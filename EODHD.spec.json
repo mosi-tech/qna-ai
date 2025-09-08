@@ -1,0 +1,1783 @@
+{
+	"info": {
+		"_postman_id": "963a320c-db6e-4629-96fe-adf9dac8e14d",
+		"name": "EODHD Documentation",
+		"description": "EODHD (EODHistoricaldata.com) Documentation. Here is a quick but comprehensive guide for the most popular API endpoints to start with our Financial Data APIs.\n\nThe API is built as REST API. Our API has predictable resource-oriented URLs, returns CSV and JSON-encoded responses, and uses standard HTTP response codes, authentication, and verbs. This is one of the most comprehensive Financial Data API on the market.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "48265780",
+		"_collection_link": "https://www.postman.com/eodhistoricaldata/eodhd-financial-data-apis-collection/collection/92tl080/eodhd-documentation?action=share&source=collection_link&creator=48265780"
+	},
+	"item": [
+		{
+			"name": "EOD (End Of Day) Data",
+			"item": [
+				{
+					"name": "AAPL 2022 json",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/eod/AAPL?api_token={{api_token}}&fmt=json&from=2022-01-01",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"eod",
+								"AAPL"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "fmt",
+									"value": "json"
+								},
+								{
+									"key": "from",
+									"value": "2022-01-01"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TSLA 2021 csv week",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/eod/TSLA?api_token={{api_token}}&from=2021-01-01&to=2021-12-31&period=w",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"eod",
+								"TSLA"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "from",
+									"value": "2021-01-01"
+								},
+								{
+									"key": "to",
+									"value": "2021-12-31"
+								},
+								{
+									"key": "period",
+									"value": "w"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Live (Delayed) Data",
+			"item": [
+				{
+					"name": "AAPL json",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/real-time/AAPL.US?api_token={{api_token}}&fmt=json",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"real-time",
+								"AAPL.US"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "fmt",
+									"value": "json"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "AMZN csv",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/real-time/AMZN?api_token={{api_token}}",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"real-time",
+								"AMZN"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "few tickets",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/real-time/MSFT?api_token={{api_token}}&s=AAPL,TSLA&fmt=json",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"real-time",
+								"MSFT"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "s",
+									"value": "AAPL,TSLA"
+								},
+								{
+									"key": "fmt",
+									"value": "json"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Dividends and Splits Data",
+			"item": [
+				{
+					"name": "div AAPL json",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/div/AAPL?api_token={{api_token}}&fmt=json&from=2021-01-01&to=2021-12-31",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"div",
+								"AAPL"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "fmt",
+									"value": "json"
+								},
+								{
+									"key": "from",
+									"value": "2021-01-01"
+								},
+								{
+									"key": "to",
+									"value": "2021-12-31"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "splits AMZN csv",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/splits/AMZN?api_token={{api_token}}",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"splits",
+								"AMZN"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Technical Indicators",
+			"item": [
+				{
+					"name": "TSLA sma json",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/technical/TSLA?api_token={{api_token}}&order=d&fmt=json&from=2017-08-01&to=2020-01-01&function=sma&period=50",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"technical",
+								"TSLA"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "order",
+									"value": "d"
+								},
+								{
+									"key": "fmt",
+									"value": "json"
+								},
+								{
+									"key": "from",
+									"value": "2017-08-01"
+								},
+								{
+									"key": "to",
+									"value": "2020-01-01"
+								},
+								{
+									"key": "function",
+									"value": "sma"
+								},
+								{
+									"key": "period",
+									"value": "50"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "AMZN avgvolccy json",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/technical/AMZN?api_token={{api_token}}&order=d&fmt=json&function=avgvolccy&period=5&from=2022-01-01",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"technical",
+								"AMZN"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "order",
+									"value": "d"
+								},
+								{
+									"key": "fmt",
+									"value": "json"
+								},
+								{
+									"key": "function",
+									"value": "avgvolccy"
+								},
+								{
+									"key": "period",
+									"value": "5"
+								},
+								{
+									"key": "from",
+									"value": "2022-01-01"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "AAPL volatility csv",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/technical/AAPL?api_token={{api_token}}&function=volatility&period=10&from=2022-03-01&to=2022-03-31",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"technical",
+								"AAPL"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "function",
+									"value": "volatility"
+								},
+								{
+									"key": "period",
+									"value": "10"
+								},
+								{
+									"key": "from",
+									"value": "2022-03-01"
+								},
+								{
+									"key": "to",
+									"value": "2022-03-31"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Intraday Data",
+			"item": [
+				{
+					"name": "TSLA json",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/intraday/TSLA?api_token={{api_token}}&fmt=json&from=1648818204&to=1649376000",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"intraday",
+								"TSLA"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "fmt",
+									"value": "json"
+								},
+								{
+									"key": "from",
+									"value": "1648818204"
+								},
+								{
+									"key": "to",
+									"value": "1649376000"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "AAPL json",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/intraday/AAPL?api_token={{api_token}}&fmt=json&from=1649828204&to=1651000000&interval=1h",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"intraday",
+								"AAPL"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "fmt",
+									"value": "json"
+								},
+								{
+									"key": "from",
+									"value": "1649828204"
+								},
+								{
+									"key": "to",
+									"value": "1651000000"
+								},
+								{
+									"key": "interval",
+									"value": "1h"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Fundamental Data",
+			"item": [
+				{
+					"name": "TSLA",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/fundamentals/TSLA.US?api_token={{api_token}}",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"fundamentals",
+								"TSLA.US"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "BTC",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/fundamentals/BTC-USD.CC?api_token={{api_token}}",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"fundamentals",
+								"BTC-USD.CC"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Historical Market Capitalization",
+			"item": [
+				{
+					"name": "AMZN",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/historical-market-cap/AMZN.US?api_token={{api_token}}&from=2021-01-01",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"historical-market-cap",
+								"AMZN.US"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "from",
+									"value": "2021-01-01"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TSLA",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/historical-market-cap/TSLA?api_token={{api_token}}&from=2022-01-01",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"historical-market-cap",
+								"TSLA"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "from",
+									"value": "2022-01-01"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Insider Transactions Data",
+			"item": [
+				{
+					"name": "AAPL",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/insider-transactions?api_token={{api_token}}&from=2022-01-01&limit=100&code=AAPL",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"insider-transactions"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "from",
+									"value": "2022-01-01"
+								},
+								{
+									"key": "limit",
+									"value": "100"
+								},
+								{
+									"key": "code",
+									"value": "AAPL"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "WMT",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/insider-transactions?api_token={{api_token}}&from=2022-01-01&limit=10&code=MSFT",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"insider-transactions"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "from",
+									"value": "2022-01-01"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "code",
+									"value": "MSFT"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Financial Calendar (Earnings, IPOs)",
+			"item": [
+				{
+					"name": "earnings",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/calendar/earnings?api_token={{api_token}}&fmt=json&symbols=AAPL.US,AMZN.US&from=2018-01-01",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"calendar",
+								"earnings"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "fmt",
+									"value": "json"
+								},
+								{
+									"key": "symbols",
+									"value": "AAPL.US,AMZN.US"
+								},
+								{
+									"key": "from",
+									"value": "2018-01-01"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "trends csv",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/calendar/trends?api_token={{api_token}}&symbols=TSLA.US, AMZN.US&from=2020-01-01",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"calendar",
+								"trends"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "symbols",
+									"value": "TSLA.US, AMZN.US"
+								},
+								{
+									"key": "from",
+									"value": "2020-01-01"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "ipos",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/calendar/ipos?api_token={{api_token}}&symbols=AAPL.US, TSLA.US&from=2021-01-01&fmt=json",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"calendar",
+								"ipos"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "symbols",
+									"value": "AAPL.US, TSLA.US"
+								},
+								{
+									"key": "from",
+									"value": "2021-01-01"
+								},
+								{
+									"key": "fmt",
+									"value": "json"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Bonds Fundamental and EOD (End Of Day) Data",
+			"item": [
+				{
+					"name": "fundamentals",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/bond-fundamentals/US501889AB59?api_token={{api_token}}",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"bond-fundamentals",
+								"US501889AB59"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "eod history",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/eod/US501889AB59.BOND?api_token={{api_token}}&fmt=json&order=d&from=2010-01-01",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"eod",
+								"US501889AB59.BOND"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "fmt",
+									"value": "json"
+								},
+								{
+									"key": "order",
+									"value": "d"
+								},
+								{
+									"key": "from",
+									"value": "2010-01-01"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "EOD Bulk Data",
+			"item": [
+				{
+					"name": "US",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/eod-bulk-last-day/US?api_token={{api_token}}&fmt=json",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"eod-bulk-last-day",
+								"US"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "fmt",
+									"value": "json"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "US splits",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/eod-bulk-last-day/US?api_token={{api_token}}&type=splits&fmt=json",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"eod-bulk-last-day",
+								"US"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "type",
+									"value": "splits"
+								},
+								{
+									"key": "fmt",
+									"value": "json"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "US dividends",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/eod-bulk-last-day/US?api_token={{api_token}}&type=dividends&fmt=json",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"eod-bulk-last-day",
+								"US"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "type",
+									"value": "dividends"
+								},
+								{
+									"key": "fmt",
+									"value": "json"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "US dated",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/eod-bulk-last-day/US?api_token={{api_token}}&date=2010-09-21&fmt=json",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"eod-bulk-last-day",
+								"US"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "date",
+									"value": "2010-09-21"
+								},
+								{
+									"key": "fmt",
+									"value": "json"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "US symbols",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/eod-bulk-last-day/US?api_token={{api_token}}&symbols=MSFT,AAPL,BMW.XETRA,SAP.F&fmt=json",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"eod-bulk-last-day",
+								"US"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "symbols",
+									"value": "MSFT,AAPL,BMW.XETRA,SAP.F"
+								},
+								{
+									"key": "fmt",
+									"value": "json"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "List of Supported Exchanges",
+			"item": [
+				{
+					"name": "list",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/exchanges-list?api_token={{api_token}}&fmt=json",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"exchanges-list"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "fmt",
+									"value": "json"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "NASDAQ exchange-symbol-list",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/exchange-symbol-list/NASDAQ?api_token={{api_token}}&fmt=json",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"exchange-symbol-list",
+								"NASDAQ"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "fmt",
+									"value": "json"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "NASDAQ exchange-symbol-list delisted",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/exchange-symbol-list/NASDAQ?api_token={{api_token}}&fmt=json&delisted=1",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"exchange-symbol-list",
+								"NASDAQ"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "fmt",
+									"value": "json"
+								},
+								{
+									"key": "delisted",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Exchange Details (Working Hours and Market Holidays)",
+			"item": [
+				{
+					"name": "US details",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/exchange-details/US?api_token={{api_token}}&fmt=json",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"exchange-details",
+								"US"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "fmt",
+									"value": "json"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "US 2021 holidays",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/exchange-details/US?api_token={{api_token}}&fmt=json&from=2021-01-01&to=2021-12-31",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"exchange-details",
+								"US"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "fmt",
+									"value": "json"
+								},
+								{
+									"key": "from",
+									"value": "2021-01-01"
+								},
+								{
+									"key": "to",
+									"value": "2021-12-31"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Stock Market Screener",
+			"item": [
+				{
+					"name": "example",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/screener?api_token={{api_token}}&sort=market_capitalization.desc&filters=[[\"market_capitalization\",\">\",1000],[\"name\",\"match\",\"apple\"],[\"code\",\"=\",\"AAPL\"],[\"exchange\",\"=\",\"us\"],[\"sector\",\"=\",\"Technology\"]]&limit=10&offset=0",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"screener"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "sort",
+									"value": "market_capitalization.desc"
+								},
+								{
+									"key": "filters",
+									"value": "[[\"market_capitalization\",\">\",1000],[\"name\",\"match\",\"apple\"],[\"code\",\"=\",\"AAPL\"],[\"exchange\",\"=\",\"us\"],[\"sector\",\"=\",\"Technology\"]]"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Stock Market Search",
+			"item": [
+				{
+					"name": "search 'AAPL'",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/search/AAPL?api_token={{api_token}}",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"search",
+								"AAPL"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "search 'Apple Inc'",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/search/Apple Inc?api_token={{api_token}}",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"search",
+								"Apple Inc"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "search 'Apple Inc' limited",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/search/Apple Inc?api_token={{api_token}}&limit=3",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"search",
+								"Apple Inc"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "limit",
+									"value": "3"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Sentiment Data (News and Tweets)",
+			"item": [
+				{
+					"name": "BTC",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/sentiments?s=btc-usd.cc,aapl&from=2022-01-01&to=2022-04-22&api_token={{api_token}}",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"sentiments"
+							],
+							"query": [
+								{
+									"key": "s",
+									"value": "btc-usd.cc,aapl"
+								},
+								{
+									"key": "from",
+									"value": "2022-01-01"
+								},
+								{
+									"key": "to",
+									"value": "2022-04-22"
+								},
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "tweets: TSLA,AAPL",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/tweets-sentiments?s=tsla,aapl&from=2022-01-01&to=2022-04-22&api_token={{api_token}}",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"tweets-sentiments"
+							],
+							"query": [
+								{
+									"key": "s",
+									"value": "tsla,aapl"
+								},
+								{
+									"key": "from",
+									"value": "2022-01-01"
+								},
+								{
+									"key": "to",
+									"value": "2022-04-22"
+								},
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "tweets: GSPC (date range)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/tweets-sentiments?s=GSPC.INDX&from=2022-04-21&to=2022-04-21",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"tweets-sentiments"
+							],
+							"query": [
+								{
+									"key": "s",
+									"value": "GSPC.INDX"
+								},
+								{
+									"key": "from",
+									"value": "2022-04-21"
+								},
+								{
+									"key": "to",
+									"value": "2022-04-21"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Economic Events Data",
+			"item": [
+				{
+					"name": "index",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{api_url}}/economic-events?api_token={{api_token}}&limit=10",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"economic-events"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "selected country",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{api_url}}/economic-events?api_token={{api_token}}&country=FR",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"economic-events"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "country",
+									"value": "FR"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Financial News API",
+			"item": [
+				{
+					"name": "AAPL limited",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{api_url}}/news?api_token={{api_token}}&s=AAPL.US&offset=0&limit=10",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"news"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "s",
+									"value": "AAPL.US"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "AMZN + tag search",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{api_url}}/news?api_token={{api_token}}&t=balance sheet&s=AMZN",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"news"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "t",
+									"value": "balance sheet"
+								},
+								{
+									"key": "s",
+									"value": "AMZN"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Macro Indicators Data",
+			"item": [
+				{
+					"name": "France inflation_consumer_prices_annual",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{api_url}}/macro-indicator/FRA?api_token={{api_token}}&fmt=json&indicator=inflation_consumer_prices_annual",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"macro-indicator",
+								"FRA"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "fmt",
+									"value": "json"
+								},
+								{
+									"key": "indicator",
+									"value": "inflation_consumer_prices_annual"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Australia population_total",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{api_url}}/macro-indicator/AUS?api_token={{api_token}}&fmt=json&indicator=population_total",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"macro-indicator",
+								"AUS"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "fmt",
+									"value": "json"
+								},
+								{
+									"key": "indicator",
+									"value": "population_total"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Macroeconomic Data",
+			"item": [
+				{
+					"name": "Government Bond",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/eod/UK10Y.GBOND?api_token={{api_token}}&fmt=json",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"eod",
+								"UK10Y.GBOND"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "fmt",
+									"value": "json"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "EURIBOR",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/eod/EURIBOR3M.MONEY?api_token={{api_token}}&fmt=json",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"eod",
+								"EURIBOR3M.MONEY"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "fmt",
+									"value": "json"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "LIBOR",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/eod/LIBOREUR2M.MONEY?api_token={{api_token}}&fmt=json",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"eod",
+								"LIBOREUR2M.MONEY"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "fmt",
+									"value": "json"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "ECB Exchange Rates",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/eod/ECBEURUSD.MONEY?api_token={{api_token}}&fmt=json",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"eod",
+								"ECBEURUSD.MONEY"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "fmt",
+									"value": "json"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Norge Bank Exchange Rates",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{api_url}}/eod/NORGEUSDNOK.MONEY?api_token={{api_token}}&fmt=json",
+							"host": [
+								"{{api_url}}"
+							],
+							"path": [
+								"eod",
+								"NORGEUSDNOK.MONEY"
+							],
+							"query": [
+								{
+									"key": "api_token",
+									"value": "{{api_token}}"
+								},
+								{
+									"key": "fmt",
+									"value": "json"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "api_url",
+			"value": "https://eodhd.com/api"
+		},
+		{
+			"key": "api_token",
+			"value": "demo"
+		}
+	]
+}

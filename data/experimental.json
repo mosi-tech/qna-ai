@@ -1,0 +1,23 @@
+[
+  {
+    "id": "trading-performance-dashboard",
+    "question": "What is my trading performance and account activity over the past 30 days?",
+    "name": "Trading Performance Dashboard",
+    "file": "experimental/TradingPerformanceDashboard.tsx",
+    "description": "Comprehensive view of trading performance and account activity over past 30 days.",
+    "workflow": [
+      "1. Get Account Overview: Call /v2/account to get current account status, portfolio value, buying power, pattern day trader flags",
+      "2. Get Portfolio History: Call /v2/account/portfolio/history with period='30D' and timeframe='1D' to get daily portfolio performance and P&L",
+      "3. Get Current Positions: Call /v2/positions to get all open positions with market values and unrealized P&L",
+      "4. Get Account Activities: Call /v2/account/activities with after=(30 days ago) to get all trading fills and non-trading activities like dividends",
+      "5. Calculate Performance Metrics: Process portfolio history to calculate total return, best/worst days, win/loss ratio from activities",
+      "6. Display Dashboard: Show account overview cards, portfolio performance chart, position allocation pie chart, and recent activity table with tabs"
+    ],
+    "apis": [
+      "trading:/v2/account",
+      "trading:/v2/account/portfolio/history",
+      "trading:/v2/positions",
+      "trading:/v2/account/activities"
+    ]
+  }
+]

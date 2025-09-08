@@ -1,0 +1,12 @@
+[
+  {
+    "id": "stock-volatility-screener",
+    "question": "What actively traded stocks have the highest price volatility over the past 30 days?",
+    "file": "experimental/StockVolatilityScreener.tsx",
+    "name": "Stock Volatility Screener",
+    "apis": [
+      "marketdata:/v2/stocks/bars",
+      "marketdata:/v1beta1/screener/stocks/most-actives"
+    ]
+  }
+]
