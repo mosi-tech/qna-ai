@@ -1,12 +1,36 @@
 [
   {
-    "id": "stock-volatility-screener",
-    "question": "What actively traded stocks have the highest price volatility over the past 30 days?",
-    "file": "experimental/StockVolatilityScreener.tsx",
-    "name": "Stock Volatility Screener",
+    "id": "position-highest-volatility-30d",
+    "name": "Highest 30D Volatility (Open Positions)",
+    "file": "experimental/OpenPositionsVolatilityTop.json",
+    "output": "/experimental/OpenPositionsVolatilityTop.json",
+    "question": "Which of my open positions has the highest 30-day volatility?",
+    "description": "Identifies the open position with the highest realized volatility over the past 30 trading days using Alpaca Market Data bars.",
     "apis": [
-      "marketdata:/v2/stocks/bars",
-      "marketdata:/v1beta1/screener/stocks/most-actives"
+      "trading:/v2/positions",
+      "marketdata:/v2/stocks/bars"
+    ],
+    "workflow": [
+      {
+        "type": "fetch",
+        "description": "Step 1: Retrieve open positions using trading:/v2/positions (equities only) to get symbols, qty, side."
+      },
+      {
+        "type": "fetch",
+        "description": "Step 2: Fetch 1D bars for all symbols for the past ~35 calendar days using marketdata:/v2/stocks/bars?timeframe=1Day&symbols=<list>&start=<ISO_35d_ago>."
+      },
+      {
+        "type": "engine",
+        "description": "Step 3: Compute daily returns (close_t/close_{t-1}-1) and 30-day realized volatility per symbol; annualize by sqrt(252)."
+      },
+      {
+        "type": "compute",
+        "description": "Step 4: Rank by realized volatility and select the highest-volatility symbol."
+      },
+      {
+        "type": "compute",
+        "description": "Step 5: Populate experimental/OpenPositionsVolatilityTop.json with top_symbol, top_symbol_volatility_30d, symbols_considered, and notes."
+      }
     ]
   }
 ]

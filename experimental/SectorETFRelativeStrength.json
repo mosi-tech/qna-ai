@@ -1,0 +1,75 @@
+{
+  "description": "Analysis of sector ETF relative strength performance showing which sectors demonstrated improving momentum versus the S&P 500 benchmark over consecutive three-week periods. This sector rotation analysis helps investors identify emerging sector leadership and potential momentum shifts in the market by comparing weekly performance ratios and identifying sustained relative outperformance trends.",
+  "body": [
+    {
+      "key": "technology_xlk_streak",
+      "value": "4 weeks",
+      "description": "Technology Select Sector SPDR Fund (XLK) showed 4 consecutive weeks of improving relative strength versus SPY, with weekly RS ratios increasing from 0.98 to 1.15. This indicates sustained institutional rotation into technology stocks driven by strong earnings momentum and AI investment themes."
+    },
+    {
+      "key": "technology_xlk_current_rs",
+      "value": 1.15,
+      "description": "Current week relative strength ratio for XLK versus SPY. Values above 1.0 indicate outperformance, with 1.15 showing Technology sector returning 15% more than the broader market this week on a relative basis."
+    },
+    {
+      "key": "technology_xlk_avg_improvement",
+      "value": "+4.2%",
+      "description": "Average weekly relative strength improvement over the 4-week streak period. Technology sector has been gaining approximately 4.2% of relative performance advantage each week compared to the S&P 500 benchmark."
+    },
+    {
+      "key": "healthcare_xlv_streak",
+      "value": "3 weeks",
+      "description": "Health Care Select Sector SPDR Fund (XLV) demonstrated 3 consecutive weeks of improving relative strength, with RS ratios climbing from 0.94 to 1.08. This suggests rotation into defensive healthcare names as investors seek stability amid market volatility."
+    },
+    {
+      "key": "healthcare_xlv_current_rs",
+      "value": 1.08,
+      "description": "Current week relative strength ratio for XLV versus SPY. The 1.08 ratio indicates Healthcare sector outperforming the broader market by 8% on a relative basis, reflecting defensive positioning and strong pharmaceutical earnings."
+    },
+    {
+      "key": "healthcare_xlv_avg_improvement",
+      "value": "+2.8%",
+      "description": "Average weekly relative strength improvement for Healthcare over the 3-week improvement streak. Consistent 2.8% weekly gains in relative performance suggest institutional accumulation in defensive healthcare positions."
+    },
+    {
+      "key": "industrials_xli_streak",
+      "value": "3 weeks", 
+      "description": "Industrial Select Sector SPDR Fund (XLI) recorded 3 weeks of consecutive relative strength improvement versus SPY, with ratios advancing from 1.01 to 1.12. Infrastructure spending optimism and manufacturing recovery drove this industrial sector momentum."
+    },
+    {
+      "key": "industrials_xli_current_rs",
+      "value": 1.12,
+      "description": "Current relative strength ratio for Industrials sector. The 1.12 value shows Industrial stocks outperforming SPY by 12% this week, supported by infrastructure investment trends and economic reopening themes."
+    },
+    {
+      "key": "energy_xle_underperformance",
+      "value": "0.87",
+      "description": "Energy Select Sector SPDR Fund (XLE) current relative strength ratio of 0.87, indicating 13% underperformance versus SPY. Energy sector showed declining relative strength over the past 3 weeks, suggesting rotation away from commodity-sensitive sectors."
+    },
+    {
+      "key": "financial_xlf_neutral",
+      "value": "0.98",
+      "description": "Financial Select Sector SPDR Fund (XLF) relative strength ratio near parity at 0.98. Financials showed mixed relative performance with no clear directional trend over the past 3 weeks, reflecting uncertainty around interest rate policy and credit conditions."
+    },
+    {
+      "key": "consumer_discretionary_xly_decline",
+      "value": "0.89",
+      "description": "Consumer Discretionary Select Sector SPDR Fund (XLY) relative strength of 0.89 shows 11% underperformance versus SPY. Two weeks of declining relative strength suggest consumer spending concerns and rotation away from growth-sensitive consumer names."
+    },
+    {
+      "key": "total_improving_sectors",
+      "value": 3,
+      "description": "Number of sector ETFs that demonstrated 3 or more consecutive weeks of improving relative strength. Technology, Healthcare, and Industrials are the current sector leaders showing sustained momentum versus the broader market benchmark."
+    },
+    {
+      "key": "market_rotation_signal",
+      "value": "Growth-to-Quality",
+      "description": "The relative strength patterns suggest a rotation from cyclical growth sectors (Energy, Consumer Discretionary) toward quality growth and defensive sectors (Technology, Healthcare). This indicates investor preference for earnings visibility over economic sensitivity."
+    },
+    {
+      "key": "momentum_confidence_score",
+      "value": "7.5/10",
+      "description": "Overall confidence score for sector momentum sustainability based on improvement consistency, volume confirmation, and breadth of participation. Score of 7.5 indicates high probability that current sector rotation trends will continue for 2-4 more weeks."
+    }
+  ]
+}

@@ -1,0 +1,159 @@
+{
+    "questions": [
+        {
+            "question": "How did a portfolio with 60% AAPL, 20% MSFT, and 20% TSLA perform over the last 5 years?",
+            "short_question": "Portfolio performance of AAPL, MSFT, TSLA in 5 years?",
+            "category": "PORTFOLIO_BACKTESTING",
+            "symbols": ["AAPL", "MSFT", "TSLA"],
+            "function": "backtest_portfolio",
+            "inputs": {
+                "allocation": {"AAPL": 0.60, "MSFT": 0.20, "TSLA": 0.20},
+                "time_period": "5_years",
+                "rebalance": "none",
+                "start_capital": 100000,
+                "in_flow": 1000
+            }
+        },
+        {
+            "question": "What was the annualized return of a portfolio where 50% was invested in FAANG stocks and 50% in top semiconductor stocks?",
+            "short_question": "Annualized return of FAANG and semiconductor portfolio?",
+            "category": "PORTFOLIO_BACKTESTING",
+            "symbols": ["FAANG", "TOP_SEMICONDUCTORS"],
+            "function": "backtest_portfolio",
+            "inputs": {
+                "allocation": {"FAANG": 0.50, "TOP_SEMICONDUCTORS": 0.50},
+                "time_period": "custom",
+                "rebalance": "none",
+                "start_capital": 100000,
+                "in_flow": 2000
+            }
+        },
+        {
+            "question": "How did a growth-focused portfolio with higher allocations to AMZN and TSLA compare to a more balanced tech portfolio including AAPL, MSFT, and GOOG in the past decade?",
+            "short_question": "Growth-focused vs balanced tech portfolio in 10 years?",
+            "category": "PORTFOLIO_BACKTESTING",
+            "symbols": ["AMZN", "TSLA", "AAPL", "MSFT", "GOOG"],
+            "function": "backtest_portfolio",
+            "inputs": {
+                "allocation": {"AMZN": 0.40, "TSLA": 0.40, "AAPL": 0.20, "MSFT": 0.20, "GOOG": 0.20},
+                "time_period": "10_years",
+                "rebalance": "none",
+                "start_capital": 100000,
+                "in_flow": 1500
+            }
+        },
+        {
+            "question": "What was the performance of a dividend-focused tech portfolio including AAPL, MSFT, and INTC compared to the NASDAQ 100 over the last 5 years?",
+            "short_question": "Dividend tech portfolio vs NASDAQ 100 in 5 years?",
+            "category": "PORTFOLIO_BACKTESTING",
+            "symbols": ["AAPL", "MSFT", "INTC", "NASDAQ 100"],
+            "function": "backtest_portfolio",
+            "inputs": {
+                "allocation": {"AAPL": 0.33, "MSFT": 0.33, "INTC": 0.34},
+                "benchmark": "NASDAQ 100",
+                "time_period": "5_years",
+                "rebalance": "none",
+                "start_capital": 100000,
+                "in_flow": 1000
+            }
+        },
+        {
+            "question": "How did a momentum-driven portfolio with quarterly rebalancing of top 5 tech stocks perform compared to a static buy-and-hold strategy in the last 3 years?",
+            "short_question": "Momentum-driven vs static tech portfolio in 3 years?",
+            "category": "PORTFOLIO_BACKTESTING",
+            "symbols": ["TOP_5_TECH"],
+            "function": "backtest_portfolio",
+            "inputs": {
+                "strategy": "momentum",
+                "time_period": "3_years",
+                "rebalance": "quarterly",
+                "start_capital": 100000,
+                "in_flow": 500
+            }
+        },
+        {
+            "question": "What has been the volatility and returns of a portfolio with 40% in big tech (AAPL, MSFT) and 60% in emerging tech (SNAP, UBER) over the past 5 years?",
+            "short_question": "Volatility and returns of big tech vs emerging tech in 5 years?",
+            "category": "PORTFOLIO_BACKTESTING",
+            "symbols": ["AAPL", "MSFT", "SNAP", "UBER"],
+            "function": "backtest_portfolio",
+            "inputs": {
+                "allocation": {"AAPL": 0.20, "MSFT": 0.20, "SNAP": 0.30, "UBER": 0.30},
+                "time_period": "5_years",
+                "rebalance": "none",
+                "start_capital": 100000,
+                "in_flow": 1000
+            }
+        },
+        {
+            "question": "How did a risk-adjusted tech portfolio with 30% in AAPL, 30% in MSFT, 20% in GOOG, and 20% in NVDA perform during the COVID-19 pandemic?",
+            "short_question": "Risk-adjusted tech portfolio performance during COVID-19?",
+            "category": "PORTFOLIO_BACKTESTING",
+            "symbols": ["AAPL", "MSFT", "GOOG", "NVDA"],
+            "function": "backtest_portfolio",
+            "inputs": {
+                "allocation": {"AAPL": 0.30, "MSFT": 0.30, "GOOG": 0.20, "NVDA": 0.20},
+                "time_period": "COVID_19_pandemic",
+                "rebalance": "none",
+                "start_capital": 100000,
+                "in_flow": 500
+            }
+        },
+        {
+            "question": "What were the cumulative returns of a portfolio split 70% in high-growth tech stocks (TSLA, NVDA) and 30% in more stable tech stocks (AAPL, MSFT) over the past 5 years?",
+            "short_question": "Cumulative returns of high-growth vs stable tech in 5 years?",
+            "category": "PORTFOLIO_BACKTESTING",
+            "symbols": ["TSLA", "NVDA", "AAPL", "MSFT"],
+            "function": "backtest_portfolio",
+            "inputs": {
+                "allocation": {"TSLA": 0.35, "NVDA": 0.35, "AAPL": 0.15, "MSFT": 0.15},
+                "time_period": "5_years",
+                "rebalance": "none",
+                "start_capital": 100000,
+                "in_flow": 1500
+            }
+        },
+        {
+            "question": "How did a sector-rotating strategy focusing on tech stocks in different market conditions perform compared to a traditional tech ETF?",
+            "short_question": "Sector-rotating vs traditional tech ETF?",
+            "category": "PORTFOLIO_BACKTESTING",
+            "symbols": ["TECH_SECTOR", "TECH_ETF"],
+            "function": "backtest_portfolio",
+            "inputs": {
+                "strategy": "sector_rotating",
+                "benchmark": "TECH_ETF",
+                "time_period": "custom",
+                "rebalance": "dynamic",
+                "start_capital": 100000,
+                "in_flow": 2000
+            }
+        },
+        {
+            "question": "What has been the performance of a portfolio with dynamic weighting based on market cap changes among AAPL, MSFT, GOOG, AMZN, and FB over the last 5 years?",
+            "short_question": "Performance of market cap-weighted tech portfolio in 5 years?",
+            "category": "PORTFOLIO_BACKTESTING",
+            "symbols": ["AAPL", "MSFT", "GOOG", "AMZN", "FB"],
+            "function": "backtest_portfolio",
+            "inputs": {
+                "allocation_strategy": "market_cap_weighted",
+                "time_period": "5_years",
+                "rebalance": "dynamic",
+                "start_capital": 100000,
+                "in_flow": 1500
+            }
+        }
+    ],
+    "unique_functions": [
+        "backtest_portfolio"
+    ],
+    "unique_inputs": [
+        "allocation",
+        "time_period",
+        "rebalance",
+        "benchmark",
+        "strategy",
+        "allocation_strategy",
+        "start_capital",
+        "in_flow"
+    ]
+}

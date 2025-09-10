@@ -1,0 +1,85 @@
+{
+  "description": "Correlation analysis between the two largest equity positions in your portfolio, showing how similarly these investments move in price. This analysis helps assess portfolio diversification and risk concentration by measuring the statistical relationship between daily returns over a 90-day period.",
+  "body": [
+    {
+      "key": "analysis_period",
+      "value": "90 days",
+      "description": "Time period used for calculating daily return correlation between the two largest equity positions"
+    },
+  {
+    "key": "position_1_symbol",
+    "value": "AAPL",
+    "description": "Symbol of the first largest equity position by market value"
+  },
+  {
+    "key": "position_1_name",
+    "value": "Apple Inc.",
+    "description": "Company name of the first largest equity position"
+  },
+  {
+    "key": "position_1_market_value",
+    "value": "$25,000.00",
+    "description": "Current market value of the first largest equity position"
+  },
+  {
+    "key": "position_1_shares",
+    "value": 167,
+    "description": "Number of shares held in the first largest position"
+  },
+  {
+    "key": "position_2_symbol",
+    "value": "MSFT",
+    "description": "Symbol of the second largest equity position by market value"
+  },
+  {
+    "key": "position_2_name",
+    "value": "Microsoft Corporation",
+    "description": "Company name of the second largest equity position"
+  },
+  {
+    "key": "position_2_market_value",
+    "value": "$22,000.00",
+    "description": "Current market value of the second largest equity position"
+  },
+  {
+    "key": "position_2_shares",
+    "value": 52,
+    "description": "Number of shares held in the second largest position"
+  },
+  {
+    "key": "correlation_coefficient",
+    "value": 0.62,
+    "description": "Pearson correlation coefficient between daily returns. Values range from -1 (perfect negative correlation) to +1 (perfect positive correlation). 0.62 indicates moderate positive correlation."
+  },
+  {
+    "key": "data_points",
+    "value": 87,
+    "description": "Number of trading days with valid price data for both positions during the 90-day analysis period"
+  },
+  {
+    "key": "risk_interpretation",
+    "value": "Moderate Diversification",
+    "description": "With 0.62 correlation, these positions provide moderate diversification benefits. They tend to move in the same direction but not perfectly synchronized, reducing overall portfolio risk compared to holding identical positions."
+  },
+  {
+    "key": "statistical_significance_p_value",
+    "value": 0.001,
+    "description": "P-value indicating the statistical significance of the correlation. Values below 0.05 suggest the correlation is statistically significant and not due to random chance."
+  },
+  {
+    "key": "recommendation_1",
+    "value": "Consider adding positions from different sectors to further reduce correlation",
+    "description": "First actionable insight based on the current correlation analysis"
+  },
+  {
+    "key": "recommendation_2",
+    "value": "Monitor correlation changes during market volatility periods",
+    "description": "Second actionable insight for ongoing portfolio management"
+  },
+  {
+    "key": "recommendation_3",
+    "value": "Rebalance if correlation increases above 0.8",
+    "description": "Third actionable insight with specific threshold for portfolio rebalancing"
+  }
+  ]
+}

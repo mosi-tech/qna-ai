@@ -1,0 +1,60 @@
+{
+    "retail_investor_questions": [
+        {
+            "function": "performance_comparison",
+            "description": "Compares the performance of different ETFs or mutual funds.",
+            "example_questions": [
+                "How has the SPDR S&P 500 ETF (SPY) performed compared to the Vanguard Total Stock Market ETF (VTI) over the past year?",
+                "Compare the performance of the Fidelity Contrafund (FCNTX) to the T. Rowe Price Growth Stock Fund (PRGFX) over the last five years."
+            ]
+        },
+        {
+            "function": "expense_ratios",
+            "description": "Analyzes the expense ratios of different ETFs or mutual funds.",
+            "example_questions": [
+                "What are the expense ratios of the iShares MSCI Emerging Markets ETF (EEM) and the Vanguard FTSE Emerging Markets ETF (VWO)?",
+                "How do the expense ratios of the Schwab U.S. Large-Cap ETF (SCHX) and the SPDR S&P 500 ETF (SPY) compare?"
+            ]
+        },
+        {
+            "function": "sector_exposure",
+            "description": "Examines the sector allocation of different funds and its impact on performance.",
+            "example_questions": [
+                "What is the sector allocation of the Invesco QQQ Trust (QQQ), and how does it affect its performance?",
+                "How does the sector exposure of the Vanguard Health Care Fund (VGHCX) compare to that of the Fidelity Select Health Care Portfolio (FSPHX)?"
+            ]
+        },
+        {
+            "function": "yield_and_dividends",
+            "description": "Evaluates the yield and dividend income from various funds.",
+            "example_questions": [
+                "What is the dividend yield of the iShares iBoxx $ Investment Grade Corporate Bond ETF (LQD)?",
+                "How does the yield of the Vanguard High Dividend Yield ETF (VYM) compare to the Schwab U.S. Dividend Equity ETF (SCHD)?"
+            ]
+        },
+        {
+            "function": "risk_assessment",
+            "description": "Assesses the risk level associated with different funds or ETFs.",
+            "example_questions": [
+                "What is the risk level of investing in the ARK Innovation ETF (ARKK) compared to the SPDR S&P 500 ETF (SPY)?",
+                "How volatile has the iShares Russell 2000 ETF (IWM) been compared to the Vanguard Total Bond Market ETF (BND)?"
+            ]
+        },
+        {
+            "function": "fund_managers",
+            "description": "Provides insights into the performance and strategy of fund managers.",
+            "example_questions": [
+                "Who manages the T. Rowe Price Blue Chip Growth Fund (TRBCX), and what is their investment strategy?",
+                "What is the track record of the fund manager for the Fidelity Magellan Fund (FMAGX)?"
+            ]
+        },
+        {
+            "function": "thematic_investing",
+            "description": "Assesses thematic ETFs or funds based on specific trends or sectors.",
+            "example_questions": [
+                "How has the Global X Robotics & Artificial Intelligence ETF (BOTZ) performed in the context of current technology trends?",
+                "What are the recent performance trends for the Invesco Solar ETF (TAN), and how does it reflect the growth in renewable energy?"
+            ]
+        }
+    ]
+}

@@ -1,0 +1,9 @@
+{
+  "description": "Indicates whether your account is currently blocked from trading, based on the account_blocked flag in your Alpaca account snapshot.",
+  "body": [
+    { "key": "account_blocked", "value": "to_be_computed", "description": "True if trading is currently blocked on your account; otherwise false." },
+    { "key": "note", "value": "If blocked, check compliance notifications or funding status.", "description": "Short guidance on common reasons for trading blocks." },
+    { "key": "data_sources", "value": ["trading:/v2/account"], "description": "Pulled from the Alpaca Trading API account endpoint." }
+  ]
+}
+

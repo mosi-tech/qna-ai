@@ -1,0 +1,102 @@
+1. What are the expense ratios of the SPDR S&P 500 ETF (SPY) and the Invesco QQQ ETF (QQQ)?
+2. How do the expense ratios of the Vanguard Total Stock Market ETF (VTI) and the iShares Russell 2000 ETF (IWM) compare?
+3. What are the expense ratios of the iShares MSCI Emerging Markets ETF (EEM) and the Vanguard FTSE Emerging Markets ETF (VWO)?
+4. How do the expense ratios of the Fidelity Contrafund (FCNTX) and the T. Rowe Price Growth Stock Fund (PRGFX) compare?
+5. What are the expense ratios of the iShares U.S. Real Estate ETF (IYR) and the Vanguard Real Estate ETF (VNQ)?
+6. How do the expense ratios of the Vanguard Dividend Appreciation ETF (VIG) and the Schwab U.S. Dividend Equity ETF (SCHD) compare?
+7. What are the expense ratios of the SPDR Gold Shares (GLD) and the iShares Silver Trust (SLV)?
+8. How do the expense ratios of the Invesco QQQ ETF (QQQ) and the SPDR Dow Jones Industrial Average ETF (DIA) compare?
+9. What are the expense ratios of the Vanguard Small-Cap Growth ETF (VBK) and the iShares Russell 2000 Growth ETF (IWO)?
+10. How do the expense ratios of the Fidelity ZERO Total Market Index Fund (FZROX) and the Vanguard Total Stock Market Index Fund (VTSAX) compare?
+11. What are the expense ratios of the iShares Core U.S. Aggregate Bond ETF (AGG) and the Vanguard Total Bond Market ETF (BND)?
+12. How do the expense ratios of the iShares S&P 500 Growth ETF (IVW) and the iShares S&P 500 Value ETF (IVE) compare?
+13. What are the expense ratios of the Vanguard Health Care ETF (VHT) and the Health Care Select Sector SPDR Fund (XLV)?
+14. How do the expense ratios of the Invesco Solar ETF (TAN) and the First Trust Global Wind Energy ETF (FAN) compare?
+15. What are the expense ratios of the iShares Transportation Average ETF (IYT) and the SPDR S&P Transportation ETF (XTN)?
+16. How do the expense ratios of the Vanguard Energy ETF (VDE) and the SPDR S&P Oil & Gas Exploration & Production ETF (XOP) compare?
+17. What are the expense ratios of the iShares U.S. Treasury Bond ETF (GOVT) and the iShares U.S. Treasury Inflation-Protected Securities ETF (TIP)?
+18. How do the expense ratios of the iShares U.S. Consumer Services ETF (IYC) and the Consumer Discretionary Select Sector SPDR Fund (XLY) compare?
+19. What are the expense ratios of the iShares Global Clean Energy ETF (ICLN) and the Invesco WilderHill Clean Energy ETF (PBW)?
+20. How do the expense ratios of the SPDR S&P 500 Growth ETF (SPYG) and the SPDR S&P 500 Value ETF (SPYV) compare?
+21. What are the expense ratios of the Vanguard Mid-Cap Growth ETF (VOT) and the iShares Russell Mid-Cap Growth ETF (IWP)?
+22. How do the expense ratios of the iShares MSCI EAFE ETF (EFA) and the Vanguard Total International Stock ETF (VXUS) compare?
+23. What are the expense ratios of the iShares U.S. Technology ETF (IYW) and the Technology Select Sector SPDR Fund (XLK)?
+24. How do the expense ratios of the Vanguard Total Bond Market Index Fund (VBTLX) and the iShares Core U.S. Aggregate Bond ETF (AGG) compare?
+25. What are the expense ratios of the SPDR S&P 500 ETF (SPY) and the iShares Russell 1000 ETF (IWB)?
+26. How do the expense ratios of the iShares U.S. Financials ETF (IYF) and the Financial Select Sector SPDR Fund (XLF) compare?
+27. What are the expense ratios of the Vanguard Growth ETF (VUG) and the iShares S&P 500 Growth ETF (IVW)?
+28. How do the expense ratios of the iShares U.S. Healthcare ETF (IYH) and the Vanguard Health Care ETF (VHT) compare?
+29. What are the expense ratios of the iShares Global Financials ETF (IXG) and the Financial Select Sector SPDR Fund (XLF)?
+30. How do the expense ratios of the iShares Global Infrastructure ETF (IGF) and the SPDR Global Infrastructure ETF (GII) compare?
+31. What are the expense ratios of the Vanguard Small-Cap Value ETF (VBR) and the iShares Russell 2000 Value ETF (IWN)?
+32. How do the expense ratios of the iShares U.S. Consumer Goods ETF (IYK) and the Consumer Staples Select Sector SPDR Fund (XLP) compare?
+33. What are the expense ratios of the Vanguard Information Technology ETF (VGT) and the iShares U.S. Technology ETF (IYW)?
+34. How do the expense ratios of the iShares U.S. Healthcare ETF (IYH) and the SPDR Health Care Select Sector Fund (XLV) compare?
+35. What are the expense ratios of the iShares S&P 500 Value ETF (IVE) and the SPDR S&P 500 Growth ETF (SPYG)?
+36. How do the expense ratios of the iShares U.S. Real Estate ETF (IYR) and the Vanguard Real Estate ETF (VNQ) compare?
+37. What are the expense ratios of the Vanguard Total Stock Market ETF (VTI) and the iShares Core S&P Total U.S. Stock Market ETF (ITOT)?
+38. How do the expense ratios of the iShares U.S. Utilities ETF (IDU) and the Utilities Select Sector SPDR Fund (XLU) compare?
+39. What are the expense ratios of the iShares Global Energy ETF (IXC) and the SPDR Energy Select Sector Fund (XLE)?
+40. How do the expense ratios of the Vanguard Mid-Cap ETF (VO) and the iShares Russell Mid-Cap ETF (IWR) compare?
+41. What are the expense ratios of the iShares Core MSCI Emerging Markets ETF (IEMG) and the Vanguard FTSE Emerging Markets ETF (VWO)?
+42. How do the expense ratios of the iShares U.S. Financials ETF (IYF) and the Vanguard Financials ETF (VFH) compare?
+43. What are the expense ratios of the iShares U.S. Consumer Discretionary ETF (IYC) and the Consumer Discretionary Select Sector SPDR Fund (XLY)?
+44. How do the expense ratios of the iShares Global Health Care ETF (IXJ) and the SPDR Health Care Select Sector Fund (XLV) compare?
+45. What are the expense ratios of the iShares Core MSCI Total International Stock ETF (IXUS) and the Vanguard Total International Stock ETF (VXUS)?
+46. How do the expense ratios of the iShares Core S&P 500 ETF (IVV) and the SPDR S&P 500 ETF (SPY) compare?
+47. What are the expense ratios of the iShares U.S. Industrials ETF (IYJ) and the Industrial Select Sector SPDR Fund (XLI)?
+48. How do the expense ratios of the iShares U.S. Technology ETF (IYW) and the Vanguard Information Technology ETF (VGT) compare?
+49. What are the expense ratios of the iShares U.S. Basic Materials ETF (IYM) and the Materials Select Sector SPDR Fund (XLB)?
+50. How do the expense ratios of the iShares Core S&P Mid-Cap ETF (IJH) and the Vanguard Mid-Cap ETF (VO) compare?
+51. What are the expense ratios of the iShares Global Materials ETF (MXI) and the SPDR Materials Select Sector Fund (XLB)?
+52. How do the expense ratios of the iShares U.S. Utilities ETF (IDU) and the Vanguard Utilities ETF (VPU) compare?
+53. What are the expense ratios of the iShares U.S. Financials ETF (IYF) and the Fidelity Financials ETF (FNCL)?
+54. How do the expense ratios of the iShares U.S. Consumer Staples ETF (IYK) and the Vanguard Consumer Staples ETF (VDC) compare?
+55. What are the expense ratios of the iShares Global Industrials ETF (EXI) and the Industrial Select Sector SPDR Fund (XLI)?
+56. How do the expense ratios of the iShares U.S. Telecommunications ETF (IYZ) and the Vanguard Telecommunication Services ETF (VOX) compare?
+57. What are the expense ratios of the iShares Core MSCI EAFE ETF (IEFA) and the Vanguard FTSE Developed Markets ETF (VEA)?
+58. How do the expense ratios of the iShares U.S. Basic Materials ETF (IYM) and the SPDR Materials Select Sector Fund (XLB) compare?
+59. What are the expense ratios of the iShares U.S. Technology ETF (IYW) and the Technology Select Sector SPDR Fund (XLK)?
+60. How do the expense ratios of the iShares U.S. Financials ETF (IYF) and the Vanguard Financials ETF (VFH) compare?
+61. What are the expense ratios of the iShares U.S. Utilities ETF (IDU) and the Utilities Select Sector SPDR Fund (XLU)?
+62. How do the expense ratios of the iShares U.S. Healthcare ETF (
+
+IYH) and the Vanguard Health Care ETF (VHT) compare?
+63. What are the expense ratios of the iShares U.S. Real Estate ETF (IYR) and the SPDR Dow Jones REIT ETF (RWR)?
+64. How do the expense ratios of the iShares Core MSCI Emerging Markets ETF (IEMG) and the SPDR S&P Emerging Markets ETF (GMM) compare?
+65. What are the expense ratios of the iShares U.S. Consumer Discretionary ETF (IYC) and the Vanguard Consumer Discretionary ETF (VCR)?
+66. How do the expense ratios of the iShares U.S. Industrials ETF (IYJ) and the Vanguard Industrials ETF (VIS) compare?
+67. What are the expense ratios of the iShares U.S. Financials ETF (IYF) and the SPDR Financial Select Sector ETF (XLF)?
+68. How do the expense ratios of the iShares Core MSCI Total International Stock ETF (IXUS) and the SPDR MSCI ACWI ex-U.S. ETF (CWI) compare?
+69. What are the expense ratios of the iShares Global Clean Energy ETF (ICLN) and the First Trust NASDAQ Clean Edge Green Energy Index Fund (QCLN)?
+70. How do the expense ratios of the iShares U.S. Technology ETF (IYW) and the Vanguard Information Technology ETF (VGT) compare?
+71. What are the expense ratios of the iShares U.S. Consumer Staples ETF (IYK) and the Consumer Staples Select Sector SPDR Fund (XLP)?
+72. How do the expense ratios of the iShares U.S. Healthcare ETF (IYH) and the Vanguard Health Care ETF (VHT) compare?
+73. What are the expense ratios of the iShares Global Infrastructure ETF (IGF) and the SPDR S&P Global Infrastructure ETF (GII)?
+74. How do the expense ratios of the iShares Core S&P Small-Cap ETF (IJR) and the SPDR S&P 600 Small Cap ETF (SLY) compare?
+75. What are the expense ratios of the iShares Global Financials ETF (IXG) and the Vanguard Financials ETF (VFH)?
+76. How do the expense ratios of the iShares U.S. Basic Materials ETF (IYM) and the SPDR Materials Select Sector Fund (XLB) compare?
+77. What are the expense ratios of the iShares U.S. Consumer Discretionary ETF (IYC) and the Consumer Discretionary Select Sector SPDR Fund (XLY)?
+78. How do the expense ratios of the iShares U.S. Real Estate ETF (IYR) and the Vanguard Real Estate ETF (VNQ) compare?
+79. What are the expense ratios of the iShares U.S. Utilities ETF (IDU) and the Utilities Select Sector SPDR Fund (XLU)?
+80. How do the expense ratios of the iShares U.S. Financials ETF (IYF) and the Vanguard Financials ETF (VFH) compare?
+81. What are the expense ratios of the iShares U.S. Industrials ETF (IYJ) and the Industrial Select Sector SPDR Fund (XLI)?
+82. How do the expense ratios of the iShares Global Health Care ETF (IXJ) and the SPDR Health Care Select Sector Fund (XLV) compare?
+83. What are the expense ratios of the iShares Core S&P Total U.S. Stock Market ETF (ITOT) and the Vanguard Total Stock Market ETF (VTI)?
+84. How do the expense ratios of the iShares Core MSCI Emerging Markets ETF (IEMG) and the Vanguard FTSE Emerging Markets ETF (VWO) compare?
+85. What are the expense ratios of the iShares U.S. Consumer Goods ETF (IYK) and the Consumer Staples Select Sector SPDR Fund (XLP)?
+86. How do the expense ratios of the iShares U.S. Technology ETF (IYW) and the Technology Select Sector SPDR Fund (XLK) compare?
+87. What are the expense ratios of the iShares Global Energy ETF (IXC) and the SPDR Energy Select Sector Fund (XLE)?
+88. How do the expense ratios of the iShares U.S. Financials ETF (IYF) and the Financial Select Sector SPDR Fund (XLF) compare?
+89. What are the expense ratios of the iShares Core MSCI EAFE ETF (IEFA) and the Vanguard FTSE Developed Markets ETF (VEA)?
+90. How do the expense ratios of the iShares U.S. Healthcare ETF (IYH) and the Vanguard Health Care ETF (VHT) compare?
+91. What are the expense ratios of the iShares U.S. Utilities ETF (IDU) and the Utilities Select Sector SPDR Fund (XLU)?
+92. How do the expense ratios of the iShares U.S. Real Estate ETF (IYR) and the Vanguard Real Estate ETF (VNQ) compare?
+93. What are the expense ratios of the iShares U.S. Industrials ETF (IYJ) and the Industrial Select Sector SPDR Fund (XLI)?
+94. How do the expense ratios of the iShares U.S. Consumer Discretionary ETF (IYC) and the Consumer Discretionary Select Sector SPDR Fund (XLY) compare?
+95. What are the expense ratios of the iShares Global Clean Energy ETF (ICLN) and the Invesco WilderHill Clean Energy ETF (PBW)?
+96. How do the expense ratios of the iShares U.S. Financials ETF (IYF) and the Vanguard Financials ETF (VFH) compare?
+97. What are the expense ratios of the iShares U.S. Technology ETF (IYW) and the Technology Select Sector SPDR Fund (XLK)?
+98. How do the expense ratios of the iShares U.S. Utilities ETF (IDU) and the Utilities Select Sector SPDR Fund (XLU) compare?
+99. What are the expense ratios of the iShares U.S. Healthcare ETF (IYH) and the Vanguard Health Care ETF (VHT)?
+100. How do the expense ratios of the iShares U.S. Real Estate ETF (IYR) and the Vanguard Real Estate ETF (VNQ) compare?

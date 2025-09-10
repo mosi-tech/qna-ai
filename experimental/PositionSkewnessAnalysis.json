@@ -1,0 +1,55 @@
+{
+  "description": "Rolling skewness analysis of daily returns across portfolio positions, identifying positions with the most asymmetric return distributions. Skewness measures the asymmetry of return distributions - positive values indicate more extreme upward moves, while negative values indicate more extreme downward moves. This analysis helps identify positions with tail risk characteristics and asymmetric return patterns over rolling 30-day and 60-day windows.",
+  "body": [
+    {
+      "key": "highest_positive_skew_30d",
+      "value": "NVDA (2.847)",
+      "description": "Position with highest positive skewness over 30-day rolling window. Positive skewness (>1.0) indicates the return distribution has a longer right tail, meaning occasional large positive returns outweigh frequent small negative returns. This suggests momentum potential but also higher volatility risk."
+    },
+    {
+      "key": "highest_positive_skew_60d",
+      "value": "TSLA (2.234)", 
+      "description": "Position with highest positive skewness over 60-day rolling window. The longer timeframe shows sustained asymmetric upward bias in returns. Tesla's 60-day positive skewness reflects its tendency for sharp rally periods followed by consolidation phases."
+    },
+    {
+      "key": "highest_negative_skew_30d",
+      "value": "META (-1.892)",
+      "description": "Position with most negative skewness over 30-day window. Negative skewness indicates left-tail risk with more frequent small gains but occasional large losses. This pattern suggests defensive characteristics but potential for sharp drawdowns during market stress."
+    },
+    {
+      "key": "highest_negative_skew_60d", 
+      "value": "AAPL (-1.456)",
+      "description": "Position with most negative skewness over 60-day window. Apple's negative skewness reflects its mature stock characteristics - steady appreciation punctuated by periodic selloffs. This pattern is common among large-cap stocks with institutional ownership."
+    },
+    {
+      "key": "skewness_volatility_correlation",
+      "value": "0.623",
+      "description": "Correlation coefficient between absolute skewness values and return volatility across positions. Strong positive correlation (>0.6) indicates that positions with more asymmetric returns also tend to be more volatile overall, suggesting skewness as a risk factor."
+    },
+    {
+      "key": "mean_portfolio_skewness_30d",
+      "value": "0.387",
+      "description": "Average skewness across all positions weighted by position size over 30-day window. Positive portfolio skewness suggests overall upward bias in return distributions, indicating the portfolio is positioned for potential upside capture but with asymmetric risk."
+    },
+    {
+      "key": "skewness_persistence_ratio",
+      "value": "0.742",
+      "description": "Ratio of positions maintaining consistent skewness direction between 30-day and 60-day windows. High persistence (>0.7) indicates that return asymmetries are structural characteristics of positions rather than temporary phenomena."
+    },
+    {
+      "key": "extreme_skewness_positions",
+      "value": "4 of 8 positions",
+      "description": "Number of positions with absolute skewness >1.5 indicating extreme asymmetry. Half the portfolio shows significant tail risk characteristics. Positions include NVDA (+2.847), TSLA (+2.234), META (-1.892), and AAPL (-1.456) - requiring active risk monitoring."
+    },
+    {
+      "key": "skewness_trend_analysis",
+      "value": "Increasing",
+      "description": "Trend direction of mean absolute skewness over the past 30 days compared to prior period. Increasing skewness suggests growing asymmetry in return patterns across positions, potentially indicating regime change or increased market stress requiring portfolio rebalancing consideration."
+    },
+    {
+      "key": "risk_adjusted_skewness_score",
+      "value": "6.8/10",
+      "description": "Composite score evaluating skewness patterns relative to position sizes and correlations. Score above 6.0 indicates elevated asymmetric risk requiring attention. Score considers magnitude of skewness, position concentration, and diversification benefits across skewness profiles."
+    }
+  ]
+}

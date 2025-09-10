@@ -1,0 +1,82 @@
+{
+    "metrics": {
+        "Technical": {
+            "Performance Metrics": [
+                "Price Change",
+                "Total Return",
+                "Relative Strength Index (RSI)",
+                "Moving Averages (e.g., SMA, EMA)"
+            ],
+            "Volatility Metrics": [
+                "Standard Deviation",
+                "Beta",
+                "Average True Range (ATR)"
+            ],
+            "Momentum Metrics": [
+                "Moving Average Convergence Divergence (MACD)",
+                "Stochastic Oscillator",
+                "Rate of Change (ROC)"
+            ],
+            "Volume Metrics": [
+                "Trading Volume",
+                "On-Balance Volume (OBV)",
+                "Accumulation/Distribution Line"
+            ],
+            "Trend Indicators": [
+                "Bollinger Bands",
+                "Parabolic SAR (Stop and Reverse)",
+                "Ichimoku Cloud"
+            ],
+            "Support and Resistance": [
+                "Pivot Points",
+                "Fibonacci Retracement Levels"
+            ]
+        },
+        "Fundamental": {
+            "Valuation Metrics": [
+                "Price-to-Earnings Ratio (P/E Ratio)",
+                "Price-to-Book Ratio (P/B Ratio)",
+                "Price-to-Earnings Growth Ratio (PEG Ratio)",
+                "Dividend Discount Model (DDM)"
+            ],
+            "Profitability Metrics": [
+                "Return on Equity (ROE)",
+                "Return on Assets (ROA)",
+                "Return on Investment (ROI)",
+                "Gross Profit Margin",
+                "Operating Profit Margin",
+                "Net Profit Margin"
+            ],
+            "Liquidity Metrics": [
+                "Current Ratio",
+                "Quick Ratio",
+                "Cash Ratio"
+            ],
+            "Solvency Metrics": [
+                "Debt-to-Equity Ratio",
+                "Interest Coverage Ratio",
+                "Debt Ratio"
+            ],
+            "Growth Metrics": [
+                "Earnings Per Share (EPS) Growth",
+                "Revenue Growth",
+                "Dividend Growth"
+            ],
+            "Efficiency Metrics": [
+                "Asset Turnover Ratio",
+                "Inventory Turnover Ratio",
+                "Receivables Turnover Ratio"
+            ],
+            "Dividend Metrics": [
+                "Dividend Yield",
+                "Dividend Payout Ratio",
+                "Dividend Growth Rate"
+            ],
+            "Market Metrics": [
+                "Market Capitalization",
+                "Enterprise Value (EV)",
+                "EV-to-EBITDA Ratio"
+            ]
+        }
+    }
+}

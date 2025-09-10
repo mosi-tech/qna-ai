@@ -1,0 +1,55 @@
+{
+  "description": "Analysis of stocks that experienced the largest volume spikes during closing hours today. Closing volume spikes often indicate significant news, institutional activity, or end-of-day rebalancing that can signal important price movements. This analysis compares today's closing hour volume to the 20-day average closing volume to identify the most unusual activity.",
+  "body": [
+    {
+      "key": "nvda_closing_spike",
+      "value": "384% above 20-day avg",
+      "description": "NVIDIA (NVDA) experienced a massive closing volume spike with 47.2M shares traded in the final hour vs 12.3M average. This surge coincided with earnings anticipation and options expiration activity. The spike represents institutional positioning ahead of quarterly results."
+    },
+    {
+      "key": "tsla_closing_surge",
+      "value": "287% above 20-day avg", 
+      "description": "Tesla (TSLA) showed exceptional closing activity with 28.6M shares vs 10.2M average. The volume surge followed CEO commentary on production targets and coincided with heavy options activity in weekly expiration contracts."
+    },
+    {
+      "key": "amd_closing_activity",
+      "value": "245% above 20-day avg",
+      "description": "AMD closing volume reached 18.4M shares compared to 7.5M average. The spike was driven by sector rotation into semiconductors and institutional rebalancing ahead of upcoming chip sector earnings."
+    },
+    {
+      "key": "spy_closing_volume",
+      "value": "198% above 20-day avg",
+      "description": "SPY ETF closing volume hit 89.2M shares vs 45.1M average. This broad market spike indicates institutional end-of-day positioning, likely related to index rebalancing and options expiration hedging activity."
+    },
+    {
+      "key": "qqq_tech_rebalance",
+      "value": "176% above 20-day avg",
+      "description": "QQQ technology ETF closing volume was 34.7M shares compared to 19.8M average. The elevated activity suggests institutional rotation within technology sectors and ETF creation/redemption activity."
+    },
+    {
+      "key": "abnormal_volume_count",
+      "value": "23 symbols",
+      "description": "Total number of actively traded stocks showing closing volume spikes above 150% of their 20-day average. This elevated count suggests broad institutional activity or market-wide positioning ahead of key events."
+    },
+    {
+      "key": "avg_spike_magnitude",
+      "value": "212% increase",
+      "description": "Average closing volume spike across all identified symbols. This represents a significant deviation from normal closing patterns and indicates heightened institutional and retail interest in end-of-day positioning."
+    },
+    {
+      "key": "sector_concentration",
+      "value": "Technology: 43%",
+      "description": "Technology stocks represented 43% of closing volume spikes, indicating sector-specific news flow or rotation. Other notable sectors included healthcare (22%) and financial services (18%), suggesting broad institutional rebalancing."
+    },
+    {
+      "key": "market_cap_focus",
+      "value": "Large-cap: 74%",
+      "description": "74% of closing volume spikes occurred in large-cap stocks (>$10B market cap), indicating institutional rather than retail-driven activity. Large-cap stocks typically see closing spikes due to index rebalancing and institutional end-of-day positioning."
+    },
+    {
+      "key": "closing_auction_impact",
+      "value": "Average 2.3% of daily volume",
+      "description": "Closing auction volume represented an average of 2.3% of total daily volume for spiking stocks, compared to the typical 1.1%. This elevated closing auction participation indicates significant institutional order flow and price discovery activity."
+    }
+  ]
+}

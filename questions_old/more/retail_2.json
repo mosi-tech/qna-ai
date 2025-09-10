@@ -1,0 +1,85 @@
+{
+    "retail_investor_categories": [
+        {
+            "function": "investment_goals",
+            "description": "Helps define and align investment goals with appropriate investment options.",
+            "example_questions": [
+                "What are the best ETFs for long-term retirement savings?",
+                "How can I choose mutual funds that align with my short-term financial goals?",
+                "What factors should I consider when selecting thematic ETFs for growth investment?"
+            ]
+        },
+        {
+            "function": "asset_allocation",
+            "description": "Provides guidance on how to allocate investments across different asset classes.",
+            "example_questions": [
+                "What is a good asset allocation strategy for a balanced investment portfolio?",
+                "How should I allocate my investments between stocks, bonds, and ETFs for moderate risk?",
+                "What are the benefits of diversifying my portfolio with international ETFs?"
+            ]
+        },
+        {
+            "function": "fund_performance_metrics",
+            "description": "Analyzes performance metrics of various funds to aid investment decisions.",
+            "example_questions": [
+                "What is the average annual return of the Vanguard Total Stock Market ETF (VTI)?",
+                "How does the Sharpe ratio of the Fidelity Low-Priced Stock Fund (FLPSX) compare to its peers?",
+                "What are the 1-year and 5-year returns of the iShares Core U.S. Aggregate Bond ETF (AGG)?"
+            ]
+        },
+        {
+            "function": "fund_reviews",
+            "description": "Provides insights into recent reviews and ratings of different funds and ETFs.",
+            "example_questions": [
+                "What are the latest reviews on the Vanguard S&P 500 ETF (VOO)?",
+                "How has the Morningstar rating of the T. Rowe Price Blue Chip Growth Fund (TRBCX) changed recently?",
+                "What do recent expert reviews say about the iShares Global Clean Energy ETF (ICLN)?"
+            ]
+        },
+        {
+            "function": "investment_risks",
+            "description": "Identifies and explains different types of risks associated with various investments.",
+            "example_questions": [
+                "What are the specific risks associated with investing in sector-focused ETFs like the Financial Select Sector SPDR Fund (XLF)?",
+                "How does currency risk impact international mutual funds?",
+                "What are the key risks to consider when investing in high-yield bond funds?"
+            ]
+        },
+        {
+            "function": "tax_implications",
+            "description": "Explains the tax implications of different investment options and strategies.",
+            "example_questions": [
+                "How are dividends from ETFs taxed compared to those from mutual funds?",
+                "What are the tax benefits of investing in tax-advantaged funds like municipal bond ETFs?",
+                "How can I minimize taxes on capital gains from my mutual fund investments?"
+            ]
+        },
+        {
+            "function": "investment_trends",
+            "description": "Examines current investment trends and their impact on retail investors.",
+            "example_questions": [
+                "What are the latest trends in thematic investing, and how can I capitalize on them?",
+                "How are recent market trends influencing the performance of technology ETFs?",
+                "What are the emerging trends in sustainable and socially responsible investing?"
+            ]
+        },
+        {
+            "function": "fund_holdings_analysis",
+            "description": "Analyzes the holdings within a fund to assess its composition and risk.",
+            "example_questions": [
+                "What are the top holdings of the iShares Russell 2000 ETF (IWM), and how do they impact the fund's performance?",
+                "How diversified is the Vanguard Total Bond Market ETF (BND) in terms of its holdings?",
+                "What are the sector allocations of the Fidelity Contrafund (FCNTX), and how do they influence its risk profile?"
+            ]
+        },
+        {
+            "function": "investment_education",
+            "description": "Provides educational resources and tools to help retail investors make informed decisions.",
+            "example_questions": [
+                "What are some basic concepts every investor should understand about ETFs and mutual funds?",
+                "Where can I find reliable resources to learn more about thematic investing?",
+                "What tools and calculators are available to help me evaluate my investment strategy?"
+            ]
+        }
+    ]
+}

@@ -1,0 +1,80 @@
+{
+  "description": "Analyzes current portfolio positions to identify which holdings demonstrated the strongest positive performance during past CPI (Consumer Price Index) release days. This analysis examines position returns on key CPI announcement dates over the past 12 months, providing insights into which holdings serve as inflation hedges or benefit from CPI-driven market reactions. Understanding CPI-day performance helps investors assess portfolio positioning for inflation protection and economic data sensitivity, crucial for tactical allocation and risk management during periods of heightened inflation volatility.",
+  "body": [
+    {
+      "key": "top_cpi_performer",
+      "value": "SPY",
+      "description": "S&P 500 ETF showed the strongest average performance on CPI release days with +2.4% average returns across 12 CPI announcements in the past year, demonstrating broad market resilience to inflation data"
+    },
+    {
+      "key": "spy_cpi_performance",
+      "value": "+2.4%",
+      "description": "SPY's average daily return on CPI release days, significantly outperforming its overall daily average of +0.08%, indicating strong institutional buying on inflation data days"
+    },
+    {
+      "key": "spy_cpi_success_rate",
+      "value": "83%",
+      "description": "Percentage of CPI release days where SPY closed positive (10 out of 12 releases), showing consistent positive reaction to inflation data announcements"
+    },
+    {
+      "key": "second_best_performer",
+      "value": "AAPL",
+      "description": "Apple Inc. ranked second with average CPI-day returns of +1.8%, benefiting from its pricing power and perceived inflation hedge characteristics in the technology sector"
+    },
+    {
+      "key": "aapl_cpi_performance",
+      "value": "+1.8%",
+      "description": "AAPL's average daily return on CPI release days versus its normal daily average of +0.12%, showing 15x outperformance on inflation announcement days"
+    },
+    {
+      "key": "aapl_volatility_multiplier",
+      "value": "2.1x",
+      "description": "AAPL's trading volatility increases by 2.1x on CPI days compared to normal trading days, indicating heightened institutional interest and position adjustments"
+    },
+    {
+      "key": "weakest_cpi_performer",
+      "value": "TSLA",
+      "description": "Tesla showed the most mixed results on CPI days with +0.6% average returns but highest volatility at 4.2x normal levels, reflecting growth stock sensitivity to rate expectations"
+    },
+    {
+      "key": "tsla_cpi_performance",
+      "value": "+0.6%",
+      "description": "TSLA's modest average CPI-day performance, underperforming both SPY and AAPL, suggesting growth stock headwinds during inflation periods"
+    },
+    {
+      "key": "tsla_cpi_success_rate",
+      "value": "58%",
+      "description": "Tesla closed positive on only 7 out of 12 CPI release days, the lowest success rate in the portfolio, indicating sensitivity to inflation-driven rate concerns"
+    },
+    {
+      "key": "portfolio_cpi_alpha",
+      "value": "+1.6%",
+      "description": "Overall portfolio weighted average performance on CPI days, demonstrating positive inflation data sensitivity with current allocation weights"
+    },
+    {
+      "key": "best_cpi_date",
+      "value": "August 14, 2024",
+      "description": "Strongest single CPI performance day when portfolio gained +4.2% as softer-than-expected inflation reading drove broad market rally across all positions"
+    },
+    {
+      "key": "cpi_volume_surge",
+      "value": "+285%",
+      "description": "Average trading volume increase across portfolio positions on CPI release days, indicating significant institutional repositioning and increased market participation"
+    },
+    {
+      "key": "defensive_recommendation",
+      "value": "Increase SPY allocation",
+      "description": "Based on consistent CPI outperformance, consider increasing SPY weight before inflation announcements while potentially reducing TSLA exposure during high-inflation periods"
+    },
+    {
+      "key": "next_cpi_date",
+      "value": "October 10, 2024",
+      "description": "Next scheduled CPI release date for tactical positioning - historical analysis suggests maintaining current SPY/AAPL overweight ahead of announcement"
+    },
+    {
+      "key": "correlation_insight",
+      "value": "0.78",
+      "description": "Strong positive correlation between position CPI-day performance and market cap, suggesting large-cap bias provides better inflation data protection in current portfolio"
+    }
+  ]
+}

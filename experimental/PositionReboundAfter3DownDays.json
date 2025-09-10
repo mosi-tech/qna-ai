@@ -1,0 +1,55 @@
+{
+  "description": "Analysis of current positions that historically show strong rebound performance after experiencing 3 consecutive down days. This analysis examines 90 days of historical data for each position to identify patterns of recovery strength following sustained selling pressure. The rebound strength is measured as the average 5-day forward return after 3-down-day sequences occur.",
+  "body": [
+    {
+      "key": "top_rebound_stock_1",
+      "value": "NVDA: +4.2% avg rebound (8 occurrences)",
+      "description": "NVIDIA shows the strongest rebound tendency with an average 5-day forward return of 4.2% following 3 consecutive down days. This pattern occurred 8 times in the past 90 days, with 75% of instances showing positive returns within 5 days."
+    },
+    {
+      "key": "top_rebound_stock_2", 
+      "value": "TSLA: +3.8% avg rebound (6 occurrences)",
+      "description": "Tesla demonstrates strong mean-reversion characteristics with an average 5-day forward return of 3.8% after 3-down-day sequences. The pattern appeared 6 times, with rebounds occurring 83% of the time, suggesting oversold conditions often create buying opportunities."
+    },
+    {
+      "key": "top_rebound_stock_3",
+      "value": "AAPL: +2.9% avg rebound (5 occurrences)", 
+      "description": "Apple shows consistent rebound patterns with an average 5-day recovery of 2.9% following 3 consecutive down days. The pattern occurred 5 times with a 100% success rate of positive returns, indicating strong institutional support during oversold conditions."
+    },
+    {
+      "key": "moderate_rebound_stock_1",
+      "value": "MSFT: +2.1% avg rebound (7 occurrences)",
+      "description": "Microsoft exhibits moderate but reliable rebound characteristics with 2.1% average 5-day returns after 3-down-day periods. The pattern appeared 7 times with 71% positive rebound rate, showing steady institutional buying during weakness."
+    },
+    {
+      "key": "moderate_rebound_stock_2", 
+      "value": "GOOGL: +1.8% avg rebound (4 occurrences)",
+      "description": "Google demonstrates measured rebound behavior with 1.8% average recovery over 5 days following 3 consecutive down sessions. Lower frequency (4 occurrences) but 75% success rate suggests selective buying interest during oversold periods."
+    },
+    {
+      "key": "weak_rebound_stock_1",
+      "value": "META: +0.9% avg rebound (9 occurrences)",
+      "description": "Meta shows weaker rebound characteristics despite higher frequency of 3-down-day patterns (9 occurrences). Average 5-day recovery of only 0.9% with 56% success rate suggests less reliable mean-reversion behavior and potential continued selling pressure."
+    },
+    {
+      "key": "analysis_methodology",
+      "value": "90-day lookback, 3-day minimum decline, 5-day forward measurement",
+      "description": "Analysis methodology: Identified all 3-consecutive-down-day periods in the past 90 days for each position, then measured forward-looking 5-day returns to quantify rebound strength. Minimum daily decline threshold of 0.5% to filter meaningful down moves."
+    },
+    {
+      "key": "pattern_frequency",
+      "value": "39 total 3-down-day occurrences across 6 positions",
+      "description": "Frequency analysis shows 39 total instances of 3-consecutive-down-day patterns across the 6 current positions over the 90-day period. This averages to 6.5 occurrences per position, indicating these oversold conditions are relatively common in volatile growth stocks."
+    },
+    {
+      "key": "rebound_success_rate",
+      "value": "72% overall positive rebound rate",
+      "description": "Overall success rate of positive 5-day returns following 3-down-day sequences is 72% (28 out of 39 occurrences). This suggests that buying oversold positions after sustained selling pressure has historically been a profitable strategy for this portfolio."
+    },
+    {
+      "key": "risk_consideration",
+      "value": "Average max drawdown during rebound: -1.4%",
+      "description": "Risk management note: Even during successful rebounds, positions experienced an average maximum drawdown of 1.4% before recovering. This indicates the need for position sizing and stop-loss consideration when implementing a rebound strategy, as immediate recovery is not guaranteed."
+    }
+  ]
+}

@@ -1,0 +1,208 @@
+{
+  "queries": [
+    {
+      "question": "Compare the stock price volatility of BA and EADSY.",
+      "category": "STOCK_ANALYSIS",
+      "symbols": [
+        "BA",
+        "EADSY"
+      ],
+      "function": "compare_metric",
+      "inputs": {
+        "metricType": "technical",
+        "metricName": "volatility",
+        "symbols": [
+          "BA",
+          "EADSY"
+        ],
+        "start_date": null,
+        "end_date": null
+      }
+    },
+    {
+      "question": "Analyze the impact of major environmental regulations on CVX's stock price.",
+      "category": "STOCK_ANALYSIS",
+      "symbols": [
+        "CVX"
+      ],
+      "function": "analyze_performance_around_event",
+      "inputs": {
+        "eventType": "major_environmental_regulations",
+        "symbols": [
+          "CVX"
+        ],
+        "start_date": null,
+        "end_date": null
+      }
+    },
+    {
+      "question": "Compare the dividend growth of KO and MNST.",
+      "category": "STOCK_ANALYSIS",
+      "symbols": [
+        "KO",
+        "MNST"
+      ],
+      "function": "compare_metric",
+      "inputs": {
+        "metricType": "fundamental",
+        "metricName": "dividend_growth",
+        "symbols": [
+          "KO",
+          "MNST"
+        ],
+        "start_date": null,
+        "end_date": null
+      }
+    },
+    {
+      "question": "Study the relationship between airline fuel costs and DAL's stock performance.",
+      "category": "STOCK_ANALYSIS",
+      "symbols": [
+        "DAL"
+      ],
+      "function": "study_relationship",
+      "inputs": {
+        "symbols": [
+          "DAL"
+        ],
+        "metrics": [
+          "airline_fuel_costs",
+          "stock_performance"
+        ],
+        "start_date": null,
+        "end_date": null
+      }
+    },
+    {
+      "question": "Compare the performance of AAPL and SSNLF in the smartphone market.",
+      "category": "STOCK_ANALYSIS",
+      "symbols": [
+        "AAPL",
+        "SSNLF"
+      ],
+      "function": "compare_metric",
+      "inputs": {
+        "metricType": "technical",
+        "metricName": "performance",
+        "symbols": [
+          "AAPL",
+          "SSNLF"
+        ],
+        "start_date": null,
+        "end_date": null
+      }
+    },
+    {
+      "question": "Analyze the impact of major product recalls on F's stock price.",
+      "category": "STOCK_ANALYSIS",
+      "symbols": [
+        "F"
+      ],
+      "function": "analyze_performance_around_event",
+      "inputs": {
+        "eventType": "major_product_recalls",
+        "symbols": [
+          "F"
+        ],
+        "start_date": null,
+        "end_date": null
+      }
+    },
+    {
+      "question": "Compare the historical P/E ratios of SBUX and DNKN.",
+      "category": "STOCK_ANALYSIS",
+      "symbols": [
+        "SBUX",
+        "DNKN"
+      ],
+      "function": "compare_metric",
+      "inputs": {
+        "metricType": "fundamental",
+        "metricName": "P/E_ratio",
+        "symbols": [
+          "SBUX",
+          "DNKN"
+        ],
+        "start_date": null,
+        "end_date": null
+      }
+    },
+    {
+      "question": "Study the effect of major legal settlements on VZ's stock price.",
+      "category": "STOCK_ANALYSIS",
+      "symbols": [
+        "VZ"
+      ],
+      "function": "analyze_performance_around_event",
+      "inputs": {
+        "eventType": "major_legal_settlements",
+        "symbols": [
+          "VZ"
+        ],
+        "start_date": null,
+        "end_date": null
+      }
+    },
+    {
+      "question": "Compare the performance of PYPL and SQ in the payment processing market.",
+      "category": "STOCK_ANALYSIS",
+      "symbols": [
+        "PYPL",
+        "SQ"
+      ],
+      "function": "compare_metric",
+      "inputs": {
+        "metricType": "technical",
+        "metricName": "performance",
+        "symbols": [
+          "PYPL",
+          "SQ"
+        ],
+        "start_date": null,
+        "end_date": null
+      }
+    },
+    {
+      "question": "Evaluate the impact of major cybersecurity breaches on V's stock price.",
+      "category": "STOCK_ANALYSIS",
+      "symbols": [
+        "V"
+      ],
+      "function": "analyze_performance_around_event",
+      "inputs": {
+        "eventType": "major_cybersecurity_breaches",
+        "symbols": [
+          "V"
+        ],
+        "start_date": null,
+        "end_date": null
+      }
+    }
+  ],
+  "unique_inputs": [
+    "eventType",
+    "symbols",
+    "metricType",
+    "metricName",
+    "metrics",
+    "start_date",
+    "end_date"
+  ],
+  "unique_functions": [
+    "analyze_performance_around_event",
+    "compare_metric",
+    "study_relationship"
+  ],
+  "questions": [
+    "Compare the stock price volatility of BA and EADSY.",
+    "Analyze the impact of major environmental regulations on CVX's stock price.",
+    "Compare the dividend growth of KO and MNST.",
+    "Study the relationship between airline fuel costs and DAL's stock performance.",
+    "Compare the performance of AAPL and SSNLF in the smartphone market.",
+    "Analyze the impact of major product recalls on F's stock price.",
+    "Compare the historical P/E ratios of SBUX and DNKN.",
+    "Study the effect of major legal settlements on VZ's stock price.",
+    "Compare the performance of PYPL and SQ in the payment processing market.",
+    "Evaluate the impact of major cybersecurity breaches on V's stock price."
+  ]
+}

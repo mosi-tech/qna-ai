@@ -1,0 +1,414 @@
+{
+  "name": "Alpaca Market Data API",
+  "description": "Real-time and historical market data",
+  "endpoints": [
+    {
+      "name": "get_corporate_actions",
+      "description": "Corporate actions like splits, dividends, mergers",
+      "parameters": [
+        "symbols",
+        "types",
+        "start",
+        "end"
+      ]
+    },
+    {
+      "name": "get_options_quotes_latest",
+      "description": "Latest option quotes (bid/ask)",
+      "parameters": [
+        "symbols"
+      ]
+    },
+    {
+      "name": "get_options_trades_latest",
+      "description": "Latest option trades",
+      "parameters": [
+        "symbols"
+      ]
+    },
+    {
+      "name": "get_options_snapshots",
+      "description": "Option market snapshots",
+      "parameters": [
+        "symbols"
+      ]
+    },
+    {
+      "name": "get_options_snapshots_underlying_symbol",
+      "description": "All option snapshots for underlying stock",
+      "parameters": [
+        "underlying_symbol"
+      ]
+    },
+    {
+      "name": "get_stocks_auctions",
+      "description": "Opening and closing auction data",
+      "parameters": [
+        "symbols",
+        "start",
+        "end"
+      ]
+    },
+    {
+      "name": "get_forex_latest_rates",
+      "description": "Latest forex exchange rates",
+      "parameters": [
+        "currency_pairs"
+      ]
+    },
+    {
+      "name": "get_screener_market_type_movers",
+      "description": "Top market movers (gainers/losers)",
+      "parameters": [
+        "market_type",
+        "top"
+      ]
+    },
+    {
+      "name": "get_crypto_loc_bars",
+      "description": "Crypto OHLC bars with location",
+      "parameters": [
+        "loc",
+        "symbols",
+        "timeframe",
+        "start",
+        "end"
+      ]
+    },
+    {
+      "name": "get_crypto_loc_latest_quotes",
+      "description": "Latest crypto bid/ask quotes",
+      "parameters": [
+        "loc",
+        "symbols"
+      ]
+    },
+    {
+      "name": "get_stocks_meta_conditions_ticktype",
+      "description": "Market condition codes",
+      "parameters": [
+        "ticktype"
+      ]
+    },
+    {
+      "name": "get_stocks_meta_exchanges",
+      "description": "Stock exchange information",
+      "parameters": []
+    },
+    {
+      "name": "get_stocks_bars",
+      "description": "Historical OHLC price bars for stocks",
+      "parameters": [
+        "symbols",
+        "timeframe",
+        "start",
+        "end"
+      ]
+    },
+    {
+      "name": "get_stocks_quotes_latest",
+      "description": "Latest bid/ask quotes for stocks",
+      "parameters": [
+        "symbols"
+      ]
+    },
+    {
+      "name": "get_stocks_trades_latest",
+      "description": "Latest trade data for stocks",
+      "parameters": [
+        "symbols"
+      ]
+    },
+    {
+      "name": "get_stocks_snapshots",
+      "description": "Current market snapshot with all data",
+      "parameters": [
+        "symbols"
+      ]
+    },
+    {
+      "name": "get_screener_stocks_most_actives",
+      "description": "Screen for most active stocks by volume",
+      "parameters": [
+        "top"
+      ]
+    },
+    {
+      "name": "get_screener_stocks_top_gainers",
+      "description": "Screen for biggest stock gainers",
+      "parameters": [
+        "top"
+      ]
+    },
+    {
+      "name": "get_screener_stocks_top_losers",
+      "description": "Screen for biggest stock losers",
+      "parameters": [
+        "top"
+      ]
+    },
+    {
+      "name": "get_news",
+      "description": "Financial news articles",
+      "parameters": [
+        "symbols",
+        "start",
+        "end",
+        "sort",
+        "include_content"
+      ]
+    },
+    {
+      "name": "get_logos_symbol",
+      "description": "Company logos",
+      "parameters": [
+        "symbol"
+      ]
+    },
+    {
+      "name": "get_options_bars",
+      "description": "Historical option price data",
+      "parameters": [
+        "symbols",
+        "timeframe",
+        "start",
+        "end"
+      ]
+    },
+    {
+      "name": "get_crypto_bars",
+      "description": "Cryptocurrency price data",
+      "parameters": [
+        "symbols",
+        "timeframe",
+        "start",
+        "end"
+      ]
+    },
+    {
+      "name": "get_forex_bars",
+      "description": "Foreign exchange rate data",
+      "parameters": [
+        "symbols",
+        "timeframe",
+        "start",
+        "end"
+      ]
+    },
+    {
+      "name": "get_forex_rates",
+      "description": "Historical forex exchange rates",
+      "parameters": [
+        "currency_pairs",
+        "start",
+        "end",
+        "timeframe"
+      ]
+    },
+    {
+      "name": "get_options_bars",
+      "description": "Historical option price bars",
+      "parameters": [
+        "symbols",
+        "timeframe",
+        "start",
+        "end"
+      ]
+    },
+    {
+      "name": "get_options_meta_conditions_ticktype",
+      "description": "Options market condition codes",
+      "parameters": [
+        "ticktype"
+      ]
+    },
+    {
+      "name": "get_options_meta_exchanges",
+      "description": "Options exchange information",
+      "parameters": []
+    },
+    {
+      "name": "get_options_trades",
+      "description": "Historical options trades",
+      "parameters": [
+        "symbols",
+        "start",
+        "end"
+      ]
+    },
+    {
+      "name": "get_crypto_perps_loc_latest_bars",
+      "description": "Latest crypto perpetuals bars",
+      "parameters": [
+        "loc",
+        "symbols"
+      ]
+    },
+    {
+      "name": "get_crypto_perps_loc_latest_orderbooks",
+      "description": "Latest crypto perpetuals order book",
+      "parameters": [
+        "loc",
+        "symbols"
+      ]
+    },
+    {
+      "name": "get_crypto_perps_loc_latest_quotes",
+      "description": "Latest crypto perpetuals quotes",
+      "parameters": [
+        "loc",
+        "symbols"
+      ]
+    },
+    {
+      "name": "get_crypto_perps_loc_latest_trades",
+      "description": "Latest crypto perpetuals trades",
+      "parameters": [
+        "loc",
+        "symbols"
+      ]
+    },
+    {
+      "name": "get_crypto_loc_latest_bars",
+      "description": "Latest crypto bars",
+      "parameters": [
+        "loc",
+        "symbols"
+      ]
+    },
+    {
+      "name": "get_crypto_loc_latest_orderbooks",
+      "description": "Latest crypto order books",
+      "parameters": [
+        "loc",
+        "symbols"
+      ]
+    },
+    {
+      "name": "get_crypto_loc_latest_trades",
+      "description": "Latest crypto trades",
+      "parameters": [
+        "loc",
+        "symbols"
+      ]
+    },
+    {
+      "name": "get_crypto_loc_quotes",
+      "description": "Historical crypto quotes",
+      "parameters": [
+        "loc",
+        "symbols",
+        "start",
+        "end"
+      ]
+    },
+    {
+      "name": "get_crypto_loc_snapshots",
+      "description": "Crypto market snapshots",
+      "parameters": [
+        "loc",
+        "symbols"
+      ]
+    },
+    {
+      "name": "get_crypto_loc_trades",
+      "description": "Historical crypto trades",
+      "parameters": [
+        "loc",
+        "symbols",
+        "start",
+        "end"
+      ]
+    },
+    {
+      "name": "get_stocks_bars_latest",
+      "description": "Latest stock bars",
+      "parameters": [
+        "symbols"
+      ]
+    },
+    {
+      "name": "get_stocks_quotes",
+      "description": "Historical stock quotes",
+      "parameters": [
+        "symbols",
+        "start",
+        "end"
+      ]
+    },
+    {
+      "name": "get_stocks_trades",
+      "description": "Historical stock trades",
+      "parameters": [
+        "symbols",
+        "start",
+        "end"
+      ]
+    },
+    {
+      "name": "get_stocks_symbol_auctions",
+      "description": "Stock-specific auction data",
+      "parameters": [
+        "symbol",
+        "start",
+        "end"
+      ]
+    },
+    {
+      "name": "get_stocks_symbol_bars",
+      "description": "Stock-specific historical bars",
+      "parameters": [
+        "symbol",
+        "timeframe",
+        "start",
+        "end"
+      ]
+    },
+    {
+      "name": "get_stocks_symbol_bars_latest",
+      "description": "Latest bar for specific stock",
+      "parameters": [
+        "symbol"
+      ]
+    },
+    {
+      "name": "get_stocks_symbol_quotes",
+      "description": "Stock-specific historical quotes",
+      "parameters": [
+        "symbol",
+        "start",
+        "end"
+      ]
+    },
+    {
+      "name": "get_stocks_symbol_quotes_latest",
+      "description": "Latest quote for specific stock",
+      "parameters": [
+        "symbol"
+      ]
+    },
+    {
+      "name": "get_stocks_symbol_snapshot",
+      "description": "Market snapshot for specific stock",
+      "parameters": [
+        "symbol"
+      ]
+    },
+    {
+      "name": "get_stocks_symbol_trades",
+      "description": "Stock-specific historical trades",
+      "parameters": [
+        "symbol",
+        "start",
+        "end"
+      ]
+    },
+    {
+      "name": "get_stocks_symbol_trades_latest",
+      "description": "Latest trade for specific stock",
+      "parameters": [
+        "symbol"
+      ]
+    }
+  ]
+}

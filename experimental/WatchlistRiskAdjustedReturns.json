@@ -1,0 +1,120 @@
+{
+  "description": "Risk-adjusted return analysis of stocks in your watchlist over the past quarter (90 days). This analysis calculates Sharpe ratios to identify which watchlist stocks provide the best returns relative to their volatility, helping you make informed investment decisions by balancing potential gains against risk levels.",
+  "body": [
+    {
+      "key": "analysis_period",
+      "value": "90 days",
+      "description": "Time period used for calculating quarterly returns and volatility metrics for watchlist stocks"
+    },
+    {
+      "key": "watchlist_name",
+      "value": "Primary Watchlist",
+      "description": "Name of the watchlist being analyzed"
+    },
+    {
+      "key": "total_stocks_analyzed",
+      "value": 12,
+      "description": "Number of stocks from your watchlist that had sufficient trading data for analysis"
+    },
+    {
+      "key": "risk_free_rate",
+      "value": "4.5%",
+      "description": "Current 3-month Treasury rate used as the risk-free baseline for Sharpe ratio calculations"
+    },
+    {
+      "key": "top_performer_symbol",
+      "value": "NVDA",
+      "description": "Stock symbol with the highest risk-adjusted return (best Sharpe ratio)"
+    },
+    {
+      "key": "top_performer_return",
+      "value": "+18.4%",
+      "description": "Quarterly return of the top-performing stock by risk-adjusted metrics"
+    },
+    {
+      "key": "top_performer_volatility",
+      "value": "28.7%",
+      "description": "Annualized volatility of the top-performing stock"
+    },
+    {
+      "key": "top_performer_sharpe_ratio",
+      "value": 2.31,
+      "description": "Sharpe ratio of top performer. Values above 2.0 are considered excellent risk-adjusted returns"
+    },
+    {
+      "key": "second_best_symbol",
+      "value": "MSFT",
+      "description": "Stock symbol with the second-highest risk-adjusted return"
+    },
+    {
+      "key": "second_best_return",
+      "value": "+12.8%",
+      "description": "Quarterly return of the second-best performing stock"
+    },
+    {
+      "key": "second_best_sharpe_ratio",
+      "value": 1.85,
+      "description": "Sharpe ratio of second-best performer, indicating very good risk-adjusted returns"
+    },
+    {
+      "key": "third_best_symbol",
+      "value": "AAPL",
+      "description": "Stock symbol with the third-highest risk-adjusted return"
+    },
+    {
+      "key": "third_best_return",
+      "value": "+9.2%",
+      "description": "Quarterly return of the third-best performing stock"
+    },
+    {
+      "key": "third_best_sharpe_ratio",
+      "value": 1.42,
+      "description": "Sharpe ratio of third-best performer, indicating good risk-adjusted returns"
+    },
+    {
+      "key": "worst_performer_symbol",
+      "value": "TSLA",
+      "description": "Stock symbol with the lowest risk-adjusted return in your watchlist"
+    },
+    {
+      "key": "worst_performer_return",
+      "value": "-5.3%",
+      "description": "Quarterly return of the worst-performing stock by risk-adjusted metrics"
+    },
+    {
+      "key": "worst_performer_sharpe_ratio",
+      "value": -0.67,
+      "description": "Negative Sharpe ratio indicating poor risk-adjusted performance"
+    },
+    {
+      "key": "watchlist_average_return",
+      "value": "+7.8%",
+      "description": "Average quarterly return across all analyzed watchlist stocks"
+    },
+    {
+      "key": "watchlist_average_sharpe",
+      "value": 1.12,
+      "description": "Average Sharpe ratio of your watchlist, indicating overall good risk-adjusted performance"
+    },
+    {
+      "key": "recommendation_buy",
+      "value": "NVDA, MSFT",
+      "description": "Top recommended stocks from your watchlist based on superior risk-adjusted returns"
+    },
+    {
+      "key": "recommendation_hold",
+      "value": "AAPL, GOOGL, AMZN",
+      "description": "Watchlist stocks with decent risk-adjusted returns suitable for holding"
+    },
+    {
+      "key": "recommendation_review",
+      "value": "TSLA, META",
+      "description": "Watchlist stocks with poor risk-adjusted returns that may need portfolio review"
+    },
+    {
+      "key": "diversification_score",
+      "value": "B+",
+      "description": "Overall grade for watchlist diversification across sectors and risk levels"
+    }
+  ]
+}

@@ -1,0 +1,309 @@
+{
+    "questions": [
+        {
+            "question": "How did using a combination of moving average crossovers and RSI signals impact the performance of AAPL stock over the last 5 years?",
+            "short_question": "Impact of moving average crossovers and RSI signals on AAPL in 5 years?",
+            "category": "SINGLE_STOCK_STRATEGIES",
+            "symbol": "AAPL",
+            "function": "backtest_strategy",
+            "inputs": {
+                "conditions": {
+                    "logic": "or",
+                    "groups": [
+                        {
+                            "logic": "and",
+                            "conditions": [
+                                {
+                                    "indicator": "moving_average_crossovers",
+                                    "operator": "cross_above",
+                                    "value": null
+                                },
+                                {
+                                    "indicator": "RSI",
+                                    "operator": "below",
+                                    "value": 30
+                                }
+                            ]
+                        },
+                        {
+                            "logic": "and",
+                            "conditions": [
+                                {
+                                    "indicator": "MACD",
+                                    "operator": "cross_above_signal",
+                                    "value": null
+                                },
+                                {
+                                    "indicator": "stochastic_oscillator",
+                                    "operator": "below",
+                                    "value": 20
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "time_period": "5_years",
+                "start_capital": 100000,
+                "in_flow": 1000
+            }
+        },
+        {
+            "question": "What was the return of investing in TSLA using a strategy that incorporates P/E ratio thresholds and MACD signals?",
+            "short_question": "Return of TSLA using P/E ratio thresholds and MACD signals?",
+            "category": "SINGLE_STOCK_STRATEGIES",
+            "symbol": "TSLA",
+            "function": "backtest_strategy",
+            "inputs": {
+                "conditions": {
+                    "logic": "and",
+                    "groups": [
+                        {
+                            "logic": "and",
+                            "conditions": [
+                                {
+                                    "indicator": "P/E_ratio",
+                                    "operator": "below",
+                                    "value": 20
+                                }
+                            ]
+                        },
+                        {
+                            "logic": "or",
+                            "conditions": [
+                                {
+                                    "indicator": "MACD",
+                                    "operator": "cross_above_signal",
+                                    "value": null
+                                },
+                                {
+                                    "indicator": "RSI",
+                                    "operator": "below",
+                                    "value": 30
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "time_period": "custom",
+                "start_capital": 100000,
+                "in_flow": 2000
+            }
+        },
+        {
+            "question": "How effective was the strategy of buying AMZN when its PEG ratio is below 1.5 and the stock price is above the 200-day moving average?",
+            "short_question": "Effectiveness of buying AMZN with PEG ratio < 1.5 and price above 200-day MA?",
+            "category": "SINGLE_STOCK_STRATEGIES",
+            "symbol": "AMZN",
+            "function": "backtest_strategy",
+            "inputs": {
+                "conditions": {
+                    "logic": "and",
+                    "conditions": [
+                        {
+                            "indicator": "PEG_ratio",
+                            "operator": "below",
+                            "value": 1.5
+                        },
+                        {
+                            "indicator": "price",
+                            "operator": "above",
+                            "value": "200_day_MA"
+                        }
+                    ]
+                },
+                "time_period": "custom",
+                "start_capital": 100000,
+                "in_flow": 1500
+            }
+        },
+        {
+            "question": "What was the performance of MSFT when using a combination of dividend yield and Bollinger Bands to determine entry and exit points?",
+            "short_question": "Performance of MSFT using dividend yield and Bollinger Bands?",
+            "category": "SINGLE_STOCK_STRATEGIES",
+            "symbol": "MSFT",
+            "function": "backtest_strategy",
+            "inputs": {
+                "conditions": {
+                    "logic": "and",
+                    "conditions": [
+                        {
+                            "indicator": "dividend_yield",
+                            "operator": "above",
+                            "value": 2.0
+                        },
+                        {
+                            "indicator": "price",
+                            "operator": "below",
+                            "value": "lower_Bollinger_Band"
+                        }
+                    ]
+                },
+                "time_period": "custom",
+                "start_capital": 100000,
+                "in_flow": 1000
+            }
+        },
+        {
+            "question": "How did using earnings growth rates and stochastic oscillator signals affect the returns of NVDA stock over the past decade?",
+            "short_question": "Impact of earnings growth rates and stochastic oscillator on NVDA in 10 years?",
+            "category": "SINGLE_STOCK_STRATEGIES",
+            "symbol": "NVDA",
+            "function": "backtest_strategy",
+            "inputs": {
+                "conditions": {
+                    "logic": "and",
+                    "conditions": [
+                        {
+                            "indicator": "earnings_growth_rate",
+                            "operator": "above",
+                            "value": 10
+                        },
+                        {
+                            "indicator": "stochastic_oscillator",
+                            "operator": "cross_above",
+                            "value": 20
+                        }
+                    ]
+                },
+                "time_period": "10_years",
+                "start_capital": 100000,
+                "in_flow": 1500
+            }
+        },
+        {
+            "question": "What was the annualized return of investing in GOOG when the P/B ratio is below industry average and the stock shows a bullish engulfing pattern on the weekly chart?",
+            "short_question": "Annualized return of GOOG using P/B ratio below industry average and bullish engulfing pattern?",
+            "category": "SINGLE_STOCK_STRATEGIES",
+            "symbol": "GOOG",
+            "function": "backtest_strategy",
+            "inputs": {
+                "conditions": {
+                    "logic": "and",
+                    "conditions": [
+                        {
+                            "indicator": "P/B_ratio",
+                            "operator": "below",
+                            "value": "industry_average"
+                        },
+                        {
+                            "indicator": "bullish_engulfing_pattern",
+                            "operator": "on_weekly_chart",
+                            "value": null
+                        }
+                    ]
+                },
+                "time_period": "custom",
+                "start_capital": 100000,
+                "in_flow": 2000
+            }
+        },
+        {
+            "question": "How effective was the strategy of buying FB when its ROE exceeds 15% and the stock price breaks above the upper Bollinger Band?",
+            "short_question": "Effectiveness of buying FB with ROE > 15% and price breaks above upper Bollinger Band?",
+            "category": "SINGLE_STOCK_STRATEGIES",
+            "symbol": "FB",
+            "function": "backtest_strategy",
+            "inputs": {
+                "conditions": {
+                    "logic": "and",
+                    "conditions": [
+                        {
+                            "indicator": "ROE",
+                            "operator": "exceeds",
+                            "value": 15
+                        },
+                        {
+                            "indicator": "price",
+                            "operator": "breaks_above",
+                            "value": "upper_Bollinger_Band"
+                        }
+                    ]
+                },
+                "time_period": "custom",
+                "start_capital": 100000,
+                "in_flow": 1500
+            }
+        },
+        {
+            "question": "What was the performance of a strategy using debt-to-equity ratio and 50-day moving average crossovers for AAPL over the last 10 years?",
+            "short_question": "Performance of AAPL using debt-to-equity ratio and 50-day moving average crossovers in 10 years?",
+            "category": "SINGLE_STOCK_STRATEGIES",
+            "symbol": "AAPL",
+            "function": "backtest_strategy",
+            "inputs": {
+                "conditions": {
+                    "logic": "and",
+                    "conditions": [
+                        {
+                            "indicator": "debt_to_equity_ratio",
+                            "operator": "below",
+                            "value": 0.5
+                        },
+                        {
+                            "indicator": "50_day_moving_average_crossovers",
+                            "operator": "cross_above",
+                            "value": null
+                        }
+                    ]
+                },
+                "time_period": "10_years",
+                "start_capital": 100000,
+                "in_flow": 2000
+            }
+        },
+        {
+            "question": "How did using cash flow growth and momentum indicators like MACD impact the returns of TSLA stock during the past 5 years?",
+            "short_question": "Impact of cash flow growth and MACD on TSLA in 5 years?",
+            "category": "SINGLE_STOCK_STRATEGIES",
+            "symbol": "TSLA",
+            "function": "backtest_strategy",
+            "inputs": {
+                "conditions": {
+                    "logic": "and",
+                    "conditions": [
+                        {
+                            "indicator": "cash_flow_growth",
+                            "operator": "above",
+                            "value": 15
+                        },
+                        {
+                            "indicator": "MACD",
+                            "operator": "cross_above_signal",
+                            "value": null
+                        }
+                    ]
+                },
+                "time_period": "5_years",
+                "start_capital": 100000,
+                "in_flow": 1500
+            }
+        },
+        {
+            "question": "What was the return of investing in AMZN using a combination of price-to-sales ratio below 3 and RSI below 30 as buy signals?",
+            "short_question": "Return of AMZN using price-to-sales ratio < 3 and RSI < 30?",
+            "category": "SINGLE_STOCK_STRATEGIES",
+            "symbol": "AMZN",
+            "function": "backtest_strategy",
+            "inputs": {
+                "conditions": {
+                    "logic": "and",
+                    "conditions": [
+                        {
+                            "indicator": "price_to_sales_ratio",
+                            "operator": "below",
+                            "value": 3
+                        },
+                        {
+                            "indicator": "RSI",
+                            "operator": "below",
+                            "value": 30
+                        }
+                    ]
+                },
+                "time_period": "custom",
+                "start_capital": 100000,
+                "in_flow": 2000
+            }
+        }
+    ]
+}

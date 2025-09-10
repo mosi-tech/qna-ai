@@ -1,0 +1,150 @@
+{
+  "description": "Comprehensive trading performance dashboard showing your account status, portfolio performance, trading activity, and current positions over the past 30 days. This analysis includes key metrics like returns, risk measures, trading statistics, and actionable insights to help optimize your investment strategy.",
+  "body": [
+    {
+      "key": "portfolio_value",
+      "value": "$127,450.23",
+      "description": "Total current market value of all positions plus cash, representing the account's total equity"
+    },
+  {
+    "key": "buying_power",
+    "value": "$45,230.87",
+    "description": "Available funds for purchasing securities, calculated based on account type, existing positions, and margin requirements"
+  },
+  {
+    "key": "cash_balance",
+    "value": "$12,340.50",
+    "description": "Uninvested cash available in the account for immediate trading or withdrawal"
+  },
+  {
+    "key": "day_trading_buying_power",
+    "value": "$90,461.74",
+    "description": "Maximum buying power available for day trading, typically 4x the account equity for pattern day traders"
+  },
+  {
+    "key": "total_return_30d",
+    "value": "+5.8% (+$7,023.45)",
+    "description": "Total portfolio return over the past 30 days, including realized and unrealized gains/losses"
+  },
+  {
+    "key": "best_day_30d",
+    "value": "Aug 15: +2.3% (+$2,845.67)",
+    "description": "Highest single-day portfolio performance in the 30-day period"
+  },
+  {
+    "key": "worst_day_30d",
+    "value": "Aug 22: -1.8% (-$2,234.12)",
+    "description": "Lowest single-day portfolio performance in the 30-day period"
+  },
+  {
+    "key": "portfolio_volatility",
+    "value": "12.4%",
+    "description": "Annualized standard deviation of daily returns, measuring portfolio risk and price fluctuation intensity"
+  },
+  {
+    "key": "sharpe_ratio",
+    "value": 1.85,
+    "description": "Risk-adjusted return metric. Values above 1.0 are generally considered good, above 2.0 excellent. Calculated as (portfolio return - risk-free rate) / portfolio volatility"
+  },
+  {
+    "key": "total_trades_30d",
+    "value": 23,
+    "description": "Total number of buy and sell transactions executed in the past 30 days"
+  },
+  {
+    "key": "winning_trades",
+    "value": "15 (65.2%)",
+    "description": "Number and percentage of profitable trades that resulted in a net gain"
+  },
+  {
+    "key": "losing_trades",
+    "value": "8 (34.8%)",
+    "description": "Number and percentage of unprofitable trades that resulted in a net loss"
+  },
+  {
+    "key": "average_win",
+    "value": "+$423.67",
+    "description": "Average profit per winning trade, indicating typical gain size on successful positions"
+  },
+  {
+    "key": "average_loss",
+    "value": "-$298.43",
+    "description": "Average loss per losing trade, indicating typical loss size on unsuccessful positions"
+  },
+  {
+    "key": "largest_win",
+    "value": "NVDA: +$1,234.56 (Aug 12)",
+    "description": "Most profitable single trade in the 30-day period"
+  },
+  {
+    "key": "largest_loss",
+    "value": "TSLA: -$876.32 (Aug 20)",
+    "description": "Least profitable single trade in the 30-day period"
+  },
+  {
+    "key": "total_positions",
+    "value": 8,
+    "description": "Number of distinct securities currently held in the portfolio"
+  },
+  {
+    "key": "largest_position",
+    "value": "AAPL: $25,000 (19.6%, +$2,450 unrealized)",
+    "description": "Largest position by market value and its contribution to total portfolio"
+  },
+  {
+    "key": "sector_allocation_technology",
+    "value": "45.2%",
+    "description": "Portfolio allocation to technology sector stocks"
+  },
+  {
+    "key": "sector_allocation_healthcare",
+    "value": "18.7%",
+    "description": "Portfolio allocation to healthcare sector stocks"
+  },
+  {
+    "key": "sector_allocation_financial",
+    "value": "12.3%",
+    "description": "Portfolio allocation to financial sector stocks"
+  },
+  {
+    "key": "sector_allocation_consumer",
+    "value": "23.8%",
+    "description": "Portfolio allocation to consumer sector stocks"
+  },
+  {
+    "key": "performance_grade",
+    "value": "B+",
+    "description": "Overall performance grade based on risk-adjusted returns, diversification, and trading efficiency"
+  },
+  {
+    "key": "strength_1",
+    "value": "Strong 30-day returns outpacing market averages",
+    "description": "Key portfolio strength identified through performance analysis"
+  },
+  {
+    "key": "strength_2",
+    "value": "Good win rate of 65.2% on trades",
+    "description": "Key trading efficiency strength showing consistent profitability"
+  },
+  {
+    "key": "strength_3",
+    "value": "Well-diversified sector allocation",
+    "description": "Key risk management strength showing proper diversification"
+  },
+  {
+    "key": "improvement_1",
+    "value": "Consider reducing position concentration in technology sector",
+    "description": "Primary recommendation for improved risk management"
+  },
+  {
+    "key": "improvement_2",
+    "value": "Average loss per trade could be reduced with better stop-loss discipline",
+    "description": "Trading strategy improvement for better risk control"
+  },
+  {
+    "key": "improvement_3",
+    "value": "Cash allocation might be too conservative for current market conditions",
+    "description": "Capital allocation suggestion for potentially higher returns"
+  }
+  ]
+}

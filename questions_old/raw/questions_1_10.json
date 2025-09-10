@@ -1,0 +1,210 @@
+{
+    "queries": [
+        {
+            "question": "Compare the 5-year performance of AAPL and MSFT.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "AAPL",
+                "MSFT"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "5-year_performance",
+                "symbols": [
+                    "AAPL",
+                    "MSFT"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Analyze the impact of quarterly earnings reports on AMZN's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "AMZN"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "quarterly_earnings_reports",
+                "symbols": [
+                    "AMZN"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Study the effect of stock splits on TSLA's historical performance.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "TSLA"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "stock_splits",
+                "symbols": [
+                    "TSLA"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare dividend yields of KO and PEP over the last decade.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "KO",
+                "PEP"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "dividend_yield",
+                "symbols": [
+                    "KO",
+                    "PEP"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Evaluate the correlation between GOOGL's revenue growth and stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "GOOGL"
+            ],
+            "function": "study_relationship",
+            "inputs": {
+                "symbols": [
+                    "GOOGL"
+                ],
+                "metrics": [
+                    "revenue_growth",
+                    "stock_price"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the P/E ratios of AAPL and NVDA over the past 5 years.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "AAPL",
+                "NVDA"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "P/E_ratio",
+                "symbols": [
+                    "AAPL",
+                    "NVDA"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Analyze the impact of new product launches on AAPL's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "AAPL"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "new_product_launches",
+                "symbols": [
+                    "AAPL"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the performance of FB and TWTR during major data privacy scandals.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "FB",
+                "TWTR"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "data_privacy_scandals",
+                "symbols": [
+                    "FB",
+                    "TWTR"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Study the relationship between NFLX's subscriber growth and stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "NFLX"
+            ],
+            "function": "study_relationship",
+            "inputs": {
+                "symbols": [
+                    "NFLX"
+                ],
+                "metrics": [
+                    "subscriber_growth",
+                    "stock_price"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the dividend growth of JNJ and PFE over the last 10 years.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "JNJ",
+                "PFE"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "dividend_growth",
+                "symbols": [
+                    "JNJ",
+                    "PFE"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        }
+    ],
+    "unique_inputs": [
+        "eventType",
+        "symbols",
+        "metricType",
+        "metricName",
+        "metrics",
+        "start_date",
+        "end_date"
+    ],
+    "unique_functions": [
+        "analyze_performance_around_event",
+        "compare_metric",
+        "study_relationship"
+    ],
+    "questions": [
+        "Compare the 5-year performance of AAPL and MSFT.",
+        "Analyze the impact of quarterly earnings reports on AMZN's stock price.",
+        "Study the effect of stock splits on TSLA's historical performance.",
+        "Compare dividend yields of KO and PEP over the last decade.",
+        "Evaluate the correlation between GOOGL's revenue growth and stock price.",
+        "Compare the P/E ratios of AAPL and NVDA over the past 5 years.",
+        "Analyze the impact of new product launches on AAPL's stock price.",
+        "Compare the performance of FB and TWTR during major data privacy scandals.",
+        "Study the relationship between NFLX's subscriber growth and stock price.",
+        "Compare the dividend growth of JNJ and PFE over the last 10 years."
+    ]
+}

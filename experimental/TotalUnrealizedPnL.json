@@ -1,0 +1,35 @@
+{
+  "description": "This output summarizes your current total unrealized profit and loss (P&L) across all open positions in your Alpaca trading account. It aggregates unrealized P&L from each position to show your overall, up-to-the-moment gain or loss before closing any trades. This helps you quickly gauge how your portfolio is performing right now without realizing gains or losses.",
+  "body": [
+    {
+      "key": "total_unrealized_pnl_usd",
+      "value": "to_be_computed",
+      "description": "Sum of unrealized P&L (in USD) across all open positions. Calculated by adding each position's unrealized_pl field from trading:/v2/positions, or, if missing, by (latest_price - avg_entry_price) * signed_qty using market data fallbacks."
+    },
+    {
+      "key": "positions_included",
+      "value": "to_be_computed",
+      "description": "Number of open positions included in the calculation, derived from the length of the trading:/v2/positions response."
+    },
+    {
+      "key": "top_gain_symbol",
+      "value": "to_be_computed",
+      "description": "The symbol contributing the largest positive unrealized P&L. Determined by finding the position with the highest unrealized_pl value."
+    },
+    {
+      "key": "top_loss_symbol",
+      "value": "to_be_computed",
+      "description": "The symbol contributing the largest negative unrealized P&L. Determined by finding the position with the lowest unrealized_pl value."
+    },
+    {
+      "key": "data_sources",
+      "value": [
+        "trading:/v2/positions",
+        "marketdata:/v2/stocks/trades/latest",
+        "marketdata:/v2/stocks/bars/latest"
+      ],
+      "description": "Primary data comes from the Trading API positions endpoint. If a position lacks a current price or unrealized_pl, the latest trade or latest bar price from Alpaca Market Data is used to compute per-position unrealized P&L."
+    }
+  ]
+}
+

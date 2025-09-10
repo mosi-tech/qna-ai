@@ -1,0 +1,210 @@
+{
+  "queries": [
+    {
+      "question": "Compare the stock price performance of NKE and ADDYY during major sports events.",
+      "category": "STOCK_ANALYSIS",
+      "symbols": [
+        "NKE",
+        "ADDYY"
+      ],
+      "function": "analyze_performance_around_event",
+      "inputs": {
+        "eventType": "major_sports_events",
+        "symbols": [
+          "NKE",
+          "ADDYY"
+        ],
+        "start_date": null,
+        "end_date": null
+      }
+    },
+    {
+      "question": "Analyze the relationship between gold prices and NEM's stock performance.",
+      "category": "STOCK_ANALYSIS",
+      "symbols": [
+        "NEM"
+      ],
+      "function": "study_relationship",
+      "inputs": {
+        "symbols": [
+          "NEM"
+        ],
+        "metrics": [
+          "gold_prices",
+          "stock_performance"
+        ],
+        "start_date": null,
+        "end_date": null
+      }
+    },
+    {
+      "question": "Compare the historical P/E ratios of HD and LOW.",
+      "category": "STOCK_ANALYSIS",
+      "symbols": [
+        "HD",
+        "LOW"
+      ],
+      "function": "compare_metric",
+      "inputs": {
+        "metricType": "fundamental",
+        "metricName": "P/E_ratio",
+        "symbols": [
+          "HD",
+          "LOW"
+        ],
+        "start_date": null,
+        "end_date": null
+      }
+    },
+    {
+      "question": "Study the effect of trade tariffs on CAT's stock price.",
+      "category": "STOCK_ANALYSIS",
+      "symbols": [
+        "CAT"
+      ],
+      "function": "analyze_performance_around_event",
+      "inputs": {
+        "eventType": "trade_tariffs",
+        "symbols": [
+          "CAT"
+        ],
+        "start_date": null,
+        "end_date": null
+      }
+    },
+    {
+      "question": "Compare the performance of INTC and AMD in the semiconductor market.",
+      "category": "STOCK_ANALYSIS",
+      "symbols": [
+        "INTC",
+        "AMD"
+      ],
+      "function": "compare_metric",
+      "inputs": {
+        "metricType": "technical",
+        "metricName": "performance",
+        "symbols": [
+          "INTC",
+          "AMD"
+        ],
+        "start_date": null,
+        "end_date": null
+      }
+    },
+    {
+      "question": "Analyze the impact of major cybersecurity breaches on MSFT's stock price.",
+      "category": "STOCK_ANALYSIS",
+      "symbols": [
+        "MSFT"
+      ],
+      "function": "analyze_performance_around_event",
+      "inputs": {
+        "eventType": "major_cybersecurity_breaches",
+        "symbols": [
+          "MSFT"
+        ],
+        "start_date": null,
+        "end_date": null
+      }
+    },
+    {
+      "question": "Compare the dividend yields of PG and UL over the last decade.",
+      "category": "STOCK_ANALYSIS",
+      "symbols": [
+        "PG",
+        "UL"
+      ],
+      "function": "compare_metric",
+      "inputs": {
+        "metricType": "fundamental",
+        "metricName": "dividend_yield",
+        "symbols": [
+          "PG",
+          "UL"
+        ],
+        "start_date": null,
+        "end_date": null
+      }
+    },
+    {
+      "question": "Study the relationship between housing market trends and HD's stock performance.",
+      "category": "STOCK_ANALYSIS",
+      "symbols": [
+        "HD"
+      ],
+      "function": "study_relationship",
+      "inputs": {
+        "symbols": [
+          "HD"
+        ],
+        "metrics": [
+          "housing_market_trends",
+          "stock_performance"
+        ],
+        "start_date": null,
+        "end_date": null
+      }
+    },
+    {
+      "question": "Compare the historical performance of WMT and COST.",
+      "category": "STOCK_ANALYSIS",
+      "symbols": [
+        "WMT",
+        "COST"
+      ],
+      "function": "compare_metric",
+      "inputs": {
+        "metricType": "technical",
+        "metricName": "historical_performance",
+        "symbols": [
+          "WMT",
+          "COST"
+        ],
+        "start_date": null,
+        "end_date": null
+      }
+    },
+    {
+      "question": "Evaluate the effect of major FDA approvals on PFE's stock price.",
+      "category": "STOCK_ANALYSIS",
+      "symbols": [
+        "PFE"
+      ],
+      "function": "analyze_performance_around_event",
+      "inputs": {
+        "eventType": "major_FDA_approvals",
+        "symbols": [
+          "PFE"
+        ],
+        "start_date": null,
+        "end_date": null
+      }
+    }
+  ],
+  "unique_inputs": [
+    "eventType",
+    "symbols",
+    "metricType",
+    "metricName",
+    "metrics",
+    "start_date",
+    "end_date"
+  ],
+  "unique_functions": [
+    "analyze_performance_around_event",
+    "compare_metric",
+    "study_relationship"
+  ],
+  "questions": [
+    "Compare the stock price performance of NKE and ADDYY during major sports events.",
+    "Analyze the relationship between gold prices and NEM's stock performance.",
+    "Compare the historical P/E ratios of HD and LOW.",
+    "Study the effect of trade tariffs on CAT's stock price.",
+    "Compare the performance of INTC and AMD in the semiconductor market.",
+    "Analyze the impact of major cybersecurity breaches on MSFT's stock price.",
+    "Compare the dividend yields of PG and UL over the last decade.",
+    "Study the relationship between housing market trends and HD's stock performance.",
+    "Compare the historical performance of WMT and COST.",
+    "Evaluate the effect of major FDA approvals on PFE's stock price."
+  ]
+}

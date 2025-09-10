@@ -1,0 +1,420 @@
+# Investment/Trading Question Generator Prompt
+
+You are a creative question generator for a financial QnA system. Your task is to generate a diverse list of investment and trading questions that retail investors would ask. These questions will later be validated against available APIs and implemented as JSON outputs.
+
+## Context & Constraints
+
+### Existing Questions to Avoid Duplicates:
+
+Before generating new questions, review these existing question sources to ensure no duplicates:
+
+**Current Approved Questions** (from `generated_questions.json`):
+[Read and list existing generated questions here]
+
+**CRITICAL**: Ensure all generated questions are distinctly different from the existing ones above. Check for:
+- Similar wording or phrasing
+- Same underlying analysis or data request  
+- Overlapping stock symbols with same analysis type
+- Identical question intent even if worded differently
+
+### Available Data Sources (API Capabilities):
+
+**Alpaca Market Data API:**
+- Stock prices (real-time & historical), OHLC bars, quotes, trades
+- Options data (chains, pricing, trades)
+- Cryptocurrency and forex data
+- Corporate actions (dividends, splits, mergers)
+- Market screeners (most active, top movers)
+- Financial news and company logos
+- Market calendars and exchange information
+
+**Alpaca Trading API:**
+- Account information, buying power, margin requirements
+- Portfolio positions and performance history
+- Order management and trading activities
+- Watchlists and asset information
+- Transaction history and account activities
+
+**EODHD API:**
+- End-of-day and real-time pricing data
+- Technical indicators (pre-calculated)
+- Fundamental company data and financials
+- Dividend and split information
+- Advanced stock screening capabilities
+- Sentiment analysis from news/social media
+- Insider trading transactions
+- Economic calendar (earnings, IPOs)
+- Macroeconomic indicators and bond data
+
+**Factor & Style Analysis Proxy ETFs:**
+- **Value vs Growth**: VTV (Vanguard Value ETF), VUG (Vanguard Growth ETF)
+- **Size Factors**: VB (Small-Cap), VO (Mid-Cap), VV (Large-Cap), VTI (Total Market)
+- **Factor Strategies**: MTUM (Momentum), QUAL (Quality), USMV (Low Volatility), VMOT (Value Momentum)
+- **Sector ETFs**: XLK (Technology), XLE (Energy), XLF (Financials), XLV (Healthcare), XLY (Consumer Discretionary), XLP (Consumer Staples), XLI (Industrials), XLB (Materials), XLU (Utilities), XLRE (Real Estate), XLC (Communication Services)
+- **International**: VEA (Developed Markets), VWO (Emerging Markets), VGK (Europe), VPL (Pacific), EFA (EAFE)
+- **Bond Proxies**: TLT (Long-term Treasury), SHY (Short-term Treasury), LQD (Investment Grade Corporate), HYG (High Yield), TIP (TIPS)
+- **Benchmark ETFs**: SPY (S&P 500), IWM (Russell 2000), QQQ (NASDAQ 100), DIA (Dow Jones)
+
+### Question Categories to Cover:
+
+1. **Market Analysis & Trends**
+   - Market momentum, sector rotation, trending stocks
+   - Technical analysis, chart patterns, indicators
+   - Market volatility and risk assessment
+   - Sector rotation timing strategies
+   - Market breadth and participation analysis
+   - Volatility regime identification
+   - Cross-asset momentum indicators
+
+2. **Stock/Asset Performance**
+   - Individual stock analysis, comparisons
+   - Performance attribution, returns analysis
+   - Price movements around events
+   - Factor exposure analysis (value, growth, momentum)
+   - Relative strength and momentum analysis
+   - [SKIP] Earnings surprise impact analysis
+
+3. **Portfolio Management**
+   - Portfolio composition and allocation
+   - Risk analysis of holdings
+   - Performance tracking and attribution
+   - Position sizing and exposure
+   - Rebalancing frequency optimization
+   - Portfolio efficiency frontier analysis
+   - Multi-asset correlation breakdowns
+   - Asset location optimization (tax-advantaged vs taxable)
+
+4. **[SKIP] Fundamental Analysis**
+   - [SKIP] Financial health and valuation metrics
+   - [SKIP] Corporate actions impact
+   - [SKIP] Earnings and financial statement analysis
+   - [SKIP] Cash flow analysis and quality metrics
+   - [SKIP] Balance sheet strength assessment
+   - [SKIP] Management effectiveness indicators
+
+5. **Enhanced Risk Assessment**
+   - Volatility analysis, beta calculations
+   - Correlation analysis between assets
+   - Risk-adjusted returns, Sharpe ratios
+   - Stress testing against historical crashes
+   - [SKIP] Tail risk and black swan event preparation
+   - [SKIP] Liquidity risk in different market conditions
+   - Concentration risk across holdings
+
+6. **[SKIP] Income & Dividend Investing**
+   - [SKIP] Dividend yields, payout ratios
+   - [SKIP] Dividend growth and sustainability
+   - [SKIP] Income-focused portfolio analysis
+   - [SKIP] Dividend coverage analysis
+   - [SKIP] REIT and income fund comparisons
+   - [SKIP] Yield trap identification
+
+7. **Market Timing & Sentiment**
+   - News sentiment analysis
+   - Insider trading activity
+   - Economic indicators impact
+   - Social media trending analysis
+   - Institutional flow analysis
+   - Fear & greed indicators
+
+8. **[SKIP] Screening & Discovery**
+   - [SKIP] Stock screening based on various criteria
+   - [SKIP] Finding opportunities in different market conditions
+   - [SKIP] Sector and thematic investing
+   - [SKIP] Value trap identification
+   - [SKIP] Growth at reasonable price (GARP) screening
+   - [SKIP] Momentum and breakout identification
+
+9. **[SKIP] Advanced Options & Derivatives**
+   - [SKIP] Options analysis and pricing
+   - [SKIP] Volatility strategies
+   - [SKIP] Risk management with options
+   - [SKIP] Covered call income optimization
+   - [SKIP] Protective put cost analysis
+   - [SKIP] Options as portfolio insurance
+   - [SKIP] Volatility trading opportunities
+
+10. **Account & Trading Management**
+    - Account status and limitations
+    - Trading performance analysis
+    - Order execution quality
+    - Trading cost impact analysis
+    - Overtrading detection
+    - Performance attribution vs benchmarks
+
+11. **Tax Optimization & Strategy**
+    - Tax-loss harvesting opportunities
+    - Tax-efficient fund selection and timing
+    - Capital gains management strategies
+    - Asset location optimization
+    - Municipal bond vs taxable bond analysis
+    - ROTH conversion opportunities
+
+12. **Goal-Based & Life-Stage Investing**
+    - Retirement planning integration
+    - Education funding strategies
+    - Home purchase savings strategies
+    - Emergency fund optimization
+    - Age-appropriate allocation analysis
+    - Glide path optimization
+
+13. **Cost & Fee Analysis**
+    - Expense ratio comparisons across funds
+    - [SKIP] Trading cost impact analysis
+    - Platform fee optimization
+    - Hidden cost identification
+    - Fee drag on long-term returns
+    - Cost-benefit of active vs passive
+
+14. **[SKIP] Fixed Income & Interest Rate Analysis**
+    - [SKIP] Bond portfolio analysis and duration
+    - [SKIP] Interest rate sensitivity assessment
+    - [SKIP] Yield curve positioning
+    - [SKIP] Inflation-protected securities analysis
+    - [SKIP] Credit quality assessment
+    - [SKIP] Bond ladder optimization
+
+15. **[SKIP] Alternative & International Investing**
+    - [SKIP] REIT and commodity exposure analysis
+    - [SKIP] International diversification benefits
+    - [SKIP] Currency hedging strategies
+    - [SKIP] Emerging market allocation
+    - [SKIP] Alternative investment screening
+    - [SKIP] Geographic allocation optimization
+
+16. **[SKIP] ESG & Sustainable Investing**
+    - [SKIP] ESG scoring and impact analysis
+    - [SKIP] Sustainable fund performance comparison
+    - [SKIP] Impact investing opportunities
+    - [SKIP] Climate risk assessment
+    - [SKIP] ESG integration in portfolio construction
+    - [SKIP] Greenwashing detection
+
+17. **Behavioral Finance & Psychology**
+    - Emotional bias identification in trading
+    - Dollar-cost averaging vs lump-sum analysis
+    - Overconfidence and overtrading detection
+    - Loss aversion pattern analysis
+    - FOMO and panic selling indicators
+    - Anchoring bias in price targets
+
+18. **[SKIP] Economic Cycle & Macro Analysis**
+    - [SKIP] Inflation impact on different asset classes
+    - [SKIP] Economic indicator interpretation
+    - [SKIP] Market cycle positioning
+    - [SKIP] Recession preparation strategies
+    - [SKIP] Interest rate cycle analysis
+    - [SKIP] Currency impact on international holdings
+
+### Question Format Requirements:
+
+- **Perspective**: Write from a retail investor's viewpoint
+- **Tone**: Natural, conversational questions an investor would actually ask
+- **Specificity**: Mix of specific stock symbols (AAPL, TSLA, SPY) and general categories
+- **Variety**: Different time horizons (daily, weekly, monthly, yearly)
+- **Actionability**: Questions that lead to actionable insights
+- **Avoid**: Questions containing "add" or multiple requests in one question
+
+### Sample Question Styles:
+
+**Direct Performance Questions:**
+- "What stocks have gained the most this week?"
+- "Which of my holdings has the highest volatility?"
+- "How has AAPL performed compared to the S&P 500 this year?"
+
+**Analytical Questions:**
+- "What's the correlation between oil prices and energy stocks?"
+- "Which tech stocks have the lowest price-to-earnings ratios?"
+- "What dividend stocks have consistently increased payouts?"
+
+**Discovery Questions:**
+- "What stocks are breaking out of their 52-week ranges?"
+- "Which companies have the most insider buying activity?"
+- "What small-cap stocks have strong earnings growth?"
+
+**Account/Portfolio Questions:**
+- "What's my current sector allocation?"
+- "Is my account blocked from trading?"
+- "Which position contributes most to my portfolio risk?"
+
+**Tax & Cost Optimization Questions:**
+- "Which stocks should I sell for tax-loss harvesting?"
+- "What's the total expense ratio impact on my portfolio?"
+- "Should I hold this stock in my taxable or IRA account?"
+
+**Behavioral & Psychology Questions:**
+- "Am I overtrading compared to successful investors?"
+- "Should I dollar-cost average or invest my bonus lump sum?"
+- "What bias might be affecting my investment decisions?"
+
+**Economic & Macro Questions:**
+- "How would rising interest rates affect my bond holdings?"
+- "Which stocks perform best during inflation?"
+- "How should I position my portfolio for a recession?"
+
+**ESG & Alternative Questions:**
+- "What are the top ESG-rated stocks in my sector?"
+- "How much international exposure should I have?"
+- "Which REITs have the best dividend coverage?"
+
+**Fixed Income Questions:**
+- "What's the duration risk in my bond portfolio?"
+- "Should I buy Treasury bills or high-yield savings?"
+- "How do I build a bond ladder for retirement?"
+
+**Life-Stage & Goal Questions:**
+- "How much should I save for my child's college?"
+- "Am I on track for retirement at 65?"
+- "Should I pay off my mortgage or invest?"
+
+**Anxiety & Practical Questions:**
+- "Is it too late to buy after a 20% market gain?"
+- "Should I panic sell during this market crash?"
+- "How do I know if I'm diversified enough?"
+
+### Generation Instructions:
+
+**Step 1: Duplicate Check Process**
+1. First, carefully review all existing questions listed in the "Existing Questions to Avoid Duplicates" section above
+2. Create a mental map of already-covered topics, analysis types, and stock symbols
+3. Identify gaps and unexplored areas for new question generation
+
+**Step 2: Generate New Questions**
+**IMPORTANT**: Only generate questions from categories that are NOT marked with [SKIP]. Skip any categories marked with [SKIP] entirely.
+
+Generate 50-100 unique questions covering ONLY the active (non-skipped) categories above. Ensure variety in:
+- Question types (performance, analysis, discovery, screening)
+- Asset classes (stocks, ETFs, sectors, options)  
+- Time horizons (intraday, weekly, monthly, yearly)
+- Complexity levels (simple lookups to complex analysis)
+- Market conditions (bull market, bear market, volatility)
+
+**Categories to SKIP** (marked with [SKIP] prefix):
+- Fundamental Analysis
+- Income & Dividend Investing  
+- Advanced Options & Derivatives
+- Fixed Income & Interest Rate Analysis
+- Alternative & International Investing
+- ESG & Sustainable Investing
+
+Focus questions on the remaining active categories for optimal API compatibility.
+
+**Step 3: Final Duplicate Validation**
+Before finalizing, double-check each generated question against existing ones to ensure:
+- No semantic duplicates (same intent, different wording)
+- No overlapping analysis requests
+- Genuinely new value for the question bank
+
+## ❌ AVOID These Question Types (Based on Validation Analysis)
+
+**The following question patterns have been validated and found to be unimplementable with available APIs. DO NOT generate similar questions:**
+
+### **Fixed Income & Bond Analytics**
+- Bond duration, convexity, or yield curve analysis
+- Credit spreads, term premiums, or bond pricing models  
+- Interest rate sensitivity beyond sector-level analysis
+- Examples to AVOID:
+  - "What's the duration of bonds in my portfolio?"
+  - "What's the credit spread on high-yield bonds?"
+  - "What's the convexity risk in my bond holdings?"
+
+### **Advanced Portfolio Analytics** ⚠️ **UPDATED: Now Available via ETF Proxies**
+- Complex factor modeling without ETF proxies
+- Risk modeling (VaR, tracking error, beta stability) without benchmark comparisons
+- Examples to AVOID (unless using ETF proxies):
+  - "What's my portfolio's value at risk calculation?" (still avoid - too complex)
+  - "What's my portfolio's exposure to systematic risk factors?" (avoid without ETF context)
+  - "What's my portfolio's risk-adjusted alpha generation?" (avoid - needs specialized models)
+
+### **Complex Options & Derivatives**
+- Options volatility surfaces, Greeks, or advanced pricing
+- Implied volatility rankings or percentiles
+- Options flow analysis or directional indicators
+- Examples to AVOID:
+  - "What's the implied volatility rank of SPY options?"
+  - "What's the options flow suggesting about market direction?"
+  - "What's the volatility surface showing for index options?"
+
+### **External Regulatory & Pipeline Data**
+- FDA approval calendars or drug pipeline data
+- Regulatory milestone tracking or approval timelines
+- Clinical trial status or regulatory submissions
+- Examples to AVOID:
+  - "Which pharmaceutical stocks have FDA approval catalysts?"
+  - "What drugs are in Phase 3 clinical trials?"
+  - "Which companies have regulatory approvals pending?"
+
+### **Macroeconomic Predictions & Forecasting**
+- Future interest rate or economic predictions
+- Market timing based on economic indicators
+- Predictive analysis or forecasting models
+- Examples to AVOID:
+  - "What's the yield curve telling us about future rates?"
+  - "What's the economic surprise index suggesting about growth?"
+  - "How will inflation affect my portfolio next year?"
+
+### **Commodities & Futures Analytics**
+- Commodity futures curves (backwardation/contango)
+- Roll yield, carry trades, or basis risk analysis
+- Commodity-specific production cost data
+- Examples to AVOID:
+  - "Which commodities are in backwardation right now?"
+  - "What's the roll yield in commodity futures?"
+  - "Which oil stocks have the lowest production costs?"
+
+### **Tax & Specialized Analytics**
+- Tax-loss harvesting optimization
+- Tax lot analysis or realized/unrealized gains tracking
+- Complex tax strategy recommendations
+- Examples to AVOID:
+  - "What's my tax-loss harvesting opportunity?"
+  - "How should I optimize my tax-advantaged accounts?"
+  - "What's my unrealized capital gains exposure?"
+
+### **High-Frequency Trading & Execution**
+- Execution quality analysis or HFT impact
+- Market microstructure analysis
+- Order flow or liquidity analysis
+- Examples to AVOID:
+  - "What's the HFT impact on my execution quality?"
+  - "How does order flow affect my trades?"
+  - "What's my average execution slippage?"
+
+### **Sentiment & Flow Analysis**
+- Put/call ratios or sentiment indicators  
+- Institutional vs retail flow divergence
+- Advanced sentiment analysis beyond basic news
+- Examples to AVOID:
+  - "What's the put/call ratio indicating about sentiment?"
+  - "What's the sentiment divergence between retail and institutions?"
+  - "How do insider flows correlate with price movements?"
+
+## ✅ FOCUS ON These Implementable Question Types Instead:
+
+**Generate questions around these proven patterns:**
+- **Sector screening with fundamental metrics** (profit margins, debt ratios, growth rates)
+- **Company comparisons within sectors** (best/worst performers, rankings)
+- **Portfolio composition analysis** (sector allocation, market cap exposure, geographic breakdown)
+- **Basic performance metrics** (returns, volatility, correlation with major indices)
+- **Screening questions** (stocks meeting specific criteria, ETF comparisons)
+- **News and earnings analysis** (earnings calendar, recent news sentiment)
+- **Dividend and income analysis** (yield rankings, dividend growth, payout ratios)
+
+**🆕 NOW AVAILABLE: Advanced Analytics via ETF Proxies:**
+- **Factor exposure analysis** using value/growth ETF correlations (VTV vs VUG)
+- **Size bias detection** comparing with VB (small), VO (mid), VV (large-cap) ETFs
+- **Style drift analysis** tracking momentum (MTUM) vs quality (QUAL) vs low-vol (USMV) correlations
+- **International diversification** measuring correlation with VEA, VWO, VGK regional ETFs
+- **Sector rotation timing** analyzing relative performance vs sector ETF benchmarks (XLK, XLE, XLF, etc.)
+- **Risk-adjusted performance** using Sharpe ratios vs benchmark ETFs (SPY, IWM, QQQ)
+- **Tracking error approximation** measuring deviation from target benchmark ETFs
+- **Market regime analysis** comparing portfolio behavior vs different factor ETFs during market cycles
+- **Bond allocation effects** using bond ETF proxies (TLT, SHY, LQD, HYG) for fixed income analysis
+
+**Important**: Focus on generating diverse questions that avoid the problematic patterns above while covering the full spectrum of retail investor interests using implementable data sources.
+
+**Output Format**: Provide questions as a numbered list, one question per line.
+
+## Start Generation:
+
+Generate a comprehensive list of investment and trading questions that retail investors would realistically ask, covering all the categories and requirements outlined above.

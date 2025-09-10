@@ -1,0 +1,94 @@
+{
+    "retail_investor_categories": [
+        {
+            "function": "expense_ratios_and_fees",
+            "description": "Analyzes the cost associated with investing in various funds and ETFs, helping investors understand how fees impact their returns.",
+            "example_questions": [
+                "What is the expense ratio of the Vanguard Total Stock Market ETF (VTI), and how does it compare to similar ETFs?",
+                "How do the management fees of mutual funds impact long-term returns?",
+                "What are the hidden costs of investing in actively managed funds versus index funds?"
+            ]
+        },
+        {
+            "function": "dividend_analysis",
+            "description": "Evaluates the dividend yield and history of funds and stocks to help investors looking for income-generating investments.",
+            "example_questions": [
+                "What is the current dividend yield of the iShares Select Dividend ETF (DVY)?",
+                "How has the dividend payout of the Procter & Gamble Co. (PG) changed over the past five years?",
+                "What are the best ETFs for high dividend income?"
+            ]
+        },
+        {
+            "function": "fund_performance_comparisons",
+            "description": "Compares the performance of different funds or ETFs to identify the best options based on specific criteria.",
+            "example_questions": [
+                "How does the performance of the SPDR S&P 500 ETF (SPY) compare to the Invesco QQQ ETF (QQQ) over the past year?",
+                "What are the performance differences between growth-oriented and value-oriented mutual funds?",
+                "Which sector ETFs have performed the best in the current economic climate?"
+            ]
+        },
+        {
+            "function": "fund_manager_evaluation",
+            "description": "Assesses the track record and management style of fund managers to gauge their effectiveness.",
+            "example_questions": [
+                "What is the track record of the fund manager for the Fidelity Contrafund (FCNTX)?",
+                "How does the management style of the T. Rowe Price Growth Stock Fund (PRGFX) impact its performance?",
+                "What are the qualifications and history of the manager of the American Funds EuroPacific Growth Fund (AEPGX)?"
+            ]
+        },
+        {
+            "function": "market_conditions_impact",
+            "description": "Examines how current market conditions affect different types of investments.",
+            "example_questions": [
+                "How are rising interest rates impacting bond ETFs like the iShares iBoxx $ Investment Grade Corporate Bond ETF (LQD)?",
+                "What is the effect of recent inflation trends on real estate investment trusts (REITs)?",
+                "How are geopolitical events influencing the performance of emerging market ETFs?"
+            ]
+        },
+        {
+            "function": "long_term_vs_short_term_investing",
+            "description": "Provides insights into strategies for both long-term and short-term investing based on different objectives.",
+            "example_questions": [
+                "What are the benefits of holding the Vanguard 500 Index Fund (VFIAX) for long-term growth?",
+                "How should short-term traders approach investing in the iShares Russell 2000 ETF (IWM)?",
+                "What are the key differences between long-term investment strategies and short-term trading strategies?"
+            ]
+        },
+        {
+            "function": "investment_strategy_review",
+            "description": "Reviews and evaluates different investment strategies to determine their effectiveness.",
+            "example_questions": [
+                "What is the effectiveness of a buy-and-hold strategy for ETFs compared to a market-timing approach?",
+                "How does a value investing strategy perform in different economic conditions?",
+                "What are the pros and cons of a dividend growth investing strategy?"
+            ]
+        },
+        {
+            "function": "retirement_planning",
+            "description": "Focuses on investment options and strategies specifically for retirement planning.",
+            "example_questions": [
+                "What are the best ETFs to include in a retirement portfolio for steady income?",
+                "How can I use target-date funds to plan for retirement?",
+                "What factors should I consider when choosing between a traditional IRA and a Roth IRA?"
+            ]
+        },
+        {
+            "function": "tax_advantaged_accounts",
+            "description": "Provides insights into using tax-advantaged accounts effectively.",
+            "example_questions": [
+                "What are the benefits of using a Health Savings Account (HSA) for investment purposes?",
+                "How can I maximize the tax advantages of investing in a 401(k) plan?",
+                "What are the best investment options within a 529 college savings plan?"
+            ]
+        },
+        {
+            "function": "investment_tools_and_resources",
+            "description": "Suggests tools and resources to help investors make informed decisions.",
+            "example_questions": [
+                "What are the best online platforms for tracking ETF performance?",
+                "How can I use investment calculators to plan my portfolio?",
+                "What are some reliable sources for fund ratings and reviews?"
+            ]
+        }
+    ]
+}

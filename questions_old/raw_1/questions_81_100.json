@@ -1,0 +1,478 @@
+{
+    "81": {
+      "question": "Compare the performance of AMD and NVDA in the GPU market.",
+      "type": "COMPARISON",
+      "symbols": ["AMD", "NVDA"],
+      "function": "compare_gpu_market_performance",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": ["AMD", "NVDA"],
+            "start_date": "2014-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Requires historical stock price data for GPU market performance comparison."
+    },
+    "82": {
+      "question": "Analyze the impact of major cybersecurity breaches on MSFT's stock price.",
+      "type": "STOCK_ANALYSIS",
+      "symbols": ["MSFT"],
+      "function": "analyze_impact_cybersecurity_breaches",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": "MSFT",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        },
+        {
+          "name": "cybersecurity_breach_events",
+          "query_parameters": {
+            "symbol": "MSFT",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Evaluate stock price changes around major cybersecurity breach dates."
+    },
+    "83": {
+      "question": "Compare the dividend yields of PG and UL over the last decade.",
+      "type": "COMPARISON",
+      "symbols": ["PG", "UL"],
+      "function": "compare_dividend_yields",
+      "inputs": [
+        {
+          "name": "historical_dividend_yields",
+          "query_parameters": {
+            "symbol": ["PG", "UL"],
+            "start_date": "2014-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Requires historical dividend yield data for comparison."
+    },
+    "84": {
+      "question": "Study the relationship between housing market trends and HD's stock performance.",
+      "type": "STOCK_ANALYSIS",
+      "symbols": ["HD"],
+      "function": "study_relationship_housing_market_trends",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": "HD",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        },
+        {
+          "name": "housing_market_trends",
+          "query_parameters": {
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Analyze correlation between housing market trends and HD's stock performance."
+    },
+    "85": {
+      "question": "Compare the historical performance of WMT and COST.",
+      "type": "COMPARISON",
+      "symbols": ["WMT", "COST"],
+      "function": "compare_historical_performance",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": ["WMT", "COST"],
+            "start_date": "2014-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Requires historical stock price data for performance comparison."
+    },
+    "86": {
+      "question": "Evaluate the effect of major FDA approvals on MRK's stock price.",
+      "type": "STOCK_ANALYSIS",
+      "symbols": ["MRK"],
+      "function": "evaluate_effect_fda_approvals",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": "MRK",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        },
+        {
+          "name": "fda_approval_events",
+          "query_parameters": {
+            "symbol": "MRK",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Evaluate stock price changes around major FDA approval dates."
+    },
+    "87": {
+      "question": "Compare the stock price volatility of BA and LMT.",
+      "type": "COMPARISON",
+      "symbols": ["BA", "LMT"],
+      "function": "compare_stock_price_volatility",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": ["BA", "LMT"],
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Requires historical stock price data to calculate volatility."
+    },
+    "88": {
+      "question": "Analyze the impact of major environmental regulations on XOM's stock price.",
+      "type": "STOCK_ANALYSIS",
+      "symbols": ["XOM"],
+      "function": "analyze_impact_environmental_regulations",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": "XOM",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        },
+        {
+          "name": "environmental_regulation_events",
+          "query_parameters": {
+            "symbol": "XOM",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Evaluate stock price changes around major environmental regulation dates."
+    },
+    "89": {
+      "question": "Compare the dividend growth of KO and MNST.",
+      "type": "COMPARISON",
+      "symbols": ["KO", "MNST"],
+      "function": "compare_dividend_growth",
+      "inputs": [
+        {
+          "name": "historical_dividend_growth",
+          "query_parameters": {
+            "symbol": ["KO", "MNST"],
+            "start_date": "2014-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Requires historical dividend growth data for comparison."
+    },
+    "90": {
+      "question": "Study the relationship between airline fuel costs and DAL's stock performance.",
+      "type": "STOCK_ANALYSIS",
+      "symbols": ["DAL"],
+      "function": "study_relationship_airline_fuel_costs",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": "DAL",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        },
+        {
+          "name": "airline_fuel_costs",
+          "query_parameters": {
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Analyze correlation between airline fuel costs and DAL's stock performance."
+    },
+    "91": {
+      "question": "Compare the performance of AAPL and SSNLF in the smartphone market.",
+      "type": "COMPARISON",
+      "symbols": ["AAPL", "SSNLF"],
+      "function": "compare_smartphone_market_performance",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": ["AAPL", "SSNLF"],
+            "start_date": "2014-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Requires historical stock price data for smartphone market performance comparison."
+    },
+    "92": {
+      "question": "Analyze the impact of major product recalls on F's stock price.",
+      "type": "STOCK_ANALYSIS",
+      "symbols": ["F"],
+      "function": "analyze_impact_product_recalls",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": "F",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        },
+        {
+          "name": "product_recall_events",
+          "query_parameters": {
+            "symbol": "F",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Evaluate stock price changes around major product recall dates."
+    },
+    "93": {
+      "question": "Compare the historical P/E ratios of SBUX and DNKN.",
+      "type": "COMPARISON",
+      "symbols": ["SBUX", "DNKN"],
+      "function": "compare_pe_ratios",
+      "inputs": [
+        {
+          "name": "historical_pe_ratios",
+          "query_parameters": {
+            "symbol": ["SBUX", "DNKN"],
+            "start_date": "2014-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Requires historical P/E ratio data for comparison."
+    },
+    "94": {
+      "question": "Study the effect of major legal settlements on VZ's stock price.",
+      "type": "STOCK_ANALYSIS",
+      "symbols": ["VZ"],
+      "function": "study_effect_legal_settlements",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": "VZ",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        },
+        {
+          "name": "legal_settlement_events",
+          "query_parameters": {
+            "symbol": "VZ",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Evaluate stock price changes around major legal settlement dates."
+    },
+    "95": {
+      "question": "Compare the performance of PYPL and SQ in the payment processing market.",
+      "type": "COMPARISON",
+      "symbols": ["PYPL", "SQ"],
+      "function": "compare_payment_processing_performance",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": ["PYPL", "SQ"],
+            "start_date": "2014-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Requires historical stock price data for payment processing market performance comparison."
+    },
+    "96": {
+      "question": "Evaluate the impact of major cybersecurity breaches on V's stock price.",
+      "type": "STOCK_ANALYSIS",
+      "symbols": ["V"],
+      "function": "evaluate_impact_cybersecurity_breaches",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": "V",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        },
+        {
+          "name": "cybersecurity_breach_events",
+          "query_parameters": {
+            "symbol": "V",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Evaluate stock price changes around major cybersecurity breach dates."
+    },
+    "97": {
+      "question": "Compare the dividend yields of MCD and YUM over the last decade.",
+      "type": "COMPARISON",
+      "symbols": ["MCD", "YUM"],
+      "function": "compare_dividend_yields",
+      "inputs": [
+        {
+          "name": "historical_dividend_yields",
+          "query_parameters": {
+            "symbol": ["MCD", "YUM"],
+            "start_date": "2014-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Requires historical dividend yield data for comparison."
+    },
+    "98": {
+      "question": "Study the relationship between interest rates and BAC's stock performance.",
+      "type": "STOCK_ANALYSIS",
+      "symbols": ["BAC"],
+      "function": "study_relationship_interest_rates",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": "BAC",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        },
+        {
+          "name": "interest_rates",
+          "query_parameters": {
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Analyze correlation between interest rates and BAC's stock performance."
+    },
+    "99": {
+      "question": "Compare the historical performance of AMZN and BABA.",
+      "type": "COMPARISON",
+      "symbols": ["AMZN", "BABA"],
+      "function": "compare_historical_performance",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": ["AMZN", "BABA"],
+            "start_date": "2014-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Requires historical stock price data for performance comparison."
+    },
+    "100": {
+      "question": "Analyze the impact of major regulatory changes on NFLX's stock price.",
+      "type": "STOCK_ANALYSIS",
+      "symbols": ["NFLX"],
+      "function": "analyze_impact_regulatory_changes",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": "NFLX",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        },
+        {
+          "name": "regulatory_change_events",
+          "query_parameters": {
+            "symbol": "NFLX",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Evaluate stock price changes around major regulatory change dates."
+    },
+    "unique_inputs": [
+      "historical_stock_prices",
+      "historical_dividend_yields",
+      "airline_fuel_costs",
+      "gpu_market_performance",
+      "product_recall_events",
+      "historical_pe_ratios",
+      "legal_settlement_events",
+      "payment_processing_market_performance",
+      "cybersecurity_breach_events",
+      "dividend_yields",
+      "interest_rates",
+      "oil_prices",
+      "trade_tariff_events",
+      "housing_market_trends",
+      "regulatory_change_events",
+      "environmental_regulation_events"
+    ],
+    "unique_functions": [
+      "compare_dividend_growth",
+      "study_relationship_airline_fuel_costs",
+      "compare_smartphone_market_performance",
+      "analyze_impact_product_recalls",
+      "compare_pe_ratios",
+      "study_effect_legal_settlements",
+      "compare_payment_processing_performance",
+      "evaluate_impact_cybersecurity_breaches",
+      "compare_dividend_yields",
+      "study_relationship_interest_rates",
+      "compare_historical_performance",
+      "analyze_relationship_oil_prices",
+      "study_effect_trade_tariffs",
+      "compare_gpu_market_performance",
+      "evaluate_effect_fda_approvals",
+      "analyze_impact_environmental_regulations"
+    ],
+    "all_questions": [
+      "Compare the performance of AMD and NVDA in the GPU market.",
+      "Analyze the impact of major cybersecurity breaches on MSFT's stock price.",
+      "Compare the dividend yields of PG and UL over the last decade.",
+      "Study the relationship between housing market trends and HD's stock performance.",
+      "Compare the historical performance of WMT and COST.",
+      "Evaluate the effect of major FDA approvals on MRK's stock price.",
+      "Compare the stock price volatility of BA and LMT.",
+      "Analyze the impact of major environmental regulations on XOM's stock price.",
+      "Compare the dividend growth of KO and MNST.",
+      "Study the relationship between airline fuel costs and DAL's stock performance.",
+      "Compare the performance of AAPL and SSNLF in the smartphone market.",
+      "Analyze the impact of major product recalls on F's stock price.",
+      "Compare the historical P/E ratios of SBUX and DNKN.",
+      "Study the effect of major legal settlements on VZ's stock price.",
+      "Compare the performance of PYPL and SQ in the payment processing market.",
+      "Evaluate the impact of major cybersecurity breaches on V's stock price.",
+      "Compare the dividend yields of MCD and YUM over the last decade.",
+      "Study the relationship between interest rates and BAC's stock performance.",
+      "Compare the historical performance of AMZN and BABA.",
+      "Analyze the impact of major regulatory changes on NFLX's stock price."
+    ]
+  }
+  

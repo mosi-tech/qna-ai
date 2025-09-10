@@ -1,0 +1,683 @@
+{
+  "name": "Alpaca Market Data API",
+  "description": "Real-time and historical market data",
+  "endpoints": [
+    {
+      "path": "/v1/corporate-actions",
+      "purpose": "Corporate actions like splits, dividends, mergers",
+      "parameters": {
+        "symbols": "AAPL,TSLA,SPY",
+        "types": "forward_split,reverse_split,cash_dividend,stock_dividend,spin_off,cash_merger,stock_merger",
+        "start": "2024-01-01",
+        "end": "2024-12-31"
+      },
+      "sample_response": {
+        "corporate_actions": [
+          {
+            "symbol": "AAPL",
+            "type": "cash_dividend",
+            "ex_date": "2024-02-09",
+            "record_date": "2024-02-12", 
+            "payable_date": "2024-02-15",
+            "amount": 0.24
+          }
+        ]
+      }
+    },
+    {
+      "path": "/v1beta1/options/quotes/latest",
+      "purpose": "Latest option quotes (bid/ask)",
+      "parameters": {
+        "symbols": "AAPL241220C00180000,TSLA240119P00200000"
+      },
+      "sample_response": {
+        "quotes": {
+          "AAPL241220C00180000": {"bp": 12.50, "bs": 5, "ap": 12.85, "as": 3, "t": "2024-01-02T21:00:00Z"}
+        }
+      }
+    },
+    {
+      "path": "/v1beta1/options/trades/latest",
+      "purpose": "Latest option trades",
+      "parameters": {
+        "symbols": "AAPL241220C00180000,TSLA240119P00200000"
+      },
+      "sample_response": {
+        "trades": {
+          "AAPL241220C00180000": {"p": 12.65, "s": 2, "t": "2024-01-02T21:00:00Z"}
+        }
+      }
+    },
+    {
+      "path": "/v1beta1/options/snapshots",
+      "purpose": "Option market snapshots",
+      "parameters": {
+        "symbols": "AAPL241220C00180000"
+      },
+      "sample_response": {
+        "snapshots": {
+          "AAPL241220C00180000": {
+            "latestTrade": {"p": 12.65, "s": 2},
+            "latestQuote": {"bp": 12.50, "ap": 12.85},
+            "impliedVolatility": 0.35,
+            "openInterest": 1250
+          }
+        }
+      }
+    },
+    {
+      "path": "/v1beta1/options/snapshots/{underlying_symbol}",
+      "purpose": "All option snapshots for underlying stock",
+      "parameters": {
+        "underlying_symbol": "AAPL, TSLA, SPY"
+      },
+      "sample_response": {
+        "snapshots": {
+          "AAPL241220C00180000": {"latestQuote": {"bp": 12.50, "ap": 12.85}},
+          "AAPL241220P00180000": {"latestQuote": {"bp": 8.20, "ap": 8.45}}
+        }
+      }
+    },
+    {
+      "path": "/v2/stocks/auctions",
+      "purpose": "Opening and closing auction data",
+      "parameters": {
+        "symbols": "AAPL,SPY",
+        "start": "2024-01-01",
+        "end": "2024-01-31"
+      },
+      "sample_response": {
+        "auctions": {
+          "AAPL": [{"t": "2024-01-02T14:30:00Z", "o": 187.15, "c": 185.64, "v": 1250000, "auction_type": "opening"}]
+        }
+      }
+    },
+    {
+      "path": "/v1beta1/forex/latest/rates",
+      "purpose": "Latest forex exchange rates",
+      "parameters": {
+        "currency_pairs": "EUR/USD,GBP/USD,USD/JPY"
+      },
+      "sample_response": {
+        "rates": {
+          "EUR/USD": {"rate": 1.1067, "timestamp": "2024-01-02T21:00:00Z"},
+          "GBP/USD": {"rate": 1.2734, "timestamp": "2024-01-02T21:00:00Z"}
+        }
+      }
+    },
+    {
+      "path": "/v1beta1/screener/{market_type}/movers",
+      "purpose": "Top market movers (gainers/losers)",
+      "parameters": {
+        "market_type": "stocks, crypto, options",
+        "top": "10, 25, 50"
+      },
+      "sample_response": {
+        "gainers": [{"symbol": "NVDA", "change_percent": 5.23, "price": 250.67}],
+        "losers": [{"symbol": "META", "change_percent": -3.21, "price": 264.33}]
+      }
+    },
+    {
+      "path": "/v1beta3/crypto/{loc}/bars",
+      "purpose": "Crypto OHLC bars with location",
+      "parameters": {
+        "loc": "us, global",
+        "symbols": "BTC/USD,ETH/USD",
+        "timeframe": "1Min,5Min,1Hour,1Day",
+        "start": "2024-01-01T00:00:00Z",
+        "end": "2024-01-31T00:00:00Z"
+      },
+      "sample_response": {
+        "bars": {
+          "BTC/USD": [{"t": "2024-01-02T00:00:00Z", "o": 42150.50, "h": 42875.25, "l": 41890.75, "c": 42635.80, "v": 125.67}]
+        }
+      }
+    },
+    {
+      "path": "/v1beta3/crypto/{loc}/latest/quotes",
+      "purpose": "Latest crypto bid/ask quotes",
+      "parameters": {
+        "loc": "us, global", 
+        "symbols": "BTC/USD,ETH/USD"
+      },
+      "sample_response": {
+        "quotes": {
+          "BTC/USD": {"bp": 42630.25, "bs": 0.5, "ap": 42640.50, "as": 0.3, "t": "2024-01-02T21:00:00Z"}
+        }
+      }
+    },
+    {
+      "path": "/v2/stocks/meta/conditions/{ticktype}",
+      "purpose": "Market condition codes",
+      "parameters": {
+        "ticktype": "trades, quotes"
+      },
+      "sample_response": [
+        {"condition": "@", "description": "Regular sale"},
+        {"condition": "I", "description": "Odd lot trade"}
+      ]
+    },
+    {
+      "path": "/v2/stocks/meta/exchanges",
+      "purpose": "Stock exchange information",
+      "parameters": {},
+      "sample_response": [
+        {"id": 1, "type": "exchange", "market": "stocks", "mic": "XNYS", "name": "New York Stock Exchange", "tape": "A"},
+        {"id": 2, "type": "exchange", "market": "stocks", "mic": "XNAS", "name": "NASDAQ", "tape": "Q"}
+      ]
+    },
+    {
+      "path": "/v2/stocks/bars",
+      "purpose": "Historical OHLC price bars for stocks",
+      "parameters": {
+        "symbols": "AAPL,TSLA,SPY",
+        "timeframe": "1Day, 1Hour, 1Min",
+        "start": "2024-01-01",
+        "end": "2024-01-31"
+      },
+      "sample_response": {
+        "bars": {
+          "AAPL": [{"t": "2024-01-02T05:00:00Z", "o": 187.15, "h": 188.44, "l": 183.89, "c": 185.64, "v": 82488200}]
+        }
+      }
+    },
+    {
+      "path": "/v2/stocks/quotes/latest", 
+      "purpose": "Latest bid/ask quotes for stocks",
+      "parameters": {
+        "symbols": "AAPL,TSLA"
+      },
+      "sample_response": {
+        "quotes": {
+          "AAPL": {"t": "2024-01-02T21:00:00.029Z", "bp": 185.63, "bs": 2, "ap": 185.64, "as": 1}
+        }
+      }
+    },
+    {
+      "path": "/v2/stocks/trades/latest",
+      "purpose": "Latest trade data for stocks", 
+      "parameters": {
+        "symbols": "AAPL,TSLA"
+      },
+      "sample_response": {
+        "trades": {
+          "AAPL": {"t": "2024-01-02T21:00:00.029Z", "p": 185.64, "s": 100}
+        }
+      }
+    },
+    {
+      "path": "/v2/stocks/snapshots",
+      "purpose": "Current market snapshot with all data",
+      "parameters": {
+        "symbols": "AAPL,SPY"
+      },
+      "sample_response": {
+        "snapshots": {
+          "AAPL": {
+            "latestTrade": {"p": 185.64, "s": 100, "t": "2024-01-02T21:00:00Z"},
+            "latestQuote": {"bp": 185.63, "ap": 185.64, "t": "2024-01-02T21:00:00Z"},
+            "dailyBar": {"o": 187.15, "h": 188.44, "l": 183.89, "c": 185.64, "v": 82488200}
+          }
+        }
+      }
+    },
+    {
+      "path": "/v1beta1/screener/stocks/most-actives",
+      "purpose": "Screen for most active stocks by volume",
+      "parameters": {
+        "top": "10, 25, 50"
+      },
+      "sample_response": {
+        "most_actives": [
+          {"symbol": "AAPL", "volume": 82488200, "trade_count": 123456},
+          {"symbol": "TSLA", "volume": 67234100, "trade_count": 98765}
+        ]
+      }
+    },
+    {
+      "path": "/v1beta1/screener/stocks/top-gainers",
+      "purpose": "Screen for biggest stock gainers",
+      "parameters": {
+        "top": "10, 25, 50"
+      },
+      "sample_response": {
+        "top_gainers": [
+          {"symbol": "NVDA", "percent_change": 5.23, "change": 12.45, "price": 250.67},
+          {"symbol": "AMD", "percent_change": 3.87, "change": 4.32, "price": 115.89}
+        ]
+      }
+    },
+    {
+      "path": "/v1beta1/screener/stocks/top-losers", 
+      "purpose": "Screen for biggest stock losers",
+      "parameters": {
+        "top": "10, 25, 50"
+      },
+      "sample_response": {
+        "top_losers": [
+          {"symbol": "META", "percent_change": -3.21, "change": -8.76, "price": 264.33}
+        ]
+      }
+    },
+    {
+      "path": "/v1beta1/news",
+      "purpose": "Financial news articles",
+      "parameters": {
+        "symbols": "AAPL,TSLA",
+        "start": "2024-01-01T00:00:00Z",
+        "end": "2024-01-02T00:00:00Z",
+        "sort": "desc",
+        "include_content": "true"
+      },
+      "sample_response": {
+        "news": [
+          {
+            "id": 24843171,
+            "headline": "Apple Reports Strong Q4 Earnings",
+            "summary": "Apple exceeded expectations...",
+            "symbols": ["AAPL"],
+            "created_at": "2024-01-02T10:30:00Z"
+          }
+        ]
+      }
+    },
+    {
+      "path": "/v1beta1/logos/{symbol}",
+      "purpose": "Company logos",
+      "parameters": {
+        "symbol": "AAPL, TSLA, SPY"
+      },
+      "sample_response": {
+        "url": "https://eodhistoricaldata.com/img/logos/US/AAPL.png"
+      }
+    },
+    {
+      "path": "/v2/options/bars",
+      "purpose": "Historical option price data",
+      "parameters": {
+        "symbols": "AAPL241220C00180000",
+        "timeframe": "1Day, 1Hour",
+        "start": "2024-01-01",
+        "end": "2024-01-31"
+      },
+      "sample_response": {
+        "bars": {
+          "AAPL241220C00180000": [{"t": "2024-01-02T05:00:00Z", "o": 12.50, "h": 13.25, "l": 12.10, "c": 12.85, "v": 1250}]
+        }
+      }
+    },
+    {
+      "path": "/v1beta1/crypto/bars",
+      "purpose": "Cryptocurrency price data",
+      "parameters": {
+        "symbols": "BTC/USD,ETH/USD",
+        "timeframe": "1Day, 1Hour, 1Min",
+        "start": "2024-01-01T00:00:00Z",
+        "end": "2024-01-31T00:00:00Z"
+      },
+      "sample_response": {
+        "bars": {
+          "BTC/USD": [{"t": "2024-01-02T00:00:00Z", "o": 42150.50, "h": 42875.25, "l": 41890.75, "c": 42635.80, "v": 125.67}]
+        }
+      }
+    },
+    {
+      "path": "/v1beta1/forex/bars",
+      "purpose": "Foreign exchange rate data",
+      "parameters": {
+        "symbols": "EUR/USD,GBP/USD,USD/JPY",
+        "timeframe": "1Day, 1Hour, 1Min",
+        "start": "2024-01-01T00:00:00Z",
+        "end": "2024-01-31T00:00:00Z"
+      },
+      "sample_response": {
+        "bars": {
+          "EUR/USD": [{"t": "2024-01-02T00:00:00Z", "o": 1.1045, "h": 1.1089, "l": 1.1032, "c": 1.1067, "v": 15672}]
+        }
+      }
+    },
+    {
+      "path": "/v1beta1/forex/rates",
+      "purpose": "Historical forex exchange rates",
+      "parameters": {
+        "currency_pairs": "EUR/USD,GBP/USD,USD/JPY",
+        "start": "2024-01-01T00:00:00Z",
+        "end": "2024-01-31T00:00:00Z",
+        "timeframe": "1Hour, 1Day"
+      },
+      "sample_response": {
+        "rates": {
+          "EUR/USD": [{"rate": 1.1067, "timestamp": "2024-01-02T21:00:00Z"}]
+        }
+      }
+    },
+    {
+      "path": "/v1beta1/options/bars",
+      "purpose": "Historical option price bars",
+      "parameters": {
+        "symbols": "AAPL241220C00180000",
+        "timeframe": "1Day, 1Hour",
+        "start": "2024-01-01",
+        "end": "2024-01-31"
+      },
+      "sample_response": {
+        "bars": {
+          "AAPL241220C00180000": [{"t": "2024-01-02T05:00:00Z", "o": 12.50, "h": 13.25, "l": 12.10, "c": 12.85, "v": 1250}]
+        }
+      }
+    },
+    {
+      "path": "/v1beta1/options/meta/conditions/{ticktype}",
+      "purpose": "Options market condition codes",
+      "parameters": {
+        "ticktype": "trades, quotes"
+      },
+      "sample_response": [
+        {"condition": "@", "description": "Regular trade"},
+        {"condition": "I", "description": "Intermarket sweep"}
+      ]
+    },
+    {
+      "path": "/v1beta1/options/meta/exchanges",
+      "purpose": "Options exchange information",
+      "parameters": {},
+      "sample_response": [
+        {"id": 1, "type": "exchange", "market": "options", "mic": "XCBO", "name": "Chicago Board Options Exchange", "tape": "O"},
+        {"id": 2, "type": "exchange", "market": "options", "mic": "XISX", "name": "International Securities Exchange", "tape": "O"}
+      ]
+    },
+    {
+      "path": "/v1beta1/options/trades",
+      "purpose": "Historical options trades",
+      "parameters": {
+        "symbols": "AAPL241220C00180000",
+        "start": "2024-01-01T00:00:00Z",
+        "end": "2024-01-02T00:00:00Z"
+      },
+      "sample_response": {
+        "trades": {
+          "AAPL241220C00180000": [{"t": "2024-01-02T21:00:00Z", "p": 12.65, "s": 2}]
+        }
+      }
+    },
+    {
+      "path": "/v1beta1/crypto-perps/{loc}/latest/bars",
+      "purpose": "Latest crypto perpetuals bars",
+      "parameters": {
+        "loc": "us, global",
+        "symbols": "BTC/USD,ETH/USD"
+      },
+      "sample_response": {
+        "bars": {
+          "BTC/USD": {"t": "2024-01-02T00:00:00Z", "o": 42150.50, "h": 42875.25, "l": 41890.75, "c": 42635.80, "v": 125.67}
+        }
+      }
+    },
+    {
+      "path": "/v1beta1/crypto-perps/{loc}/latest/orderbooks",
+      "purpose": "Latest crypto perpetuals order book",
+      "parameters": {
+        "loc": "us, global",
+        "symbols": "BTC/USD,ETH/USD"
+      },
+      "sample_response": {
+        "orderbooks": {
+          "BTC/USD": {
+            "t": "2024-01-02T21:00:00Z",
+            "bids": [{"p": 42630.25, "s": 0.5}],
+            "asks": [{"p": 42640.50, "s": 0.3}]
+          }
+        }
+      }
+    },
+    {
+      "path": "/v1beta1/crypto-perps/{loc}/latest/quotes",
+      "purpose": "Latest crypto perpetuals quotes",
+      "parameters": {
+        "loc": "us, global",
+        "symbols": "BTC/USD,ETH/USD"
+      },
+      "sample_response": {
+        "quotes": {
+          "BTC/USD": {"bp": 42630.25, "bs": 0.5, "ap": 42640.50, "as": 0.3, "t": "2024-01-02T21:00:00Z"}
+        }
+      }
+    },
+    {
+      "path": "/v1beta1/crypto-perps/{loc}/latest/trades",
+      "purpose": "Latest crypto perpetuals trades",
+      "parameters": {
+        "loc": "us, global",
+        "symbols": "BTC/USD,ETH/USD"
+      },
+      "sample_response": {
+        "trades": {
+          "BTC/USD": {"p": 42635.80, "s": 0.25, "t": "2024-01-02T21:00:00Z"}
+        }
+      }
+    },
+    {
+      "path": "/v1beta3/crypto/{loc}/latest/bars",
+      "purpose": "Latest crypto bars",
+      "parameters": {
+        "loc": "us, global",
+        "symbols": "BTC/USD,ETH/USD"
+      },
+      "sample_response": {
+        "bars": {
+          "BTC/USD": {"t": "2024-01-02T00:00:00Z", "o": 42150.50, "h": 42875.25, "l": 41890.75, "c": 42635.80, "v": 125.67}
+        }
+      }
+    },
+    {
+      "path": "/v1beta3/crypto/{loc}/latest/orderbooks",
+      "purpose": "Latest crypto order books",
+      "parameters": {
+        "loc": "us, global",
+        "symbols": "BTC/USD,ETH/USD"
+      },
+      "sample_response": {
+        "orderbooks": {
+          "BTC/USD": {
+            "t": "2024-01-02T21:00:00Z",
+            "bids": [{"p": 42630.25, "s": 0.5}],
+            "asks": [{"p": 42640.50, "s": 0.3}]
+          }
+        }
+      }
+    },
+    {
+      "path": "/v1beta3/crypto/{loc}/latest/trades",
+      "purpose": "Latest crypto trades",
+      "parameters": {
+        "loc": "us, global",
+        "symbols": "BTC/USD,ETH/USD"
+      },
+      "sample_response": {
+        "trades": {
+          "BTC/USD": {"p": 42635.80, "s": 0.25, "t": "2024-01-02T21:00:00Z"}
+        }
+      }
+    },
+    {
+      "path": "/v1beta3/crypto/{loc}/quotes",
+      "purpose": "Historical crypto quotes",
+      "parameters": {
+        "loc": "us, global",
+        "symbols": "BTC/USD,ETH/USD",
+        "start": "2024-01-01T00:00:00Z",
+        "end": "2024-01-31T00:00:00Z"
+      },
+      "sample_response": {
+        "quotes": {
+          "BTC/USD": [{"bp": 42630.25, "bs": 0.5, "ap": 42640.50, "as": 0.3, "t": "2024-01-02T21:00:00Z"}]
+        }
+      }
+    },
+    {
+      "path": "/v1beta3/crypto/{loc}/snapshots",
+      "purpose": "Crypto market snapshots",
+      "parameters": {
+        "loc": "us, global",
+        "symbols": "BTC/USD,ETH/USD"
+      },
+      "sample_response": {
+        "snapshots": {
+          "BTC/USD": {
+            "latestTrade": {"p": 42635.80, "s": 0.25, "t": "2024-01-02T21:00:00Z"},
+            "latestQuote": {"bp": 42630.25, "ap": 42640.50, "t": "2024-01-02T21:00:00Z"},
+            "dailyBar": {"o": 42150.50, "h": 42875.25, "l": 41890.75, "c": 42635.80, "v": 125.67}
+          }
+        }
+      }
+    },
+    {
+      "path": "/v1beta3/crypto/{loc}/trades",
+      "purpose": "Historical crypto trades",
+      "parameters": {
+        "loc": "us, global",
+        "symbols": "BTC/USD,ETH/USD",
+        "start": "2024-01-01T00:00:00Z",
+        "end": "2024-01-31T00:00:00Z"
+      },
+      "sample_response": {
+        "trades": {
+          "BTC/USD": [{"p": 42635.80, "s": 0.25, "t": "2024-01-02T21:00:00Z"}]
+        }
+      }
+    },
+    {
+      "path": "/v2/stocks/bars/latest",
+      "purpose": "Latest stock bars",
+      "parameters": {
+        "symbols": "AAPL,TSLA,SPY"
+      },
+      "sample_response": {
+        "bars": {
+          "AAPL": {"t": "2024-01-02T21:00:00Z", "o": 187.15, "h": 188.44, "l": 183.89, "c": 185.64, "v": 82488200}
+        }
+      }
+    },
+    {
+      "path": "/v2/stocks/quotes",
+      "purpose": "Historical stock quotes",
+      "parameters": {
+        "symbols": "AAPL,TSLA",
+        "start": "2024-01-01T00:00:00Z",
+        "end": "2024-01-31T00:00:00Z"
+      },
+      "sample_response": {
+        "quotes": {
+          "AAPL": [{"t": "2024-01-02T21:00:00.029Z", "bp": 185.63, "bs": 2, "ap": 185.64, "as": 1}]
+        }
+      }
+    },
+    {
+      "path": "/v2/stocks/trades",
+      "purpose": "Historical stock trades",
+      "parameters": {
+        "symbols": "AAPL,TSLA",
+        "start": "2024-01-01T00:00:00Z",
+        "end": "2024-01-31T00:00:00Z"
+      },
+      "sample_response": {
+        "trades": {
+          "AAPL": [{"t": "2024-01-02T21:00:00.029Z", "p": 185.64, "s": 100}]
+        }
+      }
+    },
+    {
+      "path": "/v2/stocks/{symbol}/auctions",
+      "purpose": "Stock-specific auction data",
+      "parameters": {
+        "symbol": "AAPL, TSLA, SPY",
+        "start": "2024-01-01",
+        "end": "2024-01-31"
+      },
+      "sample_response": {
+        "auctions": [{"t": "2024-01-02T14:30:00Z", "o": 187.15, "c": 185.64, "v": 1250000, "auction_type": "opening"}]
+      }
+    },
+    {
+      "path": "/v2/stocks/{symbol}/bars",
+      "purpose": "Stock-specific historical bars",
+      "parameters": {
+        "symbol": "AAPL, TSLA, SPY",
+        "timeframe": "1Day, 1Hour, 1Min",
+        "start": "2024-01-01",
+        "end": "2024-01-31"
+      },
+      "sample_response": {
+        "bars": [{"t": "2024-01-02T05:00:00Z", "o": 187.15, "h": 188.44, "l": 183.89, "c": 185.64, "v": 82488200}]
+      }
+    },
+    {
+      "path": "/v2/stocks/{symbol}/bars/latest",
+      "purpose": "Latest bar for specific stock",
+      "parameters": {
+        "symbol": "AAPL, TSLA, SPY"
+      },
+      "sample_response": {
+        "bar": {"t": "2024-01-02T21:00:00Z", "o": 187.15, "h": 188.44, "l": 183.89, "c": 185.64, "v": 82488200}
+      }
+    },
+    {
+      "path": "/v2/stocks/{symbol}/quotes",
+      "purpose": "Stock-specific historical quotes",
+      "parameters": {
+        "symbol": "AAPL, TSLA, SPY",
+        "start": "2024-01-01T00:00:00Z",
+        "end": "2024-01-31T00:00:00Z"
+      },
+      "sample_response": {
+        "quotes": [{"t": "2024-01-02T21:00:00.029Z", "bp": 185.63, "bs": 2, "ap": 185.64, "as": 1}]
+      }
+    },
+    {
+      "path": "/v2/stocks/{symbol}/quotes/latest",
+      "purpose": "Latest quote for specific stock",
+      "parameters": {
+        "symbol": "AAPL, TSLA, SPY"
+      },
+      "sample_response": {
+        "quote": {"t": "2024-01-02T21:00:00.029Z", "bp": 185.63, "bs": 2, "ap": 185.64, "as": 1}
+      }
+    },
+    {
+      "path": "/v2/stocks/{symbol}/snapshot",
+      "purpose": "Market snapshot for specific stock",
+      "parameters": {
+        "symbol": "AAPL, TSLA, SPY"
+      },
+      "sample_response": {
+        "snapshot": {
+          "latestTrade": {"p": 185.64, "s": 100, "t": "2024-01-02T21:00:00Z"},
+          "latestQuote": {"bp": 185.63, "ap": 185.64, "t": "2024-01-02T21:00:00Z"},
+          "dailyBar": {"o": 187.15, "h": 188.44, "l": 183.89, "c": 185.64, "v": 82488200}
+        }
+      }
+    },
+    {
+      "path": "/v2/stocks/{symbol}/trades",
+      "purpose": "Stock-specific historical trades",
+      "parameters": {
+        "symbol": "AAPL, TSLA, SPY",
+        "start": "2024-01-01T00:00:00Z",
+        "end": "2024-01-31T00:00:00Z"
+      },
+      "sample_response": {
+        "trades": [{"t": "2024-01-02T21:00:00.029Z", "p": 185.64, "s": 100}]
+      }
+    },
+    {
+      "path": "/v2/stocks/{symbol}/trades/latest",
+      "purpose": "Latest trade for specific stock",
+      "parameters": {
+        "symbol": "AAPL, TSLA, SPY"
+      },
+      "sample_response": {
+        "trade": {"t": "2024-01-02T21:00:00.029Z", "p": 185.64, "s": 100}
+      }
+    }
+  ]
+}

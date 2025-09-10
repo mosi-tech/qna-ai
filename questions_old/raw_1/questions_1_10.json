@@ -1,0 +1,252 @@
+{
+    "1": {
+      "question": "Compare the 5-year performance of AAPL and MSFT.",
+      "type": "COMPARISON",
+      "symbols": ["AAPL", "MSFT"],
+      "function": "compare_5_year_performance",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": ["AAPL", "MSFT"],
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Requires 5 years of historical stock price data."
+    },
+    "2": {
+      "question": "Analyze the impact of quarterly earnings reports on AMZN's stock price.",
+      "type": "STOCK_ANALYSIS",
+      "symbols": ["AMZN"],
+      "function": "analyze_impact_earnings_reports",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": "AMZN",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        },
+        {
+          "name": "earnings_reports",
+          "query_parameters": {
+            "symbol": "AMZN",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Analyze stock price changes around quarterly earnings report dates."
+    },
+    "3": {
+      "question": "Study the effect of stock splits on TSLA's historical performance.",
+      "type": "STOCK_ANALYSIS",
+      "symbols": ["TSLA"],
+      "function": "study_effect_stock_splits",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": "TSLA",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        },
+        {
+          "name": "stock_split_events",
+          "query_parameters": {
+            "symbol": "TSLA",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Compare stock performance before and after stock splits."
+    },
+    "4": {
+      "question": "Compare dividend yields of KO and PEP over the last decade.",
+      "type": "COMPARISON",
+      "symbols": ["KO", "PEP"],
+      "function": "compare_dividend_yields",
+      "inputs": [
+        {
+          "name": "historical_dividends",
+          "query_parameters": {
+            "symbol": ["KO", "PEP"],
+            "start_date": "2014-07-01",
+            "end_date": "2024-07-01"
+          }
+        },
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": ["KO", "PEP"],
+            "start_date": "2014-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Requires 10 years of historical dividend and stock price data."
+    },
+    "5": {
+      "question": "Evaluate the correlation between GOOGL's revenue growth and stock price.",
+      "type": "STOCK_ANALYSIS",
+      "symbols": ["GOOGL"],
+      "function": "evaluate_correlation_revenue_growth",
+      "inputs": [
+        {
+          "name": "historical_revenue",
+          "query_parameters": {
+            "symbol": "GOOGL",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        },
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": "GOOGL",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Analyze the relationship between quarterly revenue growth and stock price."
+    },
+    "6": {
+      "question": "Compare the P/E ratios of AAPL and NVDA over the past 5 years.",
+      "type": "COMPARISON",
+      "symbols": ["AAPL", "NVDA"],
+      "function": "compare_pe_ratios",
+      "inputs": [
+        {
+          "name": "historical_pe_ratios",
+          "query_parameters": {
+            "symbol": ["AAPL", "NVDA"],
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Requires 5 years of historical P/E ratio data."
+    },
+    "7": {
+      "question": "Analyze the impact of new product launches on AAPL's stock price.",
+      "type": "STOCK_ANALYSIS",
+      "symbols": ["AAPL"],
+      "function": "analyze_impact_new_product_launches",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": "AAPL",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        },
+        {
+          "name": "product_launch_events",
+          "query_parameters": {
+            "symbol": "AAPL",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Evaluate stock price changes around product launch dates."
+    },
+    "8": {
+      "question": "Compare the performance of FB and TWTR during major data privacy scandals.",
+      "type": "COMPARISON",
+      "symbols": ["FB", "TWTR"],
+      "function": "compare_performance_during_privacy_scandals",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": ["FB", "TWTR"],
+            "start_date": "2018-03-01",
+            "end_date": "2018-12-31"
+          }
+        },
+        {
+          "name": "privacy_scandal_events",
+          "query_parameters": {
+            "symbol": ["FB", "TWTR"],
+            "start_date": "2018-03-01",
+            "end_date": "2018-12-31"
+          }
+        }
+      ],
+      "other_information": "Analyze stock performance during data privacy scandal periods."
+    },
+    "9": {
+      "question": "Study the relationship between NFLX's subscriber growth and stock price.",
+      "type": "STOCK_ANALYSIS",
+      "symbols": ["NFLX"],
+      "function": "study_relationship_subscriber_growth",
+      "inputs": [
+        {
+          "name": "subscriber_growth_data",
+          "query_parameters": {
+            "symbol": "NFLX",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        },
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": "NFLX",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Evaluate the correlation between subscriber growth and stock price."
+    },
+    "10": {
+      "question": "Compare the dividend growth of JNJ and PFE over the last 10 years.",
+      "type": "COMPARISON",
+      "symbols": ["JNJ", "PFE"],
+      "function": "compare_dividend_growth",
+      "inputs": [
+        {
+          "name": "historical_dividends",
+          "query_parameters": {
+            "symbol": ["JNJ", "PFE"],
+            "start_date": "2014-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Requires 10 years of historical dividend data."
+    },
+    "unique_inputs": [
+      "historical_stock_prices",
+      "earnings_reports",
+      "stock_split_events",
+      "historical_dividends",
+      "historical_revenue",
+      "historical_pe_ratios",
+      "product_launch_events",
+      "privacy_scandal_events",
+      "subscriber_growth_data"
+    ],
+    "unique_functions": [
+      "compare_5_year_performance",
+      "analyze_impact_earnings_reports",
+      "study_effect_stock_splits",
+      "compare_dividend_yields",
+      "evaluate_correlation_revenue_growth",
+      "compare_pe_ratios",
+      "analyze_impact_new_product_launches",
+      "compare_performance_during_privacy_scandals",
+      "study_relationship_subscriber_growth",
+      "compare_dividend_growth"
+    ]
+  }
+  

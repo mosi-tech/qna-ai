@@ -1,0 +1,612 @@
+{
+  "invalid_questions": [
+    {
+      "question": "What's the implied volatility rank of SPY options right now?",
+      "rejection_reason": "IV rank calculation requires historical implied volatility data not available in APIs",
+      "missing_data": [
+        "Historical implied volatility time series for SPY options",
+        "IV percentile/rank calculation data",
+        "Long-term IV range data for ranking"
+      ],
+      "suggested_alternatives": [
+        "What's the current implied volatility of SPY options?",
+        "How does SPY's current implied volatility compare to recent levels?",
+        "What are the implied volatility levels across SPY option strikes?"
+      ],
+      "validation_date": "2025-01-09",
+      "category": "historical_data_unavailable"
+    },
+    {
+      "question": "Which pharmaceutical stocks have FDA approval catalysts coming up?",
+      "rejection_reason": "FDA approval calendar and drug pipeline data not available in APIs",
+      "missing_data": [
+        "FDA approval calendar and timeline data",
+        "Drug pipeline and clinical trial status",
+        "Regulatory milestone tracking"
+      ],
+      "suggested_alternatives": [
+        "Which pharmaceutical stocks have recent earnings growth?",
+        "What biotech companies have the strongest cash positions?",
+        "Which healthcare stocks have the best profit margins?"
+      ],
+      "validation_date": "2025-01-09",
+      "category": "external_regulatory_data"
+    },
+    {
+      "question": "What's the duration of bonds in my fixed income allocation?",
+      "rejection_reason": "Bond duration and fixed income analytics not available in APIs",
+      "missing_data": [
+        "Bond duration measurements",
+        "Fixed income portfolio analytics",
+        "Interest rate sensitivity metrics for individual bonds"
+      ],
+      "suggested_alternatives": [
+        "What's my portfolio's sector exposure to interest rate sensitive industries?",
+        "Which financial stocks benefit most from rising rates?",
+        "What's my allocation to dividend-paying stocks vs growth stocks?"
+      ],
+      "validation_date": "2025-01-09",
+      "category": "fixed_income_analytics"
+    },
+    {
+      "question": "What's the yield curve telling us about future interest rates?",
+      "rejection_reason": "Future interest rate predictions beyond API scope",
+      "missing_data": [
+        "Future rate predictions",
+        "Economic forecasting models"
+      ],
+      "suggested_alternatives": [
+        "What's the current yield curve shape?",
+        "Which financial stocks benefit from rising rates?"
+      ],
+      "validation_date": "2025-01-09",
+      "category": "predictive_analysis"
+    },
+    {
+      "question": "Which oil and gas stocks have the lowest production costs?",
+      "rejection_reason": "Production cost data not available in APIs",
+      "missing_data": [
+        "Production cost breakdowns",
+        "Operational cost metrics"
+      ],
+      "suggested_alternatives": [
+        "Which energy stocks have the best profit margins?",
+        "Which oil stocks have the strongest balance sheets?"
+      ],
+      "validation_date": "2025-01-09",
+      "category": "operational_data"
+    },
+    {
+      "question": "What's my portfolio's tracking error versus my benchmark?",
+      "rejection_reason": "Requires specific benchmark definition not available",
+      "missing_data": [
+        "Benchmark specification",
+        "Tracking error calculations"
+      ],
+      "suggested_alternatives": [
+        "What's my portfolio's correlation with the S&P 500?",
+        "What's my portfolio's beta compared to market?"
+      ],
+      "validation_date": "2025-01-09",
+      "category": "benchmark_dependency"
+    },
+    {
+      "question": "What's the options flow suggesting about market direction?",
+      "rejection_reason": "Options flow data not available in APIs",
+      "missing_data": [
+        "Options flow data",
+        "Directional sentiment indicators"
+      ],
+      "suggested_alternatives": [
+        "What's the current implied volatility of SPY options?",
+        "Which options have the highest volume?"
+      ],
+      "validation_date": "2025-01-09",
+      "category": "options_flow_data"
+    },
+    {
+      "question": "What's the put/call ratio indicating about market sentiment?",
+      "rejection_reason": "Put/call ratio data not available in APIs",
+      "missing_data": [
+        "Put/call ratio metrics",
+        "Options sentiment indicators"
+      ],
+      "suggested_alternatives": [
+        "What's the sentiment analysis of recent market news?",
+        "Which sectors show strongest momentum?"
+      ],
+      "validation_date": "2025-01-09",
+      "category": "sentiment_indicators"
+    },
+    {
+      "question": "What's my tax-loss harvesting opportunity this year?",
+      "rejection_reason": "Tax analysis and loss harvesting beyond API scope",
+      "missing_data": [
+        "Tax lot information",
+        "Realized/unrealized loss tracking",
+        "Tax optimization algorithms"
+      ],
+      "suggested_alternatives": [
+        "Which of my holdings have declined this year?",
+        "What's my portfolio's year-to-date performance?"
+      ],
+      "validation_date": "2025-01-09",
+      "category": "tax_analysis"
+    },
+    {
+      "question": "What's the credit spread on high-yield corporate bonds?",
+      "rejection_reason": "Corporate bond spread data not available in APIs",
+      "missing_data": [
+        "High-yield bond spreads",
+        "Corporate credit spread analytics"
+      ],
+      "suggested_alternatives": [
+        "Which corporate bonds have the highest yields?",
+        "What are the credit ratings of bonds in my portfolio?"
+      ],
+      "validation_date": "2025-01-09",
+      "category": "fixed_income_spreads"
+    },
+    {
+      "question": "Which commodities are in backwardation right now?",
+      "rejection_reason": "Commodity futures curve and backwardation data not available",
+      "missing_data": [
+        "Futures curve structure",
+        "Backwardation/contango analysis"
+      ],
+      "suggested_alternatives": [
+        "Which commodity ETFs have gained the most this month?",
+        "What energy stocks benefit from higher oil prices?"
+      ],
+      "validation_date": "2025-01-09",
+      "category": "commodities_futures"
+    },
+    {
+      "question": "What's the economic surprise index telling us about growth?",
+      "rejection_reason": "Economic surprise index not available in APIs",
+      "missing_data": [
+        "Economic surprise index data",
+        "Growth interpretation models"
+      ],
+      "suggested_alternatives": [
+        "Which sectors benefit from economic growth?",
+        "What stocks perform well during expansion phases?"
+      ],
+      "validation_date": "2025-01-09",
+      "category": "economic_indicators"
+    },
+    {
+      "question": "What's my portfolio's value at risk (VaR) calculation?",
+      "rejection_reason": "VaR calculation requires complex risk modeling not available",
+      "missing_data": [
+        "Risk factor models",
+        "VaR calculation engines",
+        "Historical simulation data"
+      ],
+      "suggested_alternatives": [
+        "What's my portfolio's maximum drawdown?",
+        "What's my portfolio's volatility compared to market?"
+      ],
+      "validation_date": "2025-01-09",
+      "category": "risk_modeling"
+    },
+    {
+      "question": "What's the term structure of interest rates across maturities?",
+      "rejection_reason": "Full yield curve term structure data not available in APIs",
+      "missing_data": [
+        "Complete yield curve data",
+        "Term structure analysis"
+      ],
+      "suggested_alternatives": [
+        "Which financial stocks benefit from rising rates?",
+        "What's the current 10-year Treasury yield?"
+      ],
+      "validation_date": "2025-01-09",
+      "category": "yield_curve"
+    },
+    {
+      "question": "What's the volatility surface showing for index options?",
+      "rejection_reason": "Options volatility surface data not available in APIs",
+      "missing_data": [
+        "Volatility surface modeling",
+        "Options Greeks analytics"
+      ],
+      "suggested_alternatives": [
+        "What's the current implied volatility of SPY options?",
+        "Which options have the highest volume today?"
+      ],
+      "validation_date": "2025-01-09",
+      "category": "options_analytics"
+    },
+    {
+      "question": "What's my portfolio's factor exposure to momentum vs value?",
+      "rejection_reason": "Factor analytics and style exposure analysis not available",
+      "missing_data": [
+        "Factor decomposition models",
+        "Style factor analytics"
+      ],
+      "suggested_alternatives": [
+        "What's my allocation to growth vs value stocks?",
+        "Which sectors dominate my portfolio?"
+      ],
+      "validation_date": "2025-01-09",
+      "category": "factor_analytics"
+    },
+    {
+      "question": "What's the repo rate telling us about liquidity conditions?",
+      "rejection_reason": "Repo rate interpretation and liquidity analysis beyond API scope",
+      "missing_data": [
+        "Repo rate data",
+        "Liquidity condition analysis"
+      ],
+      "suggested_alternatives": [
+        "Which financial stocks have strong liquidity ratios?",
+        "What's the current federal funds rate?"
+      ],
+      "validation_date": "2025-01-09",
+      "category": "liquidity_analysis"
+    },
+    {
+      "question": "What's my portfolio's currency exposure through international holdings?",
+      "rejection_reason": "Currency exposure analytics not available in APIs",
+      "missing_data": [
+        "Currency exposure decomposition",
+        "FX risk analytics"
+      ],
+      "suggested_alternatives": [
+        "What percentage of my portfolio is in international stocks?",
+        "Which international markets am I exposed to?"
+      ],
+      "validation_date": "2025-01-09",
+      "category": "currency_analytics"
+    },
+    {
+      "question": "What's the high-frequency trading impact on my execution quality?",
+      "rejection_reason": "HFT impact analysis and execution quality metrics not available",
+      "missing_data": [
+        "Execution quality analytics",
+        "HFT impact assessment"
+      ],
+      "suggested_alternatives": [
+        "What's my average trade execution price vs market?",
+        "Which brokers offer the best execution?"
+      ],
+      "validation_date": "2025-01-09",
+      "category": "execution_analytics"
+    },
+    {
+      "question": "How does fear and greed index correlate with my returns?",
+      "rejection_reason": "Fear & Greed index not available in APIs - proprietary sentiment indicator",
+      "missing_data": [
+        "CNN Fear & Greed index historical data",
+        "Proprietary sentiment indicator access",
+        "Third-party sentiment index integration"
+      ],
+      "suggested_alternatives": [
+        "What's the news sentiment for stocks in my portfolio?",
+        "How does market volatility correlate with my returns?",
+        "Which sentiment indicators show bullish or bearish trends?"
+      ],
+      "validation_date": "2025-01-09",
+      "category": "external_sentiment_data"
+    },
+    {
+      "question": "How does my trading frequency compare to successful investors?",
+      "rejection_reason": "No benchmark data available for 'successful investors' trading frequency",
+      "missing_data": [
+        "Benchmark trading frequency data for successful investors",
+        "Peer comparison trading statistics",
+        "Industry standard trading frequency metrics"
+      ],
+      "suggested_alternatives": [
+        "Am I overtrading based on my account activity?",
+        "What's my trading frequency compared to buy-and-hold strategies?",
+        "How does my holding period compare to recommended timeframes?"
+      ],
+      "validation_date": "2025-01-09",
+      "category": "benchmark_dependency"
+    },
+    {
+      "question": "Which trades had the highest execution slippage?",
+      "rejection_reason": "Execution slippage analysis not available in APIs - requires trade execution quality metrics",
+      "missing_data": [
+        "Trade execution quality data",
+        "Bid-ask spread at execution time",
+        "Market impact and slippage calculations",
+        "Execution venue performance metrics"
+      ],
+      "suggested_alternatives": [
+        "What's my average trade size compared to account value?",
+        "Which trades took longest to execute?",
+        "How do my trading costs compare across different order types?"
+      ],
+      "validation_date": "2025-01-09",
+      "category": "execution_analytics"
+    },
+    {
+      "question": "Am I saving enough for my retirement goals?",
+      "rejection_reason": "Requires personalized financial planning assumptions (income, spending, target retirement age, returns) beyond available APIs.",
+      "missing_data": [
+        "Personal income and expense projections",
+        "Retirement goal parameters and constraints",
+        "Long-term return and inflation assumptions"
+      ],
+      "suggested_alternatives": [
+        "What's my portfolio's historical annualized return?",
+        "What's my current savings rate relative to my income?"
+      ],
+      "validation_date": "2025-09-09",
+      "category": "personal_financial_planning"
+    },
+    {
+      "question": "How much should I allocate to my emergency fund?",
+      "rejection_reason": "Emergency fund sizing is a financial planning guideline and needs personal expense data not available via APIs.",
+      "missing_data": [
+        "Monthly living expenses",
+        "Job stability and income volatility",
+        "Desired months of coverage"
+      ],
+      "suggested_alternatives": [
+        "What's my average monthly spending inferred from cash flows?",
+        "What's my current cash balance as a percentage of portfolio?"
+      ],
+      "validation_date": "2025-09-09",
+      "category": "personal_financial_planning"
+    },
+    {
+      "question": "What's my target allocation for my age group?",
+      "rejection_reason": "Target allocations by age are planning heuristics, not derivable from market/trading APIs.",
+      "missing_data": [
+        "Age and risk profile",
+        "Financial goals and time horizon",
+        "Planning rule selection (e.g., 110-age heuristic)"
+      ],
+      "suggested_alternatives": [
+        "What's my current equity/bond/cash allocation?",
+        "How does my allocation compare to a chosen benchmark?"
+      ],
+      "validation_date": "2025-09-09",
+      "category": "planning_guidelines"
+    },
+    {
+      "question": "Should I rebalance my portfolio quarterly or annually?",
+      "rejection_reason": "Requires policy design and personal constraints; APIs provide data but not prescriptive policy recommendations.",
+      "missing_data": [
+        "Policy preferences and tax constraints",
+        "Transaction cost tolerance",
+        "Tracking error tolerance"
+      ],
+      "suggested_alternatives": [
+        "How far is my current allocation from targets?",
+        "What are the transaction costs to rebalance today?"
+      ],
+      "validation_date": "2025-09-09",
+      "category": "policy_recommendation"
+    },
+    {
+      "question": "How does my risk tolerance align with my time horizon?",
+      "rejection_reason": "Needs subjective risk tolerance inputs and life planning data not available in APIs.",
+      "missing_data": [
+        "Risk tolerance assessment",
+        "Time horizon and liquidity needs",
+        "Income and liability profile"
+      ],
+      "suggested_alternatives": [
+        "What's my portfolio volatility and max drawdown?",
+        "How concentrated is my portfolio in risky assets?"
+      ],
+      "validation_date": "2025-09-09",
+      "category": "subjective_assessment"
+    },
+    {
+      "question": "What cognitive biases show up in my trading patterns?",
+      "rejection_reason": "Identifying cognitive biases requires psychological assessment beyond available trading and market APIs.",
+      "missing_data": [
+        "Psychometric inputs",
+        "Behavioral assessment framework"
+      ],
+      "suggested_alternatives": [
+        "Do I buy more after recent price run-ups?",
+        "Do I hold losers longer than winners?"
+      ],
+      "validation_date": "2025-09-09",
+      "category": "behavioral_assessment"
+    },
+    {
+      "question": "How does my confidence level correlate with trading frequency?",
+      "rejection_reason": "Confidence level is a subjective input not captured by APIs; cannot quantify without external self-reports.",
+      "missing_data": [
+        "Self-reported confidence metric",
+        "Time-aligned survey data"
+      ],
+      "suggested_alternatives": [
+        "How does my trading frequency vary with recent returns?",
+        "Do winning streaks increase my trade count?"
+      ],
+      "validation_date": "2025-09-09",
+      "category": "subjective_input_required"
+    },
+    {
+      "question": "Am I on track to meet my college savings goals?",
+      "rejection_reason": "Requires personal goals, future contributions, tuition inflation assumptions beyond API scope.",
+      "missing_data": [
+        "Savings goal amount and date",
+        "Contribution plan",
+        "Tuition inflation assumptions"
+      ],
+      "suggested_alternatives": [
+        "What's my current 529/education account balance and return?",
+        "What are lower-cost ETFs to reduce fees?"
+      ],
+      "validation_date": "2025-09-09",
+      "category": "personal_financial_planning"
+    },
+    {
+      "question": "How should I adjust my portfolio as I approach retirement?",
+      "rejection_reason": "Asset allocation advice requires individualized planning and risk preferences not provided by APIs.",
+      "missing_data": [
+        "Risk tolerance",
+        "Income needs",
+        "Time horizon and constraints"
+      ],
+      "suggested_alternatives": [
+        "What's my current equity/bond/cash allocation?",
+        "How concentrated is my portfolio?"
+      ],
+      "validation_date": "2025-09-09",
+      "category": "advice_policy"
+    },
+    {
+      "question": "What's the optimal contribution to my 401k versus IRA?",
+      "rejection_reason": "Tax optimization and eligibility rules vary and require personal tax data beyond APIs.",
+      "missing_data": [
+        "Tax bracket and deductions",
+        "Employer match details",
+        "IRA eligibility and limits"
+      ],
+      "suggested_alternatives": [
+        "What's my current contribution rate?",
+        "How much could I save by lowering fund expenses?"
+      ],
+      "validation_date": "2025-09-09",
+      "category": "tax_planning"
+    },
+    {
+      "question": "How much house can I afford with my current savings rate?",
+      "rejection_reason": "Home affordability requires income, debt, credit, mortgage rates, and expenses not available via these APIs.",
+      "missing_data": [
+        "Income and debts",
+        "Credit score and rates",
+        "Housing expenses"
+      ],
+      "suggested_alternatives": [
+        "What's my current savings rate?",
+        "How have my savings grown over the last year?"
+      ],
+      "validation_date": "2025-09-09",
+      "category": "external_data_required"
+    },
+    {
+      "question": "What's my projected portfolio value at retirement?",
+      "rejection_reason": "Long-term projections require assumptions and forecasting beyond conservative API-based analysis.",
+      "missing_data": [
+        "Expected returns and volatility",
+        "Contribution schedule",
+        "Withdrawal plans"
+      ],
+      "suggested_alternatives": [
+        "What's my portfolio's historical annualized return?",
+        "What's my fee drag based on current holdings?"
+      ],
+      "validation_date": "2025-09-09",
+      "category": "forecasting_assumptions"
+    },
+    {
+      "question": "Which trading strategies work best for my risk profile?",
+      "rejection_reason": "Requires explicit risk profile definition and strategy taxonomy beyond available APIs; subjective selection needed.",
+      "missing_data": [
+        "Risk profile measurement",
+        "Strategy definitions and labeling of trades"
+      ],
+      "suggested_alternatives": [
+        "What's my win rate by holding period?",
+        "How does my P&L vary by time of day?"
+      ],
+      "validation_date": "2025-09-09",
+      "category": "subjective_assessment"
+    },
+    {
+      "question": "Do I perform better when I follow my trading plan?",
+      "rejection_reason": "Requires explicit tagging of plan adherence per trade, which is not available via APIs.",
+      "missing_data": [
+        "Trade-level plan adherence tags",
+        "Defined trading plan criteria"
+      ],
+      "suggested_alternatives": [
+        "How does my win rate change after rule-based entries?",
+        "What is my P&L by holding-period buckets?"
+      ],
+      "validation_date": "2025-09-09",
+      "category": "missing_annotations"
+    },
+    {
+      "question": "How does my emotional state correlate with trading outcomes?",
+      "rejection_reason": "Emotional state is not captured by APIs; correlation requires external self-reported data.",
+      "missing_data": [
+        "Time-stamped sentiment/mood logs",
+        "Mapping to trades"
+      ],
+      "suggested_alternatives": [
+        "Do winning streaks change my position sizes?",
+        "How does trade frequency vary after losses?"
+      ],
+      "validation_date": "2025-09-09",
+      "category": "subjective_input_required"
+    },
+    {
+      "question": "How does my confidence level change after winning or losing streaks?",
+      "rejection_reason": "Confidence is subjective and not measured in the available data.",
+      "missing_data": [
+        "Self-reported confidence logs",
+        "Time alignment with activity"
+      ],
+      "suggested_alternatives": [
+        "Do my position sizes change after streaks?",
+        "Does trade frequency change after streaks?"
+      ],
+      "validation_date": "2025-09-09",
+      "category": "subjective_input_required"
+    },
+    {
+      "question": "What tax implications should I consider for my trading activity?",
+      "rejection_reason": "Tax advice requires jurisdiction-specific rules and personal tax data not provided by APIs.",
+      "missing_data": [
+        "Tax residency and bracket",
+        "Lot level tax data",
+        "Tax rules for instruments"
+      ],
+      "suggested_alternatives": [
+        "What's my realized short-term vs long-term gains this year?",
+        "How many wash sale-flagged trades did I have?"
+      ],
+      "validation_date": "2025-09-09",
+      "category": "tax_advice"
+    },
+    {
+      "question": "How can I optimize my asset location across taxable and tax-advantaged accounts?",
+      "rejection_reason": "Asset location optimization requires tax constraints and multi-account modeling beyond API scope.",
+      "missing_data": [
+        "Account tax status and rules",
+        "Expected returns/yields by asset",
+        "Optimization objectives"
+      ],
+      "suggested_alternatives": [
+        "What's my income yield in taxable accounts?",
+        "Which holdings generate most dividends/interest?"
+      ],
+      "validation_date": "2025-09-09",
+      "category": "tax_planning"
+    },
+    {
+      "missing_data": [],
+      "suggested_alternatives": [],
+      "validation_date": "2025-09-09",
+      "category": "api_limitation"
+    },
+    {
+      "question": "Which sector ETFs had the strongest breadth (advancers vs decliners) today?",
+      "rejection_reason": "Missing API support for retrieving sector ETF list and sector classification; cannot compute breadth across sector ETFs.",
+      "missing_data": [
+        "Sector ETF list",
+        "Sector classification for ETFs"
+      ],
+      "suggested_alternatives": [
+        "Ask for the top sector ETFs by market cap and then compare their daily price changes.",
+        "Ask for the advancers vs decliners among all ETFs today.",
+        "Ask for the sector ETFs with the highest price change percentage today."
+      ],
+      "validation_date": "2025-09-09",
+      "category": "api_limitation"
+    }
+  ]
+}

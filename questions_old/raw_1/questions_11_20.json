@@ -1,0 +1,262 @@
+{
+    "11": {
+      "question": "Analyze the impact of interest rate changes on JPM's stock price.",
+      "type": "STOCK_ANALYSIS",
+      "symbols": ["JPM"],
+      "function": "analyze_impact_interest_rate_changes",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": "JPM",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        },
+        {
+          "name": "interest_rate_changes",
+          "query_parameters": {
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Analyze stock price changes around interest rate change dates."
+    },
+    "12": {
+      "question": "Compare the stock price volatility of TSLA and GM.",
+      "type": "COMPARISON",
+      "symbols": ["TSLA", "GM"],
+      "function": "compare_stock_price_volatility",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": ["TSLA", "GM"],
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Requires historical stock price data to calculate volatility."
+    },
+    "13": {
+      "question": "Evaluate the effect of major acquisitions on AMZN's stock price.",
+      "type": "STOCK_ANALYSIS",
+      "symbols": ["AMZN"],
+      "function": "evaluate_effect_major_acquisitions",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": "AMZN",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        },
+        {
+          "name": "acquisition_events",
+          "query_parameters": {
+            "symbol": "AMZN",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Evaluate stock price changes around major acquisition dates."
+    },
+    "14": {
+      "question": "Study the relationship between oil prices and XOM's stock performance.",
+      "type": "STOCK_ANALYSIS",
+      "symbols": ["XOM"],
+      "function": "study_relationship_oil_prices",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": "XOM",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        },
+        {
+          "name": "historical_oil_prices",
+          "query_parameters": {
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Analyze the correlation between oil prices and stock performance."
+    },
+    "15": {
+      "question": "Compare the historical performance of GOOGL and BIDU.",
+      "type": "COMPARISON",
+      "symbols": ["GOOGL", "BIDU"],
+      "function": "compare_historical_performance",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": ["GOOGL", "BIDU"],
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Requires 5 years of historical stock price data."
+    },
+    "16": {
+      "question": "Analyze the impact of regulatory changes on FB's stock price.",
+      "type": "STOCK_ANALYSIS",
+      "symbols": ["FB"],
+      "function": "analyze_impact_regulatory_changes",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": "FB",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        },
+        {
+          "name": "regulatory_change_events",
+          "query_parameters": {
+            "symbol": "FB",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Evaluate stock price changes around regulatory change dates."
+    },
+    "17": {
+      "question": "Compare the dividend payout ratios of T and VZ.",
+      "type": "COMPARISON",
+      "symbols": ["T", "VZ"],
+      "function": "compare_dividend_payout_ratios",
+      "inputs": [
+        {
+          "name": "historical_dividend_payout_ratios",
+          "query_parameters": {
+            "symbol": ["T", "VZ"],
+            "start_date": "2014-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Requires 10 years of historical dividend payout ratio data."
+    },
+    "18": {
+      "question": "Study the effect of major legal settlements on BA's stock price.",
+      "type": "STOCK_ANALYSIS",
+      "symbols": ["BA"],
+      "function": "study_effect_legal_settlements",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": "BA",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        },
+        {
+          "name": "legal_settlement_events",
+          "query_parameters": {
+            "symbol": "BA",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Analyze stock price changes around major legal settlement dates."
+    },
+    "19": {
+      "question": "Compare the performance of DIS and NFLX during streaming service launches.",
+      "type": "COMPARISON",
+      "symbols": ["DIS", "NFLX"],
+      "function": "compare_performance_during_streaming_launches",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": ["DIS", "NFLX"],
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        },
+        {
+          "name": "streaming_launch_events",
+          "query_parameters": {
+            "symbol": ["DIS", "NFLX"],
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Evaluate stock performance during streaming service launch periods."
+    },
+    "20": {
+      "question": "Evaluate the impact of major product recalls on TM's stock price.",
+      "type": "STOCK_ANALYSIS",
+      "symbols": ["TM"],
+      "function": "evaluate_impact_product_recalls",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": "TM",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        },
+        {
+          "name": "product_recall_events",
+          "query_parameters": {
+            "symbol": "TM",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Analyze stock price changes around major product recall dates."
+    },
+    "unique_inputs": [
+      "historical_stock_prices",
+      "interest_rate_changes",
+      "acquisition_events",
+      "historical_oil_prices",
+      "regulatory_change_events",
+      "historical_dividend_payout_ratios",
+      "legal_settlement_events",
+      "streaming_launch_events",
+      "product_recall_events"
+    ],
+    "unique_functions": [
+      "analyze_impact_interest_rate_changes",
+      "compare_stock_price_volatility",
+      "evaluate_effect_major_acquisitions",
+      "study_relationship_oil_prices",
+      "compare_historical_performance",
+      "analyze_impact_regulatory_changes",
+      "compare_dividend_payout_ratios",
+      "study_effect_legal_settlements",
+      "compare_performance_during_streaming_launches",
+      "evaluate_impact_product_recalls"
+    ],
+    "all_questions": [
+      "Analyze the impact of interest rate changes on JPM's stock price.",
+      "Compare the stock price volatility of TSLA and GM.",
+      "Evaluate the effect of major acquisitions on AMZN's stock price.",
+      "Study the relationship between oil prices and XOM's stock performance.",
+      "Compare the historical performance of GOOGL and BIDU.",
+      "Analyze the impact of regulatory changes on FB's stock price.",
+      "Compare the dividend payout ratios of T and VZ.",
+      "Study the effect of major legal settlements on BA's stock price.",
+      "Compare the performance of DIS and NFLX during streaming service launches.",
+      "Evaluate the impact of major product recalls on TM's stock price."
+    ]
+  }
+  

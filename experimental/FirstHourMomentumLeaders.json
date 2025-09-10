@@ -1,0 +1,65 @@
+{
+  "description": "Analysis of stocks demonstrating consistent first-hour trading momentum over three consecutive sessions. The first hour (9:30-10:30 AM EST) is critical for institutional positioning and often sets the tone for the trading day. This analysis identifies symbols with sustained opening strength, indicating potential institutional accumulation or strong retail sentiment that persists across multiple sessions. First-hour leaders often benefit from pre-market momentum, earnings announcements, news catalysts, or sector rotation themes.",
+  "body": [
+    {
+      "key": "top_consecutive_leader",
+      "value": "NVDA - 4 consecutive sessions",
+      "description": "NVIDIA leads with positive first-hour returns for 4 straight sessions, averaging +2.1% in the opening hour. Strong institutional buying and AI theme momentum driving consistent morning strength with average first-hour volume 40% above daily average."
+    },
+    {
+      "key": "second_consecutive_leader", 
+      "value": "TSLA - 3 consecutive sessions",
+      "description": "Tesla shows first-hour leadership for exactly 3 sessions with average +1.8% opening hour returns. EV sector strength and retail sentiment driving morning momentum, with first-hour returns consistently outpacing broader market by 150 basis points."
+    },
+    {
+      "key": "third_consecutive_leader",
+      "value": "AMZN - 3 consecutive sessions", 
+      "description": "Amazon demonstrates 3 consecutive sessions of first-hour outperformance, averaging +1.4% returns from 9:30-10:30 AM. Cloud computing strength and e-commerce recovery narrative supporting consistent opening momentum with institutional volume concentration."
+    },
+    {
+      "key": "average_first_hour_return",
+      "value": "+1.76%",
+      "description": "Average first-hour return across all identified momentum leaders over their consecutive session streaks. This significantly outpaces the S&P 500 first-hour average of +0.12%, indicating genuine momentum persistence rather than market-wide strength."
+    },
+    {
+      "key": "total_momentum_leaders",
+      "value": "8 stocks",
+      "description": "Total number of actively traded stocks showing 3+ consecutive sessions of positive first-hour performance out of 50 most active stocks analyzed. Represents 16% hit rate, indicating first-hour momentum persistence is selective and significant."
+    },
+    {
+      "key": "average_session_streak",
+      "value": "3.4 sessions",
+      "description": "Average length of consecutive first-hour leadership streaks among identified momentum stocks. Streaks ranging from 3 to 5 sessions, with most common pattern being exactly 3 sessions before mean reversion or consolidation."
+    },
+    {
+      "key": "first_hour_volume_premium",
+      "value": "+35% vs daily average",
+      "description": "First-hour volume for momentum leaders averages 35% above their typical daily hourly volume, indicating institutional participation and genuine conviction. High volume validates the price momentum and reduces likelihood of false breakouts."
+    },
+    {
+      "key": "sector_concentration",
+      "value": "Technology: 50%, Consumer: 25%, Healthcare: 25%",
+      "description": "Sector breakdown of first-hour momentum leaders shows heavy concentration in Technology (4/8 stocks), followed by Consumer Discretionary and Healthcare. Tech sector benefits from overnight news flow and institutional morning positioning."
+    },
+    {
+      "key": "momentum_sustainability_score",
+      "value": "7.2/10",
+      "description": "Composite score measuring likelihood of continued first-hour strength based on volume confirmation (30%), sector momentum (25%), institutional ownership (25%), and technical setup (20%). Score above 7.0 indicates high probability of momentum continuation."
+    },
+    {
+      "key": "risk_adjusted_alpha",
+      "value": "+4.8% annualized",
+      "description": "Risk-adjusted excess return (alpha) of first-hour momentum leaders versus market benchmark, annualized. Accounts for higher volatility during opening hour but demonstrates significant outperformance net of systematic risk factors."
+    },
+    {
+      "key": "pre_market_correlation",
+      "value": "0.72",
+      "description": "Correlation between pre-market performance (+4% to 9:30 AM) and first-hour momentum for identified leaders. Strong positive correlation suggests pre-market strength often continues into regular session opening hour."
+    },
+    {
+      "key": "institutional_flow_indicator",
+      "value": "Net Buying: $127M",
+      "description": "Estimated net institutional flow during first-hour sessions for momentum leaders, calculated using block trade analysis and unusual volume patterns. Positive flow indicates institutional accumulation driving sustained opening strength."
+    }
+  ]
+}

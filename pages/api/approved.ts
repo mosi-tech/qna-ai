@@ -19,7 +19,12 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       fs.writeFileSync(file, JSON.stringify([]));
     }
     const raw = fs.readFileSync(file, 'utf-8');
-    const data = JSON.parse(raw);
+    let data: any = [];
+    try {
+      data = raw && raw.trim().length > 0 ? JSON.parse(raw) : [];
+    } catch {
+      data = [];
+    }
 
     // Migrate legacy format (array of ids) to objects with question/file/name
     const normalized = (Array.isArray(data) ? data : [])
@@ -27,7 +32,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
         if (typeof item === 'string') {
           const def = registryMap[item];
           return def
-            ? { id: def.id, question: '', file: def.file, name: def.name, apis: [], position: undefined }
+            ? { id: def.id, question: '', file: def.file, name: def.name, apis: [], position: undefined, output: def.file, workflow: [], description: def.description }
             : null;
         }
         if (item && typeof item === 'object' && typeof item.id === 'string') {
@@ -38,6 +43,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
             file: item.file || (def ? def.file : ''),
             name: item.name || (def ? def.name : item.id),
             apis: Array.isArray(item.apis) ? item.apis.filter((x: any) => typeof x === 'string') : [],
+            output: typeof item.output === 'string' ? item.output : (def ? def.file : ''),
+            workflow: Array.isArray(item.workflow) ? item.workflow : [],
+            description: typeof item.description === 'string' ? item.description : (def ? def.description : ''),
             position: item.position && typeof item.position === 'object' ? item.position : undefined,
           };
         }

@@ -1,23 +1,393 @@
 [
   {
-    "id": "trading-performance-dashboard",
-    "question": "What is my trading performance and account activity over the past 30 days?",
-    "name": "Trading Performance Dashboard",
-    "file": "experimental/TradingPerformanceDashboard.tsx",
-    "description": "Comprehensive view of trading performance and account activity over past 30 days.",
+    "id": "positions-cpi-performance",
+    "name": "Position CPI Release Day Performance",
+    "file": "experimental/PositionsCPIPerformance.json",
+    "output": "/experimental/PositionsCPIPerformance.json",
+    "question": "Which of my positions showed positive returns during past CPI release days?",
+    "description": "Analyzes current portfolio positions to identify which holdings demonstrated the strongest positive performance during past CPI (Consumer Price Index) release days. Examines position returns on key CPI announcement dates over the past 12 months, providing insights into which holdings serve as inflation hedges or benefit from CPI-driven market reactions for tactical allocation and risk management.",
+    "apis": ["trading:/v2/positions", "marketdata:/v2/stocks/bars"],
     "workflow": [
-      "1. Get Account Overview: Call /v2/account to get current account status, portfolio value, buying power, pattern day trader flags",
-      "2. Get Portfolio History: Call /v2/account/portfolio/history with period='30D' and timeframe='1D' to get daily portfolio performance and P&L",
-      "3. Get Current Positions: Call /v2/positions to get all open positions with market values and unrealized P&L",
-      "4. Get Account Activities: Call /v2/account/activities with after=(30 days ago) to get all trading fills and non-trading activities like dividends",
-      "5. Calculate Performance Metrics: Process portfolio history to calculate total return, best/worst days, win/loss ratio from activities",
-      "6. Display Dashboard: Show account overview cards, portfolio performance chart, position allocation pie chart, and recent activity table with tabs"
+      { "type": "fetch", "description": "Step 1: Retrieve current portfolio positions using trading:/v2/positions to identify all held symbols, quantities, and market values for CPI performance analysis." },
+      { "type": "fetch", "description": "Step 2: For each position symbol, fetch 12 months of historical daily bars using marketdata:/v2/stocks/bars with timeframe=1Day to capture comprehensive price data covering multiple CPI release cycles." },
+      { "type": "engine", "description": "Step 3: Identify CPI release dates over the past 12 months using economic calendar data or manual date identification for the 12 monthly CPI announcements (typically mid-month releases)." },
+      { "type": "engine", "description": "Step 4: For each position and each CPI release date, calculate single-day returns using (close_price - open_price) / open_price * 100 to measure specific CPI-day performance." },
+      { "type": "engine", "description": "Step 5: Calculate comprehensive CPI performance statistics for each position: average CPI-day return, success rate (percentage of positive CPI days), volatility multiplier (CPI-day volatility vs normal days), and return consistency." },
+      { "type": "engine", "description": "Step 6: Compare CPI-day performance to baseline daily performance for each position to identify CPI alpha generation and statistical significance of inflation data sensitivity." },
+      { "type": "engine", "description": "Step 7: Analyze volume patterns on CPI days to identify institutional positioning changes and validate performance attribution to genuine CPI reactions versus random market noise." },
+      { "type": "compute", "description": "Step 8: Rank all positions by CPI performance metrics, format results with detailed statistics, correlation insights, and actionable recommendations for inflation-sensitive tactical allocation strategies." }
     ],
-    "apis": [
-      "trading:/v2/account",
-      "trading:/v2/account/portfolio/history",
-      "trading:/v2/positions",
-      "trading:/v2/account/activities"
+    "followUp": ["How do my CPI performers correlate with sector inflation sensitivity?", "Which positions provide the best hedge against CPI surprises?", "How should I adjust position sizing ahead of CPI releases?"]
+  },
+  {
+    "id": "position-rolling-skew",
+    "name": "Position Rolling Skew Analysis",
+    "file": "experimental/PositionRollingSkew.json",
+    "output": "/experimental/PositionRollingSkew.json",
+    "question": "Which of my positions have the highest rolling skew of daily returns?",
+    "description": "Analyzes portfolio positions to identify which holdings demonstrate the highest rolling skewness in their daily return distributions over a 30-day window. Rolling skewness measures return asymmetry - positive skew indicates momentum-like patterns with occasional large gains, while negative skew suggests mean-reversion with frequent small gains and occasional large losses. This analysis helps assess position risk characteristics and behavioral patterns for optimal portfolio management.",
+    "apis": ["trading:/v2/positions", "marketdata:/v2/stocks/bars"],
+    "workflow": [
+      { "type": "fetch", "description": "Step 1: Fetch current account positions using trading:/v2/positions to identify all held symbols, quantities, and market values for skewness analysis." },
+      { "type": "fetch", "description": "Step 2: Fetch 90-day historical daily bars for each position symbol using marketdata:/v2/stocks/bars with timeframe=1Day, adjustment=all to gather comprehensive OHLC data for statistical calculations." },
+      { "type": "engine", "description": "Step 3: Calculate daily returns for each position using consecutive closing prices: daily_return = (close_t - close_t-1) / close_t-1, handling missing data and corporate actions appropriately." },
+      { "type": "engine", "description": "Step 4: Calculate 30-day rolling skewness for each position's daily returns using scipy.stats.skew with rolling window methodology, providing current asymmetry measurements for each holding." },
+      { "type": "compute", "description": "Step 5: Rank positions by rolling skew values (highest positive and most negative), add position context including market values, quantities, and risk-adjusted insights for portfolio optimization decisions." }
+    ],
+    "followUp": ["Which positions show the most symmetric return distributions?", "How do skewness patterns change during different market regimes?", "Which holdings provide the best downside protection through negative skew?"]
+  },
+  {
+    "id": "position-200day-trend-steepness",
+    "name": "Position 200-Day Trend Steepness",
+    "file": "experimental/Position200DayTrendSteepness.json",
+    "output": "/experimental/Position200DayTrendSteepness.json",
+    "question": "Which of my positions show the steepest 200-day trend?",
+    "description": "Analyzes current portfolio positions to identify which holdings demonstrate the steepest 200-day price trends using linear regression analysis on 8 months of closing price data. Measures trend slope steepness, statistical strength (R-squared), and long-term momentum sustainability to rank positions by their directional strength and trend consistency for strategic portfolio management.",
+    "apis": ["trading:/v2/positions", "marketdata:/v2/stocks/bars"],
+    "workflow": [
+      { "type": "fetch", "description": "Step 1: Get current portfolio positions using trading:/v2/positions to retrieve all held symbols, quantities, and current market values for trend steepness analysis." },
+      { "type": "fetch", "description": "Step 2: For each position symbol, fetch 200 trading days (~280 calendar days) of historical daily bars using marketdata:/v2/stocks/bars with timeframe=1Day to gather comprehensive long-term price data for linear regression." },
+      { "type": "engine", "description": "Step 3: Apply linear regression analysis to each position's 200-day closing price series to calculate trend slope (daily price change rate), R-squared (trend strength), and statistical significance of directional patterns." },
+      { "type": "engine", "description": "Step 4: Convert trend slopes to geometric angles and steepness metrics, categorizing trends as steep upward (>45°), moderate upward (15°-45°), sideways (-15° to 15°), moderate downward (-45° to -15°), or steep downward (<-45°)." },
+      { "type": "compute", "description": "Step 5: Rank all positions by trend slope steepness (both positive and negative), format results with detailed trend metrics, statistical significance, and portfolio management insights for long-term directional positioning." }
+    ],
+    "followUp": ["Which positions have the most consistent 200-day trends?", "How do my steepest trend positions perform during market corrections?", "Which positions are showing trend deterioration or reversal signals?"]
+  },
+  {
+    "id": "etf-monthly-volatility-ranking",
+    "name": "ETF Monthly Volatility Ranking",
+    "file": "experimental/ETFMonthlyVolatilityRanking.json",
+    "output": "/experimental/ETFMonthlyVolatilityRanking.json",
+    "question": "Which ETFs exhibit the highest realized volatility this month?",
+    "description": "Analyzes actively traded ETFs to identify those with the highest realized volatility over the current month using daily return standard deviation calculations. Focuses on leveraged ETFs, sector-specific funds, and emerging market exposures to help investors understand current risk levels and volatility patterns across different ETF categories for enhanced risk management and tactical allocation decisions.",
+    "apis": ["marketdata:/v1beta1/screener/stocks/most-actives", "trading:/v2/assets", "marketdata:/v2/stocks/bars"],
+    "workflow": [
+      { "type": "fetch", "description": "Step 1: Get list of 100 most active securities using marketdata:/v1beta1/screener/stocks/most-actives to focus on liquid, actively traded instruments with sufficient volume for reliable volatility analysis." },
+      { "type": "fetch", "description": "Step 2: Retrieve all tradeable assets using trading:/v2/assets with asset_class=us_equity to get complete asset metadata and identify which active securities are actually ETFs versus individual stocks." },
+      { "type": "engine", "description": "Step 3: Cross-reference most active securities with asset data to filter for ETF symbols only, creating a focused list of actively traded ETFs for monthly volatility ranking analysis." },
+      { "type": "fetch", "description": "Step 4: For each identified ETF symbol, fetch current month's historical daily bars using marketdata:/v2/stocks/bars with timeframe=1Day to gather complete OHLC price data for volatility calculations." },
+      { "type": "engine", "description": "Step 5: Calculate daily returns for each ETF using consecutive closing prices and compute monthly realized volatility using standard deviation of daily returns, then annualize by multiplying by sqrt(252)." },
+      { "type": "compute", "description": "Step 6: Rank all ETFs by annualized realized volatility (highest first), format results with comprehensive volatility metrics, sector analysis, leverage characteristics, and risk management insights for tactical ETF allocation decisions." }
+    ],
+    "followUp": ["Which ETF sectors show the most volatility clustering this month?", "How do leveraged ETF volatility patterns compare to their underlying sectors?", "What are optimal position sizing strategies for high-volatility ETFs?"]
+  },
+  {
+    "id": "first-hour-momentum-leaders",
+    "name": "First Hour Momentum Leaders (3+ Sessions)",
+    "file": "experimental/FirstHourMomentumLeaders.json",
+    "output": "/experimental/FirstHourMomentumLeaders.json",
+    "question": "Which symbols led the first hour of trading for three straight sessions?",
+    "description": "Identifies stocks demonstrating consistent first-hour trading momentum (9:30-10:30 AM EST) over three or more consecutive sessions. Analyzes opening hour performance patterns to reveal stocks with sustained institutional buying interest, pre-market momentum continuation, and strong retail sentiment. First-hour leaders often indicate important market themes like sector rotation, earnings momentum, or news-driven catalysts that persist across multiple trading sessions.",
+    "apis": ["marketdata:/v1beta1/screener/stocks/most-actives", "marketdata:/v2/stocks/bars"],
+    "workflow": [
+      { "type": "fetch", "description": "Step 1: Get list of 50 most active stocks using marketdata:/v1beta1/screener/stocks/most-actives with top=50 to focus analysis on liquid, institutional-quality stocks with meaningful first-hour volume and price action for reliable momentum analysis." },
+      { "type": "fetch", "description": "Step 2: For each active stock symbol, fetch 5 trading days of hourly historical bars using marketdata:/v2/stocks/bars with timeframe=1Hour to capture comprehensive first-hour trading patterns across recent sessions." },
+      { "type": "engine", "description": "Step 3: Isolate first-hour data by filtering for 9:30-10:30 AM EST time window from hourly bars, ensuring accurate capture of opening momentum for each trading session without pre-market or extended hours noise." },
+      { "type": "engine", "description": "Step 4: Calculate first-hour returns for each stock and session using ((first_hour_close - first_hour_open) / first_hour_open) * 100, creating percentage return series for momentum analysis." },
+      { "type": "engine", "description": "Step 5: Identify consecutive positive first-hour sessions for each stock, tracking streaks of 3+ consecutive trading days with positive opening hour performance to establish momentum leadership patterns." },
+      { "type": "engine", "description": "Step 6: Calculate momentum strength metrics including: average first-hour return during streak, first-hour volume relative to daily average, volatility during opening hour, and consistency of positive performance." },
+      { "type": "engine", "description": "Step 7: Analyze sector distribution, market cap characteristics, and institutional ownership patterns of first-hour momentum leaders to identify common themes driving sustained opening strength." },
+      { "type": "engine", "description": "Step 8: Compute pre-market correlation analysis by examining relationship between pre-market performance (4:00 AM - 9:30 AM EST) and subsequent first-hour momentum to validate continuation patterns." },
+      { "type": "engine", "description": "Step 9: Calculate risk-adjusted momentum scores combining first-hour alpha versus market benchmark, volume confirmation ratios, and sustainability indicators based on historical performance of similar patterns." },
+      { "type": "compute", "description": "Step 10: Rank all qualifying stocks by consecutive session streak length and momentum strength, format results with detailed first-hour analytics, institutional flow estimates, and actionable insights for momentum trading strategies." }
+    ],
+    "followUp": ["Which first-hour leaders have the strongest pre-market correlation?", "How do first-hour momentum patterns perform during different market conditions?", "Which sectors consistently produce the most first-hour momentum leaders?"]
+  },
+  {
+    "id": "holdings-news-sensitivity-analysis",
+    "name": "Holdings News Sensitivity Analysis",
+    "file": "experimental/HoldingsNewsSensitivityAnalysis.json",
+    "output": "/experimental/HoldingsNewsSensitivityAnalysis.json",
+    "question": "Which of my holdings are most sensitive to headline-driven volatility spikes?",
+    "description": "Analyzes portfolio holdings to identify which positions are most reactive to news events and headline-driven volatility. Correlates position price movements with news volume, sentiment changes, and volatility expansion during high-news periods over the past 90 days. Provides comprehensive sensitivity scores, correlation metrics, and risk management insights to help investors understand which holdings require closer monitoring during news cycles and may benefit from adjusted position sizing during periods of elevated market uncertainty.",
+    "apis": ["trading:/v2/positions", "marketdata:/v2/stocks/bars", "marketdata:/v1beta1/news"],
+    "workflow": [
+      { "type": "fetch", "description": "Step 1: Get current portfolio positions using trading:/v2/positions to identify all held symbols, quantities, market values, and position weights for news sensitivity analysis." },
+      { "type": "fetch", "description": "Step 2: For each position symbol, fetch 90 days of historical daily bars using marketdata:/v2/stocks/bars with timeframe=1Day to gather comprehensive price data for volatility calculations and correlation analysis." },
+      { "type": "fetch", "description": "Step 3: Retrieve 90 days of news articles for each position using marketdata:/v1beta1/news with symbol filtering to get headline volume, sentiment, and timing data for correlation analysis." },
+      { "type": "engine", "description": "Step 4: Calculate daily returns for each holding using consecutive closing prices: daily_return = (close_today - close_yesterday) / close_yesterday, creating return series for volatility and correlation analysis." },
+      { "type": "engine", "description": "Step 5: Calculate baseline volatility metrics for each position using 30-day rolling windows of daily returns: standard deviation, average true range, and volatility percentiles for normal vs high-news periods." },
+      { "type": "engine", "description": "Step 6: Identify high-news days for each position by detecting days with >3 news articles or significant sentiment changes, creating binary classification for news-event vs normal trading days." },
+      { "type": "engine", "description": "Step 7: Calculate news-period volatility expansion by comparing volatility during high-news days vs baseline periods: volatility_multiplier = news_day_volatility / baseline_volatility for each holding." },
+      { "type": "engine", "description": "Step 8: Compute correlation coefficients between daily price movements and news metrics including: article count, sentiment scores, and news timing (pre-market vs intraday) for each position." },
+      { "type": "engine", "description": "Step 9: Analyze VIX correlation amplification by measuring how news sensitivity increases during market stress periods (VIX >25) vs normal market conditions for risk assessment." },
+      { "type": "engine", "description": "Step 10: Calculate comprehensive news sensitivity scores (0-10 scale) combining volatility expansion (40%), news correlation (30%), sentiment impact (20%), and consistency metrics (10%) for each holding." },
+      { "type": "engine", "description": "Step 11: Perform portfolio-level analysis including sector concentration risk, correlation clustering during news events, and identification of defensive vs speculative position allocations." },
+      { "type": "compute", "description": "Step 12: Rank all holdings by news sensitivity scores, format results with detailed metrics including volatility multipliers, correlation coefficients, optimal position sizing adjustments, and actionable risk management recommendations for headline-sensitive positions." }
+    ],
+    "followUp": ["How can I hedge my most news-sensitive positions?", "Which sectors provide the best diversification during news-driven volatility?", "What are optimal position sizes for my headline-sensitive holdings during earnings season?"]
+  },
+  {
+    "id": "etf-volatility-analysis",
+    "name": "ETF Volatility Analysis (30-Day)",
+    "file": "experimental/ETFVolatilityAnalysis.json",
+    "output": "/experimental/ETFVolatilityAnalysis.json",
+    "question": "Which actively traded ETFs exhibit the highest realized volatility over the past 30 days?",
+    "description": "Analyzes the most actively traded ETFs to identify those with the highest 30-day realized volatility, providing comprehensive risk metrics including maximum drawdown, Value-at-Risk, and sector concentration analysis. Focuses on leveraged ETFs and volatile sectors like technology, energy, and biotech to help investors understand current market risk patterns and make informed tactical allocation decisions.",
+    "apis": ["marketdata:/v1beta1/screener/stocks/most-actives", "trading:/v2/assets", "marketdata:/v2/stocks/bars"],
+    "workflow": [
+      { "type": "fetch", "description": "Step 1: Get list of 50 most active securities using marketdata:/v1beta1/screener/stocks/most-actives with top=50 to focus on liquid, actively traded instruments with sufficient volume for reliable volatility analysis." },
+      { "type": "fetch", "description": "Step 2: Retrieve all tradeable assets using trading:/v2/assets with asset_class=us_equity to get complete asset metadata and identify which active securities are actually ETFs." },
+      { "type": "engine", "description": "Step 3: Cross-reference most active securities with asset data to filter for ETF symbols only, creating a focused list of actively traded ETFs for volatility analysis." },
+      { "type": "fetch", "description": "Step 4: For each identified ETF symbol, fetch 30 trading days (~42 calendar days) of historical daily bars using marketdata:/v2/stocks/bars with timeframe=1Day to gather complete OHLC price data for volatility calculations." },
+      { "type": "engine", "description": "Step 5: Calculate daily returns for each ETF using consecutive closing prices: daily_return = (close_today - close_yesterday) / close_yesterday, creating return series for statistical analysis." },
+      { "type": "engine", "description": "Step 6: Compute 30-day realized volatility for each ETF using standard deviation of daily returns, then annualize by multiplying by sqrt(252) to get comparable annualized volatility metrics." },
+      { "type": "engine", "description": "Step 7: Calculate additional risk metrics including maximum drawdown (largest peak-to-trough decline), Value-at-Risk (95% confidence level), and volatility percentile ranking relative to historical norms." },
+      { "type": "engine", "description": "Step 8: Analyze sector and asset class distribution of high-volatility ETFs to identify concentration patterns, market themes, and underlying factor exposures driving volatility spikes." },
+      { "type": "compute", "description": "Step 9: Rank all ETFs by annualized realized volatility (highest first), format results with comprehensive volatility metrics, risk statistics, and actionable insights for risk management and tactical allocation decisions." }
+    ],
+    "followUp": ["Which ETF sectors show the most volatility clustering?", "How do leveraged ETF volatility patterns compare to unleveraged equivalents?", "What are the optimal position sizing strategies for high-volatility ETFs?"]
+  },
+  {
+    "id": "position-trend-analysis-200day",
+    "name": "Position 200-Day Trend Analysis",
+    "file": "experimental/PositionTrendAnalysis200Day.json",
+    "output": "/experimental/PositionTrendAnalysis200Day.json",
+    "question": "Which of my positions show the steepest 200-day trend?",
+    "description": "Analyzes current portfolio positions to identify which holdings demonstrate the steepest 200-day price trends using linear regression analysis. Measures trend slope steepness, statistical strength (R-squared), and long-term momentum sustainability to rank positions by their directional strength over the past 8 months of trading data.",
+    "apis": ["trading:/v2/positions", "marketdata:/v2/stocks/bars"],
+    "workflow": [
+      { "type": "fetch", "description": "Step 1: Get current portfolio positions using trading:/v2/positions to retrieve all held symbols, quantities, and current market values for trend analysis." },
+      { "type": "fetch", "description": "Step 2: For each position symbol, fetch 200 trading days (~280 calendar days) of historical daily bars using marketdata:/v2/stocks/bars with timeframe=1Day to gather comprehensive long-term price data." },
+      { "type": "engine", "description": "Step 3: Apply linear regression analysis to each position's 200-day closing price series to calculate trend slope (daily price change rate), R-squared (trend strength), and correlation coefficient." },
+      { "type": "engine", "description": "Step 4: Convert trend slopes to geometric angles and steepness metrics, categorizing trends as steep upward (>45°), moderate upward (15°-45°), sideways (-15° to 15°), moderate downward (-45° to -15°), or steep downward (<-45°)." },
+      { "type": "engine", "description": "Step 5: Calculate comprehensive trend statistics including: daily slope rate, 200-day total return, trend consistency (R-squared), volatility around trend line, and momentum sustainability indicators." },
+      { "type": "engine", "description": "Step 6: Analyze portfolio-level trend distribution, identify concentration risks in similar trend directions, and assess overall long-term momentum characteristics across all positions." },
+      { "type": "compute", "description": "Step 7: Rank all positions by trend slope steepness (both positive and negative), format results with detailed trend metrics, statistical significance, and actionable insights for portfolio management and trend-following strategies." }
+    ],
+    "followUp": ["Which positions have the most consistent 200-day trends?", "How do my steepest trend positions perform during market corrections?", "Which positions are showing trend deterioration or reversal signals?"]
+  },
+  {
+    "id": "failed-breakdown-analysis",
+    "name": "Failed Breakdown Analysis (60-Day)",
+    "file": "experimental/FailedBreakdownAnalysis.json",
+    "output": "/experimental/FailedBreakdownAnalysis.json",
+    "question": "Which symbols had the most failed breakdowns in the past 60 days?",
+    "description": "Identifies stocks that demonstrated the highest frequency of 'failed breakdowns' over the past 60 days, where breakdown attempts below key technical support levels (20-day or 50-day moving averages) were quickly reversed within 3-5 trading days. Failed breakdowns often indicate strong institutional support and can be bullish technical signals, providing insights into stocks with resilient price action and potential reversal opportunities during market weakness.",
+    "apis": ["marketdata:/v1beta1/screener/stocks/most-actives", "marketdata:/v2/stocks/bars"],
+    "workflow": [
+      { "type": "fetch", "description": "Step 1: Get list of 100 most active stocks using marketdata:/v1beta1/screener/stocks/most-actives to focus analysis on liquid, institutional-quality stocks with meaningful trading volumes and sufficient market participation for reliable technical analysis." },
+      { "type": "fetch", "description": "Step 2: For each active stock symbol, fetch 60 trading days (84 calendar days) of historical daily bars using marketdata:/v2/stocks/bars with timeframe=1Day to gather complete OHLC price data for technical analysis." },
+      { "type": "engine", "description": "Step 3: Calculate 20-day and 50-day simple moving averages for each stock using daily closing prices, creating dynamic support/resistance levels that will be used to identify breakdown attempts." },
+      { "type": "engine", "description": "Step 4: Identify breakdown events by detecting when stocks close below their 20-day moving average (primary criterion) or 50-day moving average (secondary criterion), with minimum 1% breach required to filter out minor violations." },
+      { "type": "engine", "description": "Step 5: For each breakdown event, track the recovery pattern over the following 5 trading days to determine if the stock successfully reclaimed the broken moving average level, classifying successful recoveries as 'failed breakdowns'." },
+      { "type": "engine", "description": "Step 6: Calculate comprehensive statistics for each symbol including: total breakdown attempts, failed breakdown count, recovery success rate, average recovery time, average recovery strength (percentage gain), and volume characteristics during breakdown events." },
+      { "type": "engine", "description": "Step 7: Analyze sector patterns, market cap correlations, and institutional ownership characteristics of stocks with the highest failed breakdown frequencies to identify common characteristics and market context." },
+      { "type": "compute", "description": "Step 8: Rank all symbols by failed breakdown frequency and create comprehensive analysis including individual stock metrics, sector concentration, trading strategy implications, and risk management guidelines for capitalizing on failed breakdown patterns." }
+    ],
+    "followUp": ["Which failed breakdown stocks have the best risk-adjusted returns?", "How do failed breakdown patterns perform during different market conditions?", "What volume characteristics distinguish successful vs unsuccessful breakdown recoveries?"]
+  },
+  {
+    "id": "holdings-least-correlated",
+    "name": "Holdings Least Correlated Analysis",
+    "file": "experimental/HoldingsLeastCorrelated.json",
+    "output": "/experimental/HoldingsLeastCorrelated.json",
+    "question": "Which of my holdings are least correlated with each other?",
+    "description": "Analyzes portfolio holdings to identify pairs with the lowest correlation coefficients over the past 90 days, providing crucial insights for portfolio diversification and risk management. Calculates pairwise correlations between all holdings using daily returns and identifies the most uncorrelated pairs that offer the best diversification benefits for reducing overall portfolio volatility.",
+    "apis": ["trading:/v2/positions", "marketdata:/v2/stocks/bars"],
+    "workflow": [
+      { "type": "fetch", "description": "Step 1: Get current portfolio positions using trading:/v2/positions to identify all held symbols, quantities, and market values for correlation analysis." },
+      { "type": "fetch", "description": "Step 2: For each position symbol, fetch 90 days of historical daily bars using marketdata:/v2/stocks/bars with timeframe=1Day to gather sufficient price data for statistical correlation calculations." },
+      { "type": "engine", "description": "Step 3: Calculate daily percentage returns for each holding using consecutive closing prices: daily_return = (close_today - close_yesterday) / close_yesterday * 100." },
+      { "type": "engine", "description": "Step 4: Compute full pairwise correlation matrix between all holdings using daily returns, applying Pearson correlation coefficient methodology to measure linear relationships between each pair." },
+      { "type": "engine", "description": "Step 5: Identify and rank pairs with the lowest correlation coefficients (closest to 0 or negative values), prioritizing combinations that offer the greatest diversification benefits." },
+      { "type": "engine", "description": "Step 6: Calculate portfolio-level diversification metrics including weighted correlation scores, sector concentration analysis, and volatility reduction estimates from low-correlation holdings." },
+      { "type": "compute", "description": "Step 7: Format results with specific correlation coefficients, portfolio weights, diversification scores, and actionable insights for improving portfolio risk-adjusted returns through strategic allocation adjustments." }
+    ],
+    "followUp": ["How can I further reduce correlation in my portfolio?", "Which asset classes would add the most diversification?", "How do these correlations change during market stress periods?"]
+  },
+  {
+    "id": "highest-up-day-percentage",
+    "name": "Highest Up Day Percentage (30-Day)",
+    "file": "experimental/HighestUpDayPercentage.json",
+    "output": "/experimental/HighestUpDayPercentage.json",
+    "question": "Which tickers have the highest percentage of up days in the last month?",
+    "description": "Analyzes the most actively traded stocks to identify which tickers demonstrate the highest consistency of positive daily performance over the past 30 trading days. An 'up day' is defined as any session where closing price exceeds opening price, providing insights into stocks with sustained intraday momentum and positive sentiment patterns.",
+    "apis": ["marketdata:/v1beta1/screener/stocks/most-actives", "marketdata:/v2/stocks/bars"],
+    "workflow": [
+      { "type": "fetch", "description": "Step 1: Get list of 100 most active stocks using marketdata:/v1beta1/screener/stocks/most-actives to focus analysis on liquid, institutional-grade stocks with meaningful trading patterns and sufficient volume for reliable analysis." },
+      { "type": "fetch", "description": "Step 2: For each active stock symbol, fetch 30 trading days of historical daily bars using marketdata:/v2/stocks/bars with timeframe=1Day and start date 30 trading days ago to capture complete OHLC data." },
+      { "type": "engine", "description": "Step 3: For each stock and each trading day, determine if it was an 'up day' by comparing closing price to opening price (up_day = close > open), creating binary daily classification for momentum analysis." },
+      { "type": "engine", "description": "Step 4: Calculate up-day statistics for each stock: total up days, up-day percentage (up_days/total_days * 100), average gain on up days, average loss on down days, and consistency metrics." },
+      { "type": "engine", "description": "Step 5: Analyze patterns across market cap segments, sectors, and volume characteristics to identify factors contributing to high up-day consistency and momentum sustainability." },
+      { "type": "compute", "description": "Step 6: Rank stocks by up-day percentage, filter for statistical significance (minimum 20 trading days), and format results with detailed performance metrics, sector analysis, and momentum insights." }
+    ],
+    "followUp": ["Which sectors show the most consistent up-day patterns?", "How do up-day percentages correlate with trading volume?", "Which high up-day stocks have the best risk-adjusted returns?"]
+  },
+  {
+    "id": "positions-weekly-range-tightness",
+    "name": "Positions with Tightest Weekly Ranges (Quarterly)", 
+    "file": "experimental/PositionsWeeklyRangeTightness.json",
+    "output": "/experimental/PositionsWeeklyRangeTightness.json",
+    "question": "Which of my positions had the tightest weekly ranges this quarter?",
+    "description": "Analyzes current portfolio positions to identify stocks with the smallest weekly trading ranges over the past quarter (13 weeks). Weekly range tightness measures the average percentage difference between weekly high and low prices, revealing the most stable and least volatile holdings that trade within narrow price bands.",
+    "apis": ["trading:/v2/positions", "marketdata:/v2/stocks/bars"],
+    "workflow": [
+      { "type": "fetch", "description": "Step 1: Get current portfolio positions using trading:/v2/positions to identify all held symbols, quantities, and current market values." },
+      { "type": "fetch", "description": "Step 2: For each position symbol, fetch 13 weeks (91 days) of historical weekly bars using marketdata:/v2/stocks/bars with timeframe=1Week and start date 91 days ago." },
+      { "type": "engine", "description": "Step 3: Calculate weekly range percentages for each position by computing ((weekly_high - weekly_low) / weekly_close) * 100 for each of the 13 weeks in the quarter." },
+      { "type": "engine", "description": "Step 4: Calculate average weekly range, standard deviation of ranges, range consistency metrics, and identify weeks with tightest/widest ranges for each position." },
+      { "type": "engine", "description": "Step 5: Rank all positions by average weekly range percentage (ascending order = tightest ranges first) and analyze volatility patterns and sector concentrations." },
+      { "type": "compute", "description": "Step 6: Format results with position details, weekly range statistics, volatility insights, institutional ownership correlations, and implications for portfolio stability and risk management." }
+    ],
+    "followUp": ["Which positions had the widest weekly ranges for comparison?", "How do my tightest-range positions perform during market stress?", "What's the correlation between weekly range tightness and dividend yield in my portfolio?"]
+  },
+  {
+    "id": "sector-etf-relative-strength",
+    "name": "Sector ETF Relative Strength Analysis",
+    "file": "experimental/SectorETFRelativeStrength.json",
+    "output": "/experimental/SectorETFRelativeStrength.json",
+    "question": "Which sector ETFs showed improving relative strength for three consecutive weeks?",
+    "description": "Analyzes major sector ETFs to identify those demonstrating sustained relative strength improvement versus the S&P 500 benchmark over consecutive three-week periods. Examines sector rotation patterns, momentum sustainability, and provides insights into emerging sector leadership for tactical allocation decisions.",
+    "apis": ["marketdata:/v2/stocks/bars"],
+    "workflow": [
+      { "type": "fetch", "description": "Step 1: Retrieve 12 weeks of daily historical bars for 11 major sector ETFs (XLK, XLF, XLE, XLV, XLI, XLP, XLU, XLRE, XLY, XLB, XLC) using marketdata:/v2/stocks/bars with timeframe=1Day." },
+      { "type": "fetch", "description": "Step 2: Get corresponding 12 weeks of SPY daily bars using marketdata:/v2/stocks/bars to establish benchmark performance for relative strength calculations." },
+      { "type": "engine", "description": "Step 3: Convert daily price data to weekly returns by calculating Friday-to-Friday percentage changes for both sector ETFs and SPY benchmark." },
+      { "type": "engine", "description": "Step 4: Calculate weekly relative strength ratios for each sector ETF by dividing sector weekly return by SPY weekly return (RS_ratio = sector_return / SPY_return)." },
+      { "type": "engine", "description": "Step 5: Identify consecutive weeks of relative strength improvement by detecting 3+ week periods where RS ratios consistently increase week-over-week." },
+      { "type": "engine", "description": "Step 6: Analyze improvement sustainability by calculating average weekly RS gains, momentum consistency scores, and volume confirmation metrics for each improving sector." },
+      { "type": "compute", "description": "Step 7: Rank sectors by relative strength improvement strength and duration, format results with sector rotation insights, and provide tactical allocation recommendations." }
+    ],
+    "followUp": ["Which individual stocks are driving sector relative strength?", "How do current sector rotations compare to historical patterns?", "What economic factors are influencing sector performance divergence?"]
+  },
+  {
+    "id": "gap-down-recovery-analysis",
+    "name": "Gap-Down Recovery Analysis",
+    "file": "experimental/GapDownRecoveryAnalysis.json",
+    "output": "/experimental/GapDownRecoveryAnalysis.json",
+    "question": "Which of my holdings most often gap down but finish green?",
+    "description": "Analyzes portfolio holdings to identify which stocks most frequently gap down at market open but recover to close higher than the opening price. Examines gap-down events and recovery success rates to rank holdings by their resilience patterns and ability to bounce back from overnight weakness.",
+    "apis": ["trading:/v2/positions", "marketdata:/v2/stocks/bars"],
+    "workflow": [
+      { "type": "fetch", "description": "Step 1: Get current portfolio positions using trading:/v2/positions to identify all held symbols and their quantities." },
+      { "type": "fetch", "description": "Step 2: For each holding, fetch 6 months of daily historical bars using marketdata:/v2/stocks/bars with timeframe=1Day to analyze gap patterns." },
+      { "type": "engine", "description": "Step 3: Identify gap-down events by comparing each day's opening price to the previous day's closing price (gap threshold >2%)." },
+      { "type": "engine", "description": "Step 4: For each gap-down session, determine if the stock 'finished green' by comparing closing price to opening price (close > open)." },
+      { "type": "engine", "description": "Step 5: Calculate recovery statistics per holding: gap-down frequency, recovery success rate, average gap magnitude, and average recovery percentage." },
+      { "type": "engine", "description": "Step 6: Analyze portfolio-wide gap-down resilience patterns and identify which holdings demonstrate strongest institutional support during weakness." },
+      { "type": "compute", "description": "Step 7: Rank holdings by gap-down recovery frequency and success rate, providing insights into which stocks show the most reliable intraday resilience." }
+    ],
+    "followUp": ["What causes the gap-down events in my top resilient holdings?", "How do my holdings' recovery rates compare to sector averages?", "Which holdings show deteriorating gap-down recovery patterns?"]
+  },
+  {
+    "id": "watchlist-momentum-ranking",
+    "name": "Watchlist Momentum Ranking (6-Month)",
+    "file": "experimental/WatchlistMomentumRanking.json",
+    "output": "/experimental/WatchlistMomentumRanking.json",
+    "question": "Which watchlist symbols have the strongest 6-month price momentum?",
+    "description": "Analyzes all symbols in user watchlists to identify those with the strongest 6-month price momentum, combining total returns with risk-adjusted metrics, trend consistency, and technical analysis. Ranks symbols by composite momentum scores that evaluate both raw performance and sustainability characteristics.",
+    "apis": ["trading:/v2/watchlists", "marketdata:/v2/stocks/bars"],
+    "workflow": [
+      { "type": "fetch", "description": "Step 1: Retrieve all user watchlists using trading:/v2/watchlists to get complete symbol lists from all watchlists." },
+      { "type": "fetch", "description": "Step 2: For each watchlist symbol, fetch 6 months of daily price bars using marketdata:/v2/stocks/bars with timeframe=1Day and start date 6 months ago." },
+      { "type": "engine", "description": "Step 3: Calculate 6-month total returns for each symbol using first and last closing prices from the historical data." },
+      { "type": "engine", "description": "Step 4: Compute daily returns and annualized volatility for each symbol to assess risk characteristics and calculate risk-adjusted momentum metrics." },
+      { "type": "engine", "description": "Step 5: Analyze trend consistency by calculating percentage of trading days above 20-day moving average and identifying higher-high/higher-low patterns." },
+      { "type": "engine", "description": "Step 6: Calculate composite momentum scores combining total return (35%), risk-adjusted return (25%), trend persistence (25%), and volatility penalty (15%)." },
+      { "type": "compute", "description": "Step 7: Rank all watchlist symbols by momentum scores, format results with detailed metrics, and provide actionable insights for momentum investing strategies." }
+    ],
+    "followUp": ["Which momentum stocks have the best risk profiles?", "How does my watchlist momentum compare to market benchmarks?", "Which symbols are showing momentum deterioration?"]
+  },
+  {
+    "id": "holdings-downside-correlation",
+    "name": "Holdings Downside Correlation with SPY",
+    "file": "experimental/HoldingsDownsideCorrelation.json",
+    "output": "/experimental/HoldingsDownsideCorrelation.json",
+    "question": "Which of my holdings has the highest downside correlation with SPY?",
+    "description": "Analyzes portfolio holdings' correlation with SPY specifically during market down days over the past 90 days, identifying which positions provide the least diversification benefit during stress periods.",
+    "apis": ["trading:/v2/positions", "marketdata:/v2/stocks/bars"],
+    "workflow": [
+      { "type": "fetch", "description": "Step 1: Get current positions using trading:/v2/positions to identify all portfolio holdings with symbols and quantities." },
+      { "type": "fetch", "description": "Step 2: Fetch 90 days of historical daily bars for SPY using marketdata:/v2/stocks/bars with timeframe=1Day to establish benchmark performance." },
+      { "type": "fetch", "description": "Step 3: For each portfolio holding, retrieve 90 days of daily bars using marketdata:/v2/stocks/bars to get price history for correlation analysis." },
+      { "type": "engine", "description": "Step 4: Calculate daily returns for SPY and all holdings, then identify specific days when SPY had negative returns (down days)." },
+      { "type": "engine", "description": "Step 5: For each holding, calculate correlation coefficient between holding returns and SPY returns using only the subset of SPY down days." },
+      { "type": "engine", "description": "Step 6: Calculate portfolio-weighted downside correlation and identify concentration risks in highly correlated positions." },
+      { "type": "compute", "description": "Step 7: Rank holdings by downside correlation strength, format results with correlation coefficients, position values, and diversification insights." }
+    ],
+    "followUp": ["How can I reduce my portfolio's downside correlation?", "Which asset classes provide better downside protection?", "What's my portfolio's beta during market stress?"]
+  },
+  {
+    "id": "closing-volume-spikes",
+    "name": "Largest Closing Volume Spikes Today",
+    "file": "experimental/ClosingVolumeSpikes.json",
+    "output": "/experimental/ClosingVolumeSpikes.json",
+    "question": "Which symbols had the largest volume spike at the close today?",
+    "description": "Identifies stocks with the most unusual closing hour volume activity compared to their 20-day historical averages, highlighting potential institutional positioning or news-driven activity.",
+    "apis": ["marketdata:/v1beta1/screener/stocks/most-actives", "marketdata:/v2/stocks/snapshots", "marketdata:/v2/stocks/auctions", "marketdata:/v2/stocks/bars"],
+    "workflow": [
+      { "type": "fetch", "description": "Step 1: Get list of 50 most active stocks using /v1beta1/screener/stocks/most-actives to focus analysis on liquid, institutional-grade stocks with meaningful volume patterns." },
+      { "type": "fetch", "description": "Step 2: Retrieve today's market snapshots using /v2/stocks/snapshots to get current day's total volume and trading metrics for all active stocks." },
+      { "type": "fetch", "description": "Step 3: Get today's closing auction data using /v2/stocks/auctions to isolate specific closing hour volume activity and auction participation rates." },
+      { "type": "fetch", "description": "Step 4: Fetch 20-day historical daily bars using /v2/stocks/bars with timeframe=1Day to establish baseline average closing volumes for comparison." },
+      { "type": "engine", "description": "Step 5: Calculate 20-day average closing volume for each symbol, today's closing volume percentage vs historical average, and statistical significance of volume spikes." },
+      { "type": "compute", "description": "Step 6: Rank symbols by closing volume spike magnitude (percentage above average), filter for spikes >150%, and format results with market context and implications." }
+    ],
+    "followUp": ["What caused the largest volume spikes?", "Which sectors saw the most closing activity?", "How do these spikes compare to options expiration patterns?"]
+  },
+  {
+    "id": "downside-gap-fills",
+    "name": "Largest Downside Gap Fills Today",
+    "file": "experimental/DownsideGapFills.json",
+    "output": "/experimental/DownsideGapFills.json",
+    "question": "Which symbols had the largest downside gap fills today?",
+    "description": "Identifies stocks that experienced the largest downside gaps at market open but subsequently filled those gaps during the trading session, indicating strong buying interest and potential support levels.",
+    "apis": ["marketdata:/v1beta1/screener/stocks/most-actives", "marketdata:/v2/stocks/snapshots", "marketdata:/v2/stocks/bars"],
+    "workflow": [
+      { "type": "fetch", "description": "Step 1: Get list of 50 most active stocks using marketdata:/v1beta1/screener/stocks/most-actives to focus analysis on liquid, tradeable names." },
+      { "type": "fetch", "description": "Step 2: Retrieve current market snapshots for all active stocks using marketdata:/v2/stocks/snapshots to get today's OHLC data." },
+      { "type": "fetch", "description": "Step 3: Get previous trading day's closing prices using marketdata:/v2/stocks/bars with timeframe=1Day for yesterday's date." },
+      { "type": "engine", "description": "Step 4: Calculate gap sizes by comparing today's opening price to previous day's closing price: gap_percent = (prev_close - today_open) / prev_close * 100." },
+      { "type": "engine", "description": "Step 5: Identify downside gaps (negative gaps where today_open < prev_close) and check if gap was filled (today_high >= prev_close)." },
+      { "type": "compute", "description": "Step 6: Rank successfully filled downside gaps by magnitude and format results with gap percentages, price levels, and market context." }
+    ]
+  },
+  {
+    "id": "position-rebound-after-3-down-days",
+    "name": "Position Rebound After 3 Down Days",
+    "file": "experimental/PositionReboundAfter3DownDays.json",
+    "output": "/experimental/PositionReboundAfter3DownDays.json",
+    "question": "Which of my positions tend to rebound after 3 down days in a row?",
+    "description": "Analyzes current positions to identify which stocks historically show the strongest rebound performance after experiencing 3 consecutive down days, based on 90 days of historical data.",
+    "apis": ["trading:/v2/positions", "marketdata:/v2/stocks/bars"],
+    "workflow": [
+      { "type": "fetch", "description": "Step 1: Get current positions using trading:/v2/positions to identify all held symbols and quantities." },
+      { "type": "fetch", "description": "Step 2: For each position symbol, fetch 90 days of historical daily bars using marketdata:/v2/stocks/bars with timeframe=1Day." },
+      { "type": "engine", "description": "Step 3: Identify all 3-consecutive-down-day sequences for each symbol over the 90-day period (minimum 0.5% daily decline threshold)." },
+      { "type": "engine", "description": "Step 4: For each 3-down-day occurrence, calculate the 5-day forward return to measure rebound strength." },
+      { "type": "engine", "description": "Step 5: Calculate rebound statistics per symbol: average 5-day return, success rate, frequency of patterns, and maximum drawdown during rebounds." },
+      { "type": "compute", "description": "Step 6: Rank positions by rebound strength and format results with comprehensive rebound analysis and risk considerations." }
+    ]
+  },
+  {
+    "id": "etf-outperformance-analysis",
+    "name": "ETF Outperformance vs SPY & QQQ",
+    "file": "experimental/ETFOutperformanceAnalysis.json",
+    "output": "/experimental/ETFOutperformanceAnalysis.json",
+    "question": "Which ETFs outperformed both SPY and QQQ over the last 30 days?",
+    "description": "Identifies ETFs that delivered superior returns compared to both SPY (S&P 500) and QQQ (Nasdaq 100) benchmarks over the past 30 days.",
+    "apis": ["marketdata:/v1beta1/screener/stocks/most-actives", "marketdata:/v2/stocks/bars"],
+    "workflow": [
+      { "type": "fetch", "description": "Step 1: Get list of most active ETFs using screener API with asset_class=us_equity filter." },
+      { "type": "fetch", "description": "Step 2: Retrieve 30-day historical bars for SPY using marketdata:/v2/stocks/bars with timeframe=1Day and start date 30 days ago." },
+      { "type": "fetch", "description": "Step 3: Retrieve 30-day historical bars for QQQ using marketdata:/v2/stocks/bars with timeframe=1Day and start date 30 days ago." },
+      { "type": "fetch", "description": "Step 4: Batch retrieve 30-day historical bars for each ETF from screener results using marketdata:/v2/stocks/bars." },
+      { "type": "engine", "description": "Step 5: Calculate 30-day total returns for all ETFs, SPY, and QQQ using first and last closing prices." },
+      { "type": "compute", "description": "Step 6: Filter and rank ETFs that outperformed both SPY and QQQ returns, displaying top performers with return percentages." }
+    ]
+  },
+  {
+    "id": "acct-trading-blocked",
+    "name": "Account: trading blocked?",
+    "file": "experimental/acct-trading-blocked.json",
+    "output": "/experimental/acct-trading-blocked.json",
+    "question": "Is my account currently blocked from trading?",
+    "description": "Checks your Alpaca account snapshot to see if trading is currently blocked (account_blocked).",
+    "apis": ["trading:/v2/account"],
+    "workflow": [
+      { "type": "fetch", "description": "Step 1: Retrieve account snapshot via trading:/v2/account." },
+      { "type": "compute", "description": "Step 2: Read account_blocked and format a clear yes/no result with a short note." }
     ]
   }
 ]

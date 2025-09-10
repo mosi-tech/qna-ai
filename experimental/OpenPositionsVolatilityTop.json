@@ -1,0 +1,11 @@
+{
+  "description": "Identifies which of your current open equity positions has the highest realized volatility over the past 30 trading days. This helps you understand which holding is the most price-sensitive and may require closer risk management.",
+  "body": [
+    { "key": "top_symbol", "value": "to_be_computed", "description": "Ticker of the open position with the highest 30-day realized volatility." },
+    { "key": "top_symbol_volatility_30d", "value": "to_be_computed", "description": "Annualized realized volatility based on the standard deviation of daily returns over the last 30 trading days." },
+    { "key": "symbols_considered", "value": "to_be_computed", "description": "List of symbols from your currently open positions that were included in the analysis." },
+    { "key": "calculation_notes", "value": "Daily returns from 1D bars; realized vol computed on past 30 trading days; annualized via sqrt(252).", "description": "Methodology notes so you know how the metric was derived." },
+    { "key": "data_sources", "value": ["trading:/v2/positions", "marketdata:/v2/stocks/bars"], "description": "Trading API for open positions; Market Data API for daily bars and prices." }
+  ]
+}
+

@@ -1,0 +1,69 @@
+{
+    "queries": [
+        {
+            "question": "What is an effective asset allocation strategy for a well-diversified investment portfolio?",
+            "short_question": "Effective asset allocation strategy?",
+            "category": "ASSET_ALLOCATION",
+            "function": "determine_asset_allocation",
+            "inputs": {
+                "portfolioType": "well_diversified",
+                "objective": "effective_strategy"
+            }
+        },
+        {
+            "question": "How should I distribute my investments among equities, fixed income, and alternative assets for a balanced risk profile?",
+            "short_question": "Distribute investments for balanced risk?",
+            "category": "ASSET_ALLOCATION",
+            "function": "determine_asset_allocation",
+            "inputs": {
+                "portfolioType": "balanced_risk",
+                "assetClasses": [
+                    "equities",
+                    "fixed_income",
+                    "alternative_assets"
+                ]
+            }
+        },
+        {
+            "question": "What are the key considerations for allocating assets in a portfolio aimed at long-term growth?",
+            "short_question": "Asset allocation for long-term growth?",
+            "category": "ASSET_ALLOCATION",
+            "function": "determine_asset_allocation",
+            "inputs": {
+                "portfolioType": "long_term_growth",
+                "objective": "key_considerations"
+            }
+        },
+        {
+            "question": "How can I best allocate my investments between domestic and international stocks to maximize returns?",
+            "short_question": "Allocate domestic vs. international stocks?",
+            "category": "ASSET_ALLOCATION",
+            "function": "determine_asset_allocation",
+            "inputs": {
+                "portfolioType": "maximize_returns",
+                "assetClasses": [
+                    "domestic_stocks",
+                    "international_stocks"
+                ]
+            }
+        },
+        {
+            "question": "What is the recommended asset allocation for someone nearing retirement who wants to reduce risk?",
+            "short_question": "Asset allocation nearing retirement?",
+            "category": "ASSET_ALLOCATION",
+            "function": "determine_asset_allocation",
+            "inputs": {
+                "portfolioType": "nearing_retirement",
+                "objective": "reduce_risk"
+            }
+        }
+    ],
+    "unique_functions": [
+        "determine_asset_allocation"
+    ],
+    "unique_inputs": [
+        "portfolioType",
+        "objective",
+        "assetClasses"
+    ]
+}

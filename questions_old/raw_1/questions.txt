@@ -1,0 +1,100 @@
+1. Compare the 5-year performance of AAPL and MSFT.
+2. Analyze the impact of quarterly earnings reports on AMZN's stock price.
+3. Study the effect of stock splits on TSLA's historical performance.
+4. Compare dividend yields of KO and PEP over the last decade.
+5. Evaluate the correlation between GOOGL's revenue growth and stock price.
+6. Compare the P/E ratios of AAPL and NVDA over the past 5 years.
+7. Analyze the impact of new product launches on AAPL's stock price.
+8. Compare the performance of FB and TWTR during major data privacy scandals.
+9. Study the relationship between NFLX's subscriber growth and stock price.
+10. Compare the dividend growth of JNJ and PFE over the last 10 years.
+11. Analyze the impact of interest rate changes on JPM's stock price.
+12. Compare the stock price volatility of TSLA and GM.
+13. Evaluate the effect of major acquisitions on AMZN's stock price.
+14. Study the relationship between oil prices and XOM's stock performance.
+15. Compare the historical performance of GOOGL and BIDU.
+16. Analyze the impact of regulatory changes on FB's stock price.
+17. Compare the dividend payout ratios of T and VZ.
+18. Study the effect of major legal settlements on BA's stock price.
+19. Compare the performance of DIS and NFLX during streaming service launches.
+20. Evaluate the impact of major product recalls on TM's stock price.
+21. Compare the stock price performance of NKE and ADDYY during major sports events.
+22. Analyze the relationship between gold prices and NEM's stock performance.
+23. Compare the historical P/E ratios of HD and LOW.
+24. Study the effect of trade tariffs on CAT's stock price.
+25. Compare the performance of INTC and AMD in the semiconductor market.
+26. Analyze the impact of major cybersecurity breaches on MSFT's stock price.
+27. Compare the dividend yields of PG and UL over the last decade.
+28. Study the relationship between housing market trends and HD's stock performance.
+29. Compare the historical performance of WMT and COST.
+30. Evaluate the effect of major FDA approvals on PFE's stock price.
+31. Compare the stock price volatility of BA and EADSY.
+32. Analyze the impact of major environmental regulations on CVX's stock price.
+33. Compare the dividend growth of KO and MNST.
+34. Study the relationship between airline fuel costs and DAL's stock performance.
+35. Compare the performance of AAPL and SSNLF in the smartphone market.
+36. Analyze the impact of major product recalls on F's stock price.
+37. Compare the historical P/E ratios of SBUX and DNKN.
+38. Study the effect of major legal settlements on VZ's stock price.
+39. Compare the performance of PYPL and SQ in the payment processing market.
+40. Evaluate the impact of major cybersecurity breaches on V's stock price.
+41. Compare the dividend yields of MCD and YUM over the last decade.
+42. Study the relationship between interest rates and BAC's stock performance.
+43. Compare the historical performance of AMZN and BABA.
+44. Analyze the impact of major regulatory changes on NFLX's stock price.
+45. Compare the dividend payout ratios of KO and PEP.
+46. Study the effect of major legal settlements on GOOGL's stock price.
+47. Compare the performance of DIS and CMCSA during theme park expansions.
+48. Evaluate the impact of major product recalls on GM's stock price.
+49. Compare the stock price volatility of AAPL and MSFT.
+50. Analyze the relationship between oil prices and CVX's stock performance.
+51. Compare the historical P/E ratios of JNJ and MRK.
+52. Study the effect of major trade tariffs on DE's stock price.
+53. Compare the performance of INTC and NVDA in the GPU market.
+54. Analyze the impact of major cybersecurity breaches on AAPL's stock price.
+55. Compare the dividend yields of PG and KMB over the last decade.
+56. Study the relationship between housing market trends and LOW's stock performance.
+57. Compare the historical performance of TGT and WMT.
+58. Evaluate the effect of major FDA approvals on MRK's stock price.
+59. Compare the stock price volatility of BA and LMT.
+60. Analyze the impact of major environmental regulations on XOM's stock price.
+61. Compare the dividend growth of PEP and KO.
+62. Study the relationship between airline fuel costs and AAL's stock performance.
+63. Compare the performance of AAPL and HUAWEI in the smartphone market.
+64. Analyze the impact of major product recalls on TM's stock price.
+65. Compare the historical P/E ratios of SBUX and DNKN.
+66. Study the effect of major legal settlements on VZ's stock price.
+67. Compare the performance of PYPL and SQ in the payment processing market.
+68. Evaluate the impact of major cybersecurity breaches on V's stock price.
+69. Compare the dividend yields of MCD and SBUX over the last decade.
+70. Study the relationship between interest rates and JPM's stock performance.
+71. Compare the historical performance of BABA and JD.
+72. Analyze the impact of major regulatory changes on NFLX's stock price.
+73. Compare the dividend payout ratios of KO and PEP.
+74. Study the effect of major legal settlements on GOOGL's stock price.
+75. Compare the performance of DIS and CMCSA during theme park expansions.
+76. Evaluate the impact of major product recalls on GM's stock price.
+77. Compare the stock price volatility of MSFT and AAPL.
+78. Analyze the relationship between oil prices and BP's stock performance.
+79. Compare the historical P/E ratios of JNJ and PFE.
+80. Study the effect of major trade tariffs on CAT's stock price.
+81. Compare the performance of AMD and NVDA in the GPU market.
+82. Analyze the impact of major cybersecurity breaches on MSFT's stock price.
+83. Compare the dividend yields of PG and UL over the last decade.
+84. Study the relationship between housing market trends and HD's stock performance.
+85. Compare the historical performance of WMT and COST.
+86. Evaluate the effect of major FDA approvals on MRK's stock price.
+87. Compare the stock price volatility of BA and LMT.
+88. Analyze the impact of major environmental regulations on XOM's stock price.
+89. Compare the dividend growth of KO and MNST.
+90. Study the relationship between airline fuel costs and DAL's stock performance.
+91. Compare the performance of AAPL and SSNLF in the smartphone market.
+92. Analyze the impact of major product recalls on F's stock price.
+93. Compare the historical P/E ratios of SBUX and DNKN.
+94. Study the effect of major legal settlements on VZ's stock price.
+95. Compare the performance of PYPL and SQ in the payment processing market.
+96. Evaluate the impact of major cybersecurity breaches on V's stock price.
+97. Compare the dividend yields of MCD and YUM over the last decade.
+98. Study the relationship between interest rates and BAC's stock performance.
+99. Compare the historical performance of AMZN and BABA.
+100. Analyze the impact of major regulatory changes on NFLX's stock price.

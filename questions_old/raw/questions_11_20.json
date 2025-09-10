@@ -1,0 +1,152 @@
+{
+    "queries":[
+    {
+        "question": "Analyze the impact of interest rate changes on JPM's stock price.",
+        "category": "STOCK_ANALYSIS",
+        "symbols": ["JPM"],
+        "function": "analyze_performance_around_event",
+        "inputs": {
+            "eventType": "interest_rate_changes",
+            "symbols": ["JPM"],
+            "start_date": null,
+            "end_date": null
+        }
+    },
+    {
+        "question": "Compare the stock price volatility of TSLA and GM.",
+        "category": "STOCK_ANALYSIS",
+        "symbols": ["TSLA", "GM"],
+        "function": "compare_metric",
+        "inputs": {
+            "metricType": "technical",
+            "metricName": "volatility",
+            "symbols": ["TSLA", "GM"],
+            "start_date": null,
+            "end_date": null
+        }
+    },
+    {
+        "question": "Evaluate the effect of major acquisitions on AMZN's stock price.",
+        "category": "STOCK_ANALYSIS",
+        "symbols": ["AMZN"],
+        "function": "analyze_performance_around_event",
+        "inputs": {
+            "eventType": "major_acquisitions",
+            "symbols": ["AMZN"],
+            "start_date": null,
+            "end_date": null
+        }
+    },
+    {
+        "question": "Study the relationship between oil prices and XOM's stock performance.",
+        "category": "STOCK_ANALYSIS",
+        "symbols": ["XOM"],
+        "function": "study_relationship",
+        "inputs": {
+            "symbols": ["XOM"],
+            "metrics": ["oil_prices", "stock_price"],
+            "start_date": null,
+            "end_date": null
+        }
+    },
+    {
+        "question": "Compare the historical performance of GOOGL and BIDU.",
+        "category": "STOCK_ANALYSIS",
+        "symbols": ["GOOGL", "BIDU"],
+        "function": "compare_metric",
+        "inputs": {
+            "metricType": "technical",
+            "metricName": "historical_performance",
+            "symbols": ["GOOGL", "BIDU"],
+            "start_date": null,
+            "end_date": null
+        }
+    },
+    {
+        "question": "Analyze the impact of regulatory changes on FB's stock price.",
+        "category": "STOCK_ANALYSIS",
+        "symbols": ["FB"],
+        "function": "analyze_performance_around_event",
+        "inputs": {
+            "eventType": "regulatory_changes",
+            "symbols": ["FB"],
+            "start_date": null,
+            "end_date": null
+        }
+    },
+    {
+        "question": "Compare the dividend payout ratios of T and VZ.",
+        "category": "STOCK_ANALYSIS",
+        "symbols": ["T", "VZ"],
+        "function": "compare_metric",
+        "inputs": {
+            "metricType": "fundamental",
+            "metricName": "dividend_payout_ratio",
+            "symbols": ["T", "VZ"],
+            "start_date": null,
+            "end_date": null
+        }
+    },
+    {
+        "question": "Study the effect of major legal settlements on BA's stock price.",
+        "category": "STOCK_ANALYSIS",
+        "symbols": ["BA"],
+        "function": "analyze_performance_around_event",
+        "inputs": {
+            "eventType": "major_legal_settlements",
+            "symbols": ["BA"],
+            "start_date": null,
+            "end_date": null
+        }
+    },
+    {
+        "question": "Compare the performance of DIS and NFLX during streaming service launches.",
+        "category": "STOCK_ANALYSIS",
+        "symbols": ["DIS", "NFLX"],
+        "function": "analyze_performance_around_event",
+        "inputs": {
+            "eventType": "streaming_service_launches",
+            "symbols": ["DIS", "NFLX"],
+            "start_date": null,
+            "end_date": null
+        }
+    },
+    {
+        "question": "Evaluate the impact of major product recalls on TM's stock price.",
+        "category": "STOCK_ANALYSIS",
+        "symbols": ["TM"],
+        "function": "analyze_performance_around_event",
+        "inputs": {
+            "eventType": "major_product_recalls",
+            "symbols": ["TM"],
+            "start_date": null,
+            "end_date": null
+        }
+    }
+],
+"unique_inputs": [
+    "eventType",
+    "symbols",
+    "metricType",
+    "metricName",
+    "start_date",
+    "end_date"
+],
+"unique_functions": [
+    "analyze_performance_around_event",
+    "compare_metric",
+    "study_relationship"
+],
+"questions": [
+    "Analyze the impact of interest rate changes on JPM's stock price.",
+    "Compare the stock price volatility of TSLA and GM.",
+    "Evaluate the effect of major acquisitions on AMZN's stock price.",
+    "Study the relationship between oil prices and XOM's stock performance.",
+    "Compare the historical performance of GOOGL and BIDU.",
+    "Analyze the impact of regulatory changes on FB's stock price.",
+    "Compare the dividend payout ratios of T and VZ.",
+    "Study the effect of major legal settlements on BA's stock price.",
+    "Compare the performance of DIS and NFLX during streaming service launches.",
+    "Evaluate the impact of major product recalls on TM's stock price."
+]
+}

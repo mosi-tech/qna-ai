@@ -1,0 +1,103 @@
+{
+    "functions": [
+        {
+            "function": "analyze_performance_around_event",
+            "description": "Analyzes stock performance around specific events or triggers.",
+            "example_questions": [
+                "Analyze the impact of major cybersecurity breaches on MSFT's stock price.",
+                "Evaluate the effect of major FDA approvals on MRK's stock price.",
+                "Study the effect of major legal settlements on VZ's stock price."
+            ]
+        },
+        {
+            "function": "compare_metric",
+            "description": "Compares specific metrics between multiple stocks.",
+            "example_questions": [
+                "Compare the performance of AMD and NVDA in the GPU market.",
+                "Compare the dividend yields of PG and UL over the last decade.",
+                "Compare the stock price volatility of BA and LMT.",
+                "Compare the historical performance of WMT and COST.",
+                "Compare the dividend growth of KO and MNST."
+            ]
+        },
+        {
+            "function": "study_relationship",
+            "description": "Studies the relationship between stock performance and other factors or metrics.",
+            "example_questions": [
+                "Study the relationship between housing market trends and HD's stock performance.",
+                "Study the relationship between airline fuel costs and DAL's stock performance.",
+                "Study the relationship between interest rates and BAC's stock performance."
+            ]
+        },
+        {
+            "function": "predict_future_performance",
+            "description": "Uses historical data and predictive models to forecast future stock prices or financial metrics.",
+            "example_questions": [
+                "Predict the stock price of AAPL for the next quarter based on historical trends and current data."
+            ]
+        },
+        {
+            "function": "assess_risk",
+            "description": "Evaluates the risk associated with a stock based on volatility, financial health, and external factors.",
+            "example_questions": [
+                "Assess the risk level of investing in TSLA considering its volatility and recent market conditions."
+            ]
+        },
+        {
+            "function": "perform_scenario_analysis",
+            "description": "Analyzes how different scenarios or events could impact stock performance.",
+            "example_questions": [
+                "Analyze how a 10% increase in oil prices would impact the stock performance of XOM."
+            ]
+        },
+        {
+            "function": "perform_valuation_analysis",
+            "description": "Assesses the intrinsic value of a stock using various valuation models.",
+            "example_questions": [
+                "Perform a discounted cash flow (DCF) valuation of MSFT to determine its intrinsic value."
+            ]
+        },
+        {
+            "function": "analyze_portfolio_performance",
+            "description": "Evaluates the performance of an investment portfolio based on various metrics and scenarios.",
+            "example_questions": [
+                "Analyze the performance of a portfolio consisting of AAPL, MSFT, and GOOG over the past year."
+            ]
+        },
+        {
+            "function": "perform_sentiment_analysis",
+            "description": "Analyzes sentiment from news, social media, or earnings calls to gauge market sentiment around a stock.",
+            "example_questions": [
+                "Perform a sentiment analysis of recent news articles on AMZN to determine market sentiment."
+            ]
+        },
+        {
+            "function": "compare_valuation",
+            "description": "Compares the valuation of multiple stocks using different valuation metrics.",
+            "example_questions": [
+                "Compare the valuation of AAPL and GOOG using P/E ratio and DCF analysis."
+            ]
+        },
+        {
+            "function": "perform_performance_attribution",
+            "description": "Breaks down the performance of a stock or portfolio to understand the contributions of different factors.",
+            "example_questions": [
+                "Perform a performance attribution analysis of a portfolio to determine the impact of sector allocation on returns."
+            ]
+        },
+        {
+            "function": "analyze_cash_flows",
+            "description": "Evaluates a company's cash flow statements to assess financial health and liquidity.",
+            "example_questions": [
+                "Analyze the cash flow statement of MSFT to evaluate its liquidity and financial stability."
+            ]
+        },
+        {
+            "function": "compare_historical_performance",
+            "description": "Compares historical performance metrics of different stocks over a specified period.",
+            "example_questions": [
+                "Compare the historical stock performance of AAPL and MSFT over the last decade."
+            ]
+        }
+    ]
+}

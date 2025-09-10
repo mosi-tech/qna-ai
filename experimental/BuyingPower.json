@@ -1,0 +1,10 @@
+{
+  "description": "Shows your current buying power available for new trades in your Alpaca account. Buying power reflects how much you can spend right now, considering cash, margin rules, and existing positions.",
+  "body": [
+    { "key": "buying_power", "value": "to_be_computed", "description": "Current available buying power as reported by the Trading API (typically in USD)." },
+    { "key": "cash_balance", "value": "to_be_computed", "description": "Current cash balance in your account to provide context for buying power." },
+    { "key": "portfolio_value", "value": "to_be_computed", "description": "Total equity (cash plus market value of positions), which influences buying power." },
+    { "key": "data_sources", "value": ["trading:/v2/account"], "description": "Uses Alpaca Trading API account endpoint to retrieve buying power, cash, and equity." }
+  ]
+}
+

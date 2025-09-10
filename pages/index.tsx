@@ -76,9 +76,12 @@ export default function Home() {
   const defaultPreviewId = useMemo(() => (experimental.length > 0 ? experimental[0].id : null), [experimental]);
   const previewId = queryPreviewId || defaultPreviewId;
   const previewDef = previewId ? registryMap[previewId] : null;
+  const previewMeta = previewId ? experimental.find((e) => e.id === previewId) : null;
   const isPreviewApproved = !!(previewId && approved.some((a) => a.id === previewId));
   const lastQuestion = useMemo(() => (messages.length ? messages[messages.length - 1].text : ''), [messages]);
   const [previewQuestion, setPreviewQuestion] = useState<string>('');
+  const [jsonData, setJsonData] = useState<any>(null);
+  const [jsonLoading, setJsonLoading] = useState(false);
 
   useEffect(() => {
     if (!previewId) return;
@@ -87,15 +90,51 @@ export default function Home() {
     setPreviewQuestion(exp?.question || lastQuestion || '');
   }, [previewId, lastQuestion, experimental]);
 
+  // Load JSON data for preview
+  useEffect(() => {
+    // If a Component exists for preview, skip fetching JSON
+    if (!previewDef?.file && !previewMeta?.file) {
+      setJsonData(null);
+      setJsonLoading(false);
+      return;
+    }
+    const hasComponent = (previewDef as any)?.Component;
+    if (hasComponent) {
+      setJsonData(null);
+      setJsonLoading(false);
+      return;
+    }
+
+    setJsonLoading(true);
+    const file = (previewDef as any)?.file || (previewMeta as any)?.file;
+    fetch(`/api/json?file=${encodeURIComponent(file)}`)
+      .then(res => res.json())
+      .then(data => {
+        setJsonData(data);
+        setJsonLoading(false);
+      })
+      .catch(err => {
+        console.error('Failed to load JSON:', err);
+        setJsonData(null);
+        setJsonLoading(false);
+      });
+  }, [previewDef]);
+
   const approveFromPreview = async () => {
     if (!previewId) return;
     try {
+      const meta = experimental.find((e) => e.id === previewId);
+      const q = (previewQuestion || meta?.question || '').trim();
       const res = await fetch('/api/approve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: previewId, question: (previewQuestion || '').trim() }),
+        body: JSON.stringify({ id: previewId, question: q }),
       });
       const json = await res.json();
+      if (!res.ok) {
+        console.error('Approve failed:', json?.error || res.statusText);
+        return;
+      }
       if (Array.isArray(json.approved)) setApproved(json.approved);
       
       // Refresh experimental list after approval
@@ -224,6 +263,7 @@ export default function Home() {
           <div style={{ display: 'flex', gap: 12 }}>
             <a href="/approved" style={{ fontSize: 14, color: '#1d4ed8' }}>Approved ({approved.length})</a>
             <a href="/experimental" style={{ fontSize: 14, color: '#1d4ed8' }}>Experimental →</a>
+            <a href="/validation" style={{ fontSize: 14, color: '#1d4ed8' }}>Validation</a>
           </div>
         </div>
 
@@ -260,11 +300,39 @@ export default function Home() {
                   <button onClick={ignoreFromPreview} style={{ padding: '8px 10px', border: 0, borderRadius: 6, background: '#ef4444', color: 'white', cursor: 'pointer' }}>Ignore</button>
                 </div>
                 {(() => {
-                  const meta = experimental.find((e) => e.id === previewId);
-                  // Pass through optional position if the component supports it
-                  // Components that ignore unknown props will simply ignore this
-                  const Comp: any = previewDef.Component as any;
-                  return <Comp position={meta?.position} />;
+                  const def = previewDef as any;
+                  const Comp = def?.Component as any;
+                  if (Comp) return <Comp />;
+                  if (jsonLoading) return <div>Loading JSON data...</div>;
+                  if (!jsonData) return <div>Failed to load data</div>;
+                  return (
+                    <div style={{ background: '#fff', borderRadius: 8, border: '1px solid #e5e7eb' }}>
+                      {jsonData.description && (
+                        <div style={{ padding: 16, borderBottom: '1px solid #e5e7eb' }}>
+                          <h4 style={{ margin: 0, marginBottom: 8, fontSize: 16, fontWeight: 600 }}>Analysis Overview</h4>
+                          <p style={{ margin: 0, fontSize: 14, color: '#6b7280', lineHeight: 1.5 }}>
+                            {jsonData.description}
+                          </p>
+                        </div>
+                      )}
+                      <div style={{ padding: 16 }}>
+                        <h4 style={{ margin: 0, marginBottom: 12, fontSize: 16, fontWeight: 600 }}>Data Points</h4>
+                        <div style={{ display: 'grid', gap: 12 }}>
+                          {jsonData.body?.map((item: any, idx: number) => (
+                            <div key={idx} style={{ padding: 12, background: '#f8f9fa', borderRadius: 6, border: '1px solid #e5e7eb' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 4 }}>
+                                <strong style={{ fontSize: 14, color: '#374151' }}>{item.key}</strong>
+                                <span style={{ fontSize: 14, fontWeight: 600, color: '#059669' }}>{String(item.value)}</span>
+                              </div>
+                              <p style={{ margin: 0, fontSize: 13, color: '#6b7280', lineHeight: 1.4 }}>
+                                {item.description}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  );
                 })()}
               </div>
             </div>

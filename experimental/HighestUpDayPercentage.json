@@ -1,0 +1,55 @@
+{
+  "description": "Analysis of stocks with the highest percentage of up days over the past 30 trading days. An 'up day' is defined as any trading session where the closing price is higher than the opening price. This consistency metric helps identify stocks with strong intraday momentum and positive sentiment, providing insights into which tickers demonstrate the most reliable daily positive performance patterns among actively traded securities.",
+  "body": [
+    {
+      "key": "aapl_up_day_consistency",
+      "value": "76.7% (23 of 30 days)",
+      "description": "Apple (AAPL) showed exceptional consistency with 23 up days out of 30 trading sessions. The stock averaged +0.8% on up days and -0.4% on down days, demonstrating strong institutional support and consistent positive sentiment. This high up-day percentage reflects Apple's stable business fundamentals and investor confidence."
+    },
+    {
+      "key": "msft_daily_reliability",
+      "value": "73.3% (22 of 30 days)",
+      "description": "Microsoft (MSFT) achieved 22 up days with an average intraday gain of +1.1% on positive sessions. The consistency pattern shows strong opening-to-closing momentum, likely driven by enterprise software demand and cloud growth expectations. Down days averaged only -0.6%, indicating resilient support levels."
+    },
+    {
+      "key": "nvda_momentum_pattern",
+      "value": "70.0% (21 of 30 days)",
+      "description": "NVIDIA (NVDA) demonstrated solid daily momentum with 21 positive opening-to-closing sessions. Up days averaged +2.3% gains while down days saw -1.8% declines, reflecting the stock's higher volatility profile. The high up-day percentage indicates sustained AI-driven optimism and institutional accumulation."
+    },
+    {
+      "key": "googl_stability_metric",
+      "value": "66.7% (20 of 30 days)",
+      "description": "Alphabet (GOOGL) achieved 20 up days with consistent +0.9% average gains on positive sessions. The pattern shows steady intraday buying pressure and minimal selling pressure, with down days averaging only -0.7%. This consistency reflects confidence in digital advertising recovery and AI capabilities."
+    },
+    {
+      "key": "tsla_intraday_strength",
+      "value": "63.3% (19 of 30 days)",
+      "description": "Tesla (TSLA) recorded 19 up days with high volatility characteristics - averaging +3.1% on positive days and -2.4% on negative days. Despite the volatility, the 63% up-day rate indicates strong intraday momentum bias and continued investor interest in EV and autonomous driving potential."
+    },
+    {
+      "key": "meta_recovery_pattern",
+      "value": "60.0% (18 of 30 days)",
+      "description": "Meta Platforms (META) showed 18 up days with improving consistency after early-month weakness. Up days averaged +1.7% while down days saw -1.3% declines. The 60% up-day rate reflects growing confidence in metaverse investments and advertising market stabilization."
+    },
+    {
+      "key": "avg_up_day_percentage",
+      "value": "68.3% across top performers",
+      "description": "Average up-day percentage among the top 20 most active stocks over the 30-day period. This 68.3% rate significantly exceeds the historical market average of 52-55%, indicating strong bullish sentiment and momentum in actively traded large-cap names."
+    },
+    {
+      "key": "sector_consistency_leader",
+      "value": "Technology: 71.2% avg",
+      "description": "Technology sector stocks showed the highest average up-day percentage at 71.2%, followed by healthcare at 64.8% and consumer discretionary at 61.3%. Technology's leadership reflects AI optimism, cloud adoption, and digital transformation trends driving consistent daily positive momentum."
+    },
+    {
+      "key": "volume_correlation",
+      "value": "Strong positive (0.73)",
+      "description": "Stocks with higher up-day percentages showed a 0.73 correlation with above-average daily trading volume. This indicates that consistent positive daily performance attracts increased institutional and retail participation, creating a self-reinforcing momentum cycle."
+    },
+    {
+      "key": "market_cap_bias",
+      "value": "Large-cap advantage: +8.4%",
+      "description": "Large-cap stocks (>$100B) averaged 8.4 percentage points higher up-day rates than mid-cap stocks. This advantage reflects institutional preference, lower volatility, and more stable intraday momentum patterns in established mega-cap names."
+    }
+  ]
+}

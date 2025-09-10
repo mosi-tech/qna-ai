@@ -1,0 +1,465 @@
+{
+  "name": "EODHD API",
+  "description": "End-of-day and fundamental financial data",
+  "endpoints": [
+    {
+      "path": "/api/eod/{symbol}",
+      "purpose": "End-of-day historical OHLC prices with adjustments",
+      "parameters": {
+        "symbol": "AAPL.US, TSLA.US, SPY.US",
+        "from": "2024-01-01",
+        "to": "2024-01-31",
+        "period": "d (daily), w (weekly), m (monthly)",
+        "order": "a (ascending), d (descending)"
+      },
+      "sample_response": [
+        {
+          "date": "2024-01-02",
+          "open": 187.15,
+          "high": 188.44,
+          "low": 183.89,
+          "close": 185.64,
+          "adjusted_close": 185.64,
+          "volume": 82488200
+        },
+        {
+          "date": "2024-01-03", 
+          "open": 184.35,
+          "high": 185.99,
+          "low": 180.17,
+          "close": 184.25,
+          "adjusted_close": 184.25,
+          "volume": 111563500
+        }
+      ]
+    },
+    {
+      "path": "/api/real-time/{symbol}",
+      "purpose": "Real-time stock prices and market data",
+      "parameters": {
+        "symbol": "AAPL.US, TSLA.US, SPY.US",
+        "fmt": "json"
+      },
+      "sample_response": {
+        "code": "AAPL.US",
+        "timestamp": 1704312000,
+        "gmtoffset": 0,
+        "open": 187.15,
+        "high": 188.44,
+        "low": 183.89,
+        "close": 185.64,
+        "volume": 82488200,
+        "previousClose": 189.95,
+        "change": -4.31,
+        "change_p": -2.27
+      }
+    },
+    {
+      "path": "/api/fundamentals/{symbol}",
+      "purpose": "Company fundamental data, financials, ratios",
+      "parameters": {
+        "symbol": "AAPL.US, TSLA.US, MSFT.US"
+      },
+      "sample_response": {
+        "General": {
+          "Code": "AAPL",
+          "Type": "Common Stock",
+          "Name": "Apple Inc",
+          "Exchange": "NASDAQ",
+          "CurrencyCode": "USD",
+          "CurrencyName": "US Dollar",
+          "CurrencySymbol": "$",
+          "CountryName": "USA",
+          "CountryISO": "US",
+          "ISIN": "US0378331005",
+          "CUSIP": "037833100",
+          "Description": "Apple Inc. designs, manufactures, and markets smartphones...",
+          "Sector": "Technology",
+          "Industry": "Consumer Electronics",
+          "FullTimeEmployees": 164000,
+          "MarketCapitalization": 2875340000000,
+          "SharesOutstanding": 15441883000,
+          "DividendYield": 0.0044,
+          "EPS": 6.13,
+          "PERatio": 30.29,
+          "Beta": 1.286
+        },
+        "Financials": {
+          "Balance_Sheet": {
+            "quarterly": {
+              "2023-09-30": {
+                "totalAssets": "352755000000",
+                "totalLiab": "290020000000", 
+                "totalStockholderEquity": "62735000000",
+                "cash": "29965000000",
+                "shortTermInvestments": "31590000000"
+              }
+            }
+          },
+          "Income_Statement": {
+            "quarterly": {
+              "2023-09-30": {
+                "totalRevenue": "89498000000",
+                "costOfRevenue": "54428000000",
+                "grossProfit": "35070000000",
+                "netIncome": "22956000000"
+              }
+            }
+          },
+          "Cash_Flow": {
+            "quarterly": {
+              "2023-09-30": {
+                "operatingCashFlow": "26321000000",
+                "capitalExpenditures": "-3736000000",
+                "freeCashFlow": "22585000000"
+              }
+            }
+          }
+        },
+        "Valuation": {
+          "TrailingPE": 30.29,
+          "ForwardPE": 28.15,
+          "PriceSalesTrailing12Months": 8.16,
+          "PriceBookMRQ": 46.21,
+          "EnterpriseValueRevenue": 7.89,
+          "EnterpriseValueEBITDA": 23.45
+        },
+        "SharesStats": {
+          "SharesOutstanding": 15441883000,
+          "SharesFloat": 15441883000,
+          "PercentInsiders": 0.07,
+          "PercentInstitutions": 61.31,
+          "SharesShort": 111520000,
+          "SharesShortPriorMonth": 113250000
+        }
+      }
+    },
+    {
+      "path": "/api/div/{symbol}",
+      "purpose": "Dividend payment history with ex-dates",
+      "parameters": {
+        "symbol": "AAPL.US, MSFT.US, JNJ.US",
+        "from": "2024-01-01",
+        "to": "2024-12-31"
+      },
+      "sample_response": [
+        {
+          "date": "2024-02-09",
+          "declarationDate": "2024-02-01",
+          "recordDate": "2024-02-12",
+          "paymentDate": "2024-02-15",
+          "period": "Q1",
+          "value": 0.24,
+          "unadjustedValue": 0.24,
+          "currency": "USD"
+        },
+        {
+          "date": "2024-05-10",
+          "declarationDate": "2024-05-02",
+          "recordDate": "2024-05-13",
+          "paymentDate": "2024-05-16",
+          "period": "Q2",
+          "value": 0.25,
+          "unadjustedValue": 0.25,
+          "currency": "USD"
+        }
+      ]
+    },
+    {
+      "path": "/api/splits/{symbol}",
+      "purpose": "Stock split history with ratios",
+      "parameters": {
+        "symbol": "AAPL.US, TSLA.US, NVDA.US",
+        "from": "2020-01-01",
+        "to": "2024-12-31"
+      },
+      "sample_response": [
+        {
+          "date": "2020-08-31",
+          "split": "4:1"
+        },
+        {
+          "date": "2022-06-09", 
+          "split": "4:1"
+        }
+      ]
+    },
+    {
+      "path": "/api/technical/{symbol}",
+      "purpose": "Technical analysis indicators (RSI, MACD, SMA, etc.)",
+      "parameters": {
+        "symbol": "AAPL.US, SPY.US",
+        "function": "sma, ema, rsi, macd, stoch, adx, cci, williams, momentum, roc",
+        "period": "14, 20, 50, 200",
+        "from": "2024-01-01",
+        "to": "2024-01-31"
+      },
+      "sample_response": [
+        {
+          "date": "2024-01-02",
+          "sma": 185.42
+        },
+        {
+          "date": "2024-01-03",
+          "sma": 184.95
+        },
+        {
+          "date": "2024-01-04", 
+          "sma": 184.67
+        }
+      ]
+    },
+    {
+      "path": "/api/screener",
+      "purpose": "Stock screener with custom filters",
+      "parameters": {
+        "filters": "market_cap_more_than.1000000000,pe_ratio_more_than.10,pe_ratio_less_than.30",
+        "limit": "50, 100",
+        "offset": "0, 50, 100",
+        "signals": "oversold_rsi,undervalued_pe,dividend_growth"
+      },
+      "sample_response": [
+        {
+          "code": "AAPL.US",
+          "name": "Apple Inc",
+          "market_cap": 2875340000000,
+          "pe_ratio": 30.29,
+          "dividend_yield": 0.0044,
+          "price": 185.64,
+          "change_p": -2.27,
+          "volume": 82488200
+        },
+        {
+          "code": "MSFT.US", 
+          "name": "Microsoft Corporation",
+          "market_cap": 2789450000000,
+          "pe_ratio": 35.67,
+          "dividend_yield": 0.0072,
+          "price": 374.58,
+          "change_p": 1.42,
+          "volume": 19567800
+        }
+      ]
+    },
+    {
+      "path": "/api/search/{query}",
+      "purpose": "Search for stocks by name or symbol",
+      "parameters": {
+        "query": "apple, AAPL, microsoft, tesla"
+      },
+      "sample_response": [
+        {
+          "Code": "AAPL.US",
+          "Name": "Apple Inc",
+          "Country": "USA",
+          "Exchange": "NASDAQ",
+          "Currency": "USD",
+          "Type": "Common Stock"
+        },
+        {
+          "Code": "AAPL.L",
+          "Name": "Apple Inc",
+          "Country": "UK", 
+          "Exchange": "LSE",
+          "Currency": "USD",
+          "Type": "Common Stock"
+        }
+      ]
+    },
+    {
+      "path": "/api/exchanges-list",
+      "purpose": "List all supported stock exchanges",
+      "parameters": {},
+      "sample_response": [
+        {
+          "Name": "New York Stock Exchange",
+          "Code": "NYSE",
+          "OperatingMIC": "XNYS",
+          "Country": "USA",
+          "Currency": "USD",
+          "CountryISO2": "US",
+          "CountryISO3": "USA"
+        },
+        {
+          "Name": "NASDAQ Global Market",
+          "Code": "NASDAQ",
+          "OperatingMIC": "XNAS", 
+          "Country": "USA",
+          "Currency": "USD",
+          "CountryISO2": "US",
+          "CountryISO3": "USA"
+        }
+      ]
+    },
+    {
+      "path": "/api/exchange-symbol-list/{exchange}",
+      "purpose": "Get all tradeable symbols for specific exchange",
+      "parameters": {
+        "exchange": "US (NYSE + NASDAQ), LSE, TSX, ASX"
+      },
+      "sample_response": [
+        {
+          "Code": "AAPL.US",
+          "Name": "Apple Inc",
+          "Country": "USA",
+          "Exchange": "NASDAQ",
+          "Currency": "USD",
+          "Type": "Common Stock",
+          "Isin": "US0378331005"
+        },
+        {
+          "Code": "MSFT.US",
+          "Name": "Microsoft Corporation", 
+          "Country": "USA",
+          "Exchange": "NASDAQ",
+          "Currency": "USD",
+          "Type": "Common Stock",
+          "Isin": "US5949181045"
+        }
+      ]
+    },
+    {
+      "path": "/api/bond-fundamentals/{symbol}",
+      "purpose": "Bond and fixed income data with yields and ratings",
+      "parameters": {
+        "symbol": "TLT.US, IEF.US, SHY.US"
+      },
+      "sample_response": {
+        "General": {
+          "Code": "TLT",
+          "Name": "iShares 20+ Year Treasury Bond ETF",
+          "Type": "ETF",
+          "Exchange": "NASDAQ",
+          "Currency": "USD"
+        },
+        "BondData": {
+          "Duration": 17.8,
+          "YieldToMaturity": 4.15,
+          "CreditRating": "AAA",
+          "EffectiveYield": 4.22,
+          "ModifiedDuration": 17.3
+        }
+      }
+    },
+    {
+      "path": "/api/etf/{symbol}",
+      "purpose": "ETF holdings and composition data",
+      "parameters": {
+        "symbol": "SPY.US, QQQ.US, VTI.US"
+      },
+      "sample_response": {
+        "General": {
+          "Code": "SPY",
+          "Name": "SPDR S&P 500 ETF Trust",
+          "Family": "State Street Global Advisors",
+          "Net_Assets": 350000000000,
+          "Expense_Ratio": 0.0945
+        },
+        "Holdings": [
+          {
+            "Symbol": "AAPL.US",
+            "Name": "Apple Inc",
+            "Weight": 7.12,
+            "Shares": 166800000
+          },
+          {
+            "Symbol": "MSFT.US", 
+            "Name": "Microsoft Corporation",
+            "Weight": 6.85,
+            "Shares": 82400000
+          }
+        ],
+        "SectorWeights": {
+          "Technology": 28.5,
+          "Healthcare": 13.2,
+          "Financial Services": 12.8,
+          "Consumer Cyclical": 10.1
+        }
+      }
+    },
+    {
+      "path": "/api/insider-transactions",
+      "purpose": "Corporate insider trading transactions",
+      "parameters": {
+        "symbol": "AAPL.US, TSLA.US",
+        "from": "2024-01-01",
+        "to": "2024-01-31"
+      },
+      "sample_response": [
+        {
+          "symbol": "AAPL.US",
+          "filingDate": "2024-01-15",
+          "transactionDate": "2024-01-12",
+          "owner": "John Smith",
+          "relationship": "Chief Executive Officer",
+          "transactionType": "Sale",
+          "securitiesOwned": 125000,
+          "securitiesTransacted": 10000,
+          "price": 185.50,
+          "securityTitle": "Common Stock"
+        }
+      ]
+    },
+    {
+      "path": "/api/short-interest/{symbol}",
+      "purpose": "Short interest data and short ratio",
+      "parameters": {
+        "symbol": "AAPL.US, TSLA.US",
+        "from": "2024-01-01",
+        "to": "2024-01-31"
+      },
+      "sample_response": [
+        {
+          "symbol": "AAPL.US",
+          "date": "2024-01-15",
+          "shortInterest": 111520000,
+          "sharesOutstanding": 15441883000,
+          "shortRatio": 2.1,
+          "percentOfFloat": 0.72,
+          "daysTocover": 2.1
+        }
+      ]
+    },
+    {
+      "path": "/api/macro-indicator/{indicator}",
+      "purpose": "Macroeconomic indicators and data",
+      "parameters": {
+        "indicator": "GDPUS.FRED, UNRATE.FRED, CPIAUCSL.FRED, FEDFUNDS.FRED",
+        "from": "2024-01-01",
+        "to": "2024-01-31"
+      },
+      "sample_response": [
+        {
+          "date": "2024-01-01",
+          "value": 5.25,
+          "indicator": "FEDFUNDS"
+        },
+        {
+          "date": "2023-12-01", 
+          "value": 3.7,
+          "indicator": "UNRATE"
+        }
+      ]
+    },
+    {
+      "path": "/api/calendar/{symbol}",
+      "purpose": "Earnings calendar and corporate events",
+      "parameters": {
+        "symbol": "AAPL.US, TSLA.US",
+        "from": "2024-01-01",
+        "to": "2024-01-31"
+      },
+      "sample_response": [
+        {
+          "symbol": "AAPL.US",
+          "name": "Apple Inc",
+          "date": "2024-01-25",
+          "time": "after_market_close",
+          "period": "Q1",
+          "estimate": 2.18,
+          "currency": "USD"
+        }
+      ]
+    }
+  ]
+}

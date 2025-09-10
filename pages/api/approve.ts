@@ -18,17 +18,23 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   try {
-    const { id, question } = req.body || {};
+    let { id, question } = req.body || {};
     if (!id || typeof id !== 'string') {
       return res.status(400).json({ error: 'Missing id' });
     }
+    // Load experimental list early so we can default the question if missing
+    const expFile = experimentalPath();
+    const expRaw = fs.existsSync(expFile) ? fs.readFileSync(expFile, 'utf-8') : '[]';
+    const expList: any[] = Array.isArray(JSON.parse(expRaw)) ? JSON.parse(expRaw) : [];
+    const expIdx = expList.findIndex((e: any) => (typeof e === 'string' ? e === id : e?.id === id));
+    const expHit = expIdx !== -1 ? expList[expIdx] : null;
+
     if (typeof question !== 'string' || !question.trim()) {
-      return res.status(400).json({ error: 'Missing question' });
+      const fallbackQ = expHit && typeof expHit === 'object' && typeof expHit.question === 'string' ? expHit.question : '';
+      if (!fallbackQ.trim()) return res.status(400).json({ error: 'Missing question' });
+      question = fallbackQ;
     }
     const def = registryMap[id];
-    if (!def) {
-      return res.status(400).json({ error: 'Unknown visual id' });
-    }
 
     const file = approvalsPath();
     if (!fs.existsSync(file)) {
@@ -36,73 +42,51 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       fs.writeFileSync(file, JSON.stringify([]));
     }
     const raw = fs.readFileSync(file, 'utf-8');
-    const parsed = JSON.parse(raw);
-    type Approval = { id: string; question: string; file: string; name: string; apis?: string[]; position?: any };
-    let data: Approval[] = [];
-    if (Array.isArray(parsed)) {
-      data = parsed.map((item: any) => {
-        if (typeof item === 'string') {
-          const d = registryMap[item];
-          return d ? { id: d.id, question: '', file: d.file, name: d.name } : null;
-        }
-        if (item && typeof item === 'object' && typeof item.id === 'string') {
-          const d = registryMap[item.id];
-          return {
-            id: item.id,
-            question: typeof item.question === 'string' ? item.question : '',
-            file: item.file || (d ? d.file : ''),
-            name: item.name || (d ? d.name : item.id),
-          };
-        }
-        return null;
-      }).filter(Boolean) as Approval[];
-    }
-
-    // Try to pull any extra metadata (like apis) from experimental.json
-    let apis: string[] | undefined = undefined;
-    let position: any | undefined = undefined;
+    let parsed: any = [];
     try {
-      const expFile = path.join(process.cwd(), 'data', 'experimental.json');
-      if (fs.existsSync(expFile)) {
-        const expRaw = fs.readFileSync(expFile, 'utf-8');
-        const expData = JSON.parse(expRaw);
-        if (Array.isArray(expData)) {
-          const hit = expData.find((e: any) => (typeof e === 'string' ? e === id : e?.id === id));
-          if (hit && typeof hit === 'object') {
-            if (Array.isArray(hit.apis)) {
-              apis = hit.apis.filter((x: any) => typeof x === 'string');
-            }
-            if (hit.position && typeof hit.position === 'object') {
-              position = hit.position;
-            }
-          }
-        }
-      }
-    } catch {}
+      parsed = raw && raw.trim().length > 0 ? JSON.parse(raw) : [];
+    } catch {
+      parsed = [];
+    }
+    let approvedArr: any[] = Array.isArray(parsed) ? parsed : [];
 
-    const existingIndex = data.findIndex((a) => a.id === id);
-    const entry: Approval = { id, question: question.trim(), file: def.file, name: def.name, apis, position };
-    if (existingIndex >= 0) {
-      data[existingIndex] = entry;
+    // Load experimental list and find the entry by id
+    const idx = expIdx;
+
+    let entry: any = null;
+    if (idx !== -1) {
+      const hit = expList[idx];
+      if (typeof hit === 'string') {
+        // Minimal expansion from registry if only an id string is present
+        const d = registryMap[hit];
+        entry = d ? { id: d.id, name: d.name, file: d.file, output: d.file } : { id: hit };
+      } else if (hit && typeof hit === 'object') {
+        entry = { ...hit };
+      }
     } else {
-      data.push(entry);
+      // Fallback: construct minimal entry from registry if not present in experimental.json
+      entry = def ? { id: def.id, name: def.name, file: def.file, output: def.file } : { id };
     }
-    fs.writeFileSync(file, JSON.stringify(data, null, 2));
-    // Also remove from experimental.json if present
+
+    // Always set/override the question from the request
+    entry.question = question.trim();
+
+    // Upsert into approved array
+    const exist = approvedArr.findIndex((a: any) => a && a.id === id);
+    if (exist >= 0) approvedArr[exist] = entry; else approvedArr.push(entry);
+    fs.writeFileSync(file, JSON.stringify(approvedArr, null, 2));
+
+    // Remove from experimental.json
     try {
-      const expFile = experimentalPath();
-      if (fs.existsSync(expFile)) {
-        const expRaw = fs.readFileSync(expFile, 'utf-8');
-        const expParsed = JSON.parse(expRaw);
-        const filtered = (Array.isArray(expParsed) ? expParsed : []).filter((it: any) => {
-          if (typeof it === 'string') return it !== id;
-          if (it && typeof it === 'object') return it.id !== id;
-          return true;
-        });
-        fs.writeFileSync(expFile, JSON.stringify(filtered, null, 2));
-      }
+      const filtered = expList.filter((it: any) => {
+        if (typeof it === 'string') return it !== id;
+        return !(it && typeof it === 'object' && it.id === id);
+      });
+      fs.writeFileSync(expFile, JSON.stringify(filtered, null, 2));
     } catch {}
-    return res.status(200).json({ approved: data });
+
+    // Respond with the approved list as stored
+    return res.status(200).json({ approved: approvedArr });
   } catch (err: any) {
     return res.status(500).json({ error: 'Failed to update approvals' });
   }

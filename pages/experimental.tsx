@@ -1,6 +1,55 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { registryMap } from '../experimental/registry';
 
+function JsonPreview({ file }: { file: string }) {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!file) return;
+    setLoading(true);
+    setError(null);
+    fetch(`/api/json?file=${encodeURIComponent(file)}`)
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((json) => setData(json))
+      .catch((e) => setError(String(e)))
+      .finally(() => setLoading(false));
+  }, [file]);
+
+  if (loading) return <div>Loading JSON…</div>;
+  if (error) return <div style={{ color: '#ef4444' }}>Failed to load: {error}</div>;
+  if (!data) return <div style={{ color: '#9ca3af' }}>No data</div>;
+
+  return (
+    <div style={{ background: '#fff', borderRadius: 8, border: '1px solid #e5e7eb' }}>
+      {data.description && (
+        <div style={{ padding: 16, borderBottom: '1px solid #e5e7eb' }}>
+          <h4 style={{ margin: 0, marginBottom: 8, fontSize: 16, fontWeight: 600 }}>Analysis Overview</h4>
+          <p style={{ margin: 0, fontSize: 14, color: '#6b7280', lineHeight: 1.5 }}>{data.description}</p>
+        </div>
+      )}
+      <div style={{ padding: 16 }}>
+        <h4 style={{ margin: 0, marginBottom: 12, fontSize: 16, fontWeight: 600 }}>Data Points</h4>
+        <div style={{ display: 'grid', gap: 12 }}>
+          {data.body?.map((item: any, idx: number) => (
+            <div key={idx} style={{ padding: 12, background: '#f8f9fa', borderRadius: 6, border: '1px solid #e5e7eb' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: 4 }}>
+                <strong style={{ fontSize: 14, color: '#374151' }}>{item.key}</strong>
+                <span style={{ fontSize: 14, fontWeight: 600, color: '#059669' }}>{String(item.value)}</span>
+              </div>
+              <p style={{ margin: 0, fontSize: 13, color: '#6b7280', lineHeight: 1.4 }}>{item.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 type Approval = { id: string; question: string; file: string; name: string };
 
 export default function ExperimentalPage() {
@@ -54,8 +103,8 @@ export default function ExperimentalPage() {
   const selected = useMemo(() => unapproved.find((e) => e.id === selectedId) || unapproved[0], [unapproved, selectedId]);
 
   const onApprove = async (id: string) => {
+    // Allow empty question; API will fallback to item's stored question
     const question = (questions[id] ?? selected?.question ?? '').trim();
-    if (!question) return;
     try {
       const res = await fetch('/api/approve', {
         method: 'POST',
@@ -107,16 +156,20 @@ export default function ExperimentalPage() {
                 />
                 <a href={`/?preview=${encodeURIComponent(selected.id)}`} style={{ padding: '8px 10px', border: '1px solid #e5e7eb', borderRadius: 6, background: '#fff', color: '#1d4ed8', textDecoration: 'none' }}>Preview on Main</a>
                 <button onClick={() => setQuestions((q) => ({ ...q, [selected!.id]: lastQuestion }))} disabled={!lastQuestion} style={{ padding: '8px 10px', border: '1px solid #e5e7eb', borderRadius: 6, background: '#fff', cursor: lastQuestion ? 'pointer' : 'not-allowed', color: lastQuestion ? '#111827' : '#9ca3af' }}>Use last question</button>
-                <button onClick={() => onApprove(selected.id)} disabled={!((questions[selected.id] ?? selected.question ?? '').trim())} style={{ padding: '8px 10px', border: 0, borderRadius: 6, background: '#10b981', color: 'white', cursor: ((questions[selected.id] ?? selected.question ?? '').trim()) ? 'pointer' : 'not-allowed' }}>Move to Approved</button>
+                <button onClick={() => onApprove(selected.id)} style={{ padding: '8px 10px', border: 0, borderRadius: 6, background: '#10b981', color: 'white', cursor: 'pointer' }}>Move to Approved</button>
               </div>
               <div style={{ padding: 12 }}>
                 {(() => {
                   const def = registryMap[selected.id];
-                  const Comp: any = def?.Component as any;
+                  const Comp: any = (def as any)?.Component as any;
+                  const file = (def as any)?.file as string | undefined;
+                  const fallbackFile = (selected as any)?.file as string | undefined;
                   return Comp ? (
                     <Comp position={(selected as any).position} />
+                  ) : (file || fallbackFile) ? (
+                    <JsonPreview file={(file || fallbackFile)!} />
                   ) : (
-                    <div style={{ color: '#9ca3af' }}>Component not found</div>
+                    <div style={{ color: '#9ca3af' }}>No component or file to preview</div>
                   );
                 })()}
               </div>

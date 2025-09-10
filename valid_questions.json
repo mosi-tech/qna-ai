@@ -1,0 +1,3621 @@
+{
+  "valid_questions": [
+    {
+      "question": "What sectors are showing the strongest momentum this month?",
+      "status": "VALID",
+      "original_question": "What sectors are showing the strongest momentum this month?",
+      "validation_notes": "Fully implementable using sector ETFs or representative stocks with historical price data",
+      "required_apis": [
+        "marketdata:/v2/stocks/bars",
+        "marketdata:/v1beta1/screener/stocks/most-actives"
+      ],
+      "data_requirements": [
+        "1-month historical price data for sector representative ETFs or stocks",
+        "Standard sector classifications (Technology, Healthcare, Energy, etc.)",
+        "Monthly return calculations",
+        "Sector ranking by performance"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which stocks have the highest daily trading volume today?",
+      "status": "VALID",
+      "original_question": "Which stocks have the highest daily trading volume today?",
+      "validation_notes": "Direct API endpoint match with most-actives screener - perfect implementation fit",
+      "required_apis": [
+        "marketdata:/v1beta1/screener/stocks/most-actives",
+        "marketdata:/v2/stocks/snapshots"
+      ],
+      "data_requirements": [
+        "Real-time trading volume data for stocks",
+        "Most active stocks screener results",
+        "Current day volume ranking",
+        "Stock symbol and volume data"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's the average P/E ratio of stocks in my portfolio?",
+      "status": "VALID",
+      "original_question": "What's the average P/E ratio of stocks in my portfolio?",
+      "validation_notes": "Implementable using portfolio positions and fundamental data for P/E ratios",
+      "required_apis": [
+        "trading:/v2/positions",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Current portfolio positions and quantities",
+        "P/E ratio fundamental data for each holding",
+        "Position weighting calculations",
+        "Portfolio-level P/E average calculation"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which companies are reporting earnings this week?",
+      "status": "VALID",
+      "original_question": "Which companies are reporting earnings this week?",
+      "validation_notes": "Direct API match with earnings calendar - excellent implementation fit",
+      "required_apis": [
+        "eodhd:/calendar/earnings"
+      ],
+      "data_requirements": [
+        "Earnings calendar data for current week",
+        "Company symbols and names",
+        "Earnings announcement dates and times",
+        "Weekly date range filtering"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's the correlation between my tech holdings and QQQ?",
+      "status": "VALID",
+      "original_question": "What's the correlation between my tech holdings and QQQ?",
+      "validation_notes": "Implementable using portfolio positions, historical price data, and correlation calculations",
+      "required_apis": [
+        "trading:/v2/positions",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Portfolio positions filtered for technology sector",
+        "Historical price data for tech holdings and QQQ",
+        "Return calculations for correlation analysis",
+        "Statistical correlation computation"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which dividend stocks cut their payouts in the last quarter?",
+      "status": "VALID",
+      "original_question": "Which dividend stocks cut their payouts in the last quarter?",
+      "validation_notes": "Implementable using corporate actions and dividend history data",
+      "required_apis": [
+        "marketdata:/v1/corporate-actions",
+        "eodhd:/dividends"
+      ],
+      "data_requirements": [
+        "Historical dividend payments for stocks",
+        "Quarter-over-quarter dividend comparisons",
+        "Dividend cut identification logic",
+        "Last quarter date range filtering"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which energy stocks have the best debt-to-equity ratios?",
+      "status": "VALID",
+      "original_question": "Which energy stocks have the best debt-to-equity ratios?",
+      "validation_notes": "Excellent match using screener and fundamentals for energy sector D/E analysis",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Energy sector stock screening",
+        "Debt-to-equity ratio fundamental data",
+        "Financial health metrics for energy companies",
+        "Ranking by best (lowest) D/E ratios"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's my portfolio's sector exposure to interest rate sensitive industries?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "What's my portfolio's exposure to interest rate risk?",
+      "validation_notes": "Refined to focus on sector-based interest rate sensitivity analysis rather than precise duration metrics",
+      "required_apis": [
+        "trading:/v2/positions",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Portfolio positions by sector",
+        "Interest rate sensitive sector identification (financials, utilities, REITs)",
+        "Sector allocation percentages",
+        "Rate sensitivity scoring by sector"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which REITs have the most sustainable dividend coverage?",
+      "status": "VALID",
+      "original_question": "Which REITs have the most sustainable dividend coverage?",
+      "validation_notes": "Implementable using REIT screening and fundamental metrics for dividend sustainability analysis",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}",
+        "eodhd:/dividends"
+      ],
+      "data_requirements": [
+        "REIT sector stock screening",
+        "Funds From Operations (FFO) data",
+        "Dividend payout and coverage ratios",
+        "REIT dividend sustainability scoring"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What stocks are hitting new 52-week highs today?",
+      "status": "VALID",
+      "original_question": "What stocks are hitting new 52-week highs today?",
+      "validation_notes": "Perfect implementation using market screeners and historical price data",
+      "required_apis": [
+        "marketdata:/v1beta1/screener/stocks/movers",
+        "marketdata:/v2/stocks/snapshots",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Current stock prices and market data",
+        "52-week historical price ranges",
+        "New high identification logic",
+        "Real-time market screener results"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which of my holdings has the highest beta coefficient?",
+      "status": "VALID",
+      "original_question": "Which of my holdings has the highest beta coefficient?",
+      "validation_notes": "Direct implementation using portfolio positions and fundamental beta data",
+      "required_apis": [
+        "trading:/v2/positions",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Current portfolio holdings and symbols",
+        "Beta coefficient fundamental data for each holding",
+        "Market risk sensitivity analysis",
+        "Beta ranking and highest identification"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's the sentiment analysis of recent TSLA news?",
+      "status": "VALID",
+      "original_question": "What's the sentiment analysis of recent TSLA news?",
+      "validation_notes": "Perfect match with EODHD sentiment analysis API",
+      "required_apis": [
+        "eodhd:/sentiments"
+      ],
+      "data_requirements": [
+        "TSLA news sentiment data",
+        "Recent news filtering",
+        "Sentiment scoring"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's my current cash allocation percentage?",
+      "status": "VALID",
+      "original_question": "What's my current cash allocation percentage?",
+      "validation_notes": "Direct implementation using account cash and portfolio data",
+      "required_apis": [
+        "trading:/v2/account",
+        "trading:/v2/positions"
+      ],
+      "data_requirements": [
+        "Account cash balance",
+        "Portfolio total value",
+        "Cash allocation calculation"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which emerging market ETFs have the lowest expense ratios?",
+      "status": "VALID",
+      "original_question": "Which emerging market ETFs have the lowest expense ratios?",
+      "validation_notes": "Implementable using ETF screening and fundamental expense ratio data",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Emerging market ETF identification",
+        "Expense ratio data",
+        "ETF cost analysis"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's the price-to-book ratio of value stocks in my portfolio?",
+      "status": "VALID",
+      "original_question": "What's the price-to-book ratio of value stocks in my portfolio?",
+      "validation_notes": "Portfolio positions + fundamental P/B ratio analysis",
+      "required_apis": [
+        "trading:/v2/positions",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Portfolio holdings",
+        "P/B ratio fundamental data",
+        "Value stock identification"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which technology stocks trade below their 200-day moving average?",
+      "status": "VALID",
+      "original_question": "Which technology stocks trade below their 200-day moving average?",
+      "validation_notes": "Technology sector screening with technical indicator analysis",
+      "required_apis": [
+        "eodhd:/technical/{symbol}",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Technology sector stocks",
+        "200-day moving averages",
+        "Current price vs MA comparison"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which consumer staples stocks have the most consistent earnings growth?",
+      "status": "VALID",
+      "original_question": "Which consumer staples stocks have the most consistent earnings growth?",
+      "validation_notes": "Sector screening with fundamental earnings consistency analysis",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Consumer staples sector filtering",
+        "Historical earnings data",
+        "Growth consistency metrics"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's my portfolio's Sharpe ratio compared to the S&P 500?",
+      "status": "VALID",
+      "original_question": "What's my portfolio's Sharpe ratio compared to the S&P 500?",
+      "validation_notes": "Portfolio performance + risk-free rate + S&P 500 benchmark data",
+      "required_apis": [
+        "trading:/v2/account/portfolio/history",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Portfolio returns",
+        "S&P 500 returns",
+        "Risk-free rate",
+        "Sharpe ratio calculation"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which biotech companies have the strongest cash positions?",
+      "status": "VALID",
+      "original_question": "Which biotech companies have the strongest cash positions?",
+      "validation_notes": "Biotech sector screening with cash and equivalents analysis",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Biotech sector filtering",
+        "Cash and cash equivalents data",
+        "Financial strength metrics"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which financial stocks benefit most from rising rates?",
+      "status": "VALID",
+      "original_question": "Which financial stocks benefit most from rising rates?",
+      "validation_notes": "Financial sector analysis with interest rate sensitivity focus",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Financial sector stocks",
+        "Interest rate sensitivity indicators",
+        "Bank and financial metrics"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's my exposure to small-cap vs large-cap stocks?",
+      "status": "VALID",
+      "original_question": "What's my exposure to small-cap vs large-cap stocks?",
+      "validation_notes": "Portfolio analysis with market cap categorization",
+      "required_apis": [
+        "trading:/v2/positions",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Portfolio holdings",
+        "Market capitalization data",
+        "Cap size allocation analysis"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's the insider trading activity for semiconductor stocks?",
+      "status": "VALID",
+      "original_question": "What's the insider trading activity for semiconductor stocks?",
+      "validation_notes": "Semiconductor sector with insider trading data from EODHD",
+      "required_apis": [
+        "eodhd:/insider-transactions",
+        "eodhd:/screener"
+      ],
+      "data_requirements": [
+        "Semiconductor sector stocks",
+        "Insider trading transactions",
+        "Insider activity analysis"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which utility stocks have the highest dividend yields?",
+      "status": "VALID",
+      "original_question": "Which utility stocks have the highest dividend yields?",
+      "validation_notes": "Utility sector screening with dividend yield ranking",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/dividends"
+      ],
+      "data_requirements": [
+        "Utility sector filtering",
+        "Dividend yield data",
+        "Yield ranking analysis"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which growth stocks are trading at reasonable valuations?",
+      "status": "VALID",
+      "original_question": "Which growth stocks are trading at reasonable valuations?",
+      "validation_notes": "Growth stock screening with valuation metrics analysis",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Growth stock identification",
+        "Valuation ratios (P/E, PEG)",
+        "Reasonable valuation criteria"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which international developed markets are outperforming?",
+      "status": "VALID",
+      "original_question": "Which international developed markets are outperforming?",
+      "validation_notes": "International market ETF performance comparison",
+      "required_apis": [
+        "marketdata:/v2/stocks/bars",
+        "eodhd:/screener"
+      ],
+      "data_requirements": [
+        "International market ETFs",
+        "Performance comparison",
+        "Developed market identification"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's my portfolio's concentration risk in any single stock?",
+      "status": "VALID",
+      "original_question": "What's my portfolio's concentration risk in any single stock?",
+      "validation_notes": "Portfolio position analysis for concentration risk assessment",
+      "required_apis": [
+        "trading:/v2/positions"
+      ],
+      "data_requirements": [
+        "Portfolio positions and weights",
+        "Concentration risk calculation",
+        "Position size analysis"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which airline stocks have recovered to pre-pandemic levels?",
+      "status": "VALID",
+      "original_question": "Which airline stocks have recovered to pre-pandemic levels?",
+      "validation_notes": "Airline sector with pre-pandemic price comparison",
+      "required_apis": [
+        "eodhd:/screener",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Airline sector stocks",
+        "Pre-pandemic price levels (2019)",
+        "Recovery analysis"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which retail stocks have the best same-store sales growth?",
+      "status": "VALID",
+      "original_question": "Which retail stocks have the best same-store sales growth?",
+      "validation_notes": "Retail sector with same-store sales growth metrics",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Retail sector filtering",
+        "Same-store sales data",
+        "Growth rate analysis"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which cybersecurity stocks have recurring revenue models?",
+      "status": "VALID",
+      "original_question": "Which cybersecurity stocks have recurring revenue models?",
+      "validation_notes": "Cybersecurity sector analysis for subscription/recurring revenue business models",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Cybersecurity sector stocks",
+        "Revenue model analysis",
+        "Recurring revenue indicators"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which healthcare stocks are undervalued based on PEG ratios?",
+      "status": "VALID",
+      "original_question": "Which healthcare stocks are undervalued based on PEG ratios?",
+      "validation_notes": "Healthcare sector screening with PEG ratio valuation analysis",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Healthcare sector filtering",
+        "PEG ratio calculations",
+        "Undervaluation criteria"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's my portfolio's maximum drawdown over the past year?",
+      "status": "VALID",
+      "original_question": "What's my portfolio's maximum drawdown over the past year?",
+      "validation_notes": "Portfolio history analysis for maximum drawdown calculation",
+      "required_apis": [
+        "trading:/v2/account/portfolio/history"
+      ],
+      "data_requirements": [
+        "Portfolio value history",
+        "Peak-to-trough analysis",
+        "Drawdown calculation"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which cloud computing stocks have the best margins?",
+      "status": "VALID",
+      "original_question": "Which cloud computing stocks have the best margins?",
+      "validation_notes": "Cloud sector screening with profit margin analysis",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Cloud computing sector identification",
+        "Profit margin data",
+        "Margin ranking"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which automotive stocks are leading in electric vehicle transition?",
+      "status": "VALID",
+      "original_question": "Which automotive stocks are leading in electric vehicle transition?",
+      "validation_notes": "Automotive sector analysis for EV transition leadership",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Automotive sector stocks",
+        "EV transition indicators",
+        "Leadership metrics"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which defense contractors have the largest order backlogs?",
+      "status": "VALID",
+      "original_question": "Which defense contractors have the largest order backlogs?",
+      "validation_notes": "Defense sector with backlog and contract analysis",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Defense contractor identification",
+        "Order backlog data",
+        "Contract value analysis"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's my portfolio's geographic diversification breakdown?",
+      "status": "VALID",
+      "original_question": "What's my portfolio's geographic diversification breakdown?",
+      "validation_notes": "Portfolio geographic analysis using stock domicile and operations data",
+      "required_apis": [
+        "trading:/v2/positions",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Portfolio holdings",
+        "Geographic exposure data",
+        "Regional allocation analysis"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which fintech companies have path to profitability?",
+      "status": "VALID",
+      "original_question": "Which fintech companies have path to profitability?",
+      "validation_notes": "Fintech sector analysis for profitability metrics and trends",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Fintech sector identification",
+        "Profitability metrics",
+        "Revenue growth trends"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which food and beverage stocks have pricing power?",
+      "status": "VALID",
+      "original_question": "Which food and beverage stocks have pricing power?",
+      "validation_notes": "F&B sector analysis for pricing power indicators",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Food & beverage sector",
+        "Margin stability",
+        "Pricing power metrics"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which mining stocks have the best ESG ratings?",
+      "status": "VALID",
+      "original_question": "Which mining stocks have the best ESG ratings?",
+      "validation_notes": "Mining sector screening with ESG rating analysis",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Mining sector stocks",
+        "ESG rating data",
+        "Sustainability metrics"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which media and entertainment stocks are adapting to streaming?",
+      "status": "VALID",
+      "original_question": "Which media and entertainment stocks are adapting to streaming?",
+      "validation_notes": "Media sector analysis for streaming adaptation strategies",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Media & entertainment sector",
+        "Streaming revenue indicators",
+        "Digital transformation metrics"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which chemical companies have the most diverse product mix?",
+      "status": "VALID",
+      "original_question": "Which chemical companies have the most diverse product mix?",
+      "validation_notes": "Chemical sector analysis for product diversification",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Chemical sector companies",
+        "Revenue diversification data",
+        "Product mix analysis"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which telecom stocks offer the best dividend sustainability?",
+      "status": "VALID",
+      "original_question": "Which telecom stocks offer the best dividend sustainability?",
+      "validation_notes": "Telecom sector with dividend sustainability analysis",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/dividends",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Telecom sector stocks",
+        "Dividend coverage ratios",
+        "Cash flow sustainability"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's my portfolio's performance attribution by sector?",
+      "status": "VALID",
+      "original_question": "What's my portfolio's performance attribution by sector?",
+      "validation_notes": "Portfolio sector allocation with performance attribution analysis",
+      "required_apis": [
+        "trading:/v2/positions",
+        "trading:/v2/account/portfolio/history",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Portfolio holdings by sector",
+        "Sector performance data",
+        "Attribution calculation"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which gaming stocks have the strongest user engagement metrics?",
+      "status": "VALID",
+      "validation_notes": "Gaming sector screening with user engagement analysis",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which construction stocks benefit from infrastructure spending?",
+      "status": "VALID",
+      "validation_notes": "Construction sector with infrastructure exposure analysis",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which e-commerce stocks have the best inventory turnover?",
+      "status": "VALID",
+      "validation_notes": "E-commerce sector with inventory efficiency metrics",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which industrial stocks have the most efficient operations?",
+      "status": "VALID",
+      "validation_notes": "Industrial sector operational efficiency analysis",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which software stocks have the highest customer retention rates?",
+      "status": "VALID",
+      "validation_notes": "Software sector customer retention analysis",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which transportation stocks have the best route networks?",
+      "status": "VALID",
+      "validation_notes": "Transportation sector route network analysis",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which renewable energy stocks have government backing?",
+      "status": "VALID",
+      "validation_notes": "Renewable energy sector with government support analysis",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which luxury goods companies have emerging market exposure?",
+      "status": "VALID",
+      "validation_notes": "Luxury goods sector with EM exposure analysis",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which payment processing companies have the widest moats?",
+      "status": "VALID",
+      "validation_notes": "Payment sector competitive moat analysis",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which hospitality stocks have recovered occupancy rates?",
+      "status": "VALID",
+      "validation_notes": "Hospitality sector occupancy recovery analysis",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which space and satellite companies have commercial viability?",
+      "status": "VALID",
+      "validation_notes": "Space/satellite sector commercial viability analysis",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which water utility stocks have rate increase approvals?",
+      "status": "VALID",
+      "validation_notes": "Water utility sector rate approval analysis",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which artificial intelligence stocks have real revenue?",
+      "status": "VALID",
+      "validation_notes": "AI sector revenue validation analysis",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which agricultural stocks benefit from crop price increases?",
+      "status": "VALID",
+      "validation_notes": "Agricultural sector crop price sensitivity analysis",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What stocks have the highest trading volume in the semiconductor sector today?",
+      "status": "VALID",
+      "original_question": "What stocks have the highest trading volume in the semiconductor sector today?",
+      "validation_notes": "Perfect match using semiconductor sector screening combined with trading volume data",
+      "required_apis": [
+        "eodhd:/screener",
+        "marketdata:/v1beta1/screener/stocks/most-actives",
+        "marketdata:/v2/stocks/snapshots"
+      ],
+      "data_requirements": [
+        "Semiconductor sector stock identification",
+        "Current day trading volume data for semiconductor stocks",
+        "Volume ranking and sorting capability",
+        "Real-time market data integration"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which biotech companies reported the biggest earnings surprises this quarter?",
+      "status": "VALID",
+      "original_question": "Which biotech companies reported the biggest earnings surprises this quarter?",
+      "validation_notes": "Excellent implementation using biotech screening with earnings calendar and fundamental surprise data",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/calendar/earnings",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Biotech sector company identification",
+        "Quarterly earnings actual vs expected data",
+        "Earnings surprise percentage calculation",
+        "Current quarter filtering"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "How does my portfolio's correlation with MTUM compare to QUAL ETF?",
+      "status": "VALID",
+      "original_question": "How does my portfolio's correlation with MTUM compare to QUAL ETF?",
+      "validation_notes": "Perfect example of ETF proxy factor analysis - compares portfolio momentum vs quality factor exposure",
+      "required_apis": [
+        "trading:/v2/account/portfolio/history",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Portfolio historical return data",
+        "MTUM ETF historical price/return data",
+        "QUAL ETF historical price/return data",
+        "Correlation coefficient calculations for both ETF comparisons"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What renewable energy stocks have the strongest balance sheets?",
+      "status": "VALID",
+      "original_question": "What renewable energy stocks have the strongest balance sheets?",
+      "validation_notes": "Renewable energy sector screening with financial strength metrics",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Renewable energy sector filtering",
+        "Balance sheet strength ratios",
+        "Debt-to-equity and liquidity metrics"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which dividend aristocrats increased their payouts the most this year?",
+      "status": "VALID",
+      "original_question": "Which dividend aristocrats increased their payouts the most this year?",
+      "validation_notes": "Dividend aristocrat identification with year-over-year dividend growth analysis",
+      "required_apis": [
+        "eodhd:/dividends",
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Dividend aristocrat stock identification",
+        "Historical dividend payments",
+        "Year-over-year growth calculations"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Is my portfolio more correlated with VTV or VUG ETF?",
+      "status": "VALID",
+      "original_question": "Is my portfolio more correlated with VTV or VUG ETF?",
+      "validation_notes": "ETF proxy value vs growth factor analysis - perfect implementation example",
+      "required_apis": [
+        "trading:/v2/account/portfolio/history",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Portfolio historical returns",
+        "VTV and VUG ETF historical data",
+        "Correlation coefficient calculations"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What Chinese ADRs are hitting new 52-week lows?",
+      "status": "VALID",
+      "original_question": "What Chinese ADRs are hitting new 52-week lows?",
+      "validation_notes": "ADR screening combined with 52-week price analysis",
+      "required_apis": [
+        "marketdata:/v1beta1/screener",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Chinese ADR identification",
+        "52-week historical price ranges",
+        "New low detection logic"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which cloud computing stocks have the highest gross margins?",
+      "status": "VALID",
+      "original_question": "Which cloud computing stocks have the highest gross margins?",
+      "validation_notes": "Cloud computing sector with fundamental margin analysis",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Cloud computing sector identification",
+        "Gross margin fundamental data",
+        "Margin ranking and comparison"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "How volatile has TSLA been compared to the broader automotive sector?",
+      "status": "VALID",
+      "original_question": "How volatile has TSLA been compared to the broader automotive sector?",
+      "validation_notes": "Individual stock volatility vs sector benchmark analysis",
+      "required_apis": [
+        "marketdata:/v2/stocks/bars",
+        "eodhd:/screener"
+      ],
+      "data_requirements": [
+        "TSLA historical price data",
+        "Automotive sector stock data",
+        "Volatility calculation and comparison"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What fintech companies have the best revenue growth rates?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "What fintech companies have the best customer acquisition costs?",
+      "validation_notes": "Refined from customer acquisition costs (unavailable) to revenue growth rates (available)",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Fintech sector identification",
+        "Revenue growth rate calculations",
+        "Growth ranking analysis"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which defense contractors have the largest government contract backlogs?",
+      "status": "VALID",
+      "original_question": "Which defense contractors have the largest government contract backlogs?",
+      "validation_notes": "Defense sector with contract backlog fundamental analysis",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Defense contractor identification",
+        "Government contract backlog data",
+        "Backlog size comparison"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Is my tech allocation overweight compared to the S&P 500 benchmark?",
+      "status": "VALID",
+      "original_question": "Is my tech allocation overweight compared to the S&P 500 benchmark?",
+      "validation_notes": "Portfolio sector allocation vs benchmark weight comparison",
+      "required_apis": [
+        "trading:/v2/positions",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Portfolio technology sector allocation",
+        "S&P 500 technology sector weighting",
+        "Allocation comparison analysis"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What airline stocks recovered fastest from the pandemic lows?",
+      "status": "VALID",
+      "original_question": "What airline stocks recovered fastest from the pandemic lows?",
+      "validation_notes": "Airline sector pandemic recovery analysis with price performance tracking",
+      "required_apis": [
+        "marketdata:/v2/stocks/bars",
+        "eodhd:/screener"
+      ],
+      "data_requirements": [
+        "Airline sector stock identification",
+        "Pandemic low price data (March 2020)",
+        "Recovery percentage calculations"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What stocks have gained the most momentum this week?",
+      "status": "VALID",
+      "original_question": "What stocks have gained the most momentum this week?",
+      "validation_notes": "Weekly momentum screening using market movers and historical price data",
+      "required_apis": [
+        "marketdata:/v1beta1/screener/stocks/movers",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Weekly price momentum calculations",
+        "Top movers screening",
+        "Performance ranking"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which sectors are showing the strongest relative strength?",
+      "status": "VALID",
+      "original_question": "Which sectors are showing the strongest relative strength?",
+      "validation_notes": "Sector performance comparison and relative strength analysis",
+      "required_apis": [
+        "eodhd:/screener",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Sector representative stocks or ETFs",
+        "Relative performance calculations",
+        "Sector strength ranking"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "How does my portfolio's volatility compare to the market?",
+      "status": "VALID",
+      "original_question": "How does my portfolio's volatility compare to the market?",
+      "validation_notes": "Portfolio volatility vs market benchmark comparison",
+      "required_apis": [
+        "trading:/v2/account/portfolio/history",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Portfolio historical returns",
+        "Market benchmark data (SPY)",
+        "Volatility calculations"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's the correlation between my tech holdings and QQQ?",
+      "status": "VALID",
+      "original_question": "What's the correlation between my tech holdings and QQQ?",
+      "validation_notes": "Tech sector holdings correlation analysis with NASDAQ ETF",
+      "required_apis": [
+        "trading:/v2/positions",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Tech holdings identification",
+        "QQQ historical data",
+        "Correlation coefficient calculation"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which stocks are breaking out of consolidation patterns?",
+      "status": "VALID",
+      "original_question": "Which stocks are breaking out of consolidation patterns?",
+      "validation_notes": "Technical analysis for consolidation breakout identification",
+      "required_apis": [
+        "marketdata:/v1beta1/screener/stocks/movers",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Price pattern analysis",
+        "Volume confirmation",
+        "Breakout detection logic"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "How does my portfolio performance compare to SPY this month?",
+      "status": "VALID",
+      "original_question": "How does my portfolio performance compare to SPY this month?",
+      "validation_notes": "Monthly portfolio performance vs S&P 500 benchmark",
+      "required_apis": [
+        "trading:/v2/account/portfolio/history",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Monthly portfolio returns",
+        "SPY monthly performance",
+        "Performance comparison"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's my portfolio's beta compared to the Russell 2000?",
+      "status": "VALID",
+      "original_question": "What's my portfolio's beta compared to the Russell 2000?",
+      "validation_notes": "Portfolio beta calculation using Russell 2000 as benchmark",
+      "required_apis": [
+        "trading:/v2/account/portfolio/history",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Portfolio returns",
+        "Russell 2000/IWM data",
+        "Beta coefficient calculation"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which of my holdings has the highest standard deviation?",
+      "status": "VALID",
+      "original_question": "Which of my holdings has the highest standard deviation?",
+      "validation_notes": "Individual holding volatility analysis and ranking",
+      "required_apis": [
+        "trading:/v2/positions",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Portfolio holdings",
+        "Individual stock price histories",
+        "Standard deviation calculations"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "How concentrated is my portfolio risk in single positions?",
+      "status": "VALID",
+      "original_question": "How concentrated is my portfolio risk in single positions?",
+      "validation_notes": "Portfolio concentration risk analysis by position sizing",
+      "required_apis": [
+        "trading:/v2/positions"
+      ],
+      "data_requirements": [
+        "Position weights",
+        "Concentration ratios",
+        "Risk concentration metrics"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's the sentiment analysis showing for AAPL stock?",
+      "status": "VALID",
+      "original_question": "What's the sentiment analysis showing for AAPL stock?",
+      "validation_notes": "News sentiment analysis for specific stock symbol",
+      "required_apis": [
+        "eodhd:/sentiments"
+      ],
+      "data_requirements": [
+        "AAPL news sentiment data",
+        "Sentiment scoring",
+        "Recent sentiment trends"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which insider transactions happened in my watchlist this week?",
+      "status": "VALID",
+      "original_question": "Which insider transactions happened in my watchlist this week?",
+      "validation_notes": "Watchlist integration with insider trading transaction data",
+      "required_apis": [
+        "eodhd:/insider-transactions",
+        "trading:/v2/watchlist"
+      ],
+      "data_requirements": [
+        "Watchlist stock symbols",
+        "Weekly insider transaction data",
+        "Transaction filtering and analysis"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What news sentiment is driving stock movements today?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "What social media trends are driving stock movements today?",
+      "validation_notes": "Refined from social media trends to news sentiment analysis using available APIs",
+      "required_apis": [
+        "eodhd:/sentiments",
+        "marketdata:/v1beta1/screener/stocks/movers"
+      ],
+      "data_requirements": [
+        "News sentiment data",
+        "Stock price movements",
+        "Sentiment-price correlation analysis"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which stocks have unusual trading volume spikes?",
+      "status": "VALID",
+      "original_question": "Which stocks have unusual trading volume spikes?",
+      "validation_notes": "Volume spike detection using most-active screening and volume analysis",
+      "required_apis": [
+        "marketdata:/v1beta1/screener/stocks/most-actives",
+        "marketdata:/v2/stocks/snapshots"
+      ],
+      "data_requirements": [
+        "Current trading volume data",
+        "Historical volume averages",
+        "Volume spike detection logic"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Am I overtrading based on my account activity?",
+      "status": "VALID",
+      "original_question": "Am I overtrading based on my account activity?",
+      "validation_notes": "Trading frequency analysis relative to account characteristics",
+      "required_apis": [
+        "trading:/v2/account/activities"
+      ],
+      "data_requirements": [
+        "Trading frequency data",
+        "Account size metrics",
+        "Overtrading threshold analysis"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's my average holding period for profitable trades?",
+      "status": "VALID",
+      "original_question": "What's my average holding period for profitable trades?",
+      "validation_notes": "Trading activity analysis focusing on profitable trade duration",
+      "required_apis": [
+        "trading:/v2/account/activities"
+      ],
+      "data_requirements": [
+        "Trade history with P&L",
+        "Buy/sell timestamp data",
+        "Holding period calculations"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "How often do I sell winners versus losers?",
+      "status": "VALID",
+      "original_question": "How often do I sell winners versus losers?",
+      "validation_notes": "Trading behavior analysis for disposition effect measurement",
+      "required_apis": [
+        "trading:/v2/account/activities"
+      ],
+      "data_requirements": [
+        "Trade history with profit/loss outcomes",
+        "Winner vs loser trade ratios",
+        "Behavioral pattern analysis"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's my win rate on trades this quarter?",
+      "status": "VALID",
+      "original_question": "What's my win rate on trades this quarter?",
+      "validation_notes": "Quarterly trading performance success rate calculation",
+      "required_apis": [
+        "trading:/v2/account/activities"
+      ],
+      "data_requirements": [
+        "Quarterly trade history",
+        "Profit/loss determination",
+        "Win rate percentage calculation"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "How does my position sizing affect my overall returns?",
+      "status": "VALID",
+      "original_question": "How does my position sizing affect my overall returns?",
+      "validation_notes": "Position size impact analysis on portfolio performance",
+      "required_apis": [
+        "trading:/v2/positions",
+        "trading:/v2/account/portfolio/history"
+      ],
+      "data_requirements": [
+        "Position sizes",
+        "Individual position returns",
+        "Portfolio performance correlation"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Am I anchoring on my purchase prices when selling?",
+      "status": "VALID",
+      "original_question": "Am I anchoring on my purchase prices when selling?",
+      "validation_notes": "Behavioral bias analysis using trading history for anchoring patterns",
+      "required_apis": [
+        "trading:/v2/account/activities"
+      ],
+      "data_requirements": [
+        "Purchase and sale price data",
+        "Holding period analysis",
+        "Anchoring bias pattern detection"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What behavioral patterns show up in my trading history?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "What emotional biases are affecting my trading decisions?",
+      "validation_notes": "Refined to focus on observable behavioral patterns in trading data",
+      "required_apis": [
+        "trading:/v2/account/activities"
+      ],
+      "data_requirements": [
+        "Trading frequency patterns",
+        "Win/loss behavior analysis",
+        "Timing pattern identification"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "How does my dollar-cost averaging performance compare to lump-sum investing?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "Should I dollar-cost average or invest my bonus lump sum?",
+      "validation_notes": "Refined from advisory question to performance comparison analysis",
+      "required_apis": [
+        "trading:/v2/account/activities",
+        "trading:/v2/account/portfolio/history"
+      ],
+      "data_requirements": [
+        "DCA transaction history",
+        "Lump-sum investment outcomes",
+        "Performance comparison metrics"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's my entry timing relative to stock price momentum?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "How does FOMO impact my entry timing?",
+      "validation_notes": "Refined to measurable entry timing vs momentum correlation",
+      "required_apis": [
+        "trading:/v2/account/activities",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Trade entry timestamps",
+        "Stock price momentum data",
+        "Entry timing correlation analysis"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Am I exhibiting loss aversion in my selling patterns?",
+      "status": "VALID",
+      "original_question": "Am I exhibiting loss aversion in my selling patterns?",
+      "validation_notes": "Loss aversion bias analysis through selling behavior patterns",
+      "required_apis": [
+        "trading:/v2/account/activities"
+      ],
+      "data_requirements": [
+        "Winning vs losing trade holding periods",
+        "Selling decision analysis",
+        "Loss aversion pattern detection"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's my account's current buying power?",
+      "status": "VALID",
+      "original_question": "What's my account's current buying power?",
+      "validation_notes": "Direct account information query for buying power",
+      "required_apis": [
+        "trading:/v2/account"
+      ],
+      "data_requirements": [
+        "Account buying power data",
+        "Cash available for trading",
+        "Margin availability"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Is my account flagged for pattern day trading?",
+      "status": "VALID",
+      "original_question": "Is my account flagged for pattern day trading?",
+      "validation_notes": "Account status check for PDT restrictions and flags",
+      "required_apis": [
+        "trading:/v2/account"
+      ],
+      "data_requirements": [
+        "Account status flags",
+        "Day trading restrictions",
+        "PDT compliance status"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "How much margin am I currently using?",
+      "status": "VALID",
+      "original_question": "How much margin am I currently using?",
+      "validation_notes": "Margin utilization analysis from account data",
+      "required_apis": [
+        "trading:/v2/account"
+      ],
+      "data_requirements": [
+        "Margin used amount",
+        "Total margin available",
+        "Margin utilization percentage"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's my account's cash allocation percentage?",
+      "status": "VALID",
+      "original_question": "What's my account's cash allocation percentage?",
+      "validation_notes": "Cash vs invested capital allocation calculation",
+      "required_apis": [
+        "trading:/v2/account",
+        "trading:/v2/positions"
+      ],
+      "data_requirements": [
+        "Account cash balance",
+        "Total portfolio value",
+        "Cash allocation percentage"
+      ],
+      "validation_date": "2025-01-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "How much am I paying in total trading fees annually?",
+      "status": "VALID",
+      "original_question": "How much am I paying in total trading fees annually?",
+      "validation_notes": "Compute sum of broker-recorded fees/commissions from account activities for a given year.",
+      "required_apis": [
+        "trading:/v2/account/activities"
+      ],
+      "data_requirements": [
+        "Account activities filtered by type (FEE, COMMISSION, REG_FEE, etc.)",
+        "Date range filter for current or specified year",
+        "Aggregation of fee amounts by activity type"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's the expense ratio impact across my ETF holdings?",
+      "status": "VALID",
+      "original_question": "What's the expense ratio impact across my ETF holdings?",
+      "validation_notes": "Estimate annual expense drag by multiplying each ETF's expense ratio by its market value; sum for portfolio impact.",
+      "required_apis": [
+        "trading:/v2/positions",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Identify ETF holdings in positions",
+        "Expense ratio (TER) per ETF",
+        "Position market value per ETF",
+        "Per-ETF and total annualized expense cost"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which funds have the lowest cost basis in my portfolio?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "Which funds have the lowest cost basis in my portfolio?",
+      "validation_notes": "Refine to use average entry price from positions as proxy for cost basis per share; lot-level tax basis may be unavailable.",
+      "required_apis": [
+        "trading:/v2/positions"
+      ],
+      "data_requirements": [
+        "Fund/ETF positions only",
+        "Average entry price per position",
+        "Ranking by lowest average cost per share"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "How do commission costs affect my small position trades?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "How do commission costs affect my small position trades?",
+      "validation_notes": "Analyze per-trade fees/commissions from activities relative to trade notional for small positions; some brokers are zero-commission.",
+      "required_apis": [
+        "trading:/v2/account/activities",
+        "trading:/v2/orders"
+      ],
+      "data_requirements": [
+        "Per-trade fees/commissions from activities",
+        "Identify small trades by notional/quantity",
+        "Fee as % of trade notional impact analysis"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's the fee drag on my long-term investment returns?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "What's the fee drag on my long-term investment returns?",
+      "validation_notes": "Estimate fee drag using expense ratios and historical returns; provide scenario analysis rather than precise forecasting.",
+      "required_apis": [
+        "trading:/v2/positions",
+        "eodhd:/fundamentals/{symbol}",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Expense ratios for funds",
+        "Portfolio value/weights",
+        "Historical returns to estimate compounding impact",
+        "Projected fee drag over multi-year horizon"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What stocks are hitting their 52-week highs today?",
+      "status": "VALID",
+      "original_question": "What stocks are hitting their 52-week highs today?",
+      "validation_notes": "Use screener/movers with historical 52-week range check and current prices.",
+      "required_apis": [
+        "marketdata:/v1beta1/screener/stocks/movers",
+        "marketdata:/v2/stocks/snapshots",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Current prices",
+        "52-week high values",
+        "New-high identification logic"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which companies reported earnings beats this week?",
+      "status": "VALID",
+      "original_question": "Which companies reported earnings beats this week?",
+      "validation_notes": "Filter earnings calendar by date and compare actual vs estimate to flag beats.",
+      "required_apis": [
+        "eodhd:/calendar/earnings"
+      ],
+      "data_requirements": [
+        "Earnings events for current week",
+        "Actual vs estimate EPS",
+        "Beat/miss classification"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "How volatile has TSLA been compared to other EV stocks?",
+      "status": "VALID",
+      "original_question": "How volatile has TSLA been compared to other EV stocks?",
+      "validation_notes": "Compute realized volatility over a window for TSLA and peer EV set, then compare.",
+      "required_apis": [
+        "marketdata:/v2/stocks/bars",
+        "eodhd:/screener"
+      ],
+      "data_requirements": [
+        "Peer set of EV stocks",
+        "Historical daily bars",
+        "Volatility (stdev of returns) comparison"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's the price momentum on semiconductor stocks?",
+      "status": "VALID",
+      "original_question": "What's the price momentum on semiconductor stocks?",
+      "validation_notes": "Define momentum (e.g., 1M/3M/6M returns or RSI) across semiconductor sector and rank.",
+      "required_apis": [
+        "eodhd:/screener",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Semiconductor sector symbols",
+        "Historical bars",
+        "Momentum metric calculation and ranking"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which stocks have the strongest technical breakouts?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "Which stocks have the strongest technical breakouts?",
+      "validation_notes": "Refine to a specific breakout definition (e.g., price crossing 52-week high with volume > 1.5x avg).",
+      "required_apis": [
+        "marketdata:/v1beta1/screener/stocks/movers",
+        "marketdata:/v2/stocks/bars",
+        "marketdata:/v2/stocks/snapshots"
+      ],
+      "data_requirements": [
+        "Historical highs",
+        "Current price and volume",
+        "Average volume baseline and threshold"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "How does my portfolio's Sharpe ratio compare to benchmarks?",
+      "status": "VALID",
+      "original_question": "How does my portfolio's Sharpe ratio compare to benchmarks?",
+      "validation_notes": "Compute portfolio Sharpe and compare to SPY or a selected benchmark over same period.",
+      "required_apis": [
+        "trading:/v2/account/portfolio/history",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Portfolio returns",
+        "Benchmark (e.g., SPY) returns",
+        "Risk-free rate and Sharpe calculation"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's my maximum drawdown over the past year?",
+      "status": "VALID",
+      "original_question": "What's my maximum drawdown over the past year?",
+      "validation_notes": "Use portfolio value history to compute peak-to-trough max drawdown for trailing 1Y.",
+      "required_apis": [
+        "trading:/v2/account/portfolio/history"
+      ],
+      "data_requirements": [
+        "Daily portfolio value series",
+        "Peak/trough tracking",
+        "Max drawdown metric"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which positions contribute most to my portfolio risk?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "Which positions contribute most to my portfolio risk?",
+      "validation_notes": "Approximate risk contribution using weights × volatility or beta due to limited covariance data.",
+      "required_apis": [
+        "trading:/v2/positions",
+        "marketdata:/v2/stocks/bars",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Position weights",
+        "Per-asset volatility or beta",
+        "Contribution scoring and ranking"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "How correlated are my top 5 holdings?",
+      "status": "VALID",
+      "original_question": "How correlated are my top 5 holdings?",
+      "validation_notes": "Select top 5 by weight, compute pairwise correlation of returns over a window.",
+      "required_apis": [
+        "trading:/v2/positions",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Top holdings by weight",
+        "Historical returns time series",
+        "Correlation matrix"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's my portfolio's tracking error versus the S&P 500?",
+      "status": "VALID",
+      "original_question": "What's my portfolio's tracking error versus the S&P 500?",
+      "validation_notes": "Tracking error is std dev of active returns vs S&P 500; compute from portfolio and SPY returns over same window.",
+      "required_apis": [
+        "trading:/v2/account/portfolio/history",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Portfolio return series",
+        "SPY return series",
+        "Std dev of differences (active returns)"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which news events moved my holdings the most this month?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "Which news events moved my holdings the most this month?",
+      "validation_notes": "Refine to attribute price moves around news timestamps for portfolio holdings; report largest post-news returns.",
+      "required_apis": [
+        "trading:/v2/positions",
+        "eodhd:/news",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Portfolio symbols",
+        "News timestamps per symbol",
+        "Event-window return calculation (e.g., 1d/3d)",
+        "Ranking by magnitude"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What earnings announcements are coming up for my stocks?",
+      "status": "VALID",
+      "original_question": "What earnings announcements are coming up for my stocks?",
+      "validation_notes": "Cross portfolio symbols with earnings calendar for upcoming dates.",
+      "required_apis": [
+        "trading:/v2/positions",
+        "eodhd:/calendar/earnings"
+      ],
+      "data_requirements": [
+        "Portfolio symbols",
+        "Earnings dates in forward window",
+        "Symbol-date mapping"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "How do analyst upgrades correlate with my stock performance?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "How do analyst upgrades correlate with my stock performance?",
+      "validation_notes": "Refine to show recent rating changes for holdings and subsequent short-horizon returns (e.g., 1w/1m).",
+      "required_apis": [
+        "trading:/v2/positions",
+        "eodhd:/analyst-ratings",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Recent rating changes per symbol",
+        "Return calculation post-change",
+        "Correlation/association summary"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which of my stocks have recent insider buying activity?",
+      "status": "VALID",
+      "original_question": "Which of my stocks have recent insider buying activity?",
+      "validation_notes": "Filter insider transactions to buys for portfolio symbols within recent period.",
+      "required_apis": [
+        "trading:/v2/positions",
+        "eodhd:/insider-transactions"
+      ],
+      "data_requirements": [
+        "Portfolio symbols",
+        "Recent insider buy transactions",
+        "Issuer, insider, date, size"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What market sentiment indicators suggest about current trends?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "What market sentiment indicators suggest about current trends?",
+      "validation_notes": "Refine to news sentiment for portfolio/watchlist over last week with average sentiment score trend.",
+      "required_apis": [
+        "eodhd:/sentiments",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Recent news sentiment scores",
+        "Time-window aggregation",
+        "Trend indication"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "How many trades have I made this month?",
+      "status": "VALID",
+      "original_question": "How many trades have I made this month?",
+      "validation_notes": "Count fills or orders with status filled in current month.",
+      "required_apis": [
+        "trading:/v2/account/activities",
+        "trading:/v2/orders"
+      ],
+      "data_requirements": [
+        "Date range filter for current month",
+        "Filled orders or trade activity count"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's my average trade size compared to my account value?",
+      "status": "VALID",
+      "original_question": "What's my average trade size compared to my account value?",
+      "validation_notes": "Compute average notional per filled order and compare to current equity.",
+      "required_apis": [
+        "trading:/v2/orders",
+        "trading:/v2/account"
+      ],
+      "data_requirements": [
+        "Filled orders with notional/qty*price",
+        "Account equity value",
+        "Average trade size as % of equity"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which stocks do I trade most frequently?",
+      "status": "VALID",
+      "original_question": "Which stocks do I trade most frequently?",
+      "validation_notes": "Aggregate filled orders by symbol and rank by count in selected period.",
+      "required_apis": [
+        "trading:/v2/orders"
+      ],
+      "data_requirements": [
+        "Filled orders by symbol",
+        "Date range filter",
+        "Frequency ranking"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "How long do I typically hold losing positions?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "How long do I typically hold losing positions?",
+      "validation_notes": "Refine to closed positions with realized losses; compute holding period between opening and closing trades.",
+      "required_apis": [
+        "trading:/v2/orders",
+        "trading:/v2/account/activities"
+      ],
+      "data_requirements": [
+        "Match buys to sells per symbol/lots",
+        "Identify losing closures",
+        "Holding period statistics"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's my profit and loss by sector allocation?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "What's my profit and loss by sector allocation?",
+      "validation_notes": "Refine to current unrealized P&L by sector using positions' market value vs cost and sector classification.",
+      "required_apis": [
+        "trading:/v2/positions",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Positions with cost basis/avg entry and market value",
+        "Sector classification",
+        "Aggregate P&L by sector"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Am I making investment decisions based on recent news?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "Am I making investment decisions based on recent news?",
+      "validation_notes": "Refine to measure fraction of trades executed within N hours after major news for traded symbols.",
+      "required_apis": [
+        "eodhd:/news",
+        "trading:/v2/orders"
+      ],
+      "data_requirements": [
+        "Trade timestamps and symbols",
+        "News timestamps and importance",
+        "Proximity window match and ratio"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "How does my performance change during volatile markets?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "How does my performance change during volatile markets?",
+      "validation_notes": "Use SPY realized volatility as proxy for market volatility; compare portfolio returns on high-vol vs normal days.",
+      "required_apis": [
+        "trading:/v2/account/portfolio/history",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Portfolio daily returns",
+        "SPY daily returns/volatility",
+        "Subsample comparison stats"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Do I tend to chase momentum or buy dips?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "Do I tend to chase momentum or buy dips?",
+      "validation_notes": "Classify buys based on prior N-day returns of the asset to determine buy-on-strength vs buy-on-weakness.",
+      "required_apis": [
+        "trading:/v2/orders",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Buy trade timestamps and symbols",
+        "Pre-trade return windows",
+        "Classification and summary"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's my current day trading buying power?",
+      "status": "VALID",
+      "original_question": "What's my current day trading buying power?",
+      "validation_notes": "Directly available from account fields.",
+      "required_apis": [
+        "trading:/v2/account"
+      ],
+      "data_requirements": [
+        "Account day trading buying power field"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "How many day trades have I used this week?",
+      "status": "VALID",
+      "original_question": "How many day trades have I used this week?",
+      "validation_notes": "Count same-day round trips from activities/orders within current week.",
+      "required_apis": [
+        "trading:/v2/account/activities",
+        "trading:/v2/orders"
+      ],
+      "data_requirements": [
+        "Order fills with timestamps",
+        "Same-day buy/sell pairing logic",
+        "Week filter"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's my account maintenance requirement?",
+      "status": "VALID",
+      "original_question": "What's my account maintenance requirement?",
+      "validation_notes": "Available from trading account details (maintenance requirement/margin).",
+      "required_apis": [
+        "trading:/v2/account"
+      ],
+      "data_requirements": [
+        "Maintenance requirement fields"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which positions are on margin versus cash?",
+      "status": "VALID",
+      "original_question": "Which positions are on margin versus cash?",
+      "validation_notes": "Determine margin usage using account margin status and position marginability; flag if margin used and position contributes.",
+      "required_apis": [
+        "trading:/v2/positions",
+        "trading:/v2/account",
+        "alpaca.trading:/v2/assets"
+      ],
+      "data_requirements": [
+        "Position list",
+        "Asset marginable flag",
+        "Account margin used"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "How much interest am I paying on margin loans?",
+      "status": "VALID",
+      "original_question": "How much interest am I paying on margin loans?",
+      "validation_notes": "Sum interest charge activities over selected period.",
+      "required_apis": [
+        "trading:/v2/account/activities"
+      ],
+      "data_requirements": [
+        "Interest charge entries",
+        "Date range filter",
+        "Aggregation"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's the total cost of ownership for my mutual funds?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "What's the total cost of ownership for my mutual funds?",
+      "validation_notes": "Estimate using expense ratios (TER) and known broker/platform fees from activities; exclude undisclosed trading costs.",
+      "required_apis": [
+        "trading:/v2/positions",
+        "eodhd:/fundamentals/{symbol}",
+        "trading:/v2/account/activities"
+      ],
+      "data_requirements": [
+        "Identify mutual fund positions",
+        "Expense ratio per fund",
+        "Platform/broker fee entries",
+        "Annualized cost estimate"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "How do expense ratios vary across my portfolio?",
+      "status": "VALID",
+      "original_question": "How do expense ratios vary across my portfolio?",
+      "validation_notes": "Join positions with expense ratios for funds/ETFs and summarize distribution by holding and weight.",
+      "required_apis": [
+        "trading:/v2/positions",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Portfolio holdings",
+        "Expense ratio per holding",
+        "Weighted averages and range"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which investments have hidden fees I should know about?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "Which investments have hidden fees I should know about?",
+      "validation_notes": "Highlight investments with higher TERs and list any recorded platform/advisory fees; true hidden costs may be unavailable.",
+      "required_apis": [
+        "trading:/v2/positions",
+        "eodhd:/fundamentals/{symbol}",
+        "trading:/v2/account/activities"
+      ],
+      "data_requirements": [
+        "Expense ratios by holding",
+        "Fee activities by symbol/account",
+        "Flag high-cost holdings"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What platform fees am I paying annually?",
+      "status": "VALID",
+      "original_question": "What platform fees am I paying annually?",
+      "validation_notes": "Sum platform/advisory/maintenance fee entries in activities over trailing year.",
+      "required_apis": [
+        "trading:/v2/account/activities"
+      ],
+      "data_requirements": [
+        "Fee-type filtering",
+        "12-month date window",
+        "Aggregation and categorization"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "How much could I save by switching to lower-cost funds?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "How much could I save by switching to lower-cost funds?",
+      "validation_notes": "Estimate savings by comparing current TERs to category lower-TER alternatives; uses screeners to find comparable funds.",
+      "required_apis": [
+        "trading:/v2/positions",
+        "eodhd:/screener",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Identify fund categories",
+        "Find lower-TER alternatives",
+        "Compute fee difference on current market values"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which stocks have the strongest price momentum right now?",
+      "status": "VALID",
+      "original_question": "Which stocks have the strongest price momentum right now?",
+      "validation_notes": "Rank by short/medium-term returns or RSI using market bars and/or screeners.",
+      "required_apis": [
+        "marketdata:/v1beta1/screener/stocks/movers",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Universe of candidates",
+        "Momentum metric (1M/3M/RSI)",
+        "Ranking"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What sectors are outperforming the broader market?",
+      "status": "VALID",
+      "original_question": "What sectors are outperforming the broader market?",
+      "validation_notes": "Compare sector ETF returns vs SPY over selected window.",
+      "required_apis": [
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Sector ETF symbols",
+        "Return calculation",
+        "Outperformance vs SPY"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "How does market breadth look for today's session?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "How does market breadth look for today's session?",
+      "validation_notes": "Approximate breadth via advancers/decliners among screener universe and volume leaders; full exchange-wide breadth may be limited.",
+      "required_apis": [
+        "marketdata:/v1beta1/screener/stocks/movers",
+        "marketdata:/v2/stocks/snapshots"
+      ],
+      "data_requirements": [
+        "Advancers/decliners counts",
+        "Volume confirmation",
+        "Intraday snapshot data"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which stocks are making new highs with volume confirmation?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "Which stocks are making new highs with volume confirmation?",
+      "validation_notes": "Define volume confirmation threshold (e.g., >1.5x 30-day avg volume) alongside new 52-week high.",
+      "required_apis": [
+        "marketdata:/v2/stocks/bars",
+        "marketdata:/v2/stocks/snapshots"
+      ],
+      "data_requirements": [
+        "52-week highs",
+        "Current/average volume",
+        "Threshold filter"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's the advance-decline ratio telling us about market health?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "What's the advance-decline ratio telling us about market health?",
+      "validation_notes": "Compute A/D ratio from available screener universe; interpret as breadth signal with caveats.",
+      "required_apis": [
+        "marketdata:/v1beta1/screener/stocks/movers",
+        "marketdata:/v2/stocks/snapshots"
+      ],
+      "data_requirements": [
+        "Advancers vs decliners counts",
+        "Intraday change data",
+        "Ratio calculation"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "How does my portfolio's alpha generation compare to the market?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "How does my portfolio's alpha generation compare to the market?",
+      "validation_notes": "Estimate alpha as excess return vs SPY or via CAPM regression; specify window and risk-free assumption.",
+      "required_apis": [
+        "trading:/v2/account/portfolio/history",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Portfolio and SPY returns",
+        "Risk-free rate (assumed/constant)",
+        "Excess return or regression alpha"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's my information ratio for active management decisions?",
+      "status": "VALID",
+      "original_question": "What's my information ratio for active management decisions?",
+      "validation_notes": "Information ratio = mean active return / tracking error vs benchmark over a specified window.",
+      "required_apis": [
+        "trading:/v2/account/portfolio/history",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Active return series",
+        "Tracking error (std dev of active returns)",
+        "Window selection"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which holdings have the highest correlation with market volatility?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "Which holdings have the highest correlation with market volatility?",
+      "validation_notes": "Use SPY realized volatility as a proxy for market vol; correlate holding returns with that series.",
+      "required_apis": [
+        "trading:/v2/positions",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Holding return series",
+        "SPY realized vol series",
+        "Correlation calculation"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "How does my portfolio perform during market stress periods?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "How does my portfolio perform during market stress periods?",
+      "validation_notes": "Define stress as SPY drawdowns > X% over Y days; compute portfolio returns during those windows.",
+      "required_apis": [
+        "trading:/v2/account/portfolio/history",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Drawdown window detection",
+        "Portfolio returns in stress windows",
+        "Comparison to baseline"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's my upside versus downside capture ratio?",
+      "status": "VALID",
+      "original_question": "What's my upside versus downside capture ratio?",
+      "validation_notes": "Compute portfolio average returns on SPY up days vs down days relative to SPY's averages.",
+      "required_apis": [
+        "trading:/v2/account/portfolio/history",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Classification of market up/down days",
+        "Portfolio returns per group",
+        "Capture ratio calculation"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which stocks in my watchlist have positive sentiment shifts?",
+      "status": "VALID",
+      "original_question": "Which stocks in my watchlist have positive sentiment shifts?",
+      "validation_notes": "Use trading watchlists (or a configured list) and compute recent change in news sentiment.",
+      "required_apis": [
+        "trading:/v2/watchlists",
+        "eodhd:/sentiments"
+      ],
+      "data_requirements": [
+        "Watchlist symbols",
+        "Recent sentiment scores",
+        "Delta vs prior period"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What earnings calendar events could impact my holdings?",
+      "status": "VALID",
+      "original_question": "What earnings calendar events could impact my holdings?",
+      "validation_notes": "Match portfolio symbols to upcoming earnings dates within chosen horizon.",
+      "required_apis": [
+        "trading:/v2/positions",
+        "eodhd:/calendar/earnings"
+      ],
+      "data_requirements": [
+        "Portfolio symbols",
+        "Upcoming earnings dates",
+        "Window filter"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "How do Federal Reserve announcements affect my positions?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "How do Federal Reserve announcements affect my positions?",
+      "validation_notes": "Use FOMC announcement dates from economic calendar; compute pre/post returns for holdings or portfolio.",
+      "required_apis": [
+        "eodhd:/economic-calendar",
+        "trading:/v2/positions",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "FOMC dates",
+        "Holdings returns around events",
+        "Event window comparison"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which of my stocks have upcoming dividend dates?",
+      "status": "VALID",
+      "original_question": "Which of my stocks have upcoming dividend dates?",
+      "validation_notes": "Query dividend calendars for portfolio symbols and filter by upcoming ex-dividend dates.",
+      "required_apis": [
+        "trading:/v2/positions",
+        "eodhd:/dividends"
+      ],
+      "data_requirements": [
+        "Portfolio symbols",
+        "Ex-dividend and pay dates",
+        "Upcoming window filter"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What analyst recommendations changed for my holdings this week?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "What analyst recommendations changed for my holdings this week?",
+      "validation_notes": "List rating changes for holdings within the last 7 days, if available from ratings endpoint.",
+      "required_apis": [
+        "trading:/v2/positions",
+        "eodhd:/analyst-ratings"
+      ],
+      "data_requirements": [
+        "Recent rating change events",
+        "Symbol mapping",
+        "Week filter"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "How many round-trip trades have I completed this month?",
+      "status": "VALID",
+      "original_question": "How many round-trip trades have I completed this month?",
+      "validation_notes": "Count completed buy->sell cycles per symbol within the current month.",
+      "required_apis": [
+        "trading:/v2/orders",
+        "trading:/v2/account/activities"
+      ],
+      "data_requirements": [
+        "Matched trade pairs",
+        "Month date filter",
+        "Cycle counting"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's my success rate on swing trades versus buy-and-hold?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "What's my success rate on swing trades versus buy-and-hold?",
+      "validation_notes": "Define swing trade holding-period threshold; compute win rate for trades above/below that threshold.",
+      "required_apis": [
+        "trading:/v2/orders",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Trade open/close matching",
+        "Holding period classification",
+        "Win rate per strategy"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "How does my performance vary by time of day trading?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "How does my performance vary by time of day trading?",
+      "validation_notes": "Compute realized P&L per trade and group by entry time buckets (open, mid-day, close).",
+      "required_apis": [
+        "trading:/v2/orders",
+        "trading:/v2/account/activities"
+      ],
+      "data_requirements": [
+        "Trade timestamps",
+        "Per-trade P&L (realized)",
+        "Grouping and comparison"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's my average time between buy and sell decisions?",
+      "status": "VALID",
+      "original_question": "What's my average time between buy and sell decisions?",
+      "validation_notes": "Match buys and subsequent sells per symbol/lots to compute holding durations; average them.",
+      "required_apis": [
+        "trading:/v2/orders"
+      ],
+      "data_requirements": [
+        "Matched buy-sell pairs",
+        "Duration calculation",
+        "Average and distribution"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Am I more successful with larger or smaller position sizes?",
+      "status": "VALID",
+      "original_question": "Am I more successful with larger or smaller position sizes?",
+      "validation_notes": "Group trades by notional size buckets and compare win rate/average P&L.",
+      "required_apis": [
+        "trading:/v2/orders",
+        "trading:/v2/account/activities"
+      ],
+      "data_requirements": [
+        "Per-trade notional and realized P&L",
+        "Bucketization by size",
+        "Win rate and P&L stats"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What patterns show up in my profitable versus unprofitable trades?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "What patterns show up in my profitable versus unprofitable trades?",
+      "validation_notes": "Summarize differences by holding period, time of day, sector, and instrument; highlight statistically notable gaps.",
+      "required_apis": [
+        "trading:/v2/orders",
+        "trading:/v2/account/activities",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Per-trade realized P&L",
+        "Derived features (holding time, entry time, sector)",
+        "Group comparisons"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's my current account equity value?",
+      "status": "VALID",
+      "original_question": "What's my current account equity value?",
+      "validation_notes": "Direct from account endpoint.",
+      "required_apis": [
+        "trading:/v2/account"
+      ],
+      "data_requirements": [
+        "Account equity field"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "How much settled cash do I have available for trading?",
+      "status": "VALID",
+      "original_question": "How much settled cash do I have available for trading?",
+      "validation_notes": "Use settled cash or cash fields from account details.",
+      "required_apis": [
+        "trading:/v2/account"
+      ],
+      "data_requirements": [
+        "Settled cash / cash fields"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's my account's net liquidation value?",
+      "status": "VALID",
+      "original_question": "What's my account's net liquidation value?",
+      "validation_notes": "Direct from account fields (net liquidation value).",
+      "required_apis": [
+        "trading:/v2/account"
+      ],
+      "data_requirements": [
+        "NLV field"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which positions are approaching margin calls?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "Which positions are approaching margin calls?",
+      "validation_notes": "Estimate by comparing maintenance margin requirement vs equity and simulating haircut; flag low headroom positions.",
+      "required_apis": [
+        "trading:/v2/account",
+        "trading:/v2/positions",
+        "alpaca.trading:/v2/assets"
+      ],
+      "data_requirements": [
+        "Maintenance requirement",
+        "Position marginability and risk",
+        "Headroom threshold"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "How much dividend income did I receive this quarter?",
+      "status": "VALID",
+      "original_question": "How much dividend income did I receive this quarter?",
+      "validation_notes": "Sum dividend activity amounts within current quarter.",
+      "required_apis": [
+        "trading:/v2/account/activities"
+      ],
+      "data_requirements": [
+        "Dividend activity entries",
+        "Quarter date range",
+        "Aggregation"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What's the all-in cost of my investment strategy?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "What's the all-in cost of my investment strategy?",
+      "validation_notes": "Combine platform/broker fees from activities with TER-based expense estimates for held funds.",
+      "required_apis": [
+        "trading:/v2/account/activities",
+        "trading:/v2/positions",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Fee entries aggregation",
+        "Expense ratio weighted costs",
+        "Annualized total"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "How much am I paying in management fees across all accounts?",
+      "status": "VALID",
+      "original_question": "How much am I paying in management fees across all accounts?",
+      "validation_notes": "Sum management/advisory fee activities across accounts over a year.",
+      "required_apis": [
+        "trading:/v2/account/activities"
+      ],
+      "data_requirements": [
+        "Management fee entries",
+        "12-month date range",
+        "Aggregation"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which investments offer the best value for their expense ratios?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "Which investments offer the best value for their expense ratios?",
+      "validation_notes": "Rank funds by performance-to-fee metric within categories using historical returns and TER.",
+      "required_apis": [
+        "eodhd:/screener",
+        "marketdata:/v2/stocks/bars",
+        "eodhd:/fundamentals/{symbol}"
+      ],
+      "data_requirements": [
+        "Fund categories",
+        "Historical returns",
+        "Expense ratios",
+        "Value metric computation"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which of my holdings showed the strongest 3-month momentum?",
+      "status": "VALID",
+      "original_question": "Which of my holdings showed the strongest 3-month momentum?",
+      "validation_notes": "Compute 3-month total return for each holding and rank.",
+      "required_apis": [
+        "trading:/v2/positions",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Portfolio symbols and weights",
+        "3-month price history",
+        "Return calculation and ranking"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which sector ETF outperformed SPY over the last 4 weeks?",
+      "status": "VALID",
+      "original_question": "Which sector ETF outperformed SPY over the last 4 weeks?",
+      "validation_notes": "Compare 4-week returns of sector ETFs vs SPY.",
+      "required_apis": [
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Sector ETF symbols (XLK, XLE, XLF, etc.)",
+        "SPY bars",
+        "4-week return comparison"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What is the rolling 30-day volatility of AAPL versus MSFT?",
+      "status": "VALID",
+      "original_question": "What is the rolling 30-day volatility of AAPL versus MSFT?",
+      "validation_notes": "Compute rolling standard deviation of daily returns over 30 trading days.",
+      "required_apis": [
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "AAPL and MSFT daily bars",
+        "Return series",
+        "30-day rolling volatility"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which of my positions has the lowest correlation with SPY over the past year?",
+      "status": "VALID",
+      "original_question": "Which of my positions has the lowest correlation with SPY over the past year?",
+      "validation_notes": "Compute correlations between each holding's returns and SPY over 252 trading days.",
+      "required_apis": [
+        "trading:/v2/positions",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Portfolio symbols",
+        "SPY daily bars",
+        "Correlation ranking"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What were the biggest intraday movers in the NASDAQ 100 today?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "What were the biggest intraday movers in the NASDAQ 100 today?",
+      "validation_notes": "Refine to a supported universe (e.g., predefined NDX list or 'top NASDAQ movers') depending on screener capabilities.",
+      "required_apis": [
+        "marketdata:/v1beta1/screener/stocks/movers",
+        "marketdata:/v2/stocks/snapshots"
+      ],
+      "data_requirements": [
+        "Universe filter (NDX constituents or NASDAQ exchange)",
+        "Intraday % change",
+        "Top movers selection"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which stocks had unusual volume today relative to their 30-day average?",
+      "status": "VALID",
+      "original_question": "Which stocks had unusual volume today relative to their 30-day average?",
+      "validation_notes": "Compute today's volume vs 30-day average volume and flag outliers.",
+      "required_apis": [
+        "marketdata:/v2/stocks/bars",
+        "marketdata:/v2/stocks/snapshots"
+      ],
+      "data_requirements": [
+        "Today volume",
+        "30-day avg volume",
+        "Unusual volume threshold (e.g., >2×)"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "How did my portfolio perform on the last three FOMC announcement days?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "How did my portfolio perform on the last three FOMC announcement days?",
+      "validation_notes": "Use economic calendar FOMC dates and compute portfolio return on those dates; exact timing granularity may vary.",
+      "required_apis": [
+        "eodhd:/economic-calendar",
+        "trading:/v2/account/portfolio/history"
+      ],
+      "data_requirements": [
+        "FOMC event dates",
+        "Portfolio daily returns",
+        "Event-day return extraction"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which of my holdings gapped up at the market open this week?",
+      "status": "VALID",
+      "original_question": "Which of my holdings gapped up at the market open this week?",
+      "validation_notes": "Detect open price > prior close for each day in the week for portfolio symbols.",
+      "required_apis": [
+        "trading:/v2/positions",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Daily O/H/L/C per symbol",
+        "Gap detection logic",
+        "Week date range"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What is my portfolio’s 6-month exposure to the momentum factor (vs MTUM)?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "What is my portfolio’s 6-month exposure to the momentum factor (vs MTUM)?",
+      "validation_notes": "Approximate exposure via correlation/regression between portfolio returns and MTUM over 6 months.",
+      "required_apis": [
+        "trading:/v2/account/portfolio/history",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Portfolio return series",
+        "MTUM return series",
+        "Correlation/regression estimate"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which symbols in my watchlist have the highest 14-day RSI right now?",
+      "status": "VALID",
+      "original_question": "Which symbols in my watchlist have the highest 14-day RSI right now?",
+      "validation_notes": "Compute RSI(14) for each watchlist symbol and rank.",
+      "required_apis": [
+        "trading:/v2/watchlists",
+        "marketdata:/v2/stocks/bars",
+        "eodhd:/technical/{symbol}"
+      ],
+      "data_requirements": [
+        "Watchlist symbols",
+        "Price history or technical endpoint",
+        "RSI ranking"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which industries led performance within the S&P 500 this month?",
+      "status": "VALID",
+      "original_question": "Which industries led performance within the S&P 500 this month?",
+      "validation_notes": "Aggregate industry-level returns using constituents and rank leaders.",
+      "required_apis": [
+        "eodhd:/screener",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "S&P 500 constituents with industries",
+        "Monthly returns by industry",
+        "Ranking"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What are the top gainers and losers in the Dow today?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "What are the top gainers and losers in the Dow today?",
+      "validation_notes": "Use a maintained Dow 30 symbol list or screener filter; compute today's % change and rank.",
+      "required_apis": [
+        "marketdata:/v2/stocks/snapshots",
+        "marketdata:/v1beta1/screener/stocks/movers"
+      ],
+      "data_requirements": [
+        "Dow 30 universe",
+        "Intraday % change",
+        "Top/bottom sorting"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which ETFs showed the strongest 1-week relative strength vs SPY?",
+      "status": "VALID",
+      "original_question": "Which ETFs showed the strongest 1-week relative strength vs SPY?",
+      "validation_notes": "Compute 1-week return for ETFs minus SPY and rank.",
+      "required_apis": [
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "ETF list",
+        "1-week returns",
+        "Relative strength vs SPY rank"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which of my holdings has the highest beta to QQQ?",
+      "status": "VALID",
+      "original_question": "Which of my holdings has the highest beta to QQQ?",
+      "validation_notes": "Estimate beta via regression of holding returns vs QQQ returns.",
+      "required_apis": [
+        "trading:/v2/positions",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Holding return series",
+        "QQQ return series",
+        "Beta estimation"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "How does my portfolio’s daily volatility compare to SPY this quarter?",
+      "status": "VALID",
+      "original_question": "How does my portfolio’s daily volatility compare to SPY this quarter?",
+      "validation_notes": "Compute standard deviation of daily returns for portfolio and SPY for the quarter.",
+      "required_apis": [
+        "trading:/v2/account/portfolio/history",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Portfolio returns",
+        "SPY returns",
+        "Volatility comparison"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which tickers are above their 50-day but below their 200-day moving average?",
+      "status": "VALID",
+      "original_question": "Which tickers are above their 50-day but below their 200-day moving average?",
+      "validation_notes": "Compute 50DMA and 200DMA and filter for condition.",
+      "required_apis": [
+        "marketdata:/v2/stocks/bars",
+        "eodhd:/technical/{symbol}"
+      ],
+      "data_requirements": [
+        "Historical prices",
+        "SMA(50) and SMA(200)",
+        "Screening condition"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "What was the average intraday range (ATR) of TSLA over the last 20 days?",
+      "status": "VALID",
+      "original_question": "What was the average intraday range (ATR) of TSLA over the last 20 days?",
+      "validation_notes": "Compute ATR(14/20) from OHLC bars over last 20 days.",
+      "required_apis": [
+        "marketdata:/v2/stocks/bars",
+        "eodhd:/technical/{symbol}"
+      ],
+      "data_requirements": [
+        "TSLA OHLC bars",
+        "ATR calculation",
+        "20-day average"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which sector rotated from underperforming to outperforming in the past 2 weeks?",
+      "status": "VALID",
+      "original_question": "Which sector rotated from underperforming to outperforming in the past 2 weeks?",
+      "validation_notes": "Compare sector vs SPY relative returns week-over-week.",
+      "required_apis": [
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Sector ETF returns",
+        "SPY returns",
+        "Relative performance trend change"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which of my positions had the largest drawdown in the last 90 days?",
+      "status": "VALID",
+      "original_question": "Which of my positions had the largest drawdown in the last 90 days?",
+      "validation_notes": "Compute max peak-to-trough decline for each holding.",
+      "required_apis": [
+        "trading:/v2/positions",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Holding price history",
+        "Max drawdown per symbol",
+        "Ranking"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which NASDAQ stocks printed new 20-day highs today?",
+      "status": "VALID",
+      "original_question": "Which NASDAQ stocks printed new 20-day highs today?",
+      "validation_notes": "Filter NASDAQ-listed symbols for new 20-day highs.",
+      "required_apis": [
+        "eodhd:/screener",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "NASDAQ exchange filter",
+        "20-day high detection",
+        "Today filter"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which of my holdings are most correlated with USMV (low volatility)?",
+      "status": "VALID",
+      "original_question": "Which of my holdings are most correlated with USMV (low volatility)?",
+      "validation_notes": "Compute correlation between holdings' returns and USMV.",
+      "required_apis": [
+        "trading:/v2/positions",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Holdings return series",
+        "USMV return series",
+        "Correlation ranking"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which symbols show persistent positive returns over the last 5 Mondays?",
+      "status": "VALID",
+      "original_question": "Which symbols show persistent positive returns over the last 5 Mondays?",
+      "validation_notes": "Filter daily bars by weekday and compute Monday returns sequence.",
+      "required_apis": [
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Daily bars for last 10 weeks",
+        "Weekday filtering",
+        "Return streak analysis"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which large-cap tech stocks had the biggest gap between open and close today?",
+      "status": "VALID",
+      "original_question": "Which large-cap tech stocks had the biggest gap between open and close today?",
+      "validation_notes": "Define large-cap tech via screener and compute |close-open| / open ranking.",
+      "required_apis": [
+        "eodhd:/screener",
+        "marketdata:/v2/stocks/snapshots"
+      ],
+      "data_requirements": [
+        "Sector/market-cap filters",
+        "Today OHLC or snapshots",
+        "Gap magnitude ranking"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which of my holdings underperformed SPY in 8 of the last 10 weeks?",
+      "status": "VALID",
+      "original_question": "Which of my holdings underperformed SPY in 8 of the last 10 weeks?",
+      "validation_notes": "Compute weekly returns by holding vs SPY and count underperformance events.",
+      "required_apis": [
+        "trading:/v2/positions",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Weekly return series",
+        "SPY weekly returns",
+        "Underperformance count threshold (>=8/10)"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which watchlist names had the largest premarket volume spike today?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "Which watchlist names had the largest premarket volume spike today?",
+      "validation_notes": "If premarket feed is limited, approximate using first minutes after open vs 30-day avg; otherwise use extended-hours data.",
+      "required_apis": [
+        "trading:/v2/watchlists",
+        "marketdata:/v2/stocks/snapshots",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Premarket or early session volume",
+        "Baseline 30-day avg volume",
+        "Spike threshold and ranking"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which sector ETFs have the lowest 21-day volatility right now?",
+      "status": "VALID",
+      "original_question": "Which sector ETFs have the lowest 21-day volatility right now?",
+      "validation_notes": "Compute 21-day realized volatility for sector ETFs and rank lowest.",
+      "required_apis": [
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Sector ETF symbols",
+        "21-day return std dev",
+        "Ranking by volatility"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which of my holdings are most negatively correlated with TLT?",
+      "status": "VALID",
+      "original_question": "Which of my holdings are most negatively correlated with TLT?",
+      "validation_notes": "Compute correlation of holdings returns vs TLT over a chosen window.",
+      "required_apis": [
+        "trading:/v2/positions",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Portfolio symbols",
+        "TLT return series",
+        "Correlation ranking (most negative)"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which mega-cap stocks led upside on above-average volume today?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "Which mega-cap stocks led upside on above-average volume today?",
+      "validation_notes": "Use market-cap filter for mega-caps and flag names with strong % change and volume > 1.5× 30-day avg.",
+      "required_apis": [
+        "eodhd:/screener",
+        "marketdata:/v2/stocks/snapshots",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Mega-cap universe filter",
+        "Today % change",
+        "Volume vs 30-day avg threshold"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which tickers showed a breakout above their 100-day high?",
+      "status": "VALID",
+      "original_question": "Which tickers showed a breakout above their 100-day high?",
+      "validation_notes": "Detect new 100-day highs and list symbols breaking out.",
+      "required_apis": [
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Historical highs over 100 days",
+        "Today high/close",
+        "Breakout condition"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which of my positions had the most consistent weekly gains this quarter?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "Which of my positions had the most consistent weekly gains this quarter?",
+      "validation_notes": "Define consistency as highest fraction of up weeks or lowest variance of weekly returns; compute and rank.",
+      "required_apis": [
+        "trading:/v2/positions",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Weekly returns per holding",
+        "Up-week hit rate or variance",
+        "Quarter window"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which industries saw the biggest breadth improvement this week?",
+      "status": "VALID",
+      "original_question": "Which industries saw the biggest breadth improvement this week?",
+      "validation_notes": "Compute industry-level advancers/decliners across constituents and compare WoW changes.",
+      "required_apis": [
+        "eodhd:/screener",
+        "marketdata:/v2/stocks/snapshots"
+      ],
+      "data_requirements": [
+        "Constituents by industry",
+        "Advancers vs decliners counts",
+        "Week-over-week breadth delta"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which semiconductors had the largest 3-day gain following earnings windows?",
+      "status": "VALID",
+      "original_question": "Which semiconductors had the largest 3-day gain following earnings windows?",
+      "validation_notes": "Identify semiconductor names and calculate 3-day post-earnings returns; rank by gain.",
+      "required_apis": [
+        "eodhd:/screener",
+        "eodhd:/calendar/earnings",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Semiconductor universe",
+        "Earnings dates",
+        "3-day post-event return ranking"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which of my holdings showed increasing momentum for 4 straight weeks?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "Which of my holdings showed increasing momentum for 4 straight weeks?",
+      "validation_notes": "Define momentum (e.g., weekly ROC) and test monotonic increase over 4 weeks.",
+      "required_apis": [
+        "trading:/v2/positions",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Weekly momentum metric",
+        "4-week monotonicity check",
+        "Qualified holdings list"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which symbols showed the steepest decline in realized volatility this month?",
+      "status": "VALID",
+      "original_question": "Which symbols showed the steepest decline in realized volatility this month?",
+      "validation_notes": "Compute month-over-month change in realized vol and rank by largest decline.",
+      "required_apis": [
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Two adjacent monthly windows",
+        "Realized vol per window",
+        "Delta ranking"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which ETFs most closely tracked SPY over the past year (lowest tracking error proxy)?",
+      "status": "VALID",
+      "original_question": "Which ETFs most closely tracked SPY over the past year (lowest tracking error proxy)?",
+      "validation_notes": "Compute std dev of active returns (ETF minus SPY) as tracking error proxy and rank.",
+      "required_apis": [
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "ETF list",
+        "SPY returns",
+        "Std dev of active returns"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which of my holdings are most sensitive to market selloffs (worst on SPY down days)?",
+      "status": "VALID",
+      "original_question": "Which of my holdings are most sensitive to market selloffs (worst on SPY down days)?",
+      "validation_notes": "Filter SPY down days and compute average/median holding return; rank worst performers.",
+      "required_apis": [
+        "trading:/v2/positions",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Identify SPY down days",
+        "Holding returns on those days",
+        "Sensitivity ranking"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which tickers had five consecutive green closes?",
+      "status": "VALID",
+      "original_question": "Which tickers had five consecutive green closes?",
+      "validation_notes": "Detect sequences of five consecutive positive close-to-close returns.",
+      "required_apis": [
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Daily close series",
+        "Consecutive positive return streak detection"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which of my positions recovered fastest after the last 5% SPY drawdown?",
+      "status": "VALID",
+      "original_question": "Which of my positions recovered fastest after the last 5% SPY drawdown?",
+      "validation_notes": "Detect last SPY 5% peak-to-trough drawdown; compute time-to-recover or % off low recovery for holdings.",
+      "required_apis": [
+        "marketdata:/v2/stocks/bars",
+        "trading:/v2/positions"
+      ],
+      "data_requirements": [
+        "SPY drawdown window",
+        "Holding performance post-drawdown",
+        "Recovery speed ranking"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which watchlist symbols have the strongest 12-week relative strength rank?",
+      "status": "VALID",
+      "original_question": "Which watchlist symbols have the strongest 12-week relative strength rank?",
+      "validation_notes": "Compute 12-week returns for watchlist tickers and rank by RS.",
+      "required_apis": [
+        "trading:/v2/watchlists",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Watchlist symbols",
+        "12-week returns",
+        "RS ranking"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which sector ETFs had the highest up/down capture ratio vs SPY YTD?",
+      "status": "VALID",
+      "original_question": "Which sector ETFs had the highest up/down capture ratio vs SPY YTD?",
+      "validation_notes": "Compute average returns on SPY up vs down days for sector ETFs; ratio vs SPY.",
+      "required_apis": [
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "SPY up/down day classification",
+        "Sector ETF returns per group",
+        "Capture ratio calculation"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which of my holdings show negative momentum divergence (price up, momentum down)?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "Which of my holdings show negative momentum divergence (price up, momentum down)?",
+      "validation_notes": "Define divergence using price vs RSI/MACD slope; flag holdings with rising price and weakening momentum.",
+      "required_apis": [
+        "trading:/v2/positions",
+        "marketdata:/v2/stocks/bars",
+        "eodhd:/technical/{symbol}"
+      ],
+      "data_requirements": [
+        "Price trend detection",
+        "Momentum indicator slope",
+        "Divergence flagging"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which names posted the largest bullish outside day candles this week?",
+      "status": "VALID",
+      "original_question": "Which names posted the largest bullish outside day candles this week?",
+      "validation_notes": "Detect bullish outside days from OHLC bars and rank by range/close strength.",
+      "required_apis": [
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Daily OHLC bars",
+        "Outside day condition",
+        "Bullish variant detection and ranking"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which of my positions spent the most days above the 50-day MA this year?",
+      "status": "VALID",
+      "original_question": "Which of my positions spent the most days above the 50-day MA this year?",
+      "validation_notes": "Count days closing above SMA(50) for each holding YTD and rank.",
+      "required_apis": [
+        "trading:/v2/positions",
+        "marketdata:/v2/stocks/bars",
+        "eodhd:/technical/{symbol}"
+      ],
+      "data_requirements": [
+        "SMA(50) per day",
+        "Daily close vs SMA(50)",
+        "Count and ranking"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which symbols in the S&P 500 had the largest 1-hour move after the open today?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "Which symbols in the S&P 500 had the largest 1-hour move after the open today?",
+      "validation_notes": "Use S&P 500 constituent list and 60-minute bars from market open to compute first-hour return; rank.",
+      "required_apis": [
+        "eodhd:/screener",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "S&P 500 symbols",
+        "First-hour bar returns",
+        "Largest move ranking"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which of my holdings lagged their industry peers the most last month?",
+      "status": "VALID",
+      "original_question": "Which of my holdings lagged their industry peers the most last month?",
+      "validation_notes": "Compute last-month return by holding and compare to industry median/mean; rank laggards.",
+      "required_apis": [
+        "trading:/v2/positions",
+        "eodhd:/screener",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Industry classification",
+        "Monthly returns",
+        "Peer relative underperformance"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which ETFs showed the steepest 3-month trend slope?",
+      "status": "VALID",
+      "original_question": "Which ETFs showed the steepest 3-month trend slope?",
+      "validation_notes": "Estimate 3-month trend slope via linear regression or ROC and rank.",
+      "required_apis": [
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "ETF symbols",
+        "3-month price series",
+        "Trend slope calculation"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which of my positions have the smallest average intraday range?",
+      "status": "VALID",
+      "original_question": "Which of my positions have the smallest average intraday range?",
+      "validation_notes": "Compute average (high - low)/midprice per day over a window and rank.",
+      "required_apis": [
+        "trading:/v2/positions",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Daily high/low",
+        "Average intraday range metric",
+        "Ranking"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which tickers had the largest positive earnings-day drift over the next 3 sessions?",
+      "status": "VALID",
+      "original_question": "Which tickers had the largest positive earnings-day drift over the next 3 sessions?",
+      "validation_notes": "Identify earnings day and compute cumulative return over next 3 sessions; rank by drift.",
+      "required_apis": [
+        "eodhd:/calendar/earnings",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Earnings calendar",
+        "Post-earnings 3-day cumulative return",
+        "Ranking"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which of my holdings show the highest correlation with MTUM?",
+      "status": "VALID",
+      "original_question": "Which of my holdings show the highest correlation with MTUM?",
+      "validation_notes": "Compute correlation between each holding and MTUM over a specified window.",
+      "required_apis": [
+        "trading:/v2/positions",
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Holding return series",
+        "MTUM return series",
+        "Correlation ranking"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which symbols showed repeated failed breakouts in the past month?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "Which symbols showed repeated failed breakouts in the past month?",
+      "validation_notes": "Define failed breakout (e.g., close above prior high then closing back below within 3 days) and count occurrences.",
+      "required_apis": [
+        "marketdata:/v2/stocks/bars"
+      ],
+      "data_requirements": [
+        "Prior high identification",
+        "Breakout then failure condition",
+        "Count repeats over a month"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which watchlist tickers had the highest 3-month Sharpe ratio?",
+      "status": "VALID",
+      "original_question": "Which watchlist tickers had the highest 3-month Sharpe ratio?",
+      "validation_notes": "Test validation using OpenAI-compatible API",
+      "required_apis": [
+        "watchlist_api",
+        "performance_api"
+      ],
+      "data_requirements": [
+        "list_of_tickers",
+        "historical_price_data_3_months",
+        "risk_free_rate_data"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which tickers in my watchlist had the highest 3-month Sharpe ratio?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "Which watchlist tickers had the highest 3-month Sharpe ratio?",
+      "validation_notes": "The question is ambiguous because it does not specify which watchlist to analyze. A watchlist identifier or user context is required to retrieve the relevant tickers and compute their Sharpe ratios.",
+      "required_apis": [
+        "watchlist_api",
+        "performance_api"
+      ],
+      "data_requirements": [
+        "watchlist_id",
+        "timeframe=3mo",
+        "metric=Sharpe"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which of my holdings most frequently closed near the day’s high this quarter?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "Which of my holdings most frequently closed near the day’s high this quarter?",
+      "validation_notes": "The question is ambiguous because it does not specify what \"near\" means (e.g., within X% of the high) and does not provide the date range for \"this quarter.\" Additionally, it assumes access to daily high and close data for each holding, which may not be available in a single API call.",
+      "required_apis": [
+        "Holdings_API",
+        "Price_History_API"
+      ],
+      "data_requirements": [
+        "List of user holdings",
+        "Daily high and close prices for each holding for the specified quarter"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which of my holdings show the most stable weekly returns distribution?",
+      "status": "VALID",
+      "original_question": "Which of my holdings show the most stable weekly returns distribution?",
+      "validation_notes": "The question can be answered using the available APIs. The Alpaca Trading API provides the list of current holdings, and the EODHD API supplies daily OHLC data that can be aggregated into weekly bars to compute weekly returns and their standard deviation, which indicates stability.",
+      "required_apis": [
+        "Alpaca Trading API:/v2/positions",
+        "EODHD API:/api/eod/{symbol}"
+      ],
+      "data_requirements": [
+        "List of current holdings (symbol, quantity) from /v2/positions",
+        "Daily OHLC data for each symbol over the desired period from /api/eod/{symbol}",
+        "Aggregation of daily data into weekly bars",
+        "Calculation of weekly returns (close of week / close previous week - 1)",
+        "Computation of standard deviation of weekly returns for each holding"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    },
+    {
+      "question": "Which of my positions rallied most after news headlines?",
+      "status": "NEEDS_REFINEMENT",
+      "original_question": "Which of my positions rallied most after high-sentiment news headlines?",
+      "validation_notes": "The question requires sentiment data for news headlines, which is not available in the provided APIs. However, the core request to identify positions with the largest price rally after news headlines can be answered using available data.",
+      "required_apis": [
+        "trading:/v2/positions",
+        "marketdata:/v1beta1/news",
+        "marketdata:/v2/stocks/bars",
+        "marketdata:/v2/stocks/quotes/latest"
+      ],
+      "data_requirements": [
+        "List of user's open positions with symbols and current prices",
+        "News headlines with symbols, publication dates, and content",
+        "Historical price data for each symbol around news dates to compute price change",
+        "Calculation of price rally (e.g., percentage change from pre-news to post-news)"
+      ],
+      "validation_date": "2025-09-09",
+      "implementation_ready": true
+    }
+  ]
+}

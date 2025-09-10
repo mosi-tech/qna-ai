@@ -1,0 +1,7 @@
+Use @question-validator-prompt.txt to validate questions in @generated_questions.json
+Script shoudl use LLM for every question
+if you want to buidl a script other wise do it here
+
+
+Generation
+Now use yourself, no script, LLM nly and @question-generator-prompt.txt to generate 1000 more questions and add to @generated_questions.json

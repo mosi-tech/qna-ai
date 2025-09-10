@@ -1,0 +1,140 @@
+{
+  "name": "EODHD API",
+  "description": "End-of-day and fundamental financial data",
+  "endpoints": [
+    {
+      "name": "get_api_eod_symbol",
+      "description": "End-of-day historical OHLC prices with adjustments",
+      "parameters": [
+        "symbol",
+        "from",
+        "to",
+        "period",
+        "order"
+      ]
+    },
+    {
+      "name": "get_api_real_time_symbol",
+      "description": "Real-time stock prices and market data",
+      "parameters": [
+        "symbol",
+        "fmt"
+      ]
+    },
+    {
+      "name": "get_api_fundamentals_symbol",
+      "description": "Company fundamental data, financials, ratios",
+      "parameters": [
+        "symbol"
+      ]
+    },
+    {
+      "name": "get_api_div_symbol",
+      "description": "Dividend payment history with ex-dates",
+      "parameters": [
+        "symbol",
+        "from",
+        "to"
+      ]
+    },
+    {
+      "name": "get_api_splits_symbol",
+      "description": "Stock split history with ratios",
+      "parameters": [
+        "symbol",
+        "from",
+        "to"
+      ]
+    },
+    {
+      "name": "get_api_technical_symbol",
+      "description": "Technical analysis indicators (RSI, MACD, SMA, etc.)",
+      "parameters": [
+        "symbol",
+        "function",
+        "period",
+        "from",
+        "to"
+      ]
+    },
+    {
+      "name": "get_api_screener",
+      "description": "Stock screener with custom filters",
+      "parameters": [
+        "filters",
+        "limit",
+        "offset",
+        "signals"
+      ]
+    },
+    {
+      "name": "get_api_search_query",
+      "description": "Search for stocks by name or symbol",
+      "parameters": [
+        "query"
+      ]
+    },
+    {
+      "name": "get_api_exchanges_list",
+      "description": "List all supported stock exchanges",
+      "parameters": []
+    },
+    {
+      "name": "get_api_exchange_symbol_list_exchange",
+      "description": "Get all tradeable symbols for specific exchange",
+      "parameters": [
+        "exchange"
+      ]
+    },
+    {
+      "name": "get_api_bond_fundamentals_symbol",
+      "description": "Bond and fixed income data with yields and ratings",
+      "parameters": [
+        "symbol"
+      ]
+    },
+    {
+      "name": "get_api_etf_symbol",
+      "description": "ETF holdings and composition data",
+      "parameters": [
+        "symbol"
+      ]
+    },
+    {
+      "name": "get_api_insider_transactions",
+      "description": "Corporate insider trading transactions",
+      "parameters": [
+        "symbol",
+        "from",
+        "to"
+      ]
+    },
+    {
+      "name": "get_api_short_interest_symbol",
+      "description": "Short interest data and short ratio",
+      "parameters": [
+        "symbol",
+        "from",
+        "to"
+      ]
+    },
+    {
+      "name": "get_api_macro_indicator_indicator",
+      "description": "Macroeconomic indicators and data",
+      "parameters": [
+        "indicator",
+        "from",
+        "to"
+      ]
+    },
+    {
+      "name": "get_api_calendar_symbol",
+      "description": "Earnings calendar and corporate events",
+      "parameters": [
+        "symbol",
+        "from",
+        "to"
+      ]
+    }
+  ]
+}

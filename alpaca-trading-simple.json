@@ -1,0 +1,678 @@
+{
+  "name": "Alpaca Trading API", 
+  "description": "Account management and trading operations",
+  "endpoints": [
+    {
+      "path": "/v2/account/activities",
+      "purpose": "Account activities (trades, fills, transactions)",
+      "parameters": {
+        "activity_type": "FILL, TRANS, MISC, ACATC, ACATS",
+        "date": "2024-01-01",
+        "until": "2024-01-31",
+        "after": "2024-01-01",
+        "direction": "asc, desc",
+        "page_size": "100, 500"
+      },
+      "sample_response": [
+        {
+          "id": "20190524113406977::8eaf7023-8bbe-4dc8-9b13-1d5e8146561e",
+          "account_id": "1d5493c9-ea39-4377-aa94-340734c368ae",
+          "activity_type": "FILL",
+          "transaction_time": "2019-05-24T15:34:06.977Z",
+          "type": "fill",
+          "price": "1.63",
+          "qty": "100",
+          "side": "buy",
+          "symbol": "LPCN"
+        }
+      ]
+    },
+    {
+      "path": "/v2/account/configurations",
+      "purpose": "Account trading configurations",
+      "parameters": {},
+      "sample_response": {
+        "dtbp_check": "entry",
+        "trade_confirm_email": "all",
+        "suspend_trade": false,
+        "no_shorting": false,
+        "fractional_trading": true,
+        "max_margin_multiplier": "2",
+        "pdt_check": "entry"
+      }
+    },
+    {
+      "path": "/v2/corporate_actions/announcements",
+      "purpose": "Corporate action announcements",
+      "parameters": {
+        "ca_types": "dividend,merger,spinoff,split", 
+        "since": "2024-01-01",
+        "until": "2024-12-31",
+        "symbol": "AAPL,TSLA",
+        "cusip": "037833100"
+      },
+      "sample_response": [
+        {
+          "id": "ca_123456789",
+          "corporate_action_id": "DIVD_AAPL_20240215",
+          "ca_type": "dividend", 
+          "ca_sub_type": "cash",
+          "initiating_symbol": "AAPL",
+          "target_symbol": "AAPL",
+          "declaration_date": "2024-02-01",
+          "ex_date": "2024-02-09",
+          "record_date": "2024-02-12",
+          "payable_date": "2024-02-15",
+          "cash_amount": "0.24",
+          "old_rate": "1",
+          "new_rate": "1"
+        }
+      ]
+    },
+    {
+      "path": "/v2/options/contracts",
+      "purpose": "Available options contracts",
+      "parameters": {
+        "underlying_symbol": "AAPL,TSLA,SPY",
+        "status": "active,inactive",
+        "expiration_date": "2024-12-20",
+        "expiration_date_gte": "2024-01-01",
+        "expiration_date_lte": "2024-12-31",
+        "root_symbol": "AAPL",
+        "type": "call,put",
+        "strike_price_gte": "100",
+        "strike_price_lte": "200"
+      },
+      "sample_response": [
+        {
+          "id": "246e5b9c-de6e-4150-b9a6-7df444b0221c",
+          "symbol": "AAPL241220C00180000",
+          "name": "AAPL Dec 20 '24 $180 Call",
+          "status": "active",
+          "tradable": true,
+          "expiration_date": "2024-12-20",
+          "root_symbol": "AAPL",
+          "underlying_symbol": "AAPL",
+          "underlying_asset_id": "904837e3-3b76-47ec-b432-046db621571b",
+          "type": "call",
+          "style": "american",
+          "strike_price": "180",
+          "multiplier": "100",
+          "size": "100",
+          "open_interest": "1250.0",
+          "open_interest_date": "2024-01-02",
+          "close_price": "12.65",
+          "close_price_date": "2024-01-02"
+        }
+      ]
+    },
+    {
+      "path": "/v2/wallets",
+      "purpose": "Crypto wallets information",
+      "parameters": {},
+      "sample_response": [
+        {
+          "id": "97522d8b-1ad5-4b3d-af5d-1d4839205161",
+          "account_id": "1d5493c9-ea39-4377-aa94-340734c368ae",
+          "name": "BTC Wallet",
+          "currency": "BTC",
+          "last_transaction_at": "2023-08-01T18:40:04.504Z",
+          "created_at": "2023-05-15T18:40:04.504Z",
+          "updated_at": "2023-08-01T18:40:04.504Z"
+        }
+      ]
+    },
+    {
+      "path": "/v2/wallets/transfers", 
+      "purpose": "Crypto wallet transfers",
+      "parameters": {
+        "asset": "BTC,ETH,LTC",
+        "status": "QUEUED,SENT,PENDING,REJECTED,CANCELLED,APPROVED",
+        "transfer_type": "deposit,withdrawal"
+      },
+      "sample_response": [
+        {
+          "id": "454e1e7a-b200-4295-9860-7b440ed62fed",
+          "wallet_id": "97522d8b-1ad5-4b3d-af5d-1d4839205161", 
+          "amount": "0.5",
+          "currency": "BTC",
+          "side": "INCOMING",
+          "status": "APPROVED",
+          "created_at": "2023-08-01T18:40:04.504Z",
+          "expires_at": "2023-08-02T18:40:04.504Z"
+        }
+      ]
+    },
+    {
+      "path": "/v2/clock",
+      "purpose": "Market clock status",
+      "parameters": {},
+      "sample_response": {
+        "timestamp": "2024-01-02T21:00:00.000Z",
+        "is_open": false,
+        "next_open": "2024-01-03T14:30:00.000Z",
+        "next_close": "2024-01-03T21:00:00.000Z"
+      }
+    },
+    {
+      "path": "/v2/account",
+      "purpose": "Get account information including buying power, equity, cash balance",
+      "parameters": {},
+      "sample_response": {
+        "id": "904837e3-3b76-47ec-b432-046db621571b",
+        "account_number": "010203ABCD",
+        "status": "ACTIVE",
+        "crypto_status": "ACTIVE",
+        "currency": "USD",
+        "buying_power": "262113.632",
+        "regt_buying_power": "262113.632",
+        "daytrading_buying_power": "262113.632",
+        "non_marginable_buying_power": "131056.82",
+        "cash": "131056.82",
+        "accrued_fees": "0",
+        "portfolio_value": "131056.82",
+        "pattern_day_trader": false,
+        "trading_blocked": false,
+        "transfers_blocked": false,
+        "account_blocked": false,
+        "created_at": "2019-06-12T22:47:07.99Z",
+        "trade_suspended_by_user": false,
+        "multiplier": "2",
+        "shorting_enabled": true,
+        "equity": "131056.82",
+        "last_equity": "131056.82",
+        "long_market_value": "126392.12",
+        "short_market_value": "0",
+        "initial_margin": "63196.06",
+        "maintenance_margin": "37917.636",
+        "last_maintenance_margin": "37917.636",
+        "sma": "131056.82",
+        "daytrade_count": 0
+      }
+    },
+    {
+      "path": "/v2/positions",
+      "purpose": "Get all open positions with P&L, market values, quantities",
+      "parameters": {},
+      "sample_response": [
+        {
+          "asset_id": "904837e3-3b76-47ec-b432-046db621571b",
+          "symbol": "AAPL",
+          "exchange": "NASDAQ",
+          "asset_class": "us_equity",
+          "avg_entry_price": "100.0",
+          "qty": "5",
+          "side": "long",
+          "market_value": "600.0",
+          "cost_basis": "500.0",
+          "unrealized_pl": "100.0",
+          "unrealized_plpc": "0.20",
+          "unrealized_intraday_pl": "10.0",
+          "unrealized_intraday_plpc": "0.0084",
+          "current_price": "120.0",
+          "lastday_price": "119.0",
+          "change_today": "0.0084"
+        }
+      ]
+    },
+    {
+      "path": "/v2/positions/{symbol}",
+      "purpose": "Get specific position details for one symbol",
+      "parameters": {
+        "symbol": "AAPL, TSLA, SPY"
+      },
+      "sample_response": {
+        "asset_id": "904837e3-3b76-47ec-b432-046db621571b",
+        "symbol": "AAPL",
+        "exchange": "NASDAQ",
+        "asset_class": "us_equity",
+        "avg_entry_price": "100.0",
+        "qty": "5",
+        "side": "long",
+        "market_value": "600.0",
+        "cost_basis": "500.0",
+        "unrealized_pl": "100.0",
+        "unrealized_plpc": "0.20",
+        "current_price": "120.0"
+      }
+    },
+    {
+      "path": "/v2/orders",
+      "purpose": "Get order history and status (filled, open, canceled)",
+      "parameters": {
+        "status": "open, closed, canceled, filled, partially_filled",
+        "limit": "100, 500",
+        "after": "2024-01-01T00:00:00Z",
+        "until": "2024-01-31T23:59:59Z",
+        "direction": "asc, desc",
+        "nested": "true, false"
+      },
+      "sample_response": [
+        {
+          "id": "904837e3-3b76-47ec-b432-046db621571b",
+          "client_order_id": "904837e3-3b76-47ec-b432-046db621571b",
+          "created_at": "2021-03-16T18:38:01.942282Z",
+          "updated_at": "2021-03-16T18:38:01.942282Z",
+          "submitted_at": "2021-03-16T18:38:01.937734Z",
+          "filled_at": "2021-03-16T18:38:01.937734Z",
+          "expired_at": "2021-03-16T18:38:01.937734Z",
+          "canceled_at": "2021-03-16T18:38:01.937734Z",
+          "failed_at": "2021-03-16T18:38:01.937734Z",
+          "replaced_at": "2021-03-16T18:38:01.937734Z",
+          "replaced_by": "904837e3-3b76-47ec-b432-046db621571b",
+          "replaces": null,
+          "asset_id": "904837e3-3b76-47ec-b432-046db621571b",
+          "symbol": "AAPL",
+          "asset_class": "us_equity",
+          "notional": "500.5",
+          "qty": "5",
+          "filled_qty": "3",
+          "filled_avg_price": "100.0",
+          "order_class": "",
+          "order_type": "market",
+          "type": "market",
+          "side": "buy",
+          "time_in_force": "day",
+          "limit_price": "107.00",
+          "stop_price": "106.00",
+          "status": "filled",
+          "extended_hours": false,
+          "legs": null,
+          "trail_percent": "30.0",
+          "trail_price": "107.00",
+          "hwm": "107.00"
+        }
+      ]
+    },
+    {
+      "path": "/v2/portfolio/history",
+      "purpose": "Portfolio performance history showing value changes over time",
+      "parameters": {
+        "period": "1D, 7D, 1M, 3M, 12M, YTD, ALL",
+        "timeframe": "1Min, 5Min, 15Min, 1H, 1D",
+        "end_date": "2024-01-31",
+        "extended_hours": "true, false"
+      },
+      "sample_response": {
+        "timestamp": [1580826600000, 1580827500000, 1580828400000],
+        "equity": [27423.73, 27408.19, 27515.97],
+        "profit_loss": [11.8, -3.74, 104.04],
+        "profit_loss_pct": [0.000430469507, -0.0001364369455, 0.003790983306],
+        "base_value": 27411.93,
+        "timeframe": "15Min"
+      }
+    },
+    {
+      "path": "/v2/watchlists",
+      "purpose": "Get user's watchlists with symbols", 
+      "parameters": {},
+      "sample_response": [
+        {
+          "id": "fb306e55-16d3-4118-8c3d-c1615fcd4c03",
+          "account_id": "1d5493c9-ea39-4377-aa94-340734c368ae",
+          "created_at": "2019-10-30T07:54:42Z",
+          "updated_at": "2019-10-30T07:54:42Z",
+          "name": "Primary Watchlist",
+          "assets": [
+            {
+              "id": "904837e3-3b76-47ec-b432-046db621571b",
+              "class": "us_equity",
+              "exchange": "NASDAQ",
+              "symbol": "AAPL",
+              "name": "Apple Inc. Common Stock",
+              "status": "active",
+              "tradable": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/v2/watchlists/{id}",
+      "purpose": "Get specific watchlist by ID",
+      "parameters": {
+        "id": "fb306e55-16d3-4118-8c3d-c1615fcd4c03"
+      },
+      "sample_response": {
+        "id": "fb306e55-16d3-4118-8c3d-c1615fcd4c03",
+        "account_id": "1d5493c9-ea39-4377-aa94-340734c368ae",
+        "created_at": "2019-10-30T07:54:42Z",
+        "updated_at": "2019-10-30T07:54:42Z",
+        "name": "Primary Watchlist",
+        "assets": [
+          {
+            "id": "904837e3-3b76-47ec-b432-046db621571b",
+            "class": "us_equity",
+            "exchange": "NASDAQ",
+            "symbol": "AAPL",
+            "name": "Apple Inc. Common Stock",
+            "status": "active",
+            "tradable": true
+          },
+          {
+            "id": "b28f4066-5c6d-479b-a2af-85dc1a8f16fb",
+            "class": "us_equity", 
+            "exchange": "NASDAQ",
+            "symbol": "TSLA",
+            "name": "Tesla, Inc. Common Stock",
+            "status": "active",
+            "tradable": true
+          }
+        ]
+      }
+    },
+    {
+      "path": "/v2/assets",
+      "purpose": "Get tradeable assets/instruments",
+      "parameters": {
+        "status": "active, inactive",
+        "asset_class": "us_equity, crypto"
+      },
+      "sample_response": [
+        {
+          "id": "904837e3-3b76-47ec-b432-046db621571b",
+          "class": "us_equity",
+          "exchange": "NASDAQ",
+          "symbol": "AAPL",
+          "name": "Apple Inc. Common Stock",
+          "status": "active",
+          "tradable": true,
+          "marginable": true,
+          "shortable": true,
+          "easy_to_borrow": true,
+          "fractionable": true
+        }
+      ]
+    },
+    {
+      "path": "/v2/calendar",
+      "purpose": "Market calendar with open/close times and holidays", 
+      "parameters": {
+        "start": "2024-01-01",
+        "end": "2024-12-31"
+      },
+      "sample_response": [
+        {
+          "date": "2024-01-02",
+          "open": "09:30",
+          "close": "16:00",
+          "session_open": "04:00",
+          "session_close": "20:00"
+        },
+        {
+          "date": "2024-01-15",
+          "open": null,
+          "close": null,
+          "session_open": null,
+          "session_close": null,
+          "settlement_date": "2024-01-16"
+        }
+      ]
+    },
+    {
+      "path": "/v2/orders/{order_id}",
+      "purpose": "Get, replace, or cancel specific order by ID",
+      "parameters": {
+        "order_id": "904837e3-3b76-47ec-b432-046db621571b"
+      },
+      "sample_response": {
+        "id": "904837e3-3b76-47ec-b432-046db621571b",
+        "client_order_id": "904837e3-3b76-47ec-b432-046db621571b",
+        "created_at": "2021-03-16T18:38:01.942282Z",
+        "updated_at": "2021-03-16T18:38:01.942282Z",
+        "submitted_at": "2021-03-16T18:38:01.937734Z",
+        "filled_at": "2021-03-16T18:38:01.937734Z",
+        "asset_id": "904837e3-3b76-47ec-b432-046db621571b",
+        "symbol": "AAPL",
+        "asset_class": "us_equity",
+        "qty": "5",
+        "filled_qty": "3",
+        "filled_avg_price": "100.0",
+        "order_type": "market",
+        "side": "buy",
+        "time_in_force": "day",
+        "limit_price": "107.00",
+        "stop_price": "106.00",
+        "status": "filled",
+        "extended_hours": false
+      }
+    },
+    {
+      "path": "/v2/positions/{symbol_or_asset_id}/exercise",
+      "purpose": "Exercise options position",
+      "parameters": {
+        "symbol_or_asset_id": "AAPL241220C00180000"
+      },
+      "sample_response": {
+        "id": "904837e3-3b76-47ec-b432-046db621571b",
+        "symbol": "AAPL241220C00180000",
+        "qty": "1",
+        "side": "long"
+      }
+    },
+    {
+      "path": "/v2/account/portfolio/history",
+      "purpose": "Portfolio performance history (alias for /v2/portfolio/history)",
+      "parameters": {
+        "period": "1D, 7D, 1M, 3M, 12M, YTD, ALL",
+        "timeframe": "1Min, 5Min, 15Min, 1H, 1D",
+        "end_date": "2024-01-31",
+        "extended_hours": "true, false"
+      },
+      "sample_response": {
+        "timestamp": [1580826600000, 1580827500000, 1580828400000],
+        "equity": [27423.73, 27408.19, 27515.97],
+        "profit_loss": [11.8, -3.74, 104.04],
+        "profit_loss_pct": [0.000430469507, -0.0001364369455, 0.003790983306],
+        "base_value": 27411.93,
+        "timeframe": "15Min"
+      }
+    },
+    {
+      "path": "/v2/watchlists:by_name",
+      "purpose": "Get watchlist by name",
+      "parameters": {
+        "name": "Primary Watchlist"
+      },
+      "sample_response": {
+        "id": "fb306e55-16d3-4118-8c3d-c1615fcd4c03",
+        "account_id": "1d5493c9-ea39-4377-aa94-340734c368ae",
+        "created_at": "2019-10-30T07:54:42Z",
+        "updated_at": "2019-10-30T07:54:42Z",
+        "name": "Primary Watchlist",
+        "assets": [
+          {
+            "id": "904837e3-3b76-47ec-b432-046db621571b",
+            "class": "us_equity",
+            "exchange": "NASDAQ",
+            "symbol": "AAPL",
+            "name": "Apple Inc. Common Stock",
+            "status": "active",
+            "tradable": true
+          }
+        ]
+      }
+    },
+    {
+      "path": "/v2/watchlists/{watchlist_id}/{symbol}",
+      "purpose": "Add or remove symbol from watchlist",
+      "parameters": {
+        "watchlist_id": "fb306e55-16d3-4118-8c3d-c1615fcd4c03",
+        "symbol": "AAPL, TSLA, SPY"
+      },
+      "sample_response": {
+        "id": "fb306e55-16d3-4118-8c3d-c1615fcd4c03",
+        "account_id": "1d5493c9-ea39-4377-aa94-340734c368ae",
+        "created_at": "2019-10-30T07:54:42Z",
+        "updated_at": "2019-10-30T07:54:42Z",
+        "name": "Primary Watchlist",
+        "assets": [
+          {
+            "id": "904837e3-3b76-47ec-b432-046db621571b",
+            "class": "us_equity",
+            "exchange": "NASDAQ",
+            "symbol": "AAPL",
+            "name": "Apple Inc. Common Stock",
+            "status": "active",
+            "tradable": true
+          }
+        ]
+      }
+    },
+    {
+      "path": "/v2/account/activities/{activity_type}",
+      "purpose": "Get specific activity type (FILL, TRANS, MISC, etc.)",
+      "parameters": {
+        "activity_type": "FILL, TRANS, MISC, ACATC, ACATS",
+        "date": "2024-01-01",
+        "until": "2024-01-31",
+        "after": "2024-01-01",
+        "direction": "asc, desc",
+        "page_size": "100, 500"
+      },
+      "sample_response": [
+        {
+          "id": "20190524113406977::8eaf7023-8bbe-4dc8-9b13-1d5e8146561e",
+          "account_id": "1d5493c9-ea39-4377-aa94-340734c368ae",
+          "activity_type": "FILL",
+          "transaction_time": "2019-05-24T15:34:06.977Z",
+          "type": "fill",
+          "price": "1.63",
+          "qty": "100",
+          "side": "buy",
+          "symbol": "LPCN"
+        }
+      ]
+    },
+    {
+      "path": "/v2/assets/{symbol_or_asset_id}",
+      "purpose": "Get specific asset information by symbol or asset ID",
+      "parameters": {
+        "symbol_or_asset_id": "AAPL, 904837e3-3b76-47ec-b432-046db621571b"
+      },
+      "sample_response": {
+        "id": "904837e3-3b76-47ec-b432-046db621571b",
+        "class": "us_equity",
+        "exchange": "NASDAQ",
+        "symbol": "AAPL",
+        "name": "Apple Inc. Common Stock",
+        "status": "active",
+        "tradable": true,
+        "marginable": true,
+        "shortable": true,
+        "easy_to_borrow": true,
+        "fractionable": true
+      }
+    },
+    {
+      "path": "/v2/options/contracts/{symbol_or_id}",
+      "purpose": "Get specific options contract details",
+      "parameters": {
+        "symbol_or_id": "AAPL241220C00180000, 246e5b9c-de6e-4150-b9a6-7df444b0221c"
+      },
+      "sample_response": {
+        "id": "246e5b9c-de6e-4150-b9a6-7df444b0221c",
+        "symbol": "AAPL241220C00180000",
+        "name": "AAPL Dec 20 '24 $180 Call",
+        "status": "active",
+        "tradable": true,
+        "expiration_date": "2024-12-20",
+        "root_symbol": "AAPL",
+        "underlying_symbol": "AAPL",
+        "underlying_asset_id": "904837e3-3b76-47ec-b432-046db621571b",
+        "type": "call",
+        "style": "american",
+        "strike_price": "180",
+        "multiplier": "100",
+        "size": "100",
+        "open_interest": "1250.0",
+        "open_interest_date": "2024-01-02",
+        "close_price": "12.65",
+        "close_price_date": "2024-01-02"
+      }
+    },
+    {
+      "path": "/v2/corporate_actions/announcements/{id}",
+      "purpose": "Get specific corporate action announcement by ID",
+      "parameters": {
+        "id": "ca_123456789"
+      },
+      "sample_response": {
+        "id": "ca_123456789",
+        "corporate_action_id": "DIVD_AAPL_20240215",
+        "ca_type": "dividend",
+        "ca_sub_type": "cash",
+        "initiating_symbol": "AAPL",
+        "target_symbol": "AAPL",
+        "declaration_date": "2024-02-01",
+        "ex_date": "2024-02-09",
+        "record_date": "2024-02-12",
+        "payable_date": "2024-02-15",
+        "cash_amount": "0.24",
+        "old_rate": "1",
+        "new_rate": "1"
+      }
+    },
+    {
+      "path": "/v2/wallets/transfers/{transfer_id}",
+      "purpose": "Get specific crypto wallet transfer details",
+      "parameters": {
+        "transfer_id": "454e1e7a-b200-4295-9860-7b440ed62fed"
+      },
+      "sample_response": {
+        "id": "454e1e7a-b200-4295-9860-7b440ed62fed",
+        "wallet_id": "97522d8b-1ad5-4b3d-af5d-1d4839205161",
+        "amount": "0.5",
+        "currency": "BTC",
+        "side": "INCOMING",
+        "status": "APPROVED",
+        "created_at": "2023-08-01T18:40:04.504Z",
+        "expires_at": "2023-08-02T18:40:04.504Z"
+      }
+    },
+    {
+      "path": "/v2/wallets/whitelists",
+      "purpose": "Get crypto wallet whitelisted addresses",
+      "parameters": {},
+      "sample_response": [
+        {
+          "id": "whitelist_123456789",
+          "wallet_id": "97522d8b-1ad5-4b3d-af5d-1d4839205161",
+          "address": "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
+          "currency": "BTC",
+          "status": "APPROVED",
+          "created_at": "2023-08-01T18:40:04.504Z"
+        }
+      ]
+    },
+    {
+      "path": "/v2/wallets/whitelists/{whitelisted_address_id}",
+      "purpose": "Get specific whitelisted address details",
+      "parameters": {
+        "whitelisted_address_id": "whitelist_123456789"
+      },
+      "sample_response": {
+        "id": "whitelist_123456789",
+        "wallet_id": "97522d8b-1ad5-4b3d-af5d-1d4839205161",
+        "address": "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
+        "currency": "BTC",
+        "status": "APPROVED",
+        "created_at": "2023-08-01T18:40:04.504Z"
+      }
+    },
+    {
+      "path": "/v2/wallets/fees/estimate",
+      "purpose": "Estimate crypto transaction fees",
+      "parameters": {
+        "currency": "BTC, ETH, LTC",
+        "transfer_type": "deposit, withdrawal"
+      },
+      "sample_response": {
+        "currency": "BTC",
+        "transfer_type": "withdrawal",
+        "estimated_fee": "0.0002",
+        "estimated_fee_usd": "8.40"
+      }
+    }
+  ]
+}

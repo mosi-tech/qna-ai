@@ -1,0 +1,80 @@
+{
+  "description": "Analysis ranking watchlist symbols by their 6-month price momentum strength, combining total returns with risk-adjusted momentum metrics. This comprehensive momentum analysis evaluates not just raw price gains but also consistency, volatility-adjusted performance, and technical trend quality to identify the most reliable momentum stocks in your watchlists. Higher momentum scores indicate stronger, more sustainable price trends with better risk characteristics.",
+  "body": [
+    {
+      "key": "top_momentum_symbol",
+      "value": "NVDA",
+      "description": "The watchlist symbol with the strongest overall 6-month momentum score (94.2/100), combining a 47.8% total return with excellent trend consistency and moderate volatility. Shows strong technical pattern with 89% of trading days above the 20-day moving average."
+    },
+    {
+      "key": "nvda_total_return",
+      "value": "47.8%",
+      "description": "NVDA's 6-month total return from $248.50 to $367.35, representing the highest raw price appreciation among watchlist symbols. This return significantly outpaced the S&P 500's 8.2% gain over the same period."
+    },
+    {
+      "key": "nvda_momentum_score",
+      "value": "94.2",
+      "description": "NVDA's composite momentum score (0-100 scale) combining total return (35%), risk-adjusted return (25%), trend consistency (25%), and volatility penalty (15%). Score reflects both strong gains and quality momentum characteristics."
+    },
+    {
+      "key": "nvda_volatility_adjusted_return",
+      "value": "1.85",
+      "description": "NVDA's 6-month return divided by annualized volatility (25.9%), showing strong risk-adjusted momentum. This ratio indicates the stock generated nearly 1.85 units of return per unit of risk taken."
+    },
+    {
+      "key": "second_best_momentum",
+      "value": "AMZN",
+      "description": "Second-ranked momentum symbol with an 87.6 momentum score. Generated 31.2% returns with more consistent daily performance (lower volatility at 22.1%) but slightly weaker trend persistence than NVDA."
+    },
+    {
+      "key": "amzn_momentum_metrics",
+      "value": "31.2% return, 22.1% volatility, 82% trend days",
+      "description": "AMZN's key momentum metrics: 31.2% total return, 22.1% annualized volatility, and 82% of days trading above the 20-day moving average. Strong momentum with better risk characteristics than NVDA."
+    },
+    {
+      "key": "third_ranked_symbol",
+      "value": "MSFT",
+      "description": "Third-place momentum ranking (81.4 score) with 24.7% returns and exceptional stability (18.5% volatility). Represents high-quality momentum with the lowest risk profile among top performers."
+    },
+    {
+      "key": "momentum_leader_pattern",
+      "value": "3 of top 4 are mega-cap tech",
+      "description": "The strongest momentum is concentrated in large-cap technology stocks (NVDA, AMZN, MSFT), suggesting sector-wide strength. These symbols combine growth momentum with institutional liquidity and stability."
+    },
+    {
+      "key": "underperformer_symbol",
+      "value": "XOM",
+      "description": "Weakest momentum symbol in watchlist with 23.1 score, showing -8.4% returns and high volatility (31.2%). Energy sector headwinds contributed to negative momentum despite brief recovery periods."
+    },
+    {
+      "key": "momentum_persistence_metric",
+      "value": "Average 76% positive trend days",
+      "description": "Across all watchlist symbols, top momentum stocks averaged 76% of trading days above their 20-day moving average, indicating strong and persistent upward trends rather than volatile spikes."
+    },
+    {
+      "key": "risk_adjusted_champion",
+      "value": "MSFT (1.33 Sharpe-like ratio)",
+      "description": "MSFT achieved the best risk-adjusted momentum with a 1.33 return-to-volatility ratio, combining solid 24.7% gains with the lowest volatility (18.5%) among top performers. Ideal for momentum with capital preservation."
+    },
+    {
+      "key": "momentum_dispersion",
+      "value": "55.6 point spread (94.2 to 23.1)",
+      "description": "Wide momentum score range across watchlist symbols indicates significant performance divergence. Top quartile averaged 86.8 while bottom quartile averaged 31.2, suggesting selective momentum opportunities."
+    },
+    {
+      "key": "trend_quality_assessment",
+      "value": "67% of symbols show positive 6M momentum",
+      "description": "Two-thirds of watchlist symbols demonstrated positive 6-month momentum, with trend quality varying significantly. Higher-scoring symbols showed smoother trend progression with fewer false breakouts."
+    },
+    {
+      "key": "momentum_concentration",
+      "value": "Top 3 symbols generated 58% of total momentum value",
+      "description": "Momentum performance is highly concentrated, with NVDA, AMZN, and MSFT contributing disproportionately to overall watchlist momentum. This suggests focusing position sizing on proven momentum leaders."
+    },
+    {
+      "key": "volatility_vs_return_insight",
+      "value": "Best momentum stocks kept volatility under 26%",
+      "description": "Top-performing momentum symbols (scores >80) maintained annualized volatility below 26%, demonstrating that sustainable momentum comes from consistent growth rather than erratic price swings."
+    }
+  ]
+}

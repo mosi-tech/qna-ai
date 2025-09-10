@@ -1,0 +1,55 @@
+{
+  "description": "This analysis identifies which of your current positions have the highest rolling skew of daily returns over the past 30 days. Rolling skewness measures the asymmetry of return distributions - positive skew indicates more frequent small losses with occasional large gains (momentum-like behavior), while negative skew suggests frequent small gains with occasional large losses (mean-reversion patterns). Understanding position skew helps assess risk characteristics and behavioral patterns of your holdings, providing insights into which positions exhibit momentum versus mean-reversion tendencies.",
+  "body": [
+    {
+      "key": "highest_positive_skew_position",
+      "value": "TSLA",
+      "description": "Tesla Inc. shows the highest positive rolling skew (+1.47) among your positions, indicating a tendency for small daily losses with occasional large positive jumps. This momentum-like pattern suggests the stock experiences sharp upward moves that outweigh gradual declines, making it a high-conviction growth position with asymmetric upside potential."
+    },
+    {
+      "key": "second_highest_skew",
+      "value": "NVDA",
+      "description": "NVIDIA Corporation displays the second-highest rolling skew (+1.23), exhibiting strong positive asymmetry in its daily returns. The high positive skew indicates this semiconductor position tends to have explosive upward moves that more than compensate for modest pullbacks, reflecting its growth momentum characteristics."
+    },
+    {
+      "key": "third_highest_skew", 
+      "value": "AMZN",
+      "description": "Amazon.com Inc. shows significant positive rolling skew (+0.89), demonstrating asymmetric return patterns favoring large upward moves over downward volatility. This suggests the position exhibits momentum characteristics with potential for outsized gains during favorable market conditions."
+    },
+    {
+      "key": "moderate_positive_skew",
+      "value": "AAPL",
+      "description": "Apple Inc. displays moderate positive rolling skew (+0.45), indicating balanced but slightly momentum-favored return patterns. While less extreme than other tech positions, it still shows tendency for upward price jumps to exceed downward movements in magnitude."
+    },
+    {
+      "key": "near_neutral_skew",
+      "value": "SPY", 
+      "description": "SPDR S&P 500 ETF shows near-neutral rolling skew (+0.12), exhibiting relatively symmetric return distribution typical of broad market exposure. This balanced pattern provides portfolio stability with neither strong momentum nor mean-reversion bias."
+    },
+    {
+      "key": "slight_negative_skew",
+      "value": "MSFT",
+      "description": "Microsoft Corporation shows slight negative rolling skew (-0.28), indicating modest mean-reversion tendencies with more frequent small gains offset by occasional larger losses. This defensive growth pattern suggests steady appreciation with limited downside volatility."
+    },
+    {
+      "key": "highest_negative_skew",
+      "value": "VTI",
+      "description": "Vanguard Total Stock Market ETF displays the most negative rolling skew (-0.67) in your portfolio, showing strong mean-reversion characteristics with frequent small positive moves occasionally interrupted by larger declines. This pattern is typical of broad-market diversified holdings that provide steady growth with periodic corrections."
+    },
+    {
+      "key": "skew_calculation_period",
+      "value": "30 days",
+      "description": "Rolling skewness is calculated using a 30-day lookback window of daily returns, providing a current snapshot of each position's return asymmetry while being responsive to recent market behavior changes."
+    },
+    {
+      "key": "total_positions_analyzed",
+      "value": 7,
+      "description": "Analysis covers all 7 current open positions in your portfolio, ensuring comprehensive coverage of your holdings' risk characteristics and return patterns for informed position management decisions."
+    },
+    {
+      "key": "portfolio_skew_diversity",
+      "value": "High variation",
+      "description": "Your portfolio shows excellent skew diversification ranging from strong positive (+1.47) to negative (-0.67) values, providing balanced exposure to both momentum-driven growth positions and mean-reverting stable holdings for optimal risk-adjusted returns."
+    }
+  ]
+}

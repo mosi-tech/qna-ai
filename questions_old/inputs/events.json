@@ -1,0 +1,178 @@
+{
+    "events_and_factors": {
+        "Corporate Events": [
+            "Merger Announcements",
+            "Acquisition Announcements",
+            "Divestitures",
+            "Stock Buybacks",
+            "Debt Issuances",
+            "Equity Offerings",
+            "Spin-offs",
+            "Joint Ventures",
+            "Management Buyouts"
+        ],
+        "Economic Indicators": [
+            "Inflation Rates",
+            "GDP Growth Rates",
+            "Unemployment Rates",
+            "Consumer Confidence Index",
+            "Retail Sales Data",
+            "Industrial Production",
+            "Personal Savings Rate"
+        ],
+        "Geopolitical Events": [
+            "Trade Wars",
+            "Sanctions",
+            "Political Instability",
+            "Conflicts and Wars",
+            "Diplomatic Relations",
+            "International Treaties"
+        ],
+        "Market Sentiment Events": [
+            "Analyst Ratings Changes",
+            "Market Speculation",
+            "Investor Sentiment Surveys",
+            "Media Coverage",
+            "Market Rumors",
+            "Investor Activism"
+        ],
+        "Technological Developments": [
+            "Technological Breakthroughs",
+            "Patent Approvals",
+            "R&D Investment Announcements",
+            "Product Innovations",
+            "Cybersecurity Developments",
+            "Technological Disruptions"
+        ],
+        "Legal and Regulatory Changes": [
+            "Changes in Taxation Laws",
+            "New Financial Regulations",
+            "Environmental Compliance Requirements",
+            "Labor Laws",
+            "Health and Safety Regulations",
+            "Antitrust Actions"
+        ],
+        "Consumer Behavior Changes": [
+            "Changes in Consumer Preferences",
+            "Shifts in Market Demand",
+            "New Consumer Trends",
+            "Consumer Spending Patterns",
+            "E-commerce Trends",
+            "Brand Loyalty"
+        ],
+        "Competitive Actions": [
+            "New Product Launches by Competitors",
+            "Pricing Wars",
+            "Market Share Changes",
+            "Competitive Mergers and Acquisitions",
+            "Competitive Pricing Strategies",
+            "Innovation by Competitors"
+        ],
+        "Supply Chain Disruptions": [
+            "Natural Disasters",
+            "Supply Shortages",
+            "Logistics Issues",
+            "Transportation Strikes",
+            "Raw Material Price Fluctuations",
+            "Supplier Bankruptcy"
+        ],
+        "Financial Performance Metrics": [
+            "Changes in Profit Margins",
+            "Revenue Surprises",
+            "Cost Management Improvements",
+            "Operational Efficiency",
+            "Gross Margin Changes",
+            "Earnings Quality"
+        ],
+        "Management Changes": [
+            "CEO or CFO Changes",
+            "Changes in Key Management Positions",
+            "New Strategic Initiatives",
+            "Resignations",
+            "New Appointments",
+            "Management Restructuring"
+        ],
+        "Investor Activism": [
+            "Shareholder Proposals",
+            "Activist Investor Campaigns",
+            "Proxy Fights",
+            "Board Elections",
+            "Shareholder Activism"
+        ],
+        "Social Media and Public Relations": [
+            "Social Media Trends",
+            "Public Relations Scandals",
+            "Influencer Endorsements",
+            "Social Media Backlash",
+            "Public Statements by Executives",
+            "Brand Image Changes"
+        ],
+        "Commodity Prices": [
+            "Gold Prices",
+            "Silver Prices",
+            "Base Metal Prices",
+            "Oil Prices",
+            "Natural Gas Prices",
+            "Agricultural Commodity Prices"
+        ],
+        "Sector-Specific Factors": [
+            "Renewable Energy Market Performance",
+            "Real Estate Market Trends",
+            "Healthcare Sector Developments",
+            "Technology Sector Innovations",
+            "Financial Sector Regulations",
+            "Consumer Goods Trends"
+        ],
+        "Global Events": [
+            "Pandemics",
+            "Global Economic Crises",
+            "Major International Agreements",
+            "Climate Change Events",
+            "International Economic Policies",
+            "Global Trade Agreements"
+        ],
+        "Interest Rate Announcements": [
+            "Federal Reserve Decisions",
+            "Central Bank Rate Changes",
+            "Monetary Policy Statements",
+            "Interest Rate Hikes/Cuts",
+            "Inflation Targeting Policies"
+        ],
+        "Dividend and Split Adjustments": [
+            "Special Dividends",
+            "Stock Splits",
+            "Reverse Stock Splits",
+            "Dividend Increases",
+            "Dividend Cuts",
+            "Stock Dividends"
+        ],
+        "Earnings Surprises": [
+            "Positive Earnings Surprises",
+            "Negative Earnings Surprises",
+            "Earnings Guidance Changes",
+            "Quarterly Earnings Reports",
+            "Annual Earnings Reports",
+            "Earnings Forecast Revisions"
+        ],
+        "Mergers and Acquisitions": [
+            "Acquisition Premiums",
+            "Merger Integration Challenges",
+            "Antitrust Reviews",
+            "Cross-Border Mergers",
+            "Divestitures"
+        ],
+        "Seasonal Trends": [
+            "Holiday Season Sales",
+            "Weather-Related Effects",
+            "Quarterly Seasonal Effects"
+        ],
+        "Investor Sentiment Factors": [
+            "VIX Index Movements",
+            "Market Volatility Index"
+        ],
+        "Regulatory and Compliance Issues": [
+            "Compliance Costs",
+            "Regulatory Investigations"
+        ]
+    }
+}

@@ -1,10 +1,10 @@
-You are a retail investor and can ask ay releavant investment/trading related question. Question shoudl be singular and not have "add".
-Also, make sure question is distinct from what we alread have in data/approved.json and data/experimental.json
-The question should be such that it can answered using the APIs listed in alpaca.marketdata.spec.json
+You are a retail investor and can ask any relevant investment/trading related question. Question should be singular and not have "add".
+Also, make sure question is distinct from what we already have in data/approved.json and data/experimental.json
+The question should be such that it can be answered using the APIs listed in alpaca.marketdata.spec.json
 and alpaca.trading.spec.json and EODHD.spec.json
 
-IMPORTANT: Don't create questions that can't be answered with using above specs. All questions shoudl be answerabel either directly using the specs or python analysis based on data from specs.
-After generating question, please check if it can be aswered before builing visual or python engine.
+IMPORTANT: Don't create questions that can't be answered using above specs. All questions should be answerable either directly using the specs or python analysis based on data from specs.
+After generating question, please check if it can be answered before building JSON output or python engine.
 
 CRITICAL VALIDATION PROCESS:
 1. First generate a question that you think can be answered using the available APIs
@@ -23,24 +23,34 @@ Example validation:
 
 Once, you are done asking question, write the question in left panel.
 
-After that you switch role to advisor/quant/accountant or trading customer service to help anser that question.
-You will create either complete visual(directly answering the queestion using above specs) or interactive component that allow user to interact and answer themselves.
+After that you switch role to advisor/quant/accountant or trading customer service to help answer that question.
+You can write python based code in engine folder that can help you answer the question if needed.
 
-The visuals should be visually appealing, production-ready, and follow modern UI/UX best practices. Avoid basic HTML tables and simple divs - use proper component libraries.
+The answer should be a well-formatted JSON output following this exact structure:
 
-IMPORTANT: Build professional, modern UI components using:
-- shadcn/ui for high-quality UI components (buttons, cards, tables, etc.)
-- visx for data visualizations and charts
-- Modern CSS/Tailwind for styling
-- Interactive elements and smooth animations
-- Professional color schemes and typography
-- Responsive design patterns
-- Build common components where possible and use those common components in new one if possible instead of re-inventing the wheel
-- All components should fit within the right panel and no scroll should be necessary.
-- The visuals should follow similar UI patterns and same libraries, exisitng components and build on existing.
+```json
+{
+  "description": "Overall explanation of what this JSON output represents, its purpose, and how it answers the specific question asked. Written for retail investors to easily understand.",
+  "body": [
+    {
+      "key": "unique_identifier_for_data_point",
+      "value": "actual_data_value_or_calculation_result",
+      "description": "Clear explanation of what this specific data point represents, how it was calculated, and why it matters to the investor"
+    },
+    {
+      "key": "another_metric",
+      "value": 42.5,
+      "description": "Another data point with its explanation and context"
+    }
+  ]
+}
+```
 
-
-
-
-Also, you can write python based code in engine folder that can help you answer the question if needed.
+Requirements:
+- Top-level `description`: Explains the entire analysis and its purpose
+- `body` array: Contains individual data points in {key, value, description} format
+- Each `key` must be unique and descriptive
+- Each `value` contains the actual data (numbers, text, percentages, etc.)
+- Each `description` explains what the data means and why it's important
+- All explanations should be written for retail investors to understand
 

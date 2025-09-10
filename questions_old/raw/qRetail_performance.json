@@ -1,0 +1,435 @@
+{
+    "queries": [
+        {
+            "question": "How has the SPDR S&P 500 ETF (SPY) performed compared to the Vanguard Total Stock Market ETF (VTI) over the past year?",
+            "short_question": "SPY vs VTI performance last year?",
+            "category": "PERFORMANCE_COMPARISON",
+            "symbols": [
+                "SPY",
+                "VTI"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "historical_performance",
+                "symbols": [
+                    "SPY",
+                    "VTI"
+                ],
+                "start_date": "2023-07-21",
+                "end_date": "2024-07-21"
+            }
+        },
+        {
+            "question": "Compare the performance of the Fidelity Contrafund (FCNTX) to the T. Rowe Price Growth Stock Fund (PRGFX) over the last five years.",
+            "short_question": "FCNTX vs PRGFX performance 5 years?",
+            "category": "PERFORMANCE_COMPARISON",
+            "symbols": [
+                "FCNTX",
+                "PRGFX"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "historical_performance",
+                "symbols": [
+                    "FCNTX",
+                    "PRGFX"
+                ],
+                "start_date": "2019-07-21",
+                "end_date": "2024-07-21"
+            }
+        },
+        {
+            "question": "How has the Vanguard FTSE Emerging Markets ETF (VWO) performed compared to the iShares MSCI Emerging Markets ETF (EEM) over the past decade?",
+            "short_question": "VWO vs EEM performance 10 years?",
+            "category": "PERFORMANCE_COMPARISON",
+            "symbols": [
+                "VWO",
+                "EEM"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "historical_performance",
+                "symbols": [
+                    "VWO",
+                    "EEM"
+                ],
+                "start_date": "2013-07-21",
+                "end_date": "2023-07-21"
+            }
+        },
+        {
+            "question": "Compare the performance of the SPDR Gold Shares (GLD) to the iShares Gold Trust (IAU) over the past three years.",
+            "short_question": "GLD vs IAU performance 3 years?",
+            "category": "PERFORMANCE_COMPARISON",
+            "symbols": [
+                "GLD",
+                "IAU"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "historical_performance",
+                "symbols": [
+                    "GLD",
+                    "IAU"
+                ],
+                "start_date": "2021-07-21",
+                "end_date": "2024-07-21"
+            }
+        },
+        {
+            "question": "How has the iShares U.S. Real Estate ETF (IYR) performed compared to the Vanguard Real Estate ETF (VNQ) over the last five years?",
+            "short_question": "IYR vs VNQ performance 5 years?",
+            "category": "PERFORMANCE_COMPARISON",
+            "symbols": [
+                "IYR",
+                "VNQ"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "historical_performance",
+                "symbols": [
+                    "IYR",
+                    "VNQ"
+                ],
+                "start_date": "2019-07-21",
+                "end_date": "2024-07-21"
+            }
+        },
+        {
+            "question": "Compare the performance of the Invesco QQQ Trust (QQQ) to the SPDR S&P 500 ETF (SPY) over the past decade.",
+            "short_question": "QQQ vs SPY performance 10 years?",
+            "category": "PERFORMANCE_COMPARISON",
+            "symbols": [
+                "QQQ",
+                "SPY"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "historical_performance",
+                "symbols": [
+                    "QQQ",
+                    "SPY"
+                ],
+                "start_date": "2013-07-21",
+                "end_date": "2023-07-21"
+            }
+        },
+        {
+            "question": "How has the Energy Select Sector SPDR Fund (XLE) performed compared to the iShares U.S. Energy ETF (IEO) over the past three years?",
+            "short_question": "XLE vs IEO performance 3 years?",
+            "category": "PERFORMANCE_COMPARISON",
+            "symbols": [
+                "XLE",
+                "IEO"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "historical_performance",
+                "symbols": [
+                    "XLE",
+                    "IEO"
+                ],
+                "start_date": "2021-07-21",
+                "end_date": "2024-07-21"
+            }
+        },
+        {
+            "question": "How has the UnitedHealth Group Inc. (UNH) stock performed compared to the Cigna Corporation (CI) stock over the past five years?",
+            "short_question": "UNH vs CI performance 5 years?",
+            "category": "PERFORMANCE_COMPARISON",
+            "symbols": [
+                "UNH",
+                "CI"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "historical_performance",
+                "symbols": [
+                    "UNH",
+                    "CI"
+                ],
+                "start_date": "2019-07-21",
+                "end_date": "2024-07-21"
+            }
+        },
+        {
+            "question": "Compare the performance of the iShares U.S. Telecom ETF (IYZ) to the SPDR S&P Telecom ETF (XTL) over the last decade.",
+            "short_question": "IYZ vs XTL performance 10 years?",
+            "category": "PERFORMANCE_COMPARISON",
+            "symbols": [
+                "IYZ",
+                "XTL"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "historical_performance",
+                "symbols": [
+                    "IYZ",
+                    "XTL"
+                ],
+                "start_date": "2013-07-21",
+                "end_date": "2023-07-21"
+            }
+        },
+        {
+            "question": "How has the PepsiCo Inc. (PEP) stock performed compared to the The Coca-Cola Company (KO) stock over the last three years?",
+            "short_question": "PEP vs KO performance 3 years?",
+            "category": "PERFORMANCE_COMPARISON",
+            "symbols": [
+                "PEP",
+                "KO"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "historical_performance",
+                "symbols": [
+                    "PEP",
+                    "KO"
+                ],
+                "start_date": "2021-07-21",
+                "end_date": "2024-07-21"
+            }
+        },
+        {
+            "question": "Compare the performance of the iShares U.S. Consumer Discretionary ETF (IYC) to the Consumer Discretionary Select Sector SPDR Fund (XLY) over the past year.",
+            "short_question": "IYC vs XLY performance last year?",
+            "category": "PERFORMANCE_COMPARISON",
+            "symbols": [
+                "IYC",
+                "XLY"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "historical_performance",
+                "symbols": [
+                    "IYC",
+                    "XLY"
+                ],
+                "start_date": "2023-07-21",
+                "end_date": "2024-07-21"
+            }
+        },
+        {
+            "question": "How has the Home Depot Inc. (HD) stock performed compared to the Lowe's Companies Inc. (LOW) stock over the past five years?",
+            "short_question": "HD vs LOW performance 5 years?",
+            "category": "PERFORMANCE_COMPARISON",
+            "symbols": [
+                "HD",
+                "LOW"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "historical_performance",
+                "symbols": [
+                    "HD",
+                    "LOW"
+                ],
+                "start_date": "2019-07-21",
+                "end_date": "2024-07-21"
+            }
+        },
+        {
+            "question": "Compare the performance of the iShares U.S. Consumer Staples ETF (XLP) to the Consumer Staples Select Sector SPDR Fund (XLP) over the last decade.",
+            "short_question": "XLP vs XLP performance 10 years?",
+            "category": "PERFORMANCE_COMPARISON",
+            "symbols": [
+                "XLP",
+                "XLP"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "historical_performance",
+                "symbols": [
+                    "XLP",
+                    "XLP"
+                ],
+                "start_date": "2013-07-21",
+                "end_date": "2023-07-21"
+            }
+        },
+        {
+            "question": "How has the Goldman Sachs Group Inc. (GS) stock performed compared to the Morgan Stanley (MS) stock over the past year?",
+            "short_question": "GS vs MS performance last year?",
+            "category": "PERFORMANCE_COMPARISON",
+            "symbols": [
+                "GS",
+                "MS"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "historical_performance",
+                "symbols": [
+                    "GS",
+                    "MS"
+                ],
+                "start_date": "2023-07-21",
+                "end_date": "2024-07-21"
+            }
+        },
+        {
+            "question": "Compare the performance of the iShares MSCI EAFE ETF (EFA) to the Vanguard FTSE Developed Markets ETF (VEA) over the past three years.",
+            "short_question": "EFA vs VEA performance 3 years?",
+            "category": "PERFORMANCE_COMPARISON",
+            "symbols": [
+                "EFA",
+                "VEA"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "historical_performance",
+                "symbols": [
+                    "EFA",
+                    "VEA"
+                ],
+                "start_date": "2021-07-21",
+                "end_date": "2024-07-21"
+            }
+        },
+        {
+            "question": "How has the Bank of America Corporation (BAC) stock performed compared to the JPMorgan Chase & Co. (JPM) stock over the past five years?",
+            "short_question": "BAC vs JPM performance 5 years?",
+            "category": "PERFORMANCE_COMPARISON",
+            "symbols": [
+                "BAC",
+                "JPM"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "historical_performance",
+                "symbols": [
+                    "BAC",
+                    "JPM"
+                ],
+                "start_date": "2019-07-21",
+                "end_date": "2024-07-21"
+            }
+        },
+        {
+            "question": "Compare the performance of the iShares U.S. Healthcare ETF (IYH) to the Health Care Select Sector SPDR Fund (XLV) over the past decade.",
+            "short_question": "IYH vs XLV performance 10 years?",
+            "category": "PERFORMANCE_COMPARISON",
+            "symbols": [
+                "IYH",
+                "XLV"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "historical_performance",
+                "symbols": [
+                    "IYH",
+                    "XLV"
+                ],
+                "start_date": "2013-07-21",
+                "end_date": "2023-07-21"
+            }
+        },
+        {
+            "question": "How has the United Parcel Service Inc. (UPS) stock performed compared to the FedEx Corporation (FDX) stock over the past three years?",
+            "short_question": "UPS vs FDX performance 3 years?",
+            "category": "PERFORMANCE_COMPARISON",
+            "symbols": [
+                "UPS",
+                "FDX"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "historical_performance",
+                "symbols": [
+                    "UPS",
+                    "FDX"
+                ],
+                "start_date": "2021-07-21",
+                "end_date": "2024-07-21"
+            }
+        },
+        {
+            "question": "Compare the performance of the iShares U.S. Technology ETF (IYW) to the Technology Select Sector SPDR Fund (XLB) over the last five years.",
+            "short_question": "IYW vs XLB performance 5 years?",
+            "category": "PERFORMANCE_COMPARISON",
+            "symbols": [
+                "IYW",
+                "XLB"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "historical_performance",
+                "symbols": [
+                    "IYW",
+                    "XLB"
+                ],
+                "start_date": "2019-07-21",
+                "end_date": "2024-07-21"
+            }
+        },
+        {
+            "question": "How has the American Tower Corporation (AMT) stock performed compared to the Crown Castle International Corp. (CCI) stock over the past decade?",
+            "short_question": "AMT vs CCI performance 10 years?",
+            "category": "PERFORMANCE_COMPARISON",
+            "symbols": [
+                "AMT",
+                "CCI"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "historical_performance",
+                "symbols": [
+                    "AMT",
+                    "CCI"
+                ],
+                "start_date": "2013-07-21",
+                "end_date": "2023-07-21"
+            }
+        },
+        {
+            "question": "Compare the performance of the iShares U.S. Technology ETF (IYW) to the Invesco QQQ Trust (QQQ) over the past year.",
+            "short_question": "IYW vs QQQ performance last year?",
+            "category": "PERFORMANCE_COMPARISON",
+            "symbols": [
+                "IYW",
+                "QQQ"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "historical_performance",
+                "symbols": [
+                    "IYW",
+                    "QQQ"
+                ],
+                "start_date": "2023-07-21",
+                "end_date": "2024-07-21"
+            }
+        },
+        {
+            "unique_functions": [
+                "compare_metric"
+            ],
+            "unique_inputs": [
+                {
+                    "metricType": "technical",
+                    "metricName": "historical_performance"
+                }
+            ]
+        }
+    ]
+}

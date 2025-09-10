@@ -1,0 +1,255 @@
+{
+    "21": {
+      "question": "Compare the stock price performance of NKE and ADDYY during major sports events.",
+      "type": "COMPARISON",
+      "symbols": ["NKE", "ADDYY"],
+      "function": "compare_performance_during_sports_events",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": ["NKE", "ADDYY"],
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        },
+        {
+          "name": "sports_event_dates",
+          "query_parameters": {
+            "symbol": ["NKE", "ADDYY"],
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Evaluate stock performance during major sports events."
+    },
+    "22": {
+      "question": "Analyze the relationship between gold prices and NEM's stock performance.",
+      "type": "STOCK_ANALYSIS",
+      "symbols": ["NEM"],
+      "function": "analyze_relationship_gold_prices",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": "NEM",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        },
+        {
+          "name": "historical_gold_prices",
+          "query_parameters": {
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Analyze correlation between gold prices and stock performance."
+    },
+    "23": {
+      "question": "Compare the historical P/E ratios of HD and LOW.",
+      "type": "COMPARISON",
+      "symbols": ["HD", "LOW"],
+      "function": "compare_pe_ratios",
+      "inputs": [
+        {
+          "name": "historical_pe_ratios",
+          "query_parameters": {
+            "symbol": ["HD", "LOW"],
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Requires historical P/E ratio data for comparison."
+    },
+    "24": {
+      "question": "Study the effect of trade tariffs on CAT's stock price.",
+      "type": "STOCK_ANALYSIS",
+      "symbols": ["CAT"],
+      "function": "study_effect_trade_tariffs",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": "CAT",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        },
+        {
+          "name": "trade_tariff_events",
+          "query_parameters": {
+            "symbol": "CAT",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Evaluate stock price changes around trade tariff dates."
+    },
+    "25": {
+      "question": "Compare the performance of INTC and AMD in the semiconductor market.",
+      "type": "COMPARISON",
+      "symbols": ["INTC", "AMD"],
+      "function": "compare_semiconductor_performance",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": ["INTC", "AMD"],
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Requires historical stock price data for semiconductor market performance comparison."
+    },
+    "26": {
+      "question": "Analyze the impact of major cybersecurity breaches on MSFT's stock price.",
+      "type": "STOCK_ANALYSIS",
+      "symbols": ["MSFT"],
+      "function": "analyze_impact_cybersecurity_breaches",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": "MSFT",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        },
+        {
+          "name": "cybersecurity_breach_events",
+          "query_parameters": {
+            "symbol": "MSFT",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Evaluate stock price changes around cybersecurity breach dates."
+    },
+    "27": {
+      "question": "Compare the dividend yields of PG and UL over the last decade.",
+      "type": "COMPARISON",
+      "symbols": ["PG", "UL"],
+      "function": "compare_dividend_yields",
+      "inputs": [
+        {
+          "name": "historical_dividend_yields",
+          "query_parameters": {
+            "symbol": ["PG", "UL"],
+            "start_date": "2014-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Requires 10 years of historical dividend yield data."
+    },
+    "28": {
+      "question": "Study the relationship between housing market trends and HD's stock performance.",
+      "type": "STOCK_ANALYSIS",
+      "symbols": ["HD"],
+      "function": "study_relationship_housing_market_trends",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": "HD",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        },
+        {
+          "name": "housing_market_trends",
+          "query_parameters": {
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Analyze correlation between housing market trends and stock performance."
+    },
+    "29": {
+      "question": "Compare the historical performance of WMT and COST.",
+      "type": "COMPARISON",
+      "symbols": ["WMT", "COST"],
+      "function": "compare_historical_performance",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": ["WMT", "COST"],
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Requires historical stock price data for comparison."
+    },
+    "30": {
+      "question": "Evaluate the effect of major FDA approvals on PFE's stock price.",
+      "type": "STOCK_ANALYSIS",
+      "symbols": ["PFE"],
+      "function": "evaluate_impact_fda_approvals",
+      "inputs": [
+        {
+          "name": "historical_stock_prices",
+          "query_parameters": {
+            "symbol": "PFE",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        },
+        {
+          "name": "fda_approval_events",
+          "query_parameters": {
+            "symbol": "PFE",
+            "start_date": "2019-07-01",
+            "end_date": "2024-07-01"
+          }
+        }
+      ],
+      "other_information": "Analyze stock price changes around major FDA approval dates."
+    },
+    "unique_inputs": [
+      "historical_stock_prices",
+      "sports_event_dates",
+      "historical_gold_prices",
+      "historical_pe_ratios",
+      "trade_tariff_events",
+      "historical_dividend_yields",
+      "housing_market_trends",
+      "fda_approval_events",
+      "cybersecurity_breach_events",
+      "semiconductor_market_performance"
+    ],
+    "unique_functions": [
+      "compare_performance_during_sports_events",
+      "analyze_relationship_gold_prices",
+      "compare_pe_ratios",
+      "study_effect_trade_tariffs",
+      "compare_semiconductor_performance",
+      "analyze_impact_cybersecurity_breaches",
+      "compare_dividend_yields",
+      "study_relationship_housing_market_trends",
+      "compare_historical_performance",
+      "evaluate_impact_fda_approvals"
+    ],
+    "all_questions": [
+      "Compare the stock price performance of NKE and ADDYY during major sports events.",
+      "Analyze the relationship between gold prices and NEM's stock performance.",
+      "Compare the historical P/E ratios of HD and LOW.",
+      "Study the effect of trade tariffs on CAT's stock price.",
+      "Compare the performance of INTC and AMD in the semiconductor market.",
+      "Analyze the impact of major cybersecurity breaches on MSFT's stock price.",
+      "Compare the dividend yields of PG and UL over the last decade.",
+      "Study the relationship between housing market trends and HD's stock performance.",
+      "Compare the historical performance of WMT and COST.",
+      "Evaluate the effect of major FDA approvals on PFE's stock price."
+    ]
+  }
+  

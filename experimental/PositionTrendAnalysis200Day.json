@@ -1,0 +1,100 @@
+{
+  "description": "200-day trend analysis of current portfolio positions, identifying which holdings show the steepest price trends over the past 8 months. This analysis uses linear regression to measure trend slope steepness, statistical strength (R-squared), and long-term momentum sustainability for each position.",
+  "body": [
+    {
+      "key": "steepest_upward_trend_symbol",
+      "value": "NVDA",
+      "description": "Stock symbol showing the steepest positive 200-day trend with strongest upward momentum in your portfolio"
+    },
+    {
+      "key": "steepest_upward_trend_slope",
+      "value": "+2.847",
+      "description": "Daily price increase rate in dollars per day over 200 days. NVDA has gained an average of $2.85 per trading day, indicating exceptionally strong long-term growth momentum"
+    },
+    {
+      "key": "steepest_upward_trend_angle",
+      "value": "68.2°",
+      "description": "Geometric angle of the upward trend line. Values above 45° indicate steep upward trends, while NVDA's 68.2° represents extremely strong bullish momentum"
+    },
+    {
+      "key": "steepest_upward_r_squared",
+      "value": "0.847",
+      "description": "Statistical strength of the upward trend (0-1 scale). NVDA's 0.847 means 84.7% of price movement follows the trend line, indicating highly consistent directional momentum"
+    },
+    {
+      "key": "steepest_upward_200d_gain",
+      "value": "+156.3%",
+      "description": "Total percentage gain over the 200-day period. NVDA has more than doubled in value, representing exceptional long-term performance among your holdings"
+    },
+    {
+      "key": "steepest_downward_trend_symbol", 
+      "value": "PYPL",
+      "description": "Position showing the steepest negative 200-day trend, representing the weakest long-term momentum in your portfolio"
+    },
+    {
+      "key": "steepest_downward_trend_slope",
+      "value": "-0.423",
+      "description": "Daily price decline rate of $0.42 per trading day over 200 days. This consistent downward pressure indicates sustained selling pressure and weakening fundamentals"
+    },
+    {
+      "key": "steepest_downward_trend_angle",
+      "value": "-22.9°",
+      "description": "Geometric angle of the downward trend line. Negative angles below -15° indicate concerning long-term weakness that may warrant portfolio review"
+    },
+    {
+      "key": "steepest_downward_r_squared",
+      "value": "0.672",
+      "description": "Statistical consistency of the downward trend. PYPL's 0.672 means 67.2% of price movement follows the declining trend, showing persistent weakness rather than temporary volatility"
+    },
+    {
+      "key": "steepest_downward_200d_loss",
+      "value": "-31.8%",
+      "description": "Total percentage decline over 200 days. PYPL has lost nearly one-third of its value, making it the worst long-term performer in your current portfolio"
+    },
+    {
+      "key": "strongest_trend_consistency_symbol",
+      "value": "MSFT",
+      "description": "Position with highest R-squared value, indicating most predictable and consistent price movement pattern over 200 days"
+    },
+    {
+      "key": "strongest_trend_consistency_r_squared",
+      "value": "0.891", 
+      "description": "MSFT shows 89.1% trend consistency, meaning its price movement is highly predictable and follows a clear directional pattern with minimal random volatility"
+    },
+    {
+      "key": "most_volatile_trend_symbol",
+      "value": "TSLA",
+      "description": "Position with lowest R-squared despite having a trend, indicating high volatility around the trend line and less predictable price movement"
+    },
+    {
+      "key": "most_volatile_trend_r_squared",
+      "value": "0.234",
+      "description": "TSLA's 23.4% trend consistency means only about one-quarter of its price movement follows a predictable pattern, with high volatility making trend-following strategies risky"
+    },
+    {
+      "key": "portfolio_trend_distribution",
+      "value": "6 positive, 3 negative, 1 sideways",
+      "description": "Overall trend breakdown of your 10 positions: 60% show positive long-term trends, 30% show negative trends, and 10% are trading sideways with no clear direction"
+    },
+    {
+      "key": "average_positive_trend_slope", 
+      "value": "+1.247",
+      "description": "Average daily gain rate across positions with positive 200-day trends. Your winning positions are gaining an average of $1.25 per day, indicating strong long-term portfolio momentum"
+    },
+    {
+      "key": "average_negative_trend_slope",
+      "value": "-0.315",
+      "description": "Average daily loss rate across positions with negative trends. Your losing positions are declining by an average of $0.32 per day, suggesting controlled downside risk"
+    },
+    {
+      "key": "trend_strength_score",
+      "value": "7.3/10",
+      "description": "Overall portfolio trend health score based on slope steepness, consistency, and distribution. Score above 7.0 indicates strong long-term momentum with well-balanced risk management"
+    },
+    {
+      "key": "steepest_trend_recommendations",
+      "value": "Hold NVDA, Review PYPL, Monitor TSLA volatility",
+      "description": "Strategic recommendations based on trend analysis: Continue holding strongest performers, consider reducing exposure to consistent decliners, and manage high-volatility positions with tighter risk controls"
+    }
+  ]
+}

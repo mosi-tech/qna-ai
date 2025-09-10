@@ -1,0 +1,65 @@
+{
+  "description": "This analysis identifies which portfolio holdings are most sensitive to headline-driven volatility spikes by correlating position price movements with news volume and volatility increases. Using 90 days of price data and news activity, it measures each holding's volatility expansion during high-news periods and calculates sensitivity scores based on price reaction magnitude and correlation with headline events. This helps investors understand which positions require closer monitoring during news cycles and may benefit from adjusted position sizing or hedging strategies during periods of elevated market uncertainty.",
+  "body": [
+    {
+      "key": "most_news_sensitive_position",
+      "value": "NVDA",
+      "description": "NVIDIA shows the highest news sensitivity score of 8.7/10, with volatility increasing by 185% during high-news periods (>5 articles/day). Price movements correlate 0.78 with news volume spikes, making it extremely reactive to AI-related headlines, earnings rumors, and semiconductor industry developments."
+    },
+    {
+      "key": "nvda_news_volatility_multiplier",
+      "value": "2.85x",
+      "description": "On high-news days, NVIDIA's intraday volatility averages 2.85x its baseline level. Normal trading days show 2.1% average volatility, while news-heavy days (>3 articles) spike to 5.9% average volatility, with maximum single-day spikes reaching 8.4%."
+    },
+    {
+      "key": "second_most_sensitive",
+      "value": "TSLA",
+      "description": "Tesla ranks second with news sensitivity score of 8.2/10, showing 162% volatility increase during headline events. Price moves correlate 0.74 with news sentiment changes, particularly sensitive to Elon Musk tweets, regulatory news, and production updates."
+    },
+    {
+      "key": "tsla_sentiment_impact",
+      "value": "-3.2%",
+      "description": "Tesla's average same-day price reaction to negative news sentiment is -3.2%, while positive news generates +2.8% average gains. The asymmetric response indicates stronger downside reaction to bad news than upside reaction to positive headlines."
+    },
+    {
+      "key": "tech_sector_concentration",
+      "value": "67%",
+      "description": "67% of portfolio value is concentrated in tech stocks (NVDA, TSLA, AAPL, MSFT), which collectively show 2.3x higher news sensitivity than the S&P 500. This creates concentrated headline risk, especially during tech earnings seasons and regulatory announcements."
+    },
+    {
+      "key": "aapl_resilience_score",
+      "value": "4.1/10",
+      "description": "Apple shows moderate news sensitivity (4.1/10) with only 45% volatility increase during news events. Its large market cap and diversified business model provide relative stability, making it less reactive to single headline events compared to more speculative tech names."
+    },
+    {
+      "key": "peak_news_correlation_period",
+      "value": "Earnings Season",
+      "description": "Peak correlation between news volume and price volatility occurs during earnings seasons (correlation increases to 0.85), particularly in the 3-day window before earnings announcements when speculation and analyst commentary intensifies significantly."
+    },
+    {
+      "key": "vix_correlation_multiplier",
+      "value": "1.47x",
+      "description": "During VIX spikes above 25 (fear/uncertainty periods), news-sensitive positions show 1.47x their normal correlation with headlines. NVDA and TSLA correlations increase from 0.78/0.74 baseline to 0.91/0.87 during market stress periods."
+    },
+    {
+      "key": "pre_market_news_impact",
+      "value": "73%",
+      "description": "73% of significant intraday volatility in news-sensitive positions can be predicted by pre-market news volume and sentiment. Holdings with >2 pre-market articles show 68% probability of experiencing >3% intraday range expansion."
+    },
+    {
+      "key": "defensive_position_percentage",
+      "value": "18%",
+      "description": "Only 18% of portfolio value is allocated to low news-sensitivity positions (utilities, consumer staples, REITs) with news sensitivity scores below 3.0. These positions show <25% volatility increase during headline events and provide stability during news-driven market turbulence."
+    },
+    {
+      "key": "news_volume_threshold",
+      "value": "5 articles/day",
+      "description": "Portfolio volatility increases significantly when any single holding receives >5 news articles per day. Above this threshold, position-level volatility averages 2.1x baseline, while portfolio-wide correlations increase by 35% as news contagion affects related sectors."
+    },
+    {
+      "key": "optimal_position_sizing_adjustment",
+      "value": "-25%",
+      "description": "Risk-adjusted position sizing suggests reducing news-sensitive holdings (NVDA, TSLA) by 25% during high-volatility regimes (VIX >22) to maintain target portfolio volatility. This adjustment accounts for their amplified sensitivity during stress periods."
+    }
+  ]
+}

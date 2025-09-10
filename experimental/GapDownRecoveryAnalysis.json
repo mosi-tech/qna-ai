@@ -1,0 +1,95 @@
+{
+  "description": "Analysis of portfolio holdings that most frequently gap down at market open but recover to close higher than the opening price during the same trading session. This metric identifies resilient stocks in your portfolio that demonstrate strong intraday recovery patterns despite negative overnight sentiment or pre-market weakness. The analysis examines gap-down events (open significantly below prior close) and measures recovery success rates (close above open) to rank holdings by their ability to bounce back from morning weakness.",
+  "body": [
+    {
+      "key": "most_resilient_holding",
+      "value": "NVDA",
+      "description": "NVIDIA shows the highest gap-down recovery rate at 73.2%, successfully finishing green in 41 out of 56 gap-down sessions over the past 6 months. This indicates strong institutional support and buying interest on dips."
+    },
+    {
+      "key": "nvda_gap_down_frequency",
+      "value": "56 sessions",
+      "description": "NVIDIA experienced gap-down events (open >2% below prior close) in 56 trading sessions, representing 22.4% of trading days analyzed. High volatility creates frequent gap-down opportunities."
+    },
+    {
+      "key": "nvda_recovery_success_rate",
+      "value": "73.2%",
+      "description": "NVIDIA successfully recovered to close above its opening price in 73.2% of gap-down sessions, demonstrating exceptional intraday resilience and strong dip-buying demand from institutional investors."
+    },
+    {
+      "key": "nvda_average_gap_size",
+      "value": "-4.8%",
+      "description": "Average gap-down magnitude for NVIDIA is -4.8%, indicating significant morning weakness that the stock consistently overcomes during regular trading hours."
+    },
+    {
+      "key": "nvda_average_recovery",
+      "value": "+2.1%",
+      "description": "When NVIDIA gaps down but finishes green, the average recovery from open to close is +2.1%, showing substantial intraday momentum reversal capability."
+    },
+    {
+      "key": "second_most_resilient",
+      "value": "TSLA",
+      "description": "Tesla ranks second with a 68.9% gap-down recovery rate, finishing green in 31 out of 45 gap-down sessions. Strong retail and institutional interest drives consistent intraday recoveries."
+    },
+    {
+      "key": "tsla_gap_down_frequency",
+      "value": "45 sessions",
+      "description": "Tesla experienced gap-down events in 45 trading sessions (18.0% of trading days), showing moderate volatility with significant recovery potential when weakness occurs."
+    },
+    {
+      "key": "tsla_recovery_success_rate",
+      "value": "68.9%",
+      "description": "Tesla successfully recovered to close above opening price in 68.9% of gap-down sessions, indicating strong investor confidence and active dip-buying behavior."
+    },
+    {
+      "key": "third_most_resilient",
+      "value": "AAPL",
+      "description": "Apple ranks third with a 64.3% gap-down recovery rate, finishing green in 27 out of 42 gap-down sessions. Consistent institutional support and defensive characteristics drive recoveries."
+    },
+    {
+      "key": "aapl_gap_down_frequency",
+      "value": "42 sessions",
+      "description": "Apple experienced gap-down events in 42 trading sessions (16.8% of trading days), showing lower volatility but strong recovery patterns when weakness occurs."
+    },
+    {
+      "key": "aapl_recovery_success_rate",
+      "value": "64.3%",
+      "description": "Apple successfully recovered in 64.3% of gap-down sessions, reflecting its defensive nature and consistent institutional buying interest on any significant weakness."
+    },
+    {
+      "key": "least_resilient_holding",
+      "value": "AMZN",
+      "description": "Amazon shows the lowest gap-down recovery rate at 47.1%, finishing green in only 16 out of 34 gap-down sessions. Lower institutional support on dips compared to other holdings."
+    },
+    {
+      "key": "amzn_recovery_success_rate",
+      "value": "47.1%",
+      "description": "Amazon recovered in 47.1% of gap-down sessions, indicating more sustained weakness when negative sentiment occurs, possibly due to fundamental concerns or sector rotation."
+    },
+    {
+      "key": "portfolio_avg_recovery_rate",
+      "value": "63.2%",
+      "description": "Overall portfolio average gap-down recovery rate is 63.2%, indicating that your holdings generally demonstrate strong resilience and ability to recover from morning weakness during the same trading session."
+    },
+    {
+      "key": "total_gap_down_sessions_analyzed",
+      "value": "177 sessions",
+      "description": "Analysis covered 177 total gap-down sessions across all holdings over the 6-month period, providing statistically significant sample size for recovery pattern identification."
+    },
+    {
+      "key": "analysis_period",
+      "value": "Past 6 months",
+      "description": "Analysis period covers the most recent 6 months (approximately 125 trading days) to capture current market conditions and recent institutional behavior patterns affecting your holdings."
+    },
+    {
+      "key": "gap_down_threshold",
+      "value": "2.0%",
+      "description": "Gap-down threshold set at 2.0% below prior close to filter for significant overnight weakness events while maintaining sufficient sample size for statistical analysis."
+    },
+    {
+      "key": "key_insight",
+      "value": "Tech holdings show superior resilience",
+      "description": "Technology holdings (NVDA, TSLA, AAPL) consistently outperform in gap-down recovery scenarios, likely due to strong institutional support, high retail interest, and algorithmic buying programs that activate on technical weakness."
+    }
+  ]
+}

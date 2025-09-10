@@ -1,0 +1,1979 @@
+{
+    "queries": [
+        {
+            "question": "Analyze the impact of interest rate changes on JPM's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "JPM"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "interest_rate_changes",
+                "symbols": [
+                    "JPM"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the stock price volatility of TSLA and GM.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "TSLA",
+                "GM"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "volatility",
+                "symbols": [
+                    "TSLA",
+                    "GM"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Evaluate the effect of major acquisitions on AMZN's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "AMZN"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "major_acquisitions",
+                "symbols": [
+                    "AMZN"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Study the relationship between oil prices and XOM's stock performance.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "XOM"
+            ],
+            "function": "study_relationship",
+            "inputs": {
+                "symbols": [
+                    "XOM"
+                ],
+                "metrics": [
+                    "oil_prices",
+                    "stock_price"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the historical performance of GOOGL and BIDU.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "GOOGL",
+                "BIDU"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "historical_performance",
+                "symbols": [
+                    "GOOGL",
+                    "BIDU"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Analyze the impact of regulatory changes on FB's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "FB"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "regulatory_changes",
+                "symbols": [
+                    "FB"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the dividend payout ratios of T and VZ.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "T",
+                "VZ"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "dividend_payout_ratio",
+                "symbols": [
+                    "T",
+                    "VZ"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Study the effect of major legal settlements on BA's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "BA"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "major_legal_settlements",
+                "symbols": [
+                    "BA"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the performance of DIS and NFLX during streaming service launches.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "DIS",
+                "NFLX"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "streaming_service_launches",
+                "symbols": [
+                    "DIS",
+                    "NFLX"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Evaluate the impact of major product recalls on TM's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "TM"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "major_product_recalls",
+                "symbols": [
+                    "TM"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the stock price performance of NKE and ADDYY during major sports events.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "NKE",
+                "ADDYY"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "major_sports_events",
+                "symbols": [
+                    "NKE",
+                    "ADDYY"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Analyze the relationship between gold prices and NEM's stock performance.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "NEM"
+            ],
+            "function": "study_relationship",
+            "inputs": {
+                "symbols": [
+                    "NEM"
+                ],
+                "metrics": [
+                    "gold_prices",
+                    "stock_performance"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the historical P/E ratios of HD and LOW.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "HD",
+                "LOW"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "P/E_ratio",
+                "symbols": [
+                    "HD",
+                    "LOW"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Study the effect of trade tariffs on CAT's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "CAT"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "trade_tariffs",
+                "symbols": [
+                    "CAT"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the performance of INTC and AMD in the semiconductor market.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "INTC",
+                "AMD"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "performance",
+                "symbols": [
+                    "INTC",
+                    "AMD"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Analyze the impact of major cybersecurity breaches on MSFT's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "MSFT"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "major_cybersecurity_breaches",
+                "symbols": [
+                    "MSFT"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the dividend yields of PG and UL over the last decade.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "PG",
+                "UL"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "dividend_yield",
+                "symbols": [
+                    "PG",
+                    "UL"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Study the relationship between housing market trends and HD's stock performance.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "HD"
+            ],
+            "function": "study_relationship",
+            "inputs": {
+                "symbols": [
+                    "HD"
+                ],
+                "metrics": [
+                    "housing_market_trends",
+                    "stock_performance"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the historical performance of WMT and COST.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "WMT",
+                "COST"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "historical_performance",
+                "symbols": [
+                    "WMT",
+                    "COST"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Evaluate the effect of major FDA approvals on PFE's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "PFE"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "major_FDA_approvals",
+                "symbols": [
+                    "PFE"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the dividend yields of MCD and YUM over the last decade.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "MCD",
+                "YUM"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "dividend_yield",
+                "symbols": [
+                    "MCD",
+                    "YUM"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Study the relationship between interest rates and BAC's stock performance.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "BAC"
+            ],
+            "function": "study_relationship",
+            "inputs": {
+                "symbols": [
+                    "BAC"
+                ],
+                "metrics": [
+                    "interest_rates",
+                    "stock_performance"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the historical performance of AMZN and BABA.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "AMZN",
+                "BABA"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "performance",
+                "symbols": [
+                    "AMZN",
+                    "BABA"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Analyze the impact of major regulatory changes on NFLX's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "NFLX"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "major_regulatory_changes",
+                "symbols": [
+                    "NFLX"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the dividend payout ratios of KO and PEP.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "KO",
+                "PEP"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "dividend_payout_ratio",
+                "symbols": [
+                    "KO",
+                    "PEP"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Study the effect of major legal settlements on GOOGL's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "GOOGL"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "major_legal_settlements",
+                "symbols": [
+                    "GOOGL"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the performance of DIS and CMCSA during theme park expansions.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "DIS",
+                "CMCSA"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "theme_park_expansions",
+                "symbols": [
+                    "DIS",
+                    "CMCSA"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Evaluate the impact of major product recalls on GM's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "GM"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "major_product_recalls",
+                "symbols": [
+                    "GM"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the stock price volatility of AAPL and MSFT.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "AAPL",
+                "MSFT"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "volatility",
+                "symbols": [
+                    "AAPL",
+                    "MSFT"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Analyze the relationship between oil prices and CVX's stock performance.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "CVX"
+            ],
+            "function": "study_relationship",
+            "inputs": {
+                "symbols": [
+                    "CVX"
+                ],
+                "metrics": [
+                    "oil_prices",
+                    "stock_performance"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the historical P/E ratios of JNJ and MRK.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "JNJ",
+                "MRK"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "P/E_ratio",
+                "symbols": [
+                    "JNJ",
+                    "MRK"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Study the effect of major trade tariffs on DE's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "DE"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "major_trade_tariffs",
+                "symbols": [
+                    "DE"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the performance of INTC and NVDA in the GPU market.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "INTC",
+                "NVDA"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "performance",
+                "symbols": [
+                    "INTC",
+                    "NVDA"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Analyze the impact of major cybersecurity breaches on AAPL's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "AAPL"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "major_cybersecurity_breaches",
+                "symbols": [
+                    "AAPL"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the dividend yields of PG and KMB over the last decade.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "PG",
+                "KMB"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "dividend_yield",
+                "symbols": [
+                    "PG",
+                    "KMB"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Study the relationship between housing market trends and LOW's stock performance.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "LOW"
+            ],
+            "function": "study_relationship",
+            "inputs": {
+                "symbols": [
+                    "LOW"
+                ],
+                "metrics": [
+                    "housing_market_trends",
+                    "stock_performance"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the historical performance of TGT and WMT.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "TGT",
+                "WMT"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "performance",
+                "symbols": [
+                    "TGT",
+                    "WMT"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Evaluate the effect of major FDA approvals on MRK's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "MRK"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "major_FDA_approvals",
+                "symbols": [
+                    "MRK"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the stock price volatility of BA and LMT.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "BA",
+                "LMT"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "volatility",
+                "symbols": [
+                    "BA",
+                    "LMT"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Analyze the impact of major environmental regulations on XOM's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "XOM"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "major_environmental_regulations",
+                "symbols": [
+                    "XOM"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the 5-year performance of AAPL and MSFT.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "AAPL",
+                "MSFT"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "5-year_performance",
+                "symbols": [
+                    "AAPL",
+                    "MSFT"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Analyze the impact of quarterly earnings reports on AMZN's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "AMZN"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "quarterly_earnings_reports",
+                "symbols": [
+                    "AMZN"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Study the effect of stock splits on TSLA's historical performance.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "TSLA"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "stock_splits",
+                "symbols": [
+                    "TSLA"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare dividend yields of KO and PEP over the last decade.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "KO",
+                "PEP"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "dividend_yield",
+                "symbols": [
+                    "KO",
+                    "PEP"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Evaluate the correlation between GOOGL's revenue growth and stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "GOOGL"
+            ],
+            "function": "study_relationship",
+            "inputs": {
+                "symbols": [
+                    "GOOGL"
+                ],
+                "metrics": [
+                    "revenue_growth",
+                    "stock_price"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the P/E ratios of AAPL and NVDA over the past 5 years.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "AAPL",
+                "NVDA"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "P/E_ratio",
+                "symbols": [
+                    "AAPL",
+                    "NVDA"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Analyze the impact of new product launches on AAPL's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "AAPL"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "new_product_launches",
+                "symbols": [
+                    "AAPL"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the performance of FB and TWTR during major data privacy scandals.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "FB",
+                "TWTR"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "data_privacy_scandals",
+                "symbols": [
+                    "FB",
+                    "TWTR"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Study the relationship between NFLX's subscriber growth and stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "NFLX"
+            ],
+            "function": "study_relationship",
+            "inputs": {
+                "symbols": [
+                    "NFLX"
+                ],
+                "metrics": [
+                    "subscriber_growth",
+                    "stock_price"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the dividend growth of JNJ and PFE over the last 10 years.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "JNJ",
+                "PFE"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "dividend_growth",
+                "symbols": [
+                    "JNJ",
+                    "PFE"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the performance of AMD and NVDA in the GPU market.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "AMD",
+                "NVDA"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "performance",
+                "symbols": [
+                    "AMD",
+                    "NVDA"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Analyze the impact of major cybersecurity breaches on MSFT's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "MSFT"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "major_cybersecurity_breaches",
+                "symbols": [
+                    "MSFT"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the dividend yields of PG and UL over the last decade.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "PG",
+                "UL"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "dividend_yield",
+                "symbols": [
+                    "PG",
+                    "UL"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Study the relationship between housing market trends and HD's stock performance.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "HD"
+            ],
+            "function": "study_relationship",
+            "inputs": {
+                "symbols": [
+                    "HD"
+                ],
+                "metrics": [
+                    "housing_market_trends",
+                    "stock_performance"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the historical performance of WMT and COST.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "WMT",
+                "COST"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "performance",
+                "symbols": [
+                    "WMT",
+                    "COST"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Evaluate the effect of major FDA approvals on MRK's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "MRK"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "major_FDA_approvals",
+                "symbols": [
+                    "MRK"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the stock price volatility of BA and LMT.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "BA",
+                "LMT"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "volatility",
+                "symbols": [
+                    "BA",
+                    "LMT"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Analyze the impact of major environmental regulations on XOM's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "XOM"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "major_environmental_regulations",
+                "symbols": [
+                    "XOM"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the dividend growth of KO and MNST.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "KO",
+                "MNST"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "dividend_growth",
+                "symbols": [
+                    "KO",
+                    "MNST"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Study the relationship between airline fuel costs and DAL's stock performance.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "DAL"
+            ],
+            "function": "study_relationship",
+            "inputs": {
+                "symbols": [
+                    "DAL"
+                ],
+                "metrics": [
+                    "airline_fuel_costs",
+                    "stock_performance"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the performance of AAPL and SSNLF in the smartphone market.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "AAPL",
+                "SSNLF"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "performance",
+                "symbols": [
+                    "AAPL",
+                    "SSNLF"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Analyze the impact of major product recalls on F's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "F"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "major_product_recalls",
+                "symbols": [
+                    "F"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the historical P/E ratios of SBUX and DNKN.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "SBUX",
+                "DNKN"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "P/E_ratio",
+                "symbols": [
+                    "SBUX",
+                    "DNKN"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Study the effect of major legal settlements on VZ's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "VZ"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "major_legal_settlements",
+                "symbols": [
+                    "VZ"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the performance of PYPL and SQ in the payment processing market.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "PYPL",
+                "SQ"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "performance",
+                "symbols": [
+                    "PYPL",
+                    "SQ"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Evaluate the impact of major cybersecurity breaches on V's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "V"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "major_cybersecurity_breaches",
+                "symbols": [
+                    "V"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the dividend yields of MCD and YUM over the last decade.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "MCD",
+                "YUM"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "dividend_yield",
+                "symbols": [
+                    "MCD",
+                    "YUM"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Study the relationship between interest rates and BAC's stock performance.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "BAC"
+            ],
+            "function": "study_relationship",
+            "inputs": {
+                "symbols": [
+                    "BAC"
+                ],
+                "metrics": [
+                    "interest_rates",
+                    "stock_performance"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the historical performance of AMZN and BABA.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "AMZN",
+                "BABA"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "performance",
+                "symbols": [
+                    "AMZN",
+                    "BABA"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Analyze the impact of major regulatory changes on NFLX's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "NFLX"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "major_regulatory_changes",
+                "symbols": [
+                    "NFLX"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the dividend growth of PEP and KO.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "PEP",
+                "KO"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "dividend_growth",
+                "symbols": [
+                    "PEP",
+                    "KO"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Study the relationship between airline fuel costs and AAL's stock performance.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "AAL"
+            ],
+            "function": "study_relationship",
+            "inputs": {
+                "symbols": [
+                    "AAL"
+                ],
+                "metrics": [
+                    "airline_fuel_costs",
+                    "stock_performance"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the performance of AAPL and HUAWEI in the smartphone market.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "AAPL",
+                "HUAWEI"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "performance",
+                "symbols": [
+                    "AAPL",
+                    "HUAWEI"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Analyze the impact of major product recalls on TM's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "TM"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "major_product_recalls",
+                "symbols": [
+                    "TM"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the historical P/E ratios of SBUX and DNKN.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "SBUX",
+                "DNKN"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "P/E_ratio",
+                "symbols": [
+                    "SBUX",
+                    "DNKN"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Study the effect of major legal settlements on VZ's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "VZ"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "major_legal_settlements",
+                "symbols": [
+                    "VZ"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the performance of PYPL and SQ in the payment processing market.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "PYPL",
+                "SQ"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "performance",
+                "symbols": [
+                    "PYPL",
+                    "SQ"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Evaluate the impact of major cybersecurity breaches on V's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "V"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "major_cybersecurity_breaches",
+                "symbols": [
+                    "V"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the dividend yields of MCD and SBUX over the last decade.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "MCD",
+                "SBUX"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "dividend_yield",
+                "symbols": [
+                    "MCD",
+                    "SBUX"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Study the relationship between interest rates and JPM's stock performance.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "JPM"
+            ],
+            "function": "study_relationship",
+            "inputs": {
+                "symbols": [
+                    "JPM"
+                ],
+                "metrics": [
+                    "interest_rates",
+                    "stock_performance"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the historical performance of BABA and JD.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "BABA",
+                "JD"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "performance",
+                "symbols": [
+                    "BABA",
+                    "JD"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Analyze the impact of major regulatory changes on NFLX's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "NFLX"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "major_regulatory_changes",
+                "symbols": [
+                    "NFLX"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the dividend payout ratios of KO and PEP.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "KO",
+                "PEP"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "dividend_payout_ratio",
+                "symbols": [
+                    "KO",
+                    "PEP"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Study the effect of major legal settlements on GOOGL's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "GOOGL"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "major_legal_settlements",
+                "symbols": [
+                    "GOOGL"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the performance of DIS and CMCSA during theme park expansions.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "DIS",
+                "CMCSA"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "theme_park_expansions",
+                "symbols": [
+                    "DIS",
+                    "CMCSA"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Evaluate the impact of major product recalls on GM's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "GM"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "major_product_recalls",
+                "symbols": [
+                    "GM"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the stock price volatility of AAPL and MSFT.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "AAPL",
+                "MSFT"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "volatility",
+                "symbols": [
+                    "AAPL",
+                    "MSFT"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Analyze the relationship between oil prices and CVX's stock performance.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "CVX"
+            ],
+            "function": "study_relationship",
+            "inputs": {
+                "symbols": [
+                    "CVX"
+                ],
+                "metrics": [
+                    "oil_prices",
+                    "stock_performance"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the historical P/E ratios of JNJ and MRK.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "JNJ",
+                "MRK"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "P/E_ratio",
+                "symbols": [
+                    "JNJ",
+                    "MRK"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Study the effect of major trade tariffs on DE's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "DE"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "major_trade_tariffs",
+                "symbols": [
+                    "DE"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the performance of INTC and NVDA in the GPU market.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "INTC",
+                "NVDA"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "performance",
+                "symbols": [
+                    "INTC",
+                    "NVDA"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Analyze the impact of major mergers and acquisitions on T's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "T"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "major_mergers_and_acquisitions",
+                "symbols": [
+                    "T"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the stock price volatility of BA and EADSY.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "BA",
+                "EADSY"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "volatility",
+                "symbols": [
+                    "BA",
+                    "EADSY"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Analyze the impact of major environmental regulations on CVX's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "CVX"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "major_environmental_regulations",
+                "symbols": [
+                    "CVX"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the dividend growth of KO and MNST.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "KO",
+                "MNST"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "dividend_growth",
+                "symbols": [
+                    "KO",
+                    "MNST"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Study the relationship between airline fuel costs and DAL's stock performance.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "DAL"
+            ],
+            "function": "study_relationship",
+            "inputs": {
+                "symbols": [
+                    "DAL"
+                ],
+                "metrics": [
+                    "airline_fuel_costs",
+                    "stock_performance"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the performance of AAPL and SSNLF in the smartphone market.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "AAPL",
+                "SSNLF"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "performance",
+                "symbols": [
+                    "AAPL",
+                    "SSNLF"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Analyze the impact of major product recalls on F's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "F"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "major_product_recalls",
+                "symbols": [
+                    "F"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the historical P/E ratios of SBUX and DNKN.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "SBUX",
+                "DNKN"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "P/E_ratio",
+                "symbols": [
+                    "SBUX",
+                    "DNKN"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Study the effect of major legal settlements on VZ's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "VZ"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "major_legal_settlements",
+                "symbols": [
+                    "VZ"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the performance of PYPL and SQ in the payment processing market.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "PYPL",
+                "SQ"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "performance",
+                "symbols": [
+                    "PYPL",
+                    "SQ"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Evaluate the impact of major cybersecurity breaches on V's stock price.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "V"
+            ],
+            "function": "analyze_performance_around_event",
+            "inputs": {
+                "eventType": "major_cybersecurity_breaches",
+                "symbols": [
+                    "V"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        }
+    ],
+    "unique_inputs": [
+        "eventType",
+        "start_date",
+        "symbols",
+        "end_date",
+        "metricName",
+        "metricType",
+        "metrics"
+    ],
+    "unique_functions": [
+        "analyze_performance_around_event",
+        "compare_metric",
+        "study_relationship"
+    ],
+    "questions": [
+        "Analyze the impact of interest rate changes on JPM's stock price.",
+        "Compare the stock price volatility of TSLA and GM.",
+        "Evaluate the effect of major acquisitions on AMZN's stock price.",
+        "Study the relationship between oil prices and XOM's stock performance.",
+        "Compare the historical performance of GOOGL and BIDU.",
+        "Analyze the impact of regulatory changes on FB's stock price.",
+        "Compare the dividend payout ratios of T and VZ.",
+        "Study the effect of major legal settlements on BA's stock price.",
+        "Compare the performance of DIS and NFLX during streaming service launches.",
+        "Evaluate the impact of major product recalls on TM's stock price.",
+        "Compare the stock price performance of NKE and ADDYY during major sports events.",
+        "Analyze the relationship between gold prices and NEM's stock performance.",
+        "Compare the historical P/E ratios of HD and LOW.",
+        "Study the effect of trade tariffs on CAT's stock price.",
+        "Compare the performance of INTC and AMD in the semiconductor market.",
+        "Analyze the impact of major cybersecurity breaches on MSFT's stock price.",
+        "Compare the dividend yields of PG and UL over the last decade.",
+        "Study the relationship between housing market trends and HD's stock performance.",
+        "Compare the historical performance of WMT and COST.",
+        "Evaluate the effect of major FDA approvals on PFE's stock price.",
+        "Compare the dividend yields of MCD and YUM over the last decade.",
+        "Study the relationship between interest rates and BAC's stock performance.",
+        "Compare the historical performance of AMZN and BABA.",
+        "Analyze the impact of major regulatory changes on NFLX's stock price.",
+        "Compare the dividend payout ratios of KO and PEP.",
+        "Study the effect of major legal settlements on GOOGL's stock price.",
+        "Compare the performance of DIS and CMCSA during theme park expansions.",
+        "Evaluate the impact of major product recalls on GM's stock price.",
+        "Compare the stock price volatility of AAPL and MSFT.",
+        "Analyze the relationship between oil prices and CVX's stock performance.",
+        "Compare the historical P/E ratios of JNJ and MRK.",
+        "Study the effect of major trade tariffs on DE's stock price.",
+        "Compare the performance of INTC and NVDA in the GPU market.",
+        "Analyze the impact of major cybersecurity breaches on AAPL's stock price.",
+        "Compare the dividend yields of PG and KMB over the last decade.",
+        "Study the relationship between housing market trends and LOW's stock performance.",
+        "Compare the historical performance of TGT and WMT.",
+        "Evaluate the effect of major FDA approvals on MRK's stock price.",
+        "Compare the stock price volatility of BA and LMT.",
+        "Analyze the impact of major environmental regulations on XOM's stock price.",
+        "Compare the 5-year performance of AAPL and MSFT.",
+        "Analyze the impact of quarterly earnings reports on AMZN's stock price.",
+        "Study the effect of stock splits on TSLA's historical performance.",
+        "Compare dividend yields of KO and PEP over the last decade.",
+        "Evaluate the correlation between GOOGL's revenue growth and stock price.",
+        "Compare the P/E ratios of AAPL and NVDA over the past 5 years.",
+        "Analyze the impact of new product launches on AAPL's stock price.",
+        "Compare the performance of FB and TWTR during major data privacy scandals.",
+        "Study the relationship between NFLX's subscriber growth and stock price.",
+        "Compare the dividend growth of JNJ and PFE over the last 10 years.",
+        "Compare the performance of AMD and NVDA in the GPU market.",
+        "Analyze the impact of major cybersecurity breaches on MSFT's stock price.",
+        "Compare the dividend yields of PG and UL over the last decade.",
+        "Study the relationship between housing market trends and HD's stock performance.",
+        "Compare the historical performance of WMT and COST.",
+        "Evaluate the effect of major FDA approvals on MRK's stock price.",
+        "Compare the stock price volatility of BA and LMT.",
+        "Analyze the impact of major environmental regulations on XOM's stock price.",
+        "Compare the dividend growth of KO and MNST.",
+        "Study the relationship between airline fuel costs and DAL's stock performance.",
+        "Compare the performance of AAPL and SSNLF in the smartphone market.",
+        "Analyze the impact of major product recalls on F's stock price.",
+        "Compare the historical P/E ratios of SBUX and DNKN.",
+        "Study the effect of major legal settlements on VZ's stock price.",
+        "Compare the performance of PYPL and SQ in the payment processing market.",
+        "Evaluate the impact of major cybersecurity breaches on V's stock price.",
+        "Compare the dividend yields of MCD and YUM over the last decade.",
+        "Study the relationship between interest rates and BAC's stock performance.",
+        "Compare the historical performance of AMZN and BABA.",
+        "Analyze the impact of major regulatory changes on NFLX's stock price.",
+        "Compare the dividend growth of PEP and KO.",
+        "Study the relationship between airline fuel costs and AAL's stock performance.",
+        "Compare the performance of AAPL and HUAWEI in the smartphone market.",
+        "Analyze the impact of major product recalls on TM's stock price.",
+        "Compare the historical P/E ratios of SBUX and DNKN.",
+        "Study the effect of major legal settlements on VZ's stock price.",
+        "Compare the performance of PYPL and SQ in the payment processing market.",
+        "Evaluate the impact of major cybersecurity breaches on V's stock price.",
+        "Compare the dividend yields of MCD and SBUX over the last decade.",
+        "Study the relationship between interest rates and JPM's stock performance.",
+        "Compare the historical performance of BABA and JD.",
+        "Analyze the impact of major regulatory changes on NFLX's stock price.",
+        "Compare the dividend payout ratios of KO and PEP.",
+        "Study the effect of major legal settlements on GOOGL's stock price.",
+        "Compare the performance of DIS and CMCSA during theme park expansions.",
+        "Evaluate the impact of major product recalls on GM's stock price.",
+        "Compare the stock price volatility of AAPL and MSFT.",
+        "Analyze the relationship between oil prices and CVX's stock performance.",
+        "Compare the historical P/E ratios of JNJ and MRK.",
+        "Study the effect of major trade tariffs on DE's stock price.",
+        "Compare the performance of INTC and NVDA in the GPU market.",
+        "Analyze the impact of major mergers and acquisitions on T's stock price.",
+        "Compare the stock price volatility of BA and EADSY.",
+        "Analyze the impact of major environmental regulations on CVX's stock price.",
+        "Compare the dividend growth of KO and MNST.",
+        "Study the relationship between airline fuel costs and DAL's stock performance.",
+        "Compare the performance of AAPL and SSNLF in the smartphone market.",
+        "Analyze the impact of major product recalls on F's stock price.",
+        "Compare the historical P/E ratios of SBUX and DNKN.",
+        "Study the effect of major legal settlements on VZ's stock price.",
+        "Compare the performance of PYPL and SQ in the payment processing market.",
+        "Evaluate the impact of major cybersecurity breaches on V's stock price."
+    ],
+    "unique_event_types": [
+        "theme_park_expansions",
+        "regulatory_changes",
+        "major_mergers_and_acquisitions",
+        "major_legal_settlements",
+        "quarterly_earnings_reports",
+        "major_acquisitions",
+        "new_product_launches",
+        "trade_tariffs",
+        "major_cybersecurity_breaches",
+        "major_product_recalls",
+        "major_FDA_approvals",
+        "major_sports_events",
+        "stock_splits",
+        "streaming_service_launches",
+        "data_privacy_scandals",
+        "major_environmental_regulations",
+        "major_trade_tariffs",
+        "major_regulatory_changes",
+        "interest_rate_changes"
+    ],
+    "unique_metric_types": [
+        "technical",
+        "fundamental"
+    ],
+    "unique_metric_names": [
+        "dividend_yield",
+        "P/E_ratio",
+        "historical_performance",
+        "performance",
+        "5-year_performance",
+        "dividend_payout_ratio",
+        "dividend_growth",
+        "volatility"
+    ]
+}

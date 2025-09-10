@@ -1,0 +1,10 @@
+How did using a combination of moving average crossovers and RSI signals impact the performance of AAPL stock over the last 5 years?
+What was the return of investing in TSLA using a strategy that incorporates P/E ratio thresholds and MACD signals?
+How effective was the strategy of buying AMZN when its PEG ratio is below 1.5 and the stock price is above the 200-day moving average?
+What was the performance of MSFT when using a combination of dividend yield and Bollinger Bands to determine entry and exit points?
+How did using earnings growth rates and stochastic oscillator signals affect the returns of NVDA stock over the past decade?
+What was the annualized return of investing in GOOG when the P/B ratio is below industry average and the stock shows a bullish engulfing pattern on the weekly chart?
+How effective was the strategy of buying FB when its ROE exceeds 15% and the stock price breaks above the upper Bollinger Band?
+What was the performance of a strategy using debt-to-equity ratio and 50-day moving average crossovers for AAPL over the last 10 years?
+How did using cash flow growth and momentum indicators like MACD impact the returns of TSLA stock during the past 5 years?
+What was the return of investing in AMZN using a combination of price-to-sales ratio below 3 and RSI below 30 as buy signals?

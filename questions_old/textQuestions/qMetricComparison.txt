@@ -1,0 +1,114 @@
+[Operator] the [metric] of [stock1] and [stock2] over [period]
+
+Operator = [Compare, Comparison between]
+metrics = [performance, divident_yield, PE_ratio, volatility, stock_price, returns, EBITDA_margin]
+stock1 = [any stock or name from 3000 stocks or index]
+stock2 = [any stock or name from 3000 stocks or index]
+
+function: [operator]_metric
+symols: symbol array
+duration: 1 year/ default
+start_time: 1 year ago
+end_time: today/default
+
+
+Compare the performance of AAPL and MSFT over the past year.
+Compare the dividend yields of JNJ and PFE over the last decade.
+Compare the P/E ratios of TSLA and GM in the current year.
+Compare the stock price volatility of FB and TWTR over the last five years.
+Compare the return on equity (ROE) of KO and PEP in the last quarter.
+Compare the EBITDA margins of NFLX and DIS over the past three years.
+Compare the historical performance of WMT and COST in the retail sector.
+Compare the dividend growth rates of MCD and YUM over the last decade.
+Compare the gross profit margins of AMZN and BABA over the past five years.
+Compare the historical P/E ratios of SBUX and DNKN.
+Compare the earnings growth of GOOGL and BIDU over the past three years.
+Compare the debt-to-equity ratios of BA and LMT.
+Compare the free cash flow of V and MA over the last year.
+Compare the revenue growth of NVDA and AMD in the GPU market.
+Compare the stock price performance of HD and LOW over the past five years.
+Compare the price-to-book ratios of BAC and JPM.
+Compare the historical dividend payouts of XOM and CVX.
+Compare the return on assets (ROA) of ADBE and CRM over the past year.
+Compare the profit margins of ORCL and SAP over the last decade.
+Compare the historical EPS (earnings per share) growth of INTC and QCOM.
+Compare the net income of TSLA and F over the past five years.
+Compare the dividend payout ratios of PG and UL over the last decade.
+Compare the stock performance of PYPL and SQ in the payment processing market.
+Compare the operating margins of MSFT and IBM over the past three years.
+Compare the market capitalization of T and VZ over the past decade.
+Compare the book value per share of BRK.B and AIG.
+Compare the historical beta of GOOG and MSFT.
+Compare the forward P/E ratios of AAPL and GOOGL.
+Compare the price-to-sales ratios of AMZN and EBAY over the past five years.
+Compare the dividend yields of TGT and WMT over the last decade.
+Compare the historical earnings volatility of GE and HON.
+Compare the net profit margins of JNJ and MRK.
+Compare the revenue of FB and SNAP over the past three years.
+Compare the historical performance of AAPL and SSNLF in the smartphone market.
+Compare the P/S ratios of TSLA and NIO.
+Compare the dividend yield of KO and PEP in the current year.
+Compare the operating cash flow of MSFT and ORCL over the past decade.
+Compare the stock performance of AMD and NVDA in the GPU market.
+Compare the current ratios of BA and AIR over the past five years.
+Compare the earnings before interest and taxes (EBIT) of NFLX and CMCSA.
+Compare the dividend payout ratios of XOM and RDS.A over the last decade.
+Compare the price-to-earnings growth (PEG) ratios of GOOGL and BIDU.
+Compare the gross profit margins of CRM and NOW.
+Compare the stock price volatility of AMZN and WMT over the last decade.
+Compare the return on equity of JPM and GS in the banking sector.
+Compare the dividend growth of KO and MNST over the past five years.
+Compare the historical return on assets of VZ and T.
+Compare the net income margins of FB and TWTR.
+Compare the revenue growth rates of AAPL and MSFT over the past decade.
+Compare the P/E ratios of DIS and CMCSA in the media industry.
+Compare the operating margins of ADBE and MSFT over the past five years.
+Compare the price-to-book ratios of PG and CL.
+Compare the dividend yields of HD and LOW over the last decade.
+Compare the historical EPS of NVDA and AMD.
+Compare the stock performance of GE and HON in the industrial sector.
+Compare the free cash flow yields of KO and PEP.
+Compare the revenue per share of AMZN and BABA over the past decade.
+Compare the profit margins of SBUX and DNKN.
+Compare the dividend payout ratios of JNJ and PFE.
+Compare the return on assets of TSLA and GM over the past five years.
+Compare the operating cash flows of INTC and QCOM.
+Compare the historical price-to-sales ratios of NFLX and DIS.
+Compare the EBITDA of V and MA over the past three years.
+Compare the dividend yields of MCD and YUM over the last decade.
+Compare the historical beta of AAPL and MSFT.
+Compare the gross profit margins of PYPL and SQ.
+Compare the historical return on equity of GOOGL and FB.
+Compare the P/E ratios of ADBE and CRM.
+Compare the revenue growth of ORCL and SAP over the past five years.
+Compare the stock price performance of HD and TGT.
+Compare the net income margins of JNJ and MRK.
+Compare the historical EPS growth of TSLA and NIO.
+Compare the dividend payout ratios of PG and UL.
+Compare the free cash flow of AAPL and AMZN.
+Compare the historical performance of BAC and WFC in the banking sector.
+Compare the return on assets of NVDA and AMD over the past three years.
+Compare the stock price volatility of BA and LMT.
+Compare the dividend growth rates of KO and MNST.
+Compare the gross profit margins of FB and TWTR.
+Compare the historical dividend yields of T and VZ.
+Compare the operating margins of SBUX and DNKN.
+Compare the P/E ratios of AAPL and GOOGL.
+Compare the historical revenue growth of MSFT and ORCL.
+Compare the dividend yields of TGT and WMT.
+Compare the historical stock performance of AAPL and MSFT.
+Compare the return on equity of BA and LMT.
+Compare the historical price-to-book ratios of PG and UL.
+Compare the dividend payout ratios of XOM and CVX.
+Compare the stock price performance of NFLX and DIS.
+Compare the operating cash flows of JNJ and PFE.
+Compare the historical EBITDA margins of AMZN and BABA.
+Compare the net income of TSLA and GM.
+Compare the return on assets of SBUX and DNKN.
+Compare the dividend growth rates of KO and PEP.
+Compare the historical P/E ratios of AAPL and MSFT.
+Compare the stock price volatility of FB and TWTR.
+Compare the free cash flow yields of V and MA.
+Compare the historical dividend yields of T and VZ.
+Compare the return on equity of ADBE and CRM.
+Compare the price-to-sales ratios of AMZN and EBAY.

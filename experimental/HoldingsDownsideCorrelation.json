@@ -1,0 +1,85 @@
+{
+  "description": "Analysis of portfolio holdings' correlation with SPY specifically during SPY down days over the past 90 days. This downside correlation metric shows which holdings move most closely with market declines, indicating lowest diversification benefit during stress periods. Higher correlation values mean the holding tends to fall when the market falls, while lower or negative values suggest better downside protection.",
+  "body": [
+    {
+      "key": "analysis_period",
+      "value": "90 trading days",
+      "description": "Time period analyzed for downside correlation calculation, providing sufficient data points for statistical significance while remaining relevant to current market conditions"
+    },
+    {
+      "key": "spy_down_days_count",
+      "value": 38,
+      "description": "Number of trading days in the 90-day period where SPY closed lower than the previous day, representing the sample size for downside correlation calculation"
+    },
+    {
+      "key": "spy_avg_down_day_return",
+      "value": "-1.24%",
+      "description": "Average daily return of SPY on down days during the analysis period, showing typical magnitude of market declines used in correlation analysis"
+    },
+    {
+      "key": "highest_downside_correlation_symbol",
+      "value": "QQQ",
+      "description": "Portfolio holding with the highest downside correlation to SPY (0.89), indicating it tends to decline strongly when the market declines, providing minimal downside protection"
+    },
+    {
+      "key": "qqq_position_value",
+      "value": "$8,450",
+      "description": "Current market value of the QQQ position, representing 12.3% of total portfolio value and significant exposure to tech-heavy downside correlation"
+    },
+    {
+      "key": "qqq_downside_correlation",
+      "value": 0.89,
+      "description": "Correlation coefficient between QQQ and SPY returns specifically on SPY down days. High positive correlation indicates QQQ typically falls when SPY falls, amplifying portfolio downside risk"
+    },
+    {
+      "key": "second_highest_correlation_symbol",
+      "value": "VOO",
+      "description": "Second highest downside correlation holding (0.97), which is expected since VOO tracks the S&P 500 directly and should move very closely with SPY during declines"
+    },
+    {
+      "key": "voo_downside_correlation",
+      "value": 0.97,
+      "description": "Near-perfect correlation with SPY on down days, which is expected for an S&P 500 index fund. This holding provides no diversification benefit during market stress"
+    },
+    {
+      "key": "third_highest_correlation_symbol",
+      "value": "NVDA",
+      "description": "Individual stock with high downside correlation (0.83), showing strong tendency to decline when the broader market declines, typical of growth/tech stocks"
+    },
+    {
+      "key": "nvda_downside_correlation",
+      "value": 0.83,
+      "description": "High downside correlation indicating NVDA tends to fall significantly during market stress periods, with correlation higher than many other individual stocks"
+    },
+    {
+      "key": "lowest_downside_correlation_symbol",
+      "value": "TLT",
+      "description": "Portfolio holding with lowest/most negative downside correlation (-0.32), indicating it tends to rise when SPY falls, providing valuable downside protection through flight-to-safety behavior"
+    },
+    {
+      "key": "tlt_downside_correlation",
+      "value": -0.32,
+      "description": "Negative downside correlation shows TLT (Treasury bonds) often rises when the stock market falls, demonstrating classic safe-haven behavior and portfolio diversification benefit"
+    },
+    {
+      "key": "portfolio_weighted_downside_correlation",
+      "value": 0.76,
+      "description": "Overall portfolio downside correlation weighted by position sizes, indicating the portfolio tends to decline significantly when SPY declines, suggesting limited diversification during stress periods"
+    },
+    {
+      "key": "high_correlation_exposure",
+      "value": "68.4%",
+      "description": "Percentage of portfolio value in holdings with downside correlation above 0.70, representing significant exposure to assets that tend to fall when the market declines"
+    },
+    {
+      "key": "diversification_ratio",
+      "value": 0.24,
+      "description": "Portfolio diversification ratio during down markets (1 - weighted correlation), where lower values indicate less diversification. Current ratio suggests limited downside protection"
+    },
+    {
+      "key": "risk_concentration_warning",
+      "value": "High Tech Exposure",
+      "description": "Portfolio shows high concentration in technology-related holdings (QQQ, NVDA) that historically exhibit strong downside correlation with the broader market during stress periods"
+    }
+  ]
+}

@@ -1,0 +1,400 @@
+{
+    "queries": [
+        {
+            "question": "Compare the performance of AAPL and MSFT over the past year.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "AAPL",
+                "MSFT"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "performance",
+                "symbols": [    
+                    "AAPL",
+                    "MSFT"
+                ],
+                "start_date": "2023-07-21",
+                "end_date": "2024-07-21"
+            }
+        },
+        {
+            "question": "Compare the dividend yields of JNJ and PFE over the last decade.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "JNJ",
+                "PFE"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "dividend_yield",
+                "symbols": [
+                    "JNJ",
+                    "PFE"
+                ],
+                "start_date": "2013-07-21",
+                "end_date": "2023-07-21"
+            }
+        },
+        {
+            "question": "Compare the P/E ratios of TSLA and GM in the current year.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "TSLA",
+                "GM"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "P/E_ratio",
+                "symbols": [
+                    "TSLA",
+                    "GM"
+                ],
+                "start_date": "2024-01-01",
+                "end_date": "2024-12-31"
+            }
+        },
+        {
+            "question": "Compare the stock price volatility of FB and TWTR over the last five years.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "FB",
+                "TWTR"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "volatility",
+                "symbols": [
+                    "FB",
+                    "TWTR"
+                ],
+                "start_date": "2019-07-21",
+                "end_date": "2024-07-21"
+            }
+        },
+        {
+            "question": "Compare the return on equity (ROE) of KO and PEP in the last quarter.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "KO",
+                "PEP"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "ROE",
+                "symbols": [
+                    "KO",
+                    "PEP"
+                ],
+                "start_date": "2024-04-01",
+                "end_date": "2024-06-30"
+            }
+        },
+        {
+            "question": "Compare the EBITDA margins of NFLX and DIS over the past three years.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "NFLX",
+                "DIS"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "EBITDA_margin",
+                "symbols": [
+                    "NFLX",
+                    "DIS"
+                ],
+                "start_date": "2021-07-21",
+                "end_date": "2024-07-21"
+            }
+        },
+        {
+            "question": "Compare the historical performance of WMT and COST in the retail sector.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "WMT",
+                "COST"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "performance",
+                "symbols": [
+                    "WMT",
+                    "COST"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the dividend growth rates of MCD and YUM over the last decade.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "MCD",
+                "YUM"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "dividend_growth",
+                "symbols": [
+                    "MCD",
+                    "YUM"
+                ],
+                "start_date": "2013-07-21",
+                "end_date": "2023-07-21"
+            }
+        },
+        {
+            "question": "Compare the gross profit margins of AMZN and BABA over the past five years.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "AMZN",
+                "BABA"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "gross_profit_margin",
+                "symbols": [
+                    "AMZN",
+                    "BABA"
+                ],
+                "start_date": "2019-07-21",
+                "end_date": "2024-07-21"
+            }
+        },
+        {
+            "question": "Compare the historical P/E ratios of SBUX and DNKN.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "SBUX",
+                "DNKN"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "P/E_ratio",
+                "symbols": [
+                    "SBUX",
+                    "DNKN"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the earnings growth of GOOGL and BIDU over the past three years.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "GOOGL",
+                "BIDU"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "earnings_growth",
+                "symbols": [
+                    "GOOGL",
+                    "BIDU"
+                ],
+                "start_date": "2021-07-21",
+                "end_date": "2024-07-21"
+            }
+        },
+        {
+            "question": "Compare the debt-to-equity ratios of BA and LMT.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "BA",
+                "LMT"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "debt_to_equity",
+                "symbols": [
+                    "BA",
+                    "LMT"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the free cash flow of V and MA over the last year.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "V",
+                "MA"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "free_cash_flow",
+                "symbols": [
+                    "V",
+                    "MA"
+                ],
+                "start_date": "2023-07-21",
+                "end_date": "2024-07-21"
+            }
+        },
+        {
+            "question": "Compare the revenue growth of NVDA and AMD in the GPU market.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "NVDA",
+                "AMD"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "revenue_growth",
+                "symbols": [
+                    "NVDA",
+                    "AMD"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the stock price performance of HD and LOW over the past five years.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "HD",
+                "LOW"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "technical",
+                "metricName": "performance",
+                "symbols": [
+                    "HD",
+                    "LOW"
+                ],
+                "start_date": "2019-07-21",
+                "end_date": "2024-07-21"
+            }
+        },
+        {
+            "question": "Compare the price-to-book ratios of BAC and JPM.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "BAC",
+                "JPM"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "price_to_book",
+                "symbols": [
+                    "BAC",
+                    "JPM"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the historical dividend payouts of XOM and CVX.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "XOM",
+                "CVX"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "dividend_payouts",
+                "symbols": [
+                    "XOM",
+                    "CVX"
+                ],
+                "start_date": null,
+                "end_date": null
+            }
+        },
+        {
+            "question": "Compare the return on assets (ROA) of ADBE and CRM over the past year.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "ADBE",
+                "CRM"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "ROA",
+                "symbols": [
+                    "ADBE",
+                    "CRM"
+                ],
+                "start_date": "2023-07-21",
+                "end_date": "2024-07-21"
+            }
+        },
+        {
+            "question": "Compare the profit margins of ORCL and SAP over the last decade.",
+            "category": "STOCK_ANALYSIS",
+            "symbols": [
+                "ORCL",
+                "SAP"
+            ],
+            "function": "compare_metric",
+            "inputs": {
+                "metricType": "fundamental",
+                "metricName": "profit_margin",
+                "symbols": [
+                    "ORCL",
+                    "SAP"
+                ],
+                "start_date": "2013-07-21",
+                "end_date": "2023-07-21"
+            }
+        }
+    ],
+    "unique_inputs": [
+        "eventType",
+        "symbols",
+        "metricType",
+        "metricName",
+        "metrics",
+        "start_date",
+        "end_date"
+    ],
+    "unique_functions": [
+        "analyze_performance_around_event",
+        "compare_metric",
+        "study_relationship"
+    ],
+    "questions": [
+        "Compare the performance of AAPL and MSFT over the past year.",
+        "Compare the dividend yields of JNJ and PFE over the last decade.",
+        "Compare the P/E ratios of TSLA and GM in the current year.",
+        "Compare the stock price volatility of FB and TWTR over the last five years.",
+        "Compare the return on equity (ROE) of KO and PEP in the last quarter.",
+        "Compare the EBITDA margins of NFLX and DIS over the past three years.",
+        "Compare the historical performance of WMT and COST in the retail sector.",
+        "Compare the dividend growth rates of MCD and YUM over the last decade.",
+        "Compare the gross profit margins of AMZN and BABA over the past five years.",
+        "Compare the historical P/E ratios of SBUX and DNKN.",
+        "Compare the earnings growth of GOOGL and BIDU over the past three years.",
+        "Compare the debt-to-equity ratios of BA and LMT.",
+        "Compare the free cash flow of V and MA over the last year.",
+        "Compare the revenue growth of NVDA and AMD in the GPU market.",
+        "Compare the stock price performance of HD and LOW over the past five years.",
+        "Compare the price-to-book ratios of BAC and JPM.",
+        "Compare the historical dividend payouts of XOM and CVX.",
+        "Compare the return on assets (ROA) of ADBE and CRM over the past year.",
+        "Compare the profit margins of ORCL and SAP over the last decade."
+    ]
+}

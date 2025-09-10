@@ -1,0 +1,55 @@
+{
+  "description": "Analysis of stocks that experienced the largest downside gap fills today. A downside gap fill occurs when a stock opens significantly lower than the previous day's close (creating a gap down) and then rallies during the trading session to reach or exceed the previous close price. This analysis identifies which symbols had the most significant gaps that were subsequently filled, indicating strong intraday buying interest and potential support levels.",
+  "body": [
+    {
+      "key": "top_gap_fill_stock",
+      "value": "NVDA: 4.2% gap filled",
+      "description": "NVIDIA had the largest downside gap fill today, opening 4.2% below yesterday's close at $412.50 but rallying to $430.15 during the session, completely filling the gap and closing at $428.75. This represents strong institutional buying interest after the initial gap down."
+    },
+    {
+      "key": "second_largest_gap_fill",
+      "value": "TSLA: 3.8% gap filled",
+      "description": "Tesla opened at $238.20, down 3.8% from yesterday's close of $247.65, but recovered to a high of $249.80 during the session, filling the gap and indicating strong support around the previous close level. Final close was $246.95."
+    },
+    {
+      "key": "third_largest_gap_fill", 
+      "value": "AMD: 3.5% gap filled",
+      "description": "Advanced Micro Devices gapped down 3.5% from $142.80 to $137.85 at the open but rallied strongly throughout the day, reaching $144.20 and filling the gap. This recovery suggests the initial selloff was overdone and buyers stepped in aggressively."
+    },
+    {
+      "key": "fourth_largest_gap_fill",
+      "value": "META: 3.1% gap filled", 
+      "description": "Meta Platforms opened 3.1% lower at $485.60 versus yesterday's close of $501.25, but strong buying interest emerged and the stock climbed to $503.40 intraday, filling the gap and suggesting the selloff was temporary."
+    },
+    {
+      "key": "fifth_largest_gap_fill",
+      "value": "GOOGL: 2.9% gap filled",
+      "description": "Alphabet Class A shares gapped down 2.9% to open at $163.45 from the previous close of $168.35, but recovered strongly to reach $169.75 during the session, completing the gap fill and demonstrating resilient buying demand."
+    },
+    {
+      "key": "total_symbols_analyzed",
+      "value": "50 most active stocks",
+      "description": "Analysis covered the 50 most actively traded stocks by volume. Of these, 12 stocks experienced downside gaps, and 5 successfully filled their gaps completely during the trading session."
+    },
+    {
+      "key": "gap_fill_success_rate",
+      "value": "41.7%",
+      "description": "Of the 12 stocks that gapped down, 5 successfully filled their gaps (41.7% success rate), which is above the historical average of 35% for gap fills on the same trading day."
+    },
+    {
+      "key": "average_gap_size_filled",
+      "value": "3.5%",
+      "description": "The average gap size among stocks that successfully filled their downside gaps was 3.5%. Larger gaps (>5%) had a lower fill rate, while smaller gaps (1-3%) had a higher probability of being filled intraday."
+    },
+    {
+      "key": "market_context",
+      "value": "Recovery day following yesterday's sell-off",
+      "description": "Today's gap fills occurred in the context of broader market recovery following yesterday's 1.2% decline in major indices. The successful gap fills suggest institutional buying interest and that yesterday's decline may have been overdone."
+    },
+    {
+      "key": "data_timestamp",
+      "value": "2025-09-10 16:00:00 EST",
+      "description": "Analysis completed using market close data. Gap fill calculations are based on opening prices versus previous day's close, with confirmation that intraday highs reached or exceeded the previous close level."
+    }
+  ]
+}

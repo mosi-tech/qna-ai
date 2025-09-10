@@ -1,0 +1,10 @@
+How did a portfolio with 60% AAPL, 20% MSFT, and 20% TSLA perform over the last 5 years?
+What was the annualized return of a portfolio where 50% was invested in FAANG stocks and 50% in top semiconductor stocks?
+How did a growth-focused portfolio with higher allocations to AMZN and TSLA compare to a more balanced tech portfolio including AAPL, MSFT, and GOOG in the past decade?
+What was the performance of a dividend-focused tech portfolio including AAPL, MSFT, and INTC compared to the NASDAQ 100 over the last 5 years?
+How did a momentum-driven portfolio with quarterly rebalancing of top 5 tech stocks perform compared to a static buy-and-hold strategy in the last 3 years?
+What has been the volatility and returns of a portfolio with 40% in big tech (AAPL, MSFT) and 60% in emerging tech (SNAP, UBER) over the past 5 years?
+How did a risk-adjusted tech portfolio with 30% in AAPL, 30% in MSFT, 20% in GOOG, and 20% in NVDA perform during the COVID-19 pandemic?
+What were the cumulative returns of a portfolio split 70% in high-growth tech stocks (TSLA, NVDA) and 30% in more stable tech stocks (AAPL, MSFT) over the past 5 years?
+How did a sector-rotating strategy focusing on tech stocks in different market conditions perform compared to a traditional tech ETF?
+What has been the performance of a portfolio with dynamic weighting based on market cap changes among AAPL, MSFT, GOOG, AMZN, and FB over the last 5 years?
