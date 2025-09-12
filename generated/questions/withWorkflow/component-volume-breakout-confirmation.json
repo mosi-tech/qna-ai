@@ -1,0 +1,47 @@
+{
+  "id": "volume-breakout-confirmation",
+  "name": "Volume Breakout Confirmation Scanner",
+  "file": "experimental/VolumeBreakoutConfirmation.json",
+  "output": "/experimental/VolumeBreakoutConfirmation.json",
+  "question": "Which stocks are breaking out with strong volume confirmation?",
+  "retailQuestion": "Which stocks are breaking higher with big volume?",
+  "description": "Identifies stocks breaking above resistance levels with significantly elevated volume, indicating institutional participation and higher probability of sustained moves. Analyzes volume spikes relative to average, breakout quality above key levels, and follow-through patterns to filter authentic breakouts from false moves.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get most active stocks showing elevated volume patterns",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price and volume data for breakout pattern identification",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Get real-time market data for current breakout confirmation",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Identify resistance breakouts and analyze volume confirmation with institutional flow indicators",
+      "function": "scan_volume_breakouts"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank breakouts by volume quality and sustainability probability",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I chase these breakout stocks?",
+    "How high can these stocks go?",
+    "What if I buy at the top of the breakout?",
+    "Are volume breakouts reliable for profits?"
+  ]
+}

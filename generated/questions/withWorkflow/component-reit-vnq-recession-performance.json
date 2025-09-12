@@ -1,0 +1,46 @@
+{
+  "id": "reit-vnq-recession-performance",
+  "name": "REIT VNQ Recession and Recovery Analysis",
+  "file": "experimental/REITVNQRecessionPerformance.json",
+  "output": "/experimental/REITVNQRecessionPerformance.json",
+  "question": "How has the Vanguard Real Estate ETF (VNQ) performed during recessions and recoveries?",
+  "retailQuestion": "Should I buy real estate stocks during economic downturns?",
+  "description": "Analyzes VNQ performance during the 2008-2009 recession, COVID-19 pandemic, and other economic downturns over 15 years. Examines REIT behavior during interest rate cycles, recession periods, and recovery phases to evaluate real estate as a defensive or cyclical investment.",
+  "apis": [
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get 15+ years of VNQ data covering multiple economic cycles",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get current VNQ market data for latest cycle context",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 3: Identify recession periods and analyze VNQ performance patterns",
+      "function": "analyze_reit_recession_performance"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Compare VNQ vs SPY during economic stress and recovery periods",
+      "function": "backtest_reit_cycle_strategy"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Evaluate REITs as recession hedge vs growth investment",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Are REITs a good hedge against economic downturns?",
+    "Should I buy real estate stocks when interest rates are falling?",
+    "How much real estate exposure should I have in my portfolio?",
+    "Do REITs behave more like stocks or bonds during crises?"
+  ]
+}

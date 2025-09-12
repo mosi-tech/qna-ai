@@ -1,0 +1,46 @@
+{
+  "id": "nvidia-ai-bubble-analysis",
+  "name": "NVIDIA AI Bubble Risk Analysis and Timing",
+  "file": "experimental/NVIDIAAIBubbleAnalysis.json",
+  "output": "/experimental/NVIDIAAIBubbleAnalysis.json",
+  "question": "How does NVDA's current valuation and momentum compare to historical tech bubbles?",
+  "retailQuestion": "Is NVIDIA in a bubble and should I take profits now?",
+  "description": "Analyzes NVIDIA's price action, valuation metrics, and momentum indicators compared to historical tech bubbles like the 2000 dot-com crash and individual stock bubbles. Uses technical analysis and fundamental ratios to assess bubble risk and potential timing signals for the AI semiconductor boom.",
+  "apis": [
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get 5+ years of NVDA price data including the AI boom period",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get current NVDA market data for bubble assessment",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 3: Analyze bubble characteristics using price momentum and volatility",
+      "function": "analyze_bubble_characteristics"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Compare current metrics to historical bubble patterns",
+      "function": "compare_to_historical_bubbles"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Assess bubble risk level and potential exit timing signals",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I sell my NVIDIA shares before a potential crash?",
+    "How can I tell if a stock is in a bubble?",
+    "Is the AI boom sustainable or just hype?",
+    "Should I take some profits and let the rest ride?"
+  ]
+}

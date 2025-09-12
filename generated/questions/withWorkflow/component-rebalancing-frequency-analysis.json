@@ -1,0 +1,47 @@
+{
+  "id": "rebalancing-frequency-analysis",
+  "name": "Rebalancing Frequency Impact Analysis",
+  "file": "experimental/RebalancingFrequencyAnalysis.json",
+  "output": "/experimental/RebalancingFrequencyAnalysis.json",
+  "question": "What would be the impact of rebalancing my portfolio monthly vs quarterly vs annually?",
+  "retailQuestion": "How often should I rebalance my portfolio?",
+  "description": "Analyzes the performance impact of different rebalancing frequencies on your portfolio by simulating transaction costs, tax implications, and return differences. Compares monthly, quarterly, semi-annual, and annual rebalancing strategies to determine the optimal frequency based on your portfolio size, volatility, and cost structure.",
+  "apis": [
+    "trading:/v2/positions",
+    "trading:/v2/account",
+    "marketdata:/v2/stocks/bars"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get current portfolio positions and target allocation percentages",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get account information for portfolio size and buying power calculations",
+      "function": "alpaca-trading_account"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Get historical price data to simulate rebalancing scenarios over multiple years",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Simulate rebalancing impact across different frequencies with transaction cost modeling",
+      "function": "simulate_rebalancing_frequencies"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Calculate net returns after costs and rank rebalancing strategies by efficiency",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Is monthly rebalancing too much work?",
+    "What happens if I never rebalance?",
+    "How much does rebalancing frequency matter?",
+    "Should I rebalance based on time or portfolio drift?"
+  ]
+}

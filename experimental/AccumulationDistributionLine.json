@@ -1,0 +1,125 @@
+{
+  "description": "Analyzes Accumulation/Distribution (A/D) Line across actively traded stocks to identify institutional buying and selling patterns. The A/D Line combines price and volume to reveal whether smart money is accumulating (buying) or distributing (selling) positions. This analysis helps retail investors follow institutional flow and identify stocks with strong underlying demand or supply pressure, providing early signals for potential breakouts or breakdowns.",
+  "body": [
+    {
+      "key": "aapl_ad_signal",
+      "value": "Strong Accumulation", 
+      "description": "Apple (AAPL) shows strong accumulation pattern with A/D Line trending upward despite recent price consolidation. This suggests institutional investors are steadily building positions, indicating potential upside momentum."
+    },
+    {
+      "key": "aapl_institutional_flow",
+      "value": "Heavy Buying",
+      "description": "Institutional flow direction for AAPL based on A/D Line analysis. Heavy buying indicates smart money is actively accumulating shares, often preceding significant price moves higher."
+    },
+    {
+      "key": "tsla_ad_signal", 
+      "value": "Moderate Distribution",
+      "description": "Tesla (TSLA) exhibits moderate distribution with A/D Line showing recent weakness. This suggests some institutional selling pressure, though not yet at extreme levels that would indicate major capitulation."
+    },
+    {
+      "key": "tsla_divergence_analysis",
+      "value": "Bearish Divergence Detected",
+      "description": "TSLA price made new highs while A/D Line failed to confirm, creating bearish divergence. This technical warning suggests the recent rally may lack institutional support and could be vulnerable to reversal."
+    },
+    {
+      "key": "msft_ad_position",
+      "value": "85th Percentile",
+      "description": "Microsoft's A/D Line is at the 85th percentile of its recent range, indicating strong cumulative buying pressure over the analysis period. This high percentile suggests sustained institutional interest."
+    },
+    {
+      "key": "nvda_volume_confirmation",
+      "value": "Volume Increasing",
+      "description": "NVIDIA's accumulation signal is confirmed by increasing volume trends, validating the A/D Line analysis. Rising volume during accumulation phases strengthens the bullish institutional flow signal."
+    },
+    {
+      "key": "googl_ad_momentum",
+      "value": 2.3,
+      "description": "Google's A/D Line 5-day momentum score. Positive values above 2.0 indicate strong recent accumulation activity, suggesting institutional buying has accelerated in recent sessions."
+    },
+    {
+      "key": "meta_smart_money_flow",
+      "value": "Sideways",
+      "description": "Meta's institutional flow appears neutral with A/D Line moving sideways. This suggests balanced buying and selling pressure from institutions, indicating a wait-and-see approach from smart money."
+    },
+    {
+      "key": "amzn_accumulation_strength",
+      "value": "Moderate",
+      "description": "Amazon shows moderate accumulation strength based on A/D Line analysis. While trending positive, the accumulation isn't as pronounced as other mega-cap names, suggesting measured institutional interest."
+    },
+    {
+      "key": "spy_institutional_sentiment",
+      "value": "Bullish Accumulation",
+      "description": "SPY ETF shows bullish accumulation pattern with A/D Line confirming recent market strength. This broad market accumulation suggests institutions remain constructive on overall equity markets."
+    },
+    {
+      "key": "qqq_ad_divergence",
+      "value": "No Divergence",
+      "description": "QQQ (NASDAQ ETF) shows no price-volume divergence with A/D Line confirming recent price action. This alignment suggests technology sector institutional flows remain healthy and supportive of current levels."
+    },
+    {
+      "key": "strongest_accumulation_stock",
+      "value": "AAPL",
+      "description": "Among analyzed stocks, Apple shows the strongest accumulation signal with the highest A/D Line momentum and most consistent institutional buying pattern over the measurement period."
+    },
+    {
+      "key": "strongest_distribution_stock",
+      "value": "TSLA",
+      "description": "Tesla exhibits the strongest distribution pattern with declining A/D Line momentum and bearish price-volume divergence, suggesting institutional profit-taking or position reduction."
+    },
+    {
+      "key": "accumulation_count",
+      "value": 8,
+      "description": "Number of stocks showing net accumulation signals out of 15 analyzed securities. A majority in accumulation mode suggests overall positive institutional sentiment toward the market."
+    },
+    {
+      "key": "distribution_count", 
+      "value": 4,
+      "description": "Number of stocks showing net distribution signals. The lower count compared to accumulation suggests institutions are generally building rather than reducing equity positions."
+    },
+    {
+      "key": "neutral_count",
+      "value": 3,
+      "description": "Stocks showing neutral A/D Line signals with balanced institutional flow. These names may be in consolidation phases or experiencing mixed institutional sentiment."
+    },
+    {
+      "key": "high_volume_accumulation",
+      "value": 5,
+      "description": "Count of stocks showing accumulation patterns confirmed by above-average volume. High-volume accumulation provides stronger conviction in the institutional buying signal."
+    },
+    {
+      "key": "divergence_warning_count",
+      "value": 2,
+      "description": "Number of stocks showing bearish divergence between price and A/D Line. These divergences often precede price corrections and warrant caution despite recent strength."
+    },
+    {
+      "key": "sector_rotation_signal",
+      "value": "Technology Accumulation",
+      "description": "Sector-level A/D Line analysis reveals continued institutional accumulation in technology stocks, suggesting smart money believes the tech sector remains attractive despite recent volatility."
+    },
+    {
+      "key": "market_breadth_indicator",
+      "value": "Positive",
+      "description": "Overall market breadth based on A/D Line analysis across major indices and individual stocks. Positive breadth indicates broad-based institutional participation supporting market advances."
+    },
+    {
+      "key": "institutional_conviction_score",
+      "value": 7.2,
+      "description": "Composite score (1-10) measuring institutional conviction based on A/D Line strength, volume confirmation, and divergence analysis across all analyzed securities. Scores above 7 indicate strong institutional confidence."
+    },
+    {
+      "key": "follow_smart_money_recommendation", 
+      "value": "Yes - Focus on Accumulation Names",
+      "description": "Recommendation for retail investors based on institutional flow analysis. Following accumulation patterns in names like AAPL while avoiding distribution names like TSLA aligns retail positioning with smart money flow."
+    },
+    {
+      "key": "risk_management_note",
+      "value": "Monitor Divergences",
+      "description": "Key risk management consideration: Watch for expanding bearish divergences between price and A/D Line, as these often provide early warning signals for potential institutional selling and price weakness."
+    },
+    {
+      "key": "next_monitoring_focus",
+      "value": "Volume Confirmation",
+      "description": "Primary focus for next analysis period should be volume confirmation of A/D Line signals, as sustained institutional flows require consistent volume support to maintain momentum."
+    }
+  ]
+}

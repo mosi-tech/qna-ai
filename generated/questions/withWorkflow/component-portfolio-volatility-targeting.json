@@ -1,0 +1,47 @@
+{
+  "id": "portfolio-volatility-targeting",
+  "name": "Portfolio Volatility Targeting Strategy",
+  "file": "experimental/PortfolioVolatilityTargeting.json",
+  "output": "/experimental/PortfolioVolatilityTargeting.json",
+  "question": "How would implementing a volatility targeting strategy affect my portfolio performance?",
+  "retailQuestion": "Should I adjust my risk based on market conditions?",
+  "description": "Tests volatility targeting strategies that dynamically adjust portfolio leverage or allocation based on realized volatility to maintain consistent risk exposure. Compares constant allocation against vol-targeted approaches using different lookback periods and volatility targets to optimize risk-adjusted returns and reduce portfolio volatility clustering.",
+  "apis": [
+    "trading:/v2/positions",
+    "trading:/v2/account",
+    "marketdata:/v2/stocks/bars"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get current portfolio allocation and historical volatility characteristics",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get account buying power for leverage adjustment calculations",
+      "function": "alpaca-trading_account"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Get historical price data for volatility calculation and backtesting",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Simulate volatility targeting strategies with different target levels and adjustment frequencies",
+      "function": "test_volatility_targeting"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Compare vol-targeted vs static allocation performance and calculate implementation requirements",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I be more conservative in volatile markets?",
+    "How do I know when to take more risk?",
+    "What's the best way to manage portfolio volatility?",
+    "Should I reduce positions when markets get choppy?"
+  ]
+}

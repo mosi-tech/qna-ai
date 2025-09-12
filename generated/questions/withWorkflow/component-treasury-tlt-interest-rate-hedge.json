@@ -1,0 +1,46 @@
+{
+  "id": "treasury-tlt-interest-rate-hedge",
+  "name": "Long-Term Treasury TLT Interest Rate Hedge Analysis",
+  "file": "experimental/TreasuryTLTInterestRateHedge.json",
+  "output": "/experimental/TreasuryTLTInterestRateHedge.json",
+  "question": "How effective has TLT been as a hedge against falling interest rates and stock market volatility?",
+  "retailQuestion": "Should I buy long-term Treasury bonds when stocks get scary?",
+  "description": "Analyzes the effectiveness of the iShares 20+ Year Treasury Bond ETF (TLT) as a hedge during stock market declines and periods of falling interest rates. Examines correlations, hedge ratios, and performance during major market stress events over 15 years including 2008, 2020, and rate cycle changes.",
+  "apis": [
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get 15+ years of TLT and SPY data for hedge analysis",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get current TLT and SPY market data for correlation context",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 3: Calculate hedge effectiveness and correlation during stress periods",
+      "function": "analyze_treasury_hedge_effectiveness"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Backtest portfolio with TLT allocation during different rate environments",
+      "function": "backtest_treasury_hedge_portfolio"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Evaluate optimal TLT allocation for hedging purposes",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I hold Treasury bonds to protect against market crashes?",
+    "How much of my portfolio should be in bonds?",
+    "Do bonds still work as a hedge when rates are rising?",
+    "Are there better hedges than long-term Treasuries?"
+  ]
+}

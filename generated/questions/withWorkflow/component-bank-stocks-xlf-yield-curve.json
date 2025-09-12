@@ -1,0 +1,46 @@
+{
+  "id": "bank-stocks-xlf-yield-curve",
+  "name": "Bank Stocks XLF Yield Curve Steepening Strategy",
+  "file": "experimental/BankStocksXLFYieldCurve.json",
+  "output": "/experimental/BankStocksXLFYieldCurve.json",
+  "question": "How would buying XLF when the yield curve steepens and selling when it flattens have performed?",
+  "retailQuestion": "Should I buy bank stocks when long-term rates rise faster than short-term rates?",
+  "description": "Backtests a yield curve-based strategy for the Financial Select Sector SPDR Fund (XLF) that buys during yield curve steepening and sells during flattening. Analyzes the relationship between the 2-10 year spread and bank profitability over 15 years of interest rate cycles and Fed policy changes.",
+  "apis": [
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get 15+ years of XLF data covering multiple yield curve cycles",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get current XLF market data for yield curve context",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 3: Calculate yield curve metrics and generate bank sector timing signals",
+      "function": "calculate_yield_curve_bank_signals"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Backtest yield curve steepening strategy for financial sector",
+      "function": "backtest_yield_curve_strategy"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Analyze correlation strength and optimal entry/exit thresholds",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Do bank stocks really benefit from steeper yield curves?",
+    "Should I watch interest rate spreads to time financial investments?",
+    "How do I interpret yield curve signals for stock investing?",
+    "Are there better ways to play interest rate changes?"
+  ]
+}

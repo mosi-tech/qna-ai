@@ -1,0 +1,47 @@
+{
+  "id": "dividend-aristocrat-technicals",
+  "name": "Dividend Aristocrat Technical Analysis",
+  "file": "experimental/DividendAristocratTechnicals.json",
+  "output": "/experimental/DividendAristocratTechnicals.json",
+  "question": "Which dividend aristocrat stocks are showing strong technical setups for income-focused investors?",
+  "retailQuestion": "Which reliable dividend stocks look ready to go up?",
+  "description": "Analyzes S&P 500 Dividend Aristocrats for technical entry opportunities, combining dividend safety with technical momentum. Examines moving average support, relative strength, and low-volatility breakouts ideal for conservative income investors seeking capital appreciation.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "eodhd:/fundamentals/bulk"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get dividend aristocrat stock universe for technical analysis",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data for technical pattern and trend analysis",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Get fundamental data for dividend safety and aristocrat status verification",
+      "function": "eodhd_fundamentals-bulk"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Analyze dividend aristocrat technical setups with stability-focused momentum indicators",
+      "function": "analyze_aristocrat_technicals"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank aristocrats by technical setup quality and income investor suitability",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I focus on dividend stocks for income?",
+    "Are dividend aristocrats safer investments?",
+    "Can I get both income and growth from these stocks?",
+    "How often do these companies cut their dividends?"
+  ]
+}

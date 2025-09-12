@@ -1,0 +1,47 @@
+{
+  "id": "bollinger-band-squeeze-analysis",
+  "name": "Bollinger Band Squeeze Analysis",
+  "file": "experimental/BollingerBandSqueezeAnalysis.json",
+  "output": "/experimental/BollingerBandSqueezeAnalysis.json",
+  "question": "Which stocks are showing the tightest Bollinger Band squeeze patterns?",
+  "retailQuestion": "Which stocks are about to make a big move?",
+  "description": "Identifies stocks experiencing Bollinger Band squeezes, indicating periods of low volatility that often precede significant price movements. Analyzes band width percentiles, volume patterns, and historical breakout directions to predict potential explosive moves and provide entry timing for volatility expansion trades.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get most active stocks for Bollinger Band squeeze screening",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data for Bollinger Band calculation across multiple timeframes",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Get current market snapshots for real-time band width verification",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate Bollinger Band width percentiles and identify squeeze patterns with volume confirmation",
+      "function": "analyze_bollinger_squeeze"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank stocks by squeeze tightness and breakout probability",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I buy these stocks before they break out?",
+    "How long until the big move happens?",
+    "What if the stock moves in the wrong direction?",
+    "How reliable are these breakout signals?"
+  ]
+}

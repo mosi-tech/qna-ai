@@ -1,0 +1,47 @@
+{
+  "id": "dollar-cost-averaging-simulation",
+  "name": "Dollar Cost Averaging Simulation",
+  "file": "experimental/DollarCostAveragingSimulation.json",
+  "output": "/experimental/DollarCostAveragingSimulation.json",
+  "question": "How would dollar cost averaging compare to lump sum investing for my portfolio strategy?",
+  "retailQuestion": "Should I invest all my money at once or spread it out?",
+  "description": "Compares dollar cost averaging (DCA) versus lump sum investing strategies across different market conditions and time periods. Analyzes the impact of investment timing, market volatility, and psychological factors to determine which approach would have been more effective for your investment goals and risk tolerance.",
+  "apis": [
+    "trading:/v2/positions",
+    "trading:/v2/account",
+    "marketdata:/v2/stocks/bars"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get current portfolio composition and target allocation strategy",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get account cash available for investment simulation scenarios",
+      "function": "alpaca-trading_account"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Get historical price data for DCA vs lump sum backtesting over multiple periods",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Simulate DCA and lump sum strategies across bull, bear, and volatile market conditions",
+      "function": "simulate_dca_vs_lump_sum"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Compare final values, volatility reduction, and probability of success for each strategy",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "What if I invest everything and the market crashes?",
+    "How much should I invest each month?",
+    "Is timing the market better than dollar cost averaging?",
+    "What's the downside of spreading out my investments?"
+  ]
+}

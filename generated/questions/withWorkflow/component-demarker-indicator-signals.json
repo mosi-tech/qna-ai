@@ -1,0 +1,47 @@
+{
+  "id": "demarker-indicator-signals",
+  "name": "DeMarker Indicator Signal Analysis",
+  "file": "experimental/DeMarkerIndicatorSignals.json",
+  "output": "/experimental/DeMarkerIndicatorSignals.json",
+  "question": "Which stocks are showing DeMarker indicator overbought or oversold signals?",
+  "retailQuestion": "Which stocks are at extreme price levels?",
+  "description": "Analyzes DeMarker indicator to identify price exhaustion points through overbought readings above 0.7 and oversold readings below 0.3. Examines demand pressure and supply pressure to predict potential reversal zones in trending markets.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "trading:/v2/positions"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for DeMarker indicator screening",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data for DeMarker calculation and exhaustion analysis",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Check portfolio positions for DeMarker reversal opportunities",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate DeMarker indicator and identify overbought/oversold extremes with reversal signals",
+      "function": "analyze_demarker_indicator"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank DeMarker signals by extremity and mean reversion probability",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I avoid buying overbought stocks?",
+    "Are oversold stocks always good deals?",
+    "How do I time my entry on these signals?",
+    "What happens if these extremes continue?"
+  ]
+}

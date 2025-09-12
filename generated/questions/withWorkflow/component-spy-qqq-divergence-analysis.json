@@ -1,0 +1,40 @@
+{
+  "id": "spy-qqq-divergence-analysis",
+  "name": "SPY vs QQQ Divergence Analysis",
+  "file": "experimental/SPYQQQDivergenceAnalysis.json",
+  "output": "/experimental/SPYQQQDivergenceAnalysis.json",
+  "question": "Are SPY and QQQ showing technical divergences that signal market regime changes?",
+  "description": "Analyzes technical divergences between SPY (broad market) and QQQ (tech-heavy) to identify market regime shifts, sector rotation signals, and leadership changes. Examines relative strength, momentum indicators, and volume patterns to predict growth vs value rotations.",
+  "apis": [
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots",
+    "trading:/v2/positions"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get historical price and volume data for SPY and QQQ across multiple timeframes",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get current market snapshots for SPY and QQQ real-time divergence assessment",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Check portfolio positions for growth/value exposure relative to divergence signals",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate SPY/QQQ ratio analysis, momentum divergences, and regime change indicators",
+      "function": "analyze_spy_qqq_divergences"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Score divergence signals and rank by regime change probability",
+      "function": "client_compute"
+    }
+  ]
+}

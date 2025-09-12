@@ -1,0 +1,47 @@
+{
+  "id": "evening-star-pattern",
+  "name": "Evening Star Bearish Reversal Pattern",
+  "file": "experimental/EveningStarPattern.json",
+  "output": "/experimental/EveningStarPattern.json",
+  "question": "Which stocks are forming evening star bearish reversal patterns?",
+  "retailQuestion": "Which stocks might be ready to fall?",
+  "description": "Identifies evening star patterns - three-candle bearish reversal formations with a long green candle, small-bodied star candle, and confirming red candle. Analyzes pattern quality, gap characteristics, and resistance level context for high-probability bearish reversals.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "trading:/v2/positions"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for evening star pattern screening",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get recent OHLC data for bearish reversal pattern identification",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Check portfolio positions for potential bearish reversal warnings",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Identify evening star patterns with resistance level analysis and volume confirmation",
+      "function": "detect_evening_star_patterns"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank bearish reversal patterns by pattern quality and downside risk",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I sell immediately when I see this pattern?",
+    "How accurate are evening star signals?",
+    "What if I'm wrong about the reversal?",
+    "Is this a good short selling opportunity?"
+  ]
+}

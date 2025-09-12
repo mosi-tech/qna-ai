@@ -1,0 +1,47 @@
+{
+  "id": "commodity-channel-index", 
+  "name": "Commodity Channel Index Signals",
+  "file": "experimental/CommodityChannelIndex.json",
+  "output": "/experimental/CommodityChannelIndex.json",
+  "question": "Which stocks are showing CCI overbought or oversold reversal signals?",
+  "retailQuestion": "Which stocks are extremely overbought or oversold?",
+  "description": "Analyzes Commodity Channel Index (CCI) to identify overbought conditions above +100 and oversold conditions below -100. Examines CCI divergences, zero-line crosses, and extreme readings to predict potential reversal points and trend changes.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "trading:/v2/positions"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for CCI signal screening",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data for CCI calculation and signal analysis",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Check portfolio positions for CCI reversal opportunities",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate Commodity Channel Index and identify overbought/oversold reversal signals",
+      "function": "analyze_commodity_channel_index"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank CCI signals by extremity and reversal probability",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I sell overbought stocks immediately?",
+    "Are oversold stocks good buying opportunities?",
+    "How long do these extreme conditions last?",
+    "What's the risk of catching a falling knife?"
+  ]
+}

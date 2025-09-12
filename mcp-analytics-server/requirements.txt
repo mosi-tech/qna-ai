@@ -1,0 +1,18 @@
+pandas>=2.0.0
+numpy>=1.24.0
+scipy>=1.10.0
+scikit-learn>=1.3.0
+ta>=0.10.2
+xgboost>=1.7.0
+yfinance>=0.2.0
+matplotlib>=3.7.0
+mcp>=0.5.0
+
+# Core libraries for analytics engine
+# - pandas: Data manipulation, time series analysis
+# - numpy: Numerical computations
+# - scipy: Statistical tests and distributions
+# - scikit-learn: Machine learning and clustering
+# - ta: Technical analysis indicators
+# - xgboost: Advanced gradient boosting (note: may need OpenMP)
+# - yfinance: Backup data source

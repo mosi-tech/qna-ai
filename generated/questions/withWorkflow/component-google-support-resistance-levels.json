@@ -1,0 +1,46 @@
+{
+  "id": "google-support-resistance-levels",
+  "name": "Google Support and Resistance Trading Backtest",
+  "file": "experimental/GoogleSupportResistanceLevels.json",
+  "output": "/experimental/GoogleSupportResistanceLevels.json",
+  "question": "How profitable would trading GOOGL based on key support and resistance levels have been?",
+  "retailQuestion": "Does buying Google when it hits support levels and selling at resistance work?",
+  "description": "Backtests a support and resistance trading strategy on Google (GOOGL) using historical price levels and volume confirmation. Identifies key psychological levels and tests buying at support with stops below, and selling at resistance targets over 6 years of trading data.",
+  "apis": [
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get 6+ years of GOOGL daily OHLC and volume data",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get current GOOGL market data for latest level analysis",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 3: Identify key support and resistance levels using price action",
+      "function": "identify_support_resistance_levels"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Backtest level-based trading with volume confirmation and stops",
+      "function": "backtest_support_resistance_strategy"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Analyze success rates, risk-reward ratios, and level reliability",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Are support and resistance levels reliable for trading?",
+    "How do I identify the right levels to trade?",
+    "Should I use stop losses when trading levels?",
+    "Is this strategy better than buy-and-hold for Google?"
+  ]
+}

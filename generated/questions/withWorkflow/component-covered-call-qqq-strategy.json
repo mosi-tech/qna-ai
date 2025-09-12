@@ -1,0 +1,46 @@
+{
+  "id": "covered-call-qqq-strategy",
+  "name": "QQQ Covered Call Income Strategy Backtest",
+  "file": "experimental/CoveredCallQQQStrategy.json",
+  "output": "/experimental/CoveredCallQQQStrategy.json",
+  "question": "How would selling monthly covered calls on QQQ have enhanced returns over the last 5 years?",
+  "retailQuestion": "Can I make extra money selling call options on my QQQ shares?",
+  "description": "Backtests a covered call strategy on QQQ by selling monthly out-of-the-money calls while holding the underlying ETF. Analyzes income generation, opportunity cost from called away shares, and total return enhancement across different market conditions including bull, bear, and sideways markets.",
+  "apis": [
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get 5+ years of QQQ daily price data for covered call analysis",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get current QQQ market data and options context",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 3: Simulate monthly covered call writing with realistic option pricing",
+      "function": "simulate_covered_call_strategy"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate total returns including dividends and call premiums",
+      "function": "analyze_covered_call_performance"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Compare covered call returns vs buy-and-hold in different market environments",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Is selling covered calls worth the extra complexity?",
+    "What happens if QQQ shoots up and my shares get called away?",
+    "How much extra income can I realistically expect?",
+    "Should I only sell calls in certain market conditions?"
+  ]
+}

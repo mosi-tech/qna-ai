@@ -1,0 +1,47 @@
+{
+  "id": "portfolio-drawdown-analysis",
+  "name": "Portfolio Maximum Drawdown Analysis",
+  "file": "experimental/PortfolioDrawdownAnalysis.json",
+  "output": "/experimental/PortfolioDrawdownAnalysis.json",
+  "question": "What would be the maximum drawdown risk of my current portfolio allocation?",
+  "retailQuestion": "How much could I lose in a bad market?",
+  "description": "Analyzes potential maximum drawdown scenarios for your portfolio by stress-testing against historical market crashes, sector-specific selloffs, and correlation breakdowns. Uses Monte Carlo simulation and historical backtesting to estimate worst-case loss scenarios and recovery timeframes, helping you understand and prepare for portfolio risk exposure.",
+  "apis": [
+    "trading:/v2/positions",
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get current portfolio positions, weights, and correlation structure",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data covering multiple market cycles and stress periods",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Get current market conditions for real-time risk assessment",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate maximum drawdown scenarios using Monte Carlo simulation and historical stress testing",
+      "function": "analyze_portfolio_drawdowns"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank risk scenarios by probability and impact, with suggested hedging strategies",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I prepare for a 20% market drop?",
+    "How can I reduce my potential losses?",
+    "What would happen to my retirement if markets crash?",
+    "Is my portfolio too risky for my timeline?"
+  ]
+}

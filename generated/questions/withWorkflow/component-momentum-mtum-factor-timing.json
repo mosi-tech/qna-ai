@@ -1,0 +1,46 @@
+{
+  "id": "momentum-mtum-factor-timing",
+  "name": "Momentum Factor MTUM Timing Strategy Analysis",
+  "file": "experimental/MomentumMTUMFactorTiming.json",
+  "output": "/experimental/MomentumMTUMFactorTiming.json",
+  "question": "How would timing momentum factor exposure using MTUM based on market volatility have performed?",
+  "retailQuestion": "Should I increase my momentum stock exposure when markets are calm?",
+  "description": "Backtests a momentum factor timing strategy using the iShares MSCI USA Momentum Factor ETF (MTUM) based on VIX levels and market regime indicators. Increases momentum exposure during low volatility periods and reduces it during high volatility, analyzing the effectiveness of factor timing over 8 years.",
+  "apis": [
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get 8+ years of MTUM, SPY, and VIX data for factor timing analysis",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get current MTUM and volatility market data",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 3: Calculate volatility regimes and momentum factor timing signals",
+      "function": "calculate_momentum_factor_timing_signals"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Backtest factor timing strategy vs constant momentum exposure",
+      "function": "backtest_factor_timing_strategy"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Evaluate timing effectiveness and optimal volatility thresholds",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I time my momentum stock exposure based on market volatility?",
+    "Do momentum strategies work better in certain market conditions?",
+    "Is factor timing worth the extra complexity and costs?",
+    "How do I know when to increase or decrease momentum exposure?"
+  ]
+}

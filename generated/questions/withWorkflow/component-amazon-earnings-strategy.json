@@ -1,0 +1,46 @@
+{
+  "id": "amazon-earnings-strategy",
+  "name": "Amazon Earnings Announcement Strategy Backtest",
+  "file": "experimental/AmazonEarningsStrategy.json",
+  "output": "/experimental/AmazonEarningsStrategy.json",
+  "question": "What would the returns be from holding AMZN only around earnings announcements?",
+  "retailQuestion": "Should I buy Amazon before earnings and sell after?",
+  "description": "Backtests an earnings-focused strategy on Amazon that buys 2 weeks before earnings and sells 2 days after the announcement. Analyzes the effectiveness of this event-driven approach over 20+ quarters, including the impact of earnings surprises and guidance changes on returns.",
+  "apis": [
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get 5+ years of AMZN daily price data covering multiple earnings cycles",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get current AMZN market data and upcoming earnings context",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 3: Identify earnings dates and calculate pre/post announcement windows",
+      "function": "identify_earnings_trading_windows"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Backtest earnings strategy with realistic timing and costs",
+      "function": "backtest_earnings_strategy"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Analyze win rate, average returns, and volatility around earnings",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Is playing earnings too risky for my portfolio?",
+    "How often do earnings trades work out?",
+    "Should I hold Amazon long-term instead?",
+    "What if earnings disappoint the market?"
+  ]
+}

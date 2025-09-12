@@ -1,0 +1,46 @@
+{
+  "id": "japan-etf-ewj-currency-hedge",
+  "name": "Japan ETF Currency Hedged vs Unhedged Analysis",
+  "file": "experimental/JapanETFEWJCurrencyHedge.json",
+  "output": "/experimental/JapanETFEWJCurrencyHedge.json",
+  "question": "How much difference has currency hedging made for Japan ETF investments over the USD/JPY volatility cycles?",
+  "retailQuestion": "Should I hedge currency risk when investing in Japanese stocks?",
+  "description": "Compares the performance of currency-hedged vs unhedged Japan ETF investments (EWJ vs DXJ) over 12 years of USD/JPY fluctuations. Analyzes the impact of currency movements on returns, volatility, and the effectiveness of hedging during different currency cycles and Bank of Japan policy changes.",
+  "apis": [
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get 12+ years of EWJ and DXJ data for currency hedge comparison",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get current Japan ETF market data for currency context",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 3: Analyze currency impact on returns and calculate hedge effectiveness",
+      "function": "analyze_currency_hedge_impact"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Backtest hedged vs unhedged strategies across currency cycles",
+      "function": "backtest_currency_hedge_strategies"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Evaluate when currency hedging adds value for international investing",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I worry about currency risk when investing internationally?",
+    "Is currency hedging worth the extra cost?",
+    "How do I know when to hedge foreign investments?",
+    "Do currency movements matter for long-term investing?"
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "id": "factor-exposure-testing",
+  "name": "Portfolio Factor Exposure Testing",
+  "file": "experimental/PortfolioFactorExposureTesting.json",
+  "output": "/experimental/PortfolioFactorExposureTesting.json",
+  "question": "What are my portfolio's exposures to different investment factors like value, growth, and momentum?",
+  "description": "Analyzes your portfolio's factor exposures across value, growth, momentum, quality, size, and volatility factors to understand performance drivers and risk concentrations. Tests alternative factor weightings and suggests rebalancing strategies to improve risk-adjusted returns while maintaining alignment with your investment philosophy and goals.",
+  "apis": [
+    "trading:/v2/positions",
+    "marketdata:/v2/stocks/bars",
+    "eodhd:/fundamentals/bulk"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get current portfolio holdings and position sizes for factor analysis",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price and returns data for factor performance attribution",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Get fundamental metrics for value, growth, and quality factor calculations",
+      "function": "eodhd_fundamentals-bulk"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate factor exposures and test alternative factor allocation scenarios",
+      "function": "analyze_factor_exposures"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Score factor balance and rank optimization strategies by risk-adjusted potential",
+      "function": "client_compute"
+    }
+  ]
+}

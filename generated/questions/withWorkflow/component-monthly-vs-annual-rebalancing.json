@@ -1,0 +1,46 @@
+{
+  "id": "monthly-vs-annual-rebalancing",
+  "name": "Monthly vs Annual Portfolio Rebalancing Analysis",
+  "file": "experimental/MonthlyVsAnnualRebalancing.json",
+  "output": "/experimental/MonthlyVsAnnualRebalancing.json",
+  "question": "How much difference does rebalancing frequency make for a diversified portfolio?",
+  "retailQuestion": "Should I rebalance my portfolio every month or just once a year?",
+  "description": "Compares the impact of different rebalancing frequencies (monthly, quarterly, semi-annually, annually) on a diversified portfolio of VTI, VXUS, BND, and VNQ. Analyzes transaction costs, performance differences, and optimal rebalancing frequency over 12 years of market conditions.",
+  "apis": [
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get 12+ years of data for VTI, VXUS, BND, VNQ for rebalancing analysis",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get current market data for all portfolio components",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 3: Simulate different rebalancing schedules with transaction costs",
+      "function": "simulate_rebalancing_frequencies"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate net returns after costs for each rebalancing frequency",
+      "function": "analyze_rebalancing_performance"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Determine optimal frequency considering costs and benefits",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "How often should I check and adjust my portfolio?",
+    "Do transaction costs eat up the benefits of frequent rebalancing?",
+    "What's the minimum drift before I should rebalance?",
+    "Can I just set it and forget it with annual rebalancing?"
+  ]
+}

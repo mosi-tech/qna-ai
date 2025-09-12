@@ -1,0 +1,46 @@
+{
+  "id": "utilities-xlu-interest-rate-sensitivity",
+  "name": "Utilities XLU Interest Rate Sensitivity Analysis",
+  "file": "experimental/UtilitiesXLUInterestRateSensitivity.json",
+  "output": "/experimental/UtilitiesXLUInterestRateSensitivity.json",
+  "question": "How has XLU performed during different interest rate cycles and Fed policy changes?",
+  "retailQuestion": "Should I buy utility stocks when interest rates are falling?",
+  "description": "Analyzes the Utilities Select Sector SPDR Fund (XLU) performance across various Federal Reserve policy cycles over 20 years. Examines sensitivity to 10-year Treasury yields, Fed rate changes, and yield curve movements to determine optimal timing for utility sector investments based on interest rate environment.",
+  "apis": [
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get 20+ years of XLU data covering multiple Fed cycles",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get current XLU market data for rate environment context",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 3: Analyze correlation between XLU performance and interest rate changes",
+      "function": "analyze_utility_rate_sensitivity"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Backtest rate-based utility timing strategy with Fed policy signals",
+      "function": "backtest_rate_sensitive_strategy"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Determine optimal allocation timing based on rate cycle positioning",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I buy utilities when the Fed starts cutting rates?",
+    "Are utility stocks still good dividend investments when rates are high?",
+    "How do rising rates affect utility stock prices?",
+    "Is there a better time to invest in defensive sectors?"
+  ]
+}

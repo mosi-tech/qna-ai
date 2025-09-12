@@ -1,0 +1,46 @@
+{
+  "id": "dividend-growth-vdg-strategy",
+  "name": "Dividend Growth VDG vs High Yield Strategy Comparison",
+  "file": "experimental/DividendGrowthVDGStrategy.json",
+  "output": "/experimental/DividendGrowthVDGStrategy.json",
+  "question": "How has focusing on dividend growth stocks performed compared to high dividend yield strategies?",
+  "retailQuestion": "Should I buy stocks with growing dividends or just the highest yields?",
+  "description": "Compares the Vanguard Dividend Appreciation ETF (VDG) performance against high-yield dividend strategies over 12 years. Analyzes total return, dividend sustainability, and risk characteristics to determine whether dividend growth or dividend yield provides better long-term wealth building for income-focused investors.",
+  "apis": [
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get 12+ years of VDG and high-yield dividend ETF data",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get current dividend growth vs high yield ETF market data",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 3: Analyze dividend growth sustainability vs yield trap risks",
+      "function": "analyze_dividend_strategy_effectiveness"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Backtest dividend growth vs high yield strategies across market cycles",
+      "function": "backtest_dividend_strategies"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Compare total return, volatility, and income generation characteristics",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I focus on high dividends or growing dividends?",
+    "Are dividend growth stocks less risky than high-yield stocks?",
+    "How do I avoid dividend cuts and yield traps?",
+    "Is dividend investing still good in a low-rate environment?"
+  ]
+}

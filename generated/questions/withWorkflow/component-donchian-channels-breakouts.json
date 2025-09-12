@@ -1,0 +1,47 @@
+{
+  "id": "donchian-channels-breakouts",
+  "name": "Donchian Channels Breakout Scanner",
+  "file": "experimental/DonchianChannelsBreakouts.json",
+  "output": "/experimental/DonchianChannelsBreakouts.json",
+  "question": "Which stocks are breaking out of Donchian Channel high/low ranges?",
+  "retailQuestion": "Which stocks just broke to new highs?",
+  "description": "Identifies stocks breaking above Donchian Channel upper band (highest high) or below lower band (lowest low) over specified periods. Analyzes breakout quality, volume confirmation, and channel width to validate genuine trend initiation versus false breakouts.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for Donchian Channel breakout screening",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data for Donchian Channel calculation and breakout identification",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Get current market data for real-time breakout confirmation",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate Donchian Channels and identify high/low breakouts with volume validation",
+      "function": "analyze_donchian_breakouts"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank breakouts by channel significance and trend initiation probability",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I buy stocks that just hit new highs?",
+    "How often do breakouts continue higher?",
+    "What if I buy and it immediately drops?",
+    "Is it too late to buy after the breakout?"
+  ]
+}

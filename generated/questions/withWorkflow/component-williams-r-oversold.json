@@ -1,0 +1,47 @@
+{
+  "id": "williams-r-oversold",
+  "name": "Williams %R Oversold Scanner",
+  "file": "experimental/WilliamsROversold.json",
+  "output": "/experimental/WilliamsROversold.json",
+  "question": "Which stocks are showing Williams %R oversold reversal signals?",
+  "retailQuestion": "Which stocks have been beaten down but might recover?",
+  "description": "Identifies stocks with Williams %R readings below -80 (severely oversold) that are beginning to reverse higher, indicating potential short-term bounce opportunities. Analyzes momentum divergences and trend context to filter high-probability reversal candidates from trending downmoves.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "trading:/v2/positions"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for Williams %R oversold screening",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data for Williams %R calculation and trend analysis",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Check portfolio positions for oversold reversal opportunities",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate Williams %R and identify oversold reversal patterns with momentum confirmation",
+      "function": "scan_williams_r_oversold"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank reversal signals by momentum strength and trend support",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I buy these heavily sold stocks?",
+    "How can I tell if they'll really bounce?",
+    "What's the risk of catching a falling stock?",
+    "Should I wait for more confirmation?"
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "id": "elder-ray-index",
+  "name": "Elder Ray Index Bull/Bear Power",
+  "file": "experimental/ElderRayIndex.json",
+  "output": "/experimental/ElderRayIndex.json",
+  "question": "Which stocks are showing Elder Ray bull power or bear power signals?",
+  "retailQuestion": "Which stocks have strong buying or selling pressure?",
+  "description": "Analyzes Elder Ray Index bull power and bear power indicators to measure the strength of buyers versus sellers. Examines bull power (high minus EMA) and bear power (low minus EMA) to identify potential trend changes and momentum shifts.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives", 
+    "marketdata:/v2/stocks/bars",
+    "trading:/v2/positions"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for Elder Ray analysis",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical OHLC data for bull/bear power calculations",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Check portfolio positions for bull/bear power assessment",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate Elder Ray bull power and bear power indicators with trend analysis",
+      "function": "analyze_elder_ray_index"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank stocks by bull/bear power strength and momentum direction",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I buy stocks with strong bull power?",
+    "How concerning is high bear power?",
+    "Do these signals predict future moves?",
+    "What's the best way to use these indicators?"
+  ]
+}

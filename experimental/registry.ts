@@ -1,5 +1,55 @@
 // Registry mapping for experimental JSON outputs
 export const registryMap = {
+  "triangle-pattern-breakouts": {
+    id: "triangle-pattern-breakouts",
+    name: "Triangle Pattern Breakout Scanner",
+    file: "experimental/TrianglePatternBreakouts.json"
+  },
+  "treasury-tlt-interest-rate-hedge": {
+    id: "treasury-tlt-interest-rate-hedge",
+    name: "Long-Term Treasury TLT Interest Rate Hedge Analysis",
+    file: "experimental/TreasuryTLTInterestRateHedge.json"
+  },
+  "keltner-channels-analysis": {
+    id: "keltner-channels-analysis",
+    name: "Keltner Channels Breakout Analysis",
+    file: "experimental/KeltnerChannelsAnalysis.json"
+  },
+  "macd-crossover-signals": {
+    id: "macd-crossover-signals",
+    name: "MACD Crossover Signal Analysis",
+    file: "experimental/MACDCrossoverSignals.json"
+  },
+  "price-volume-breakouts": {
+    id: "price-volume-breakouts",
+    name: "Price Volume Breakout Analysis",
+    file: "experimental/PriceVolumeBreakouts.json"
+  },
+  "three-black-crows-pattern": {
+    id: "three-black-crows-pattern",
+    name: "Three Black Crows Bearish Pattern",
+    file: "experimental/ThreeBlackCrowsPattern.json"
+  },
+  "adx-trend-strength": {
+    id: "adx-trend-strength",
+    name: "ADX Trend Strength Analysis",
+    file: "experimental/ADXTrendStrength.json"
+  },
+  "accumulation-distribution-line": {
+    id: "accumulation-distribution-line",
+    name: "Accumulation Distribution Line Analysis", 
+    file: "experimental/AccumulationDistributionLine.json"
+  },
+  "aapl-weekday-trading-analysis": {
+    id: "aapl-weekday-trading-analysis",
+    name: "AAPL Weekday Trading Analysis",
+    file: "experimental/AAPLWeekdayTradingAnalysis.json"
+  },
+  "sector-etf-friday-performance": {
+    id: "sector-etf-friday-performance",
+    name: "Sector ETF Friday Performance Analysis",
+    file: "experimental/SectorETFFridayPerformance.json"
+  },
   "first-hour-momentum-leaders": {
     id: "first-hour-momentum-leaders",
     name: "First Hour Momentum Leaders (3+ Sessions)",
@@ -140,6 +190,36 @@ export const registryMap = {
     id: "positions-cpi-performance",
     name: "Position CPI Release Day Performance",
     file: "experimental/PositionsCPIPerformance.json"
+  },
+  "monday-performance-analysis": {
+    id: "monday-performance-analysis",
+    name: "Monday Performance Analysis",
+    file: "experimental/MondayPerformanceAnalysis.json"
+  },
+  "tesla-sma-crossover-strategy": {
+    id: "tesla-sma-crossover-strategy",
+    name: "Tesla SMA Crossover Strategy Analysis",
+    file: "experimental/TeslaSMACrossoverStrategy.json"
+  },
+  "tesla-five-technical-strategies": {
+    id: "tesla-five-technical-strategies",
+    name: "Tesla Five Technical Strategies Comparison",
+    file: "experimental/TeslaFiveTechnicalStrategies.json"
+  },
+  "aapl-vs-nvda-decision": {
+    id: "aapl-vs-nvda-decision",
+    name: "AAPL vs NVDA Investment Decision Analysis",
+    file: "experimental/AAPLvsNVDADecision.json"
+  },
+  "bullish-engulfing-today": {
+    id: "bullish-engulfing-today",
+    name: "Bullish Engulfing Patterns Today",
+    file: "experimental/BullishEngulfingToday.json"
+  },
+  "position-fair-value-gaps": {
+    id: "position-fair-value-gaps",
+    name: "Position Fair Value Gap Analysis",
+    file: "experimental/PositionFairValueGaps.json"
   }
 };
 

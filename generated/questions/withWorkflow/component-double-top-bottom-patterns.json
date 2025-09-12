@@ -1,0 +1,47 @@
+{
+  "id": "double-top-bottom-patterns",
+  "name": "Double Top/Bottom Pattern Scanner",
+  "file": "experimental/DoubleTopBottomPatterns.json",
+  "output": "/experimental/DoubleTopBottomPatterns.json",
+  "question": "Which stocks are forming double top or double bottom reversal patterns?",
+  "retailQuestion": "Which stocks might be changing direction?",
+  "description": "Identifies classic double top and double bottom reversal patterns that signal potential trend changes. Analyzes pattern symmetry, volume confirmation, neckline breaks, and time between peaks/troughs to validate authentic reversal formations and filter out false patterns in consolidating markets.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "trading:/v2/positions"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for double top/bottom pattern screening",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data for pattern recognition and validation",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Check portfolio positions for potential reversal patterns",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Identify double top/bottom patterns with volume analysis and neckline break confirmation",
+      "function": "detect_double_patterns"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank patterns by completion probability and reversal strength",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I sell if I see a double top pattern?",
+    "Are double bottom patterns good buying opportunities?",
+    "How often do these reversal patterns actually work?",
+    "What's the best way to trade these patterns?"
+  ]
+}

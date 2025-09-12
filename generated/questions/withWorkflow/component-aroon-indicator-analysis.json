@@ -1,0 +1,47 @@
+{
+  "id": "aroon-indicator-analysis",
+  "name": "Aroon Indicator Trend Analysis",
+  "file": "experimental/AroonIndicatorAnalysis.json",
+  "output": "/experimental/AroonIndicatorAnalysis.json",
+  "question": "Which stocks are showing strong Aroon up or down trend signals?",
+  "retailQuestion": "Which stocks have the strongest trends right now?",
+  "description": "Analyzes Aroon Up and Aroon Down indicators to identify trend strength and potential trend changes. Examines Aroon crossovers, parallel movements, and extreme readings to determine trend direction and momentum for both trending and ranging markets.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "trading:/v2/positions"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for Aroon indicator analysis",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data for Aroon Up/Down calculation",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Check portfolio positions for Aroon trend assessment",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate Aroon Up/Down indicators and identify trend strength signals with crossover analysis",
+      "function": "analyze_aroon_indicators"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank stocks by Aroon trend strength and direction clarity",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I follow these strong trending stocks?",
+    "How long do these trends typically last?",
+    "What happens when the trend weakens?",
+    "Is it better to buy early or wait for confirmation?"
+  ]
+}

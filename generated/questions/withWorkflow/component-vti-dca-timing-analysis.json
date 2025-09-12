@@ -1,0 +1,46 @@
+{
+  "id": "vti-dca-timing-analysis",
+  "name": "VTI Dollar Cost Averaging Timing Analysis",
+  "file": "experimental/VTIDCATimingAnalysis.json",
+  "output": "/experimental/VTIDCATimingAnalysis.json",
+  "question": "How would different DCA schedules (weekly vs monthly vs quarterly) have performed with VTI?",
+  "retailQuestion": "Should I invest in VTI every week, month, or quarter to get the best results?",
+  "description": "Compares the performance of different dollar-cost averaging schedules on VTI (Total Stock Market ETF) over 10 years. Analyzes weekly, bi-weekly, monthly, and quarterly investment schedules to determine optimal DCA timing and frequency for long-term wealth building.",
+  "apis": [
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get 10+ years of VTI daily price data for DCA simulation",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get current VTI market data for context",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 3: Simulate multiple DCA schedules with consistent investment amounts",
+      "function": "simulate_dca_timing_strategies"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate cost basis, total returns, and timing impact for each schedule",
+      "function": "analyze_dca_performance_metrics"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Compare final values, volatility of returns, and optimal frequency",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Does it matter when I invest my money each month?",
+    "Should I invest more frequently for better results?",
+    "Is weekly investing worth the extra hassle?",
+    "What if I miss a few investment periods?"
+  ]
+}

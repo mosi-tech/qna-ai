@@ -1,0 +1,40 @@
+{
+  "id": "tax-loss-harvesting-simulation",
+  "name": "Tax Loss Harvesting Simulation",
+  "file": "experimental/TaxLossHarvestingSimulation.json",
+  "output": "/experimental/TaxLossHarvestingSimulation.json",
+  "question": "What would be the tax benefits of implementing a tax loss harvesting strategy on my portfolio?",
+  "description": "Simulates tax loss harvesting opportunities within your current portfolio by identifying positions with unrealized losses that could offset gains. Analyzes wash sale rules, replacement securities, and projected tax savings to optimize your after-tax returns while maintaining desired asset allocation and investment strategy.",
+  "apis": [
+    "trading:/v2/positions",
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get current positions with cost basis, unrealized gains/losses, and holding periods",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data to calculate potential harvesting opportunities",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Get current market prices for real-time loss calculations",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Simulate tax loss harvesting scenarios with wash sale rule compliance and replacement security analysis",
+      "function": "simulate_tax_loss_harvesting"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Calculate potential tax savings and rank harvesting opportunities by net benefit",
+      "function": "client_compute"
+    }
+  ]
+}

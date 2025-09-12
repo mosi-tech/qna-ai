@@ -1,0 +1,47 @@
+{
+  "id": "adx-trend-strength",
+  "name": "ADX Trend Strength Analysis",
+  "file": "experimental/ADXTrendStrength.json",
+  "output": "/experimental/ADXTrendStrength.json",
+  "question": "Which stocks are showing strong trending behavior based on ADX readings?",
+  "retailQuestion": "Which stocks are in strong uptrends or downtrends?",
+  "description": "Identifies stocks with high ADX (Average Directional Index) readings above 25, indicating strong trending conditions. Analyzes directional movement indicators (+DI/-DI) and ADX slope to determine trend strength, direction, and sustainability for trend-following strategies.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "trading:/v2/positions"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for ADX trend strength screening",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data for ADX and directional indicator calculations",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Check portfolio positions for trend strength assessment",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate ADX, +DI, -DI indicators and analyze trend strength with direction confirmation",
+      "function": "analyze_adx_trend_strength"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank stocks by trend strength and directional clarity",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I buy stocks in strong uptrends?",
+    "How long do these trends usually last?",
+    "What if the trend suddenly reverses?",
+    "Is it safe to follow the trend direction?"
+  ]
+}

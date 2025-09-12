@@ -1,0 +1,47 @@
+{
+  "id": "moving-average-support-levels",
+  "name": "Moving Average Support Level Analysis",
+  "file": "experimental/MovingAverageSupportLevels.json",
+  "output": "/experimental/MovingAverageSupportLevels.json",
+  "question": "Which of my holdings are finding support at key moving averages?",
+  "retailQuestion": "Which of my stocks are bouncing back from recent lows?",
+  "description": "Analyzes portfolio positions to identify stocks finding technical support at critical moving averages (20, 50, 100, 200-day). Evaluates bounce quality, volume patterns, and trend strength to determine which positions are likely to hold support levels and continue higher versus break down through key technical levels.",
+  "apis": [
+    "trading:/v2/positions",
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get current portfolio positions for moving average support analysis",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data for moving average calculation and support level identification",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Get current market prices for real-time support level testing",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate multiple moving averages and analyze support/resistance interactions with volume confirmation",
+      "function": "analyze_ma_support_levels"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank positions by support strength and probability of bounce continuation",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I buy more of stocks that are bouncing?",
+    "Are these bounces likely to continue higher?",
+    "What if my stock breaks below support?",
+    "How do I know if the bounce is real or fake?"
+  ]
+}

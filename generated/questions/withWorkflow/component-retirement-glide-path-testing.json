@@ -1,0 +1,40 @@
+{
+  "id": "retirement-glide-path-testing",
+  "name": "Retirement Glide Path Testing",
+  "file": "experimental/RetirementGlidePathTesting.json",
+  "output": "/experimental/RetirementGlidePathTesting.json",
+  "question": "How should my portfolio allocation change as I approach retirement?",
+  "description": "Tests different retirement glide path strategies by simulating how your portfolio allocation should evolve over time based on your age, risk tolerance, and retirement timeline. Compares aggressive vs conservative glide paths, target-date fund approaches, and custom allocation strategies to optimize retirement readiness and sequence-of-returns risk management.",
+  "apis": [
+    "trading:/v2/positions",
+    "trading:/v2/account",
+    "marketdata:/v2/stocks/bars"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get current portfolio allocation and target retirement timeframe",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get account value and contribution capacity for glide path modeling",
+      "function": "alpaca-trading_account"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Get historical returns for stocks, bonds, and alternative assets across market cycles",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Simulate different glide path strategies with sequence-of-returns risk analysis",
+      "function": "test_retirement_glide_paths"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Calculate retirement success probability and rank glide path strategies by outcome distribution",
+      "function": "client_compute"
+    }
+  ]
+}

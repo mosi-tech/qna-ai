@@ -1,0 +1,47 @@
+{
+  "id": "multi-timeframe-confluence",
+  "name": "Multi-Timeframe Technical Confluence",
+  "file": "experimental/MultiTimeframeConfluence.json",
+  "output": "/experimental/MultiTimeframeConfluence.json",
+  "question": "Which stocks show technical signal confluence across multiple timeframes?",
+  "retailQuestion": "Which stocks show strong signals across all time periods?",
+  "description": "Analyzes technical signals across daily, weekly, and monthly timeframes to identify high-probability setups with multi-timeframe confluence. Examines trend alignment, support/resistance levels, and momentum indicators for comprehensive signal validation.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "trading:/v2/positions"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for multi-timeframe technical analysis",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data across multiple timeframes (daily, weekly, monthly)",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Check portfolio positions for multi-timeframe signal assessment",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Analyze technical signals across timeframes and calculate confluence scores with trend alignment",
+      "function": "analyze_timeframe_confluence"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank stocks by multi-timeframe confluence strength and signal alignment",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Are these multi-timeframe signals more reliable?",
+    "Should I wait for all timeframes to align?",
+    "What if signals conflict between timeframes?",
+    "How important is long-term vs short-term confirmation?"
+  ]
+}

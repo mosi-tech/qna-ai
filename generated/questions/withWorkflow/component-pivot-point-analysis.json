@@ -1,0 +1,47 @@
+{
+  "id": "pivot-point-analysis",
+  "name": "Pivot Point Support Resistance Analysis",
+  "file": "experimental/PivotPointAnalysis.json",
+  "output": "/experimental/PivotPointAnalysis.json",
+  "question": "Which stocks are reacting at key pivot point support and resistance levels?",
+  "retailQuestion": "Which stocks are bouncing off important price levels?",
+  "description": "Analyzes classical pivot points, support (S1, S2, S3) and resistance (R1, R2, R3) levels to identify intraday and swing trading opportunities. Examines price reactions at pivot levels, volume confirmation, and breakthrough probability for tactical entry and exit points.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for pivot point analysis",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data for pivot point calculation and level identification",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Get current market data for real-time pivot level interaction assessment",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate pivot points and analyze price reactions at support/resistance levels",
+      "function": "analyze_pivot_points"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank pivot interactions by reaction strength and breakthrough probability",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I buy at support levels?",
+    "How reliable are these pivot points?",
+    "What happens if support doesn't hold?",
+    "Are these good entry and exit points?"
+  ]
+}

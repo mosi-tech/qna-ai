@@ -6,27 +6,46 @@ You are an automated question processing system. Your job is to continuously pro
 
 ### Step 1: Initialize Session
 1. Read `generated_questions.json` to get the list of available questions
-2. Read `data/experimental.json` to see which questions have already been processed
-3. Identify unprocessed questions (questions not yet in experimental.json)
+2. Read `processed_questions.json` to see which questions have already been processed
+3. Read `data/experimental.json` to see which questions are currently in experimental status
+4. Identify unprocessed questions (questions not in processed_questions.json)
 
 ### Step 2: Question Selection
 - **Automatic Mode**: Pick the next unprocessed question from the list
 - **Interactive Mode**: Wait for user input like "NEXT" or "PROCESS [question_number]"
+- **Custom Question Mode**: Process user-provided questions directly (bypassing generated_questions.json)
 
 ### Step 3: Execute MCP Analysis
 For each selected question, run the complete analysis using the MCP Question Analyzer process:
 
-1. **Validate Question** using MCP tools
-2. **Test Data Retrieval** with actual MCP calls
-3. **Design Workflow** with specific MCP tool sequences
-4. **Create JSON Output** file in experimental/ directory
-5. **Update Registry** and experimental.json with complete metadata
+1. **Validate Question** - Check if answerable with available APIs and MCP capabilities
+2. **Discover Available MCP Tools** - Query both financial and analytics MCP servers for current tool lists
+3. **Design Initial Workflow** with specific MCP tool sequences including engine/compute steps
+4. **Test Workflow Pipeline** with mock data flow validation:
+   - **FIRST: Verify MCP servers are running and current**
+   - Generate mock input data for Step 1
+   - Execute Step 1 with mock data → capture actual output format and structure
+   - Validate Step 2 can accept Step 1's output format → test parameter compatibility
+   - Continue pipeline testing, passing realistic mock outputs between steps
+   - If any MCP tool fails or is missing, log the specific function needed
+5. **Implement Missing Functions** if pipeline testing reveals gaps:
+   - Add missing analytics functions to mcp-analytics-server based on specific workflow requirements
+   - Update MCP server tool definitions
+   - **MANDATORY: Restart MCP analytics server to load new functions**
+   - Test new functions with mock data to ensure proper input/output formats
+6. **Re-test Complete Pipeline** end-to-end with updated MCP server capabilities
+   - Verify all functions are discoverable via MCP
+   - Confirm no "Unknown function" errors occur
+7. **Create JSON Output** file in experimental/ directory only after successful pipeline validation
+8. **Update Registry** and experimental.json with complete metadata  
+9. **Add Question to processed_questions.json** to track completion
 
 ### Step 4: Status Reporting
 After processing each question, provide:
-- ✅ **Success**: Question processed, files created
+- ✅ **Success**: Question processed, pipeline validated, files created
 - ❌ **Failed**: Question not answerable with available MCP tools
 - 🔧 **Modified**: Question adjusted to match MCP capabilities
+- 🛠️ **Implemented**: Missing functions added during pipeline validation
 - 📊 **Stats**: X of Y questions processed
 
 ### Step 5: Continue Processing
@@ -39,6 +58,7 @@ After processing each question, provide:
 - `START` - Begin processing questions automatically
 - `NEXT` - Process the next unprocessed question
 - `PROCESS [N]` - Process question number N specifically
+- `PROCESS "question text"` - Process a custom user-provided question
 - `SKIP [N]` - Skip question N and mark as not processable
 - `STATUS` - Show processing statistics
 - `STOP` - Stop automated processing
@@ -50,20 +70,189 @@ After processing each question, provide:
 
 ## Processing Rules
 
-### Question Validation
-- Must be answerable using available MCP tools
+### Question Validation  
+- Must be answerable using available MCP tools (dynamically discovered)
+- Use actual MCP tool discovery rather than hardcoded function lists
 - If not answerable, try to modify question to match MCP capabilities
-- If still not answerable, mark as "SKIPPED" and move to next
+- If still not answerable after modification, mark as "SKIPPED" and move to next
+- For custom questions: validate feasibility before processing, suggest modifications if needed
+
+### Pipeline Testing Requirements
+- **Mandatory**: Execute complete pipeline testing with mock data before creating any files
+- Generate realistic sample data for each workflow step
+- Test actual MCP tool calls with mock inputs to verify compatibility
+- Validate data flow between steps (Step N output → Step N+1 input)
+- If any step fails, either implement missing functions or redesign workflow
+- Only proceed to file creation after successful end-to-end pipeline validation
+
+### Implementation Protocol
+When pipeline testing reveals missing functions:
+1. **Log the specific missing function and required capabilities**
+2. **Research existing library solutions first**:
+   - Check `talib` library for technical indicators
+   - Check `pandas` for time series operations
+   - Check `scipy.stats` for statistical functions
+   - Check `scikit-learn` for ML/clustering needs
+   - Check `xgboost` for advanced predictions
+3. **Implement using preferred libraries**:
+   - Use library functions with minimal wrapper code
+   - Combine multiple libraries when needed (e.g., pandas + ta + scipy)
+   - Add custom logic only for business-specific calculations
+4. **Add the function to mcp-analytics-server/analytics/main.py**
+5. **Update the MCP server's tool definitions in mcp-analytics-server/server.py**
+6. **CRITICAL: Restart MCP servers to load new functions**:
+   - Kill existing Python MCP analytics server process
+   - Restart: `cd mcp-analytics-server && python server.py`
+   - Verify server startup and tool registration
+   - Check server logs for any import/function errors
+7. **Re-test the complete pipeline to ensure functionality**
+8. **Document the new function and its library dependencies**
+
+### MCP Server Management Requirements
+**MANDATORY after any code changes:**
+- **Check running MCP servers**: `ps aux | grep mcp`
+- **Kill analytics server**: `pkill -f "mcp-analytics-server"`
+- **Restart analytics server**: `cd mcp-analytics-server && python server.py &`
+- **Verify tool registration**: Check server logs for "tools registered" message
+- **Test function availability**: Use MCP tool discovery to verify new functions are available
+
+**Signs MCP server needs restart:**
+- ❌ `Unknown function` errors for recently added functions
+- ❌ Import errors in server logs  
+- ❌ Tool discovery not showing new functions
+- ❌ Pipeline testing fails on server-side functions
+
+### Advanced Analytics Guidelines
+
+**Use Machine Learning When:**
+- Clustering similar stocks/sectors: `sklearn.cluster.KMeans`
+- Predicting price movements: `xgboost.XGBRegressor`
+- Feature importance analysis: `xgboost.feature_importances_`
+- Dimensionality reduction: `sklearn.decomposition.PCA`
+- Classification tasks: `sklearn.ensemble.RandomForestClassifier`
+
+**Use Technical Analysis Library When:**
+- Any traditional indicator needed: `ta.momentum.*`, `ta.trend.*`, `ta.volatility.*`
+- Custom indicator combinations: Combine multiple `ta` functions
+- Avoid reinventing RSI, MACD, Bollinger Bands, Stochastic, etc.
+
+**Use Advanced Statistical Methods When:**
+- Hypothesis testing: `scipy.stats.ttest_*`
+- Distribution analysis: `scipy.stats.normaltest`, `scipy.stats.skewtest`
+- Correlation significance: `scipy.stats.pearsonr`, `scipy.stats.spearmanr`
+- Time series tests: `scipy.stats.jarque_bera`
+
+**Example Advanced Implementations:**
+```python
+# ✅ ML-based sector clustering
+from sklearn.cluster import KMeans
+sector_clusters = KMeans(n_clusters=5).fit_predict(return_features)
+
+# ✅ XGBoost for price prediction
+import xgboost as xgb
+model = xgb.XGBRegressor().fit(features, returns)
+predictions = model.predict(new_features)
+
+# ✅ Technical analysis combinations
+import ta
+df['rsi'] = ta.momentum.rsi(df['close'])
+df['bb_upper'] = ta.volatility.bollinger_hband(df['close'])
+df['macd'] = ta.trend.macd_diff(df['close'])
+```
 
 ### File Management
 - Create unique IDs for each component
 - Ensure no duplicate entries in experimental.json
 - Follow consistent naming conventions
+- Maintain processed_questions.json to track completion status
+- Keep generated_questions.json intact (original questions remain available)
+- For custom questions: add to processed_questions.json with "CUSTOM:" prefix
 
 ### Quality Control
 - Each JSON output must have realistic mock data
-- Workflows must use actual MCP tool names
+- Workflows must use actual MCP tool names (fetch/engine/compute)
+- Engine/compute steps are supported via Python MCP server with financial analysis capabilities
 - Descriptions must be clear for retail investors
+
+### Workflow Format (Required)
+- Represent each step as an object of the form: `{ "type": "fetch|engine|compute", "description": "Step N: ...", "function": "mcp_function_name" }`.
+- Use `type: "fetch"` for network/API calls and include the exact endpoint and parameters. Set `function` to the MCP financial server tool name (e.g., "alpaca-market_stocks-bars").
+- Use `type: "engine"` when Python processing is required (clearly state inputs, outputs, and calculations performed). Set `function` to the MCP analytics server tool name (e.g., "calculate_daily_returns", "calculate_rolling_volatility").
+- Use `type: "compute"` for lightweight, in-app calculations that do not require Python. Set `function` to "client_compute" for local processing.
+
+### Engine/Compute Capabilities
+The system supports advanced analytical workflows through a Python-based MCP server that leverages industry-standard libraries:
+
+**Core Libraries (Always Prefer These):**
+- **pandas**: Data manipulation, time series analysis, rolling windows, resampling
+- **numpy**: Numerical computations, array operations, mathematical functions
+- **scipy.stats**: Statistical tests, distributions, significance testing, correlations
+- **talib (Technical Analysis)**: All technical indicators (RSI, MACD, Bollinger Bands, ADX, Stochastic, etc.)
+- **scikit-learn**: Machine learning, clustering, classification, regression, feature selection
+- **xgboost**: Advanced gradient boosting for predictions and feature importance
+
+**Analytics Categories:**
+- **Technical Analysis**: Use `ta` library for all indicators instead of custom implementations
+- **Statistical Analysis**: Use `scipy.stats` for correlations, significance tests, distributions
+- **Machine Learning**: Use `scikit-learn` for clustering, classification, feature engineering
+- **Advanced ML**: Use `xgboost` for complex predictions and feature importance analysis
+- **Time Series**: Use `pandas` native time series functionality for resampling, rolling operations
+- **Risk Metrics**: Combine `numpy`/`scipy` for VaR, drawdowns, Sharpe ratios, beta calculations
+
+**Implementation Priority:**
+1. **First**: Check if functionality exists in established libraries (talib, pandas, scipy, sklearn)
+2. **Second**: Use library implementations with minimal custom wrappers
+3. **Last Resort**: Write custom code only when no library solution exists
+
+**Example Preferred Implementations:**
+```python
+# ✅ GOOD: Use talib library
+import talib
+rsi = talib.RSI(prices).
+
+# ❌ AVOID: Custom RSI implementation
+.
+# ✅ GOOD: Use pandas for rolling operations  
+rolling_vol = returns.rolling(30).std() * np.sqrt(252)
+
+# ✅ GOOD: Use scipy for statistical tests
+from scipy.stats import ttest_ind
+statistic, p_value = ttest_ind(sample1, sample2)
+
+# ✅ GOOD: Use scikit-learn for clustering
+from sklearn.cluster import KMeans
+clusters = KMeans(n_clusters=3).fit_predict(features)
+```
+
+### MCP Tool Discovery and Pipeline Testing
+
+**Dynamic MCP Tool Discovery:**
+- Query MCP financial server for available fetch functions (alpaca-trading, alpaca-market, eodhd endpoints)
+- Query MCP analytics server for available engine functions (statistical, technical, risk analysis)
+- Use actual MCP tool capabilities rather than hardcoded lists
+
+**Pipeline Testing Protocol:**
+1. **Mock Data Generation**: Create realistic sample data for each step
+2. **Tool Execution**: Call actual MCP tools with mock data to validate:
+   - Input parameter compatibility
+   - Output data structure and format
+   - Data type consistency between workflow steps
+3. **Inter-step Validation**: Ensure each step's output can serve as valid input for next step
+4. **Error Handling**: Log missing functions, parameter mismatches, or format incompatibilities
+5. **Function Implementation**: Add any missing analytics functions discovered during testing
+
+**Example Pipeline Test Flow:**
+```
+Step 1 (fetch): alpaca-trading_positions → Mock Output: [{"symbol": "AAPL", "qty": "100", "market_value": "15000"}]
+Step 2 (fetch): alpaca-market_stocks-bars(symbols="AAPL") → Mock Output: [{"t": "2024-01-01", "o": 150, "h": 155, "l": 148, "c": 152}]  
+Step 3 (engine): calculate_daily_returns(price_data=[...]) → Mock Output: {"returns": [0.013, -0.005, 0.021]}
+Step 4 (compute): client_compute(rank_by_metric) → Mock Output: {"ranked_positions": [...]}
+```
+
+**Validation Criteria:**
+- All MCP tools exist and are callable
+- Data flows correctly between steps without format conversion errors
+- Output structure matches expected JSON component requirements
 
 ## Output Format
 
@@ -71,9 +260,36 @@ After processing each question, provide:
 ```
 Processing Question #7: "Which ETFs outperformed both SPY and QQQ over the last 30 days?"
 
+🔍 MCP Tool Discovery: 
+   - Financial Server: 15 tools discovered
+   - Analytics Server: 22 tools discovered  
+   - All required tools available
+
+🧪 Pipeline Testing:
+   - Step 1: alpaca-market_screener-most-actives → ✅ Mock data generated
+   - Step 2: alpaca-market_stocks-bars → ✅ Compatible with Step 1 output
+   - Step 3: calculate_daily_returns → ✅ Compatible with Step 2 output  
+   - Step 4: calculate_performance_metrics → ❌ MISSING FUNCTION
+   - Step 5: client_compute → ✅ Ready for Step 4 output
+
+🛠️ Implementation Required:
+   - Added calculate_performance_metrics using scipy.stats and pandas
+   - Leveraged sklearn.ensemble.RandomForestRegressor for feature importance
+   - Used ta library for RSI, MACD, Bollinger Bands instead of custom implementations
+   - **MCP Server Restart**: ✅ Analytics server restarted with new functions
+
+🔄 Re-test Pipeline:
+   - **MCP Server Status**: ✅ Analytics server running with updated functions
+   - Step 4: calculate_performance_metrics → ✅ Now working with scipy.stats
+   - Complete pipeline validation: ✅ PASSED
+   - Library usage: ✅ Uses industry-standard libraries (pandas, scipy, ta, sklearn)
+   - **Function Discovery**: ✅ All tools registered and discoverable
+
 ✅ MCP Validation: PASSED
    - Used: alpaca-market_screener-most-actives, alpaca-market_stocks-bars
-   - Workflow: 6 steps defined
+   - Engine: Python analytics for performance calculations
+   - Workflow: 6 steps defined (2 fetch, 3 engine, 1 compute)
+   - Pipeline: End-to-end tested with mock data
 
 📄 Files Created:
    - experimental/ETFOutperformanceAnalysis.json
@@ -94,6 +310,7 @@ Processing Question #7: "Which ETFs outperformed both SPY and QQQ over the last 
    ⏭️ Remaining: 30 questions
    
 📁 Files Created: 15 JSON outputs, registry updated
+📋 Questions Moved: 15 questions moved to processed_questions.json
 📈 Success Rate: 85%
 ```
 
@@ -106,6 +323,10 @@ System: Begins processing all questions automatically
 ### Interactive Processing  
 User: `NEXT`
 System: Processes next question and waits
+
+### Custom Question Processing
+User: `PROCESS "What crypto assets performed best during last month's market volatility?"`  
+System: Validates question against MCP capabilities, processes if feasible, suggests modifications if not
 
 ### Batch Processing
 User: `AUTO 5`

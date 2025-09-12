@@ -1,0 +1,47 @@
+{
+  "id": "gap-fill-analysis",
+  "name": "Gap Fill Probability Analysis",
+  "file": "experimental/GapFillAnalysis.json",
+  "output": "/experimental/GapFillAnalysis.json",
+  "question": "Which stocks have unfilled gaps that are likely to be filled?",
+  "retailQuestion": "Which stocks might return to their previous price levels?",
+  "description": "Identifies stocks with significant price gaps (upward or downward) that remain unfilled and analyzes the probability of gap closure based on gap size, volume patterns, time elapsed, and market conditions. Provides gap fill targets and timeframe estimates for mean reversion trading strategies.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for gap identification and analysis",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data to identify unfilled gaps and gap characteristics",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Get current market prices for gap distance calculations",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Identify unfilled gaps and calculate fill probability based on historical patterns and market context",
+      "function": "analyze_gap_fill_probability"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank gaps by fill probability and expected timeframe",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I buy stocks expecting gaps to fill?",
+    "How long does it usually take for gaps to close?",
+    "What if the gap never gets filled?",
+    "Are gap fills reliable trading opportunities?"
+  ]
+}

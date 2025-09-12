@@ -1,0 +1,47 @@
+{
+  "id": "relative-strength-momentum",
+  "name": "Relative Strength Momentum Scanner",
+  "file": "experimental/RelativeStrengthMomentum.json",
+  "output": "/experimental/RelativeStrengthMomentum.json",
+  "question": "Which stocks are showing the strongest relative strength vs the market?",
+  "retailQuestion": "Which stocks are outperforming the market?",
+  "description": "Identifies stocks demonstrating superior relative strength compared to the S&P 500 across multiple timeframes. Analyzes price performance ratios, momentum persistence, and sector-relative performance to find stocks with sustained outperformance that may continue their leadership trends.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "trading:/v2/positions"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for relative strength screening",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data for stocks and market benchmark (SPY) for relative strength calculations",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Check portfolio positions for relative strength assessment",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate relative strength ratios across multiple timeframes with momentum persistence analysis",
+      "function": "calculate_relative_strength_momentum"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank stocks by relative strength score and momentum consistency",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I focus on buying market leaders?",
+    "How long do these outperformers typically last?",
+    "What's the risk of buying winners?",
+    "When should I take profits on strong performers?"
+  ]
+}

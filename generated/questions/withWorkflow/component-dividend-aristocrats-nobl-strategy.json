@@ -1,0 +1,46 @@
+{
+  "id": "dividend-aristocrats-nobl-strategy",
+  "name": "Dividend Aristocrats Defensive Strategy Backtest",
+  "file": "experimental/DividendAristocratsNOBLStrategy.json",
+  "output": "/experimental/DividendAristocratsNOBLStrategy.json",
+  "question": "How would holding NOBL during market downturns and switching to growth during uptrends have performed?",
+  "retailQuestion": "Should I rotate between dividend stocks and growth stocks based on market conditions?",
+  "description": "Backtests a defensive rotation strategy using the ProShares S&P 500 Dividend Aristocrats ETF (NOBL) as a safe haven during market stress and growth assets during bull markets. Uses VIX levels and market momentum to trigger rotations over 8 years of market cycles.",
+  "apis": [
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get 8+ years of NOBL and QQQ price data for rotation analysis",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get current market data for NOBL and growth comparison",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 3: Calculate market stress signals and rotation triggers",
+      "function": "calculate_defensive_rotation_signals"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Backtest defensive rotation strategy with realistic timing",
+      "function": "backtest_defensive_rotation_strategy"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Compare rotation vs static allocation performance and drawdowns",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I switch to dividend stocks when markets get scary?",
+    "How often should I rotate between defensive and growth?",
+    "Are dividend aristocrats really safer investments?",
+    "Is this rotation strategy worth the complexity?"
+  ]
+}

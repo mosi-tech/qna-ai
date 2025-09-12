@@ -1,0 +1,47 @@
+{
+  "id": "money-flow-index",
+  "name": "Money Flow Index Analysis", 
+  "file": "experimental/MoneyFlowIndex.json",
+  "output": "/experimental/MoneyFlowIndex.json",
+  "question": "Which stocks are showing Money Flow Index buying or selling pressure signals?",
+  "retailQuestion": "Which stocks are seeing the most buying interest?",
+  "description": "Analyzes Money Flow Index (MFI) to measure buying and selling pressure based on both price and volume. Identifies overbought conditions above 80, oversold conditions below 20, and MFI divergences that indicate potential trend reversals.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "trading:/v2/positions"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for Money Flow Index analysis",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price and volume data for MFI calculation",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Check portfolio positions for MFI signal assessment",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate Money Flow Index and analyze buying/selling pressure with divergence detection",
+      "function": "analyze_money_flow_index"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank stocks by MFI signal strength and pressure direction",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I follow the buying pressure signals?",
+    "How do I know if the buying is real or temporary?",
+    "What happens when selling pressure kicks in?",
+    "Is heavy buying always a good sign?"
+  ]
+}

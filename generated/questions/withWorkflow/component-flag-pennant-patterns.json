@@ -1,0 +1,47 @@
+{
+  "id": "flag-pennant-patterns",
+  "name": "Flag and Pennant Continuation Patterns",
+  "file": "experimental/FlagPennantPatterns.json", 
+  "output": "/experimental/FlagPennantPatterns.json",
+  "question": "Which stocks are forming flag or pennant continuation patterns?",
+  "retailQuestion": "Which stocks might continue their upward trend?",
+  "description": "Identifies flag and pennant continuation patterns that typically occur mid-trend and signal resumption of the primary trend direction. Analyzes pattern duration, volume characteristics, and breakout quality to confirm authentic continuation setups versus reversal threats.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for flag and pennant pattern screening",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data for continuation pattern identification and trend context",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Get current market data for pattern completion and breakout timing",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Identify flag and pennant patterns with trend continuation probability analysis",
+      "function": "detect_flag_pennant_patterns"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank continuation patterns by trend strength and breakout potential",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I buy these continuation patterns?",
+    "How reliable are flag and pennant breakouts?",
+    "What's the risk if the pattern fails?",
+    "How long should I hold after a breakout?"
+  ]
+}

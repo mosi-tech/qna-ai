@@ -1,0 +1,47 @@
+{
+  "id": "hammer-doji-patterns",
+  "name": "Hammer and Doji Candlestick Patterns",
+  "file": "experimental/HammerDojiPatterns.json",
+  "output": "/experimental/HammerDojiPatterns.json",
+  "question": "Which stocks are forming hammer or doji reversal candlestick patterns?",
+  "retailQuestion": "Which stocks are showing reversal signals?",
+  "description": "Scans for hammer, inverted hammer, and doji candlestick patterns that often signal potential reversals at support or resistance levels. Analyzes pattern quality, location within trends, and volume confirmation to identify high-probability reversal setups for both bullish and bearish scenarios.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "trading:/v2/positions"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for candlestick pattern screening",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get OHLC data for candlestick pattern identification and trend context",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Check portfolio positions for reversal pattern opportunities",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Identify hammer, doji, and other reversal candlestick patterns with trend and volume validation",
+      "function": "detect_reversal_candlesticks"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank candlestick patterns by reversal probability and trend context",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I buy when I see these reversal patterns?",
+    "How reliable are candlestick signals?",
+    "What if the reversal doesn't happen?",
+    "Do I need to wait for confirmation?"
+  ]
+}

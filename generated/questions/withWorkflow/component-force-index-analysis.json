@@ -1,0 +1,47 @@
+{
+  "id": "force-index-analysis",
+  "name": "Force Index Momentum Analysis",
+  "file": "experimental/ForceIndexAnalysis.json",
+  "output": "/experimental/ForceIndexAnalysis.json",
+  "question": "Which stocks are showing Force Index buying or selling pressure signals?",
+  "retailQuestion": "Which stocks have strong buying or selling momentum?",
+  "description": "Analyzes Force Index to measure the amount of power behind price movements by combining price change with volume. Identifies strong buying pressure (positive spikes) and selling pressure (negative spikes) to confirm trend strength and predict continuation patterns.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "trading:/v2/positions"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for Force Index analysis",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price and volume data for Force Index calculation",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Check portfolio positions for Force Index pressure assessment",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate Force Index and identify buying/selling pressure spikes with trend confirmation",
+      "function": "analyze_force_index"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank Force Index signals by pressure strength and trend alignment",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I follow the buying pressure signals?",
+    "How does force index differ from other indicators?",
+    "What if the momentum suddenly changes?",
+    "Are these good timing signals for entry?"
+  ]
+}

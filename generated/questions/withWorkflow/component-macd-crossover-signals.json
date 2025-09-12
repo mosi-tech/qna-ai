@@ -1,0 +1,47 @@
+{
+  "id": "macd-crossover-signals",
+  "name": "MACD Crossover Signal Analysis",
+  "file": "experimental/MACDCrossoverSignals.json",
+  "output": "/experimental/MACDCrossoverSignals.json",
+  "question": "Which stocks are showing fresh MACD bullish crossover signals?",
+  "retailQuestion": "Which stocks are showing fresh momentum to go higher?",
+  "description": "Identifies stocks with recent MACD bullish crossovers where the MACD line crosses above the signal line, indicating potential upward momentum. Analyzes crossover strength, histogram patterns, and volume confirmation to filter high-probability momentum signals and avoid false breakouts in sideways markets.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for MACD crossover screening",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data for MACD calculation and trend context",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Get current market data for real-time crossover confirmation",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate MACD indicators and identify fresh bullish crossovers with volume validation",
+      "function": "scan_macd_crossovers"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank crossover signals by momentum strength and trend alignment",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I buy these stocks with momentum signals?",
+    "How long does this momentum usually last?",
+    "What if the momentum fades quickly?",
+    "Are these signals reliable for making money?"
+  ]
+}

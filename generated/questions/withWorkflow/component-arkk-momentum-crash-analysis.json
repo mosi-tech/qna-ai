@@ -1,0 +1,46 @@
+{
+  "id": "arkk-momentum-crash-analysis",
+  "name": "ARKK Momentum Strategy Crash Analysis",
+  "file": "experimental/ARKKMomentumCrashAnalysis.json",
+  "output": "/experimental/ARKKMomentumCrashAnalysis.json",
+  "question": "How would a momentum strategy on ARKK have performed during the 2021-2022 growth stock crash?",
+  "retailQuestion": "Would following trends on ARKK have saved me from the crash?",
+  "description": "Analyzes a momentum-based strategy on ARK Innovation ETF during the major growth stock selloff from early 2021 to 2022. Tests whether momentum indicators could have provided early exit signals before the 75%+ decline and evaluates re-entry timing during the recovery phase.",
+  "apis": [
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get 2020-2023 ARKK daily price data covering the full cycle",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get current ARKK market data for recovery context",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 3: Calculate momentum indicators and generate crash-protection signals",
+      "function": "calculate_momentum_crash_signals"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Backtest strategy through crash and recovery with timing analysis",
+      "function": "backtest_crash_protection_strategy"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Compare momentum strategy vs buy-and-hold during the crisis",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Could momentum signals have protected me from the crash?",
+    "Should I use stop-losses on growth stocks like ARKK?",
+    "How do I know when it's safe to buy back in?",
+    "Is ARKK too risky for my portfolio?"
+  ]
+}

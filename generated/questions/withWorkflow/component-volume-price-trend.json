@@ -1,0 +1,47 @@
+{
+  "id": "volume-price-trend",
+  "name": "Volume Price Trend Analysis",
+  "file": "experimental/VolumePriceTrend.json",
+  "output": "/experimental/VolumePriceTrend.json", 
+  "question": "Which stocks are showing strong volume-price trend confirmation?",
+  "retailQuestion": "Which stocks have volume backing their price moves?",
+  "description": "Analyzes the Volume Price Trend (VPT) indicator to identify stocks where volume is confirming price movements. Examines VPT divergences, trend confirmations, and volume flow patterns to distinguish between sustainable trends and potential reversals.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "trading:/v2/positions"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for volume-price trend analysis",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price and volume data for VPT calculation and trend analysis",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Check portfolio positions for volume-price trend assessment",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate Volume Price Trend indicator and analyze confirmation patterns with price trends",
+      "function": "analyze_volume_price_trend"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank stocks by volume-price trend strength and confirmation quality",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I prefer volume-confirmed moves?",
+    "What happens when volume doesn't support price?",
+    "How important is volume in trend analysis?",
+    "Are these more reliable than price-only signals?"
+  ]
+}

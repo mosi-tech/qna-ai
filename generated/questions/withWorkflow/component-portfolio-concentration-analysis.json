@@ -1,0 +1,47 @@
+{
+  "id": "portfolio-concentration-analysis",
+  "name": "Portfolio Concentration Risk Analysis",
+  "file": "experimental/PortfolioConcentrationAnalysis.json",
+  "output": "/experimental/PortfolioConcentrationAnalysis.json",
+  "question": "How concentrated is my portfolio and what are the risks of my largest positions?",
+  "retailQuestion": "Am I putting too many eggs in one basket?",
+  "description": "Analyzes portfolio concentration risk by examining position sizes, sector weightings, and correlation clusters to identify over-concentration in individual stocks, sectors, or themes. Provides concentration metrics, diversification scores, and recommendations for reducing single-point-of-failure risks while maintaining performance potential.",
+  "apis": [
+    "trading:/v2/positions",
+    "marketdata:/v2/stocks/bars",
+    "eodhd:/fundamentals/bulk"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get current portfolio positions with market values and percentage allocations",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data for correlation and volatility analysis",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Get fundamental data for sector classification and business overlap analysis",
+      "function": "eodhd_fundamentals-bulk"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate concentration metrics, correlation matrices, and sector clustering analysis",
+      "function": "analyze_portfolio_concentration"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Score concentration risk and rank positions by diversification impact",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I diversify my largest holdings?",
+    "How many stocks should I own?",
+    "What's the risk of having one big winner?",
+    "When should I trim my best performers?"
+  ]
+}

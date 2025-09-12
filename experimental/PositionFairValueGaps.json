@@ -1,0 +1,94 @@
+{
+  "description": "Analysis showing which of your current positions had the largest price gaps versus their calculated fair value at market open. This helps identify positions that opened significantly above or below their theoretical fair value based on overnight news, pre-market activity, and market sentiment. Large gaps can indicate strong momentum signals or potential mean-reversion opportunities.",
+  "body": [
+    {
+      "key": "position_with_largest_gap",
+      "value": "NVDA",
+      "description": "The position showing the largest absolute price gap between actual market open and calculated fair value open (3.2% premium to fair value)"
+    },
+    {
+      "key": "largest_premium_gap",
+      "value": "3.2%",
+      "description": "NVDA opened 3.2% above its calculated fair value, indicating strong bullish sentiment or positive overnight news flow"
+    },
+    {
+      "key": "largest_discount_gap",
+      "value": "-2.1%", 
+      "description": "AAPL opened 2.1% below its calculated fair value, potentially representing a value opportunity or negative sentiment"
+    },
+    {
+      "key": "average_gap_magnitude",
+      "value": "1.4%",
+      "description": "Average absolute gap across all positions between actual open and fair value open, indicating overall market efficiency"
+    },
+    {
+      "key": "positions_above_fair_value",
+      "value": 7,
+      "description": "Number of positions that opened above their calculated fair value, suggesting broad market optimism"
+    },
+    {
+      "key": "positions_below_fair_value", 
+      "value": 3,
+      "description": "Number of positions that opened below their calculated fair value, potentially indicating value opportunities"
+    },
+    {
+      "key": "largest_gap_position_details",
+      "value": {
+        "symbol": "NVDA",
+        "actual_open": "$142.50",
+        "fair_value_open": "$138.12",
+        "gap_amount": "$4.38",
+        "gap_percentage": "3.2%",
+        "position_size": "150 shares"
+      },
+      "description": "Detailed breakdown of the position with the largest fair value gap, showing actual vs expected opening prices"
+    },
+    {
+      "key": "gap_persistence_indicator",
+      "value": "72%",
+      "description": "Percentage of large fair value gaps (>2%) that persist through the trading day, indicating gap significance"
+    },
+    {
+      "key": "correlation_with_volume",
+      "value": 0.65,
+      "description": "Correlation between gap magnitude and opening volume, showing larger gaps tend to occur with higher volume confirmation"
+    },
+    {
+      "key": "market_regime_context",
+      "value": "Low Volatility",
+      "description": "Current market volatility regime context - fair value gaps tend to be smaller in low volatility environments"
+    }
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get current account positions with quantities and market values",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "fetch", 
+      "description": "Step 2: Get current market snapshots for all position symbols including bid/ask and last trade data",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Get historical price data for fair value calculation (previous day close, overnight futures if available)",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate fair value open price using previous close, overnight sentiment indicators, and volatility adjustments",
+      "function": "calculate_risk_metrics"
+    },
+    {
+      "type": "engine",
+      "description": "Step 5: Calculate gap magnitude between actual market open and calculated fair value open for each position",
+      "function": "identify_gaps"
+    },
+    {
+      "type": "compute",
+      "description": "Step 6: Rank positions by absolute gap magnitude and categorize as premium/discount to fair value",
+      "function": "client_compute"
+    }
+  ]
+}

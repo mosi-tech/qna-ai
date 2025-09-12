@@ -1,0 +1,47 @@
+{
+  "id": "wedge-pattern-analysis",
+  "name": "Wedge Pattern Reversal Analysis", 
+  "file": "experimental/WedgePatternAnalysis.json",
+  "output": "/experimental/WedgePatternAnalysis.json",
+  "question": "Which stocks are completing rising or falling wedge reversal patterns?",
+  "retailQuestion": "Which stocks are showing exhaustion patterns?",
+  "description": "Identifies rising wedge (bearish) and falling wedge (bullish) reversal patterns characterized by converging trend lines with decreasing volume. Analyzes wedge angle, volume patterns, and breakout direction to predict high-probability reversal trades.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "trading:/v2/positions"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for wedge pattern identification",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data for wedge pattern construction and analysis",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Check portfolio positions for potential wedge reversal opportunities",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Identify rising and falling wedge patterns with volume confirmation and reversal probability",
+      "function": "analyze_wedge_patterns"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank wedge patterns by reversal strength and completion probability",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I expect these trends to reverse?",
+    "How reliable are wedge reversal patterns?",
+    "What's the best way to trade these formations?",
+    "When should I enter or exit these positions?"
+  ]
+}

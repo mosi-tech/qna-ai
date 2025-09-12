@@ -1,0 +1,46 @@
+{
+  "id": "apple-macd-crossover-backtest",
+  "name": "Apple MACD Crossover Strategy Backtest",
+  "file": "experimental/AppleMACDCrossoverBacktest.json",
+  "output": "/experimental/AppleMACDCrossoverBacktest.json",
+  "question": "What would the returns be from trading AAPL based on MACD bullish and bearish crossovers?",
+  "retailQuestion": "Would following momentum signals on Apple stock have made me money?",
+  "description": "Backtests a MACD crossover strategy on Apple stock over 7 years, buying on bullish crossovers and selling on bearish crossovers. Analyzes the effectiveness of this momentum strategy including transaction costs, slippage, and performance during different market cycles specific to Apple's trading patterns.",
+  "apis": [
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get 7+ years of AAPL daily OHLC price data for MACD calculation",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get current AAPL market data for latest MACD context",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 3: Calculate MACD values and identify bullish/bearish crossover signals",
+      "function": "calculate_macd_crossover_signals"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Backtest crossover strategy with realistic execution costs and timing",
+      "function": "backtest_macd_crossover_strategy"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Compare strategy returns vs buy-and-hold and calculate success metrics",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Are momentum signals reliable for Apple stock?",
+    "Should I trade AAPL or just hold it long-term?",
+    "How many false signals would I get with this strategy?",
+    "Is this strategy too complicated for me?"
+  ]
+}

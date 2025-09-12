@@ -1,5 +1,6 @@
 {
   "questions": [
+    "What's the best weekday to trade AAPL?",
     "Which symbols had the largest downside gap fills today?",
     "Which of my positions tend to rebound after 3 down days in a row?",
     "Which symbols had the largest volume spike at the close today?",

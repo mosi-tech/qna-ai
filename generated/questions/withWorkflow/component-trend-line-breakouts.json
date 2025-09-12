@@ -1,0 +1,47 @@
+{
+  "id": "trend-line-breakouts",
+  "name": "Trend Line Breakout Scanner",
+  "file": "experimental/TrendLineBreakouts.json",
+  "output": "/experimental/TrendLineBreakouts.json",
+  "question": "Which stocks are breaking above or below key trend lines?",
+  "retailQuestion": "Which stocks are breaking out of their trading patterns?",
+  "description": "Identifies stocks breaking through significant uptrend or downtrend lines with volume confirmation. Analyzes trend line validity, breakout quality, and follow-through potential to distinguish between false breakouts and genuine trend changes that could lead to accelerated price movements.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for trend line breakout screening",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data for trend line construction and breakout identification",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Get current market data for real-time breakout confirmation",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Construct trend lines and identify breakouts with volume and momentum validation",
+      "function": "detect_trendline_breakouts"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank breakouts by trend line significance and continuation probability",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I buy stocks breaking above trend lines?",
+    "How reliable are trend line breakouts?",
+    "What if the breakout is a false signal?",
+    "Is it too late to enter after the breakout?"
+  ]
+}

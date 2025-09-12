@@ -1,0 +1,46 @@
+{
+  "id": "healthcare-xlv-defensive-analysis",
+  "name": "Healthcare Sector Defensive Strategy Analysis",
+  "file": "experimental/HealthcareXLVDefensiveAnalysis.json",
+  "output": "/experimental/HealthcareXLVDefensiveAnalysis.json",
+  "question": "How effective has XLV been as a defensive sector during market volatility over the past decade?",
+  "retailQuestion": "Should I buy healthcare stocks when the market gets volatile?",
+  "description": "Analyzes the Health Care Select Sector SPDR Fund (XLV) performance during market stress periods, comparing its defensive characteristics to utilities and consumer staples. Examines correlation breakdowns, downside capture, and recovery patterns during the 2018 correction, 2020 crash, and 2022 bear market.",
+  "apis": [
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get 10+ years of XLV, SPY, and VIX data for defensive analysis",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get current XLV market data for sector positioning",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 3: Calculate downside capture ratios and defensive metrics",
+      "function": "analyze_defensive_sector_characteristics"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Backtest defensive rotation strategy using XLV during high VIX periods",
+      "function": "backtest_defensive_sector_strategy"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Compare healthcare vs other defensive sectors and timing effectiveness",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Are healthcare stocks really safer during market crashes?",
+    "Should I rotate into defensive sectors when volatility spikes?",
+    "How much of my portfolio should be in defensive sectors?",
+    "Is healthcare still defensive with all the biotech volatility?"
+  ]
+}

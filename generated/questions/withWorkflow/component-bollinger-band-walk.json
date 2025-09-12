@@ -1,0 +1,47 @@
+{
+  "id": "bollinger-band-walk",
+  "name": "Bollinger Band Walk Analysis",
+  "file": "experimental/BollingerBandWalk.json",
+  "output": "/experimental/BollingerBandWalk.json",
+  "question": "Which stocks are showing Bollinger Band walk patterns indicating strong trends?",
+  "retailQuestion": "Which stocks are on a strong trending run?",
+  "description": "Identifies stocks exhibiting Bollinger Band walks - sustained price action along the upper or lower band indicating strong trending behavior. Analyzes walk duration, band position, and volume patterns to distinguish trending moves from potential exhaustion signals.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "trading:/v2/positions"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for Bollinger Band walk screening",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data for Bollinger Band calculation and walk pattern identification",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Check portfolio positions for Bollinger Band walk assessment",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Identify Bollinger Band walks and analyze trend strength with exhaustion signals",
+      "function": "analyze_bollinger_walks"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank band walks by trend strength and continuation probability",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I ride the trend or wait for a pullback?",
+    "How long do these trends usually last?",
+    "What are the risks of buying into a trending stock?",
+    "How do I know when the trend is ending?"
+  ]
+}

@@ -1,0 +1,170 @@
+{
+  "description": "Identifies stocks experiencing coordinated price and volume breakouts - a powerful signal where price moves above resistance levels while volume expands significantly. These breakouts indicate institutional participation and have higher probability of sustained moves compared to price-only breakouts. The analysis examines volume ratios, accumulation patterns, momentum alignment, and sustainability factors to validate authentic breakout patterns.",
+  "body": [
+    {
+      "key": "nvda_coordinated_breakout",
+      "value": "Very Strong Active Breakout",
+      "description": "NVIDIA (NVDA) shows a very strong coordinated price-volume breakout with price breaking above 20-day resistance while volume expanded 240% above average. This combination indicates strong institutional buying."
+    },
+    {
+      "key": "nvda_breakout_strength",
+      "value": "90/100 Score",
+      "description": "NVDA's breakout strength scores 90/100 based on price momentum (+6.8%), volume expansion (2.4x average), and institutional flow indicators. Scores above 85 indicate very strong breakout patterns."
+    },
+    {
+      "key": "nvda_volume_confirmation",
+      "value": "Confirmed (240% above average)",
+      "description": "Volume confirmation is strong with trading 240% above 20-day average volume. High-volume breakouts have 78% higher success rate than price-only breakouts in sustaining moves."
+    },
+    {
+      "key": "nvda_sustainability_score",
+      "value": "High (85%)",
+      "description": "Sustainability analysis shows 85% probability of continued upward momentum based on trend alignment, momentum strength, volume confirmation, and institutional flow patterns."
+    },
+    {
+      "key": "tsla_moderate_breakout",
+      "value": "Strong Breakout with Caution",
+      "description": "Tesla (TSLA) displays strong breakout pattern with +5.2% price move and 180% volume expansion, but sustainability score is moderate due to mixed institutional flow signals."
+    },
+    {
+      "key": "tsla_institutional_flow",
+      "value": "Mixed Signals (65%)",
+      "description": "TSLA's institutional flow score of 65% shows moderate institutional participation. While volume is elevated, the pattern lacks sustained accumulation characteristics seen in strongest breakouts."
+    },
+    {
+      "key": "aapl_price_only_breakout",
+      "value": "Breakout Lacking Volume",
+      "description": "Apple (AAPL) shows price breakout above resistance but lacks volume confirmation with only 120% of average volume. Price-only breakouts have lower sustainability probability."
+    },
+    {
+      "key": "aapl_recommendation",
+      "value": "Wait for Volume Confirmation",
+      "description": "AAPL breakout recommendation is to wait for volume validation before entry. Without volume support, the price move may lack institutional backing and could reverse quickly."
+    },
+    {
+      "key": "msft_no_breakout",
+      "value": "Consolidation Pattern",
+      "description": "Microsoft (MSFT) remains in consolidation pattern below 20-day resistance with no coordinated breakout detected. Price action suggests continued range-bound trading."
+    },
+    {
+      "key": "googl_false_breakout",
+      "value": "Failed Volume Confirmation",
+      "description": "Google (GOOGL) attempted price breakout but failed volume test with below-average trading activity. False breakouts often reverse quickly without institutional support."
+    },
+    {
+      "key": "spy_market_breakout",
+      "value": "Broad Market Breakout Confirmed",
+      "description": "SPY ETF shows coordinated price-volume breakout suggesting broad market participation. Market-wide breakouts provide supportive environment for individual stock breakouts."
+    },
+    {
+      "key": "qqq_tech_momentum",
+      "value": "Strong Tech Sector Breakout",
+      "description": "QQQ (NASDAQ ETF) displays very strong breakout pattern with exceptional volume, indicating broad technology sector momentum that supports individual tech stock breakouts like NVDA."
+    },
+    {
+      "key": "breakout_count_total",
+      "value": 8,
+      "description": "Total coordinated price-volume breakouts detected across screened universe. Moderate count suggests selective strength rather than broad market euphoria, which is healthier for sustainability."
+    },
+    {
+      "key": "strongest_breakout_stock",
+      "value": "NVDA",
+      "description": "NVIDIA demonstrates the strongest coordinated breakout with highest volume expansion, best momentum characteristics, and strongest institutional flow signals among all analyzed stocks."
+    },
+    {
+      "key": "volume_expansion_leaders",
+      "value": "NVDA (240%), TSLA (180%), AMD (170%)",
+      "description": "Stocks with highest volume expansion during breakouts. Volume expansion above 150% typically indicates institutional participation and higher breakout reliability."
+    },
+    {
+      "key": "resistance_level_breaks",
+      "value": "6 out of 8 patterns",
+      "description": "Six of eight detected breakouts coincided with clean breaks above key resistance levels, adding technical confirmation to the volume-supported price moves."
+    },
+    {
+      "key": "institutional_participation",
+      "value": "Strong in 5 breakouts",
+      "description": "Five breakouts show strong institutional participation (scores >75%), indicating smart money involvement which typically leads to more sustainable price advances."
+    },
+    {
+      "key": "momentum_acceleration",
+      "value": "Present in 7 patterns",
+      "description": "Seven breakouts show momentum acceleration where current price movement exceeds recent average momentum by 20%+ - a key characteristic of authentic breakout patterns."
+    },
+    {
+      "key": "sustainability_analysis",
+      "value": "4 High, 3 Moderate, 1 Low",
+      "description": "Sustainability probability distribution shows 4 high-probability breakouts (>80%), 3 moderate (60-80%), and 1 low probability (<60%), indicating generally favorable breakout quality."
+    },
+    {
+      "key": "sector_concentration",
+      "value": "Technology and Semiconductors",
+      "description": "Breakout patterns concentrated in technology sector, particularly semiconductors (NVDA, AMD), suggesting sector-specific momentum rather than broad market speculation."
+    },
+    {
+      "key": "average_volume_expansion",
+      "value": "185%",
+      "description": "Average volume expansion across all breakout patterns is 185% above normal levels. Volume expansions above 150% are typically associated with institutional buying programs."
+    },
+    {
+      "key": "price_momentum_average",
+      "value": "+5.8%",
+      "description": "Average price momentum during breakout patterns is +5.8%, indicating significant moves rather than marginal breakouts. Strong breakouts typically show >3% single-day moves."
+    },
+    {
+      "key": "follow_through_probability",
+      "value": "82%",
+      "description": "Historical probability that volume-confirmed breakouts continue higher over next 10 trading sessions. Strong volume confirmation significantly increases follow-through success rates."
+    },
+    {
+      "key": "risk_reward_profile",
+      "value": "Favorable (3.2:1 avg)",
+      "description": "Average risk-reward profile for detected breakouts is 3.2:1 based on breakout level as stop loss and resistance projections as targets. Favorable ratios support trading these patterns."
+    },
+    {
+      "key": "optimal_entry_timing",
+      "value": "On Volume Confirmation Day",
+      "description": "Optimal entry timing is on the day of volume confirmation rather than waiting for pullbacks. Volume-confirmed breakouts often gap higher making pullback entries difficult."
+    },
+    {
+      "key": "stop_loss_placement",
+      "value": "Below Breakout Level",
+      "description": "Recommended stop-loss placement is 2-3% below the actual breakout level (resistance line). Clean breaks below breakout levels typically invalidate the pattern."
+    },
+    {
+      "key": "target_projections",
+      "value": "12-18% upside potential",
+      "description": "Technical target projections for confirmed breakouts range 12-18% above breakout levels based on resistance spacing and momentum characteristics of current patterns."
+    },
+    {
+      "key": "volume_trend_analysis",
+      "value": "Increasing in 6/8 patterns",
+      "description": "Volume trend analysis shows six patterns have consistently increasing volume over recent sessions, indicating building accumulation rather than single-day volume spikes."
+    },
+    {
+      "key": "market_environment",
+      "value": "Supportive for Breakouts",
+      "description": "Current market environment is supportive for breakout strategies with broad indices also showing coordinated price-volume breakouts, providing favorable backdrop."
+    },
+    {
+      "key": "trading_strategy",
+      "value": "Focus on Volume-Confirmed Patterns",
+      "description": "Recommended strategy is to focus exclusively on volume-confirmed breakouts (NVDA, TSLA type) while avoiding price-only breakouts that lack institutional support."
+    },
+    {
+      "key": "portfolio_allocation",
+      "value": "25-30% in Breakout Names",
+      "description": "Suggested portfolio allocation to breakout patterns is 25-30% maximum to capture momentum while maintaining diversification and risk control during breakout strategies."
+    },
+    {
+      "key": "monitoring_priority",
+      "value": "Daily Volume Tracking",
+      "description": "High priority on daily volume monitoring for breakout names. Sustained volume above 150% of average for 3+ days typically confirms institutional accumulation programs."
+    },
+    {
+      "key": "failure_rate_consideration",
+      "value": "18% historical failure rate",
+      "description": "Volume-confirmed breakouts have 18% historical failure rate where patterns reverse below breakout levels within 10 sessions. Risk management essential despite high success rates."
+    }
+  ]
+}

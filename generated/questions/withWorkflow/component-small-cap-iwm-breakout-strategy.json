@@ -1,0 +1,46 @@
+{
+  "id": "small-cap-iwm-breakout-strategy",
+  "name": "Small Cap Russell 2000 Breakout Strategy",
+  "file": "experimental/SmallCapIWMBreakoutStrategy.json",
+  "output": "/experimental/SmallCapIWMBreakoutStrategy.json",
+  "question": "How would trading IWM breakouts above 52-week highs have performed over 7 years?",
+  "retailQuestion": "Should I buy small cap stocks when they break to new highs?",
+  "description": "Backtests a breakout strategy on the iShares Russell 2000 ETF (IWM) that buys when price breaks above 52-week highs with volume confirmation. Analyzes the effectiveness of momentum breakouts in small-cap stocks during different economic cycles and market conditions over 7 years.",
+  "apis": [
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get 7+ years of IWM daily price and volume data",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get current IWM market data for breakout context",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 3: Identify 52-week high breakouts with volume confirmation",
+      "function": "identify_breakout_signals"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Backtest breakout strategy with stop-loss and profit targets",
+      "function": "backtest_breakout_strategy"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Analyze breakout success rates and risk-adjusted returns",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Do breakout strategies work better with small cap stocks?",
+    "Should I chase stocks that are making new highs?",
+    "How do I protect myself if the breakout fails?",
+    "Is IWM too volatile for breakout trading?"
+  ]
+}

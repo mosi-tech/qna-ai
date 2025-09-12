@@ -1,0 +1,47 @@
+{
+  "id": "portfolio-momentum-testing",
+  "name": "Portfolio Momentum Strategy Testing",
+  "file": "experimental/PortfolioMomentumTesting.json",
+  "output": "/experimental/PortfolioMomentumTesting.json",
+  "question": "How would adding momentum-based position sizing improve my portfolio returns?",
+  "retailQuestion": "Should I buy more of my winning stocks?",
+  "description": "Tests momentum-based portfolio management strategies by analyzing relative strength, price trends, and earnings momentum to optimize position sizing. Compares equal-weight allocation against momentum-weighted approaches using 3, 6, and 12-month lookback periods to determine the optimal momentum strategy for enhancing risk-adjusted returns.",
+  "apis": [
+    "trading:/v2/positions",
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v1/screener/stocks/most-actives"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get current portfolio positions and equal-weight baseline allocation",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data for momentum calculation across multiple timeframes",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Get market momentum leaders for relative strength benchmarking",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate momentum scores and backtest momentum-weighted allocation strategies",
+      "function": "test_momentum_weighting"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Compare momentum strategies vs equal-weight and rank by risk-adjusted performance",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Is it smart to chase momentum?",
+    "How much more should I invest in winners?",
+    "What if my hot stocks suddenly turn cold?",
+    "Should I follow the trend or buy the dip?"
+  ]
+}

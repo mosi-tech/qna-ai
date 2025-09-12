@@ -1,0 +1,40 @@
+{
+  "id": "correlation-stress-testing",
+  "name": "Portfolio Correlation Stress Testing",
+  "file": "experimental/PortfolioCorrelationStressTesting.json",
+  "output": "/experimental/PortfolioCorrelationStressTesting.json",
+  "question": "How would my portfolio correlations change during market stress and what are the implications?",
+  "description": "Analyzes how correlations between your portfolio holdings increase during market stress events, potentially reducing diversification benefits when needed most. Tests correlation breakdown scenarios, identifies assets that maintain low correlation during crises, and suggests portfolio adjustments to improve stress resilience and true diversification.",
+  "apis": [
+    "trading:/v2/positions",
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get current portfolio positions for correlation matrix baseline analysis",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data covering normal and stress market periods",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Get current market conditions to assess real-time correlation environment",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate rolling correlations and analyze correlation spikes during stress events",
+      "function": "analyze_correlation_stress"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Identify correlation vulnerabilities and rank diversification improvements by effectiveness",
+      "function": "client_compute"
+    }
+  ]
+}

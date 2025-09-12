@@ -1,0 +1,46 @@
+{
+  "id": "microsoft-bollinger-bands-backtest",
+  "name": "Microsoft Bollinger Bands Mean Reversion Backtest",
+  "file": "experimental/MicrosoftBollingerBandsBacktest.json",
+  "output": "/experimental/MicrosoftBollingerBandsBacktest.json",
+  "question": "How would a Bollinger Bands mean reversion strategy have performed on MSFT over 5 years?",
+  "retailQuestion": "Would buying Microsoft when it hits the bottom price band have made money?",
+  "description": "Backtests a mean reversion strategy on Microsoft using Bollinger Bands to identify oversold and overbought conditions. Buys when price touches the lower band and sells when it reaches the upper band or middle line. Evaluates the strategy during Microsoft's growth phases and market corrections.",
+  "apis": [
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get 5+ years of MSFT daily price data for Bollinger Bands calculation",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get current MSFT market data for latest band positioning",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 3: Calculate Bollinger Bands and generate mean reversion signals",
+      "function": "calculate_bollinger_mean_reversion_signals"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Backtest band touch strategy with realistic execution parameters",
+      "function": "backtest_bollinger_mean_reversion"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Analyze hit rates, holding periods, and risk-adjusted returns",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I buy Microsoft when it hits support levels?",
+    "How reliable are Bollinger Band signals for tech stocks?",
+    "Is mean reversion trading too risky for me?",
+    "What happens if the bands keep expanding?"
+  ]
+}

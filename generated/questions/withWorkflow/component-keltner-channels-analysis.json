@@ -1,0 +1,47 @@
+{
+  "id": "keltner-channels-analysis",
+  "name": "Keltner Channels Breakout Analysis",
+  "file": "experimental/KeltnerChannelsAnalysis.json",
+  "output": "/experimental/KeltnerChannelsAnalysis.json",
+  "question": "Which stocks are showing Keltner Channel breakout or squeeze patterns?",
+  "retailQuestion": "Which stocks are breaking out or building pressure?",
+  "description": "Analyzes Keltner Channels based on exponential moving average and Average True Range to identify trending breakouts and consolidation squeezes. Examines channel width, price position, and volume confirmation for high-probability trend continuation and reversal signals.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "trading:/v2/positions"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for Keltner Channel analysis",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data for Keltner Channel calculation and pattern identification",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Check portfolio positions for Keltner Channel signal opportunities",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate Keltner Channels and identify breakout/squeeze patterns with ATR analysis",
+      "function": "analyze_keltner_channels"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank channel signals by breakout strength and trend continuation probability",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I buy these channel breakouts?",
+    "How do Keltner Channels differ from Bollinger Bands?",
+    "What's the best way to trade squeeze patterns?",
+    "How reliable are these breakout signals?"
+  ]
+}

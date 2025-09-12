@@ -1,0 +1,210 @@
+{
+  "description": "Identifies ascending, descending, and symmetrical triangle patterns approaching breakout points with comprehensive analysis of pattern duration, volume contraction during formation, and breakout quality with volume expansion. Triangle patterns represent periods of consolidation where converging trendlines create predictable breakout opportunities, making them valuable for timing entries and exits with well-defined risk parameters.",
+  "body": [
+    {
+      "key": "nvda_ascending_triangle",
+      "value": "High-Quality Ascending Triangle", 
+      "description": "NVIDIA (NVDA) displaying textbook ascending triangle with horizontal resistance at $448 and rising support trendline. Pattern quality score 87/100 with 23-day formation period showing classic volume contraction."
+    },
+    {
+      "key": "nvda_breakout_probability",
+      "value": "78% upside breakout probability",
+      "description": "NVDA triangle analysis indicates 78% probability of upside breakout based on ascending pattern type, current price position at 85% of triangle range, and recent volume expansion signals."
+    },
+    {
+      "key": "nvda_target_projection",
+      "value": "$465 price target (+3.8%)",
+      "description": "Technical target projection for NVDA breakout is $465, representing triangle height projected from breakout level. Conservative 80% of full pattern height used for realistic target setting."
+    },
+    {
+      "key": "nvda_volume_pattern",
+      "value": "Ideal contraction then expansion",
+      "description": "NVDA shows ideal triangle volume pattern: 67% volume contraction during formation followed by 185% volume expansion on recent test of resistance, confirming breakout potential."
+    },
+    {
+      "key": "nvda_days_to_apex",
+      "value": "8 trading days remaining", 
+      "description": "NVDA triangle apex (convergence point) estimated in 8 trading days. Patterns typically break out before reaching apex, creating urgency for directional resolution."
+    },
+    {
+      "key": "tsla_symmetrical_triangle",
+      "value": "Clean Symmetrical Pattern",
+      "description": "Tesla (TSLA) forming clean symmetrical triangle with converging upper resistance and lower support trendlines. 19-day pattern with quality score 81/100 indicates professional consolidation."
+    },
+    {
+      "key": "tsla_neutral_bias",
+      "value": "No directional bias (50/50)",
+      "description": "TSLA symmetrical triangle provides no inherent directional bias. Breakout direction will depend on broader market conditions and Tesla-specific catalysts rather than pattern structure."
+    },
+    {
+      "key": "tsla_current_position",
+      "value": "Middle of triangle (52%)",
+      "description": "TSLA currently trading at 52% of triangle range from support to resistance. Neutral positioning suggests equal probability of upside or downside breakout resolution."
+    },
+    {
+      "key": "aapl_descending_triangle",
+      "value": "Bearish Descending Formation",
+      "description": "Apple (AAPL) showing descending triangle pattern with horizontal support at $174 and declining resistance trendline. Pattern suggests distribution and potential downside break."
+    },
+    {
+      "key": "aapl_support_test_count",
+      "value": "4 successful support tests",
+      "description": "AAPL has successfully tested $174 support level 4 times during triangle formation. Multiple tests increase breakout significance but also weaken support with each touch."
+    },
+    {
+      "key": "aapl_volume_concern",
+      "value": "Insufficient volume contraction",
+      "description": "AAPL triangle shows only 23% volume contraction during formation, below ideal 40-60% range. Higher volume during consolidation may indicate continued selling pressure."
+    },
+    {
+      "key": "amd_failed_triangle", 
+      "value": "Pattern invalidated by break",
+      "description": "AMD triangle pattern invalidated by premature break below support with high volume. False breakdown demonstrates importance of waiting for clean breakout confirmation."
+    },
+    {
+      "key": "googl_forming_triangle",
+      "value": "Early-stage ascending pattern",
+      "description": "Google (GOOGL) showing early-stage ascending triangle formation with only 12 trading days. Pattern needs additional time and touches to confirm validity before trading."
+    },
+    {
+      "key": "msft_triangle_near_apex",
+      "value": "Imminent breakout expected",
+      "description": "Microsoft (MSFT) triangle pattern within 3 days of apex convergence. Historical data shows 89% of patterns resolve within 5 days of apex, making breakout timing critical."
+    },
+    {
+      "key": "spy_market_triangle",
+      "value": "Broad market consolidation",
+      "description": "SPY (S&P 500 ETF) forming large symmetrical triangle, providing important market context for individual stock patterns. Market-level consolidation supports triangle pattern reliability."
+    },
+    {
+      "key": "total_patterns_detected",
+      "value": 14,
+      "description": "Total triangle patterns detected across active stock screening universe. Moderate count suggests selective consolidation rather than widespread market indecision."
+    },
+    {
+      "key": "pattern_type_distribution",
+      "value": "6 Ascending, 4 Descending, 4 Symmetrical",
+      "description": "Distribution of triangle types: 6 ascending (bullish bias), 4 descending (bearish bias), 4 symmetrical (neutral). Slight bullish skew in pattern formation."
+    },
+    {
+      "key": "high_quality_patterns",
+      "value": "8 patterns above 75 quality score",
+      "description": "8 triangle patterns score above 75/100 quality threshold indicating well-formed consolidations with clean trendlines, appropriate volume patterns, and minimal false breaks."
+    },
+    {
+      "key": "active_breakouts",
+      "value": "3 confirmed breakouts",
+      "description": "3 patterns showing active breakouts with volume confirmation: 2 bullish breaks, 1 bearish break. Active breakouts provide immediate trading opportunities with defined risk levels."
+    },
+    {
+      "key": "volume_confirmation_rate",
+      "value": "71% of patterns show volume confirmation",
+      "description": "71% of triangle patterns display proper volume characteristics: contraction during formation and expansion on breakout attempts. Volume confirmation critical for pattern reliability."
+    },
+    {
+      "key": "average_pattern_duration",
+      "value": "26 trading days",
+      "description": "Average triangle formation period is 26 trading days. Patterns lasting 15-45 days typically show best reliability, while shorter formations may be noise and longer ones lose relevance."
+    },
+    {
+      "key": "breakout_success_rate",
+      "value": "68% historical success rate",
+      "description": "Historical analysis shows 68% success rate for triangle breakouts sustaining direction over next 10 trading sessions. Volume-confirmed breakouts show 78% success rate."
+    },
+    {
+      "key": "false_breakout_rate",
+      "value": "32% experience false breaks",
+      "description": "32% of triangle patterns experience false breakouts that quickly reverse. Stop-loss placement below pattern boundaries essential for managing false breakout risk."
+    },
+    {
+      "key": "optimal_entry_timing",
+      "value": "On confirmed breakout with volume",
+      "description": "Optimal entry timing is on confirmed breakout above/below triangle boundary with volume expansion >150% of average. Early entries often face whipsaw action."
+    },
+    {
+      "key": "stop_loss_placement",
+      "value": "Opposite triangle boundary",
+      "description": "Recommended stop-loss placement at opposite triangle boundary. For upside breakout, stop below support line; for downside break, stop above resistance line."
+    },
+    {
+      "key": "target_achievement_rate",
+      "value": "54% reach full target projections",
+      "description": "54% of successful triangle breakouts achieve full target projections (triangle height from breakout level). Conservative targets using 70-80% of height improve success rates."
+    },
+    {
+      "key": "holding_period_analysis",
+      "value": "Average 12 days to target",
+      "description": "Successful triangle breakouts average 12 trading days to reach target projections. Most moves complete within 15-20 sessions, suggesting relatively quick pattern completion."
+    },
+    {
+      "key": "market_environment_impact",
+      "value": "Strong market enhances success",
+      "description": "Triangle breakout success rates increase to 78% in strong trending markets vs 58% in choppy conditions. Market environment analysis crucial for pattern trading."
+    },
+    {
+      "key": "sector_concentration",
+      "value": "Technology leads with 36%",
+      "description": "Triangle patterns concentrated in Technology (36%), Healthcare (21%), and Financial (19%) sectors. Sector momentum affects pattern breakout direction and success."
+    },
+    {
+      "key": "apex_timing_importance",
+      "value": "85% break before apex",
+      "description": "85% of triangle patterns break out before reaching calculated apex convergence point. Patterns failing to break near apex often invalidate as consolidation continues."
+    },
+    {
+      "key": "multiple_timeframe_confirmation",
+      "value": "Daily + Weekly alignment increases success",
+      "description": "Triangle patterns showing alignment across daily and weekly timeframes demonstrate 73% higher success rates than single-timeframe patterns."
+    },
+    {
+      "key": "volume_pattern_scoring",
+      "value": "Volume score averages 67/100",
+      "description": "Average volume pattern score of 67/100 across all triangles. Patterns scoring >80 on volume show significantly higher breakout reliability and follow-through."
+    },
+    {
+      "key": "trendline_quality_metrics",
+      "value": "R-squared averages 0.74",
+      "description": "Average trendline R-squared correlation of 0.74 indicates good trendline fit quality. Higher correlation values (>0.80) associated with more reliable pattern boundaries."
+    },
+    {
+      "key": "pattern_maturity_distribution",
+      "value": "57% in mature stage",
+      "description": "57% of detected patterns in mature stage (>75% of expected duration). Mature patterns more likely to resolve soon but also more susceptible to false breakouts."
+    },
+    {
+      "key": "breakout_magnitude_expectation",
+      "value": "Average 4.2% initial move",
+      "description": "Confirmed triangle breakouts average 4.2% initial move in breakout direction within 3 sessions. Magnitude correlates with triangle height and volume expansion."
+    },
+    {
+      "key": "risk_reward_optimization",
+      "value": "Average 2.8:1 risk-reward ratio",
+      "description": "Triangle patterns offer average 2.8:1 risk-reward ratio using pattern boundaries for stops and height projections for targets. Favorable ratios support systematic trading."
+    },
+    {
+      "key": "continuation_vs_reversal",
+      "value": "68% continuation, 32% reversal",
+      "description": "Triangle patterns show continuation of prior trend 68% of time vs reversal 32%. Trend context important for assessing breakout direction probability."
+    },
+    {
+      "key": "earnings_proximity_impact",
+      "value": "Avoid patterns near earnings",
+      "description": "Triangle patterns within 10 days of earnings announcements show 47% higher false breakout rates. Event-driven volatility disrupts technical pattern reliability."
+    },
+    {
+      "key": "monitoring_recommendations",
+      "value": "Daily boundary tests and volume",
+      "description": "Key monitoring points: daily boundary tests, volume expansion on tests, approaching apex timeline, and broader market trend alignment for optimal pattern trading."
+    },
+    {
+      "key": "pattern_failure_signals",
+      "value": "Volume-less breaks and sideways drift",
+      "description": "Primary failure signals: breakouts without volume confirmation, price drifting sideways past apex, or multiple false breakouts eroding pattern integrity."
+    },
+    {
+      "key": "implementation_strategy",
+      "value": "Scale into positions on confirmation",
+      "description": "Recommended implementation: scale 30% position on initial breakout, add 40% on volume confirmation, final 30% on successful retest of breakout level."
+    }
+  ]
+}

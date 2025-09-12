@@ -1,0 +1,46 @@
+{
+  "id": "emerging-markets-eem-momentum",
+  "name": "Emerging Markets Momentum Strategy Backtest",
+  "file": "experimental/EmergingMarketsEEMMomentum.json",
+  "output": "/experimental/EmergingMarketsEEMMomentum.json",
+  "question": "How would a 6-month momentum strategy have performed on EEM over the last decade?",
+  "retailQuestion": "Should I follow trends when investing in emerging markets?",
+  "description": "Backtests a momentum strategy on the iShares MSCI Emerging Markets ETF (EEM) using 6-month rolling returns. Analyzes performance during emerging market crises, currency devaluations, and global risk-on/risk-off cycles over 12 years including major EM events and recoveries.",
+  "apis": [
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get 12+ years of EEM daily price data covering EM cycles",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get current EEM market data for momentum context",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 3: Calculate 6-month momentum signals and risk-off indicators",
+      "function": "calculate_em_momentum_signals"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Backtest momentum strategy through EM crisis periods",
+      "function": "backtest_em_momentum_strategy"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Analyze performance during crisis vs normal periods",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Are emerging markets too risky for momentum strategies?",
+    "Should I avoid emerging markets during uncertain times?",
+    "How much emerging market exposure should I have?",
+    "Do momentum signals work the same in all markets?"
+  ]
+}

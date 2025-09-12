@@ -438,6 +438,25 @@ function generateAlpacaMarketData(endpoint, args, symbols, today) {
       
       return { snapshots };
 
+    case '/v2/stocks/auctions':
+      const auctions = {};
+      symbols.forEach(symbol => {
+        const closingPrice = 100 + Math.random() * 100;
+        const auctionVolume = Math.floor(Math.random() * 1000000) + 100000;
+        
+        auctions[symbol] = {
+          c: parseFloat(closingPrice.toFixed(2)), // closing auction price
+          v: auctionVolume, // auction volume
+          t: today.toISOString(),
+          condition: "C", // closing auction condition
+          exchange: "V", // IEX
+          size: auctionVolume,
+          tape: "C"
+        };
+      });
+      
+      return { auctions };
+
     case '/v1beta1/options/quotes/latest':
       const optionQuotes = {};
       symbols.forEach(symbol => {

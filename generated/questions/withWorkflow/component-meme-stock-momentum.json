@@ -1,0 +1,47 @@
+{
+  "id": "meme-stock-momentum",
+  "name": "Meme Stock Momentum Scanner",
+  "file": "experimental/MemeStockMomentum.json",
+  "output": "/experimental/MemeStockMomentum.json",
+  "question": "Which meme stocks are showing technical momentum and social sentiment alignment?",
+  "retailQuestion": "Which popular stocks are trending up with social buzz?",
+  "description": "Analyzes popular meme stocks (GME, AMC, BBBY, etc.) for technical momentum patterns, volume spikes, and breakout signals that often coincide with social media sentiment surges. Identifies early momentum shifts before viral price movements.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get meme stock universe and social media trending stocks",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price and volume data for meme stock momentum analysis",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Get current market data for real-time momentum assessment",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Analyze meme stock momentum patterns, volume spikes, and sentiment-driven breakouts",
+      "function": "analyze_meme_momentum"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank meme stocks by momentum strength and viral potential",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I invest in trending meme stocks?",
+    "How risky are these social media darlings?",
+    "What happens when the hype dies down?",
+    "How do I know when to exit these positions?"
+  ]
+}

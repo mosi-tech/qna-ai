@@ -1,0 +1,47 @@
+{
+  "id": "triangle-pattern-breakouts", 
+  "name": "Triangle Pattern Breakout Scanner",
+  "file": "experimental/TrianglePatternBreakouts.json",
+  "output": "/experimental/TrianglePatternBreakouts.json",
+  "question": "Which stocks are breaking out of triangle consolidation patterns?",
+  "retailQuestion": "Which stocks finished consolidating and are ready to move?",
+  "description": "Identifies ascending, descending, and symmetrical triangle patterns approaching breakout points. Analyzes pattern duration, volume contraction during formation, and breakout quality with volume expansion to distinguish authentic breakouts from false moves.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for triangle pattern identification",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data for triangle pattern construction and breakout analysis",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Get current market data for real-time breakout confirmation",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Identify triangle patterns and analyze breakout probability with volume validation",
+      "function": "detect_triangle_breakouts"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank triangle breakouts by pattern quality and continuation potential",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I buy these triangle breakouts?",
+    "How often do these patterns work?",
+    "What's the risk if the breakout fails?",
+    "How long should I hold after a breakout?"
+  ]
+}

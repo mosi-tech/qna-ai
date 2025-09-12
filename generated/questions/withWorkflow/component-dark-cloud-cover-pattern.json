@@ -1,0 +1,47 @@
+{
+  "id": "dark-cloud-cover-pattern",
+  "name": "Dark Cloud Cover Bearish Pattern",
+  "file": "experimental/DarkCloudCoverPattern.json",
+  "output": "/experimental/DarkCloudCoverPattern.json",
+  "question": "Which stocks are forming dark cloud cover bearish reversal patterns?",
+  "retailQuestion": "Which stocks might be topping out?",
+  "description": "Identifies dark cloud cover patterns - two-candle bearish reversal formations where a red candle opens above the previous green candle's high and closes below its midpoint. Analyzes penetration depth, volume patterns, and resistance level context for reversal validation.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "trading:/v2/positions"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for dark cloud cover pattern screening",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get recent OHLC data for two-candle bearish reversal pattern identification",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Check portfolio positions for dark cloud cover reversal warnings",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Identify dark cloud cover patterns with penetration analysis and resistance level validation",
+      "function": "detect_dark_cloud_patterns"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank bearish patterns by penetration quality and reversal probability",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I sell stocks showing this pattern?",
+    "How reliable are bearish reversal signals?",
+    "What if the stock continues going up?",
+    "Is this a good time to take profits?"
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "id": "oil-etf-uso-crude-correlation",
+  "name": "Oil ETF USO vs Crude Oil Futures Tracking Analysis",
+  "file": "experimental/OilETFUSOCrudeCorrelation.json",
+  "output": "/experimental/OilETFUSOCrudeCorrelation.json",
+  "question": "How well has USO tracked crude oil prices and what causes the tracking differences?",
+  "retailQuestion": "Does the oil ETF actually follow oil prices like it's supposed to?",
+  "description": "Analyzes the tracking effectiveness of the United States Oil Fund (USO) relative to crude oil spot prices over 10 years. Examines contango/backwardation effects, roll costs, and structural issues that cause tracking errors, helping investors understand commodity ETF limitations and alternatives.",
+  "apis": [
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get 10+ years of USO daily price data for tracking analysis",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get current USO market data for latest tracking context",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 3: Calculate tracking error vs crude oil prices and identify causes",
+      "function": "analyze_commodity_etf_tracking"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Analyze impact of futures curve structure on USO performance",
+      "function": "analyze_futures_curve_impact"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Evaluate USO effectiveness as commodity investment vehicle",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Why doesn't USO perfectly track oil prices?",
+    "Should I invest in oil stocks instead of oil ETFs?",
+    "Are there better ways to invest in commodities?",
+    "How do futures-based ETFs work differently than stock ETFs?"
+  ]
+}

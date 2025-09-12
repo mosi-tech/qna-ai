@@ -1,0 +1,46 @@
+{
+  "id": "bitcoin-etf-bito-volatility",
+  "name": "Bitcoin ETF Volatility Trading Strategy",
+  "file": "experimental/BitcoinETFBITOVolatility.json",
+  "output": "/experimental/BitcoinETFBITOVolatility.json",
+  "question": "How would a volatility-based strategy have performed on the Bitcoin Strategy ETF (BITO)?",
+  "retailQuestion": "Could I make money trading Bitcoin ETF when it gets really volatile?",
+  "description": "Backtests a volatility trading strategy on the ProShares Bitcoin Strategy ETF (BITO) since its inception. Tests buying during low volatility periods and reducing exposure during high volatility, analyzing performance during crypto market cycles and major Bitcoin events.",
+  "apis": [
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get full history of BITO daily price data since inception",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get current BITO market data for volatility context",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 3: Calculate volatility metrics and generate position sizing signals",
+      "function": "calculate_crypto_volatility_signals"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Backtest volatility-adjusted strategy through crypto cycles",
+      "function": "backtest_crypto_volatility_strategy"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Analyze performance vs buy-and-hold and risk management effectiveness",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Is Bitcoin ETF too volatile for my portfolio?",
+    "Should I time my Bitcoin investments based on volatility?",
+    "How much Bitcoin exposure should I have?",
+    "Is BITO better than buying Bitcoin directly?"
+  ]
+}

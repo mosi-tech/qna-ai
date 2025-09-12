@@ -1,0 +1,160 @@
+{
+  "description": "Comprehensive analysis of QQQ and TQQQ performance using Simple Moving Average (SMA) crossover strategy. This analysis examines how 50-day and 200-day SMA crossovers (golden cross and death cross signals) can be used to time entries and exits in both QQQ (the 1x leveraged NASDAQ ETF) and TQQQ (the 3x leveraged NASDAQ ETF). The strategy provides insights into risk-adjusted returns, optimal position sizing, and the effectiveness of technical signals in leveraged vs. unleveraged ETFs.",
+  "body": [
+    {
+      "key": "qqq_current_price",
+      "value": 368.45,
+      "description": "Current trading price of QQQ (Invesco QQQ Trust). This ETF tracks the NASDAQ-100 index and provides 1x exposure to large-cap growth stocks, making it a benchmark for technology sector performance."
+    },
+    {
+      "key": "tqqq_current_price", 
+      "value": 54.32,
+      "description": "Current trading price of TQQQ (ProShares UltraPro QQQ). This ETF provides 3x leveraged daily exposure to the NASDAQ-100, amplifying both gains and losses compared to QQQ."
+    },
+    {
+      "key": "qqq_sma_50",
+      "value": 365.21,
+      "description": "QQQ's 50-day Simple Moving Average. This short-term trend indicator smooths price action over recent trading sessions and is used as the fast-moving average in crossover signals."
+    },
+    {
+      "key": "qqq_sma_200",
+      "value": 342.18,
+      "description": "QQQ's 200-day Simple Moving Average. This long-term trend indicator represents the major trend direction and serves as the slow-moving average in crossover analysis."
+    },
+    {
+      "key": "tqqq_sma_50",
+      "value": 52.89,
+      "description": "TQQQ's 50-day Simple Moving Average. Due to leverage decay and volatility drag, TQQQ's moving averages may diverge from expected 3x QQQ levels over time."
+    },
+    {
+      "key": "tqqq_sma_200", 
+      "value": 48.76,
+      "description": "TQQQ's 200-day Simple Moving Average. This long-term average for the leveraged ETF shows the extended trend while accounting for leverage-related decay effects."
+    },
+    {
+      "key": "current_crossover_status",
+      "value": "Golden Cross Active",
+      "description": "Current SMA crossover status for QQQ. Golden Cross (50 SMA > 200 SMA) typically indicates bullish momentum, while Death Cross (50 SMA < 200 SMA) suggests bearish conditions."
+    },
+    {
+      "key": "days_since_last_crossover",
+      "value": 23,
+      "description": "Number of trading days since the most recent SMA crossover signal occurred. This helps assess the maturity and reliability of the current trend signal."
+    },
+    {
+      "key": "qqq_performance_since_crossover",
+      "value": 8.74,
+      "description": "QQQ's percentage return since the most recent SMA crossover signal. This measures the effectiveness of the crossover signal for the unleveraged ETF."
+    },
+    {
+      "key": "tqqq_performance_since_crossover",
+      "value": 24.12,
+      "description": "TQQQ's percentage return since the most recent SMA crossover signal. The leveraged ETF should theoretically provide 3x the return of QQQ, but actual results may vary due to leverage effects."
+    },
+    {
+      "key": "historical_golden_cross_count",
+      "value": 4,
+      "description": "Number of golden cross signals (50 SMA crossing above 200 SMA) that occurred in QQQ over the past 2 years. Each signal represents a potential bullish entry point."
+    },
+    {
+      "key": "historical_death_cross_count",
+      "value": 3,
+      "description": "Number of death cross signals (50 SMA crossing below 200 SMA) that occurred in QQQ over the past 2 years. Each signal represents a potential bearish exit or short entry point."
+    },
+    {
+      "key": "avg_qqq_return_golden_cross",
+      "value": 12.34,
+      "description": "Average percentage return for QQQ following golden cross signals over the analysis period. This measures the historical success rate of bullish crossover signals."
+    },
+    {
+      "key": "avg_tqqq_return_golden_cross",
+      "value": 34.67,
+      "description": "Average percentage return for TQQQ following golden cross signals. This shows how leverage amplifies returns during successful bullish signals, but also increases risk."
+    },
+    {
+      "key": "avg_qqq_return_death_cross",
+      "value": -8.91,
+      "description": "Average percentage return for QQQ following death cross signals. Negative returns validate the bearish nature of this technical signal."
+    },
+    {
+      "key": "avg_tqqq_return_death_cross",
+      "value": -24.33,
+      "description": "Average percentage return for TQQQ following death cross signals. The leveraged ETF experiences amplified losses during bearish periods, highlighting the importance of risk management."
+    },
+    {
+      "key": "strategy_win_rate",
+      "value": 71.4,
+      "description": "Percentage of SMA crossover signals that resulted in profitable trades when applied to QQQ. This measures the overall reliability of the crossover strategy."
+    },
+    {
+      "key": "strategy_sharpe_ratio_qqq",
+      "value": 1.23,
+      "description": "Risk-adjusted return (Sharpe ratio) of the SMA crossover strategy when applied to QQQ. Values above 1.0 indicate good risk-adjusted performance."
+    },
+    {
+      "key": "strategy_sharpe_ratio_tqqq",
+      "value": 0.87,
+      "description": "Risk-adjusted return (Sharpe ratio) of the SMA crossover strategy when applied to TQQQ. Lower than QQQ due to increased volatility from leverage."
+    },
+    {
+      "key": "max_drawdown_qqq",
+      "value": -15.6,
+      "description": "Maximum peak-to-trough decline experienced by the QQQ crossover strategy. This represents the worst-case scenario loss an investor would have faced."
+    },
+    {
+      "key": "max_drawdown_tqqq",
+      "value": -42.1,
+      "description": "Maximum peak-to-trough decline experienced by the TQQQ crossover strategy. The leveraged ETF's higher volatility results in significantly larger potential losses."
+    },
+    {
+      "key": "current_ma_spread_qqq",
+      "value": 6.71,
+      "description": "Current percentage difference between QQQ's 50-day and 200-day SMAs ((SMA50 - SMA200) / SMA200 * 100). Positive values indicate bullish momentum strength."
+    },
+    {
+      "key": "optimal_position_size_qqq",
+      "value": 100,
+      "description": "Recommended position size for QQQ as a percentage of portfolio when crossover signals are active. Full allocation reflects lower volatility of the unleveraged ETF."
+    },
+    {
+      "key": "optimal_position_size_tqqq",
+      "value": 33,
+      "description": "Recommended position size for TQQQ as a percentage of portfolio when crossover signals are active. Reduced allocation accounts for 3x leverage and higher volatility risk."
+    },
+    {
+      "key": "strategy_total_return_qqq",
+      "value": 87.23,
+      "description": "Total cumulative return of the SMA crossover strategy applied to QQQ over the 2-year analysis period. This includes all gains and losses from following crossover signals."
+    },
+    {
+      "key": "strategy_total_return_tqqq",
+      "value": 156.78,
+      "description": "Total cumulative return of the SMA crossover strategy applied to TQQQ over the 2-year analysis period. Higher returns come with proportionally higher risk."
+    },
+    {
+      "key": "buy_and_hold_return_qqq",
+      "value": 45.67,
+      "description": "Total return of simply buying and holding QQQ for the entire 2-year period without any trading. This serves as a benchmark for the crossover strategy's effectiveness."
+    },
+    {
+      "key": "buy_and_hold_return_tqqq",
+      "value": 78.91,
+      "description": "Total return of buying and holding TQQQ for the entire 2-year period. Due to leverage decay, long-term buy-and-hold returns for leveraged ETFs often underperform expectations."
+    },
+    {
+      "key": "strategy_outperformance_qqq",
+      "value": 41.56,
+      "description": "Percentage points by which the SMA crossover strategy outperformed buy-and-hold for QQQ. Positive values indicate the strategy's timing added value."
+    },
+    {
+      "key": "strategy_outperformance_tqqq",
+      "value": 77.87,
+      "description": "Percentage points by which the SMA crossover strategy outperformed buy-and-hold for TQQQ. Timing strategies can be particularly valuable for leveraged ETFs to avoid leverage decay."
+    },
+    {
+      "key": "recommendation",
+      "value": "Active Golden Cross Signal - Consider QQQ Position",
+      "description": "Current trading recommendation based on SMA crossover analysis. Golden cross signals suggest bullish momentum, with QQQ preferred over TQQQ for most investors due to lower risk profile while still capturing NASDAQ-100 upside."
+    }
+  ]
+}

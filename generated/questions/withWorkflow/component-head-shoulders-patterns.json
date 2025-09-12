@@ -1,0 +1,47 @@
+{
+  "id": "head-shoulders-patterns",
+  "name": "Head and Shoulders Pattern Scanner",
+  "file": "experimental/HeadShouldersPatterns.json",
+  "output": "/experimental/HeadShouldersPatterns.json",
+  "question": "Which stocks are forming head and shoulders reversal patterns?",
+  "retailQuestion": "Which stocks might be changing direction soon?",
+  "description": "Identifies classic head and shoulders (and inverse head and shoulders) reversal patterns that signal major trend changes. Analyzes pattern symmetry, volume characteristics at each peak/trough, neckline breaks, and target projections to validate authentic reversal formations.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "trading:/v2/positions"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for head and shoulders pattern screening",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get extended historical price data for pattern recognition and validation",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Check portfolio positions for potential major reversal patterns",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Identify head and shoulders patterns with volume analysis and neckline break confirmation",
+      "function": "detect_head_shoulders_patterns"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank patterns by completion probability and reversal magnitude",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I sell if my stock shows this pattern?",
+    "How reliable are these reversal signals?",
+    "What if the pattern doesn't complete?",
+    "Is it too late to act on this signal?"
+  ]
+}

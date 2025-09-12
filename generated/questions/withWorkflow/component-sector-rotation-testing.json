@@ -1,0 +1,40 @@
+{
+  "id": "sector-rotation-testing",
+  "name": "Sector Rotation Strategy Testing",
+  "file": "experimental/SectorRotationTesting.json",
+  "output": "/experimental/SectorRotationTesting.json",
+  "question": "How would a sector rotation strategy improve my portfolio performance?",
+  "description": "Tests systematic sector rotation strategies against your buy-and-hold portfolio approach by analyzing economic cycle patterns, momentum indicators, and relative strength signals. Simulates tactical allocation shifts between growth, value, defensive, and cyclical sectors to optimize performance across different market environments and economic conditions.",
+  "apis": [
+    "trading:/v2/positions",
+    "marketdata:/v2/stocks/bars",
+    "eodhd:/eod/bulk"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get current portfolio sector allocation and individual position details",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data for major sector ETFs and individual stocks",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Get economic and sector performance data for rotation signal generation",
+      "function": "eodhd_eod-bulk"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Simulate sector rotation strategies using momentum, economic cycle, and relative strength indicators",
+      "function": "backtest_sector_rotation"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Compare rotation strategy returns vs buy-and-hold and calculate implementation costs",
+      "function": "client_compute"
+    }
+  ]
+}

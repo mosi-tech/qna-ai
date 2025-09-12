@@ -1,0 +1,47 @@
+{
+  "id": "fibonacci-retracement-levels",
+  "name": "Fibonacci Retracement Level Analysis",
+  "file": "experimental/FibonacciRetracementLevels.json",
+  "output": "/experimental/FibonacciRetracementLevels.json",
+  "question": "Which stocks are finding support or resistance at key Fibonacci levels?",
+  "retailQuestion": "Which stocks are bouncing at predictable price levels?",
+  "description": "Identifies stocks interacting with significant Fibonacci retracement levels (23.6%, 38.2%, 50%, 61.8%) from recent major moves. Analyzes price reactions at these mathematical support/resistance levels to predict potential reversal points and continuation patterns for swing trading opportunities.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for Fibonacci level analysis",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data to identify significant highs and lows for Fibonacci calculations",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Get current prices for real-time Fibonacci level interaction analysis",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate Fibonacci retracement levels and analyze price reactions with volume confirmation",
+      "function": "analyze_fibonacci_levels"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank stocks by Fibonacci level significance and reaction strength",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I buy when a stock bounces at these levels?",
+    "How accurate are these price predictions?",
+    "What if the stock breaks through the level?",
+    "Are these mathematical patterns reliable?"
+  ]
+}

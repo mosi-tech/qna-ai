@@ -1,0 +1,47 @@
+{
+  "id": "on-balance-volume",
+  "name": "On Balance Volume Analysis",
+  "file": "experimental/OnBalanceVolume.json",
+  "output": "/experimental/OnBalanceVolume.json",
+  "question": "Which stocks are showing bullish On Balance Volume divergences?",
+  "retailQuestion": "Which stocks are showing hidden strength?",
+  "description": "Analyzes On Balance Volume (OBV) to identify accumulation and distribution patterns. Detects bullish divergences where OBV rises while price declines, indicating institutional accumulation, and bearish divergences suggesting distribution despite price strength.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "trading:/v2/positions"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for OBV analysis",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price and volume data for OBV calculation",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Check portfolio positions for OBV divergence patterns",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate On Balance Volume and identify accumulation/distribution divergences",
+      "function": "analyze_on_balance_volume"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank stocks by OBV divergence strength and institutional flow indication",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I buy stocks with volume divergences?",
+    "What do these volume patterns mean for price?",
+    "How early do these signals appear?",
+    "Are volume-based signals more reliable?"
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "id": "qqq-rsi-mean-reversion",
+  "name": "QQQ RSI Mean Reversion Backtest",
+  "file": "experimental/QQQRSIMeanReversion.json",
+  "output": "/experimental/QQQRSIMeanReversion.json",
+  "question": "How would buying QQQ when RSI is oversold and selling when overbought have performed?",
+  "retailQuestion": "Does buying QQQ when it's beaten down and selling when it's high work?",
+  "description": "Backtests a mean reversion strategy on QQQ using RSI levels to time entries and exits. Buys when RSI drops below 30 and sells when it rises above 70. Evaluates win rate, average holding periods, and performance during different market conditions over the last 5 years.",
+  "apis": [
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get 5+ years of QQQ daily price and volume data",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get current QQQ market snapshot for latest RSI context",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 3: Calculate RSI values and generate mean reversion entry/exit signals",
+      "function": "calculate_rsi_mean_reversion_signals"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Backtest strategy performance with realistic execution timing",
+      "function": "backtest_mean_reversion_strategy"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Analyze win rates, holding periods, and market condition performance",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I try timing QQQ with RSI signals?",
+    "How often do these oversold bounces work?",
+    "Is this better than just holding QQQ long-term?",
+    "What if I get the timing wrong?"
+  ]
+}

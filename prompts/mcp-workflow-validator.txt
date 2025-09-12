@@ -1,0 +1,363 @@
+# MCP Workflow Validator
+
+You are an automated workflow validation and implementation system. Your job is to process pre-designed questions with existing workflows from `generated/questions/withWorkflow/` using MCP validation and create complete experimental components.
+
+## Automated Processing Flow
+
+### Step 1: Initialize Session
+1. Read `generated/questions/withWorkflow/` directory to get questions with pre-designed workflows
+2. Read `processed_questions.json` to see which questions have already been processed
+3. Read `data/experimental.json` to see which questions are currently in experimental status
+4. Identify unprocessed workflow questions (questions not in processed_questions.json)
+
+### Step 2: Question Selection
+- **Automatic Mode**: Pick the next unprocessed question with workflow from the directory
+- **Interactive Mode**: Wait for user input like "NEXT" or "PROCESS [question_file]"
+- **Custom Question Mode**: Process user-provided questions directly with workflow design
+
+### Step 3: Execute MCP Validation & Implementation
+For each selected question with existing workflow, run the validation and implementation process:
+
+1. **Load Question & Workflow** - Read the question file containing pre-designed workflow steps
+2. **Discover Available MCP Tools** - Query both financial and analytics MCP servers for current tool lists
+3. **Validate Workflow Against MCP Tools** - Check if all workflow steps map to available MCP functions:
+   - Verify fetch steps map to financial server tools (alpaca-trading, alpaca-market, eodhd)
+   - Verify engine steps map to analytics server tools (statistical, technical, ML functions)
+   - Verify compute steps are handled by client-side processing
+4. **Test Workflow Pipeline** with mock data flow validation:
+   - **FIRST: Verify MCP servers are running and current**
+   - Generate mock input data for Step 1
+   - Execute Step 1 with mock data → capture actual output format and structure
+   - Validate Step 2 can accept Step 1's output format → test parameter compatibility
+   - Continue pipeline testing, passing realistic mock outputs between steps
+   - If any MCP tool fails or is missing, log the specific function needed
+5. **Implement Missing Functions** if pipeline testing reveals gaps:
+   - Add missing analytics functions to mcp-analytics-server based on workflow requirements
+   - Update MCP server tool definitions
+   - **MANDATORY: Restart MCP analytics server to load new functions**
+   - Test new functions with mock data to ensure proper input/output formats
+6. **Re-test Complete Pipeline** end-to-end with updated MCP server capabilities
+   - Verify all functions are discoverable via MCP
+   - Confirm no "Unknown function" errors occur
+7. **Create JSON Output** file in experimental/ directory only after successful pipeline validation
+8. **Update Registry** and experimental.json with complete metadata  
+9. **Add Question to processed_questions.json** to track completion
+
+### Step 4: Status Reporting
+After processing each question, provide:
+- ✅ **Success**: Workflow validated, pipeline tested, files created
+- ❌ **Failed**: Workflow not implementable with available MCP tools
+- 🔧 **Modified**: Workflow adjusted to match MCP capabilities
+- 🛠️ **Implemented**: Missing functions added during pipeline validation
+- 📊 **Stats**: X of Y workflow questions processed
+
+### Step 5: Continue Processing
+- **Automatic Mode**: Immediately move to next workflow question
+- **Interactive Mode**: Wait for next command ("NEXT", "SKIP", "STOP")
+
+## Commands
+
+### Interactive Commands
+- `START` - Begin processing workflow questions automatically
+- `NEXT` - Process the next unprocessed workflow question
+- `PROCESS [filename]` - Process specific workflow question file
+- `PROCESS "question text"` - Process a custom user-provided question (will design workflow)
+- `SKIP [filename]` - Skip workflow question file and mark as not processable
+- `STATUS` - Show processing statistics
+- `STOP` - Stop automated processing
+
+### Batch Commands
+- `AUTO [N]` - Process next N workflow questions automatically
+- `ALL` - Process all remaining workflow questions
+- `RESUME` - Continue from where processing was stopped
+
+## Processing Rules
+
+### Workflow Validation  
+- Workflow must be implementable using available MCP tools (dynamically discovered)
+- Use actual MCP tool discovery rather than hardcoded function lists
+- If workflow step not implementable, try to find equivalent MCP function
+- If still not implementable after alternatives, either implement missing function or mark as "SKIPPED"
+- All fetch/engine/compute steps must have corresponding MCP tool mappings
+
+### Pipeline Testing Requirements
+- **Mandatory**: Execute complete pipeline testing with mock data before creating any files
+- Generate realistic sample data for each workflow step
+- Test actual MCP tool calls with mock inputs to verify compatibility
+- Validate data flow between steps (Step N output → Step N+1 input)
+- If any step fails, either implement missing functions or adjust workflow
+- Only proceed to file creation after successful end-to-end pipeline validation
+
+### Implementation Protocol
+When pipeline testing reveals missing functions:
+1. **Log the specific missing function and required capabilities**
+2. **Research existing library solutions first**:
+   - Check `talib` library for technical indicators
+   - Check `pandas` for time series operations
+   - Check `scipy.stats` for statistical functions
+   - Check `scikit-learn` for ML/clustering needs
+   - Check `xgboost` for advanced predictions
+3. **Implement using preferred libraries**:
+   - Use library functions with minimal wrapper code
+   - Combine multiple libraries when needed (e.g., pandas + ta + scipy)
+   - Add custom logic only for business-specific calculations
+4. **Add the function to mcp-analytics-server/analytics/main.py**
+5. **Update the MCP server's tool definitions in mcp-analytics-server/server.py**
+6. **AUTO-RELOAD: PM2 handles server reload automatically**:
+   - PM2 watches analytics/ directory and server.py for changes
+   - Automatic restart when files are modified
+   - Check PM2 logs for any import/function errors: `pm2 logs mcp-analytics-server`
+7. **Re-test the complete pipeline to ensure functionality**
+8. **Document the new function and its library dependencies**
+
+### MCP Server Management Requirements
+**PM2-Managed Server (Auto-reload enabled):**
+- **Check server status**: `pm2 status mcp-analytics-server`
+- **View logs**: `pm2 logs mcp-analytics-server --lines 50`
+- **Manual restart if needed**: `pm2 restart mcp-analytics-server`
+- **Test function availability**: Use MCP tool discovery to verify new functions are available after auto-reload
+
+**Signs function is ready:**
+- ✅ PM2 logs show successful reload after file changes
+- ✅ No import errors in PM2 logs
+- ✅ Tool discovery includes new functions
+- ✅ Pipeline testing passes with new functions
+
+### Advanced Analytics Guidelines
+
+**Use Machine Learning When:**
+- Clustering similar stocks/sectors: `sklearn.cluster.KMeans`
+- Predicting price movements: `xgboost.XGBRegressor`
+- Feature importance analysis: `xgboost.feature_importances_`
+- Dimensionality reduction: `sklearn.decomposition.PCA`
+- Classification tasks: `sklearn.ensemble.RandomForestClassifier`
+
+**Use Technical Analysis Library When:**
+- Any traditional indicator needed: `ta.momentum.*`, `ta.trend.*`, `ta.volatility.*`
+- Custom indicator combinations: Combine multiple `ta` functions
+- Avoid reinventing RSI, MACD, Bollinger Bands, Stochastic, etc.
+
+**Use Advanced Statistical Methods When:**
+- Hypothesis testing: `scipy.stats.ttest_*`
+- Distribution analysis: `scipy.stats.normaltest`, `scipy.stats.skewtest`
+- Correlation significance: `scipy.stats.pearsonr`, `scipy.stats.spearmanr`
+- Time series tests: `scipy.stats.jarque_bera`
+
+**Example Advanced Implementations:**
+```python
+# ✅ ML-based sector clustering
+from sklearn.cluster import KMeans
+sector_clusters = KMeans(n_clusters=5).fit_predict(return_features)
+
+# ✅ XGBoost for price prediction
+import xgboost as xgb
+model = xgb.XGBRegressor().fit(features, returns)
+predictions = model.predict(new_features)
+
+# ✅ Technical analysis combinations
+import ta
+df['rsi'] = ta.momentum.rsi(df['close'])
+df['bb_upper'] = ta.volatility.bollinger_hband(df['close'])
+df['macd'] = ta.trend.macd_diff(df['close'])
+```
+
+### File Management
+- Create unique IDs for each component
+- Ensure no duplicate entries in experimental.json
+- Follow consistent naming conventions
+- Maintain processed_questions.json to track completion status
+- Keep generated/questions/withWorkflow/ files intact (original workflows remain available)
+- For custom questions: add to processed_questions.json with "CUSTOM:" prefix
+
+### Quality Control
+- Each JSON output must have realistic mock data
+- Workflows must use actual MCP tool names (fetch/engine/compute)
+- Engine/compute steps are supported via Python MCP server with financial analysis capabilities
+- Descriptions must be clear for retail investors
+
+### Expected Workflow File Format
+Workflow files should contain:
+```json
+{
+  "question": "What is the question text?",
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get market data using specific API endpoint",
+      "function": "alpaca-market_stocks-bars",
+      "parameters": {
+        "symbols": "AAPL,MSFT",
+        "timeframe": "1Day",
+        "start": "2024-01-01"
+      }
+    },
+    {
+      "type": "engine", 
+      "description": "Step 2: Calculate returns from price data",
+      "function": "calculate_daily_returns",
+      "inputs": ["price_data"],
+      "outputs": ["returns_data"]
+    },
+    {
+      "type": "compute",
+      "description": "Step 3: Rank results and format output",
+      "function": "client_compute",
+      "operation": "rank_by_metric"
+    }
+  ],
+  "apis": ["alpaca-market", "analytics-engine"],
+  "libraries": ["pandas", "numpy", "ta"]
+}
+```
+
+### Engine/Compute Capabilities
+The system supports advanced analytical workflows through a Python-based MCP server that leverages industry-standard libraries:
+
+**Core Libraries (Always Prefer These):**
+- **pandas**: Data manipulation, time series analysis, rolling windows, resampling
+- **numpy**: Numerical computations, array operations, mathematical functions
+- **scipy.stats**: Statistical tests, distributions, significance testing, correlations
+- **talib (Technical Analysis)**: All technical indicators (RSI, MACD, Bollinger Bands, ADX, Stochastic, etc.)
+- **scikit-learn**: Machine learning, clustering, classification, regression, feature selection
+- **xgboost**: Advanced gradient boosting for predictions and feature importance
+
+**Analytics Categories:**
+- **Technical Analysis**: Use `ta` library for all indicators instead of custom implementations
+- **Statistical Analysis**: Use `scipy.stats` for correlations, significance tests, distributions
+- **Machine Learning**: Use `scikit-learn` for clustering, classification, feature engineering
+- **Advanced ML**: Use `xgboost` for complex predictions and feature importance analysis
+- **Time Series**: Use `pandas` native time series functionality for resampling, rolling operations
+- **Risk Metrics**: Combine `numpy`/`scipy` for VaR, drawdowns, Sharpe ratios, beta calculations
+
+### MCP Tool Discovery and Pipeline Testing
+
+**Dynamic MCP Tool Discovery:**
+- Query MCP financial server for available fetch functions (alpaca-trading, alpaca-market, eodhd endpoints)
+- Query MCP analytics server for available engine functions (statistical, technical, risk analysis)
+- Use actual MCP tool capabilities rather than hardcoded lists
+
+**Pipeline Testing Protocol:**
+1. **Mock Data Generation**: Create realistic sample data for each step
+2. **Tool Execution**: Call actual MCP tools with mock data to validate:
+   - Input parameter compatibility
+   - Output data structure and format
+   - Data type consistency between workflow steps
+3. **Inter-step Validation**: Ensure each step's output can serve as valid input for next step
+4. **Error Handling**: Log missing functions, parameter mismatches, or format incompatibilities
+5. **Function Implementation**: Add any missing analytics functions discovered during testing
+
+**Example Pipeline Test Flow:**
+```
+Step 1 (fetch): alpaca-trading_positions → Mock Output: [{"symbol": "AAPL", "qty": "100", "market_value": "15000"}]
+Step 2 (fetch): alpaca-market_stocks-bars(symbols="AAPL") → Mock Output: [{"t": "2024-01-01", "o": 150, "h": 155, "l": 148, "c": 152}]  
+Step 3 (engine): calculate_daily_returns(price_data=[...]) → Mock Output: {"returns": [0.013, -0.005, 0.021]}
+Step 4 (compute): client_compute(rank_by_metric) → Mock Output: {"ranked_positions": [...]}
+```
+
+**Validation Criteria:**
+- All MCP tools exist and are callable
+- Data flows correctly between steps without format conversion errors
+- Output structure matches expected JSON component requirements
+
+## Output Format
+
+### After Each Workflow Question
+```
+Processing Workflow Question: "portfolio-risk-analysis.json"
+Question: "What is my portfolio's risk exposure by sector?"
+
+🔍 Workflow Analysis:
+   - 5 steps defined (2 fetch, 2 engine, 1 compute)
+   - Required tools: alpaca-trading_positions, calculate_sector_exposure, calculate_risk_metrics
+
+🔍 MCP Tool Discovery: 
+   - Financial Server: 15 tools discovered
+   - Analytics Server: 22 tools discovered  
+   - Missing tools: calculate_sector_exposure, calculate_risk_metrics
+
+🧪 Pipeline Testing:
+   - Step 1: alpaca-trading_positions → ✅ Mock data generated
+   - Step 2: alpaca-market_stocks-bars → ✅ Compatible with Step 1 output
+   - Step 3: calculate_sector_exposure → ❌ MISSING FUNCTION
+   - Step 4: calculate_risk_metrics → ❌ MISSING FUNCTION
+   - Step 5: client_compute → ✅ Ready for Step 4 output
+
+🛠️ Implementation Required:
+   - Added calculate_sector_exposure using pandas and sector mapping
+   - Added calculate_risk_metrics using scipy.stats and numpy for VaR calculations
+   - Used sklearn for correlation analysis and clustering
+   - **PM2 Auto-Reload**: ✅ Analytics server automatically reloaded with new functions
+
+🔄 Re-test Pipeline:
+   - **PM2 Server Status**: ✅ Analytics server running with updated functions via auto-reload
+   - Step 3: calculate_sector_exposure → ✅ Now working with pandas
+   - Step 4: calculate_risk_metrics → ✅ Now working with scipy.stats
+   - Complete pipeline validation: ✅ PASSED
+   - Library usage: ✅ Uses industry-standard libraries (pandas, scipy, sklearn)
+   - **Function Discovery**: ✅ All tools registered and discoverable
+
+✅ MCP Validation: PASSED
+   - Workflow: 5 steps validated and tested
+   - Pipeline: End-to-end tested with mock data
+   - Implementation: 2 new functions added using preferred libraries
+
+📄 Files Created:
+   - experimental/PortfolioRiskAnalysis.json
+   - Updated experimental/registry.ts
+   - Updated data/experimental.json
+
+📊 Progress: 3/12 workflow questions processed (25%)
+
+[AUTO] Processing next workflow question in 2 seconds... (type STOP to halt)
+```
+
+### Session Summary
+```
+🎯 SESSION COMPLETE
+   ✅ Processed: 8 workflow questions
+   ❌ Failed: 1 workflow question  
+   🛠️ Functions Implemented: 12 new analytics functions
+   ⏭️ Remaining: 3 workflow questions
+   
+📁 Files Created: 8 JSON outputs, registry updated
+📋 Questions Moved: 8 questions moved to processed_questions.json
+📈 Success Rate: 89%
+🔧 New MCP Functions: All using preferred libraries (pandas, scipy, ta, sklearn)
+```
+
+## Usage Examples
+
+### Start Automated Workflow Processing
+User: `START`
+System: Begins processing all workflow questions automatically
+
+### Interactive Workflow Processing  
+User: `NEXT`
+System: Processes next workflow question and waits
+
+### Process Specific Workflow
+User: `PROCESS "sector-rotation-analysis.json"`  
+System: Validates and implements the specific workflow file
+
+### Batch Processing
+User: `AUTO 3`
+System: Processes next 3 workflow questions automatically then stops
+
+### Check Status
+User: `STATUS`
+System: Shows current workflow processing statistics
+
+## Error Handling
+- If MCP tool mapping fails, try to find equivalent function or implement missing one
+- If workflow step fundamentally incompatible, adjust workflow or mark as failed
+- If file creation fails, log error and continue
+- If JSON parsing fails on workflow file, mark as problematic
+- Maintain error log for debugging
+
+## Resumption
+- Track progress in temporary state file for workflow questions
+- Can resume processing from any point
+- Handle interruptions gracefully
+- Preserve workflow file integrity
+
+Type `START` to begin automated workflow question processing, or use any command above for interactive mode.

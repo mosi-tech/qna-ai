@@ -1,0 +1,47 @@
+{
+  "id": "morning-star-pattern",
+  "name": "Morning Star Bullish Reversal Pattern",
+  "file": "experimental/MorningStarPattern.json",
+  "output": "/experimental/MorningStarPattern.json",
+  "question": "Which stocks are forming morning star bullish reversal patterns?",
+  "retailQuestion": "Which stocks might be ready to bounce back?",
+  "description": "Identifies morning star patterns - three-candle bullish reversal formations consisting of a long red candle, small-bodied candle (star), and confirming green candle. Analyzes pattern completion, gap characteristics, and volume confirmation for authentic reversal signals.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "trading:/v2/positions"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for morning star pattern screening",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get recent OHLC data for three-candle reversal pattern identification",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Check portfolio positions for bullish reversal pattern opportunities",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Identify morning star patterns with gap analysis and volume confirmation validation",
+      "function": "detect_morning_star_patterns"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank bullish reversal patterns by completion quality and upside potential",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I buy stocks showing reversal signals?",
+    "How reliable are morning star patterns?",
+    "What if the reversal doesn't happen?",
+    "Is this a good entry point for beaten-down stocks?"
+  ]
+}

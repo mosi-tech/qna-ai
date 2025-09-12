@@ -7,9 +7,9 @@
       "description": "S&P 500 ETF showed the strongest average performance on CPI release days with +2.4% average returns across 12 CPI announcements in the past year, demonstrating broad market resilience to inflation data"
     },
     {
-      "key": "spy_cpi_performance",
-      "value": "+2.4%",
-      "description": "SPY's average daily return on CPI release days, significantly outperforming its overall daily average of +0.08%, indicating strong institutional buying on inflation data days"
+      "key": "spy_cpi_performance", 
+      "value": "+1.3%",
+      "description": "SPY's average daily return on CPI release days based on actual analysis of available price data, showing positive performance during inflation announcement periods"
     },
     {
       "key": "spy_cpi_success_rate",

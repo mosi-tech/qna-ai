@@ -1,0 +1,47 @@
+{
+  "id": "stochastic-oversold-signals",
+  "name": "Stochastic Oversold Reversal Signals",
+  "file": "experimental/StochasticOversoldSignals.json",
+  "output": "/experimental/StochasticOversoldSignals.json",
+  "question": "Which stocks are showing stochastic oversold reversal signals?",
+  "retailQuestion": "Which beaten-down stocks might bounce back?",
+  "description": "Scans for stocks with stochastic oscillator readings below 20 (oversold) that are beginning to turn higher, indicating potential short-term reversal opportunities. Analyzes %K and %D line crossovers, divergence patterns, and trend context to identify high-probability bounce candidates in trending markets.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "trading:/v2/positions"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for stochastic oversold screening",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data for stochastic oscillator calculation",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Check portfolio positions for oversold reversal opportunities",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate stochastic values and identify oversold reversal patterns with trend alignment",
+      "function": "detect_stochastic_reversals"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank reversal signals by strength and uptrend probability",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I buy these oversold stocks?",
+    "How do I know if they'll actually bounce?",
+    "What if they keep going down?",
+    "Is this a good time to catch falling knives?"
+  ]
+}

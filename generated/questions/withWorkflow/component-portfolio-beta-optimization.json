@@ -1,0 +1,47 @@
+{
+  "id": "portfolio-beta-optimization",
+  "name": "Portfolio Beta Optimization Analysis",
+  "file": "experimental/PortfolioBetaOptimization.json",
+  "output": "/experimental/PortfolioBetaOptimization.json",
+  "question": "How can I adjust my portfolio beta to better match my risk tolerance?",
+  "retailQuestion": "How can I make my portfolio less risky?",
+  "description": "Analyzes your portfolio's current beta relative to the market and simulates adjustments to achieve your target risk level. Tests different combinations of high-beta growth stocks, low-beta defensive positions, and market-neutral alternatives to optimize risk-adjusted returns while maintaining diversification and meeting your investment objectives.",
+  "apis": [
+    "trading:/v2/positions",
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v1/screener/stocks/most-actives"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get current portfolio positions and weightings for beta calculation",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data for portfolio stocks and market benchmark (SPY)",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Get market data for alternative securities with different beta profiles",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate current portfolio beta and simulate adjustments to achieve target beta levels",
+      "function": "optimize_portfolio_beta"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank beta adjustment strategies by risk-return efficiency and implementation feasibility",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I add safer investments to my portfolio?",
+    "How do I know if my portfolio is too risky?",
+    "What stocks should I avoid for lower risk?",
+    "Is it worth sacrificing returns for safety?"
+  ]
+}

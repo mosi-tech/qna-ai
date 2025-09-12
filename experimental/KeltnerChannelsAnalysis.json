@@ -1,0 +1,205 @@
+{
+  "description": "Analyzes Keltner Channels based on exponential moving average and Average True Range to identify trending breakouts and consolidation squeeze patterns. Keltner Channels combine price momentum with volatility measurement to detect high-probability trend continuation signals and pre-breakout squeeze formations that often precede significant price moves.",
+  "body": [
+    {
+      "key": "nvda_bullish_breakout",
+      "value": "Strong Bullish Channel Breakout",
+      "description": "NVIDIA (NVDA) showing strong bullish Keltner Channel breakout with price at $445.20 breaking above upper channel at $442.80. Signal strength 88/100 with volume confirmation and channel expansion."
+    },
+    {
+      "key": "nvda_channel_position",
+      "value": "Above Upper Channel (+0.54%)",
+      "description": "NVDA trading 0.54% above upper Keltner Channel, indicating bullish momentum continuation. Position above upper channel suggests trend acceleration and institutional buying pressure."
+    },
+    {
+      "key": "nvda_volume_confirmation",
+      "value": "Strong (185% of average)",
+      "description": "NVDA breakout confirmed by volume expansion to 185% of 20-day average. Volume-confirmed channel breakouts have 76% higher sustainability rate than price-only breaks."
+    },
+    {
+      "key": "nvda_channel_expansion",
+      "value": "Expanding (+8.2%)",
+      "description": "NVDA Keltner Channels expanding by 8.2% from previous period, indicating increasing volatility and trend strength. Expanding channels support continued directional moves."
+    },
+    {
+      "key": "nvda_trend_strength",
+      "value": "Very Strong (90%)",
+      "description": "NVDA trend strength score of 90% based on price position relative to middle channel over past 10 sessions. Consistent upper channel trading indicates strong bullish trend."
+    },
+    {
+      "key": "tsla_squeeze_pattern",
+      "value": "High-Probability Squeeze",
+      "description": "Tesla (TSLA) displaying classic Keltner Channel squeeze with channel width at 20-month low. Squeeze intensity 85/100 indicates imminent breakout potential."
+    },
+    {
+      "key": "tsla_squeeze_intensity",
+      "value": "85/100 (Very High)",
+      "description": "TSLA squeeze intensity of 85/100 indicates channels at extreme compression. High-intensity squeezes (>80) typically resolve with significant directional moves within 5-10 sessions."
+    },
+    {
+      "key": "tsla_breakout_probability",
+      "value": "78% within 10 sessions",
+      "description": "Historical probability analysis shows 78% chance of significant breakout from current TSLA squeeze pattern within 10 trading sessions. Tight channels cannot persist indefinitely."
+    },
+    {
+      "key": "tsla_volume_pattern",
+      "value": "Contracting (65% average)",
+      "description": "TSLA volume contracting to 65% of average during squeeze formation, typical pattern before explosive breakouts. Low volume squeeze indicates accumulation phase."
+    },
+    {
+      "key": "aapl_channel_resistance",
+      "value": "Testing Upper Channel",
+      "description": "Apple (AAPL) price testing upper Keltner Channel resistance at $175.40. Current price $175.20 just below breakout threshold, suggesting potential upside break."
+    },
+    {
+      "key": "aapl_channel_percent",
+      "value": "95th Percentile",
+      "description": "AAPL trading at 95th percentile of Keltner Channel range, indicating strong upward pressure. Readings above 90% often precede channel breakouts."
+    },
+    {
+      "key": "amd_bearish_breakout",
+      "value": "Bearish Channel Breakdown",
+      "description": "AMD showing bearish breakdown below lower Keltner Channel at $138.50. Current price $137.20 suggests continued downside pressure with signal strength 72/100."
+    },
+    {
+      "key": "amd_breakdown_confirmation",
+      "value": "Volume Confirmed",
+      "description": "AMD bearish breakdown confirmed by 160% volume expansion. Volume-confirmed breakdowns typically see continued selling pressure over subsequent 5-10 sessions."
+    },
+    {
+      "key": "googl_neutral_zone",
+      "value": "Inside Channel Range",
+      "description": "Google (GOOGL) trading within Keltner Channel range at 45% of channel width from lower band. Neutral position suggests range-bound trading until breakout catalyst."
+    },
+    {
+      "key": "msft_middle_channel_support",
+      "value": "Holding EMA Support",
+      "description": "Microsoft (MSFT) finding support at middle Keltner Channel (20-period EMA) at $420.80. Middle channel often acts as dynamic support/resistance in trending markets."
+    },
+    {
+      "key": "spy_broad_market_breakout",
+      "value": "Market-Wide Channel Breakout",
+      "description": "SPY showing broad market Keltner Channel breakout, providing supportive environment for individual stock breakout signals. Market confirmation increases success probability."
+    },
+    {
+      "key": "qqq_tech_channel_expansion",
+      "value": "Technology Sector Momentum",
+      "description": "QQQ displaying channel expansion with strong breakout above upper band. Tech sector leadership supports individual technology stock channel signals like NVDA, AAPL."
+    },
+    {
+      "key": "total_stocks_analyzed",
+      "value": 52,
+      "description": "Total stocks analyzed for Keltner Channel patterns across active trading universe. Comprehensive screening ensures capture of both breakout and squeeze opportunities."
+    },
+    {
+      "key": "breakout_signals_found",
+      "value": 12,
+      "description": "Active channel breakout signals detected (both bullish and bearish). 23% breakout rate indicates selective momentum rather than broad market speculation."
+    },
+    {
+      "key": "squeeze_patterns_identified",
+      "value": 8,
+      "description": "High-probability squeeze patterns identified across screening universe. Squeeze patterns offer pre-positioned opportunities before major breakout moves."
+    },
+    {
+      "key": "bullish_breakouts",
+      "value": 7,
+      "description": "Stocks breaking above upper Keltner Channel with volume confirmation. Bullish breakouts suggest continuation of uptrend with institutional participation."
+    },
+    {
+      "key": "bearish_breakouts", 
+      "value": 5,
+      "description": "Stocks breaking below lower Keltner Channel indicating trend reversal or acceleration of downtrend. Bearish breakouts warrant defensive positioning."
+    },
+    {
+      "key": "strong_signals_count",
+      "value": 6,
+      "description": "Channel signals rated as 'strong' (70+ strength score). Strong Keltner Channel signals have historically shown 82% success rate over subsequent 15 trading sessions."
+    },
+    {
+      "key": "volume_confirmed_breakouts",
+      "value": 9,
+      "description": "Breakout signals with volume confirmation (>150% average). Volume confirmation increases breakout sustainability and reduces probability of false signals."
+    },
+    {
+      "key": "channel_expansion_signals",
+      "value": 11,
+      "description": "Signals occurring with channel expansion (increasing volatility). Expanding channels indicate strengthening trends and higher breakout sustainability."
+    },
+    {
+      "key": "average_signal_strength",
+      "value": "68.4/100",
+      "description": "Average strength score across all detected channel signals. Above-average strength indicates generally high-quality technical patterns rather than weak signals."
+    },
+    {
+      "key": "sector_distribution",
+      "value": "Technology 42%, Healthcare 23%, Finance 35%",
+      "description": "Distribution of channel signals across sectors. Technology concentration aligns with current market leadership and momentum themes."
+    },
+    {
+      "key": "squeeze_resolution_timing",
+      "value": "5-12 sessions average",
+      "description": "Historical analysis shows squeeze patterns typically resolve within 5-12 trading sessions. Current squeezes approaching historical resolution timeframe."
+    },
+    {
+      "key": "channel_vs_bollinger_comparison",
+      "value": "Less False Signals",
+      "description": "Keltner Channels using ATR produce fewer false breakout signals than Bollinger Bands. ATR-based volatility measurement more stable than standard deviation approach."
+    },
+    {
+      "key": "optimal_entry_strategy",
+      "value": "Breakout + Volume Confirmation",
+      "description": "Optimal entry strategy combines channel breakout with volume expansion above 150% average. This combination filters highest-probability continuation moves."
+    },
+    {
+      "key": "stop_loss_placement",
+      "value": "Opposite Channel Band",
+      "description": "Recommended stop-loss placement at opposite channel band. Channel-based stops provide logical technical levels while allowing room for normal volatility."
+    },
+    {
+      "key": "profit_targets",
+      "value": "1.5-2.5x Channel Width",
+      "description": "Profit targets typically 1.5-2.5 times channel width from breakout point. Channel width provides volatility-adjusted targeting for realistic expectations."
+    },
+    {
+      "key": "false_breakout_rate",
+      "value": "18% historical average",
+      "description": "Keltner Channel false breakout rate averages 18% historically, lower than other channel methods. ATR-based calculation reduces noise-driven false signals."
+    },
+    {
+      "key": "squeeze_success_rate",
+      "value": "73% directional accuracy",
+      "description": "Squeeze patterns show 73% accuracy in predicting breakout direction based on pre-squeeze momentum and volume patterns. High-probability setups for patient traders."
+    },
+    {
+      "key": "market_regime_assessment",
+      "value": "Favorable for Channel Trading",
+      "description": "Current market regime with moderate volatility and trending behavior favors Keltner Channel strategies. Environment supports both breakout and squeeze approaches."
+    },
+    {
+      "key": "volatility_environment",
+      "value": "Moderate (VIX 16-22 range)",
+      "description": "Current volatility environment in VIX 16-22 range optimal for channel analysis. Moderate volatility produces clearer channel signals than extreme volatility periods."
+    },
+    {
+      "key": "institutional_activity",
+      "value": "Supporting Breakouts",
+      "description": "Volume analysis indicates institutional participation in channel breakouts. Large block trading confirms professional money involvement in directional moves."
+    },
+    {
+      "key": "correlation_with_trend",
+      "value": "85% alignment",
+      "description": "Channel breakout signals show 85% alignment with underlying trend direction. Trend-aligned breakouts have higher sustainability than counter-trend signals."
+    },
+    {
+      "key": "risk_reward_profile", 
+      "value": "Favorable (2.8:1 average)",
+      "description": "Average risk-reward profile for channel breakout trades is 2.8:1 using channel-based stops and targets. Favorable ratios support systematic trading approach."
+    },
+    {
+      "key": "seasonal_patterns",
+      "value": "September Breakout Season",
+      "description": "September historically shows increased breakout activity as institutional money returns from summer holidays. Seasonal factor supports current channel signal timing."
+    }
+  ]
+}

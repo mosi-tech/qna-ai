@@ -1,0 +1,47 @@
+{
+  "id": "momentum-divergence-scanner",
+  "name": "Momentum Divergence Scanner",
+  "file": "experimental/MomentumDivergenceScanner.json",
+  "output": "/experimental/MomentumDivergenceScanner.json",
+  "question": "Which stocks are showing momentum divergences across multiple indicators?",
+  "retailQuestion": "Which stocks might be losing steam?",
+  "description": "Scans for divergences between price action and multiple momentum indicators (RSI, MACD, Stochastic) to identify potential reversal points. Analyzes divergence strength, confirmation across indicators, and trend context to filter high-probability reversal setups.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "trading:/v2/positions"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for multi-indicator divergence screening",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data for multiple momentum indicator calculations",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Check portfolio positions for momentum divergence opportunities",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate multiple momentum indicators and identify cross-indicator divergence patterns",
+      "function": "scan_momentum_divergences"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank divergences by confirmation strength and reversal probability",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I sell stocks showing weakness?",
+    "How reliable are these divergence signals?",
+    "What if the stock continues going up anyway?",
+    "When should I act on these warning signs?"
+  ]
+}

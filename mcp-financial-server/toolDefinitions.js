@@ -452,6 +452,24 @@ export const FINANCIAL_TOOLS = [
       additionalProperties: false,
     },
   },
+  {
+    name: 'alpaca-market_stocks-auctions',
+    description: 'Closing auction data including volume and price information',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        symbols: {
+          type: 'string',
+          description: 'Comma-separated list of symbols',
+        },
+        date: {
+          type: 'string',
+          description: 'Date for auction data (YYYY-MM-DD, defaults to today)',
+        },
+      },
+      additionalProperties: false,
+    },
+  },
 
   // EODHD API Tools
   {
@@ -563,33 +581,33 @@ export const FINANCIAL_TOOLS = [
       additionalProperties: false,
     },
   },
-  {
-    name: 'eodhd_technical-indicators',
-    description: 'Technical analysis indicators (RSI, MACD, SMA, etc.)',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        symbol: {
-          type: 'string',
-          description: 'Stock symbol with exchange (e.g., AAPL.US)',
-          default: 'AAPL.US',
-        },
-        function: {
-          type: 'string',
-          description: 'Technical indicator function',
-          enum: ['sma', 'ema', 'rsi', 'macd', 'stoch', 'adx', 'cci', 'williams', 'momentum', 'roc'],
-          default: 'sma',
-        },
-        period: {
-          type: 'number',
-          description: 'Indicator period',
-          default: 14,
-        },
-      },
-      required: ['symbol'],
-      additionalProperties: false,
-    },
-  },
+  // {
+  //   name: 'eodhd_technical-indicators',
+  //   description: 'Technical analysis indicators (RSI, MACD, SMA, etc.)',
+  //   inputSchema: {
+  //     type: 'object',
+  //     properties: {
+  //       symbol: {
+  //         type: 'string',
+  //         description: 'Stock symbol with exchange (e.g., AAPL.US)',
+  //         default: 'AAPL.US',
+  //       },
+  //       function: {
+  //         type: 'string',
+  //         description: 'Technical indicator function',
+  //         enum: ['sma', 'ema', 'rsi', 'macd', 'stoch', 'adx', 'cci', 'williams', 'momentum', 'roc'],
+  //         default: 'sma',
+  //       },
+  //       period: {
+  //         type: 'number',
+  //         description: 'Indicator period',
+  //         default: 14,
+  //       },
+  //     },
+  //     required: ['symbol'],
+  //     additionalProperties: false,
+  //   },
+  // },
   {
     name: 'eodhd_screener',
     description: 'Stock screener with custom filters',

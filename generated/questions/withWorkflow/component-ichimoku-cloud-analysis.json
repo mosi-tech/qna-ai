@@ -1,0 +1,47 @@
+{
+  "id": "ichimoku-cloud-analysis",
+  "name": "Ichimoku Cloud Signal Analysis",
+  "file": "experimental/IchimokuCloudAnalysis.json",
+  "output": "/experimental/IchimokuCloudAnalysis.json",
+  "question": "Which stocks are showing bullish Ichimoku cloud breakout signals?",
+  "retailQuestion": "Which stocks are breaking into bullish territory?",
+  "description": "Analyzes Ichimoku cloud formations to identify stocks breaking above the cloud (kumo) with bullish momentum signals. Evaluates Tenkan-sen/Kijun-sen crossovers, cloud color changes, and price position relative to all Ichimoku components for comprehensive trend and momentum analysis.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "trading:/v2/positions"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for Ichimoku cloud analysis",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get extended historical price data for Ichimoku component calculations",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Check portfolio positions for Ichimoku signal opportunities",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate all Ichimoku components and identify cloud breakout signals with momentum confirmation",
+      "function": "analyze_ichimoku_signals"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank Ichimoku signals by signal alignment and trend strength",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I buy these cloud breakout stocks?",
+    "How reliable are Ichimoku signals?",
+    "What makes this indicator different?",
+    "Is it good for both entry and exit timing?"
+  ]
+}

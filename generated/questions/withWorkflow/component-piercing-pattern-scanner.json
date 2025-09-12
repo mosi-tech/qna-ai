@@ -1,0 +1,47 @@
+{
+  "id": "piercing-pattern-scanner",
+  "name": "Piercing Pattern Bullish Reversal",
+  "file": "experimental/PiercingPatternScanner.json",
+  "output": "/experimental/PiercingPatternScanner.json",
+  "question": "Which stocks are forming piercing pattern bullish reversal signals?",
+  "retailQuestion": "Which stocks might be bouncing back up?",
+  "description": "Identifies piercing patterns - two-candle bullish reversal formations where a green candle opens below the previous red candle's low and closes above its midpoint. Analyzes pattern quality, penetration depth, and volume confirmation for authentic reversal setups.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "trading:/v2/positions"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for piercing pattern screening",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get recent OHLC data for two-candle bullish reversal pattern identification",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Check portfolio positions for piercing pattern reversal opportunities",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Identify piercing patterns with penetration analysis and volume confirmation validation",
+      "function": "detect_piercing_patterns"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank piercing patterns by penetration depth and reversal strength",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I buy stocks showing this reversal pattern?",
+    "How reliable are piercing patterns?",
+    "What if the bounce fails?",
+    "Is this a good entry signal for recovery plays?"
+  ]
+}

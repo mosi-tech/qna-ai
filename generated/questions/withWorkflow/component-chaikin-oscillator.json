@@ -1,0 +1,47 @@
+{
+  "id": "chaikin-oscillator",
+  "name": "Chaikin Oscillator Analysis",
+  "file": "experimental/ChaikinOscillator.json", 
+  "output": "/experimental/ChaikinOscillator.json",
+  "question": "Which stocks are showing Chaikin Oscillator accumulation or distribution signals?",
+  "retailQuestion": "Which stocks are being accumulated or sold off?",
+  "description": "Analyzes Chaikin Oscillator to identify accumulation and distribution phases based on Accumulation/Distribution Line momentum. Detects bullish signals when oscillator crosses above zero and bearish signals when crossing below zero, with divergence analysis.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "trading:/v2/positions"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for Chaikin Oscillator analysis",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price and volume data for Chaikin Oscillator calculation",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Check portfolio positions for accumulation/distribution signals",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate Chaikin Oscillator and identify accumulation/distribution crossover signals",
+      "function": "analyze_chaikin_oscillator"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank stocks by Chaikin signal strength and accumulation/distribution phase",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I buy stocks showing accumulation?",
+    "How do I know if institutions are buying?",
+    "What if the selling pressure gets worse?",
+    "Are these signals better than price alone?"
+  ]
+}

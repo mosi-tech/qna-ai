@@ -1,0 +1,47 @@
+{
+  "id": "harami-patterns",
+  "name": "Harami Reversal Pattern Scanner",
+  "file": "experimental/HaramiPatterns.json",
+  "output": "/experimental/HaramiPatterns.json",
+  "question": "Which stocks are forming bullish or bearish harami reversal patterns?",
+  "retailQuestion": "Which stocks might be changing momentum?",
+  "description": "Identifies bullish and bearish harami patterns where a small candle is completely contained within the previous large candle's body, signaling potential trend reversals. Analyzes pattern quality, volume characteristics, and trend context for authentic reversal signals.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "trading:/v2/positions"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for harami pattern screening",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get recent OHLC data for two-candle reversal pattern identification",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Check portfolio positions for harami reversal pattern opportunities",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Identify bullish and bearish harami patterns with volume analysis and trend validation",
+      "function": "detect_harami_patterns"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank harami patterns by reversal probability and pattern quality",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I trade on these reversal signals?",
+    "How reliable are harami patterns?",
+    "What's the best way to confirm these signals?",
+    "Do I need to wait for additional confirmation?"
+  ]
+}

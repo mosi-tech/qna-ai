@@ -1,0 +1,46 @@
+{
+  "id": "sector-rotation-xlf-xle",
+  "name": "Financial vs Energy Sector Rotation Backtest",
+  "file": "experimental/SectorRotationXLFXLE.json",
+  "output": "/experimental/SectorRotationXLFXLE.json",
+  "question": "How would a sector rotation strategy between XLF and XLE have performed based on relative strength?",
+  "retailQuestion": "Should I switch between financial and energy ETFs based on which is doing better?",
+  "description": "Backtests a sector rotation strategy that switches between Financial Select Sector SPDR ETF (XLF) and Energy Select Sector SPDR ETF (XLE) based on 3-month relative strength. Analyzes the effectiveness of rotating between these cyclical sectors during different economic cycles over 8 years.",
+  "apis": [
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get 8+ years of daily price data for both XLF and XLE",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get current market snapshots for both sector ETFs",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 3: Calculate relative strength between sectors and rotation signals",
+      "function": "calculate_sector_rotation_signals"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Backtest rotation strategy with realistic switching costs and timing",
+      "function": "backtest_sector_rotation_strategy"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Compare rotation vs equal-weight vs individual sector performance",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I rotate between sector ETFs?",
+    "How often would I need to switch positions?",
+    "Is sector rotation better than diversification?",
+    "What if I pick the wrong time to rotate?"
+  ]
+}

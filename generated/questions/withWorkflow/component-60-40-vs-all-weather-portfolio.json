@@ -1,0 +1,46 @@
+{
+  "id": "60-40-vs-all-weather-portfolio",
+  "name": "Traditional 60/40 vs All Weather Portfolio Backtest",
+  "file": "experimental/SixtyFortyVsAllWeatherPortfolio.json",
+  "output": "/experimental/SixtyFortyVsAllWeatherPortfolio.json",
+  "question": "How would a 60/40 stock/bond portfolio have compared to Ray Dalio's All Weather strategy over 15 years?",
+  "retailQuestion": "Should I stick with simple 60/40 investing or try a more complex diversified approach?",
+  "description": "Compares the performance of a traditional 60% stock/40% bond portfolio against Ray Dalio's All Weather strategy using SPY, TLT, IEF, DBC, and GLD. Analyzes returns, volatility, and drawdowns across different economic environments including the 2008 crisis, low interest rates, and inflation periods.",
+  "apis": [
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get 15+ years of data for SPY, TLT, IEF, DBC, GLD for strategy comparison",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get current market snapshots for all portfolio components",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 3: Calculate portfolio allocations and rebalancing schedules",
+      "function": "calculate_portfolio_allocations"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Backtest both strategies with quarterly rebalancing",
+      "function": "backtest_portfolio_strategies"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Compare risk-adjusted returns, drawdowns, and Sharpe ratios",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Is the simple 60/40 portfolio still good enough?",
+    "Should I diversify into commodities and international assets?",
+    "How often should I rebalance my portfolio?",
+    "Is the All Weather strategy too complicated for me?"
+  ]
+}

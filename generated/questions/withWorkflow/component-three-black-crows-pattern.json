@@ -1,0 +1,47 @@
+{
+  "id": "three-black-crows-pattern",
+  "name": "Three Black Crows Bearish Pattern",
+  "file": "experimental/ThreeBlackCrowsPattern.json",
+  "output": "/experimental/ThreeBlackCrowsPattern.json",
+  "question": "Which stocks are forming three black crows bearish reversal patterns?",
+  "retailQuestion": "Which stocks are showing serious weakness?",
+  "description": "Identifies three black crows patterns - three consecutive long red candles with progressively lower closes, signaling strong bearish reversal. Analyzes pattern quality, volume confirmation, and trend context to validate authentic bearish reversals at resistance levels.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "trading:/v2/positions"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for three black crows pattern screening",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get recent OHLC data for bearish candlestick pattern identification",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Check portfolio positions for potential bearish reversal patterns",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Identify three black crows patterns with volume analysis and trend context validation",
+      "function": "detect_three_black_crows"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank bearish patterns by reversal strength and continuation probability",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I sell stocks showing this pattern?",
+    "How bearish is the three black crows signal?",
+    "Is this a good time to short these stocks?",
+    "What if the selling pressure continues?"
+  ]
+}

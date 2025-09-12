@@ -1,0 +1,40 @@
+{
+  "id": "crisis-stress-testing",
+  "name": "Portfolio Crisis Stress Testing",
+  "file": "experimental/PortfolioCrisisStressTesting.json",
+  "output": "/experimental/PortfolioCrisisStressTesting.json",
+  "question": "How would my portfolio have performed during major market crises like 2008 or March 2020?",
+  "description": "Stress tests your current portfolio allocation against historical market crises including the 2008 financial crisis, 2020 COVID crash, dot-com bubble, and other major downturns. Analyzes maximum drawdown, recovery time, and defensive characteristics to identify vulnerabilities and suggest portfolio adjustments for crisis resilience.",
+  "apis": [
+    "trading:/v2/positions",
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v1/screener/stocks/most-actives"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get current portfolio positions and weightings for stress test modeling",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data covering major crisis periods (2000-2024)",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Get market breadth data to identify crisis severity and duration",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Run portfolio stress tests against historical crisis scenarios with correlation analysis",
+      "function": "execute_crisis_stress_tests"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Calculate crisis performance metrics and rank portfolio resilience by scenario",
+      "function": "client_compute"
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "id": "portfolio-allocation-testing",
+  "name": "Portfolio Allocation Testing Analysis",
+  "file": "experimental/PortfolioAllocationTesting.json",
+  "output": "/experimental/PortfolioAllocationTesting.json",
+  "question": "How would my portfolio perform with different asset allocation percentages?",
+  "retailQuestion": "What if I changed my stock and bond mix?",
+  "description": "Tests multiple asset allocation scenarios for your current portfolio to compare risk-adjusted returns, drawdowns, and volatility across different stock/bond/alternative weightings. Uses historical backtesting to model performance during various market conditions and provides optimal allocation recommendations based on your risk tolerance and return objectives.",
+  "apis": [
+    "trading:/v2/positions",
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get current portfolio positions with quantities, market values, and asset classifications",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data for all portfolio assets covering multiple market cycles",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Get current market snapshots for real-time valuation adjustments",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Run allocation backtesting scenarios (conservative 60/40, balanced 70/30, aggressive 80/20) with rebalancing simulation",
+      "function": "backtest_allocation_scenarios"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Compare risk-adjusted metrics and rank allocation strategies by Sharpe ratio and maximum drawdown",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I increase my stock allocation?",
+    "How much should I invest in bonds?",
+    "What's the best mix for my age?",
+    "How often should I rebalance my portfolio?"
+  ]
+}

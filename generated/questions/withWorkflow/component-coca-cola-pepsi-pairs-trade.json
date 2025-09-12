@@ -1,0 +1,46 @@
+{
+  "id": "coca-cola-pepsi-pairs-trade",
+  "name": "Coca-Cola vs PepsiCo Pairs Trading Strategy",
+  "file": "experimental/CocaColaPepsiPairsTrade.json",
+  "output": "/experimental/CocaColaPepsiPairsTrade.json",
+  "question": "How would a pairs trading strategy between KO and PEP based on relative performance have worked?",
+  "retailQuestion": "Should I switch between Coca-Cola and Pepsi stock based on which is performing better?",
+  "description": "Backtests a pairs trading strategy between Coca-Cola (KO) and PepsiCo (PEP) that goes long the underperforming stock and short the outperforming stock when their relative performance diverges significantly. Analyzes mean reversion patterns and trade profitability over 15 years of beverage industry competition.",
+  "apis": [
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get 15+ years of KO and PEP daily price data for pairs analysis",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get current KO and PEP market data for relative performance",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 3: Calculate relative performance ratio and identify divergence signals",
+      "function": "calculate_pairs_trading_signals"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Backtest pairs trading strategy with realistic execution and costs",
+      "function": "backtest_pairs_trading_strategy"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Analyze trade success rate, holding periods, and risk-adjusted returns",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Does pairs trading work with similar companies like KO and PEP?",
+    "Should I switch between competing stocks in the same industry?",
+    "How do I identify good pairs trading opportunities?",
+    "Is pairs trading too risky for retail investors?"
+  ]
+}

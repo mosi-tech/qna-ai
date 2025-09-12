@@ -1,0 +1,46 @@
+{
+  "id": "tesla-volatility-strategy",
+  "name": "Tesla Volatility Trading Strategy Backtest",
+  "file": "experimental/TeslaVolatilityStrategy.json",
+  "output": "/experimental/TeslaVolatilityStrategy.json",
+  "question": "How would a volatility-based strategy have performed on TSLA during high-volatility periods?",
+  "retailQuestion": "Could I have made money trading Tesla when it was really jumpy?",
+  "description": "Backtests a volatility trading strategy on Tesla that increases position size during low volatility periods and reduces exposure during high volatility. Analyzes performance during Tesla's most volatile periods including earnings, product launches, and market events over the past 3 years.",
+  "apis": [
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get 3+ years of TSLA daily price and volume data including major events",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get current TSLA market data for volatility context",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 3: Calculate rolling volatility and generate position sizing signals",
+      "function": "calculate_volatility_position_signals"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Backtest volatility-adjusted strategy with realistic position limits",
+      "function": "backtest_volatility_strategy"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Analyze performance during high/low volatility periods and risk metrics",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Is volatility trading too risky for me?",
+    "Should I avoid Tesla when it's volatile?",
+    "How do I know when volatility is too high?",
+    "Would this work with other volatile stocks?"
+  ]
+}

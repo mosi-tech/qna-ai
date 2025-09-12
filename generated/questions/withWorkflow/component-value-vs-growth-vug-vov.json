@@ -1,0 +1,46 @@
+{
+  "id": "value-vs-growth-vug-vov",
+  "name": "Value vs Growth Factor Rotation Strategy",
+  "file": "experimental/ValueVsGrowthVUGVOV.json",
+  "output": "/experimental/ValueVsGrowthVUGVOV.json",
+  "question": "How would rotating between VUG and VOV based on valuation spreads have performed over 15 years?",
+  "retailQuestion": "Should I switch between value and growth stocks based on which is cheaper?",
+  "description": "Backtests a factor rotation strategy between Vanguard Growth ETF (VUG) and Vanguard Value ETF (VOV) based on relative valuation spreads and momentum indicators. Analyzes the effectiveness of value/growth timing across different market cycles including the 2010s growth dominance and 2022 value rotation.",
+  "apis": [
+    "marketdata:/v2/stocks/bars",
+    "marketdata:/v2/stocks/snapshots"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get 15+ years of VUG and VOV data for factor analysis",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get current VUG and VOV market data for valuation context",
+      "function": "alpaca-market_stocks-snapshots"
+    },
+    {
+      "type": "engine",
+      "description": "Step 3: Calculate valuation spreads and momentum indicators for rotation signals",
+      "function": "calculate_value_growth_rotation_signals"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Backtest factor rotation strategy with realistic timing delays",
+      "function": "backtest_factor_rotation_strategy"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Compare rotation vs static allocations and market timing effectiveness",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I try to time value and growth cycles?",
+    "How do I know when value stocks will outperform growth?",
+    "Is it better to just hold both value and growth long-term?",
+    "Which style works better in different market environments?"
+  ]
+}

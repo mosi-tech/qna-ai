@@ -1,0 +1,47 @@
+{
+  "id": "awesome-oscillator-signals",
+  "name": "Awesome Oscillator Signal Analysis",
+  "file": "experimental/AwesomeOscillatorSignals.json",
+  "output": "/experimental/AwesomeOscillatorSignals.json",
+  "question": "Which stocks are showing Awesome Oscillator momentum change signals?",
+  "retailQuestion": "Which stocks are picking up or losing momentum?",
+  "description": "Analyzes Awesome Oscillator (AO) to identify momentum changes through saucer signals, zero line crosses, and twin peaks patterns. Examines histogram color changes and momentum divergences to predict trend acceleration and reversal points.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "trading:/v2/positions"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for Awesome Oscillator analysis",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data for AO calculation and signal identification",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Check portfolio positions for AO momentum assessment",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate Awesome Oscillator and identify saucer, zero cross, and twin peak signals",
+      "function": "analyze_awesome_oscillator"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank AO signals by momentum strength and trend change probability",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I buy stocks that are gaining momentum?",
+    "How reliable are these momentum signals?",
+    "What if the momentum suddenly reverses?",
+    "When is the best time to enter these positions?"
+  ]
+}

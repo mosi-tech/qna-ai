@@ -126,10 +126,10 @@ All JSON output files must follow this structure:
 **IMPORTANT**: The `workflow` field must contain a detailed step-by-step approach to get the required data using the available API specifications. Each step should specify the exact API endpoint, parameters, and data processing required.
 
 ### Workflow Format (Required)
-- Represent each step as an object of the form: `{ "type": "fetch|engine|compute", "description": "Step N: ..." }`.
-- Use `type: "fetch"` for network/API calls and include the exact endpoint and parameters.
-- Use `type: "engine"` when Python processing is required (clearly state inputs, outputs, and calculations performed).
-- Use `type: "compute"` for lightweight, in-app calculations that do not require Python.
+- Represent each step as an object of the form: `{ "type": "fetch|engine|compute", "description": "Step N: ...", "function": "mcp_function_name" }`.
+- Use `type: "fetch"` for network/API calls and include the exact endpoint and parameters. Set `function` to the MCP financial server tool name (e.g., "alpaca-market_stocks-bars").
+- Use `type: "engine"` when Python processing is required (clearly state inputs, outputs, and calculations performed). Set `function` to the MCP analytics server tool name (e.g., "calculate_daily_returns", "calculate_rolling_volatility").
+- Use `type: "compute"` for lightweight, in-app calculations that do not require Python. Set `function` to "client_compute" for local processing.
 
 ## File Structure
 - `pages/index.tsx`: Main QnA interface with auto-preview

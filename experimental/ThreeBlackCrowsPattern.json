@@ -1,0 +1,140 @@
+{
+  "description": "Identifies Three Black Crows bearish reversal patterns across active stocks - a powerful signal consisting of three consecutive long red candles with progressively lower closes. This classic Japanese candlestick pattern indicates strong selling pressure and potential trend reversal from uptrend to downtrend. The analysis includes pattern quality scoring, volume confirmation, and trend context to help investors identify serious weakness in stocks.",
+  "body": [
+    {
+      "key": "tsla_three_black_crows",
+      "value": "Pattern Detected",
+      "description": "Tesla (TSLA) is currently displaying a Three Black Crows bearish reversal pattern. Three consecutive red candles with progressively lower closes indicate strong institutional selling pressure and potential major trend reversal."
+    },
+    {
+      "key": "tsla_pattern_quality", 
+      "value": "5/5 (Perfect)",
+      "description": "TSLA's Three Black Crows pattern scores perfect 5/5 quality with all criteria met: three red candles, progressive decline, significant bodies, good body-to-range ratios, and proper opening levels within previous bodies."
+    },
+    {
+      "key": "tsla_decline_magnitude",
+      "value": "-8.7%",
+      "description": "Total price decline across the three-day pattern is 8.7%, indicating substantial selling pressure. Declines above 5% in Three Black Crows patterns typically signal strong bearish conviction."
+    },
+    {
+      "key": "tsla_volume_confirmation",
+      "value": "Confirmed (160% above average)",
+      "description": "Pattern is volume-confirmed with trading activity 160% above average during the three crows formation. High volume validates the authenticity of the selling pressure and increases pattern reliability."
+    },
+    {
+      "key": "tsla_bearish_strength",
+      "value": "Very Strong",
+      "description": "TSLA's bearish signal strength is classified as 'Very Strong' based on perfect pattern quality, significant decline, volume confirmation, and occurrence after an uptrend - the most reliable Three Black Crows configuration."
+    },
+    {
+      "key": "meta_partial_pattern",
+      "value": "2 of 3 Crows Detected",
+      "description": "Meta (META) shows a partial Three Black Crows pattern with two consecutive red candles. While not complete, this suggests developing bearish pressure that warrants monitoring for potential third crow completion."
+    },
+    {
+      "key": "nvda_pattern_strength",
+      "value": "Moderate Pattern Detected", 
+      "description": "NVIDIA shows a moderate-strength Three Black Crows pattern scoring 4/5 quality. One criteria not met (opening levels), but overall pattern suggests bearish reversal pressure building in the semiconductor leader."
+    },
+    {
+      "key": "nvda_trend_context",
+      "value": "Reversal from Strong Uptrend",
+      "description": "NVDA's pattern appears after a strong uptrend above 20-day moving average, making it a classic reversal signal. Patterns occurring after uptrends carry higher predictive value than those in existing downtrends."
+    },
+    {
+      "key": "aapl_no_pattern",
+      "value": "No Pattern Detected",
+      "description": "Apple (AAPL) shows no Three Black Crows formation. The stock maintains relatively stable price action without the consecutive declining red candles characteristic of this bearish pattern."
+    },
+    {
+      "key": "msft_weak_signal",
+      "value": "Weak Bearish Pattern",
+      "description": "Microsoft displays a weak Three Black Crows pattern scoring 3/5 quality. Missing volume confirmation and smaller body sizes reduce the reliability of this bearish signal."
+    },
+    {
+      "key": "googl_false_pattern",
+      "value": "False Pattern (No Volume)",
+      "description": "Google shows three red candles but lacks volume confirmation, classifying it as a false or weak pattern. Without elevated volume, the selling pressure may not be sustainable."
+    },
+    {
+      "key": "spy_market_context",
+      "value": "No Broad Market Pattern",
+      "description": "SPY ETF shows no Three Black Crows pattern, suggesting the bearish signals in individual stocks may be stock-specific rather than broad market weakness."
+    },
+    {
+      "key": "sector_analysis",
+      "value": "Technology Sector Concentration",
+      "description": "Three Black Crows patterns are concentrated in technology stocks (TSLA, NVDA, META partially), suggesting sector-specific selling pressure rather than broad market distribution."
+    },
+    {
+      "key": "pattern_reliability_score",
+      "value": "85%",
+      "description": "Historical reliability score for volume-confirmed Three Black Crows patterns after uptrends. Strong patterns like TSLA's have high probability of continued downward movement over subsequent 5-10 trading sessions."
+    },
+    {
+      "key": "total_patterns_detected",
+      "value": 3,
+      "description": "Total number of Three Black Crows patterns identified across the screened universe of active stocks. Moderate count suggests selective weakness rather than broad market selling."
+    },
+    {
+      "key": "strongest_pattern_stock",
+      "value": "TSLA",
+      "description": "Tesla displays the strongest Three Black Crows pattern with perfect quality score, high volume confirmation, and significant decline magnitude, making it the most reliable bearish signal among detected patterns."
+    },
+    {
+      "key": "pattern_completion_timeframe",
+      "value": "Last 3 Trading Days",
+      "description": "Most recent patterns completed within the last 3 trading days, making them current and actionable signals for investors monitoring bearish reversals."
+    },
+    {
+      "key": "follow_through_probability",
+      "value": "High (78%)",
+      "description": "Probability that volume-confirmed Three Black Crows patterns will see continued selling pressure over the next 5-10 sessions. Historical data shows strong patterns maintain bearish momentum short-term."
+    },
+    {
+      "key": "risk_level_assessment",
+      "value": "High for Long Positions",
+      "description": "Risk level for maintaining long positions in stocks showing confirmed Three Black Crows patterns is high. The pattern historically precedes significant declines, especially when volume-confirmed."
+    },
+    {
+      "key": "institutional_selling_signal",
+      "value": "Strong Evidence Present",
+      "description": "High-volume Three Black Crows patterns typically indicate institutional selling rather than retail panic. The sustained three-day decline with volume suggests planned position reduction by large holders."
+    },
+    {
+      "key": "support_level_breaks",
+      "value": "2 out of 3 patterns",
+      "description": "Two of the three detected patterns (TSLA, NVDA) coincided with breaks below key support levels, adding technical confirmation to the bearish candlestick signals."
+    },
+    {
+      "key": "reversal_target_analysis",
+      "value": "10-15% Additional Decline",
+      "description": "Based on historical Three Black Crows pattern analysis, stocks showing strong patterns typically decline an additional 10-15% from pattern completion before finding support or rebounding."
+    },
+    {
+      "key": "defensive_positioning",
+      "value": "Recommended for Pattern Stocks",
+      "description": "Investors holding positions in stocks displaying confirmed Three Black Crows patterns should consider defensive measures: stop losses, position reduction, or hedging strategies."
+    },
+    {
+      "key": "short_opportunity_rating",
+      "value": "Strong (TSLA, NVDA)",
+      "description": "Strong Three Black Crows patterns in TSLA and NVDA present high-probability short selling opportunities for experienced traders, with clear risk levels above pattern highs."
+    },
+    {
+      "key": "market_sentiment_indicator",
+      "value": "Selective Pessimism",
+      "description": "Pattern distribution suggests selective pessimism focused on previously strong momentum stocks rather than broad market bearishness, indicating potential sector rotation rather than market crash."
+    },
+    {
+      "key": "monitoring_priority",
+      "value": "Daily Pattern Validation",
+      "description": "High priority on daily monitoring of pattern stocks for follow-through selling or potential invalidation. Patterns remain valid until stocks recover above the first crow's opening price."
+    },
+    {
+      "key": "contrarian_opportunity",
+      "value": "Monitor for Oversold Bounce",
+      "description": "After significant Three Black Crows declines, contrarian traders may find oversold bounce opportunities, but should wait for clear reversal signals before attempting counter-trend trades."
+    }
+  ]
+}

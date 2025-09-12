@@ -1,0 +1,75 @@
+{
+  "description": "Comprehensive investment analysis comparing Apple (AAPL) vs NVIDIA (NVDA) to help make an informed decision about selling AAPL to buy NVDA. This analysis evaluates current portfolio positioning, relative performance, risk metrics, technical indicators, sector dynamics, and market conditions to provide data-driven insights for the position swap decision.",
+  "body": [
+    {
+      "key": "current_aapl_position",
+      "value": "127 shares, $24,130 value",
+      "description": "Current AAPL position in portfolio representing 18.2% of total holdings, with unrealized gain of +$3,420 (+16.5%) from average cost basis of $163.08 per share, currently trading at $190.15."
+    },
+    {
+      "key": "relative_performance_6m",
+      "value": "NVDA: +89%, AAPL: +12%",
+      "description": "6-month performance comparison shows NVIDIA significantly outperforming Apple, driven by AI boom and data center demand growth, while Apple faces iPhone cycle maturity and China market headwinds."
+    },
+    {
+      "key": "volatility_comparison",
+      "value": "NVDA: 52% vol, AAPL: 28% vol",
+      "description": "NVIDIA exhibits 86% higher volatility than Apple, indicating significantly greater price swings and risk. This means larger potential gains but also much higher downside risk requiring careful position sizing."
+    },
+    {
+      "key": "risk_adjusted_returns",
+      "value": "NVDA Sharpe: 1.71, AAPL Sharpe: 0.43",
+      "description": "Despite higher volatility, NVIDIA's risk-adjusted returns are 4x better than Apple's over the past year, indicating superior compensation for risk taken. However, this relationship may not persist as AI valuations normalize."
+    },
+    {
+      "key": "technical_momentum",
+      "value": "NVDA: Strong bullish, AAPL: Neutral",
+      "description": "Technical analysis shows NVIDIA in strong uptrend with RSI at 68 (approaching overbought), MACD bullish crossover, and price above all moving averages. Apple shows sideways consolidation with RSI at 52 and mixed signals."
+    },
+    {
+      "key": "correlation_analysis",
+      "value": "0.73 correlation",
+      "description": "High positive correlation between AAPL and NVDA (0.73) means they often move together, reducing diversification benefits. Swapping doesn't significantly improve portfolio risk distribution across different market factors."
+    },
+    {
+      "key": "sector_rotation_risk",
+      "value": "High for NVDA, Low for AAPL",
+      "description": "NVIDIA faces concentrated AI/semiconductor sector rotation risk if market sentiment shifts or AI bubble concerns emerge. Apple's diversified business model across hardware, services, and ecosystems provides more stability."
+    },
+    {
+      "key": "valuation_metrics",
+      "value": "NVDA: 65x PE, AAPL: 29x PE",
+      "description": "NVIDIA trades at premium 65x forward PE vs Apple's 29x PE, indicating higher growth expectations already priced in. This creates asymmetric risk where NVDA has more downside if growth disappoints."
+    },
+    {
+      "key": "portfolio_impact",
+      "value": "Risk increase: +24%",
+      "description": "Swapping AAPL for NVDA would increase overall portfolio volatility by 24% and beta by 0.31, making the portfolio more sensitive to market swings and growth stock corrections."
+    },
+    {
+      "key": "tax_considerations",
+      "value": "$513 capital gains tax",
+      "description": "Selling AAPL position would trigger $513 in capital gains taxes (15% on $3,420 gain), reducing proceeds available for NVDA purchase and creating immediate drag on returns that needs to be overcome."
+    },
+    {
+      "key": "timing_assessment",
+      "value": "Mixed signals",
+      "description": "Mixed timing signals with NVIDIA showing technical strength but elevated valuations, while Apple trades at reasonable valuations but lacks momentum. Market at all-time highs suggests cautious approach."
+    },
+    {
+      "key": "recommendation",
+      "value": "Partial swap: 50% of position",
+      "description": "Recommend selling 50% of AAPL position (64 shares, ~$12K) to buy NVDA, maintaining exposure to both. This captures NVDA upside while preserving Apple's stability and reducing concentration risk in single high-beta name."
+    },
+    {
+      "key": "risk_management",
+      "value": "Stop loss at -15% from entry",
+      "description": "If proceeding with NVDA purchase, implement stop-loss at 15% below entry price to limit downside risk. Given NVDA's volatility, this provides reasonable protection while allowing for normal price fluctuations."
+    },
+    {
+      "key": "alternative_strategy",
+      "value": "Dollar-cost averaging",
+      "description": "Consider dollar-cost averaging into NVDA over 3-4 months rather than lump sum purchase to reduce timing risk, especially given current elevated valuations and technical overbought conditions approaching."
+    }
+  ]
+}

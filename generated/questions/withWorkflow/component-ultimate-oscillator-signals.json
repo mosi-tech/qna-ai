@@ -1,0 +1,47 @@
+{
+  "id": "ultimate-oscillator-signals",
+  "name": "Ultimate Oscillator Signal Analysis",
+  "file": "experimental/UltimateOscillatorSignals.json",
+  "output": "/experimental/UltimateOscillatorSignals.json",
+  "question": "Which stocks are showing Ultimate Oscillator buy or sell signals?",
+  "retailQuestion": "Which stocks are flashing buy or sell alerts?",
+  "description": "Analyzes Ultimate Oscillator readings across multiple timeframes (7, 14, 28 periods) to identify overbought conditions above 70 and oversold conditions below 30. Examines divergences and multi-timeframe confirmation for high-probability reversal signals in trending markets.",
+  "apis": [
+    "marketdata:/v1/screener/stocks/most-actives",
+    "marketdata:/v2/stocks/bars",
+    "trading:/v2/positions"
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Get active stocks for Ultimate Oscillator screening",
+      "function": "alpaca-market_screener-most-actives"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Get historical price data for multi-timeframe Ultimate Oscillator calculation",
+      "function": "alpaca-market_stocks-bars"
+    },
+    {
+      "type": "fetch",
+      "description": "Step 3: Check portfolio positions for Ultimate Oscillator signal opportunities",
+      "function": "alpaca-trading_positions"
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate Ultimate Oscillator across timeframes and identify buy/sell signals with divergence analysis",
+      "function": "analyze_ultimate_oscillator"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Rank signals by multi-timeframe confirmation and signal strength",
+      "function": "client_compute"
+    }
+  ],
+  "followUp": [
+    "Should I trust these oscillator signals?",
+    "How does this differ from RSI signals?",
+    "What makes Ultimate Oscillator special?",
+    "Are these good for short-term trading?"
+  ]
+}
