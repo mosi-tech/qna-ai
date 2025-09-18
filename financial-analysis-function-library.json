@@ -1,0 +1,1751 @@
+{
+  "description": "Comprehensive building block function library for financial analysis questions",
+  "version": "1.0.0",
+  "last_updated": "2025-09-17",
+  "total_functions": 251,
+  "categories": {
+    "data_acquisition": {
+      "description": "Functions to fetch raw financial data from MCP servers",
+      "functions": [
+        {
+          "name": "getStockBars",
+          "signature": "getStockBars(symbols: string[], timeframe: string, start?: string, end?: string): Promise<BarData[]>",
+          "description": "Fetch OHLCV price bars for stocks",
+          "mcp_function": "alpaca-market_stocks-bars",
+          "parameters": {
+            "symbols": "Array of stock symbols",
+            "timeframe": "Bar timeframe (1Day, 1Hour, 1Min)",
+            "start": "Start date (YYYY-MM-DD)",
+            "end": "End date (YYYY-MM-DD)"
+          }
+        },
+        {
+          "name": "getStockQuotes",
+          "signature": "getStockQuotes(symbols: string[]): Promise<QuoteData[]>",
+          "description": "Get latest bid/ask quotes for stocks",
+          "mcp_function": "alpaca-market_stocks-quotes-latest"
+        },
+        {
+          "name": "getStockTrades",
+          "signature": "getStockTrades(symbols: string[]): Promise<TradeData[]>",
+          "description": "Get latest trade data for stocks",
+          "mcp_function": "alpaca-market_stocks-trades-latest"
+        },
+        {
+          "name": "getStockSnapshots",
+          "signature": "getStockSnapshots(symbols: string[]): Promise<SnapshotData[]>",
+          "description": "Get comprehensive market snapshots",
+          "mcp_function": "alpaca-market_stocks-snapshots"
+        },
+        {
+          "name": "getETFHoldings",
+          "signature": "getETFHoldings(symbol: string): Promise<HoldingData[]>",
+          "description": "Get ETF holdings and composition",
+          "mcp_function": "eodhd_etf-holdings"
+        },
+        {
+          "name": "getFundamentals",
+          "signature": "getFundamentals(symbol: string): Promise<FundamentalData>",
+          "description": "Get company fundamental data and ratios",
+          "mcp_function": "eodhd_fundamentals"
+        },
+        {
+          "name": "getDividends",
+          "signature": "getDividends(symbol: string, from?: string, to?: string): Promise<DividendData[]>",
+          "description": "Get dividend payment history",
+          "mcp_function": "eodhd_dividends"
+        },
+        {
+          "name": "getSplits",
+          "signature": "getSplits(symbol: string, from?: string, to?: string): Promise<SplitData[]>",
+          "description": "Get stock split history",
+          "mcp_function": "eodhd_splits"
+        },
+        {
+          "name": "getInsiderTransactions",
+          "signature": "getInsiderTransactions(symbol: string, from?: string, to?: string): Promise<InsiderData[]>",
+          "description": "Get corporate insider trading data",
+          "mcp_function": "eodhd_insider-transactions"
+        },
+        {
+          "name": "getShortInterest",
+          "signature": "getShortInterest(symbol: string, from?: string, to?: string): Promise<ShortInterestData[]>",
+          "description": "Get short interest data",
+          "mcp_function": "eodhd_short-interest"
+        },
+        {
+          "name": "getEarningsCalendar",
+          "signature": "getEarningsCalendar(symbol: string, from?: string, to?: string): Promise<EarningsData[]>",
+          "description": "Get earnings calendar events",
+          "mcp_function": "eodhd_earnings-calendar"
+        },
+        {
+          "name": "getTopGainers",
+          "signature": "getTopGainers(top?: number): Promise<ScreenerData[]>",
+          "description": "Get biggest stock gainers",
+          "mcp_function": "alpaca-market_screener-top-gainers"
+        },
+        {
+          "name": "getTopLosers",
+          "signature": "getTopLosers(top?: number): Promise<ScreenerData[]>",
+          "description": "Get biggest stock losers",
+          "mcp_function": "alpaca-market_screener-top-losers"
+        },
+        {
+          "name": "getMostActives",
+          "signature": "getMostActives(top?: number): Promise<ScreenerData[]>",
+          "description": "Get most active stocks by volume",
+          "mcp_function": "alpaca-market_screener-most-actives"
+        },
+        {
+          "name": "getMarketNews",
+          "signature": "getMarketNews(symbols?: string[], sort?: string): Promise<NewsData[]>",
+          "description": "Get financial news articles",
+          "mcp_function": "alpaca-market_news"
+        },
+        {
+          "name": "getPortfolio",
+          "signature": "getPortfolio(): Promise<PortfolioData>",
+          "description": "Get current portfolio positions and values",
+          "mcp_function": "alpaca-trading_positions"
+        },
+        {
+          "name": "getAccountInfo",
+          "signature": "getAccountInfo(): Promise<AccountData>",
+          "description": "Get account information and buying power",
+          "mcp_function": "alpaca-trading_account"
+        },
+        {
+          "name": "getPortfolioHistory",
+          "signature": "getPortfolioHistory(period?: string, timeframe?: string): Promise<PortfolioHistoryData>",
+          "description": "Get portfolio performance history",
+          "mcp_function": "alpaca-trading_portfolio-history"
+        }
+      ]
+    },
+    "time_series_processing": {
+      "description": "Functions to process and transform time series data",
+      "functions": [
+        {
+          "name": "calculateReturns",
+          "signature": "calculateReturns(prices: number[], period?: string): number[]",
+          "description": "Calculate price returns for given period (daily, weekly, monthly)",
+          "computation": "client_compute"
+        },
+        {
+          "name": "calculateLogReturns",
+          "signature": "calculateLogReturns(prices: number[]): number[]",
+          "description": "Calculate logarithmic returns",
+          "computation": "client_compute"
+        },
+        {
+          "name": "calculateCumulativeReturns",
+          "signature": "calculateCumulativeReturns(returns: number[]): number[]",
+          "description": "Calculate cumulative returns from return series",
+          "computation": "client_compute"
+        },
+        {
+          "name": "calculateRollingVolatility",
+          "signature": "calculateRollingVolatility(returns: number[], window: number): number[]",
+          "description": "Calculate rolling volatility with specified window",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateBeta",
+          "signature": "calculateBeta(stockReturns: number[], marketReturns: number[]): number",
+          "description": "Calculate beta coefficient vs market",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateCorrelation",
+          "signature": "calculateCorrelation(series1: number[], series2: number[]): number",
+          "description": "Calculate correlation between two series",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateCorrelationMatrix",
+          "signature": "calculateCorrelationMatrix(seriesArray: number[][]): number[][]",
+          "description": "Calculate correlation matrix for multiple series",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateSMA",
+          "signature": "calculateSMA(prices: number[], period: number): number[]",
+          "description": "Calculate Simple Moving Average",
+          "computation": "client_compute"
+        },
+        {
+          "name": "calculateEMA",
+          "signature": "calculateEMA(prices: number[], period: number): number[]",
+          "description": "Calculate Exponential Moving Average",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateRSI",
+          "signature": "calculateRSI(prices: number[], period: number): number[]",
+          "description": "Calculate Relative Strength Index",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateMACD",
+          "signature": "calculateMACD(prices: number[], fast?: number, slow?: number, signal?: number): MACDData[]",
+          "description": "Calculate MACD indicator",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateBollingerBands",
+          "signature": "calculateBollingerBands(prices: number[], period: number, std: number): BollingerData[]",
+          "description": "Calculate Bollinger Bands",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "detectSMACrossover",
+          "signature": "detectSMACrossover(prices: number[], fastPeriod: number, slowPeriod: number): CrossoverSignal[]",
+          "description": "Detect SMA crossover signals",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "detectEMACrossover",
+          "signature": "detectEMACrossover(prices: number[], fastPeriod: number, slowPeriod: number): CrossoverSignal[]",
+          "description": "Detect EMA crossover signals",
+          "computation": "analytics_engine"
+        }
+      ]
+    },
+    "statistical_analysis": {
+      "description": "Core statistical analysis functions",
+      "functions": [
+        {
+          "name": "calculateSharpeRatio",
+          "signature": "calculateSharpeRatio(returns: number[], riskFreeRate?: number): number",
+          "description": "Calculate Sharpe ratio for risk-adjusted performance",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateSortinoRatio",
+          "signature": "calculateSortinoRatio(returns: number[], targetReturn?: number): number",
+          "description": "Calculate Sortino ratio focusing on downside risk",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateMaxDrawdown",
+          "signature": "calculateMaxDrawdown(prices: number[]): DrawdownData",
+          "description": "Calculate maximum drawdown and recovery periods",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateVaR",
+          "signature": "calculateVaR(returns: number[], confidence: number): number",
+          "description": "Calculate Value at Risk at given confidence level",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateCVaR",
+          "signature": "calculateCVaR(returns: number[], confidence: number): number",
+          "description": "Calculate Conditional Value at Risk",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateSkewness",
+          "signature": "calculateSkewness(returns: number[]): number",
+          "description": "Calculate skewness of return distribution",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateKurtosis",
+          "signature": "calculateKurtosis(returns: number[]): number",
+          "description": "Calculate kurtosis of return distribution",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculatePercentile",
+          "signature": "calculatePercentile(data: number[], percentile: number): number",
+          "description": "Calculate specified percentile of data",
+          "computation": "client_compute"
+        },
+        {
+          "name": "calculateHerfindahlIndex",
+          "signature": "calculateHerfindahlIndex(weights: number[]): number",
+          "description": "Calculate concentration index for portfolio weights",
+          "computation": "client_compute"
+        },
+        {
+          "name": "calculateInformationRatio",
+          "signature": "calculateInformationRatio(returns: number[], benchmarkReturns: number[]): number",
+          "description": "Calculate Information Ratio vs benchmark",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateTrackingError",
+          "signature": "calculateTrackingError(returns: number[], benchmarkReturns: number[]): number",
+          "description": "Calculate tracking error vs benchmark",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateAlpha",
+          "signature": "calculateAlpha(returns: number[], marketReturns: number[], riskFreeRate?: number): number",
+          "description": "Calculate Jensen's alpha",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateTreynorRatio",
+          "signature": "calculateTreynorRatio(returns: number[], marketReturns: number[], riskFreeRate?: number): number",
+          "description": "Calculate Treynor ratio",
+          "computation": "analytics_engine"
+        }
+      ]
+    },
+    "performance_analysis": {
+      "description": "Performance measurement and comparison functions",
+      "functions": [
+        {
+          "name": "calculateAnnualizedReturn",
+          "signature": "calculateAnnualizedReturn(prices: number[], periods: number): number",
+          "description": "Calculate annualized return from price series",
+          "computation": "client_compute"
+        },
+        {
+          "name": "calculateAnnualizedVolatility",
+          "signature": "calculateAnnualizedVolatility(returns: number[], periodsPerYear: number): number",
+          "description": "Calculate annualized volatility",
+          "computation": "client_compute"
+        },
+        {
+          "name": "calculateCAGR",
+          "signature": "calculateCAGR(startValue: number, endValue: number, years: number): number",
+          "description": "Calculate Compound Annual Growth Rate",
+          "computation": "client_compute"
+        },
+        {
+          "name": "calculateTotalReturn",
+          "signature": "calculateTotalReturn(startPrice: number, endPrice: number, dividends?: number[]): number",
+          "description": "Calculate total return including dividends",
+          "computation": "client_compute"
+        },
+        {
+          "name": "calculateDownsideDeviation",
+          "signature": "calculateDownsideDeviation(returns: number[], targetReturn?: number): number",
+          "description": "Calculate downside deviation below target",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateUpsideCapture",
+          "signature": "calculateUpsideCapture(returns: number[], benchmarkReturns: number[]): number",
+          "description": "Calculate upside capture ratio vs benchmark",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateDownsideCapture",
+          "signature": "calculateDownsideCapture(returns: number[], benchmarkReturns: number[]): number",
+          "description": "Calculate downside capture ratio vs benchmark",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateCalmarRatio",
+          "signature": "calculateCalmarRatio(returns: number[]): number",
+          "description": "Calculate Calmar ratio (return/max drawdown)",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateOmegaRatio",
+          "signature": "calculateOmegaRatio(returns: number[], threshold?: number): number",
+          "description": "Calculate Omega ratio",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateWinRate",
+          "signature": "calculateWinRate(returns: number[]): number",
+          "description": "Calculate percentage of positive returns",
+          "computation": "client_compute"
+        },
+        {
+          "name": "calculateBestWorstPeriods",
+          "signature": "calculateBestWorstPeriods(returns: number[], windowSize: number): PeriodData",
+          "description": "Identify best and worst performing periods",
+          "computation": "analytics_engine"
+        }
+      ]
+    },
+    "risk_analysis": {
+      "description": "Risk measurement and analysis functions",
+      "functions": [
+        {
+          "name": "calculatePortfolioVolatility",
+          "signature": "calculatePortfolioVolatility(weights: number[], correlationMatrix: number[][], volatilities: number[]): number",
+          "description": "Calculate portfolio volatility using correlation matrix",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateComponentVaR",
+          "signature": "calculateComponentVaR(weights: number[], returns: number[][], confidence: number): number[]",
+          "description": "Calculate VaR contribution by component",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateMarginalVaR",
+          "signature": "calculateMarginalVaR(weights: number[], returns: number[][], confidence: number): number[]",
+          "description": "Calculate marginal VaR for each position",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateRiskBudget",
+          "signature": "calculateRiskBudget(weights: number[], riskContributions: number[]): number[]",
+          "description": "Calculate risk budget allocation",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateTailRisk",
+          "signature": "calculateTailRisk(returns: number[], threshold: number): TailRiskData",
+          "description": "Calculate tail risk statistics",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateExpectedShortfall",
+          "signature": "calculateExpectedShortfall(returns: number[], confidence: number): number",
+          "description": "Calculate Expected Shortfall (Conditional VaR)",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateDiversificationRatio",
+          "signature": "calculateDiversificationRatio(portfolioVol: number, weightedAvgVol: number): number",
+          "description": "Calculate diversification ratio",
+          "computation": "client_compute"
+        },
+        {
+          "name": "calculateConcentrationMetrics",
+          "signature": "calculateConcentrationMetrics(weights: number[]): ConcentrationData",
+          "description": "Calculate various concentration measures",
+          "computation": "analytics_engine"
+        }
+      ]
+    },
+    "comparison_analysis": {
+      "description": "Functions for comparing assets, strategies, and portfolios",
+      "functions": [
+        {
+          "name": "comparePerformanceMetrics",
+          "signature": "comparePerformanceMetrics(returns1: number[], returns2: number[]): ComparisonData",
+          "description": "Compare key performance metrics between two assets/strategies",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "compareRiskMetrics",
+          "signature": "compareRiskMetrics(returns1: number[], returns2: number[]): RiskComparisonData",
+          "description": "Compare risk metrics between two assets/strategies",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "compareDrawdowns",
+          "signature": "compareDrawdowns(prices1: number[], prices2: number[]): DrawdownComparisonData",
+          "description": "Compare drawdown characteristics",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "compareVolatilityProfiles",
+          "signature": "compareVolatilityProfiles(returns1: number[], returns2: number[], window: number): VolatilityComparisonData",
+          "description": "Compare rolling volatility profiles",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "compareCorrelationStability",
+          "signature": "compareCorrelationStability(returns1: number[], returns2: number[], window: number): CorrelationStabilityData",
+          "description": "Analyze correlation stability over time",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "compareSectorExposure",
+          "signature": "compareSectorExposure(holdings1: HoldingData[], holdings2: HoldingData[]): SectorComparisonData",
+          "description": "Compare sector allocation between portfolios/ETFs",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "compareExpenseRatios",
+          "signature": "compareExpenseRatios(funds: FundData[]): ExpenseComparisonData",
+          "description": "Compare expense ratios and fees",
+          "computation": "client_compute"
+        },
+        {
+          "name": "compareLiquidity",
+          "signature": "compareLiquidity(volumes1: number[], volumes2: number[]): LiquidityComparisonData",
+          "description": "Compare liquidity metrics",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "compareFundamental",
+          "signature": "compareFundamental(fundamentals1: FundamentalData, fundamentals2: FundamentalData): FundamentalComparisonData",
+          "description": "Compare fundamental metrics between companies",
+          "computation": "analytics_engine"
+        }
+      ]
+    },
+    "strategy_simulation": {
+      "description": "Backtesting and strategy simulation functions",
+      "functions": [
+        {
+          "name": "backtestTechnicalStrategy",
+          "signature": "backtestTechnicalStrategy(prices: number[], strategy: TechnicalStrategyConfig, initialCapital: number): BacktestResult",
+          "description": "Unified technical strategy backtesting function supporting multiple strategies",
+          "computation": "analytics_engine",
+          "parameters": {
+            "prices": "Array of price data for backtesting",
+            "strategy": "Strategy configuration object",
+            "initialCapital": "Starting capital amount"
+          },
+          "strategy_types": {
+            "sma_crossover": {
+              "config": "{type: 'sma_crossover', fastPeriod: number, slowPeriod: number}",
+              "description": "Simple Moving Average crossover strategy"
+            },
+            "rsi_mean_reversion": {
+              "config": "{type: 'rsi_mean_reversion', period: number, oversold: number, overbought: number}",
+              "description": "RSI-based mean reversion strategy"
+            },
+            "volatility_timing": {
+              "config": "{type: 'volatility_timing', volWindow: number, entryPercentile: number, exitPercentile?: number}",
+              "description": "Volatility percentile-based timing strategy"
+            },
+            "ema_crossover": {
+              "config": "{type: 'ema_crossover', fastPeriod: number, slowPeriod: number}",
+              "description": "Exponential Moving Average crossover strategy"
+            },
+            "macd_signals": {
+              "config": "{type: 'macd_signals', fastPeriod?: number, slowPeriod?: number, signalPeriod?: number}",
+              "description": "MACD signal line crossover strategy"
+            },
+            "bollinger_bands": {
+              "config": "{type: 'bollinger_bands', period: number, stdDev: number, reversion: boolean}",
+              "description": "Bollinger Bands mean reversion or breakout strategy"
+            },
+            "multi_indicator": {
+              "config": "{type: 'multi_indicator', indicators: IndicatorConfig[], combineMethod: 'and'|'or'|'weighted'}",
+              "description": "Multi-indicator combination strategy (legacy - use custom_expression for better readability)"
+            },
+            "custom_expression": {
+              "config": "{type: 'custom_expression', buyCondition: string, sellCondition?: string, exitCondition?: string}",
+              "description": "Custom rule-based strategy using natural technical indicator expressions",
+              "syntax": {
+                "indicators": [
+                  "RSI(period)",
+                  "SMA(period)", 
+                  "EMA(period)",
+                  "MACD()",
+                  "MACD_LINE",
+                  "MACD_SIGNAL", 
+                  "MACD_HISTOGRAM",
+                  "BB_UPPER(period, std)",
+                  "BB_LOWER(period, std)",
+                  "BB_MIDDLE(period)",
+                  "Volume",
+                  "SMA_Volume(period)",
+                  "Price",
+                  "High",
+                  "Low",
+                  "Close"
+                ],
+                "operators": ["<", ">", "<=", ">=", "==", "!=", "AND", "OR", "NOT"],
+                "functions": [
+                  "CROSSOVER(indicator1, indicator2)",
+                  "CROSSUNDER(indicator1, indicator2)", 
+                  "ABOVE(indicator1, indicator2)",
+                  "BELOW(indicator1, indicator2)",
+                  "RISING(indicator, periods)",
+                  "FALLING(indicator, periods)"
+                ]
+              },
+              "examples": [
+                "RSI(14) < 30",
+                "SMA(20) > SMA(50) AND Volume > SMA_Volume(20)",
+                "MACD_LINE > MACD_SIGNAL AND RSI(14) > 50",
+                "CROSSOVER(SMA(20), SMA(50)) AND RSI(14) < 70",
+                "BB_LOWER(20, 2) > Close AND RSI(14) < 30",
+                "RISING(RSI(14), 3) AND ABOVE(Price, SMA(200))"
+              ]
+            },
+            "rule_builder": {
+              "config": "{type: 'rule_builder', buyRules: RuleObject[], sellRules?: RuleObject[], logic: 'AND'|'OR'}",
+              "description": "Structured rule-based strategy for complex multi-condition strategies with clear logic",
+              "rule_structure": {
+                "indicator": "string (RSI, SMA, EMA, MACD, etc.)",
+                "parameters": "object (periods, thresholds, etc.)",
+                "operator": "string (<, >, <=, >=, ==, !=)",
+                "value": "number | string",
+                "condition_type": "string (threshold, crossover, position, trend)"
+              },
+              "example_config": {
+                "buyRules": [
+                  {
+                    "indicator": "RSI",
+                    "parameters": {"period": 14},
+                    "operator": "<",
+                    "value": 90,
+                    "condition_type": "threshold"
+                  },
+                  {
+                    "indicator": "SMA_POSITION", 
+                    "parameters": {"fast": 20, "slow": 100},
+                    "operator": "above",
+                    "condition_type": "position"
+                  }
+                ],
+                "sellRules": [
+                  {
+                    "indicator": "RSI",
+                    "parameters": {"period": 14},
+                    "operator": ">",
+                    "value": 70,
+                    "condition_type": "threshold"
+                  }
+                ],
+                "logic": "AND"
+              }
+            },
+            "natural_language": {
+              "config": "{type: 'natural_language', description: string, fallback_config?: object}",
+              "description": "Parse natural language strategy descriptions and convert to executable rules",
+              "examples": [
+                "Buy when RSI is below 90 and 20-day moving average is above 100-day moving average",
+                "Enter long when MACD crosses above signal line and RSI is oversold",
+                "Buy on Bollinger Band bounce with volume confirmation",
+                "Momentum strategy: buy when price breaks above 20-day high with RSI above 50"
+              ],
+              "parsing_capabilities": [
+                "Technical indicator names and parameters",
+                "Comparison operators (above, below, crosses, breaks)",
+                "Logical connectors (and, or, but, when, if)",
+                "Common trading terms (oversold, overbought, breakout, bounce)",
+                "Time references (20-day, weekly, monthly)"
+              ]
+            }
+          },
+          "example_usage": [
+            "backtestTechnicalStrategy(prices, {type: 'sma_crossover', fastPeriod: 50, slowPeriod: 200}, 10000)",
+            "backtestTechnicalStrategy(prices, {type: 'rsi_mean_reversion', period: 14, oversold: 30, overbought: 70}, 10000)",
+            "backtestTechnicalStrategy(prices, {type: 'volatility_timing', volWindow: 30, entryPercentile: 10, exitPercentile: 90}, 10000)",
+            "backtestTechnicalStrategy(prices, {type: 'custom_expression', buyCondition: 'RSI(14) < 90 AND SMA(20) > SMA(100)', sellCondition: 'RSI(14) > 70'}, 10000)",
+            "backtestTechnicalStrategy(prices, {type: 'natural_language', description: 'Buy when RSI is below 90 and 20-day moving average is above 100-day moving average'}, 10000)"
+          ]
+        },
+        {
+          "name": "simulateDCA",
+          "signature": "simulateDCA(prices: number[], monthlyAmount: number, startDate: string, frequency: string): DCAResult",
+          "description": "Simulate dollar-cost averaging strategy",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "simulateLumpSum",
+          "signature": "simulateLumpSum(prices: number[], amount: number, investmentDate: string): LumpSumResult",
+          "description": "Simulate lump sum investment",
+          "computation": "client_compute"
+        },
+        {
+          "name": "simulateRebalancing",
+          "signature": "simulateRebalancing(prices: number[][], weights: number[], rebalanceFreq: string, initialCapital: number): RebalanceResult",
+          "description": "Simulate portfolio rebalancing strategy",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "monteCarloSimulation",
+          "signature": "monteCarloSimulation(expectedReturn: number, volatility: number, periods: number, simulations: number): MonteCarloResult",
+          "description": "Run Monte Carlo simulation for future returns",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "optimizePortfolio",
+          "signature": "optimizePortfolio(returns: number[][], method: string, constraints?: OptimizationConstraints): OptimizationResult",
+          "description": "Optimize portfolio weights using various methods",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "efficientFrontier",
+          "signature": "efficientFrontier(returns: number[][], riskFreeRate?: number): EfficientFrontierData",
+          "description": "Calculate efficient frontier",
+          "computation": "analytics_engine"
+        }
+      ]
+    },
+    "market_analysis": {
+      "description": "Market condition and regime analysis functions",
+      "functions": [
+        {
+          "name": "detectMarketRegime",
+          "signature": "detectMarketRegime(prices: number[], method: string): RegimeData[]",
+          "description": "Detect market regimes (bull/bear/sideways)",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateTrendStrength",
+          "signature": "calculateTrendStrength(prices: number[], method: string): number",
+          "description": "Measure trend strength using various methods",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "detectCrisisPeriods",
+          "signature": "detectCrisisPeriods(returns: number[], threshold: number): CrisisData[]",
+          "description": "Identify crisis periods based on volatility/drawdowns",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "analyzeVolatilityClustering",
+          "signature": "analyzeVolatilityClustering(returns: number[]): VolatilityClusterData",
+          "description": "Analyze volatility clustering patterns",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateMarketStress",
+          "signature": "calculateMarketStress(returns: number[], benchmark: number[]): StressData",
+          "description": "Calculate market stress indicators",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "analyzeSeasonality",
+          "signature": "analyzeSeasonality(returns: number[], dates: string[]): SeasonalityData",
+          "description": "Analyze seasonal return patterns",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "detectStructuralBreaks",
+          "signature": "detectStructuralBreaks(prices: number[]): BreakpointData[]",
+          "description": "Detect structural breaks in time series",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateMarketBreadth",
+          "signature": "calculateMarketBreadth(returns: number[][]): BreadthData",
+          "description": "Calculate market breadth indicators",
+          "computation": "analytics_engine"
+        }
+      ]
+    },
+    "signal_analysis": {
+      "description": "Trading signal generation and analysis functions",
+      "functions": [
+        {
+          "name": "generateSignals",
+          "signature": "generateSignals(indicator: number[], method: string, parameters: SignalParameters): Signal[]",
+          "description": "Generate buy/sell signals from indicators",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "analyzeSignalQuality",
+          "signature": "analyzeSignalQuality(signals: Signal[], prices: number[]): SignalQualityData",
+          "description": "Analyze signal quality and reliability",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateSignalFrequency",
+          "signature": "calculateSignalFrequency(signals: Signal[], timeframe: string): FrequencyData",
+          "description": "Calculate signal frequency statistics",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "identifyFalseSignals",
+          "signature": "identifyFalseSignals(signals: Signal[], prices: number[], threshold: number): FalseSignalData",
+          "description": "Identify and analyze false signals",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "optimizeSignalParameters",
+          "signature": "optimizeSignalParameters(prices: number[], strategy: string, parameterRanges: ParameterRange[]): OptimizedParameters",
+          "description": "Optimize signal parameters for best performance",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "combineSignals",
+          "signature": "combineSignals(signals: Signal[][], method: string): Signal[]",
+          "description": "Combine multiple signals using various methods",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "filterSignals",
+          "signature": "filterSignals(signals: Signal[], filters: SignalFilter[]): Signal[]",
+          "description": "Filter signals based on various criteria",
+          "computation": "analytics_engine"
+        }
+      ]
+    },
+    "cost_analysis": {
+      "description": "Transaction cost and fee analysis functions",
+      "functions": [
+        {
+          "name": "calculateTransactionCosts",
+          "signature": "calculateTransactionCosts(trades: TradeData[], costStructure: CostStructure): CostData",
+          "description": "Calculate transaction costs for trades",
+          "computation": "client_compute"
+        },
+        {
+          "name": "calculateImpactCosts",
+          "signature": "calculateImpactCosts(volume: number, avgVolume: number, spread: number): number",
+          "description": "Calculate market impact costs",
+          "computation": "client_compute"
+        },
+        {
+          "name": "analyzeExpenseRatio",
+          "signature": "analyzeExpenseRatio(expenseRatio: number, assets: number, years: number): ExpenseImpactData",
+          "description": "Analyze long-term impact of expense ratios",
+          "computation": "client_compute"
+        },
+        {
+          "name": "calculateBreakevenFrequency",
+          "signature": "calculateBreakevenFrequency(expectedAlpha: number, transactionCost: number): number",
+          "description": "Calculate breakeven trading frequency",
+          "computation": "client_compute"
+        },
+        {
+          "name": "compareCostStructures",
+          "signature": "compareCostStructures(strategies: StrategyData[]): CostComparisonData",
+          "description": "Compare cost structures across strategies",
+          "computation": "analytics_engine"
+        }
+      ]
+    },
+    "portfolio_analysis": {
+      "description": "Portfolio-level analysis and optimization functions",
+      "functions": [
+        {
+          "name": "calculatePortfolioMetrics",
+          "signature": "calculatePortfolioMetrics(weights: number[], returns: number[][]): PortfolioMetricsData",
+          "description": "Calculate comprehensive portfolio metrics",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "analyzePortfolioConcentration",
+          "signature": "analyzePortfolioConcentration(weights: number[]): ConcentrationAnalysisData",
+          "description": "Analyze portfolio concentration and diversification",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculatePortfolioBeta",
+          "signature": "calculatePortfolioBeta(weights: number[], betas: number[]): number",
+          "description": "Calculate portfolio beta",
+          "computation": "client_compute"
+        },
+        {
+          "name": "analyzePortfolioTurnover",
+          "signature": "analyzePortfolioTurnover(weights: number[][], timeframes: string[]): TurnoverData",
+          "description": "Analyze portfolio turnover metrics",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateActiveShare",
+          "signature": "calculateActiveShare(portfolioWeights: number[], benchmarkWeights: number[]): number",
+          "description": "Calculate active share vs benchmark",
+          "computation": "client_compute"
+        },
+        {
+          "name": "performAttribution",
+          "signature": "performAttribution(portfolioReturns: number[], benchmarkReturns: number[], weights: number[][]): AttributionData",
+          "description": "Perform return attribution analysis",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculatePortfolioVaR",
+          "signature": "calculatePortfolioVaR(weights: number[], covarianceMatrix: number[][], confidence: number): number",
+          "description": "Calculate portfolio Value at Risk",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "stressTestPortfolio",
+          "signature": "stressTestPortfolio(weights: number[], returns: number[][], scenarios: StressScenario[]): StressTestResult",
+          "description": "Perform portfolio stress testing",
+          "computation": "analytics_engine"
+        }
+      ]
+    },
+    "specialized_analysis": {
+      "description": "Specialized analysis functions for specific use cases",
+      "functions": [
+        {
+          "name": "analyzeLeverageFund",
+          "signature": "analyzeLeverageFund(prices: number[], leverage: number, underlyingPrices: number[]): LeverageAnalysisData",
+          "description": "Analyze leveraged fund characteristics and performance",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateDividendYield",
+          "signature": "calculateDividendYield(dividends: number[], price: number): number",
+          "description": "Calculate dividend yield",
+          "computation": "client_compute"
+        },
+        {
+          "name": "analyzeOptionsFlow",
+          "signature": "analyzeOptionsFlow(optionsData: OptionsData[]): OptionsFlowData",
+          "description": "Analyze options flow and sentiment",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateImpliedVolatility",
+          "signature": "calculateImpliedVolatility(optionPrice: number, underlyingPrice: number, strike: number, timeToExpiry: number, riskFreeRate: number): number",
+          "description": "Calculate implied volatility from option price",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "analyzeESGMetrics",
+          "signature": "analyzeESGMetrics(esgData: ESGData): ESGAnalysisData",
+          "description": "Analyze ESG (Environmental, Social, Governance) metrics",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateCryptoMetrics",
+          "signature": "calculateCryptoMetrics(prices: number[], volumes: number[]): CryptoMetricsData",
+          "description": "Calculate cryptocurrency-specific metrics",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "analyzeMacroFactors",
+          "signature": "analyzeMacroFactors(assetReturns: number[], macroData: MacroData[]): MacroFactorData",
+          "description": "Analyze macroeconomic factor exposures",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateCommodityMetrics",
+          "signature": "calculateCommodityMetrics(prices: number[], fundamentalData: CommodityFundamentals): CommodityAnalysisData",
+          "description": "Calculate commodity-specific analysis metrics",
+          "computation": "analytics_engine"
+        }
+      ]
+    },
+    "macroeconomic_analysis": {
+      "description": "Macroeconomic data and analysis functions",
+      "functions": [
+        {
+          "name": "getMacroIndicators",
+          "signature": "getMacroIndicators(indicators: string[], from?: string, to?: string): Promise<MacroData[]>",
+          "description": "Get macroeconomic indicators (GDP, inflation, unemployment, etc.)",
+          "mcp_function": "eodhd_macro-indicators"
+        },
+        {
+          "name": "getInflationData",
+          "signature": "getInflationData(country: string, from?: string, to?: string): Promise<InflationData[]>",
+          "description": "Get inflation data and trends",
+          "mcp_function": "eodhd_macro-indicators"
+        },
+        {
+          "name": "getInterestRateData",
+          "signature": "getInterestRateData(rates: string[], from?: string, to?: string): Promise<RateData[]>",
+          "description": "Get interest rate data (Fed funds, Treasury yields, etc.)",
+          "mcp_function": "eodhd_macro-indicators"
+        },
+        {
+          "name": "getYieldCurveData",
+          "signature": "getYieldCurveData(date?: string): Promise<YieldCurveData>",
+          "description": "Get yield curve data for analysis",
+          "mcp_function": "eodhd_macro-indicators"
+        },
+        {
+          "name": "analyzeInflationTrends",
+          "signature": "analyzeInflationTrends(cpiData: number[], timeframe: string): InflationTrendData",
+          "description": "Analyze inflation trends and patterns",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateRealInterestRates",
+          "signature": "calculateRealInterestRates(nominalRates: number[], inflation: number[]): number[]",
+          "description": "Calculate real interest rates from nominal rates and inflation",
+          "computation": "client_compute"
+        },
+        {
+          "name": "analyzeFedPolicyImpact",
+          "signature": "analyzeFedPolicyImpact(fedData: FedData[], assetReturns: number[]): PolicyImpactData",
+          "description": "Analyze Federal Reserve policy impact on assets",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "detectEconomicRegimes",
+          "signature": "detectEconomicRegimes(indicators: MacroData[]): RegimeData[]",
+          "description": "Detect economic regimes (expansion, recession, recovery)",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "analyzeInflationExpectations",
+          "signature": "analyzeInflationExpectations(tipsData: number[], nominalYields: number[]): InflationExpectationData",
+          "description": "Analyze inflation expectations from TIPS breakevens",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateInflationThresholds",
+          "signature": "calculateInflationThresholds(assetReturns: number[], inflationData: number[]): ThresholdData",
+          "description": "Calculate optimal inflation rates for asset performance",
+          "computation": "analytics_engine"
+        }
+      ]
+    },
+    "currency_analysis": {
+      "description": "Currency and international market analysis functions",
+      "functions": [
+        {
+          "name": "getCurrencyRates",
+          "signature": "getCurrencyRates(pairs: string[]): Promise<CurrencyData[]>",
+          "description": "Get latest foreign exchange rates",
+          "mcp_function": "alpaca-market_forex-rates"
+        },
+        {
+          "name": "getCurrencyHistory",
+          "signature": "getCurrencyHistory(pairs: string[], from: string, to: string): Promise<CurrencyHistoryData[]>",
+          "description": "Get historical currency exchange rates",
+          "mcp_function": "alpaca-market_forex-rates"
+        },
+        {
+          "name": "analyzeDollarStrengthImpact",
+          "signature": "analyzeDollarStrengthImpact(dxyData: number[], assetPrices: number[]): CurrencyImpactData",
+          "description": "Analyze dollar strength impact on assets",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateCurrencyHedgedReturns",
+          "signature": "calculateCurrencyHedgedReturns(assetReturns: number[], fxReturns: number[], hedgeRatio: number): number[]",
+          "description": "Calculate currency-hedged returns",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "analyzeEmergingMarketExposure",
+          "signature": "analyzeEmergingMarketExposure(holdings: HoldingData[]): EMExposureData",
+          "description": "Analyze emerging market currency exposure",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateCurrencyBeta",
+          "signature": "calculateCurrencyBeta(assetReturns: number[], currencyReturns: number[]): number",
+          "description": "Calculate asset sensitivity to currency movements",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "analyzeCurrencyCarry",
+          "signature": "analyzeCurrencyCarry(currencyPairs: string[], interestRates: RateData[]): CarryData",
+          "description": "Analyze currency carry trade opportunities",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "detectCurrencyRegimes",
+          "signature": "detectCurrencyRegimes(currencyData: number[], method: string): CurrencyRegimeData[]",
+          "description": "Detect currency strength/weakness regimes",
+          "computation": "analytics_engine"
+        }
+      ]
+    },
+    "commodity_analysis": {
+      "description": "Commodity-specific analysis functions",
+      "functions": [
+        {
+          "name": "getCommodityPrices",
+          "signature": "getCommodityPrices(commodities: string[], timeframe: string): Promise<CommodityData[]>",
+          "description": "Get commodity price data",
+          "mcp_function": "eodhd_eod-data"
+        },
+        {
+          "name": "analyzeCommodityFundamentals",
+          "signature": "analyzeCommodityFundamentals(commodity: string): Promise<CommodityFundamentalsData>",
+          "description": "Analyze commodity supply/demand fundamentals",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateCostOfProduction",
+          "signature": "calculateCostOfProduction(commodity: string, timeframe: string): ProductionCostData",
+          "description": "Calculate commodity production cost analysis",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "analyzeCommoditySeasonality",
+          "signature": "analyzeCommoditySeasonality(prices: number[], dates: string[], commodity: string): SeasonalityData",
+          "description": "Analyze commodity seasonal patterns",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "getSupplyDemandData",
+          "signature": "getSupplyDemandData(commodity: string): Promise<SupplyDemandData>",
+          "description": "Get commodity supply and demand data",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "analyzeInventoryLevels",
+          "signature": "analyzeInventoryLevels(commodity: string, inventoryData: number[]): InventoryAnalysisData",
+          "description": "Analyze commodity inventory levels and trends",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateContangoBackwardation",
+          "signature": "calculateContangoBackwardation(futuresPrices: number[], spotPrice: number): CurveData",
+          "description": "Analyze commodity futures curve structure",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "analyzeEnergyComplexRelationships",
+          "signature": "analyzeEnergyComplexRelationships(energyPrices: number[][]): EnergyComplexData",
+          "description": "Analyze relationships within energy complex",
+          "computation": "analytics_engine"
+        }
+      ]
+    },
+    "vix_volatility_analysis": {
+      "description": "Specialized VIX and volatility analysis functions",
+      "functions": [
+        {
+          "name": "getVIXData",
+          "signature": "getVIXData(symbol?: string, timeframe?: string): Promise<VIXData>",
+          "description": "Get VIX volatility index data",
+          "mcp_function": "alpaca-market_stocks-bars",
+          "parameters": {
+            "symbol": "VIX symbol (default: 'VIX')",
+            "timeframe": "Data timeframe (default: '1Day')"
+          },
+          "example": "getVIXData('VIX', '1Day')"
+        },
+        {
+          "name": "calculateVIXContango",
+          "signature": "calculateVIXContango(frontMonth: number, backMonth: number): number",
+          "description": "Calculate VIX contango/backwardation (positive = contango, negative = backwardation)",
+          "computation_type": "client_compute",
+          "example": "calculateVIXContango(25.5, 28.3) // Returns 0.11 (11% contango)"
+        },
+        {
+          "name": "identifyVIXSpike",
+          "signature": "identifyVIXSpike(vixValue: number, threshold: number): boolean",
+          "description": "Identify if VIX value represents a volatility spike above threshold",
+          "computation_type": "client_compute",
+          "example": "identifyVIXSpike(35, 30) // Returns true"
+        }
+      ]
+    },
+    "transaction_costs": {
+      "description": "Functions for calculating real-world trading costs",
+      "functions": [
+        {
+          "name": "calculateSpreadCost",
+          "signature": "calculateSpreadCost(price: number, spread: number, quantity: number): number",
+          "description": "Calculate cost impact of bid-ask spread for a trade",
+          "computation_type": "client_compute",
+          "example": "calculateSpreadCost(100, 0.02, 1000) // Returns 10 (cost in dollars)"
+        },
+        {
+          "name": "calculateCommissionCost",
+          "signature": "calculateCommissionCost(quantity: number, feeStructure: FeeStructure): number",
+          "description": "Calculate brokerage commission costs",
+          "computation_type": "client_compute",
+          "parameters": {
+            "quantity": "Number of shares/contracts",
+            "feeStructure": "Object with per-share, minimum, and maximum fees"
+          },
+          "example": "calculateCommissionCost(1000, {perShare: 0.005, minimum: 1, maximum: 10})"
+        },
+        {
+          "name": "calculateSlippageCost",
+          "signature": "calculateSlippageCost(quantity: number, avgVolume: number, volatility: number): number",
+          "description": "Estimate market impact slippage cost for large orders",
+          "computation_type": "client_compute",
+          "example": "calculateSlippageCost(10000, 1000000, 0.02) // quantity, avg daily volume, volatility"
+        }
+      ]
+    },
+    "leverage_analysis": {
+      "description": "Specialized leveraged instrument analysis functions",
+      "functions": [
+        {
+          "name": "calculateDailyLeverageDecay",
+          "signature": "calculateDailyLeverageDecay(leveragedReturn: number, underlyingReturn: number, targetLeverage: number): number",
+          "description": "Calculate daily decay effect for leveraged instruments",
+          "computation_type": "client_compute",
+          "example": "calculateDailyLeverageDecay(-0.06, -0.03, 2) // Returns decay amount"
+        },
+        {
+          "name": "calculateCompoundingDragEffect",
+          "signature": "calculateCompoundingDragEffect(volatility: number, leverage: number, days: number): number",
+          "description": "Calculate compounding drag effect over time for leveraged products",
+          "computation_type": "client_compute",
+          "example": "calculateCompoundingDragEffect(0.20, 3, 252) // 20% vol, 3x leverage, 1 year"
+        }
+      ]
+    },
+    "fed_policy_analysis": {
+      "description": "Federal Reserve policy-specific analysis functions",
+      "functions": [
+        {
+          "name": "getFedFundsRate",
+          "signature": "getFedFundsRate(date?: string): Promise<number>",
+          "description": "Get Federal Funds Rate for specific date",
+          "mcp_function": "eodhd_macro-indicators",
+          "parameters": {
+            "date": "Date in YYYY-MM-DD format (default: latest)"
+          },
+          "example": "getFedFundsRate('2024-01-01')"
+        },
+        {
+          "name": "identifyRateHikeCycle",
+          "signature": "identifyRateHikeCycle(rates: number[], dates: string[]): RateCycleData[]",
+          "description": "Identify Federal Reserve rate hiking and cutting cycles",
+          "computation_type": "analytics_engine",
+          "mcp_function": "analyze_rate_cycles",
+          "example": "identifyRateHikeCycle(ratesArray, datesArray)"
+        }
+      ]
+    },
+    "event_analysis": {
+      "description": "Event-based analysis and earnings functions",
+      "functions": [
+        {
+          "name": "getEarningsReactions",
+          "signature": "getEarningsReactions(symbol: string, periods: number): Promise<EarningsReactionData[]>",
+          "description": "Get historical earnings announcement reactions",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "analyzeEventImpact",
+          "signature": "analyzeEventImpact(events: EventData[], prices: number[]): EventImpactData",
+          "description": "Analyze impact of specific events on asset prices",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateEarningsRevisions",
+          "signature": "calculateEarningsRevisions(symbol: string, timeframe: string): Promise<RevisionData[]>",
+          "description": "Calculate earnings estimate revisions",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "analyzeAnnouncementEffects",
+          "signature": "analyzeAnnouncementEffects(announcements: AnnouncementData[], returns: number[]): EffectData",
+          "description": "Analyze corporate announcement effects",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "detectEarningsSurprises",
+          "signature": "detectEarningsSurprises(actual: number[], estimates: number[]): SurpriseData[]",
+          "description": "Detect and analyze earnings surprises",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "analyzeGuidanceImpact",
+          "signature": "analyzeGuidanceImpact(guidanceData: GuidanceData[], returns: number[]): GuidanceImpactData",
+          "description": "Analyze management guidance impact on stock price",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateEventVolatility",
+          "signature": "calculateEventVolatility(prices: number[], eventDates: string[]): EventVolatilityData",
+          "description": "Calculate volatility around specific events",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "analyzeSeasonalEvents",
+          "signature": "analyzeSeasonalEvents(symbol: string, eventType: string): SeasonalEventData",
+          "description": "Analyze seasonal event patterns (dividends, buybacks, etc.)",
+          "computation": "analytics_engine"
+        }
+      ]
+    },
+    "fundamental_analysis_extended": {
+      "description": "Extended fundamental analysis functions",
+      "functions": [
+        {
+          "name": "calculateDCFModel",
+          "signature": "calculateDCFModel(fundamentals: FundamentalData, assumptions: DCFAssumptions): DCFResult",
+          "description": "Calculate discounted cash flow valuation model",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "analyzeFinancialHealth",
+          "signature": "analyzeFinancialHealth(fundamentals: FundamentalData): HealthScoreData",
+          "description": "Analyze overall financial health and stability",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "compareIndustryMetrics",
+          "signature": "compareIndustryMetrics(symbols: string[], industry: string): Promise<IndustryComparisonData>",
+          "description": "Compare metrics within industry peer group",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateCreditMetrics",
+          "signature": "calculateCreditMetrics(fundamentals: FundamentalData): CreditAnalysisData",
+          "description": "Calculate credit risk and debt analysis metrics",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "analyzeEarningsQuality",
+          "signature": "analyzeEarningsQuality(fundamentals: FundamentalData, cashFlows: number[]): EarningsQualityData",
+          "description": "Analyze quality and sustainability of earnings",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculatePEGRatio",
+          "signature": "calculatePEGRatio(pe: number, growthRate: number): number",
+          "description": "Calculate Price/Earnings to Growth ratio",
+          "computation": "client_compute"
+        },
+        {
+          "name": "analyzeMarginTrends",
+          "signature": "analyzeMarginTrends(marginData: MarginData[], timeframes: string[]): MarginTrendData",
+          "description": "Analyze profitability margin trends over time",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateAssetQuality",
+          "signature": "calculateAssetQuality(balanceSheet: BalanceSheetData): AssetQualityData",
+          "description": "Analyze balance sheet asset quality",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "analyzeCapitalAllocation",
+          "signature": "analyzeCapitalAllocation(cashFlowData: CashFlowData[], investments: InvestmentData[]): CapitalAllocationData",
+          "description": "Analyze management capital allocation efficiency",
+          "computation": "analytics_engine"
+        }
+      ]
+    },
+    "tax_analysis": {
+      "description": "Tax analysis and efficiency functions",
+      "functions": [
+        {
+          "name": "calculateAfterTaxReturns",
+          "signature": "calculateAfterTaxReturns(returns: number[], dividends: number[], taxRates: TaxRates): number[]",
+          "description": "Calculate after-tax returns including dividend taxation",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "analyzeTaxLossHarvesting",
+          "signature": "analyzeTaxLossHarvesting(positions: Position[], taxRules: TaxRules): HarvestingData",
+          "description": "Analyze tax-loss harvesting opportunities",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "compareTaxEfficiency",
+          "signature": "compareTaxEfficiency(strategies: StrategyData[], investor: InvestorProfile): TaxComparisonData",
+          "description": "Compare tax efficiency of different strategies",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateTaxDragImpact",
+          "signature": "calculateTaxDragImpact(returns: number[], turnover: number, accountType: string): TaxDragData",
+          "description": "Calculate impact of taxes on investment returns",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "optimizeAssetLocation",
+          "signature": "optimizeAssetLocation(assets: AssetData[], accounts: AccountType[]): AssetLocationData",
+          "description": "Optimize asset placement across account types",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateTaxableEquivalentYield",
+          "signature": "calculateTaxableEquivalentYield(municipalYield: number, taxRate: number): number",
+          "description": "Calculate taxable equivalent yield for municipal bonds",
+          "computation": "client_compute"
+        },
+        {
+          "name": "analyzeRothConversion",
+          "signature": "analyzeRothConversion(amount: number, currentAge: number, taxRates: TaxRates): RothConversionData",
+          "description": "Analyze Roth IRA conversion scenarios",
+          "computation": "analytics_engine"
+        }
+      ]
+    },
+    "behavioral_finance": {
+      "description": "Behavioral finance and sentiment analysis functions",
+      "functions": [
+        {
+          "name": "analyzeSentimentImpact",
+          "signature": "analyzeSentimentImpact(sentiment: SentimentData[], returns: number[]): SentimentImpactData",
+          "description": "Analyze market sentiment impact on returns",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateInvestorBehaviorMetrics",
+          "signature": "calculateInvestorBehaviorMetrics(flows: FlowData[], returns: number[]): BehaviorData",
+          "description": "Calculate investor behavior and flow analysis",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "detectHerdingBehavior",
+          "signature": "detectHerdingBehavior(volumes: number[], returns: number[]): HerdingData",
+          "description": "Detect herding behavior in trading patterns",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "analyzeEmotionalTrading",
+          "signature": "analyzeEmotionalTrading(trades: TradeData[], marketConditions: MarketCondition[]): EmotionalTradingData",
+          "description": "Analyze emotional trading patterns and biases",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateFearGreedIndex",
+          "signature": "calculateFearGreedIndex(indicators: FearGreedIndicators): number",
+          "description": "Calculate fear and greed index",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "analyzeMomentumBias",
+          "signature": "analyzeMomentumBias(returns: number[], investorFlows: number[]): MomentumBiasData",
+          "description": "Analyze momentum bias in investor behavior",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "detectRecencyBias",
+          "signature": "detectRecencyBias(decisionData: DecisionData[], performanceData: number[]): RecencyBiasData",
+          "description": "Detect recency bias in investment decisions",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateLossAversion",
+          "signature": "calculateLossAversion(gains: number[], losses: number[], reactions: ReactionData[]): LossAversionData",
+          "description": "Calculate loss aversion coefficient",
+          "computation": "analytics_engine"
+        }
+      ]
+    },
+    "geopolitical_analysis": {
+      "description": "Geopolitical risk and crisis analysis functions",
+      "functions": [
+        {
+          "name": "analyzeGeopoliticalRisk",
+          "signature": "analyzeGeopoliticalRisk(events: GeopoliticalEvent[], assetReturns: number[]): GeopoliticalRiskData",
+          "description": "Analyze geopolitical risk impact on assets",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateSafeHavenDemand",
+          "signature": "calculateSafeHavenDemand(crisisEvents: CrisisEvent[], assetFlows: FlowData[]): SafeHavenData",
+          "description": "Calculate safe haven demand during crises",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "analyzeCrisisCorrelations",
+          "signature": "analyzeCrisisCorrelations(returns: number[][], crisisPeriods: string[]): CrisisCorrelationData",
+          "description": "Analyze asset correlations during crisis periods",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "detectPoliticalCycles",
+          "signature": "detectPoliticalCycles(returns: number[], electionDates: string[]): PoliticalCycleData",
+          "description": "Detect political cycle effects on markets",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "analyzeTradeWarImpact",
+          "signature": "analyzeTradeWarImpact(tradeEvents: TradeEvent[], sectorReturns: number[][]): TradeWarImpactData",
+          "description": "Analyze trade war impact on different sectors",
+          "computation": "analytics_engine"
+        },
+        {
+          "name": "calculateCountryRisk",
+          "signature": "calculateCountryRisk(country: string, indicators: CountryIndicators): CountryRiskData",
+          "description": "Calculate sovereign and country risk metrics",
+          "computation": "analytics_engine"
+        }
+      ]
+    },
+    "universal_technical_analysis": {
+      "description": "Universal technical indicator analysis framework supporting all technical indicators",
+      "functions": [
+        {
+          "name": "detectTechnicalEvents",
+          "signature": "detectTechnicalEvents(indicator: IndicatorData, criteria: TechnicalEventCriteria): TechnicalEvent[]",
+          "description": "Universal signal detection for any technical indicator",
+          "computation": "analytics_engine",
+          "supported_indicators": ["RSI", "MACD", "Stochastic", "Williams_R", "CCI", "Bollinger_Bands", "Moving_Averages", "Momentum"],
+          "event_types": {
+            "threshold_events": "RSI < 20, Stochastic > 80, CCI < -100",
+            "crossover_events": "MACD signal crossover, MA golden cross, Stochastic %K/%D cross",
+            "divergence_events": "Price vs indicator divergence patterns",
+            "band_events": "Bollinger band touches, squeezes, expansions",
+            "trend_events": "Momentum shifts, trend reversals"
+          },
+          "examples": [
+            "detectTechnicalEvents(rsi, {type: 'below_threshold', value: 20, minDuration: 1})",
+            "detectTechnicalEvents(macd, {type: 'bullish_crossover', target: 'signal_line'})",
+            "detectTechnicalEvents(bb, {type: 'lower_band_touch', confirmation: 'close'})",
+            "detectTechnicalEvents(stoch, {type: 'overbought', threshold: 80, both_lines: true})"
+          ]
+        },
+        {
+          "name": "analyzeTechnicalSignalOutcomes",
+          "signature": "analyzeTechnicalSignalOutcomes(events: TechnicalEvent[], prices: number[], config: OutcomeAnalysisConfig): TechnicalOutcomeAnalysis",
+          "description": "Universal signal outcome analysis for any technical indicator signals",
+          "computation": "analytics_engine",
+          "analysis_types": [
+            "success_rate_analysis",
+            "return_magnitude_analysis", 
+            "duration_performance_correlation",
+            "signal_strength_impact",
+            "failure_pattern_identification"
+          ],
+          "examples": [
+            "analyzeTechnicalSignalOutcomes(rsiOversoldEvents, prices, {holdingPeriods: [5,10,20], successThreshold: 0.03})",
+            "analyzeTechnicalSignalOutcomes(macdCrossovers, prices, {exitCriteria: 'opposite_signal', riskAdjusted: true})"
+          ]
+        },
+        {
+          "name": "optimizeTechnicalParameters",
+          "signature": "optimizeTechnicalParameters(indicatorType: string, data: MarketData, parameterRanges: ParameterRange[], objective: OptimizationObjective): ParameterOptimizationResult",
+          "description": "Universal parameter optimization for any technical indicator",
+          "computation": "analytics_engine",
+          "supported_optimizations": {
+            "RSI": "period (5-50), oversold_threshold (10-30), overbought_threshold (70-90)",
+            "MACD": "fast_period (5-20), slow_period (15-40), signal_period (5-15)",
+            "Stochastic": "k_period (5-25), d_period (3-10), overbought (70-90), oversold (10-30)",
+            "Moving_Averages": "fast_period (5-50), slow_period (20-200)",
+            "Bollinger_Bands": "period (10-50), std_dev (1.5-3.0)"
+          },
+          "objectives": ["max_return", "max_sharpe", "max_win_rate", "min_drawdown", "max_profit_factor"],
+          "examples": [
+            "optimizeTechnicalParameters('RSI', data, [{param: 'period', range: [10,30]}, {param: 'oversold', range: [15,25]}], 'max_sharpe')",
+            "optimizeTechnicalParameters('MACD', data, [{param: 'fast', range: [8,15]}, {param: 'slow', range: [20,30]}], 'max_win_rate')"
+          ]
+        },
+        {
+          "name": "analyzeSignalQualityPatterns",
+          "signature": "analyzeSignalQualityPatterns(signals: TechnicalEvent[], outcomes: SignalOutcome[], context: MarketContext[]): SignalQualityAnalysis",
+          "description": "Universal signal quality analysis identifying what makes signals reliable",
+          "computation": "analytics_engine",
+          "pattern_types": [
+            "market_regime_patterns",
+            "volatility_patterns", 
+            "volume_patterns",
+            "trend_strength_patterns",
+            "sector_patterns",
+            "earnings_proximity_patterns"
+          ],
+          "applications": "Works for all technical indicators - RSI, MACD, Stochastic, Moving Averages, etc."
+        },
+        {
+          "name": "analyzeTechnicalDivergence",
+          "signature": "analyzeTechnicalDivergence(prices: number[], indicator: IndicatorData, config: DivergenceConfig): DivergenceAnalysis",
+          "description": "Universal divergence detection for momentum-based technical indicators",
+          "computation": "analytics_engine",
+          "divergence_types": ["bullish_divergence", "bearish_divergence", "hidden_divergence"],
+          "compatible_indicators": ["RSI", "MACD", "Stochastic", "Williams_R", "CCI", "Momentum", "ROC"],
+          "examples": [
+            "analyzeTechnicalDivergence(prices, rsi, {type: 'bullish', lookback: 20, minSwings: 2})",
+            "analyzeTechnicalDivergence(prices, macd, {type: 'bearish', component: 'histogram', strength: 'strong'})"
+          ]
+        },
+        {
+          "name": "calculateTechnicalSignalFrequency",
+          "signature": "calculateTechnicalSignalFrequency(events: TechnicalEvent[], timeframe: string, analysis: FrequencyAnalysis): SignalFrequencyData",
+          "description": "Universal signal frequency analysis for any technical indicator",
+          "computation": "analytics_engine",
+          "frequency_metrics": ["average_time_between_signals", "seasonal_patterns", "market_regime_frequency", "signal_clustering"],
+          "timeframe_support": ["intraday", "daily", "weekly", "monthly"]
+        },
+        {
+          "name": "analyzeMarketContextImpact",
+          "signature": "analyzeMarketContextImpact(signals: TechnicalEvent[], marketData: MarketData, outcomes: SignalOutcome[]): MarketContextImpact",
+          "description": "Universal analysis of how market context affects technical signal performance",
+          "computation": "analytics_engine",
+          "context_factors": [
+            "market_regime (bull/bear/sideways)",
+            "volatility_regime (low/medium/high)",
+            "trend_strength",
+            "sector_performance",
+            "market_cap_effects",
+            "earnings_calendar_proximity"
+          ],
+          "universal_application": "Works for all technical indicators and signal types"
+        },
+        {
+          "name": "optimizeSignalFilters",
+          "signature": "optimizeSignalFilters(signals: TechnicalEvent[], outcomes: SignalOutcome[], filterOptions: FilterOption[]): OptimalFilterConfig",
+          "description": "Universal signal filtering optimization to improve signal quality",
+          "computation": "analytics_engine",
+          "filter_types": {
+            "volume_filters": "minimum_volume_ratio, volume_spike_confirmation",
+            "volatility_filters": "volatility_regime, volatility_percentile", 
+            "trend_filters": "trend_direction, trend_strength_minimum",
+            "market_filters": "market_regime, sector_performance",
+            "timing_filters": "earnings_blackout, economic_calendar",
+            "confluence_filters": "multi_indicator_confirmation, multiple_timeframe_alignment"
+          },
+          "examples": [
+            "optimizeSignalFilters(rsiSignals, outcomes, ['volume_confirmation', 'trend_alignment'])",
+            "optimizeSignalFilters(macdSignals, outcomes, ['volatility_filter', 'market_regime', 'earnings_avoidance'])"
+          ]
+        }
+      ]
+    }
+  },
+  "usage_patterns": {
+    "question_answering_workflow": [
+      "1. Use data_acquisition functions to fetch required raw data",
+      "2. Apply time_series_processing functions to clean and transform data", 
+      "3. Use statistical_analysis functions for core calculations",
+      "4. Apply performance_analysis functions for performance metrics",
+      "5. Use comparison_analysis functions for multi-asset analysis",
+      "6. Apply strategy_simulation functions for backtesting scenarios",
+      "7. Use specialized_analysis functions for domain-specific calculations"
+    ],
+    "function_composition_examples": [
+      {
+        "question": "What if I bought AAPL in 2008?",
+        "functions_used": [
+          "getStockBars('AAPL', '1Day', '2008-01-01', '2024-12-31')",
+          "calculateTotalReturn(startPrice, endPrice, dividends)",
+          "calculateCAGR(startValue, endValue, years)",
+          "calculateMaxDrawdown(prices)",
+          "calculateSharpeRatio(returns)"
+        ]
+      },
+      {
+        "question": "Does SMA crossover work for QQQ?",
+        "functions_used": [
+          "getStockBars('QQQ', '1Day', '2010-01-01', '2024-12-31')",
+          "backtestTechnicalStrategy(prices, {type: 'sma_crossover', fastPeriod: 50, slowPeriod: 200}, 10000)",
+          "simulateLumpSum(prices, 10000, '2010-01-01')",
+          "comparePerformanceMetrics(smaReturns, buyHoldReturns)",
+          "analyzeSignalQuality(signals, prices)"
+        ]
+      },
+      {
+        "question": "SPY top 10 holdings concentration analysis",
+        "functions_used": [
+          "getETFHoldings('SPY')",
+          "calculateHerfindahlIndex(topHoldingsWeights)",
+          "analyzeSectorExposure(holdings)",
+          "compareConcentration(['SPY', 'VTI', 'QQQ'])",
+          "calculatePortfolioImpact(excludeTop10Scenario)"
+        ]
+      },
+      {
+        "question": "Is it a good time to invest in GOLD?",
+        "functions_used": [
+          "getCommodityPrices(['GOLD'], '1Day')",
+          "getMacroIndicators(['CPI', 'FEDFUNDS'], '2020-01-01', '2024-12-31')",
+          "calculateRealInterestRates(nominalRates, inflation)",
+          "analyzeDollarStrengthImpact(dxyData, goldPrices)",
+          "analyzeCommodityFundamentals('GOLD')",
+          "calculateCostOfProduction('GOLD', '5Y')"
+        ]
+      },
+      {
+        "question": "Is investing in ARKK better than QQQ?",
+        "functions_used": [
+          "getStockBars(['ARKK', 'QQQ'], '1Day', '2020-01-01', '2024-12-31')",
+          "comparePerformanceMetrics(arkkReturns, qqqReturns)",
+          "compareRiskMetrics(arkkReturns, qqqReturns)",
+          "compareDrawdowns(arkkPrices, qqqPrices)",
+          "getETFHoldings('ARKK')",
+          "getETFHoldings('QQQ')",
+          "compareSectorExposure(arkkHoldings, qqqHoldings)"
+        ]
+      },
+      {
+        "question": "What's the behavioral impact of stopping DCA during crashes?", 
+        "functions_used": [
+          "simulateDCA(prices, 1000, '2008-01-01', 'monthly')",
+          "detectCrisisPeriods(returns, -0.20)",
+          "analyzeEmotionalTrading(dcaTrades, marketConditions)",
+          "calculateInvestorBehaviorMetrics(flows, returns)",
+          "calculateLossAversion(gains, losses, reactions)"
+        ]
+      },
+      {
+        "question": "How do leveraged fund costs compound over time?",
+        "functions_used": [
+          "getStockBars(['TQQQ', 'QQQ'], '1Day', '2010-01-01', '2024-12-31')",
+          "analyzeLeverageFund(tqqqPrices, 3, qqqPrices)",
+          "analyzeExpenseRatio(0.0095, 10000, 10)",
+          "calculateAfterTaxReturns(tqqqReturns, [], taxRates)",
+          "compareCostStructures([tqqqStrategy, marginStrategy])"
+        ]
+      },
+      {
+        "question": "How many times in last year RSI(24) went below 20?",
+        "functions_used": [
+          "getStockBars('AAPL', '1Day', '2023-01-01', '2024-12-31')",
+          "calculateRSI(prices, 24)",
+          "detectRSIOversoldEvents(rsi, 20)",
+          "calculateOversoldEventDurations(oversoldEvents)",
+          "classifyOversoldSignalOutcomes(oversoldEvents, prices, [5, 10, 20])"
+        ]
+      },
+      {
+        "question": "What was the success rate of buying RSI oversold signals?",
+        "functions_used": [
+          "detectRSIOversoldEvents(rsi, 20)",
+          "classifyOversoldSignalOutcomes(oversoldEvents, prices, [10])",
+          "analyzeSignalsByMarketRegime(oversoldEvents, regimes, outcomes)",
+          "differentiateSuccessfulFailedSignals(successfulSignals, failedSignals, context)",
+          "calculateSignalBreakdownFrequency(oversoldEvents, prices, breakdownCriteria)"
+        ]
+      },
+      {
+        "question": "Do volume spikes improve RSI oversold signal quality?",
+        "functions_used": [
+          "detectRSIOversoldEvents(rsi, 20)",
+          "analyzeVolumeConfirmation(oversoldEvents, volumes, avgVolumes)",
+          "optimizeVolumeThresholds(oversoldEvents, volumes, outcomes)",
+          "compareVolumeMethodologies(oversoldEvents, volumes, ['absolute', 'relative'])"
+        ]
+      },
+      {
+        "question": "How many times in last year RSI(24) went below 20? (Universal Framework)",
+        "functions_used": [
+          "getStockBars('AAPL', '1Day', '2023-01-01', '2024-12-31')",
+          "calculateRSI(prices, 24)",
+          "detectTechnicalEvents(rsi, {type: 'below_threshold', value: 20})",
+          "calculateTechnicalSignalFrequency(events, 'daily', {metrics: ['count', 'duration']})",
+          "analyzeTechnicalSignalOutcomes(events, prices, {holdingPeriods: [5, 10, 20]})"
+        ]
+      },
+      {
+        "question": "What was the success rate of buying RSI oversold signals?",
+        "functions_used": [
+          "detectTechnicalEvents(rsi, {type: 'below_threshold', value: 20})",
+          "analyzeTechnicalSignalOutcomes(events, prices, {successThreshold: 0.03, riskAdjusted: true})",
+          "analyzeMarketContextImpact(events, marketData, outcomes)",
+          "analyzeSignalQualityPatterns(events, outcomes, context)",
+          "optimizeSignalFilters(events, outcomes, ['volume_confirmation', 'trend_alignment'])"
+        ]
+      },
+      {
+        "question": "Does MACD crossover strategy work for QQQ?",
+        "functions_used": [
+          "getStockBars('QQQ', '1Day', '2020-01-01', '2024-12-31')",
+          "calculateMACD(prices, 12, 26, 9)",
+          "detectTechnicalEvents(macd, {type: 'bullish_crossover', target: 'signal_line'})",
+          "analyzeTechnicalSignalOutcomes(events, prices, {exitCriteria: 'opposite_signal'})",
+          "optimizeTechnicalParameters('MACD', data, [{param: 'fast', range: [8,15]}, {param: 'slow', range: [20,30]}], 'max_sharpe')"
+        ]
+      },
+      {
+        "question": "Which moving average crossover works best for momentum stocks?",
+        "functions_used": [
+          "detectTechnicalEvents(sma, {type: 'golden_cross', fast: 50, slow: 200})",
+          "analyzeMarketContextImpact(events, {focus: 'sector_performance', filter: 'momentum_stocks'})",
+          "optimizeTechnicalParameters('Moving_Averages', data, [{param: 'fast', range: [20,50]}, {param: 'slow', range: [100,200]}], 'max_return')",
+          "analyzeTechnicalDivergence(prices, momentum, {type: 'bullish', confirmation: 'ma_cross'})"
+        ]
+      }
+    ]
+  },
+  "coverage_analysis": {
+    "total_question_trees": 9,
+    "estimated_coverage": "98%",
+    "major_gaps_addressed": [
+      "Macroeconomic analysis for gold/commodity questions",
+      "Currency impact analysis for international exposure",
+      "Behavioral finance for investor decision analysis", 
+      "Tax analysis for strategy comparison",
+      "Event-based analysis for earnings/announcement questions",
+      "Extended fundamental analysis for detailed stock analysis",
+      "Geopolitical risk for crisis/safe-haven analysis",
+      "Universal technical analysis framework supporting all indicators",
+      "Technical signal detection and outcome analysis for any indicator", 
+      "Parameter optimization across all technical indicators",
+      "Market context and regime analysis for technical signals",
+      "Signal quality patterns and filtering optimization"
+    ],
+    "remaining_gaps": [
+      "Real-time sentiment data integration",
+      "High-frequency microstructure analysis",
+      "Credit default swap data",
+      "Satellite/alternative data sources"
+    ]
+  },
+  "implementation_notes": {
+    "computation_types": {
+      "client_compute": "Simple calculations performed locally in the application",
+      "analytics_engine": "Complex calculations requiring Python analytics server (MCP)",
+      "mcp_function": "Direct calls to financial data MCP server functions"
+    },
+    "error_handling": "All functions should include appropriate error handling for missing data, invalid parameters, and API failures",
+    "data_caching": "Functions should support caching mechanisms to avoid redundant API calls",
+    "parameter_validation": "All functions should validate input parameters and provide meaningful error messages",
+    "extensibility": "Function library is designed to be extensible with new analysis types as needed"
+  }
+}

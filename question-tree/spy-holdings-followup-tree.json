@@ -1,0 +1,214 @@
+{
+  "root_question": "What are SPY top 10 holdings?",
+  "description": "Binary follow-up question tree with 5 levels of depth",
+  "tree_structure": {
+    "level_1": {
+      "root": {
+        "question": "What are SPY top 10 holdings?",
+        "analysis_type": "etf_basic_info",
+        "output_filter": "holdings_only"
+      }
+    },
+    "level_2": {
+      "2a": {
+        "question": "How have these top holdings performed this year?",
+        "parent": "root",
+        "analysis_type": "stock_comparison_performance",
+        "rationale": "User wants to know if the biggest positions are driving SPY performance"
+      },
+      "2b": {
+        "question": "What percentage of SPY do these top 10 represent?",
+        "parent": "root", 
+        "analysis_type": "etf_concentration_analysis",
+        "rationale": "User wants to understand concentration risk in SPY"
+      }
+    },
+    "level_3": {
+      "3a": {
+        "question": "Which of these holdings outperformed the S&P 500?",
+        "parent": "2a",
+        "analysis_type": "relative_performance_analysis",
+        "rationale": "Identify alpha generators within top holdings"
+      },
+      "3b": {
+        "question": "What sectors do these top holdings belong to?",
+        "parent": "2a",
+        "analysis_type": "sector_breakdown_analysis", 
+        "rationale": "Understand sector concentration in top holdings"
+      },
+      "3c": {
+        "question": "How does this concentration compare to other major ETFs?",
+        "parent": "2b",
+        "analysis_type": "etf_concentration_comparison",
+        "rationale": "Benchmark SPY concentration vs VTI, QQQ, etc."
+      },
+      "3d": {
+        "question": "What would happen if I excluded these top 10 from SPY?",
+        "parent": "2b",
+        "analysis_type": "portfolio_impact_analysis",
+        "rationale": "Understanding contribution of top holdings to returns"
+      }
+    },
+    "level_4": {
+      "4a": {
+        "question": "Which outperforming stock has the best risk-adjusted returns?",
+        "parent": "3a",
+        "analysis_type": "risk_adjusted_performance",
+        "rationale": "Find the highest quality outperformer"
+      },
+      "4b": {
+        "question": "Are there any warning signs in the underperformers?",
+        "parent": "3a", 
+        "analysis_type": "fundamental_health_check",
+        "rationale": "Risk assessment of lagging holdings"
+      },
+      "4c": {
+        "question": "Is technology overweight in these top holdings vs S&P 500?",
+        "parent": "3b",
+        "analysis_type": "sector_weight_comparison",
+        "rationale": "Check if top holdings create sector bias"
+      },
+      "4d": {
+        "question": "How correlated are these top holdings with each other?",
+        "parent": "3b",
+        "analysis_type": "correlation_analysis",
+        "rationale": "Assess diversification within top holdings"
+      },
+      "4e": {
+        "question": "Which ETF has the most diversified top 10 holdings?",
+        "parent": "3c",
+        "analysis_type": "diversification_comparison",
+        "rationale": "Find best diversified large-cap ETF alternative"
+      },
+      "4f": {
+        "question": "How has SPY concentration changed over the past 5 years?",
+        "parent": "3c",
+        "analysis_type": "historical_concentration_trend",
+        "rationale": "Track concentration trend over time"
+      },
+      "4g": {
+        "question": "What would be the performance of SPY without top 10?",
+        "parent": "3d",
+        "analysis_type": "equal_weight_simulation",
+        "rationale": "Calculate return difference of concentration impact"
+      },
+      "4h": {
+        "question": "Which individual holding contributes most to SPY volatility?",
+        "parent": "3d",
+        "analysis_type": "volatility_contribution_analysis",
+        "rationale": "Identify primary risk driver in SPY"
+      }
+    },
+    "level_5": {
+      "5a": {
+        "question": "What's the maximum drawdown of this best performer?",
+        "parent": "4a",
+        "analysis_type": "drawdown_analysis",
+        "rationale": "Assess worst-case scenario for top risk-adjusted stock"
+      },
+      "5b": {
+        "question": "How does its Sharpe ratio compare to the sector average?",
+        "parent": "4a",
+        "analysis_type": "sector_relative_sharpe",
+        "rationale": "Context for risk-adjusted performance within sector"
+      },
+      "5c": {
+        "question": "What specific fundamental metrics are deteriorating?",
+        "parent": "4b",
+        "analysis_type": "fundamental_deterioration_analysis",
+        "rationale": "Pinpoint exact warning signals"
+      },
+      "5d": {
+        "question": "How have their earnings estimates been revised recently?",
+        "parent": "4b",
+        "analysis_type": "earnings_revision_analysis",
+        "rationale": "Check if market expectations are declining"
+      },
+      "5e": {
+        "question": "By how much is tech overweight vs the full S&P 500?",
+        "parent": "4c",
+        "analysis_type": "sector_overweight_calculation",
+        "rationale": "Quantify exact tech bias in SPY top holdings"
+      },
+      "5f": {
+        "question": "What's the tech allocation if we equal-weight the top 10?",
+        "parent": "4c",
+        "analysis_type": "equal_weight_sector_allocation",
+        "rationale": "See how market cap weighting affects sector exposure"
+      },
+      "5g": {
+        "question": "What's the average correlation between top 10 holdings?",
+        "parent": "4d",
+        "analysis_type": "average_correlation_calculation",
+        "rationale": "Single metric for diversification within top holdings"
+      },
+      "5h": {
+        "question": "Which pair of holdings has the highest correlation?",
+        "parent": "4d",
+        "analysis_type": "pairwise_correlation_ranking",
+        "rationale": "Identify most redundant holdings"
+      },
+      "5i": {
+        "question": "What's the Herfindahl index for each ETF's top 10?",
+        "parent": "4e",
+        "analysis_type": "concentration_index_comparison",
+        "rationale": "Mathematical measure of concentration differences"
+      },
+      "5j": {
+        "question": "Which ETF has the lowest correlation between top holdings?",
+        "parent": "4e",
+        "analysis_type": "inter_holding_correlation_comparison",
+        "rationale": "Find ETF with most diversified large positions"
+      },
+      "5k": {
+        "question": "What drove the biggest concentration changes historically?",
+        "parent": "4f",
+        "analysis_type": "concentration_driver_analysis",
+        "rationale": "Understand if growth or new entrants drove concentration"
+      },
+      "5l": {
+        "question": "At what point was SPY most/least concentrated?",
+        "parent": "4f",
+        "analysis_type": "historical_concentration_extremes",
+        "rationale": "Identify peak concentration periods"
+      },
+      "5m": {
+        "question": "What would be the annual return difference?",
+        "parent": "4g",
+        "analysis_type": "annualized_return_difference",
+        "rationale": "Quantify long-term impact of concentration"
+      },
+      "5n": {
+        "question": "How would the Sharpe ratio change without top 10?",
+        "parent": "4g",
+        "analysis_type": "risk_adjusted_return_comparison",
+        "rationale": "See if concentration helps or hurts risk-adjusted returns"
+      },
+      "5o": {
+        "question": "What percentage of SPY volatility does this stock explain?",
+        "parent": "4h",
+        "analysis_type": "volatility_attribution_percentage",
+        "rationale": "Quantify single stock's impact on total portfolio risk"
+      },
+      "5p": {
+        "question": "How has this stock's volatility contribution changed over time?",
+        "parent": "4h",
+        "analysis_type": "historical_volatility_contribution",
+        "rationale": "Track changing risk profile of biggest volatility driver"
+      }
+    }
+  },
+  "tree_statistics": {
+    "total_questions": 31,
+    "levels": 5,
+    "branching_factor": 2,
+    "leaf_questions": 16,
+    "analysis_types_needed": 25
+  },
+  "user_journey_paths": {
+    "performance_focused_path": ["root", "2a", "3a", "4a", "5a"],
+    "risk_focused_path": ["root", "2b", "3d", "4h", "5o"],
+    "comparison_focused_path": ["root", "2b", "3c", "4e", "5i"],
+    "sector_focused_path": ["root", "2a", "3b", "4c", "5e"]
+  }
+}

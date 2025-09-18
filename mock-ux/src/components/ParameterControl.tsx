@@ -2,8 +2,8 @@ import { Parameter } from '@/types/modules';
 
 interface ParameterControlProps {
   parameter: Parameter;
-  value: string | string[];
-  onChange: (value: string | string[]) => void;
+  value: string | number | boolean | string[];
+  onChange: (value: string | number | boolean | string[]) => void;
 }
 
 export default function ParameterControl({ parameter, value, onChange }: ParameterControlProps) {

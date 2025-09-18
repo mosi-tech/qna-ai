@@ -1,0 +1,220 @@
+{
+  "category": "portfolio_visualizer",
+  "description": "Portfolio Visualizer analyses ranging from simple asset allocation to advanced multi-strategy systems",
+  "analyses": [
+    {
+      "analysis_id": "portfolio_basic_mix",
+      "name": "Basic Portfolio Allocator", 
+      "complexity": "simple",
+      "category": "portfolio_visualizer",
+      "keywords": ["portfolio mix", "asset allocation", "60/40", "combine stocks", "diversify", "basic portfolio", "simple allocation"],
+      "description": "Compare different stock/ETF combinations with simple rebalancing",
+      "typical_questions": [
+        "How would a 60% stock, 40% bond portfolio perform?",
+        "Should I add international stocks to my portfolio?",
+        "What if I combined Apple and Tesla equally?"
+      ],
+      "parameters": {
+        "required": {
+          "assets": [
+            {"symbol": "VTI", "allocation": 0.6, "name": "US Total Market"},
+            {"symbol": "BND", "allocation": 0.4, "name": "US Bonds"}
+          ],
+          "timeframe": "5Y"
+        },
+        "optional": {
+          "initial_amount": 10000,
+          "rebalance_frequency": "yearly",
+          "benchmark": "SPY"
+        }
+      },
+      "output_format": {
+        "charts": ["cumulative_returns", "allocation_pie"],
+        "metrics": ["total_return", "annual_return", "volatility", "max_drawdown"],
+        "simple_summary": "Portfolio grew to $X with Y% less volatility than all-stock"
+      },
+      "api_requirements": ["alpaca-market_stocks-bars", "mcp-analytics-server_sma"],
+      "computational_complexity": "low"
+    },
+    {
+      "analysis_id": "portfolio_multi_asset",
+      "name": "Multi-Asset Strategy Analyzer",
+      "complexity": "intermediate", 
+      "category": "portfolio_visualizer",
+      "keywords": ["factor investing", "value growth", "international", "emerging markets", "sector allocation", "multi-asset", "factor tilt"],
+      "description": "Analyze complex portfolios with multiple asset classes and factors",
+      "typical_questions": [
+        "How does adding small-cap value improve my returns?",
+        "What's the optimal allocation between US and international?",
+        "Should I tilt toward growth or value stocks?"
+      ],
+      "parameters": {
+        "required": {
+          "assets": [
+            {"symbol": "VTI", "allocation": 0.4, "name": "US Total Market"},
+            {"symbol": "VTV", "allocation": 0.2, "name": "US Value"}, 
+            {"symbol": "VTIAX", "allocation": 0.3, "name": "International"},
+            {"symbol": "BND", "allocation": 0.1, "name": "US Bonds"}
+          ],
+          "timeframe": "10Y"
+        },
+        "optional": {
+          "rebalance_frequency": "quarterly",
+          "tax_considerations": false,
+          "factor_analysis": ["size", "value", "momentum", "quality"],
+          "correlation_matrix": true,
+          "rolling_periods": [36, 60, 120]
+        }
+      },
+      "output_format": {
+        "charts": ["performance_comparison", "rolling_correlation", "drawdown_periods", "factor_attribution"],
+        "metrics": ["sharpe_ratio", "sortino_ratio", "calmar_ratio", "factor_loadings", "tracking_error"],
+        "analysis": "Factor attribution and risk-return optimization insights"
+      },
+      "api_requirements": ["alpaca-market_stocks-bars", "mcp-analytics-server_sharpe_ratio", "mcp-analytics-server_bollinger_bands"],
+      "computational_complexity": "medium"
+    },
+    {
+      "analysis_id": "portfolio_risk_optimized",
+      "name": "Risk-Optimized Portfolio Constructor",
+      "complexity": "advanced",
+      "category": "portfolio_visualizer", 
+      "keywords": ["risk parity", "efficient frontier", "black litterman", "optimization", "tail risk", "var", "cvar", "modern portfolio theory"],
+      "description": "Build portfolios using modern portfolio theory and risk optimization",
+      "typical_questions": [
+        "What's the optimal risk-parity allocation across asset classes?",
+        "How can I minimize portfolio volatility while maintaining returns?",
+        "What allocation maximizes my Sharpe ratio?"
+      ],
+      "parameters": {
+        "required": {
+          "universe": ["stocks", "bonds", "commodities", "reits", "international"],
+          "optimization_objective": "max_sharpe", 
+          "risk_tolerance": 0.15,
+          "lookback_period": 252
+        },
+        "optional": {
+          "constraints": {
+            "max_allocation_per_asset": 0.4,
+            "min_allocation_per_asset": 0.05,
+            "sector_limits": {"technology": 0.3, "financials": 0.2}
+          },
+          "black_litterman_views": [],
+          "stress_test_scenarios": ["2008_crisis", "covid_crash", "inflation_spike"],
+          "tail_risk_hedging": true,
+          "resampling_iterations": 1000
+        }
+      },
+      "output_format": {
+        "charts": ["efficient_frontier", "risk_contribution", "monte_carlo_paths", "stress_test_results"],
+        "metrics": ["var_95", "cvar_95", "maximum_drawdown", "risk_budget", "diversification_ratio"],
+        "optimization_results": "Recommended allocation with risk/return projections and confidence intervals"
+      },
+      "api_requirements": ["alpaca-market_stocks-bars", "mcp-analytics-server_historical_volatility", "mcp-analytics-server_sharpe_ratio"],
+      "computational_complexity": "high"
+    },
+    {
+      "analysis_id": "portfolio_dynamic_multi_strategy", 
+      "name": "Dynamic Multi-Strategy Portfolio System",
+      "complexity": "expert",
+      "category": "portfolio_visualizer",
+      "keywords": ["factor timing", "regime switching", "dynamic allocation", "multi-manager", "alternative risk premia", "quant strategies", "momentum mean reversion"],
+      "description": "Advanced portfolio construction with regime detection and dynamic rebalancing",
+      "typical_questions": [
+        "How would a regime-switching momentum/mean-reversion strategy perform?",
+        "What's the optimal factor timing model for my multi-asset portfolio?",
+        "How do I construct a crisis-alpha overlay for tail protection?"
+      ],
+      "parameters": {
+        "required": {
+          "strategy_components": [
+            {
+              "type": "momentum", 
+              "lookback": 252, 
+              "allocation_range": [0.0, 0.5],
+              "universe": ["equity_factors", "commodities"]
+            },
+            {
+              "type": "mean_reversion", 
+              "half_life": 21, 
+              "allocation_range": [0.0, 0.4],
+              "universe": ["currencies", "rates"]
+            }, 
+            {
+              "type": "carry", 
+              "universe": "currencies", 
+              "allocation_range": [0.0, 0.3]
+            }
+          ],
+          "regime_indicators": ["vix", "yield_curve_slope", "credit_spreads"],
+          "rebalance_frequency": "daily"
+        },
+        "optional": {
+          "transaction_costs": 0.002,
+          "capacity_constraints": true,
+          "leverage_limit": 1.6,
+          "liquidity_requirements": "T+1",
+          "alternative_data_signals": ["sentiment", "positioning", "flow"],
+          "risk_overlay": {
+            "vol_target": 0.12,
+            "max_drawdown_limit": 0.15,
+            "correlation_adjustment": true
+          },
+          "regime_model": {
+            "hidden_states": 3,
+            "transition_smoothing": 0.9,
+            "min_regime_duration": 20
+          }
+        }
+      },
+      "output_format": {
+        "charts": [
+          "regime_timeline", 
+          "strategy_attribution", 
+          "risk_factor_exposure", 
+          "dynamic_allocation",
+          "alpha_beta_separation"
+        ],
+        "metrics": [
+          "information_ratio", 
+          "max_leverage", 
+          "turnover", 
+          "capacity_estimate",
+          "regime_hit_rate",
+          "alpha_t_stat"
+        ],
+        "simulation_results": "Full backtest with regime analysis, performance attribution, and capacity constraints"
+      },
+      "api_requirements": [
+        "alpaca-market_stocks-bars", 
+        "alpaca-market_forex-rates",
+        "mcp-analytics-server_momentum",
+        "mcp-analytics-server_mean_reversion", 
+        "mcp-analytics-server_regime_detection"
+      ],
+      "computational_complexity": "very_high"
+    }
+  ],
+  "keyword_triggers": {
+    "simple": {
+      "primary_keywords": ["60/40", "basic portfolio", "asset allocation", "diversify", "combine stocks"],
+      "question_patterns": ["how would", "what if I", "should I combine", "basic mix"],
+      "complexity_signals": ["simple", "basic", "beginner", "easy"]
+    },
+    "intermediate": {
+      "primary_keywords": ["factor", "value growth", "international", "sector allocation", "multi-asset"],
+      "question_patterns": ["factor analysis", "international exposure", "sector rotation"],
+      "complexity_signals": ["analyze", "compare", "optimize"]
+    },
+    "advanced": {
+      "primary_keywords": ["risk parity", "efficient frontier", "optimization", "var", "tail risk"],
+      "question_patterns": ["minimize risk", "maximize sharpe", "optimal allocation"],
+      "complexity_signals": ["risk-adjusted", "modern portfolio theory", "optimization"]
+    },
+    "expert": {
+      "primary_keywords": ["regime", "factor timing", "dynamic allocation", "multi-strategy", "alpha"],
+      "question_patterns": ["regime switching", "factor timing", "crisis alpha"],
+      "complexity_signals": ["dynamic", "regime-based", "multi-manager", "quantitative"]
+    }
+  }
+}

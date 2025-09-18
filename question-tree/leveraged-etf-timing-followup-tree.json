@@ -1,0 +1,276 @@
+{
+  "root_question": "If I switched to QLD or TQQQ in place of QQQ in period of low vol, how would my portfolio do?",
+  "description": "Binary follow-up question tree with 5 levels of depth for leveraged ETF timing strategy during low volatility periods",
+  "tree_structure": {
+    "level_1": {
+      "root": {
+        "question": "If I switched to QLD or TQQQ in place of QQQ in period of low vol, how would my portfolio do?",
+        "analysis_type": "leveraged_etf_volatility_timing_analysis",
+        "category": "Volatility-Based Timing Strategies"
+      }
+    },
+    "level_2": {
+      "2a": {
+        "question": "How do I accurately identify low volatility periods for timing?",
+        "parent": "root",
+        "analysis_type": "volatility_regime_identification_analysis",
+        "category": "Volatility Regime Detection",
+        "rationale": "User needs to know how to detect optimal entry conditions for leveraged positioning"
+      },
+      "2b": {
+        "question": "What's the historical performance difference between QLD vs TQQQ during low vol periods?",
+        "parent": "root", 
+        "analysis_type": "leveraged_etf_comparative_performance_analysis",
+        "category": "Leveraged ETF Comparison",
+        "rationale": "User wants to compare 2x vs 3x leverage effectiveness during favorable conditions"
+      }
+    },
+    "level_3": {
+      "3a": {
+        "question": "What volatility percentile threshold provides the best timing signals?",
+        "parent": "2a",
+        "analysis_type": "optimal_volatility_threshold_analysis",
+        "category": "Volatility Threshold Optimization",
+        "rationale": "Determine precise volatility levels for optimal leverage timing"
+      },
+      "3b": {
+        "question": "How long do low volatility periods typically last?",
+        "parent": "2a",
+        "analysis_type": "volatility_regime_duration_analysis",
+        "category": "Volatility Regime Persistence Analysis",
+        "rationale": "Understanding holding period expectations for timing strategy"
+      },
+      "3c": {
+        "question": "Which leveraged ETF provides better risk-adjusted returns during low vol?",
+        "parent": "2b",
+        "analysis_type": "risk_adjusted_leveraged_performance_comparison",
+        "category": "Risk-Adjusted Leveraged Performance Analysis",
+        "rationale": "Compare Sharpe ratios and risk metrics between leverage levels"
+      },
+      "3d": {
+        "question": "How much additional return does timing provide vs buy-and-hold leverage?",
+        "parent": "2b",
+        "analysis_type": "timing_vs_static_leverage_comparison",
+        "category": "Dynamic vs Static Leverage Strategy Analysis",
+        "rationale": "Quantify the value-add of volatility timing vs constant leverage exposure"
+      }
+    },
+    "level_4": {
+      "4a": {
+        "question": "Should I use VIX percentiles or realized volatility for timing signals?",
+        "parent": "3a",
+        "analysis_type": "volatility_measurement_methodology_comparison",
+        "category": "Volatility Measurement Methodology Analysis",
+        "rationale": "Compare forward-looking vs backward-looking volatility measures for timing"
+      },
+      "4b": {
+        "question": "Do different lookback periods affect timing signal quality?",
+        "parent": "3a", 
+        "analysis_type": "volatility_calculation_window_optimization",
+        "category": "Volatility Calculation Optimization",
+        "rationale": "Optimize the time window for volatility calculations"
+      },
+      "4c": {
+        "question": "What causes low volatility periods to end abruptly?",
+        "parent": "3b",
+        "analysis_type": "volatility_regime_transition_catalyst_analysis",
+        "category": "Volatility Regime Transition Analysis",
+        "rationale": "Identify warning signs of volatility regime changes"
+      },
+      "4d": {
+        "question": "Can I predict when low volatility periods will end?",
+        "parent": "3b",
+        "analysis_type": "volatility_regime_prediction_analysis",
+        "category": "Volatility Regime Forecasting",
+        "rationale": "Develop early warning systems for regime changes"
+      },
+      "4e": {
+        "question": "How does portfolio correlation change with leverage during low vol?",
+        "parent": "3c",
+        "analysis_type": "leveraged_correlation_impact_analysis",
+        "category": "Leveraged Portfolio Correlation Analysis",
+        "rationale": "Assess diversification effects under different leverage levels"
+      },
+      "4f": {
+        "question": "What's the maximum drawdown risk of each leveraged strategy?",
+        "parent": "3c",
+        "analysis_type": "leveraged_maximum_drawdown_comparison",
+        "category": "Leveraged Drawdown Risk Analysis",
+        "rationale": "Compare worst-case scenarios between leverage strategies"
+      },
+      "4g": {
+        "question": "How often do timing signals generate profitable trades?",
+        "parent": "3d",
+        "analysis_type": "volatility_timing_win_rate_analysis",
+        "category": "Volatility Timing Success Rate Analysis",
+        "rationale": "Measure consistency and reliability of timing strategy"
+      },
+      "4h": {
+        "question": "What are the transaction costs of frequent leverage adjustments?",
+        "parent": "3d",
+        "analysis_type": "leverage_timing_transaction_cost_analysis",
+        "category": "Dynamic Strategy Transaction Cost Analysis",
+        "rationale": "Account for real-world implementation costs of timing strategy"
+      }
+    },
+    "level_5": {
+      "5a": {
+        "question": "Does VIX term structure improve timing signal accuracy?",
+        "parent": "4a",
+        "analysis_type": "vix_term_structure_timing_enhancement",
+        "category": "VIX Term Structure Analysis",
+        "rationale": "Use volatility curve shape for enhanced timing signals"
+      },
+      "5b": {
+        "question": "How do options-implied vs realized volatility compare for timing?",
+        "parent": "4a",
+        "analysis_type": "implied_vs_realized_volatility_timing_comparison",
+        "category": "Volatility Forecasting Methodology Comparison",
+        "rationale": "Compare forward vs backward-looking volatility measures"
+      },
+      "5c": {
+        "question": "What's the optimal volatility calculation frequency for timing?",
+        "parent": "4b",
+        "analysis_type": "volatility_update_frequency_optimization",
+        "category": "Volatility Update Frequency Analysis",
+        "rationale": "Determine how often to recalculate volatility for timing decisions"
+      },
+      "5d": {
+        "question": "Do intraday vs daily volatility measures affect timing quality?",
+        "parent": "4b",
+        "analysis_type": "volatility_timeframe_impact_on_timing",
+        "category": "Multi-Timeframe Volatility Analysis",
+        "rationale": "Compare high-frequency vs daily volatility for timing signals"
+      },
+      "5e": {
+        "question": "Which macro events most often trigger volatility spikes?",
+        "parent": "4c",
+        "analysis_type": "macro_volatility_catalyst_identification",
+        "category": "Macroeconomic Volatility Catalyst Analysis",
+        "rationale": "Identify external factors that end low volatility regimes"
+      },
+      "5f": {
+        "question": "How do earnings seasons affect volatility regime stability?",
+        "parent": "4c",
+        "analysis_type": "earnings_season_volatility_impact_analysis",
+        "category": "Earnings Calendar Volatility Analysis",
+        "rationale": "Assess seasonal volatility pattern impacts on timing strategy"
+      },
+      "5g": {
+        "question": "What technical indicators predict volatility regime changes?",
+        "parent": "4d",
+        "analysis_type": "technical_volatility_regime_prediction",
+        "category": "Technical Volatility Forecasting",
+        "rationale": "Use technical analysis to anticipate volatility regime shifts"
+      },
+      "5h": {
+        "question": "Can machine learning improve volatility regime prediction?",
+        "parent": "4d",
+        "analysis_type": "ml_volatility_regime_forecasting",
+        "category": "Machine Learning Volatility Prediction",
+        "rationale": "Apply advanced analytics to volatility regime forecasting"
+      },
+      "5i": {
+        "question": "How does sector concentration affect leveraged correlation risk?",
+        "parent": "4e",
+        "analysis_type": "sector_concentration_leveraged_correlation_analysis",
+        "category": "Sector Concentration Leverage Risk Analysis",
+        "rationale": "Assess how portfolio composition affects leverage risk"
+      },
+      "5j": {
+        "question": "Do international market correlations increase with leverage?",
+        "parent": "4e",
+        "analysis_type": "international_correlation_leverage_impact",
+        "category": "International Correlation Leverage Analysis",
+        "rationale": "Analyze global diversification effects under leverage"
+      },
+      "5k": {
+        "question": "How do leveraged ETF decay effects vary by volatility regime?",
+        "parent": "4f",
+        "analysis_type": "volatility_regime_leverage_decay_analysis",
+        "category": "Leverage Decay Analysis",
+        "rationale": "Understand how volatility affects leveraged ETF performance drag"
+      },
+      "5l": {
+        "question": "What position sizing reduces maximum drawdown risk?",
+        "parent": "4f",
+        "analysis_type": "position_sizing_drawdown_optimization",
+        "category": "Position Sizing Risk Management",
+        "rationale": "Optimize allocation to limit downside risk in leveraged strategies"
+      },
+      "5m": {
+        "question": "How do false timing signals impact overall strategy performance?",
+        "parent": "4g",
+        "analysis_type": "false_signal_performance_impact_analysis",
+        "category": "False Signal Impact Analysis",
+        "rationale": "Quantify the cost of incorrect timing decisions"
+      },
+      "5n": {
+        "question": "What signal confirmation reduces false positives?",
+        "parent": "4g",
+        "analysis_type": "timing_signal_confirmation_optimization",
+        "category": "Signal Confirmation Optimization",
+        "rationale": "Improve timing signal reliability through confirmation techniques"
+      },
+      "5o": {
+        "question": "How do bid-ask spreads affect leveraged ETF timing costs?",
+        "parent": "4h",
+        "analysis_type": "leveraged_etf_spread_cost_analysis",
+        "category": "Leveraged ETF Trading Cost Analysis",
+        "rationale": "Account for market microstructure costs in leveraged ETF timing"
+      },
+      "5p": {
+        "question": "What's the breakeven timing frequency for profitable implementation?",
+        "parent": "4h",
+        "analysis_type": "timing_frequency_breakeven_analysis",
+        "category": "Timing Strategy Breakeven Analysis",
+        "rationale": "Determine minimum performance improvement needed to justify timing costs"
+      }
+    }
+  },
+  "tree_statistics": {
+    "total_questions": 31,
+    "levels": 5,
+    "branching_factor": 2,
+    "leaf_questions": 16,
+    "analysis_types_needed": 30
+  },
+  "user_journey_paths": {
+    "timing_methodology_path": ["root", "2a", "3a", "4a", "5a"],
+    "performance_comparison_path": ["root", "2b", "3c", "4f", "5k"],
+    "risk_management_path": ["root", "2b", "3c", "4f", "5l"],
+    "implementation_optimization_path": ["root", "2a", "3b", "4d", "5g"]
+  },
+  "new_categories_identified": [
+    "Volatility Regime Detection",
+    "Leveraged ETF Comparison", 
+    "Volatility Threshold Optimization",
+    "Volatility Regime Persistence Analysis",
+    "Risk-Adjusted Leveraged Performance Analysis",
+    "Dynamic vs Static Leverage Strategy Analysis",
+    "Volatility Measurement Methodology Analysis",
+    "Volatility Calculation Optimization",
+    "Volatility Regime Transition Analysis",
+    "Volatility Regime Forecasting",
+    "Leveraged Portfolio Correlation Analysis",
+    "Leveraged Drawdown Risk Analysis",
+    "Volatility Timing Success Rate Analysis",
+    "Dynamic Strategy Transaction Cost Analysis",
+    "VIX Term Structure Analysis",
+    "Volatility Forecasting Methodology Comparison",
+    "Volatility Update Frequency Analysis",
+    "Multi-Timeframe Volatility Analysis",
+    "Macroeconomic Volatility Catalyst Analysis",
+    "Earnings Calendar Volatility Analysis",
+    "Technical Volatility Forecasting",
+    "Machine Learning Volatility Prediction",
+    "Sector Concentration Leverage Risk Analysis",
+    "International Correlation Leverage Analysis",
+    "Leverage Decay Analysis",
+    "Position Sizing Risk Management",
+    "False Signal Impact Analysis",
+    "Signal Confirmation Optimization",
+    "Leveraged ETF Trading Cost Analysis",
+    "Timing Strategy Breakeven Analysis"
+  ]
+}

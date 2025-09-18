@@ -19,13 +19,14 @@ export default function MockOutput({ moduleKey }: MockOutputProps) {
         };
       case 'backtest':
         return {
-          title: 'Strategy Performance Results',
+          title: 'Visual Strategy Backtest Results',
           metrics: [
-            { metric: 'Total Return', value: '28.7%', description: 'Strategy vs 18.3% buy-and-hold', trend: '+10.4%' },
-            { metric: 'Win Rate', value: '62%', description: 'Percentage of profitable trades', trend: '' },
-            { metric: 'Avg Trade Return', value: '1.8%', description: 'Average per-trade return', trend: '' },
-            { metric: 'Max Loss', value: '-4.2%', description: 'Largest single trade loss', trend: '' },
-            { metric: 'Calmar Ratio', value: '1.89', description: 'Return over maximum drawdown', trend: '' }
+            { metric: 'Strategy Performance', value: '+28.7%', description: 'Total return vs 18.3% buy-and-hold', trend: '+10.4%' },
+            { metric: 'Sharpe Ratio', value: '1.89', description: 'Risk-adjusted performance measure', trend: '+0.31' },
+            { metric: 'Win Rate', value: '62%', description: 'Percentage of profitable trades', trend: '+2%' },
+            { metric: 'Max Drawdown', value: '-6.4%', description: 'Largest peak-to-trough decline', trend: '-0.8%' },
+            { metric: 'Total Trades', value: '52', description: 'Entry and exit signals generated', trend: '' },
+            { metric: 'Avg Trade Duration', value: '7.2 days', description: 'Average holding period per trade', trend: '' }
           ]
         };
       case 'regression':
@@ -70,6 +71,18 @@ export default function MockOutput({ moduleKey }: MockOutputProps) {
             { metric: 'Portfolio Diversity', value: '6.2/10', description: 'Diversification score', trend: '+0.8' },
             { metric: 'Avg Correlation', value: '0.54', description: 'Mean pairwise correlation', trend: '' },
             { metric: 'Risk Concentration', value: '34%', description: 'Risk from top 2 holdings', trend: '-3%' }
+          ]
+        };
+      case 'strategy_builder':
+        return {
+          title: 'Visual Strategy Builder Results',
+          metrics: [
+            { metric: 'Strategy Performance', value: '+24.7%', description: 'Total return vs 18.3% buy-and-hold', trend: '+6.4%' },
+            { metric: 'Sharpe Ratio', value: '1.58', description: 'Risk-adjusted performance measure', trend: '+0.23' },
+            { metric: 'Win Rate', value: '68%', description: 'Percentage of profitable trades', trend: '+3%' },
+            { metric: 'Max Drawdown', value: '-7.8%', description: 'Largest peak-to-trough decline', trend: '-1.2%' },
+            { metric: 'Total Trades', value: '47', description: 'Entry and exit signals generated', trend: '' },
+            { metric: 'Avg Trade Duration', value: '8.3 days', description: 'Average holding period per trade', trend: '' }
           ]
         };
       default:

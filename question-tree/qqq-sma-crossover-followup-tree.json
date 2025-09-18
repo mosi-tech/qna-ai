@@ -1,0 +1,251 @@
+{
+  "root_question": "Does SMA crossover strategy work for QQQ?",
+  "description": "Binary follow-up question tree with 5 levels of depth for SMA crossover strategy effectiveness analysis",
+  "tree_structure": {
+    "level_1": {
+      "root": {
+        "question": "Does SMA crossover strategy work for QQQ?",
+        "analysis_type": "sma_crossover_strategy_effectiveness",
+        "category": "Simple Technical Backtesting"
+      }
+    },
+    "level_2": {
+      "2a": {
+        "question": "What's the optimal SMA period combination for QQQ?",
+        "parent": "root",
+        "analysis_type": "sma_period_optimization",
+        "category": "Technical Parameter Optimization",
+        "rationale": "User wants to find the best SMA settings for QQQ"
+      },
+      "2b": {
+        "question": "How does this strategy compare to buy-and-hold for QQQ?",
+        "parent": "root", 
+        "analysis_type": "sma_vs_buy_hold_comparison",
+        "category": "Investment Strategy Comparison",
+        "rationale": "User wants to validate if SMA timing adds value over passive approach"
+      }
+    },
+    "level_3": {
+      "3a": {
+        "question": "Should I use 50/200 day or 20/50 day SMA crossover?",
+        "parent": "2a",
+        "analysis_type": "sma_timeframe_comparison",
+        "category": "Technical Parameter Optimization",
+        "rationale": "Comparing different SMA timeframe combinations"
+      },
+      "3b": {
+        "question": "How often do SMA crossover signals occur for QQQ?",
+        "parent": "2a",
+        "analysis_type": "sma_signal_frequency_analysis",
+        "category": "Signal Frequency Analysis",
+        "rationale": "Understanding trading frequency and practicality"
+      },
+      "3c": {
+        "question": "What's the risk-adjusted return difference?",
+        "parent": "2b",
+        "analysis_type": "risk_adjusted_sma_comparison",
+        "category": "Investment Strategy Comparison",
+        "rationale": "Sharpe ratio and risk-adjusted performance comparison"
+      },
+      "3d": {
+        "question": "During which market conditions does SMA crossover outperform?",
+        "parent": "2b",
+        "analysis_type": "market_condition_sma_performance",
+        "category": "Market Regime Analysis",
+        "rationale": "Understanding when SMA crossover timing works best"
+      }
+    },
+    "level_4": {
+      "4a": {
+        "question": "Does exponential weighting improve SMA crossover signals?",
+        "parent": "3a",
+        "analysis_type": "ema_vs_sma_crossover_comparison",
+        "category": "Moving Average Strategy Analysis",
+        "rationale": "Comparing SMA vs EMA for crossover strategies"
+      },
+      "4b": {
+        "question": "Should I add volume confirmation to SMA crossover signals?",
+        "parent": "3a", 
+        "analysis_type": "volume_confirmed_sma_signals",
+        "category": "Multi-Indicator Strategy Analysis",
+        "rationale": "Enhancing SMA signals with volume confirmation"
+      },
+      "4c": {
+        "question": "What's the average time between SMA crossover signals?",
+        "parent": "3b",
+        "analysis_type": "sma_signal_timing_distribution",
+        "category": "Signal Frequency Analysis",
+        "rationale": "Understanding signal timing patterns"
+      },
+      "4d": {
+        "question": "How many false breakouts occur with SMA crossovers?",
+        "parent": "3b",
+        "analysis_type": "sma_false_signal_analysis",
+        "category": "Signal Quality Analysis",
+        "rationale": "Assessing signal reliability and whipsaws"
+      },
+      "4e": {
+        "question": "How do transaction costs affect SMA crossover returns?",
+        "parent": "3c",
+        "analysis_type": "sma_transaction_cost_impact",
+        "category": "Transaction Cost Analysis",
+        "rationale": "Real-world implementation cost considerations"
+      },
+      "4f": {
+        "question": "What's the maximum drawdown of SMA crossover vs buy-hold?",
+        "parent": "3c",
+        "analysis_type": "sma_drawdown_comparison",
+        "category": "Risk Analysis",
+        "rationale": "Downside risk comparison between strategies"
+      },
+      "4g": {
+        "question": "Does SMA crossover work better in trending or sideways markets?",
+        "parent": "3d",
+        "analysis_type": "sma_market_trend_effectiveness",
+        "category": "Trend Analysis",
+        "rationale": "Strategy effectiveness in different market environments"
+      },
+      "4h": {
+        "question": "How did SMA crossover perform during QQQ bear markets?",
+        "parent": "3d",
+        "analysis_type": "sma_bear_market_performance",
+        "category": "Crisis Performance Analysis",
+        "rationale": "Strategy performance during market downturns"
+      }
+    },
+    "level_5": {
+      "5a": {
+        "question": "What's the optimal EMA period combination for QQQ crossover?",
+        "parent": "4a",
+        "analysis_type": "ema_period_optimization",
+        "category": "Moving Average Strategy Analysis",
+        "rationale": "Optimizing EMA parameters for crossover strategy"
+      },
+      "5b": {
+        "question": "How do MACD signals compare to EMA crossover for QQQ?",
+        "parent": "4a",
+        "analysis_type": "macd_vs_ema_crossover_comparison",
+        "category": "Multi-Indicator Strategy Analysis",
+        "rationale": "Comparing different momentum-based crossover strategies"
+      },
+      "5c": {
+        "question": "Should volume be above average or just increasing?",
+        "parent": "4b",
+        "analysis_type": "volume_confirmation_criteria",
+        "category": "Multi-Indicator Strategy Analysis",
+        "rationale": "Optimizing volume confirmation requirements"
+      },
+      "5d": {
+        "question": "Does combining RSI with SMA crossover improve results?",
+        "parent": "4b",
+        "analysis_type": "rsi_sma_combination_strategy",
+        "category": "Multi-Indicator Strategy Analysis",
+        "rationale": "Multi-indicator strategy development"
+      },
+      "5e": {
+        "question": "Are SMA crossover signals seasonal for QQQ?",
+        "parent": "4c",
+        "analysis_type": "sma_seasonal_pattern_analysis",
+        "category": "Seasonal Analysis",
+        "rationale": "Calendar-based SMA crossover patterns"
+      },
+      "5f": {
+        "question": "What's the longest period without SMA crossover signals?",
+        "parent": "4c",
+        "analysis_type": "sma_signal_drought_analysis",
+        "category": "Signal Frequency Analysis",
+        "rationale": "Understanding potential trading gaps"
+      },
+      "5g": {
+        "question": "How can I filter out SMA crossover whipsaws?",
+        "parent": "4d",
+        "analysis_type": "sma_whipsaw_filtering_techniques",
+        "category": "Signal Filter Analysis",
+        "rationale": "Improving signal quality through filtering"
+      },
+      "5h": {
+        "question": "What percentage of SMA crossovers result in profitable trades?",
+        "parent": "4d",
+        "analysis_type": "sma_crossover_win_rate_analysis",
+        "category": "Signal Quality Analysis",
+        "rationale": "Success rate measurement for SMA crossovers"
+      },
+      "5i": {
+        "question": "At what transaction frequency does SMA crossover become unprofitable?",
+        "parent": "4e",
+        "analysis_type": "sma_breakeven_frequency_analysis",
+        "category": "Transaction Cost Analysis",
+        "rationale": "Cost-effectiveness threshold determination"
+      },
+      "5j": {
+        "question": "How do bid-ask spreads affect SMA crossover execution?",
+        "parent": "4e",
+        "analysis_type": "sma_spread_impact_analysis",
+        "category": "Market Microstructure Analysis",
+        "rationale": "Implementation challenges and costs"
+      },
+      "5k": {
+        "question": "Does SMA crossover reduce QQQ volatility exposure?",
+        "parent": "4f",
+        "analysis_type": "sma_volatility_reduction_analysis",
+        "category": "Risk Analysis",
+        "rationale": "Risk management effectiveness of timing strategy"
+      },
+      "5l": {
+        "question": "How does SMA crossover perform during QQQ corrections?",
+        "parent": "4f",
+        "analysis_type": "sma_correction_performance_analysis",
+        "category": "Crisis Performance Analysis",
+        "rationale": "Strategy effectiveness during moderate downturns"
+      },
+      "5m": {
+        "question": "What trend strength indicator works best with SMA crossover?",
+        "parent": "4g",
+        "analysis_type": "trend_strength_sma_combination",
+        "category": "Trend Analysis",
+        "rationale": "Enhancing SMA crossover with trend strength measures"
+      },
+      "5n": {
+        "question": "Should I avoid SMA crossover signals during low volatility periods?",
+        "parent": "4g",
+        "analysis_type": "volatility_filtered_sma_strategy",
+        "category": "Volatility-Based Timing Strategies",
+        "rationale": "Using volatility to filter SMA crossover signals"
+      },
+      "5o": {
+        "question": "How early does SMA crossover signal QQQ bear market entries?",
+        "parent": "4h",
+        "analysis_type": "sma_bear_market_timing_analysis",
+        "category": "Crisis Performance Analysis",
+        "rationale": "Early warning capabilities of SMA crossover"
+      },
+      "5p": {
+        "question": "Does SMA crossover help avoid the worst QQQ drawdown days?",
+        "parent": "4h",
+        "analysis_type": "sma_tail_risk_avoidance_analysis",
+        "category": "Tail Risk Management",
+        "rationale": "Extreme downside protection effectiveness"
+      }
+    }
+  },
+  "tree_statistics": {
+    "total_questions": 31,
+    "levels": 5,
+    "branching_factor": 2,
+    "leaf_questions": 16,
+    "analysis_types_needed": 30
+  },
+  "user_journey_paths": {
+    "optimization_path": ["root", "2a", "3a", "4a", "5a"],
+    "practical_implementation_path": ["root", "2b", "3c", "4e", "5i"],
+    "signal_quality_path": ["root", "2a", "3b", "4d", "5g"],
+    "risk_management_path": ["root", "2b", "3c", "4f", "5k"]
+  },
+  "new_categories_identified": [
+    "Moving Average Strategy Analysis",
+    "Multi-Indicator Strategy Analysis", 
+    "Trend Analysis",
+    "Signal Filter Analysis",
+    "Tail Risk Management"
+  ]
+}

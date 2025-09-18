@@ -1,0 +1,231 @@
+{
+  "category": "portfolio_visualizer_enhanced",
+  "description": "Enhanced simple portfolio visualizer with practical features for retail investors",
+  "version": "enhanced_v2",
+  "analyses": [
+    {
+      "analysis_id": "portfolio_smart_builder",
+      "name": "Smart Portfolio Builder", 
+      "complexity": "simple",
+      "category": "portfolio_visualizer",
+      "keywords": ["portfolio mix", "asset allocation", "60/40", "three fund", "target date", "lazy portfolio", "retirement portfolio", "monthly investing", "dollar cost averaging"],
+      "description": "Build and compare popular portfolio strategies with real-world scenarios including regular contributions and practical recommendations",
+      "typical_questions": [
+        "How would the three-fund portfolio perform with $500 monthly?",
+        "Should I use a target-date fund or build my own portfolio?",
+        "What if I invest $1000 monthly in a 60/40 portfolio for retirement?",
+        "How much do I need to save monthly to reach $1 million?",
+        "Which lazy portfolio is best for a 30-year-old?"
+      ],
+      "parameters": {
+        "required": {
+          "portfolio_selection": "preset_or_custom",
+          "timeframe": "10Y",
+          "investor_profile": {
+            "age": 35,
+            "retirement_target_age": 65,
+            "risk_tolerance": "moderate"
+          }
+        },
+        "portfolio_presets": {
+          "three_fund_bogleheads": {
+            "name": "Three-Fund Portfolio (Bogleheads)",
+            "description": "Simple, diversified, low-cost approach loved by DIY investors",
+            "assets": [
+              {"symbol": "VTI", "allocation": 0.60, "name": "US Total Stock Market", "expense_ratio": 0.03},
+              {"symbol": "VTIAX", "allocation": 0.30, "name": "International Stock", "expense_ratio": 0.11},
+              {"symbol": "VBTLX", "allocation": 0.10, "name": "Total Bond Market", "expense_ratio": 0.05}
+            ],
+            "min_investment": 3000,
+            "available_at": ["Vanguard", "Fidelity", "Schwab"]
+          },
+          "classic_60_40": {
+            "name": "Classic 60/40 Balanced",
+            "description": "Traditional balanced approach for moderate risk investors",
+            "assets": [
+              {"symbol": "VTI", "allocation": 0.60, "name": "US Total Stock Market", "expense_ratio": 0.03},
+              {"symbol": "BND", "allocation": 0.40, "name": "US Total Bond Market", "expense_ratio": 0.03}
+            ],
+            "min_investment": 2000,
+            "available_at": ["Vanguard", "Fidelity", "Schwab", "ETrade"]
+          },
+          "target_date_2060": {
+            "name": "Target Date 2060 Style (Aggressive)",
+            "description": "High stock allocation suitable for young investors",
+            "assets": [
+              {"symbol": "VTI", "allocation": 0.54, "name": "US Stock Market", "expense_ratio": 0.03},
+              {"symbol": "VTIAX", "allocation": 0.36, "name": "International Stock", "expense_ratio": 0.11},
+              {"symbol": "BND", "allocation": 0.10, "name": "US Bond Market", "expense_ratio": 0.03}
+            ],
+            "min_investment": 1000,
+            "available_at": ["Most brokerages"]
+          },
+          "two_fund_simple": {
+            "name": "Two-Fund Portfolio (Ultra Simple)",
+            "description": "Extremely simple portfolio for beginners",
+            "assets": [
+              {"symbol": "VT", "allocation": 0.80, "name": "Total World Stock", "expense_ratio": 0.08},
+              {"symbol": "BND", "allocation": 0.20, "name": "US Total Bond", "expense_ratio": 0.03}
+            ],
+            "min_investment": 1000,
+            "available_at": ["Vanguard", "Most brokerages"]
+          },
+          "conservative_pre_retirement": {
+            "name": "Conservative Pre-Retirement (50+)",
+            "description": "Lower risk approach for investors nearing retirement",
+            "assets": [
+              {"symbol": "VTI", "allocation": 0.35, "name": "US Stock Market", "expense_ratio": 0.03},
+              {"symbol": "VTIAX", "allocation": 0.15, "name": "International Stock", "expense_ratio": 0.11},
+              {"symbol": "BND", "allocation": 0.40, "name": "US Bond Market", "expense_ratio": 0.03},
+              {"symbol": "VTEB", "allocation": 0.10, "name": "Tax-Exempt Bond", "expense_ratio": 0.05}
+            ],
+            "min_investment": 4000,
+            "available_at": ["Vanguard", "Fidelity", "Schwab"]
+          }
+        },
+        "optional": {
+          "financial_goals": {
+            "retirement_goal": 1000000,
+            "years_to_retirement": 30,
+            "other_goals": ["house_downpayment", "emergency_fund"]
+          },
+          "contribution_strategy": {
+            "initial_amount": 10000,
+            "monthly_contribution": 1000,
+            "annual_increase": 0.03,
+            "max_contribution": 2000,
+            "contribution_timing": "beginning_of_month"
+          },
+          "account_details": {
+            "account_types": ["401k", "ira_roth", "taxable"],
+            "tax_bracket": 0.22,
+            "state_taxes": true,
+            "employer_match": 0.50
+          },
+          "preferences": {
+            "rebalance_frequency": "annually",
+            "rebalance_threshold": 0.05,
+            "automatic_rebalancing": true,
+            "dividend_reinvestment": true,
+            "tax_loss_harvesting": false
+          },
+          "market_scenarios": {
+            "include_worst_timing": true,
+            "include_best_timing": true,
+            "include_average_timing": true,
+            "stress_test_scenarios": ["2008_financial_crisis", "covid_2020"]
+          }
+        }
+      },
+      "real_world_features": {
+        "dollar_cost_averaging": {
+          "enabled": true,
+          "show_lump_sum_comparison": true,
+          "show_contribution_impact": true,
+          "model_market_volatility": true
+        },
+        "rebalancing_education": {
+          "show_rebalancing_benefit": true,
+          "calculate_rebalancing_drag": true,
+          "suggest_optimal_frequency": true
+        },
+        "practical_implementation": {
+          "broker_specific_instructions": true,
+          "minimum_investment_warnings": true,
+          "tax_efficiency_tips": true,
+          "automation_suggestions": true
+        },
+        "goal_planning": {
+          "retirement_income_projection": true,
+          "monte_carlo_success_rate": true,
+          "required_savings_calculator": true,
+          "catch_up_scenarios": true
+        }
+      },
+      "output_format": {
+        "executive_summary": {
+          "one_line_result": "Investing $X monthly in Portfolio Y could grow to $Z by retirement",
+          "success_probability": "85% chance of meeting your $1M retirement goal",
+          "key_insight": "Dollar-cost averaging reduces your risk compared to lump sum investing"
+        },
+        "charts": [
+          "growth_projection_with_contributions",
+          "allocation_breakdown_with_costs",
+          "market_timing_comparison",
+          "rebalancing_impact_chart",
+          "success_probability_cone"
+        ],
+        "financial_metrics": [
+          "final_portfolio_value",
+          "total_personal_contributions", 
+          "total_investment_gains",
+          "compound_annual_growth_rate",
+          "real_return_after_inflation",
+          "total_fees_paid",
+          "tax_impact_estimate"
+        ],
+        "practical_insights": [
+          "monthly_savings_needed_for_goal",
+          "years_to_first_100k",
+          "retirement_income_potential_4_percent_rule",
+          "emergency_fund_recommendation",
+          "optimal_account_priority"
+        ],
+        "actionable_next_steps": [
+          "specific_funds_to_buy",
+          "suggested_brokerage_accounts",
+          "automation_setup_guide",
+          "rebalancing_calendar",
+          "tax_optimization_checklist",
+          "portfolio_monitoring_schedule"
+        ],
+        "educational_content": [
+          "why_this_allocation_works",
+          "common_beginner_mistakes_to_avoid",
+          "when_to_adjust_your_strategy",
+          "low_cost_alternatives_comparison"
+        ]
+      },
+      "risk_education": {
+        "historical_worst_case": "In 2008, this portfolio would have lost X%, recovering in Y months",
+        "volatility_explanation": "Expect your portfolio to swing ±15% in typical years",
+        "sequence_of_returns_risk": "Early losses hurt more than later losses - here's why",
+        "inflation_protection": "Your portfolio historically beats inflation by X% annually"
+      },
+      "implementation_guidance": {
+        "step_by_step_setup": [
+          "Open account at recommended brokerage",
+          "Set up automatic monthly transfers",
+          "Purchase initial allocation",
+          "Enable automatic rebalancing",
+          "Set calendar reminders for annual review"
+        ],
+        "maintenance_schedule": {
+          "monthly": "Verify automatic contributions",
+          "quarterly": "Review account statements",
+          "annually": "Rebalance if needed, increase contributions",
+          "major_life_events": "Reassess risk tolerance and timeline"
+        }
+      },
+      "api_requirements": [
+        "alpaca-market_stocks-bars",
+        "mcp-analytics-server_sma", 
+        "mcp-analytics-server_historical_volatility",
+        "mcp-analytics-server_sharpe_ratio"
+      ],
+      "computational_complexity": "low"
+    }
+  ],
+  "enhanced_keyword_triggers": {
+    "goal_based": ["retirement", "save for", "reach $", "financial goal", "monthly savings"],
+    "strategy_focused": ["three fund", "60/40", "lazy portfolio", "target date", "bogleheads"],
+    "implementation": ["how to invest", "which broker", "automatic investing", "dollar cost averaging"],
+    "beginner_friendly": ["simple portfolio", "easy investing", "beginner", "start investing", "first time"],
+    "practical_questions": ["how much monthly", "what if I", "realistic returns", "worst case scenario"]
+  },
+  "success_metrics": {
+    "user_engagement": ["time_spent_in_tool", "scenarios_compared", "presets_explored"],
+    "educational_value": ["concepts_explained", "mistakes_highlighted", "next_steps_provided"],
+    "actionability": ["specific_funds_recommended", "broker_instructions_given", "automation_enabled"]
+  }
+}

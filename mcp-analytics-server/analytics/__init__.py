@@ -1,59 +1,22 @@
 """
-Analytics Package - Clean Technical Analysis System
+Analytics New - Reorganized Financial Analysis Engine
 
-This package provides sophisticated technical analysis capabilities through a clean,
-well-organized interface.
-
-Main Components:
-- CleanAnalyticsEngine: Professional-grade analytics engine
-- 37 Core Technical Indicators
-- 10 Crossover Detection Functions  
-- 4 Advanced Pattern Recognition Functions
-
-Total: 51 high-quality technical analysis functions
+Complete rewrite using libraries from requirements.txt - no manual calculations
+From financial-analysis-function-library.json
 """
 
-# Import the new clean analytics engine
-from .engine import CleanAnalyticsEngine, clean_analytics
+# Import all modules
+from .utils import *
+from .performance import *
+from .indicators import *
+from .portfolio import *
+from .risk import *
 
-# Import specific technical analysis functions for direct access
-from .technical import (
-    # Core Indicators
-    sma, ema, rsi, macd, bollinger_bands, stochastic, atr, adx,
-    williams_r, cci, obv, vwap, keltner_channels, donchian_channels,
-    
-    # Crossover Detection
-    moving_average_crossover, macd_crossover, rsi_level_cross,
-    stochastic_crossover, price_channel_breakout,
-    
-    # Pattern Recognition
-    bullish_confluence, bearish_confluence, squeeze_pattern,
-    trend_continuation_pattern
-)
+# Export main interface
+from .main import AnalyticsEngine, get_all_functions
 
-# Legacy imports are disabled due to import path issues
-# The new clean system provides all necessary functionality
-
+__version__ = "2.0.0"
 __all__ = [
-    # New Clean System
-    'CleanAnalyticsEngine', 'clean_analytics',
-    
-    # Core Indicators
-    'sma', 'ema', 'rsi', 'macd', 'bollinger_bands', 'stochastic', 'atr', 'adx',
-    'williams_r', 'cci', 'obv', 'vwap', 'keltner_channels', 'donchian_channels',
-    
-    # Crossovers
-    'moving_average_crossover', 'macd_crossover', 'rsi_level_cross',
-    'stochastic_crossover', 'price_channel_breakout',
-    
-    # Patterns
-    'bullish_confluence', 'bearish_confluence', 'squeeze_pattern',
-    'trend_continuation_pattern'
+    'AnalyticsEngine',
+    'get_all_functions'
 ]
-
-# Print status message when imported
-print("🚀 Comprehensive Technical Analysis System Loaded:")
-print(f"   - 36 Core Indicators")
-print(f"   - 10 Crossover Detection Functions")
-print(f"   - 4 Advanced Pattern Recognition Functions")
-print(f"   - Total: 50 professional-grade functions")

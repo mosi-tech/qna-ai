@@ -1,12 +1,21 @@
 #!/usr/bin/env python3
 """
-MCP Server for Comprehensive Technical Analysis
+MCP Server for Comprehensive Financial Analysis
 
-Exposes 115 professional-grade technical analysis functions through MCP protocol:
+Exposes 130+ professional-grade analysis functions through MCP protocol:
+
+Technical Analysis (115 functions):
 - 36 Core Technical Indicators
 - 10 Crossover Detection Functions  
 - 4 Advanced Pattern Recognition Functions
 - 65 Advanced Technical Indicators (Momentum, Trend, Volatility, Statistical, Market Structure, Volume-Price, Cycle Analysis)
+
+Portfolio Analysis (30+ functions from financial-analysis-function-library.json):
+- 7 Time Series Processing Functions (returns, correlation, beta, volatility)
+- 7 Performance Analysis Functions (Sharpe, Sortino, CAGR, Information Ratio, Treynor, Calmar, Alpha)
+- 8 Risk Analysis Functions (VaR, CVaR, drawdown, skewness, kurtosis, capture ratios)
+- 4 Strategy Simulation Functions (backtesting, Monte Carlo, buy-and-hold, comparison)
+- 5 Data Processing Functions (legacy compatibility)
 
 All functions follow consistent input/output patterns with professional error handling.
 """
@@ -37,12 +46,12 @@ logger = logging.getLogger("mcp-analytics-server")
 # Initialize the server
 server = Server("mcp-analytics-server")
 
-# Get all available technical analysis functions
-all_functions = get_all_functions()
+# Get all available functions (technical + portfolio)
+all_functions = analytics_engine.get_all_function_names()
 function_categories = get_function_categories()
-function_counts = get_function_count()
+function_counts = analytics_engine.get_function_count()
 
-logger.info(f"🚀 MCP Analytics Server initialized with {len(all_functions)} technical analysis functions")
+logger.info(f"🚀 MCP Analytics Server initialized with {len(all_functions)} total functions ({function_counts.get('portfolio_functions', 0)} portfolio functions)")
 
 
 @server.list_tools()
@@ -403,7 +412,189 @@ async def handle_list_tools() -> List[types.Tool]:
                 }
             ))
     
-    logger.info(f"📊 Exposing {len(tools)} technical analysis tools through MCP")
+    # Portfolio Analysis Tools from financial-analysis-function-library.json
+    
+    # Time Series Processing Tools (From financial-analysis-function-library.json)
+    time_series_tools = [
+        ("calculateReturns", "Calculate price returns for given period", {"period": "daily"}),
+        ("calculateLogReturns", "Calculate logarithmic returns", {}),
+        ("calculateCumulativeReturns", "Calculate cumulative returns from return series", {}),
+        ("calculateRollingVolatility", "Calculate rolling volatility with specified window", {"window": 30}),
+        ("calculateBeta", "Calculate beta coefficient vs market", {"market_returns": "array"}),
+        ("calculateCorrelation", "Calculate correlation between two series", {"series2": "array"}),
+        ("calculateCorrelationMatrix", "Calculate correlation matrix for multiple series", {"series_dict": "object"}),
+        ("calculateSMA", "Calculate Simple Moving Average", {"period": 20}),
+        ("calculateEMA", "Calculate Exponential Moving Average", {"period": 20}),
+        ("detectSMACrossover", "Detect SMA crossover signals", {"fast_period": 20, "slow_period": 50}),
+        ("detectEMACrossover", "Detect EMA crossover signals", {"fast_period": 12, "slow_period": 26})
+    ]
+    
+    # Performance Analysis Tools (From financial-analysis-function-library.json)
+    performance_tools = [
+        ("calculateSharpeRatio", "Calculate Sharpe ratio (risk-adjusted return)", {"risk_free_rate": 0.02, "trading_days_per_year": 252}),
+        ("calculateSortinoRatio", "Calculate Sortino ratio (downside risk-adjusted return)", {"risk_free_rate": 0.02, "trading_days_per_year": 252}),
+        ("calculateCAGR", "Calculate Compound Annual Growth Rate", {"end_value": "number", "years": "number"}),
+        ("calculateInformationRatio", "Calculate Information Ratio vs benchmark", {"benchmark_returns": "array"}),
+        ("calculateTreynorRatio", "Calculate Treynor ratio", {"market_returns": "array", "risk_free_rate": 0.02}),
+        ("calculateCalmarRatio", "Calculate Calmar ratio (annualized return / max drawdown)", {"trading_days_per_year": 252}),
+        ("calculateAlpha", "Calculate Jensen's Alpha vs market", {"market_returns": "array", "risk_free_rate": 0.02}),
+        ("calculateAnnualizedReturn", "Calculate annualized return from price series", {"periods": 252}),
+        ("calculateAnnualizedVolatility", "Calculate annualized volatility", {"periods_per_year": 252}),
+        ("calculateTotalReturn", "Calculate total return including dividends", {"end_price": "number", "dividends": "array"}),
+        ("calculateWinRate", "Calculate percentage of positive returns", {})
+    ]
+    
+    # Statistical Analysis Tools (From financial-analysis-function-library.json)
+    statistical_tools = [
+        ("calculatePercentile", "Calculate specified percentile of data", {"percentile": 50}),
+        ("calculateHerfindahlIndex", "Calculate concentration index for portfolio weights", {}),
+        ("calculateTrackingError", "Calculate tracking error vs benchmark", {"benchmark_returns": "array"}),
+        ("calculateOmegaRatio", "Calculate Omega ratio", {"threshold": 0.0}),
+        ("calculateBestWorstPeriods", "Identify best and worst performing periods", {"window_size": 30}),
+        ("calculateZScore", "Calculate Z-score (standardized score)", {"window": "number"})
+    ]
+    
+    # Comparison Analysis Tools (From financial-analysis-function-library.json)
+    comparison_tools = [
+        ("comparePerformanceMetrics", "Compare key performance metrics between two assets/strategies", {"returns2": "array"}),
+        ("compareRiskMetrics", "Compare risk metrics between two assets/strategies", {"returns2": "array"}),
+        ("compareDrawdowns", "Compare drawdown characteristics", {"prices2": "array"}),
+        ("compareVolatilityProfiles", "Compare rolling volatility profiles", {"returns2": "array", "window": 30}),
+        ("compareExpenseRatios", "Compare expense ratios and fees", {"funds": "array"})
+    ]
+    
+    # Portfolio Analysis Tools (From financial-analysis-function-library.json)
+    portfolio_tools = [
+        ("calculatePortfolioMetrics", "Calculate comprehensive portfolio metrics", {"weights": "object", "returns": "object"}),
+        ("analyzePortfolioConcentration", "Analyze portfolio concentration and diversification", {"weights": "object"}),
+        ("calculatePortfolioBeta", "Calculate portfolio beta", {"weights": "object", "betas": "object"}),
+        ("calculateActiveShare", "Calculate active share vs benchmark", {"portfolio_weights": "object", "benchmark_weights": "object"})
+    ]
+    
+    # Strategy Simulation Tools (From financial-analysis-function-library.json)
+    strategy_tools = [
+        ("backtestTechnicalStrategy", "Backtest a technical trading strategy", {
+            "buy_signals": "array", "sell_signals": "array", "initial_capital": 100000, "transaction_cost": 0.001
+        }),
+        ("monteCarloSimulation", "Run Monte Carlo simulation for future returns", {
+            "expected_return": "number", "volatility": "number", "periods": "number", "simulations": 1000, "initial_value": 100000
+        }),
+        ("backtestBuyAndHold", "Backtest a simple buy-and-hold strategy", {
+            "initial_capital": 100000, "dividend_yield": 0.0
+        }),
+        ("compareStrategies", "Compare multiple backtested strategies", {"strategies": "object"})
+    ]
+    
+    # Data Processing Tools (Legacy compatibility)
+    data_processing_tools = [
+        ("calculate_portfolio_returns", "Calculate portfolio returns from individual asset data and weights", {"weights": "object"}),
+        ("filter_date_range", "Filter time series data to specific date range", {"start": "string", "end": "string"}),
+        ("resample_frequency", "Resample time series to different frequency", {"frequency": "string"}),
+        ("align_data_series", "Align multiple time series to common date range", {}),
+        ("fill_missing_data", "Fill missing values in time series", {"method": "string"})
+    ]
+    
+    # Add portfolio analysis tools
+    portfolio_tool_lists = [
+        time_series_tools, performance_tools, statistical_tools, 
+        comparison_tools, portfolio_tools, strategy_tools, data_processing_tools
+    ]
+    
+    for tool_list in portfolio_tool_lists:
+        for name, desc, params in tool_list:
+            # Create flexible input schema for portfolio functions
+            schema_props = {}
+            
+            # Portfolio functions have diverse input requirements
+            if name in ["calculate_portfolio_returns"]:
+                schema_props["data"] = {
+                    "type": "object",
+                    "description": "Dictionary of {symbol: [{date, close, ...}]} - Historical price data"
+                }
+            elif name in ["calculateBeta", "calculateCorrelation", "calculateInformationRatio", "calculateTreynorRatio", "calculateTrackingError"]:
+                schema_props["returns"] = {
+                    "type": "array", 
+                    "description": "Portfolio return series or price data"
+                }
+            elif name in ["backtestTechnicalStrategy"]:
+                schema_props["price_data"] = {
+                    "type": "array",
+                    "description": "OHLC price data for backtesting"
+                }
+            elif name in ["monteCarloSimulation"]:
+                # Monte Carlo has specific numeric inputs
+                pass
+            elif name in ["compareStrategies"]:
+                schema_props["strategies"] = {
+                    "type": "object",
+                    "description": "Dictionary of strategy backtest results"
+                }
+            elif name in ["comparePerformanceMetrics", "compareRiskMetrics", "compareVolatilityProfiles"]:
+                schema_props["returns1"] = {
+                    "type": "array",
+                    "description": "First asset/strategy return series"
+                }
+            elif name in ["compareDrawdowns"]:
+                schema_props["prices1"] = {
+                    "type": "array",
+                    "description": "First asset price series"
+                }
+            elif name in ["calculatePortfolioMetrics"]:
+                schema_props["weights"] = {
+                    "type": "object",
+                    "description": "Portfolio weights as dict {asset: weight}"
+                }
+                schema_props["returns"] = {
+                    "type": "object",
+                    "description": "Return series for each asset"
+                }
+            elif name in ["analyzePortfolioConcentration", "calculatePortfolioBeta"]:
+                schema_props["weights"] = {
+                    "type": "object",
+                    "description": "Portfolio weights"
+                }
+            elif name in ["calculateActiveShare"]:
+                schema_props["portfolio_weights"] = {
+                    "type": "object",
+                    "description": "Portfolio weights"
+                }
+            elif name in ["compareExpenseRatios"]:
+                schema_props["funds"] = {
+                    "type": "array",
+                    "description": "List of fund data with expense ratios"
+                }
+            else:
+                # Generic data input for most functions
+                schema_props["data"] = {
+                    "type": "array",
+                    "description": "Price or return data series"
+                }
+            
+            # Add function-specific parameters
+            for param_name, param_default in params.items():
+                if isinstance(param_default, str):
+                    schema_props[param_name] = {"type": "string", "default": param_default}
+                elif isinstance(param_default, (int, float)):
+                    param_type = "integer" if isinstance(param_default, int) else "number"
+                    schema_props[param_name] = {"type": param_type, "default": param_default}
+                elif isinstance(param_default, bool):
+                    schema_props[param_name] = {"type": "boolean", "default": param_default}
+                elif param_default == "array":
+                    schema_props[param_name] = {"type": "array", "description": f"{param_name.replace('_', ' ').title()} data"}
+                elif param_default == "object":
+                    schema_props[param_name] = {"type": "object", "description": f"{param_name.replace('_', ' ').title()} data"}
+            
+            tools.append(types.Tool(
+                name=name,
+                description=f"{desc} (From financial-analysis-function-library.json)",
+                inputSchema={
+                    "type": "object", 
+                    "properties": schema_props,
+                    "required": [key for key in schema_props.keys() if key in ["data", "price_data", "returns", "returns1", "prices1", "strategies", "expected_return", "volatility", "periods", "weights", "portfolio_weights", "funds"]]
+                }
+            ))
+    
+    logger.info(f"📊 Exposing {len(tools)} analysis tools through MCP ({len(tools) - len(all_functions)} new portfolio functions)")
     return tools
 
 
@@ -472,10 +663,15 @@ async def main():
     """Run the MCP server."""
     logger.info("🚀 Starting MCP Analytics Server")
     logger.info(f"📊 Available Functions: {function_counts['total']}")
-    logger.info(f"   - Core Indicators: {function_counts['core_indicators']}")
-    logger.info(f"   - Crossover Detection: {function_counts['crossovers']}")
-    logger.info(f"   - Pattern Recognition: {function_counts['patterns']}")
-    logger.info(f"   - Advanced Indicators: {function_counts['advanced_indicators']}")
+    logger.info(f"   - Core Indicators: {function_counts.get('core_indicators', 0)}")
+    logger.info(f"   - Crossover Detection: {function_counts.get('crossovers', 0)}")
+    logger.info(f"   - Pattern Recognition: {function_counts.get('patterns', 0)}")
+    logger.info(f"   - Advanced Indicators: {function_counts.get('advanced_indicators', 0)}")
+    logger.info(f"   - Time Series Processing: {function_counts.get('time_series_processing', 0)}")
+    logger.info(f"   - Performance Analysis: {function_counts.get('performance_analysis', 0)}")
+    logger.info(f"   - Risk Analysis: {function_counts.get('risk_analysis', 0)}")
+    logger.info(f"   - Strategy Simulation: {function_counts.get('strategy_simulation', 0)}")
+    logger.info(f"   - Data Processing (Legacy): {function_counts.get('data_processing', 0)}")
     
     async with mcp.server.stdio.stdio_server() as (read_stream, write_stream):
         await server.run(

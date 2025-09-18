@@ -4,7 +4,7 @@ export interface Parameter {
   type: ParameterType;
   label: string;
   options?: string[];
-  defaultValue?: string | string[];
+  defaultValue?: string | number | boolean | string[];
   placeholder?: string;
 }
 
@@ -14,6 +14,7 @@ export interface Module {
   category?: string;
   difficulty?: 'Beginner' | 'Intermediate' | 'Advanced';
   estimatedTime?: string;
+  type?: string;
   params: Parameter[];
 }
 
@@ -22,5 +23,5 @@ export interface ModuleConfig {
 }
 
 export interface ParameterValues {
-  [key: string]: string | string[];
+  [key: string]: string | number | boolean | string[];
 }

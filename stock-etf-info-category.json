@@ -1,0 +1,404 @@
+{
+  "category": "stock_etf_info",
+  "description": "Basic informational lookup for stocks and ETFs - foundational data before analysis",
+  "analyses": [
+    {
+      "analysis_id": "stock_basic_info",
+      "name": "Stock Information Lookup",
+      "complexity": "simple",
+      "category": "stock_etf_info",
+      "keywords": [
+        "what is AAPL", "tell me about Apple", "GOOGL stock info", "Tesla stock",
+        "stock information", "company info", "stock details", "about this stock"
+      ],
+      "description": "Get basic company information, current metrics, and key facts for any stock",
+      "typical_questions": [
+        "What is Apple stock?",
+        "Tell me about GOOGL",
+        "What does Tesla do?",
+        "NVDA stock information",
+        "Microsoft company info"
+      ],
+      "parameters": {
+        "required": {
+          "symbol": "AAPL"
+        },
+        "optional": {
+          "include_financials": true,
+          "include_news": false,
+          "include_analyst_data": false
+        }
+      },
+      "output_format": {
+        "basic_info": {
+          "company_name": "Apple Inc.",
+          "symbol": "AAPL",
+          "exchange": "NASDAQ",
+          "sector": "Technology",
+          "industry": "Consumer Electronics",
+          "description": "Brief company description and business model",
+          "headquarters": "Cupertino, CA",
+          "employees": "164,000",
+          "founded": "1976"
+        },
+        "current_metrics": {
+          "current_price": "$185.20",
+          "price_change_1d": "+$2.15 (+1.17%)",
+          "market_cap": "$2.89T",
+          "pe_ratio": "28.5",
+          "dividend_yield": "0.5%",
+          "52_week_range": "$164.08 - $199.62",
+          "volume": "45.2M",
+          "avg_volume": "55.8M"
+        },
+        "historical_performance": {
+          "1_day": "+1.17%",
+          "1_week": "-0.5%",
+          "1_month": "+3.2%",
+          "3_months": "+8.1%",
+          "6_months": "+12.4%",
+          "ytd": "+15.8%",
+          "1_year": "+22.1%",
+          "3_years": "+45.2%",
+          "5_years": "+178.3%"
+        },
+        "key_facts": [
+          "World's largest company by market cap",
+          "Primary revenue from iPhone sales",
+          "Growing services business segment",
+          "Strong balance sheet with significant cash reserves"
+        ]
+      },
+      "api_requirements": [
+        "alpaca-market_stocks-quotes-latest",
+        "eodhd_fundamentals",
+        "eodhd_real-time"
+      ],
+      "computational_complexity": "low"
+    },
+    {
+      "analysis_id": "etf_basic_info",
+      "name": "ETF Information Lookup",
+      "complexity": "simple", 
+      "category": "stock_etf_info",
+      "keywords": [
+        "what is SPY", "tell me about ARKK", "VTI ETF info", "QQQ fund",
+        "ETF information", "fund details", "ETF holdings", "about this ETF"
+      ],
+      "description": "Get basic ETF information, holdings, and key characteristics for any ETF",
+      "typical_questions": [
+        "What is SPY ETF?",
+        "Tell me about ARKK fund", 
+        "VTI ETF information",
+        "What does QQQ track?",
+        "ARKK holdings and strategy"
+      ],
+      "parameters": {
+        "required": {
+          "symbol": "SPY"
+        },
+        "optional": {
+          "include_top_holdings": true,
+          "include_sector_breakdown": true,
+          "holdings_limit": 10,
+          "output_filter": "all"
+        },
+        "output_filters": {
+          "all": "Return complete ETF information",
+          "holdings_only": "Return only top holdings list",
+          "info_only": "Return only basic ETF information", 
+          "performance_only": "Return only performance metrics",
+          "sectors_only": "Return only sector breakdown"
+        }
+      },
+      "output_format": {
+        "basic_info": {
+          "fund_name": "SPDR S&P 500 ETF Trust",
+          "symbol": "SPY",
+          "exchange": "NYSE",
+          "fund_family": "State Street",
+          "inception_date": "1993-01-22",
+          "expense_ratio": "0.09%",
+          "aum": "$450.2B",
+          "strategy": "Tracks the S&P 500 Index"
+        },
+        "current_metrics": {
+          "nav": "$485.20",
+          "price_change_1d": "+$1.85 (+0.38%)",
+          "premium_discount": "-0.02%", 
+          "avg_daily_volume": "45.2M",
+          "dividend_yield": "1.3%",
+          "52_week_range": "$380.15 - $495.30"
+        },
+        "historical_performance": {
+          "1_day": "+0.38%",
+          "1_week": "+1.2%",
+          "1_month": "+2.8%",
+          "3_months": "+5.1%",
+          "6_months": "+9.4%",
+          "ytd": "+12.5%",
+          "1_year": "+18.7%",
+          "3_years": "+28.3%",
+          "5_years": "+98.2%"
+        },
+        "top_holdings": [
+          {"symbol": "AAPL", "name": "Apple Inc.", "weight": "7.2%"},
+          {"symbol": "MSFT", "name": "Microsoft Corp", "weight": "6.8%"},
+          {"symbol": "GOOGL", "name": "Alphabet Inc", "weight": "4.1%"}
+        ],
+        "sector_breakdown": [
+          {"sector": "Technology", "weight": "28.5%"},
+          {"sector": "Healthcare", "weight": "13.2%"},
+          {"sector": "Financials", "weight": "12.8%"}
+        ]
+      },
+      "api_requirements": [
+        "alpaca-market_stocks-quotes-latest",
+        "eodhd_etf-holdings",
+        "eodhd_fundamentals"
+      ],
+      "computational_complexity": "low"
+    },
+    {
+      "analysis_id": "quick_stock_snapshot",
+      "name": "Quick Stock Snapshot",
+      "complexity": "simple",
+      "category": "stock_etf_info", 
+      "keywords": [
+        "AAPL snapshot", "quick info", "stock summary", "brief overview",
+        "key metrics", "stock stats", "company snapshot"
+      ],
+      "description": "Get a quick overview of key stock metrics and recent performance",
+      "typical_questions": [
+        "Give me a quick AAPL overview",
+        "Tesla stock snapshot", 
+        "Key metrics for MSFT",
+        "Brief summary of GOOGL",
+        "Quick stats on NVDA"
+      ],
+      "parameters": {
+        "required": {
+          "symbol": "AAPL"
+        },
+        "optional": {
+          "timeframe": "1Y",
+          "include_technicals": false
+        }
+      },
+      "output_format": {
+        "snapshot_summary": {
+          "symbol": "AAPL",
+          "current_price": "$185.20",
+          "price_change": "+$2.15 (+1.17%)",
+          "market_cap": "$2.89T", 
+          "pe_ratio": "28.5",
+          "quick_description": "Tech giant known for iPhone, strong financials"
+        },
+        "performance": {
+          "1_day": "+1.17%",
+          "1_week": "-0.5%", 
+          "1_month": "+3.2%",
+          "ytd": "+15.8%",
+          "1_year": "+22.1%"
+        },
+        "key_levels": {
+          "52_week_high": "$199.62",
+          "52_week_low": "$164.08",
+          "support_level": "$180.00",
+          "resistance_level": "$190.00"
+        }
+      },
+      "api_requirements": [
+        "alpaca-market_stocks-quotes-latest",
+        "alpaca-market_stocks-bars",
+        "eodhd_real-time"
+      ],
+      "computational_complexity": "low"
+    },
+    {
+      "analysis_id": "stock_price_performance",
+      "name": "Stock Price & Performance Lookup",
+      "complexity": "simple",
+      "category": "stock_etf_info",
+      "keywords": [
+        "AAPL price", "stock price", "how is TSLA doing", "performance",
+        "stock chart", "price history", "returns", "how much up down"
+      ],
+      "description": "Get current price and comprehensive historical performance data",
+      "typical_questions": [
+        "What's Apple's stock price?",
+        "How is Tesla performing?",
+        "GOOGL price and performance",
+        "Microsoft stock returns",
+        "How much is NVDA up this year?"
+      ],
+      "parameters": {
+        "required": {
+          "symbol": "AAPL"
+        },
+        "optional": {
+          "extended_periods": true,
+          "include_chart_data": false,
+          "benchmark_comparison": "SPY"
+        }
+      },
+      "output_format": {
+        "current_price_info": {
+          "symbol": "AAPL",
+          "current_price": "$185.20",
+          "price_change": "+$2.15",
+          "percent_change": "+1.17%",
+          "last_updated": "2024-01-15 16:00:00 EST",
+          "market_status": "closed",
+          "after_hours_price": "$185.45",
+          "after_hours_change": "+$0.25 (+0.13%)"
+        },
+        "performance_overview": {
+          "short_term": {
+            "1_day": "+1.17%",
+            "1_week": "-0.5%",
+            "1_month": "+3.2%"
+          },
+          "medium_term": {
+            "3_months": "+8.1%",
+            "6_months": "+12.4%",
+            "ytd": "+15.8%"
+          },
+          "long_term": {
+            "1_year": "+22.1%",
+            "3_years": "+45.2%",
+            "5_years": "+178.3%",
+            "10_years": "+485.7%"
+          }
+        },
+        "price_levels": {
+          "52_week_high": "$199.62",
+          "52_week_low": "$164.08",
+          "all_time_high": "$199.62",
+          "distance_from_high": "-7.2%",
+          "distance_from_low": "+12.9%"
+        },
+        "volume_info": {
+          "current_volume": "45.2M",
+          "avg_volume_10d": "55.8M",
+          "volume_ratio": "0.81x average"
+        },
+        "benchmark_comparison": {
+          "vs_spy_1_year": "+3.4% outperformance",
+          "vs_spy_ytd": "+1.2% outperformance"
+        }
+      },
+      "api_requirements": [
+        "alpaca-market_stocks-quotes-latest",
+        "alpaca-market_stocks-bars",
+        "eodhd_real-time"
+      ],
+      "computational_complexity": "low"
+    }
+  ],
+  "keyword_triggers": {
+    "info_requests": {
+      "primary_keywords": ["what is", "tell me about", "info", "information", "details", "about"],
+      "symbols": ["AAPL", "GOOGL", "TSLA", "SPY", "QQQ", "ARKK", "VTI"],
+      "question_patterns": ["what is [SYMBOL]", "tell me about [SYMBOL]", "[SYMBOL] info", "about [SYMBOL]"]
+    },
+    "snapshot_requests": {
+      "primary_keywords": ["snapshot", "overview", "summary", "quick", "brief", "stats", "metrics"],
+      "question_patterns": ["[SYMBOL] snapshot", "quick [SYMBOL] overview", "[SYMBOL] summary"]
+    },
+    "price_performance_requests": {
+      "primary_keywords": ["price", "performance", "returns", "how is", "up", "down", "chart", "doing"],
+      "question_patterns": ["[SYMBOL] price", "how is [SYMBOL]", "[SYMBOL] performance", "[SYMBOL] returns", "how much is [SYMBOL] up"]
+    },
+    "holdings_specific_requests": {
+      "primary_keywords": ["holdings", "top holdings", "what does it hold", "companies", "stocks in"],
+      "question_patterns": ["[SYMBOL] holdings", "top 10 holdings of [SYMBOL]", "what does [SYMBOL] hold", "companies in [SYMBOL]"],
+      "output_filter": "holdings_only"
+    },
+    "sectors_specific_requests": {
+      "primary_keywords": ["sectors", "sector breakdown", "allocation", "what sectors"],
+      "question_patterns": ["[SYMBOL] sectors", "sector breakdown of [SYMBOL]", "what sectors does [SYMBOL] hold"],
+      "output_filter": "sectors_only"
+    },
+    "basic_info_requests": {
+      "primary_keywords": ["what is", "tell me about", "expense ratio", "fund info"],
+      "question_patterns": ["what is [SYMBOL]", "tell me about [SYMBOL]", "[SYMBOL] expense ratio"],
+      "output_filter": "info_only"
+    }
+  },
+  "user_intent_mapping": {
+    "basic_learning": "User wants to understand what this stock/ETF is",
+    "quick_check": "User wants current price and basic metrics",
+    "performance_tracking": "User wants to know how the investment is performing",
+    "research_starting_point": "User beginning research on this investment",
+    "holdings_focused": "User specifically wants to know what the ETF holds",
+    "sector_focused": "User wants sector/allocation breakdown"
+  },
+  "output_selection_logic": {
+    "description": "How to determine which output sections to return based on user input",
+    "rules": [
+      {
+        "if_keywords": ["holdings", "top holdings", "companies", "stocks in"],
+        "then_output_filter": "holdings_only",
+        "return_sections": ["top_holdings"]
+      },
+      {
+        "if_keywords": ["sectors", "sector breakdown", "allocation"],
+        "then_output_filter": "sectors_only", 
+        "return_sections": ["sector_breakdown"]
+      },
+      {
+        "if_keywords": ["expense ratio", "fees", "cost"],
+        "then_output_filter": "info_only",
+        "return_sections": ["basic_info"]
+      },
+      {
+        "if_keywords": ["performance", "returns", "how is it doing"],
+        "then_output_filter": "performance_only",
+        "return_sections": ["historical_performance", "current_metrics"]
+      },
+      {
+        "if_keywords": ["what is", "tell me about", "overview"],
+        "then_output_filter": "all",
+        "return_sections": ["basic_info", "current_metrics", "historical_performance", "top_holdings", "sector_breakdown"]
+      }
+    ]
+  },
+  "example_filtered_outputs": {
+    "holdings_only_example": {
+      "question": "What are the top 10 holdings of SPY?",
+      "output": {
+        "top_holdings": [
+          {"symbol": "AAPL", "name": "Apple Inc.", "weight": "7.2%"},
+          {"symbol": "MSFT", "name": "Microsoft Corp", "weight": "6.8%"},
+          {"symbol": "GOOGL", "name": "Alphabet Inc", "weight": "4.1%"},
+          {"symbol": "AMZN", "name": "Amazon.com Inc", "weight": "3.4%"},
+          {"symbol": "NVDA", "name": "NVIDIA Corp", "weight": "3.1%"},
+          {"symbol": "TSLA", "name": "Tesla Inc", "weight": "2.8%"},
+          {"symbol": "META", "name": "Meta Platforms", "weight": "2.5%"},
+          {"symbol": "BRK.B", "name": "Berkshire Hathaway", "weight": "1.9%"},
+          {"symbol": "UNH", "name": "UnitedHealth Group", "weight": "1.7%"},
+          {"symbol": "JNJ", "name": "Johnson & Johnson", "weight": "1.6%"}
+        ]
+      }
+    },
+    "sectors_only_example": {
+      "question": "What sectors does SPY invest in?",
+      "output": {
+        "sector_breakdown": [
+          {"sector": "Technology", "weight": "28.5%"},
+          {"sector": "Healthcare", "weight": "13.2%"},
+          {"sector": "Financials", "weight": "12.8%"},
+          {"sector": "Consumer Discretionary", "weight": "10.9%"},
+          {"sector": "Communication Services", "weight": "8.7%"},
+          {"sector": "Industrials", "weight": "8.1%"},
+          {"sector": "Consumer Staples", "weight": "6.2%"},
+          {"sector": "Energy", "weight": "4.8%"},
+          {"sector": "Utilities", "weight": "2.9%"},
+          {"sector": "Real Estate", "weight": "2.5%"},
+          {"sector": "Materials", "weight": "2.4%"}
+        ]
+      }
+    }
+  }
+}

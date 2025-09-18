@@ -35,48 +35,39 @@ export const modules: ModuleConfig = {
     ]
   },
   backtest: {
-    title: "Strategy Backtest",
-    description: "Backtest trading strategies with comprehensive risk metrics and performance analysis",
+    title: "Visual Strategy Backtest",
+    description: "Build and backtest trading strategies using a visual block-based interface",
     category: "Strategy Testing",
     difficulty: "Advanced",
-    estimatedTime: "3-5 minutes",
+    estimatedTime: "5-10 minutes",
     params: [
-      { 
-        type: "input", 
-        label: "Primary Ticker",
-        defaultValue: "AAPL",
-        placeholder: "e.g., AAPL, MSFT, SPY"
+      {
+        type: "input",
+        label: "Primary Symbols",
+        defaultValue: "AAPL,MSFT",
+        placeholder: "e.g., AAPL,MSFT,SPY"
       },
       {
         type: "dropdown",
-        label: "Strategy Type",
-        options: ["Moving Average Crossover", "RSI Mean Reversion", "Bollinger Bands", "MACD"],
-        defaultValue: "Moving Average Crossover"
+        label: "Initial Investment",
+        options: ["$10,000", "$25,000", "$50,000", "$100,000", "$250,000"],
+        defaultValue: "$100,000"
       },
-      { 
-        type: "input", 
-        label: "Short MA Period",
-        defaultValue: "10"
-      },
-      { 
-        type: "input", 
-        label: "Long MA Period",
-        defaultValue: "50"
-      },
-      { 
-        type: "date", 
+      {
+        type: "date",
         label: "Backtest Start",
-        defaultValue: "2022-01-01"
+        defaultValue: "2023-01-01"
       },
-      { 
-        type: "date", 
+      {
+        type: "date",
         label: "Backtest End",
         defaultValue: "2024-01-01"
       },
       {
-        type: "input",
-        label: "Initial Capital ($)",
-        defaultValue: "100000"
+        type: "dropdown",
+        label: "Risk Management",
+        options: ["Conservative (3% stop loss)", "Moderate (5% stop loss)", "Aggressive (10% stop loss)", "Custom"],
+        defaultValue: "Moderate (5% stop loss)"
       }
     ]
   },
@@ -212,6 +203,43 @@ export const modules: ModuleConfig = {
         label: "Data Frequency",
         options: ["Daily", "Weekly", "Monthly"],
         defaultValue: "Daily"
+      }
+    ]
+  },
+  strategy_builder: {
+    title: "Visual Strategy Builder",
+    description: "Build and backtest trading strategies using a visual block-based interface",
+    category: "Strategy Testing",
+    difficulty: "Advanced",
+    estimatedTime: "5-10 minutes",
+    params: [
+      {
+        type: "input",
+        label: "Primary Symbols",
+        defaultValue: "AAPL,MSFT",
+        placeholder: "e.g., AAPL,MSFT,SPY"
+      },
+      {
+        type: "dropdown",
+        label: "Initial Investment",
+        options: ["$10,000", "$25,000", "$50,000", "$100,000", "$250,000"],
+        defaultValue: "$100,000"
+      },
+      {
+        type: "date",
+        label: "Backtest Start",
+        defaultValue: "2023-01-01"
+      },
+      {
+        type: "date",
+        label: "Backtest End",
+        defaultValue: "2024-01-01"
+      },
+      {
+        type: "dropdown",
+        label: "Risk Management",
+        options: ["Conservative (3% stop loss)", "Moderate (5% stop loss)", "Aggressive (10% stop loss)", "Custom"],
+        defaultValue: "Moderate (5% stop loss)"
       }
     ]
   }

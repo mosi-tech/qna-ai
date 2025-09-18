@@ -1,0 +1,276 @@
+{
+  "root_question": "How many times in last year RSI(24) went below 20?",
+  "description": "Binary follow-up question tree with 5 levels of depth for RSI oversold frequency analysis",
+  "tree_structure": {
+    "level_1": {
+      "root": {
+        "question": "How many times in last year RSI(24) went below 20?",
+        "analysis_type": "rsi_oversold_frequency_analysis",
+        "category": "Technical Indicators Trading"
+      }
+    },
+    "level_2": {
+      "2a": {
+        "question": "What was the average duration of each RSI oversold period?",
+        "parent": "root",
+        "analysis_type": "oversold_duration_analysis",
+        "category": "Technical Signal Duration Analysis",
+        "rationale": "User wants to understand how long oversold conditions typically last"
+      },
+      "2b": {
+        "question": "How did the stock perform after each RSI oversold signal?",
+        "parent": "root", 
+        "analysis_type": "post_oversold_performance_analysis",
+        "category": "Technical Signal Performance Analysis",
+        "rationale": "User wants to know if oversold signals were profitable entry points"
+      }
+    },
+    "level_3": {
+      "3a": {
+        "question": "Did shorter oversold periods lead to better rebounds?",
+        "parent": "2a",
+        "analysis_type": "duration_performance_correlation_analysis",
+        "category": "Technical Signal Quality Analysis",
+        "rationale": "Understanding relationship between signal duration and subsequent performance"
+      },
+      "3b": {
+        "question": "What market conditions caused the longest oversold periods?",
+        "parent": "2a",
+        "analysis_type": "oversold_market_context_analysis",
+        "category": "Market Context Analysis",
+        "rationale": "Identify what broader market factors extend oversold conditions"
+      },
+      "3c": {
+        "question": "What was the success rate of buying RSI oversold signals?",
+        "parent": "2b",
+        "analysis_type": "oversold_signal_success_rate_analysis",
+        "category": "Technical Signal Reliability Analysis",
+        "rationale": "Quantify how often oversold signals resulted in profitable trades"
+      },
+      "3d": {
+        "question": "How much did the stock typically gain after oversold signals?",
+        "parent": "2b",
+        "analysis_type": "oversold_rebound_magnitude_analysis",
+        "category": "Technical Signal Return Analysis",
+        "rationale": "Measure the typical return potential of oversold rebounds"
+      }
+    },
+    "level_4": {
+      "4a": {
+        "question": "What's the optimal holding period after RSI oversold signals?",
+        "parent": "3a",
+        "analysis_type": "optimal_holding_period_analysis",
+        "category": "Technical Signal Timing Optimization",
+        "rationale": "Determine best exit timing for oversold entry signals"
+      },
+      "4b": {
+        "question": "Do volume spikes improve RSI oversold signal quality?",
+        "parent": "3a", 
+        "analysis_type": "volume_confirmation_analysis",
+        "category": "Multi-Indicator Confluence Analysis",
+        "rationale": "Test if volume confirmation improves signal reliability"
+      },
+      "4c": {
+        "question": "Were oversold periods longer during bear markets?",
+        "parent": "3b",
+        "analysis_type": "bear_market_oversold_duration_analysis",
+        "category": "Market Regime Technical Analysis",
+        "rationale": "Understanding how market regime affects technical signal behavior"
+      },
+      "4d": {
+        "question": "Did oversold signals fail more often during downtrends?",
+        "parent": "3b",
+        "analysis_type": "trend_context_signal_failure_analysis",
+        "category": "Trend-Based Signal Analysis",
+        "rationale": "Assess how underlying trend affects technical signal effectiveness"
+      },
+      "4e": {
+        "question": "How did false oversold signals differ from successful ones?",
+        "parent": "3c",
+        "analysis_type": "signal_differentiation_analysis",
+        "category": "Technical Signal Pattern Recognition",
+        "rationale": "Identify characteristics that distinguish good from bad signals"
+      },
+      "4f": {
+        "question": "What percentage of oversold signals led to new lows?",
+        "parent": "3c",
+        "analysis_type": "oversold_breakdown_frequency_analysis",
+        "category": "Technical Signal Breakdown Analysis",
+        "rationale": "Measure how often oversold conditions continue deteriorating"
+      },
+      "4g": {
+        "question": "Which oversold rebounds had the strongest momentum?",
+        "parent": "3d",
+        "analysis_type": "rebound_momentum_strength_analysis",
+        "category": "Technical Momentum Analysis",
+        "rationale": "Identify which rebounds turned into sustained rallies"
+      },
+      "4h": {
+        "question": "How did rebound magnitude correlate with RSI depth?",
+        "parent": "3d",
+        "analysis_type": "oversold_depth_rebound_correlation",
+        "category": "Technical Indicator Correlation Analysis",
+        "rationale": "Test if deeper oversold levels produce stronger rebounds"
+      }
+    },
+    "level_5": {
+      "5a": {
+        "question": "Should holding periods vary by market volatility?",
+        "parent": "4a",
+        "analysis_type": "volatility_adjusted_holding_periods",
+        "category": "Volatility-Adaptive Signal Timing",
+        "rationale": "Optimize holding periods based on market volatility regime"
+      },
+      "5b": {
+        "question": "What's the risk-adjusted return of different holding periods?",
+        "parent": "4a",
+        "analysis_type": "risk_adjusted_holding_period_returns",
+        "category": "Risk-Adjusted Technical Strategy Analysis",
+        "rationale": "Compare holding periods on risk-adjusted basis, not just raw returns"
+      },
+      "5c": {
+        "question": "What volume threshold provides the best signal filter?",
+        "parent": "4b",
+        "analysis_type": "optimal_volume_threshold_analysis",
+        "category": "Technical Signal Filter Optimization",
+        "rationale": "Determine precise volume criteria for signal filtering"
+      },
+      "5d": {
+        "question": "Should volume be absolute or relative to average?",
+        "parent": "4b",
+        "analysis_type": "volume_measurement_methodology_analysis",
+        "category": "Technical Indicator Methodology Analysis",
+        "rationale": "Compare different volume measurement approaches for signal confirmation"
+      },
+      "5e": {
+        "question": "How much longer are oversold periods in bear vs bull markets?",
+        "parent": "4c",
+        "analysis_type": "regime_specific_oversold_duration_comparison",
+        "category": "Market Regime Comparative Analysis",
+        "rationale": "Quantify specific differences in signal behavior across market regimes"
+      },
+      "5f": {
+        "question": "Do oversold signals recover faster in certain sectors?",
+        "parent": "4c",
+        "analysis_type": "sector_specific_oversold_recovery_analysis",
+        "category": "Sector-Based Technical Analysis",
+        "rationale": "Identify if some sectors show more reliable oversold rebounds"
+      },
+      "5g": {
+        "question": "What trend strength threshold invalidates oversold signals?",
+        "parent": "4d",
+        "analysis_type": "trend_strength_signal_invalidation_analysis",
+        "category": "Trend Strength Measurement Analysis",
+        "rationale": "Determine when downtrend is too strong for oversold signals to work"
+      },
+      "5h": {
+        "question": "How do other indicators behave during oversold signal failures?",
+        "parent": "4d",
+        "analysis_type": "multi_indicator_failure_pattern_analysis",
+        "category": "Multi-Indicator Failure Analysis",
+        "rationale": "Identify warning signs from other indicators when RSI signals fail"
+      },
+      "5i": {
+        "question": "What price action patterns accompany successful oversold signals?",
+        "parent": "4e",
+        "analysis_type": "price_action_signal_confirmation_analysis",
+        "category": "Price Action Pattern Analysis",
+        "rationale": "Identify specific price patterns that confirm oversold signal quality"
+      },
+      "5j": {
+        "question": "Do successful signals show specific RSI divergence patterns?",
+        "parent": "4e",
+        "analysis_type": "rsi_divergence_signal_analysis",
+        "category": "Technical Divergence Analysis",
+        "rationale": "Examine if bullish divergence improves oversold signal success"
+      },
+      "5k": {
+        "question": "What market cap segments show higher breakdown rates?",
+        "parent": "4f",
+        "analysis_type": "market_cap_breakdown_frequency_analysis",
+        "category": "Market Cap Technical Analysis",
+        "rationale": "Assess if company size affects oversold signal breakdown probability"
+      },
+      "5l": {
+        "question": "How quickly do breakdown signals typically unfold?",
+        "parent": "4f",
+        "analysis_type": "breakdown_signal_timing_analysis",
+        "category": "Technical Breakdown Timing Analysis",
+        "rationale": "Understand the time dynamics of oversold signal failures"
+      },
+      "5m": {
+        "question": "Which momentum rebounds sustained above key resistance levels?",
+        "parent": "4g",
+        "analysis_type": "resistance_breakthrough_momentum_analysis",
+        "category": "Resistance Level Breakthrough Analysis",
+        "rationale": "Identify rebounds that became sustained uptrends by breaking resistance"
+      },
+      "5n": {
+        "question": "How do momentum rebounds correlate with earnings proximity?",
+        "parent": "4g",
+        "analysis_type": "earnings_proximity_rebound_analysis",
+        "category": "Earnings-Based Technical Analysis",
+        "rationale": "Test if earnings announcements affect oversold rebound strength"
+      },
+      "5o": {
+        "question": "Is there a minimum RSI level for reliable rebound predictions?",
+        "parent": "4h",
+        "analysis_type": "minimum_oversold_threshold_analysis",
+        "category": "Technical Threshold Optimization Analysis",
+        "rationale": "Determine if extremely oversold levels are required for predictable rebounds"
+      },
+      "5p": {
+        "question": "How does rebound correlation change across different timeframes?",
+        "parent": "4h",
+        "analysis_type": "timeframe_correlation_stability_analysis",
+        "category": "Multi-Timeframe Technical Analysis",
+        "rationale": "Test if oversold-rebound correlation holds across daily, weekly, monthly timeframes"
+      }
+    }
+  },
+  "tree_statistics": {
+    "total_questions": 31,
+    "levels": 5,
+    "branching_factor": 2,
+    "leaf_questions": 16,
+    "analysis_types_needed": 30
+  },
+  "user_journey_paths": {
+    "signal_quality_path": ["root", "2a", "3a", "4b", "5c"],
+    "market_context_path": ["root", "2b", "3b", "4c", "5e"], 
+    "performance_optimization_path": ["root", "2b", "3d", "4g", "5m"],
+    "signal_reliability_path": ["root", "2b", "3c", "4e", "5i"]
+  },
+  "new_categories_identified": [
+    "Technical Signal Duration Analysis",
+    "Technical Signal Performance Analysis", 
+    "Technical Signal Quality Analysis",
+    "Market Context Analysis",
+    "Technical Signal Reliability Analysis",
+    "Technical Signal Return Analysis",
+    "Technical Signal Timing Optimization",
+    "Multi-Indicator Confluence Analysis",
+    "Market Regime Technical Analysis", 
+    "Trend-Based Signal Analysis",
+    "Technical Signal Pattern Recognition",
+    "Technical Signal Breakdown Analysis",
+    "Technical Momentum Analysis",
+    "Technical Indicator Correlation Analysis",
+    "Volatility-Adaptive Signal Timing",
+    "Risk-Adjusted Technical Strategy Analysis",
+    "Technical Signal Filter Optimization",
+    "Technical Indicator Methodology Analysis",
+    "Market Regime Comparative Analysis",
+    "Sector-Based Technical Analysis",
+    "Trend Strength Measurement Analysis",
+    "Multi-Indicator Failure Analysis",
+    "Price Action Pattern Analysis", 
+    "Technical Divergence Analysis",
+    "Market Cap Technical Analysis",
+    "Technical Breakdown Timing Analysis",
+    "Resistance Level Breakthrough Analysis",
+    "Earnings-Based Technical Analysis",
+    "Technical Threshold Optimization Analysis",
+    "Multi-Timeframe Technical Analysis"
+  ]
+}

@@ -1,0 +1,262 @@
+{
+  "root_question": "Is it a good idea to invest 10% in leveraged fund like TQQQ?",
+  "description": "Binary follow-up question tree with 5 levels of depth for leveraged fund allocation analysis",
+  "tree_structure": {
+    "level_1": {
+      "root": {
+        "question": "Is it a good idea to invest 10% in leveraged fund like TQQQ?",
+        "analysis_type": "leveraged_fund_allocation_analysis",
+        "category": "Leveraged Portfolios"
+      }
+    },
+    "level_2": {
+      "2a": {
+        "question": "How does 10% TQQQ allocation affect overall portfolio risk?",
+        "parent": "root",
+        "analysis_type": "leveraged_allocation_risk_impact",
+        "category": "Portfolio Risk Analysis",
+        "rationale": "User wants to understand risk implications of leveraged exposure"
+      },
+      "2b": {
+        "question": "What's the optimal allocation percentage for TQQQ in a portfolio?",
+        "parent": "root", 
+        "analysis_type": "leveraged_fund_allocation_optimization",
+        "category": "Portfolio Allocation Optimization",
+        "rationale": "User wants to find the best leveraged fund allocation size"
+      }
+    },
+    "level_3": {
+      "3a": {
+        "question": "How much does TQQQ increase portfolio volatility?",
+        "parent": "2a",
+        "analysis_type": "leveraged_volatility_contribution",
+        "category": "Portfolio Risk Analysis",
+        "rationale": "Quantifying volatility impact of leveraged positions"
+      },
+      "3b": {
+        "question": "What's the maximum drawdown risk with 10% TQQQ?",
+        "parent": "2a",
+        "analysis_type": "leveraged_drawdown_impact_analysis",
+        "category": "Portfolio Risk Analysis",
+        "rationale": "Understanding worst-case scenario losses"
+      },
+      "3c": {
+        "question": "Should allocation be based on risk tolerance or return target?",
+        "parent": "2b",
+        "analysis_type": "allocation_criteria_optimization",
+        "category": "Portfolio Allocation Optimization",
+        "rationale": "Determining allocation methodology approach"
+      },
+      "3d": {
+        "question": "How does TQQQ allocation compare to using margin?",
+        "parent": "2b",
+        "analysis_type": "leveraged_fund_vs_margin_comparison",
+        "category": "Leverage Strategy Comparison",
+        "rationale": "Comparing different leverage implementation methods"
+      }
+    },
+    "level_4": {
+      "4a": {
+        "question": "Does TQQQ increase correlation during market stress?",
+        "parent": "3a",
+        "analysis_type": "leveraged_correlation_breakdown_analysis",
+        "category": "Correlation Breakdown Analysis",
+        "rationale": "Understanding correlation stability during crises"
+      },
+      "4b": {
+        "question": "How does portfolio beta change with 10% TQQQ allocation?",
+        "parent": "3a", 
+        "analysis_type": "portfolio_beta_impact_analysis",
+        "category": "Portfolio Risk Analysis",
+        "rationale": "Market sensitivity changes from leveraged exposure"
+      },
+      "4c": {
+        "question": "What's the probability of losing 50% with TQQQ allocation?",
+        "parent": "3b",
+        "analysis_type": "tail_risk_probability_analysis",
+        "category": "Tail Risk Management",
+        "rationale": "Extreme loss probability assessment"
+      },
+      "4d": {
+        "question": "How long do TQQQ drawdowns typically last?",
+        "parent": "3b",
+        "analysis_type": "leveraged_recovery_time_analysis",
+        "category": "Drawdown Recovery Analysis",
+        "rationale": "Understanding recovery periods for leveraged funds"
+      },
+      "4e": {
+        "question": "What risk tolerance level justifies 10% TQQQ allocation?",
+        "parent": "3c",
+        "analysis_type": "risk_tolerance_threshold_analysis",
+        "category": "Risk Tolerance Assessment",
+        "rationale": "Matching allocation to investor risk capacity"
+      },
+      "4f": {
+        "question": "Should allocation be dynamic based on market conditions?",
+        "parent": "3c",
+        "analysis_type": "dynamic_allocation_strategy_analysis",
+        "category": "Dynamic Portfolio Management",
+        "rationale": "Tactical vs strategic allocation approaches"
+      },
+      "4g": {
+        "question": "What are the cost differences between TQQQ and margin?",
+        "parent": "3d",
+        "analysis_type": "leverage_cost_comparison_analysis",
+        "category": "Leverage Cost Analysis",
+        "rationale": "Expense ratio vs margin interest comparison"
+      },
+      "4h": {
+        "question": "Which provides better tax efficiency for leverage?",
+        "parent": "3d",
+        "analysis_type": "leverage_tax_efficiency_comparison",
+        "category": "Tax Efficiency Analysis",
+        "rationale": "Tax implications of different leverage methods"
+      }
+    },
+    "level_5": {
+      "5a": {
+        "question": "Does TQQQ correlation approach 1.0 during market crashes?",
+        "parent": "4a",
+        "analysis_type": "crisis_correlation_convergence_analysis",
+        "category": "Correlation Breakdown Analysis",
+        "rationale": "Extreme correlation behavior during stress events"
+      },
+      "5b": {
+        "question": "How do other leveraged funds correlate with TQQQ during stress?",
+        "parent": "4a",
+        "analysis_type": "leveraged_fund_correlation_analysis",
+        "category": "Leveraged Fund Comparison",
+        "rationale": "Cross-leveraged fund correlation patterns"
+      },
+      "5c": {
+        "question": "What's the portfolio's sensitivity to interest rate changes?",
+        "parent": "4b",
+        "analysis_type": "interest_rate_beta_analysis",
+        "category": "Interest Rate Sensitivity Analysis",
+        "rationale": "How leverage affects interest rate exposure"
+      },
+      "5d": {
+        "question": "How does portfolio beta change during different market regimes?",
+        "parent": "4b",
+        "analysis_type": "regime_dependent_beta_analysis",
+        "category": "Market Regime Analysis",
+        "rationale": "Beta stability across market conditions"
+      },
+      "5e": {
+        "question": "What's the Value at Risk (VaR) with 10% TQQQ allocation?",
+        "parent": "4c",
+        "analysis_type": "portfolio_var_analysis",
+        "category": "Risk Measurement Analysis",
+        "rationale": "Statistical risk measurement with leverage"
+      },
+      "5f": {
+        "question": "How often does TQQQ experience 20%+ single-day drops?",
+        "parent": "4c",
+        "analysis_type": "leveraged_extreme_move_frequency",
+        "category": "Extreme Movement Analysis",
+        "rationale": "Frequency of severe single-day losses"
+      },
+      "5g": {
+        "question": "Does TQQQ recover faster than QQQ during rebounds?",
+        "parent": "4d",
+        "analysis_type": "leveraged_recovery_speed_comparison",
+        "category": "Drawdown Recovery Analysis",
+        "rationale": "Leverage benefits during recovery periods"
+      },
+      "5h": {
+        "question": "What percentage of TQQQ drawdowns exceed 12 months?",
+        "parent": "4d",
+        "analysis_type": "extended_drawdown_frequency_analysis",
+        "category": "Drawdown Duration Analysis",
+        "rationale": "Long-term recovery risk assessment"
+      },
+      "5i": {
+        "question": "How should risk tolerance be measured for leveraged allocations?",
+        "parent": "4e",
+        "analysis_type": "leveraged_risk_tolerance_methodology",
+        "category": "Risk Tolerance Assessment",
+        "rationale": "Appropriate risk assessment for leverage"
+      },
+      "5j": {
+        "question": "What behavioral biases affect leveraged fund decisions?",
+        "parent": "4e",
+        "analysis_type": "leveraged_behavioral_bias_analysis",
+        "category": "Behavioral Finance Analysis",
+        "rationale": "Psychological factors in leverage decisions"
+      },
+      "5k": {
+        "question": "Should TQQQ allocation increase during market dips?",
+        "parent": "4f",
+        "analysis_type": "contrarian_leveraged_allocation_strategy",
+        "category": "Dynamic Portfolio Management",
+        "rationale": "Counter-cyclical leverage allocation timing"
+      },
+      "5l": {
+        "question": "How frequently should leveraged allocations be rebalanced?",
+        "parent": "4f",
+        "analysis_type": "leveraged_rebalancing_frequency_analysis",
+        "category": "Rebalancing Strategy Analysis",
+        "rationale": "Optimal rebalancing for leveraged positions"
+      },
+      "5m": {
+        "question": "How do expense ratios compound over time for TQQQ?",
+        "parent": "4g",
+        "analysis_type": "leveraged_expense_compounding_analysis",
+        "category": "Leverage Cost Analysis",
+        "rationale": "Long-term cost impact of leveraged funds"
+      },
+      "5n": {
+        "question": "What's the breakeven holding period for TQQQ vs margin?",
+        "parent": "4g",
+        "analysis_type": "leverage_cost_breakeven_analysis",
+        "category": "Leverage Cost Analysis",
+        "rationale": "Time-based cost comparison thresholds"
+      },
+      "5o": {
+        "question": "How are leveraged fund distributions taxed vs margin interest?",
+        "parent": "4h",
+        "analysis_type": "leveraged_tax_treatment_comparison",
+        "category": "Tax Efficiency Analysis",
+        "rationale": "Detailed tax implications comparison"
+      },
+      "5p": {
+        "question": "Does TQQQ provide better tax-loss harvesting opportunities?",
+        "parent": "4h",
+        "analysis_type": "leveraged_tax_loss_harvesting_analysis",
+        "category": "Tax Loss Harvesting Analysis",
+        "rationale": "Tax strategy opportunities with leverage"
+      }
+    }
+  },
+  "tree_statistics": {
+    "total_questions": 31,
+    "levels": 5,
+    "branching_factor": 2,
+    "leaf_questions": 16,
+    "analysis_types_needed": 30
+  },
+  "user_journey_paths": {
+    "risk_assessment_path": ["root", "2a", "3a", "4a", "5a"],
+    "allocation_optimization_path": ["root", "2b", "3c", "4e", "5i"],
+    "cost_analysis_path": ["root", "2b", "3d", "4g", "5m"],
+    "drawdown_analysis_path": ["root", "2a", "3b", "4d", "5h"]
+  },
+  "new_categories_identified": [
+    "Portfolio Risk Analysis",
+    "Portfolio Allocation Optimization",
+    "Leverage Strategy Comparison",
+    "Correlation Breakdown Analysis", 
+    "Drawdown Recovery Analysis",
+    "Risk Tolerance Assessment",
+    "Dynamic Portfolio Management",
+    "Leverage Cost Analysis",
+    "Tax Efficiency Analysis",
+    "Leveraged Fund Comparison",
+    "Interest Rate Sensitivity Analysis",
+    "Risk Measurement Analysis",
+    "Extreme Movement Analysis",
+    "Drawdown Duration Analysis",
+    "Rebalancing Strategy Analysis",
+    "Tax Loss Harvesting Analysis"
+  ]
+}

@@ -1,0 +1,1046 @@
+RETAIL INVESTOR ANALYSIS CATEGORIES - PRIORITIZED BY DEMAND & IMPACT
+
+Original Categories from Discussion:
+- Stock Analysis
+- Stock Comparison  
+- ETF Comparison
+- Market Timing Analysis
+- Selling & Buying based on "if this happened"
+- Leveraged Portfolios
+- Technical Indicators based Trading
+- Stock Performance around Events
+- Simple Backtesting based on Technicals
+
+ORGANIZED BY RETAIL IMPACT & USAGE:
+
+🏃 MOST BASIC & ESSENTIAL (Foundation for everything else)
+0. Stock/ETF Info - "Tell me about ARKK ETF" or "What is GOOGL stock?"
+   - Basic company/fund information lookup
+   - Key facts, description, holdings, sector
+   - Current price and basic metrics
+   - Foundation before any analysis
+   - Highest volume searches ("What is..." queries)
+
+🔥 HIGHEST DEMAND (What retail investors Google most)
+1. Stock Analysis - "Is Tesla a good buy right now?"
+   - Individual stock evaluation and recommendations
+   - Most searched financial topic by retail investors
+   - Clear buy/hold/sell decision output
+   - Perfect for complexity scaling (simple ratios → DCF models)
+
+2. Technical Indicators Trading - "RSI shows Apple is oversold" 
+   - Chart-based trading signals and alerts
+   - Very popular with active retail traders
+   - Visual and engaging with clear green/red signals
+   - Actionable entry/exit points
+   
+   2a. Technical Signal Duration Analysis - "How long do oversold conditions last?"
+       - Average duration of technical signal periods
+       - Signal persistence measurement
+       - Duration vs performance correlation
+   
+   2b. Technical Signal Performance Analysis - "Do RSI oversold signals work?"
+       - Post-signal performance tracking
+       - Signal success rate measurement
+       - Entry/exit point optimization
+   
+   2c. Technical Signal Quality Analysis - "Which signals are most reliable?"
+       - Signal filtering and quality assessment
+       - False signal identification
+       - Signal strength measurement
+   
+   2d. Technical Signal Reliability Analysis - "How often do signals fail?"
+       - Statistical reliability measurement
+       - Confidence intervals for signals
+       - Failure pattern analysis
+   
+   2e. Technical Signal Return Analysis - "What returns do signals generate?"
+       - Average returns per signal type
+       - Risk-adjusted signal performance
+       - Return distribution analysis
+   
+   2f. Technical Signal Timing Optimization - "When to enter/exit on signals?"
+       - Optimal holding periods
+       - Entry/exit timing refinement
+       - Market timing with technical signals
+   
+   2g. Multi-Indicator Confluence Analysis - "Do multiple signals improve accuracy?"
+       - Signal combination strategies
+       - Confluence-based filtering
+       - Multi-timeframe signal alignment
+   
+   2h. Technical Signal Pattern Recognition - "What patterns make signals reliable?"
+       - Pattern-based signal enhancement
+       - Setup identification
+       - Context-aware signal analysis
+   
+   2i. Technical Signal Breakdown Analysis - "When do signals fail catastrophically?"
+       - Breakdown pattern identification
+       - Signal failure prediction
+       - Risk management for failed signals
+   
+   2j. Technical Signal Filter Optimization - "How to improve signal accuracy?"
+       - Volume, volatility, trend filters
+       - Optimal filter thresholds
+       - Multi-criteria signal screening
+
+3. Market Timing Analysis - "Should I buy the dip?"
+   - Broad market entry/exit timing decisions
+   - Universal retail investor concern
+   - Helps overcome "analysis paralysis"
+   - Educational about market cycles
+
+4. Stock Comparison - "Apple vs Microsoft - which is better?"
+   - Head-to-head stock comparisons
+   - Natural extension of stock analysis
+   - Decision-focused approach
+   - Teaches comparative analysis skills
+
+📈 HIGH ENGAGEMENT
+5. ETF Comparison - "VTI vs VOO vs SCHB - which is cheapest?"
+   - Low-cost fund selection guidance
+   - Bridge between stock picking and portfolio building
+   - Cost and performance comparisons
+   - Practical for portfolio construction
+
+6. ETF Concentration & Risk Analysis - "How concentrated is SPY vs other ETFs?"
+   - Fund concentration risk assessment
+   - Top holdings percentage analysis
+   - Diversification quality comparison
+   - Risk attribution by individual holdings
+
+7. Portfolio Impact Analysis - "What if I excluded the top 10 holdings?"
+   - What-if portfolio construction scenarios
+   - Holdings contribution to returns/risk
+   - Equal-weight vs cap-weight comparisons
+   - Portfolio optimization insights
+
+8. Correlation & Diversification Analysis - "How correlated are these holdings?"
+   - Asset correlation matrices
+   - Diversification quality assessment
+   - Portfolio overlap analysis
+   - Risk concentration identification
+
+9. Historical Trend Analysis - "How has concentration changed over time?"
+   - Metric evolution over time periods
+   - Long-term trend identification
+   - Historical comparison analysis
+   - Structural change detection
+
+10. Sector Weight & Bias Analysis - "Is tech overweight in top holdings?"
+    - Sector allocation comparisons
+    - Style/factor bias detection
+    - Geographic/sector concentration
+    - Benchmark deviation analysis
+
+11. Historical Investment Scenarios - "What if I bought AAPL in 2008?"
+    - Historical "what if" investment scenarios
+    - Long-term return calculations from past dates
+    - Crisis recovery analysis
+    - Time-based investment outcome modeling
+
+12. Investment Strategy Comparison - "Lump sum vs dollar cost averaging?"
+    - Strategy performance comparisons
+    - DCA vs lump sum analysis
+    - Timing optimization studies
+    - Behavioral impact on returns
+
+13. Risk Analysis - "What was the maximum drawdown?"
+    - Maximum drawdown calculations
+    - Volatility and risk metrics
+    - Peer risk comparisons
+    - Stress testing scenarios
+
+14. Sector Performance Analysis - "Which sectors outperformed during 2008?"
+    - Historical sector performance ranking
+    - Sector rotation analysis
+    - Risk-adjusted sector returns
+    - Sector timing strategies
+
+15. Behavioral Finance Analysis - "How do emotions affect investment returns?"
+    - Investor behavior impact studies
+    - Emotional decision cost analysis
+    - Historical investor behavior patterns
+    - Opportunity cost of poor timing
+
+16. Historical Market Analysis - "How long do market recoveries typically take?"
+    - Historical market pattern analysis
+    - Recovery time statistics
+    - Market cycle identification
+    - Long-term market behavior studies
+
+17. Stock Performance Around Events - "How do stocks perform after earnings?"
+   - Event-driven analysis and trading
+   - Earnings, Fed meetings, economic releases
+   - Calendar-based investment decisions
+   - Pattern recognition learning
+
+18. Simple Technical Backtesting - "What if I bought every RSI oversold signal?"
+   - Strategy validation for retail traders
+   - "Proof" that technical analysis works (or doesn't)
+   - Risk-free strategy testing
+   - Educational about strategy performance
+
+19. Growth Analysis - "Which stock has better growth prospects?"
+   - Revenue and earnings growth comparisons
+   - Growth catalyst identification
+   - Future potential assessment
+   - Growth sustainability analysis
+
+20. Industry Analysis - "Which operates in a more promising industry?"
+   - Industry outlook comparisons
+   - Sector tailwinds assessment
+   - Market size and growth potential
+   - Industry disruption analysis
+
+21. Business Cycle Analysis - "Which is more sensitive to economic cycles?"
+   - Economic sensitivity assessment
+   - Cyclicality comparisons
+   - Recession performance analysis
+   - Macro sensitivity studies
+
+22. Competitive Analysis - "Which has better pricing power?"
+   - Competitive advantage assessment
+   - Market position analysis
+   - Pricing power evaluation
+   - Competitive moat analysis
+
+23. Thematic Analysis - "Is AI a better theme than consumer tech?"
+   - Investment theme comparisons
+   - Long-term trend analysis
+   - Thematic sustainability assessment
+   - Secular growth driver evaluation
+
+24. Earnings Quality Analysis - "Which has more predictable earnings?"
+   - Earnings consistency analysis
+   - Results predictability assessment
+   - Quality of earnings evaluation
+   - Earnings sustainability studies
+
+25. Business Model Analysis - "Which has more diversified revenue streams?"
+   - Business model comparisons
+   - Revenue diversification analysis
+   - Margin stability assessment
+   - Operating leverage evaluation
+
+26. Innovation Analysis - "Which has a stronger innovation pipeline?"
+   - R&D effectiveness comparison
+   - Innovation pipeline assessment
+   - Product development capabilities
+   - Technology leadership evaluation
+
+27. Management Quality Analysis - "How do their capital allocation strategies compare?"
+   - Management effectiveness assessment
+   - Capital allocation analysis
+   - Strategic decision quality
+   - Execution capability evaluation
+
+28. Regulatory Risk Analysis - "How do regulatory risks compare?"
+   - Regulatory environment assessment
+   - Policy risk comparison
+   - Compliance cost analysis
+   - Regulatory uncertainty evaluation
+
+29. Macro Sensitivity Analysis - "Which is more sensitive to interest rates?"
+   - Interest rate sensitivity
+   - Currency exposure analysis
+   - Inflation impact assessment
+   - Macro factor sensitivity
+
+30. Geographic Risk Analysis - "How do their international exposures compare?"
+   - Geographic revenue analysis
+   - Country risk assessment
+   - Currency exposure comparison
+   - International market dependency
+
+🎯 SOPHISTICATED RETAIL  
+31. Scenario-Based Decisions - "If inflation spikes, should I sell tech stocks?"
+   - What-if analysis for portfolio decisions
+   - Stress testing individual positions
+   - Economic scenario planning
+   - Risk management education
+
+32. Leveraged Portfolios - "What if I used 2x leverage on SPY?"
+   - Advanced risk/return analysis
+   - Leveraged ETF comparisons
+   - Margin trading education
+   - Risk amplification understanding
+
+33. Volatility-Based Timing Strategies - "What if I bought AAPL when volatility was low?"
+   - Volatility threshold entry/exit strategies
+   - Percentile-based volatility timing
+   - Historical volatility pattern analysis
+   - Mean reversion timing approaches
+
+34. Signal Frequency Analysis - "How often would this timing strategy trigger?"
+   - Buy signal frequency assessment
+   - Signal drought period analysis
+   - Seasonal signal pattern identification
+   - Average time between signals
+
+35. Exit Strategy Optimization - "When should I sell after volatility-based entry?"
+   - Optimal exit threshold determination
+   - Entry-exit volatility relationship
+   - Holding period optimization
+   - Asymmetric entry/exit strategies
+
+36. Transaction Cost Analysis - "How do costs affect this timing strategy?"
+   - Breakeven transaction frequency
+   - Bid-ask spread impact during volatility
+   - Cost-effectiveness threshold analysis
+   - Real-world implementation costs
+
+37. Market Regime Analysis - "Does this work better in bull or bear markets?"
+   - Bull vs bear market strategy performance
+   - Regime-specific effectiveness
+   - Market cycle timing optimization
+   - Structural market change detection
+
+38. Signal Quality Analysis - "How reliable are these timing signals?"
+   - Signal success rate measurement
+   - False signal identification
+   - Signal correlation with market conditions
+   - Win rate and signal effectiveness
+
+39. Technical Parameter Optimization - "What's the best volatility calculation period?"
+   - Optimal lookback period determination
+   - Volatility window comparison (30-day vs 60-day)
+   - Intraday vs daily volatility measures
+   - Parameter sensitivity testing
+
+40. Volatility Measurement Analysis - "Should I use implied or historical volatility?"
+   - Implied vs realized volatility comparison
+   - Volatility measure effectiveness
+   - Forward-looking vs backward-looking metrics
+   - Volatility calculation methodology
+
+41. Advanced Timing Strategies - "Should entry and exit use different thresholds?"
+   - Asymmetric volatility strategies
+   - Optimal entry-exit volatility spreads
+   - Complex multi-threshold approaches
+   - Advanced volatility band trading
+
+42. Market Microstructure Analysis - "How do spreads affect volatile period trades?"
+   - Bid-ask spread impact analysis
+   - Market liquidity during volatility
+   - Implementation timing optimization
+   - High-frequency execution considerations
+
+43. Crisis Performance Analysis - "How did this strategy perform during crashes?"
+   - Strategy resilience during market stress
+   - Crisis period effectiveness
+   - Black swan event performance
+   - Tail risk management
+
+44. Volatility Forecasting Analysis - "Can implied volatility predict future volatility?"
+   - Volatility prediction accuracy
+   - Forward vs backward volatility measures
+   - Forecasting model effectiveness
+   - Predictive signal quality
+
+45. Volatility Behavior Analysis - "Which volatility measure mean reverts strongest?"
+   - Volatility persistence characteristics
+   - Mean reversion patterns
+   - Volatility clustering analysis
+   - Long-term volatility behavior
+
+46. Holding Period Optimization - "How long should I hold after volatility entries?"
+   - Optimal position holding duration
+   - Time-based vs signal-based exits
+   - Risk-adjusted holding periods
+   - Dynamic holding period strategies
+
+47. Volatility Regime Analysis - "How do volatility breakouts affect the strategy?"
+   - Volatility regime change detection
+   - Strategy performance during regime shifts
+   - Volatility breakout impact
+   - Regime-adaptive strategy modifications
+
+48. Moving Average Strategy Analysis - "Does EMA crossover work better than SMA?"
+   - SMA vs EMA crossover comparison
+   - Optimal moving average period selection
+   - Moving average crossover optimization
+   - Adaptive moving average strategies
+
+49. Multi-Indicator Strategy Analysis - "Should I combine RSI with SMA crossover?"
+   - Multiple technical indicator combinations
+   - Volume confirmation with price signals
+   - MACD and moving average synergies
+   - Complex multi-signal trading systems
+
+50. Trend Analysis - "Does this strategy work better in trending markets?"
+   - Trend strength measurement
+   - Trending vs sideways market identification
+   - Trend-following strategy effectiveness
+   - Market environment classification
+
+51. Signal Filter Analysis - "How can I reduce false trading signals?"
+   - Whipsaw reduction techniques
+   - Signal quality improvement methods
+   - False breakout filtering
+   - Signal confirmation requirements
+
+52. Tail Risk Management - "Does this strategy avoid the worst market days?"
+   - Extreme downside protection
+   - Black swan event avoidance
+   - Tail risk reduction effectiveness
+   - Maximum loss limitation strategies
+
+53. Portfolio Risk Analysis - "How does adding TQQQ affect my portfolio risk?"
+   - Portfolio volatility impact assessment
+   - Beta and correlation analysis
+   - Risk contribution measurement
+   - Diversification effectiveness evaluation
+
+54. Portfolio Allocation Optimization - "What's the optimal allocation to leveraged funds?"
+   - Allocation percentage optimization
+   - Risk-return trade-off analysis
+   - Allocation criteria methodology
+   - Strategic vs tactical allocation
+
+55. Leverage Strategy Comparison - "TQQQ vs margin vs options for leverage?"
+   - Different leverage method comparison
+   - Cost and risk trade-offs
+   - Implementation complexity analysis
+   - Regulatory and liquidity considerations
+
+56. Correlation Breakdown Analysis - "Do correlations increase during market stress?"
+   - Crisis correlation behavior
+   - Diversification failure analysis
+   - Correlation stability assessment
+   - Cross-asset correlation patterns
+
+57. Drawdown Recovery Analysis - "How long do leveraged fund recoveries take?"
+   - Recovery time measurement
+   - Recovery speed comparison
+   - Drawdown magnitude vs duration
+   - Recovery pattern analysis
+
+58. Risk Tolerance Assessment - "Can I handle 3x leverage volatility?"
+   - Investor risk capacity evaluation
+   - Behavioral risk assessment
+   - Leverage-appropriate risk measurement
+   - Psychological impact analysis
+
+59. Dynamic Portfolio Management - "Should I adjust allocations based on markets?"
+   - Tactical allocation strategies
+   - Market timing approaches
+   - Dynamic rebalancing methods
+   - Regime-based allocation changes
+
+60. Leverage Cost Analysis - "What are the true costs of leveraged investing?"
+   - Expense ratio impact analysis
+   - Compounding cost effects
+   - Cost comparison methodologies
+   - Breakeven cost analysis
+
+61. Tax Efficiency Analysis - "How do leveraged funds affect my taxes?"
+   - Tax treatment comparison
+   - Distribution tax implications
+   - Tax-loss harvesting opportunities
+   - After-tax return analysis
+
+62. Leveraged Fund Comparison - "TQQQ vs UPRO vs other leveraged ETFs?"
+   - Cross-leveraged fund analysis
+   - Performance and risk comparison
+   - Tracking error assessment
+   - Structural difference evaluation
+
+63. Interest Rate Sensitivity Analysis - "How do rate changes affect leveraged funds?"
+   - Interest rate exposure measurement
+   - Rate sensitivity comparison
+   - Duration and convexity effects
+   - Monetary policy impact assessment
+
+64. Risk Measurement Analysis - "What's my portfolio's Value at Risk with leverage?"
+   - VaR and CVaR calculation
+   - Risk metric interpretation
+   - Statistical risk measurement
+   - Stress testing methodologies
+
+65. Extreme Movement Analysis - "How often do leveraged funds have huge moves?"
+   - Extreme return frequency
+   - Tail event probability
+   - Single-day loss analysis
+   - Volatility clustering patterns
+
+66. Drawdown Duration Analysis - "How long do leveraged fund losses last?"
+   - Extended drawdown frequency
+   - Duration vs magnitude analysis
+   - Recovery probability assessment
+   - Time-based risk measurement
+
+67. Rebalancing Strategy Analysis - "How often should I rebalance with leverage?"
+   - Rebalancing frequency optimization
+   - Cost vs benefit trade-offs
+   - Drift tolerance settings
+   - Tactical rebalancing triggers
+
+68. Tax Loss Harvesting Analysis - "Can leveraged funds improve tax strategies?"
+   - Tax-loss opportunity identification
+   - Harvesting strategy optimization
+   - Wash sale rule considerations
+   - After-tax alpha generation
+
+69. Performance Metrics Analysis - "How do Sharpe ratios compare across timeframes?"
+   - Multi-period performance measurement
+   - Return consistency evaluation
+   - Risk-adjusted return calculation
+   - Performance attribution analysis
+
+70. Sector Growth Analysis - "Which sectors have the best future growth potential?"
+   - Future growth sector identification
+   - Sector allocation assessment
+   - Growth catalyst evaluation
+   - Long-term sector trends
+
+71. Innovation Valuation Analysis - "Is the innovation premium sustainable?"
+   - Innovation theme valuation
+   - Premium sustainability assessment
+   - Valuation multiple analysis
+   - Innovation bubble detection
+
+72. Earnings Growth Analysis - "Which theme shows stronger earnings potential?"
+   - Thematic earnings comparison
+   - Growth trajectory analysis
+   - Earnings sustainability assessment
+   - Fundamental growth drivers
+
+73. AI Investment Analysis - "Which has better AI and automation exposure?"
+   - Artificial intelligence investment exposure
+   - AI trend analysis
+   - Automation technology assessment
+   - Machine learning investment opportunities
+
+74. ESG Investment Analysis - "How do ESG and sustainability exposures compare?"
+   - Environmental, social, governance analysis
+   - Sustainability investment assessment
+   - ESG scoring comparison
+   - Impact investment evaluation
+
+75. Downside Protection Analysis - "Which provides better downside protection?"
+   - Asymmetric risk measurement
+   - Downside deviation analysis
+   - Bear market protection
+   - Defensive characteristics assessment
+
+76. Volatility Analysis - "Which has more stable return patterns?"
+   - Rolling volatility comparison
+   - Volatility clustering analysis
+   - Return stability measurement
+   - Volatility forecasting
+
+77. Tracking Error Analysis - "How well do ETFs follow their benchmarks?"
+   - Benchmark tracking accuracy
+   - Active share measurement
+   - Tracking error assessment
+   - Index replication effectiveness
+
+78. Concentration Risk Analysis - "How does concentration affect risk?"
+   - Portfolio concentration measurement
+   - Sector concentration risk
+   - Single-stock risk assessment
+   - Diversification effectiveness
+
+79. Recovery Pattern Analysis - "Which shows better recovery characteristics?"
+   - V-shaped vs U-shaped recovery
+   - Recovery speed measurement
+   - Recovery pattern identification
+   - Post-crisis performance analysis
+
+80. Innovation Sector Analysis - "Which innovation sectors have pricing power?"
+   - Innovation sector breakdown
+   - Sector-specific innovation analysis
+   - Competitive advantage assessment
+   - Innovation sector trends
+
+81. Revenue Growth Analysis - "How do revenue growth rates compare?"
+   - Historical revenue growth comparison
+   - Top-line growth assessment
+   - Revenue sustainability analysis
+   - Growth trajectory evaluation
+
+82. AI Hardware Analysis - "Which has better AI chip exposure?"
+   - AI semiconductor investment
+   - Hardware infrastructure analysis
+   - Chip manufacturer exposure
+   - AI hardware trend assessment
+
+83. Autonomous Vehicle Analysis - "How do autonomous vehicle exposures compare?"
+   - Self-driving technology investment
+   - Transportation innovation exposure
+   - Autonomous vehicle market analysis
+   - Mobility transformation assessment
+
+84. Clean Energy Analysis - "Which has better clean energy transition exposure?"
+   - Renewable energy investment
+   - Energy transition analysis
+   - Clean technology assessment
+   - Environmental investment evaluation
+
+85. Social Impact Analysis - "How do social impact scores compare?"
+   - Social responsibility measurement
+   - Impact investment assessment
+   - Social outcome evaluation
+   - Community benefit analysis
+
+86. Macroeconomic Analysis - "What economic factors favor gold investment?"
+   - Economic indicator assessment
+   - Macro trend analysis
+   - Economic cycle evaluation
+   - Policy impact assessment
+
+87. Commodity Valuation Analysis - "How does gold's price compare to fair value?"
+   - Commodity pricing models
+   - Fair value assessment
+   - Valuation methodology
+   - Price discovery analysis
+
+88. Inflation Hedge Analysis - "Does gold protect against inflation?"
+   - Inflation protection effectiveness
+   - Real return analysis
+   - Purchasing power preservation
+   - Inflation correlation studies
+
+89. Cost Basis Analysis - "How does price compare to production costs?"
+   - Production cost evaluation
+   - Cost structure analysis
+   - Breakeven price assessment
+   - Economic viability analysis
+
+90. Real Interest Rate Analysis - "How do real rates affect gold?"
+   - Real vs nominal rate impact
+   - Opportunity cost assessment
+   - Real yield analysis
+   - Rate-adjusted returns
+
+91. Currency Impact Analysis - "How does dollar strength affect gold?"
+   - Currency correlation analysis
+   - Exchange rate impact
+   - International purchasing power
+   - Multi-currency exposure
+
+92. Trend Reversal Analysis - "How long do gold trend changes take?"
+   - Trend change identification
+   - Reversal pattern analysis
+   - Trend duration measurement
+   - Momentum shift detection
+
+93. Mining Economics Analysis - "What drives gold production costs?"
+   - Mining cost structure
+   - Production economics
+   - Resource depletion impact
+   - Operational efficiency analysis
+
+94. Commodity Fundamentals Analysis - "What are gold supply/demand dynamics?"
+   - Supply and demand balance
+   - Physical market analysis
+   - Inventory level assessment
+   - Market structure evaluation
+
+95. Inflation Threshold Analysis - "At what inflation rate is gold attractive?"
+   - Optimal inflation levels
+   - Threshold identification
+   - Breakpoint analysis
+   - Inflation sensitivity measurement
+
+96. Economic Regime Analysis - "How does gold perform in different economies?"
+   - Regime-specific performance
+   - Economic cycle analysis
+   - Structural change impact
+   - Cross-regime comparison
+
+97. Inflation Expectations Analysis - "How do inflation expectations affect gold?"
+   - Forward-looking inflation impact
+   - Expectation vs reality analysis
+   - Market pricing efficiency
+   - Anticipatory behavior assessment
+
+98. Federal Reserve Policy Analysis - "How does Fed policy affect gold?"
+   - Monetary policy impact
+   - Central bank communication
+   - Policy transition effects
+   - Fed decision analysis
+
+99. Cross-Asset Correlation Analysis - "How does gold correlate with other assets?"
+   - Multi-asset correlation
+   - Diversification benefits
+   - Portfolio integration
+   - Risk-adjusted correlation
+
+100. Currency Technical Analysis - "What dollar levels favor gold investment?"
+    - Currency chart analysis
+    - Technical level identification
+    - Currency momentum assessment
+    - Exchange rate forecasting
+
+101. Global Currency Analysis - "How do international currencies affect gold?"
+    - Multi-currency impact
+    - Global currency dynamics
+    - International demand drivers
+    - Currency basket analysis
+
+102. Momentum Indicator Analysis - "How reliable are gold momentum signals?"
+    - Momentum signal effectiveness
+    - Indicator reliability assessment
+    - Signal quality measurement
+    - Momentum strategy evaluation
+
+103. Trend Catalyst Analysis - "What triggers major gold trend changes?"
+    - Catalyst identification
+    - Trend driver analysis
+    - Change point detection
+    - Fundamental shift assessment
+
+104. Geopolitical Risk Analysis - "How do global events affect gold?"
+    - Political risk assessment
+    - Crisis impact analysis
+    - Safe haven demand
+    - Uncertainty premium evaluation
+
+105. Energy Cost Analysis - "How do energy prices affect gold mining?"
+    - Energy cost impact
+    - Input cost analysis
+    - Energy price sensitivity
+    - Operational cost drivers
+
+106. ESG Mining Analysis - "How do ESG factors affect gold mining?"
+    - Environmental impact assessment
+    - Sustainability considerations
+    - Social responsibility evaluation
+    - Governance quality analysis
+
+107. Central Bank Gold Analysis - "How does central bank buying affect gold?"
+    - Official sector demand
+    - Reserve allocation analysis
+    - Central bank strategy
+    - Institutional demand drivers
+
+108. Gold ETF Analysis - "How do ETF flows affect gold prices?"
+    - ETF demand impact
+    - Flow analysis
+    - Paper vs physical market
+    - Investor behavior assessment
+
+🔍 TECHNICAL ANALYSIS DEEP DIVE CATEGORIES (Added from RSI Oversold Analysis):
+
+109. Market Context Analysis - "What market conditions affect signals?"
+    - Broader market environment impact on technical signals
+    - Macro context for technical analysis
+    - Market regime influence on signal effectiveness
+
+110. Technical Momentum Analysis - "Which signals show strongest momentum?"
+    - Momentum measurement in technical rebounds
+    - Strength analysis of technical movements
+    - Sustained momentum identification
+
+111. Technical Indicator Correlation Analysis - "How do indicators relate?"
+    - Cross-indicator correlation studies
+    - Indicator redundancy analysis
+    - Multi-indicator relationship mapping
+
+112. Volatility-Adaptive Signal Timing - "Should timing vary with volatility?"
+    - Volatility-based signal timing adjustments
+    - Dynamic timing optimization
+    - Regime-specific signal timing
+
+113. Risk-Adjusted Technical Strategy Analysis - "What's the risk-adjusted performance?"
+    - Sharpe ratios for technical strategies
+    - Risk-adjusted signal comparison
+    - Volatility-adjusted technical returns
+
+114. Technical Indicator Methodology Analysis - "Which calculation method works best?"
+    - Indicator calculation optimization
+    - Parameter sensitivity analysis
+    - Methodology comparison studies
+
+115. Market Regime Technical Analysis - "Do signals work differently in bull/bear markets?"
+    - Regime-specific technical signal behavior
+    - Bull vs bear market signal effectiveness
+    - Market cycle technical analysis
+
+116. Trend-Based Signal Analysis - "How does trend affect signal quality?"
+    - Trend context for technical signals
+    - Trend strength impact on signals
+    - Trend-following vs counter-trend signals
+
+117. Market Regime Comparative Analysis - "How much do regimes affect signals?"
+    - Quantitative regime comparison
+    - Statistical regime differences
+    - Regime transition effects
+
+118. Sector-Based Technical Analysis - "Do sectors respond differently to signals?"
+    - Sector-specific technical signal behavior
+    - Industry technical characteristics
+    - Sector rotation technical analysis
+
+119. Trend Strength Measurement Analysis - "How strong is too strong for signals?"
+    - Trend strength quantification
+    - Signal invalidation thresholds
+    - Trend momentum measurement
+
+120. Multi-Indicator Failure Analysis - "What warns of signal failures?"
+    - Failure pattern recognition
+    - Early warning systems
+    - Signal failure prediction
+
+121. Price Action Pattern Analysis - "What price patterns confirm signals?"
+    - Chart pattern confirmation
+    - Price action signal validation
+    - Pattern-based signal enhancement
+
+122. Technical Divergence Analysis - "Do divergences improve signals?"
+    - Bullish/bearish divergence analysis
+    - Divergence-based signal filtering
+    - Momentum divergence studies
+
+123. Market Cap Technical Analysis - "Do signals work differently by company size?"
+    - Large vs small cap technical behavior
+    - Market cap technical signal effectiveness
+    - Size-based technical strategy optimization
+
+124. Technical Breakdown Timing Analysis - "How fast do breakdowns happen?"
+    - Breakdown speed analysis
+    - Signal failure timing patterns
+    - Rapid deterioration identification
+
+125. Resistance Level Breakthrough Analysis - "Which rebounds break resistance?"
+    - Technical level breakthrough analysis
+    - Resistance penetration studies
+    - Breakout continuation analysis
+
+126. Earnings-Based Technical Analysis - "How do earnings affect technical signals?"
+    - Earnings announcement technical impact
+    - Pre/post earnings signal behavior
+    - Fundamental-technical interaction
+
+127. Technical Threshold Optimization Analysis - "What are optimal signal thresholds?"
+    - Threshold sensitivity analysis
+    - Optimal parameter determination
+    - Threshold robustness testing
+
+128. Multi-Timeframe Technical Analysis - "Do signals work across timeframes?"
+    - Cross-timeframe signal validation
+    - Timeframe-specific signal behavior
+    - Multi-horizon technical analysis
+
+🔬 VOLATILITY & LEVERAGE ANALYSIS CATEGORIES (Added from Leveraged ETF Timing Analysis):
+
+129. Volatility-Based Timing Strategies - "Should I buy leveraged ETFs during low volatility?"
+    - Volatility threshold entry/exit strategies
+    - Percentile-based volatility timing
+    - Historical volatility pattern analysis
+    - Mean reversion timing approaches
+
+130. Volatility Regime Detection - "How do I identify low volatility periods?"
+    - Volatility environment classification
+    - Regime change identification
+    - Market state detection
+    - Volatility clustering analysis
+
+131. Leveraged ETF Comparison - "QLD vs TQQQ - which leveraged ETF is better?"
+    - 2x vs 3x leverage effectiveness
+    - Leveraged fund performance comparison
+    - Risk-adjusted leveraged returns
+    - Leverage multiplier optimization
+
+132. Volatility Threshold Optimization - "What volatility level provides best timing?"
+    - Optimal volatility percentile thresholds
+    - Threshold sensitivity analysis
+    - Entry/exit volatility criteria
+    - Threshold robustness testing
+
+133. Volatility Regime Persistence Analysis - "How long do low volatility periods last?"
+    - Volatility regime duration measurement
+    - Persistence pattern identification
+    - Regime stability assessment
+    - Volatility cycle analysis
+
+134. Risk-Adjusted Leveraged Performance Analysis - "Which leverage provides better Sharpe ratios?"
+    - Risk-adjusted leverage comparison
+    - Sharpe ratio analysis for leveraged strategies
+    - Volatility-adjusted leveraged returns
+    - Risk-return optimization
+
+135. Dynamic vs Static Leverage Strategy Analysis - "Is volatility timing better than buy-and-hold leverage?"
+    - Timing vs constant leverage comparison
+    - Active vs passive leverage strategies
+    - Value-add of volatility timing
+    - Strategy implementation comparison
+
+136. Volatility Measurement Methodology Analysis - "VIX vs realized volatility for timing?"
+    - Forward vs backward volatility measures
+    - Implied vs historical volatility
+    - Volatility calculation methodology
+    - Predictive volatility assessment
+
+137. Volatility Calculation Optimization - "What lookback period works best?"
+    - Optimal volatility calculation windows
+    - Parameter sensitivity for volatility
+    - Timeframe impact on volatility measures
+    - Calculation frequency optimization
+
+138. Volatility Regime Transition Analysis - "What causes volatility breakouts?"
+    - Volatility regime change catalysts
+    - Transition pattern identification
+    - Regime shift prediction
+    - Volatility spike analysis
+
+139. Volatility Regime Forecasting - "Can I predict volatility regime changes?"
+    - Volatility regime prediction models
+    - Early warning systems
+    - Regime change indicators
+    - Forecasting accuracy assessment
+
+140. Leveraged Portfolio Correlation Analysis - "How does leverage affect portfolio correlations?"
+    - Correlation impact of leverage
+    - Diversification under leverage
+    - Portfolio correlation dynamics
+    - Risk concentration with leverage
+
+141. Leveraged Drawdown Risk Analysis - "What's the maximum risk of leveraged strategies?"
+    - Maximum drawdown comparison
+    - Tail risk assessment
+    - Worst-case scenario analysis
+    - Risk limitation strategies
+
+142. Volatility Timing Success Rate Analysis - "How often do timing signals work?"
+    - Timing signal win rates
+    - Signal reliability measurement
+    - Success rate consistency
+    - Performance reliability assessment
+
+143. Dynamic Strategy Transaction Cost Analysis - "What are the costs of volatility timing?"
+    - Transaction cost impact
+    - Implementation cost analysis
+    - Frequency vs cost trade-offs
+    - Real-world execution costs
+
+144. VIX Term Structure Analysis - "Does VIX curve shape improve timing?"
+    - Volatility curve analysis
+    - Term structure implications
+    - Curve shape timing signals
+    - Forward volatility insights
+
+145. Volatility Forecasting Methodology Comparison - "Implied vs realized volatility for forecasting?"
+    - Forecasting methodology comparison
+    - Predictive accuracy assessment
+    - Forward vs backward volatility
+    - Volatility prediction models
+
+146. Volatility Update Frequency Analysis - "How often should I recalculate volatility?"
+    - Optimal update frequency
+    - Real-time vs periodic updates
+    - Calculation frequency trade-offs
+    - Signal responsiveness optimization
+
+147. Multi-Timeframe Volatility Analysis - "Daily vs intraday volatility for timing?"
+    - Cross-timeframe volatility analysis
+    - Timeframe impact on signals
+    - Multi-horizon volatility patterns
+    - Timeframe optimization studies
+
+148. Macroeconomic Volatility Catalyst Analysis - "Which events trigger volatility spikes?"
+    - Economic event impact on volatility
+    - Macro catalyst identification
+    - Event-driven volatility analysis
+    - Systematic volatility drivers
+
+149. Earnings Calendar Volatility Analysis - "How do earnings seasons affect volatility?"
+    - Seasonal volatility patterns
+    - Earnings impact on market volatility
+    - Calendar-based volatility analysis
+    - Systematic volatility cycles
+
+150. Technical Volatility Forecasting - "Can technical indicators predict volatility changes?"
+    - Technical volatility prediction
+    - Indicator-based forecasting
+    - Chart pattern volatility signals
+    - Technical volatility models
+
+151. Machine Learning Volatility Prediction - "Can AI improve volatility forecasting?"
+    - ML-based volatility models
+    - Advanced analytics for volatility
+    - Algorithmic volatility prediction
+    - AI-enhanced forecasting
+
+152. Sector Concentration Leverage Risk Analysis - "How does sector concentration affect leverage risk?"
+    - Sector concentration under leverage
+    - Portfolio composition risk
+    - Leverage magnification effects
+    - Sector-specific risk assessment
+
+153. International Correlation Leverage Analysis - "Do global correlations increase with leverage?"
+    - International correlation under leverage
+    - Global diversification with leverage
+    - Cross-border correlation dynamics
+    - International risk amplification
+
+154. Leverage Decay Analysis - "How does volatility affect leveraged ETF decay?"
+    - Volatility regime impact on decay
+    - Leverage performance drag
+    - Decay pattern analysis
+    - Volatility-decay relationship
+
+155. Position Sizing Risk Management - "What position size limits drawdown risk?"
+    - Optimal position sizing for leverage
+    - Risk-based allocation
+    - Drawdown limitation strategies
+    - Size-based risk management
+
+156. False Signal Impact Analysis - "What's the cost of incorrect timing decisions?"
+    - False signal cost assessment
+    - Error impact measurement
+    - Signal quality vs cost
+    - Decision error analysis
+
+157. Signal Confirmation Optimization - "How can I reduce false timing signals?"
+    - Signal confirmation techniques
+    - False positive reduction
+    - Signal reliability improvement
+    - Confirmation methodology
+
+158. Leveraged ETF Trading Cost Analysis - "How do spreads affect leveraged ETF timing?"
+    - Trading cost impact on leverage
+    - Bid-ask spread effects
+    - Market microstructure costs
+    - Implementation cost optimization
+
+159. Timing Strategy Breakeven Analysis - "What performance improvement justifies timing costs?"
+    - Breakeven performance thresholds
+    - Cost-benefit analysis
+    - Minimum improvement requirements
+    - Strategy viability assessment
+
+TOP 3 RECOMMENDATIONS FOR DEVELOPMENT ORDER:
+
+1. STOCK ANALYSIS (Winner) 🏆
+   - Highest search volume among retail investors
+   - Clear decision output that people want
+   - Perfect complexity range from simple to sophisticated
+   - Great keyword matching potential
+   - Gateway to other analysis types
+
+2. TECHNICAL INDICATORS TRADING 🥈  
+   - Very popular with active retail traders
+   - Visual and engaging user experience
+   - Easy to understand signal-based approach
+   - Clear actionable outputs
+
+3. STOCK COMPARISON 🥉
+   - Natural extension of stock analysis  
+   - Decision-focused "which should I buy?"
+   - High educational value
+   - Directly helps with portfolio stock selection
+
+DEVELOPMENT STRATEGY:
+Start with Stock Analysis as it's the "gateway drug" that gets retail investors hooked, then leads them naturally to:
+- Stock Comparison (compare their picks)
+- Technical Analysis (time their entries)  
+- Portfolio Allocation (proper diversification)
+
+Each category should follow the same complexity hierarchy:
+- Simple: Basic metrics and recommendations
+- Intermediate: Multiple factors and comparisons  
+- Advanced: Detailed valuation models
+- Expert: Quantitative analysis and modeling

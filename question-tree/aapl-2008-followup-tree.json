@@ -1,0 +1,252 @@
+{
+  "root_question": "What if I bought AAPL in 2008?",
+  "description": "Binary follow-up question tree with 5 levels of depth for historical investment scenario",
+  "tree_structure": {
+    "level_1": {
+      "root": {
+        "question": "What if I bought AAPL in 2008?",
+        "analysis_type": "historical_performance_analysis",
+        "category": "Historical Investment Scenarios"
+      }
+    },
+    "level_2": {
+      "2a": {
+        "question": "What would my total return be if I held until today?",
+        "parent": "root",
+        "analysis_type": "long_term_return_calculation",
+        "category": "Historical Investment Scenarios",
+        "rationale": "User wants to know the exact financial outcome"
+      },
+      "2b": {
+        "question": "How did AAPL perform during the 2008 financial crisis?",
+        "parent": "root", 
+        "analysis_type": "crisis_performance_analysis",
+        "category": "Stock Performance Around Events",
+        "rationale": "User wants to understand how it weathered the specific crisis"
+      }
+    },
+    "level_3": {
+      "3a": {
+        "question": "How does this return compare to the S&P 500 over the same period?",
+        "parent": "2a",
+        "analysis_type": "benchmark_comparison_analysis",
+        "category": "Stock Comparison",
+        "rationale": "Benchmark the performance against market"
+      },
+      "3b": {
+        "question": "What if I had invested the same amount monthly instead of lump sum?",
+        "parent": "2a",
+        "analysis_type": "dollar_cost_averaging_comparison",
+        "category": "Investment Strategy Comparison",
+        "rationale": "Compare lump sum vs DCA strategies"
+      },
+      "3c": {
+        "question": "What was AAPL's maximum drawdown during 2008-2009?",
+        "parent": "2b",
+        "analysis_type": "drawdown_analysis",
+        "category": "Risk Analysis",
+        "rationale": "Understand the worst-case scenario during crisis"
+      },
+      "3d": {
+        "question": "How long did it take AAPL to recover to pre-crisis levels?",
+        "parent": "2b",
+        "analysis_type": "recovery_time_analysis",
+        "category": "Historical Investment Scenarios",
+        "rationale": "Time-based recovery metrics for crisis scenarios"
+      }
+    },
+    "level_4": {
+      "4a": {
+        "question": "Would AAPL have been the best performing stock in my potential portfolio?",
+        "parent": "3a",
+        "analysis_type": "portfolio_ranking_analysis",
+        "category": "Stock Comparison",
+        "rationale": "Understand relative performance in broader context"
+      },
+      "4b": {
+        "question": "What sectors outperformed AAPL during this period?",
+        "parent": "3a", 
+        "analysis_type": "sector_performance_ranking",
+        "category": "Sector Performance Analysis",
+        "rationale": "Identify better performing sectors over the timeframe"
+      },
+      "4c": {
+        "question": "At what points would dollar-cost averaging have been most beneficial?",
+        "parent": "3b",
+        "analysis_type": "dca_timing_optimization",
+        "category": "Investment Strategy Comparison",
+        "rationale": "Identify optimal DCA entry points during volatility"
+      },
+      "4d": {
+        "question": "What if I had stopped DCA during the worst months?",
+        "parent": "3b",
+        "analysis_type": "behavioral_impact_analysis",
+        "category": "Behavioral Finance Analysis",
+        "rationale": "Impact of emotional decision-making on returns"
+      },
+      "4e": {
+        "question": "How did this drawdown compare to other tech stocks?",
+        "parent": "3c",
+        "analysis_type": "peer_drawdown_comparison",
+        "category": "Risk Analysis",
+        "rationale": "Relative risk assessment within sector"
+      },
+      "4f": {
+        "question": "What fundamental factors drove AAPL's decline in 2008?",
+        "parent": "3c",
+        "analysis_type": "fundamental_decline_analysis",
+        "category": "Stock Analysis",
+        "rationale": "Understanding company-specific vs market factors"
+      },
+      "4g": {
+        "question": "Did AAPL recover faster than other large-cap stocks?",
+        "parent": "3d",
+        "analysis_type": "recovery_speed_comparison",
+        "category": "Stock Comparison",
+        "rationale": "Relative recovery performance analysis"
+      },
+      "4h": {
+        "question": "What key events accelerated AAPL's recovery?",
+        "parent": "3d",
+        "analysis_type": "catalyst_event_analysis",
+        "category": "Stock Performance Around Events",
+        "rationale": "Identify specific drivers of recovery"
+      }
+    },
+    "level_5": {
+      "5a": {
+        "question": "What percentage of the S&P 500 would have matched AAPL's returns?",
+        "parent": "4a",
+        "analysis_type": "percentile_performance_analysis",
+        "category": "Stock Comparison",
+        "rationale": "Statistical ranking of performance"
+      },
+      "5b": {
+        "question": "If I had diversified across top 10 stocks, how would returns compare?",
+        "parent": "4a",
+        "analysis_type": "diversification_impact_analysis", 
+        "category": "Portfolio Impact Analysis",
+        "rationale": "Risk-adjusted performance with diversification"
+      },
+      "5c": {
+        "question": "Which specific sectors had the highest risk-adjusted returns?",
+        "parent": "4b",
+        "analysis_type": "sector_risk_adjusted_ranking",
+        "category": "Sector Performance Analysis",
+        "rationale": "Quality of sector performance accounting for risk"
+      },
+      "5d": {
+        "question": "How much would sector rotation have improved returns?",
+        "parent": "4b",
+        "analysis_type": "sector_rotation_analysis",
+        "category": "Investment Strategy Comparison",
+        "rationale": "Active vs passive sector allocation impact"
+      },
+      "5e": {
+        "question": "What was the optimal DCA frequency during high volatility periods?",
+        "parent": "4c",
+        "analysis_type": "dca_frequency_optimization",
+        "category": "Investment Strategy Comparison",
+        "rationale": "Tactical DCA timing during market stress"
+      },
+      "5f": {
+        "question": "How much alpha was lost by stopping contributions during crashes?",
+        "parent": "4c",
+        "analysis_type": "opportunity_cost_analysis",
+        "category": "Behavioral Finance Analysis",
+        "rationale": "Quantify cost of poor timing decisions"
+      },
+      "5g": {
+        "question": "What percentage of investors likely stopped DCA during the worst months?",
+        "parent": "4d",
+        "analysis_type": "investor_behavior_statistics",
+        "category": "Behavioral Finance Analysis",
+        "rationale": "Historical investor behavior during crisis"
+      },
+      "5h": {
+        "question": "How did stopping DCA affect long-term compound growth rates?",
+        "parent": "4d",
+        "analysis_type": "compound_growth_impact_analysis",
+        "category": "Investment Strategy Comparison",
+        "rationale": "Long-term mathematical impact of behavioral decisions"
+      },
+      "5i": {
+        "question": "Which tech stock had the smallest maximum drawdown in 2008?",
+        "parent": "4e",
+        "analysis_type": "minimum_risk_identification",
+        "category": "Risk Analysis",
+        "rationale": "Identify most defensive option in sector"
+      },
+      "5j": {
+        "question": "What was the correlation between AAPL and market stress indicators?",
+        "parent": "4e",
+        "analysis_type": "stress_correlation_analysis",
+        "category": "Correlation & Diversification Analysis",
+        "rationale": "Understanding systematic vs idiosyncratic risk"
+      },
+      "5k": {
+        "question": "Which fundamental metric best predicted AAPL's resilience?",
+        "parent": "4f",
+        "analysis_type": "predictive_fundamental_analysis",
+        "category": "Stock Analysis",
+        "rationale": "Identify leading indicators of crisis performance"
+      },
+      "5l": {
+        "question": "How did AAPL's balance sheet strength compare to peers in 2008?",
+        "parent": "4f",
+        "analysis_type": "financial_strength_comparison",
+        "category": "Stock Analysis",
+        "rationale": "Comparative fundamental analysis during stress"
+      },
+      "5m": {
+        "question": "What was the median recovery time for large-cap stocks after 2008?",
+        "parent": "4g",
+        "analysis_type": "market_recovery_statistics",
+        "category": "Historical Market Analysis",
+        "rationale": "Benchmark recovery expectations"
+      },
+      "5n": {
+        "question": "How did early vs late recovery stocks perform in subsequent years?",
+        "parent": "4g",
+        "analysis_type": "recovery_timing_performance",
+        "category": "Historical Investment Scenarios",
+        "rationale": "Whether fast recovery predicted future performance"
+      },
+      "5o": {
+        "question": "Which event had the biggest positive impact on AAPL's stock price?",
+        "parent": "4h",
+        "analysis_type": "single_event_impact_ranking",
+        "category": "Stock Performance Around Events",
+        "rationale": "Identify most significant catalyst"
+      },
+      "5p": {
+        "question": "How predictable were these recovery catalysts in advance?",
+        "parent": "4h",
+        "analysis_type": "catalyst_predictability_analysis",
+        "category": "Behavioral Finance Analysis",
+        "rationale": "Whether recovery drivers were foreseeable"
+      }
+    }
+  },
+  "tree_statistics": {
+    "total_questions": 31,
+    "levels": 5,
+    "branching_factor": 2,
+    "leaf_questions": 16,
+    "analysis_types_needed": 26
+  },
+  "user_journey_paths": {
+    "return_focused_path": ["root", "2a", "3a", "4a", "5a"],
+    "strategy_focused_path": ["root", "2a", "3b", "4c", "5e"],
+    "risk_focused_path": ["root", "2b", "3c", "4e", "5i"],
+    "behavioral_focused_path": ["root", "2a", "3b", "4d", "5g"]
+  },
+  "new_categories_identified": [
+    "Historical Investment Scenarios",
+    "Investment Strategy Comparison", 
+    "Risk Analysis",
+    "Sector Performance Analysis",
+    "Behavioral Finance Analysis",
+    "Historical Market Analysis"
+  ]
+}

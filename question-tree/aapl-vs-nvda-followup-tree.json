@@ -1,0 +1,258 @@
+{
+  "root_question": "AAPL or NVDA?",
+  "description": "Binary follow-up question tree with 5 levels of depth for stock comparison decision",
+  "tree_structure": {
+    "level_1": {
+      "root": {
+        "question": "AAPL or NVDA?",
+        "analysis_type": "stock_head_to_head_comparison",
+        "category": "Stock Comparison"
+      }
+    },
+    "level_2": {
+      "2a": {
+        "question": "Which one has better growth prospects?",
+        "parent": "root",
+        "analysis_type": "growth_prospects_comparison",
+        "category": "Growth Analysis",
+        "rationale": "User wants to understand future potential"
+      },
+      "2b": {
+        "question": "Which one is less risky?",
+        "parent": "root", 
+        "analysis_type": "risk_comparison_analysis",
+        "category": "Risk Analysis",
+        "rationale": "User wants to understand relative risk profiles"
+      }
+    },
+    "level_3": {
+      "3a": {
+        "question": "Which has higher revenue growth expectations?",
+        "parent": "2a",
+        "analysis_type": "revenue_growth_comparison",
+        "category": "Growth Analysis",
+        "rationale": "Focus on top-line growth drivers"
+      },
+      "3b": {
+        "question": "Which operates in a more promising industry?",
+        "parent": "2a",
+        "analysis_type": "industry_outlook_comparison",
+        "category": "Industry Analysis",
+        "rationale": "Sector/industry tailwinds comparison"
+      },
+      "3c": {
+        "question": "Which has lower volatility?",
+        "parent": "2b",
+        "analysis_type": "volatility_comparison",
+        "category": "Risk Analysis",
+        "rationale": "Price stability comparison"
+      },
+      "3d": {
+        "question": "Which is more dependent on economic cycles?",
+        "parent": "2b",
+        "analysis_type": "cyclicality_analysis",
+        "category": "Business Cycle Analysis",
+        "rationale": "Economic sensitivity assessment"
+      }
+    },
+    "level_4": {
+      "4a": {
+        "question": "What are AAPL's main growth catalysts vs NVDA's?",
+        "parent": "3a",
+        "analysis_type": "growth_catalyst_identification",
+        "category": "Growth Analysis",
+        "rationale": "Specific drivers of future growth"
+      },
+      "4b": {
+        "question": "Which has better pricing power in their markets?",
+        "parent": "3a", 
+        "analysis_type": "pricing_power_analysis",
+        "category": "Competitive Analysis",
+        "rationale": "Ability to maintain margins and raise prices"
+      },
+      "4c": {
+        "question": "Is AI/chips a better long-term theme than consumer tech?",
+        "parent": "3b",
+        "analysis_type": "thematic_investment_comparison",
+        "category": "Thematic Analysis",
+        "rationale": "Compare underlying investment themes"
+      },
+      "4d": {
+        "question": "Which industry has higher barriers to entry?",
+        "parent": "3b",
+        "analysis_type": "competitive_moat_analysis",
+        "category": "Competitive Analysis",
+        "rationale": "Defensive characteristics of business models"
+      },
+      "4e": {
+        "question": "Which stock has more predictable earnings?",
+        "parent": "3c",
+        "analysis_type": "earnings_predictability_analysis",
+        "category": "Earnings Quality Analysis",
+        "rationale": "Consistency and forecastability of results"
+      },
+      "4f": {
+        "question": "Which has performed better during market downturns?",
+        "parent": "3c",
+        "analysis_type": "defensive_performance_analysis",
+        "category": "Risk Analysis",
+        "rationale": "Historical performance during stress periods"
+      },
+      "4g": {
+        "question": "How sensitive is NVDA to AI spending vs AAPL to consumer spending?",
+        "parent": "3d",
+        "analysis_type": "spending_sensitivity_analysis",
+        "category": "Business Cycle Analysis",
+        "rationale": "Compare different economic sensitivities"
+      },
+      "4h": {
+        "question": "Which has more diversified revenue streams?",
+        "parent": "3d",
+        "analysis_type": "revenue_diversification_analysis",
+        "category": "Business Model Analysis",
+        "rationale": "Revenue concentration risk assessment"
+      }
+    },
+    "level_5": {
+      "5a": {
+        "question": "Which company has a stronger innovation pipeline?",
+        "parent": "4a",
+        "analysis_type": "innovation_pipeline_comparison",
+        "category": "Innovation Analysis",
+        "rationale": "R&D effectiveness and future product potential"
+      },
+      "5b": {
+        "question": "How do their capital allocation strategies compare?",
+        "parent": "4a",
+        "analysis_type": "capital_allocation_comparison",
+        "category": "Management Quality Analysis",
+        "rationale": "Efficiency of capital deployment"
+      },
+      "5c": {
+        "question": "Which has stronger competitive advantages in pricing?",
+        "parent": "4b",
+        "analysis_type": "competitive_advantage_analysis",
+        "category": "Competitive Analysis",
+        "rationale": "Sustainable competitive positioning"
+      },
+      "5d": {
+        "question": "How do customer switching costs compare between them?",
+        "parent": "4b",
+        "analysis_type": "customer_stickiness_analysis",
+        "category": "Competitive Analysis",
+        "rationale": "Customer retention and ecosystem strength"
+      },
+      "5e": {
+        "question": "Which theme has more sustainable long-term demand?",
+        "parent": "4c",
+        "analysis_type": "demand_sustainability_analysis",
+        "category": "Thematic Analysis",
+        "rationale": "Longevity of underlying trends"
+      },
+      "5f": {
+        "question": "How do regulatory risks compare between AI and consumer tech?",
+        "parent": "4c",
+        "analysis_type": "regulatory_risk_comparison",
+        "category": "Regulatory Risk Analysis",
+        "rationale": "Government and policy risk assessment"
+      },
+      "5g": {
+        "question": "Which has higher switching costs for customers?",
+        "parent": "4d",
+        "analysis_type": "switching_cost_analysis",
+        "category": "Competitive Analysis",
+        "rationale": "Customer lock-in and retention strength"
+      },
+      "5h": {
+        "question": "How do their network effects compare?",
+        "parent": "4d",
+        "analysis_type": "network_effects_comparison",
+        "category": "Business Model Analysis",
+        "rationale": "Platform and ecosystem advantages"
+      },
+      "5i": {
+        "question": "Which has more consistent quarter-over-quarter results?",
+        "parent": "4e",
+        "analysis_type": "quarterly_consistency_analysis",
+        "category": "Earnings Quality Analysis",
+        "rationale": "Short-term result predictability"
+      },
+      "5j": {
+        "question": "How do their guidance accuracy records compare?",
+        "parent": "4e",
+        "analysis_type": "guidance_accuracy_comparison",
+        "category": "Management Quality Analysis",
+        "rationale": "Management credibility and forecasting ability"
+      },
+      "5k": {
+        "question": "Which recovered faster from the COVID-19 crash?",
+        "parent": "4f",
+        "analysis_type": "crisis_recovery_comparison",
+        "category": "Historical Investment Scenarios",
+        "rationale": "Resilience during specific crisis events"
+      },
+      "5l": {
+        "question": "How do their maximum drawdowns compare over 5 years?",
+        "parent": "4f",
+        "analysis_type": "historical_drawdown_comparison",
+        "category": "Risk Analysis",
+        "rationale": "Historical worst-case scenario comparison"
+      },
+      "5m": {
+        "question": "Which is more sensitive to interest rate changes?",
+        "parent": "4g",
+        "analysis_type": "interest_rate_sensitivity_analysis",
+        "category": "Macro Sensitivity Analysis",
+        "rationale": "Monetary policy impact comparison"
+      },
+      "5n": {
+        "question": "How do their international revenue exposures compare?",
+        "parent": "4g",
+        "analysis_type": "geographic_exposure_comparison",
+        "category": "Geographic Risk Analysis",
+        "rationale": "International market dependency"
+      },
+      "5o": {
+        "question": "Which has better margin stability across business cycles?",
+        "parent": "4h",
+        "analysis_type": "margin_stability_analysis",
+        "category": "Business Model Analysis",
+        "rationale": "Profitability consistency through cycles"
+      },
+      "5p": {
+        "question": "How do their customer concentration risks compare?",
+        "parent": "4h",
+        "analysis_type": "customer_concentration_analysis",
+        "category": "Business Model Analysis",
+        "rationale": "Dependency on key customers or market segments"
+      }
+    }
+  },
+  "tree_statistics": {
+    "total_questions": 31,
+    "levels": 5,
+    "branching_factor": 2,
+    "leaf_questions": 16,
+    "analysis_types_needed": 28
+  },
+  "user_journey_paths": {
+    "growth_focused_path": ["root", "2a", "3a", "4a", "5a"],
+    "risk_focused_path": ["root", "2b", "3c", "4f", "5l"],
+    "competitive_focused_path": ["root", "2a", "3b", "4d", "5g"],
+    "thematic_focused_path": ["root", "2a", "3b", "4c", "5e"]
+  },
+  "new_categories_identified": [
+    "Growth Analysis",
+    "Industry Analysis", 
+    "Business Cycle Analysis",
+    "Competitive Analysis",
+    "Thematic Analysis",
+    "Earnings Quality Analysis",
+    "Business Model Analysis",
+    "Innovation Analysis",
+    "Management Quality Analysis",
+    "Regulatory Risk Analysis",
+    "Macro Sensitivity Analysis",
+    "Geographic Risk Analysis"
+  ]
+}

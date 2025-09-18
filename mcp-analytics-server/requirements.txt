@@ -1,18 +1,31 @@
-pandas>=2.0.0
-numpy>=1.24.0
-scipy>=1.10.0
-scikit-learn>=1.3.0
-ta>=0.10.2
-xgboost>=1.7.0
-yfinance>=0.2.0
-matplotlib>=3.7.0
-mcp>=0.5.0
+# Financial Analytics MCP Server Dependencies
+# MCP SDK
+mcp>=1.0.0
 
-# Core libraries for analytics engine
-# - pandas: Data manipulation, time series analysis
-# - numpy: Numerical computations
-# - scipy: Statistical tests and distributions
-# - scikit-learn: Machine learning and clustering
-# - ta: Technical analysis indicators
-# - xgboost: Advanced gradient boosting (note: may need OpenMP)
-# - yfinance: Backup data source
+# Core Data Science Libraries
+numpy>=1.24.0
+pandas>=2.0.0
+scipy>=1.10.0
+
+# Financial Analysis
+quantlib>=1.31
+yfinance>=0.2.18
+
+# Statistics and ML
+scikit-learn>=1.3.0
+statsmodels>=0.14.0
+
+# Technical Analysis
+TA-Lib>=0.4.25
+
+# Portfolio Optimization
+cvxpy>=1.3.0
+PyPortfolioOpt>=1.5.5
+
+# Risk Analysis
+empyrical-reloaded>=0.5.12
+
+# Utilities
+python-dateutil>=2.8.0
+requests>=2.31.0
+typing-extensions>=4.7.0

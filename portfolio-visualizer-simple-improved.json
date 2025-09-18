@@ -1,0 +1,160 @@
+{
+  "category": "portfolio_visualizer",
+  "description": "Improved simple portfolio visualizer that extends the original structure",
+  "version": "simple_improved_v1",
+  "analyses": [
+    {
+      "analysis_id": "portfolio_basic_mix_improved",
+      "name": "Enhanced Basic Portfolio Allocator", 
+      "complexity": "simple",
+      "category": "portfolio_visualizer",
+      "keywords": ["portfolio mix", "asset allocation", "60/40", "combine stocks", "diversify", "basic portfolio", "simple allocation", "three fund", "lazy portfolio"],
+      "description": "Compare different stock/ETF combinations with simple rebalancing, now with popular presets and practical features",
+      "typical_questions": [
+        "How would a 60% stock, 40% bond portfolio perform?",
+        "Should I add international stocks to my portfolio?",
+        "What if I combined Apple and Tesla equally?",
+        "How does the three-fund portfolio compare to 60/40?",
+        "What if I invest $500 monthly instead of lump sum?"
+      ],
+      "parameters": {
+        "required": {
+          "assets": [
+            {"symbol": "VTI", "allocation": 0.6, "name": "US Total Market"},
+            {"symbol": "BND", "allocation": 0.4, "name": "US Bonds"}
+          ],
+          "timeframe": "5Y"
+        },
+        "optional": {
+          "initial_amount": 10000,
+          "rebalance_frequency": "yearly",
+          "benchmark": "SPY",
+          "monthly_contribution": 0,
+          "contribution_growth": 0.03,
+          "account_type": "taxable",
+          "include_dividends": true,
+          "inflation_adjusted": true
+        },
+        "preset_portfolios": {
+          "three_fund": {
+            "name": "Three-Fund Portfolio",
+            "assets": [
+              {"symbol": "VTI", "allocation": 0.6, "name": "US Total Stock"},
+              {"symbol": "VTIAX", "allocation": 0.3, "name": "International Stock"},
+              {"symbol": "VBTLX", "allocation": 0.1, "name": "Total Bond"}
+            ]
+          },
+          "classic_60_40": {
+            "name": "Classic 60/40",
+            "assets": [
+              {"symbol": "VTI", "allocation": 0.6, "name": "US Stock Market"},
+              {"symbol": "BND", "allocation": 0.4, "name": "US Bond Market"}
+            ]
+          },
+          "two_fund": {
+            "name": "Two-Fund Simple",
+            "assets": [
+              {"symbol": "VT", "allocation": 0.8, "name": "Total World Stock"},
+              {"symbol": "BND", "allocation": 0.2, "name": "US Bonds"}
+            ]
+          },
+          "target_date_style": {
+            "name": "Target Date 2050 Style",
+            "assets": [
+              {"symbol": "VTI", "allocation": 0.54, "name": "US Stock"},
+              {"symbol": "VTIAX", "allocation": 0.36, "name": "International Stock"},
+              {"symbol": "BND", "allocation": 0.10, "name": "US Bonds"}
+            ]
+          }
+        }
+      },
+      "enhanced_features": {
+        "dollar_cost_averaging": {
+          "enabled": true,
+          "compare_lump_sum": true,
+          "show_volatility_reduction": true
+        },
+        "rebalancing_impact": {
+          "show_no_rebalance_comparison": true,
+          "calculate_rebalancing_bonus": true
+        },
+        "practical_insights": {
+          "expense_ratio_impact": true,
+          "tax_efficiency": true,
+          "minimum_investments": true
+        }
+      },
+      "output_format": {
+        "charts": [
+          "cumulative_returns", 
+          "allocation_pie", 
+          "monthly_contributions_impact",
+          "rebalancing_benefit"
+        ],
+        "metrics": [
+          "total_return", 
+          "annual_return", 
+          "volatility", 
+          "max_drawdown",
+          "sharpe_ratio",
+          "total_contributions",
+          "investment_gains",
+          "expense_ratio_cost"
+        ],
+        "simple_summary": "Portfolio grew to $X with Y% less volatility than all-stock",
+        "practical_summary": "With $M monthly contributions, you'd have $Z total ($A from gains)",
+        "actionable_insights": [
+          "rebalancing_saves_X_percent",
+          "dollar_cost_averaging_reduces_risk_by_Y_percent", 
+          "total_fees_over_period",
+          "tax_drag_estimate"
+        ]
+      },
+      "real_world_additions": {
+        "fund_details": {
+          "expense_ratios": true,
+          "minimum_investments": true,
+          "available_brokerages": ["Vanguard", "Fidelity", "Schwab"]
+        },
+        "implementation_help": {
+          "setup_instructions": true,
+          "automation_suggestions": true,
+          "rebalancing_calendar": true
+        },
+        "educational_content": {
+          "why_diversification_works": true,
+          "rebalancing_explanation": true,
+          "dollar_cost_averaging_benefits": true
+        }
+      },
+      "api_requirements": [
+        "alpaca-market_stocks-bars", 
+        "mcp-analytics-server_sma",
+        "mcp-analytics-server_sharpe_ratio"
+      ],
+      "computational_complexity": "low"
+    }
+  ],
+  "comparison_with_original": {
+    "maintains_original_structure": true,
+    "extends_parameters": {
+      "added_optional_fields": [
+        "monthly_contribution",
+        "contribution_growth", 
+        "account_type",
+        "include_dividends",
+        "inflation_adjusted"
+      ],
+      "added_preset_portfolios": 4,
+      "added_enhanced_features": 3
+    },
+    "backward_compatible": true,
+    "new_capabilities": [
+      "Popular portfolio presets",
+      "Dollar cost averaging modeling",
+      "Rebalancing impact analysis",
+      "Practical implementation guidance",
+      "Enhanced educational content"
+    ]
+  }
+}
