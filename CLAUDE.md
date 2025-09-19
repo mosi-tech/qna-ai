@@ -71,6 +71,37 @@ npm run lint
 - **Alpaca Trading** (`alpaca.trading.spec.json`): Account management, positions, orders, portfolio management  
 - **EODHD** (`EODHD.spec.json`): Additional financial data endpoints
 
+## Unified MCP Architecture
+The project now includes a unified Python MCP architecture in the `mcp/` folder:
+
+### Structure
+- **`mcp/financial/`**: Python financial server functions (replaces JavaScript mcp-financial-server)
+- **`mcp/analytics/`**: Technical analysis and portfolio optimization engine
+- **`mcp/tools/`**: Retail analysis tools using real financial data
+- **`mcp/financial_server.py`**: Standalone MCP financial server
+- **`mcp/analytics_server.py`**: Standalone MCP analytics server
+
+### Key Features
+- **Real Data Integration**: All tools use actual financial data (no mock data)
+- **Industry Libraries**: Uses talib-binary, empyrical, PyPortfolioOpt for proven calculations
+- **End-to-End Flow**: Financial Server → Analytics Engine → Retail Tools
+- **MCP Compatible**: Full MCP server implementations with proper tool schemas
+
+### Testing
+```bash
+# Test the unified architecture
+python test_unified_mcp.py
+```
+
+### Running MCP Servers
+```bash
+# Financial server
+python mcp/financial_server.py
+
+# Analytics server  
+python mcp/analytics_server.py
+```
+
 ## Adding New JSON Outputs
 1. Create JSON file in `experimental/` (e.g., `MyOutput.json`)
    - **Include descriptive field explanations for each data point**
