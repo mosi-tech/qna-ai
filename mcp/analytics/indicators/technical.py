@@ -421,6 +421,172 @@ def calculate_atr(data: Union[pd.DataFrame, Dict[str, Any]], period: int = 14) -
         return {"success": False, "error": f"ATR calculation failed: {str(e)}"}
 
 
+def detect_sma_crossover(prices: Union[pd.Series, Dict[str, Any]], 
+                        fast_period: int = 20, slow_period: int = 50) -> Dict[str, Any]:
+    """
+    Detect SMA crossover signals.
+    
+    From financial-analysis-function-library.json time_series_processing category
+    Uses talib-binary for SMA calculations and pandas for crossover detection
+    
+    Args:
+        prices: Price data
+        fast_period: Fast SMA period
+        slow_period: Slow SMA period
+        
+    Returns:
+        Dict: Crossover signals and analysis
+    """
+    try:
+        prices = validate_price_data(prices)
+        
+        # Calculate SMAs using talib
+        fast_sma = talib.SMA(prices.values.astype(np.float64), timeperiod=fast_period)
+        slow_sma = talib.SMA(prices.values.astype(np.float64), timeperiod=slow_period)
+        
+        fast_series = pd.Series(fast_sma, index=prices.index).dropna()
+        slow_series = pd.Series(slow_sma, index=prices.index).dropna()
+        
+        # Align series
+        min_length = min(len(fast_series), len(slow_series))
+        fast_aligned = fast_series.iloc[-min_length:]
+        slow_aligned = slow_series.iloc[-min_length:]
+        
+        # Detect crossovers
+        crossovers = []
+        for i in range(1, len(fast_aligned)):
+            prev_fast = fast_aligned.iloc[i-1]
+            prev_slow = slow_aligned.iloc[i-1]
+            curr_fast = fast_aligned.iloc[i]
+            curr_slow = slow_aligned.iloc[i]
+            
+            # Bullish crossover (fast crosses above slow)
+            if prev_fast <= prev_slow and curr_fast > curr_slow:
+                crossovers.append({
+                    "type": "bullish_crossover",
+                    "date": fast_aligned.index[i],
+                    "fast_sma": float(curr_fast),
+                    "slow_sma": float(curr_slow),
+                    "price": float(prices.iloc[fast_aligned.index.get_loc(fast_aligned.index[i])])
+                })
+            
+            # Bearish crossover (fast crosses below slow)
+            elif prev_fast >= prev_slow and curr_fast < curr_slow:
+                crossovers.append({
+                    "type": "bearish_crossover",
+                    "date": fast_aligned.index[i],
+                    "fast_sma": float(curr_fast),
+                    "slow_sma": float(curr_slow),
+                    "price": float(prices.iloc[fast_aligned.index.get_loc(fast_aligned.index[i])])
+                })
+        
+        # Current signal
+        current_signal = "neutral"
+        if len(fast_aligned) > 0 and len(slow_aligned) > 0:
+            if fast_aligned.iloc[-1] > slow_aligned.iloc[-1]:
+                current_signal = "bullish"
+            else:
+                current_signal = "bearish"
+        
+        result = {
+            "fast_sma": fast_aligned,
+            "slow_sma": slow_aligned,
+            "crossovers": crossovers,
+            "total_signals": len(crossovers),
+            "current_signal": current_signal,
+            "fast_period": fast_period,
+            "slow_period": slow_period
+        }
+        
+        return standardize_output(result, "detect_sma_crossover")
+        
+    except Exception as e:
+        return {"success": False, "error": f"SMA crossover detection failed: {str(e)}"}
+
+
+def detect_ema_crossover(prices: Union[pd.Series, Dict[str, Any]], 
+                        fast_period: int = 12, slow_period: int = 26) -> Dict[str, Any]:
+    """
+    Detect EMA crossover signals.
+    
+    From financial-analysis-function-library.json time_series_processing category
+    Uses talib-binary for EMA calculations and pandas for crossover detection
+    
+    Args:
+        prices: Price data
+        fast_period: Fast EMA period
+        slow_period: Slow EMA period
+        
+    Returns:
+        Dict: Crossover signals and analysis
+    """
+    try:
+        prices = validate_price_data(prices)
+        
+        # Calculate EMAs using talib
+        fast_ema = talib.EMA(prices.values.astype(np.float64), timeperiod=fast_period)
+        slow_ema = talib.EMA(prices.values.astype(np.float64), timeperiod=slow_period)
+        
+        fast_series = pd.Series(fast_ema, index=prices.index).dropna()
+        slow_series = pd.Series(slow_ema, index=prices.index).dropna()
+        
+        # Align series
+        min_length = min(len(fast_series), len(slow_series))
+        fast_aligned = fast_series.iloc[-min_length:]
+        slow_aligned = slow_series.iloc[-min_length:]
+        
+        # Detect crossovers
+        crossovers = []
+        for i in range(1, len(fast_aligned)):
+            prev_fast = fast_aligned.iloc[i-1]
+            prev_slow = slow_aligned.iloc[i-1]
+            curr_fast = fast_aligned.iloc[i]
+            curr_slow = slow_aligned.iloc[i]
+            
+            # Bullish crossover (fast crosses above slow)
+            if prev_fast <= prev_slow and curr_fast > curr_slow:
+                crossovers.append({
+                    "type": "bullish_crossover",
+                    "date": fast_aligned.index[i],
+                    "fast_ema": float(curr_fast),
+                    "slow_ema": float(curr_slow),
+                    "price": float(prices.iloc[fast_aligned.index.get_loc(fast_aligned.index[i])])
+                })
+            
+            # Bearish crossover (fast crosses below slow)
+            elif prev_fast >= prev_slow and curr_fast < curr_slow:
+                crossovers.append({
+                    "type": "bearish_crossover",
+                    "date": fast_aligned.index[i],
+                    "fast_ema": float(curr_fast),
+                    "slow_ema": float(curr_slow),
+                    "price": float(prices.iloc[fast_aligned.index.get_loc(fast_aligned.index[i])])
+                })
+        
+        # Current signal
+        current_signal = "neutral"
+        if len(fast_aligned) > 0 and len(slow_aligned) > 0:
+            if fast_aligned.iloc[-1] > slow_aligned.iloc[-1]:
+                current_signal = "bullish"
+            else:
+                current_signal = "bearish"
+        
+        result = {
+            "fast_ema": fast_aligned,
+            "slow_ema": slow_aligned,
+            "crossovers": crossovers,
+            "total_signals": len(crossovers),
+            "current_signal": current_signal,
+            "fast_period": fast_period,
+            "slow_period": slow_period
+        }
+        
+        return standardize_output(result, "detect_ema_crossover")
+        
+    except Exception as e:
+        return {"success": False, "error": f"EMA crossover detection failed: {str(e)}"}
+
+
 # Registry of technical indicator functions - all using libraries
 TECHNICAL_INDICATORS_FUNCTIONS = {
     'calculate_sma': calculate_sma,
@@ -429,5 +595,7 @@ TECHNICAL_INDICATORS_FUNCTIONS = {
     'calculate_macd': calculate_macd,
     'calculate_bollinger_bands': calculate_bollinger_bands,
     'calculate_stochastic': calculate_stochastic,
-    'calculate_atr': calculate_atr
+    'calculate_atr': calculate_atr,
+    'detect_sma_crossover': detect_sma_crossover,
+    'detect_ema_crossover': detect_ema_crossover
 }

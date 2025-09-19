@@ -291,11 +291,54 @@ def standardize_output(result: Dict[str, Any], function_name: str) -> Dict[str, 
         }
 
 
+def calculate_log_returns(prices: Union[pd.Series, Dict[str, Any]]) -> pd.Series:
+    """
+    Calculate logarithmic returns from prices.
+    
+    From financial-analysis-function-library.json time_series_processing category
+    Wrapper around prices_to_returns with method='log'
+    
+    Args:
+        prices: Price data
+        
+    Returns:
+        pd.Series: Log return series
+    """
+    return prices_to_returns(prices, method="log")
+
+
+def calculate_cumulative_returns(returns: Union[pd.Series, List, Dict[str, Any]]) -> pd.Series:
+    """
+    Calculate cumulative returns from return series.
+    
+    From financial-analysis-function-library.json time_series_processing category
+    Uses pandas built-in methods for cumulative product
+    
+    Args:
+        returns: Return series
+        
+    Returns:
+        pd.Series: Cumulative return series
+    """
+    try:
+        returns_series = validate_return_data(returns)
+        
+        # Calculate cumulative returns using pandas
+        cumulative_returns = (1 + returns_series).cumprod() - 1
+        
+        return cumulative_returns
+        
+    except Exception as e:
+        raise ValueError(f"Cumulative return calculation failed: {str(e)}")
+
+
 # Registry of utility functions
 DATA_UTILS_FUNCTIONS = {
     'validate_price_data': validate_price_data,
     'validate_return_data': validate_return_data,
     'prices_to_returns': prices_to_returns,
+    'calculate_log_returns': calculate_log_returns,
+    'calculate_cumulative_returns': calculate_cumulative_returns,
     'align_series': align_series,
     'resample_data': resample_data,
     'standardize_output': standardize_output

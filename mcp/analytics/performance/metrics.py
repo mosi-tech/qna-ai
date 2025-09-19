@@ -211,10 +211,385 @@ def calculate_drawdown_analysis(returns: Union[pd.Series, Dict[str, Any]]) -> Di
         return {"success": False, "error": f"Drawdown analysis failed: {str(e)}"}
 
 
+def calculate_annualized_return(prices: Union[pd.Series, Dict[str, Any]], periods: int) -> float:
+    """
+    Calculate annualized return from price series.
+    
+    From financial-analysis-function-library.json performance_analysis category
+    Uses empyrical library instead of manual calculations - no code duplication
+    
+    Args:
+        prices: Price series
+        periods: Number of periods per year (252 for daily, 12 for monthly)
+        
+    Returns:
+        float: Annualized return
+    """
+    try:
+        price_series = validate_price_data(prices)
+        
+        # Calculate returns from prices
+        returns = price_series.pct_change().dropna()
+        
+        # Use empyrical for annualized return
+        annual_return = empyrical.annual_return(returns, period=periods)
+        
+        return float(annual_return)
+        
+    except Exception as e:
+        raise ValueError(f"Annualized return calculation failed: {str(e)}")
+
+
+def calculate_annualized_volatility(returns: Union[pd.Series, Dict[str, Any]], periods_per_year: int) -> float:
+    """
+    Calculate annualized volatility.
+    
+    From financial-analysis-function-library.json performance_analysis category
+    Uses empyrical library instead of manual calculations - no code duplication
+    
+    Args:
+        returns: Return series
+        periods_per_year: Number of periods per year
+        
+    Returns:
+        float: Annualized volatility
+    """
+    try:
+        returns_series = validate_return_data(returns)
+        
+        # Use empyrical for annualized volatility
+        annual_vol = empyrical.annual_volatility(returns_series, period=periods_per_year)
+        
+        return float(annual_vol)
+        
+    except Exception as e:
+        raise ValueError(f"Annualized volatility calculation failed: {str(e)}")
+
+
+def calculate_cagr(start_value: float, end_value: float, years: float) -> float:
+    """
+    Calculate Compound Annual Growth Rate.
+    
+    From financial-analysis-function-library.json performance_analysis category
+    Simple CAGR calculation using numpy - no code duplication
+    
+    Args:
+        start_value: Starting value
+        end_value: Ending value
+        years: Number of years
+        
+    Returns:
+        float: CAGR as decimal
+    """
+    try:
+        if start_value <= 0:
+            raise ValueError("Start value must be positive")
+        if years <= 0:
+            raise ValueError("Years must be positive")
+        
+        # CAGR formula: (end_value / start_value)^(1/years) - 1
+        cagr = np.power(end_value / start_value, 1.0 / years) - 1
+        
+        return float(cagr)
+        
+    except Exception as e:
+        raise ValueError(f"CAGR calculation failed: {str(e)}")
+
+
+def calculate_total_return(start_price: float, end_price: float, dividends: Optional[list] = None) -> float:
+    """
+    Calculate total return including dividends.
+    
+    From financial-analysis-function-library.json performance_analysis category
+    Simple calculation using numpy - no code duplication
+    
+    Args:
+        start_price: Starting price
+        end_price: Ending price
+        dividends: Optional list of dividend payments
+        
+    Returns:
+        float: Total return as decimal
+    """
+    try:
+        if start_price <= 0:
+            raise ValueError("Start price must be positive")
+        
+        # Price return
+        price_return = (end_price - start_price) / start_price
+        
+        # Dividend return
+        dividend_return = 0.0
+        if dividends and len(dividends) > 0:
+            total_dividends = np.sum(dividends)
+            dividend_return = total_dividends / start_price
+        
+        # Total return
+        total_return = price_return + dividend_return
+        
+        return float(total_return)
+        
+    except Exception as e:
+        raise ValueError(f"Total return calculation failed: {str(e)}")
+
+
+def calculate_downside_deviation(returns: Union[pd.Series, Dict[str, Any]], target_return: Optional[float] = None) -> float:
+    """
+    Calculate downside deviation below target.
+    
+    From financial-analysis-function-library.json performance_analysis category
+    Uses empyrical library instead of manual calculations - no code duplication
+    
+    Args:
+        returns: Return series
+        target_return: Target return threshold (default: 0)
+        
+    Returns:
+        float: Downside deviation
+    """
+    try:
+        returns_series = validate_return_data(returns)
+        
+        if target_return is None:
+            target_return = 0.0
+        
+        # Use empyrical for downside deviation
+        downside_dev = empyrical.downside_risk(returns_series, required_return=target_return)
+        
+        return float(downside_dev)
+        
+    except Exception as e:
+        raise ValueError(f"Downside deviation calculation failed: {str(e)}")
+
+
+def calculate_upside_capture(returns: Union[pd.Series, Dict[str, Any]], 
+                           benchmark_returns: Union[pd.Series, Dict[str, Any]]) -> float:
+    """
+    Calculate upside capture ratio vs benchmark.
+    
+    From financial-analysis-function-library.json performance_analysis category
+    Uses empyrical library instead of manual calculations - no code duplication
+    
+    Args:
+        returns: Portfolio returns
+        benchmark_returns: Benchmark returns
+        
+    Returns:
+        float: Upside capture ratio
+    """
+    try:
+        portfolio_returns = validate_return_data(returns)
+        benchmark_series = validate_return_data(benchmark_returns)
+        
+        # Align series
+        from ..utils.data_utils import align_series
+        portfolio_aligned, benchmark_aligned = align_series(portfolio_returns, benchmark_series)
+        
+        # Use empyrical for upside capture
+        upside_capture = empyrical.up_capture(portfolio_aligned, benchmark_aligned)
+        
+        return float(upside_capture)
+        
+    except Exception as e:
+        raise ValueError(f"Upside capture calculation failed: {str(e)}")
+
+
+def calculate_downside_capture(returns: Union[pd.Series, Dict[str, Any]], 
+                             benchmark_returns: Union[pd.Series, Dict[str, Any]]) -> float:
+    """
+    Calculate downside capture ratio vs benchmark.
+    
+    From financial-analysis-function-library.json performance_analysis category
+    Uses empyrical library instead of manual calculations - no code duplication
+    
+    Args:
+        returns: Portfolio returns
+        benchmark_returns: Benchmark returns
+        
+    Returns:
+        float: Downside capture ratio
+    """
+    try:
+        portfolio_returns = validate_return_data(returns)
+        benchmark_series = validate_return_data(benchmark_returns)
+        
+        # Align series
+        from ..utils.data_utils import align_series
+        portfolio_aligned, benchmark_aligned = align_series(portfolio_returns, benchmark_series)
+        
+        # Use empyrical for downside capture
+        downside_capture = empyrical.down_capture(portfolio_aligned, benchmark_aligned)
+        
+        return float(downside_capture)
+        
+    except Exception as e:
+        raise ValueError(f"Downside capture calculation failed: {str(e)}")
+
+
+def calculate_calmar_ratio(returns: Union[pd.Series, Dict[str, Any]]) -> float:
+    """
+    Calculate Calmar ratio (return/max drawdown).
+    
+    From financial-analysis-function-library.json performance_analysis category
+    Uses empyrical library instead of manual calculations - no code duplication
+    
+    Args:
+        returns: Return series
+        
+    Returns:
+        float: Calmar ratio
+    """
+    try:
+        returns_series = validate_return_data(returns)
+        
+        # Use empyrical for Calmar ratio
+        calmar = empyrical.calmar_ratio(returns_series)
+        
+        return float(calmar)
+        
+    except Exception as e:
+        raise ValueError(f"Calmar ratio calculation failed: {str(e)}")
+
+
+def calculate_omega_ratio(returns: Union[pd.Series, Dict[str, Any]], threshold: Optional[float] = None) -> float:
+    """
+    Calculate Omega ratio.
+    
+    From financial-analysis-function-library.json performance_analysis category
+    Uses empyrical library instead of manual calculations - no code duplication
+    
+    Args:
+        returns: Return series
+        threshold: Return threshold (default: 0)
+        
+    Returns:
+        float: Omega ratio
+    """
+    try:
+        returns_series = validate_return_data(returns)
+        
+        if threshold is None:
+            threshold = 0.0
+        
+        # Use empyrical for Omega ratio
+        omega = empyrical.omega_ratio(returns_series, risk_free=threshold)
+        
+        return float(omega)
+        
+    except Exception as e:
+        raise ValueError(f"Omega ratio calculation failed: {str(e)}")
+
+
+def calculate_win_rate(returns: Union[pd.Series, Dict[str, Any]]) -> float:
+    """
+    Calculate percentage of positive returns.
+    
+    From financial-analysis-function-library.json performance_analysis category
+    Simple calculation using pandas - no code duplication
+    
+    Args:
+        returns: Return series
+        
+    Returns:
+        float: Win rate as decimal (0.0 to 1.0)
+    """
+    try:
+        returns_series = validate_return_data(returns)
+        
+        # Count positive returns
+        positive_returns = (returns_series > 0).sum()
+        total_returns = len(returns_series)
+        
+        if total_returns == 0:
+            return 0.0
+        
+        win_rate = positive_returns / total_returns
+        
+        return float(win_rate)
+        
+    except Exception as e:
+        raise ValueError(f"Win rate calculation failed: {str(e)}")
+
+
+def calculate_best_worst_periods(returns: Union[pd.Series, Dict[str, Any]], window_size: int) -> Dict[str, Any]:
+    """
+    Identify best and worst performing periods.
+    
+    From financial-analysis-function-library.json performance_analysis category
+    Uses pandas rolling calculations - no code duplication
+    
+    Args:
+        returns: Return series
+        window_size: Rolling window size for periods
+        
+    Returns:
+        Dict: Best and worst period data
+    """
+    try:
+        returns_series = validate_return_data(returns)
+        
+        if len(returns_series) < window_size:
+            raise ValueError(f"Not enough data points for window size {window_size}")
+        
+        # Calculate rolling returns for specified window
+        rolling_returns = returns_series.rolling(window=window_size).apply(
+            lambda x: (1 + x).prod() - 1, raw=False
+        ).dropna()
+        
+        if len(rolling_returns) == 0:
+            raise ValueError("No valid rolling periods calculated")
+        
+        # Find best and worst periods
+        best_period_idx = rolling_returns.idxmax()
+        worst_period_idx = rolling_returns.idxmin()
+        
+        best_return = rolling_returns.loc[best_period_idx]
+        worst_return = rolling_returns.loc[worst_period_idx]
+        
+        # Calculate period start dates
+        best_start = returns_series.index[returns_series.index.get_loc(best_period_idx) - window_size + 1]
+        worst_start = returns_series.index[returns_series.index.get_loc(worst_period_idx) - window_size + 1]
+        
+        result = {
+            "window_size": window_size,
+            "best_period": {
+                "start_date": str(best_start),
+                "end_date": str(best_period_idx),
+                "return": float(best_return),
+                "return_pct": f"{best_return * 100:.2f}%"
+            },
+            "worst_period": {
+                "start_date": str(worst_start),
+                "end_date": str(worst_period_idx),
+                "return": float(worst_return),
+                "return_pct": f"{worst_return * 100:.2f}%"
+            },
+            "total_periods": len(rolling_returns),
+            "average_rolling_return": float(rolling_returns.mean()),
+            "rolling_volatility": float(rolling_returns.std())
+        }
+        
+        return standardize_output(result, "calculate_best_worst_periods")
+        
+    except Exception as e:
+        raise ValueError(f"Best/worst periods calculation failed: {str(e)}")
+
+
 # Registry using library-based functions - no manual calculations
 PERFORMANCE_METRICS_FUNCTIONS = {
     'calculate_returns_metrics': calculate_returns_metrics,
     'calculate_risk_metrics': calculate_risk_metrics,
     'calculate_benchmark_metrics': calculate_benchmark_metrics,
-    'calculate_drawdown_analysis': calculate_drawdown_analysis
+    'calculate_drawdown_analysis': calculate_drawdown_analysis,
+    'calculate_annualized_return': calculate_annualized_return,
+    'calculate_annualized_volatility': calculate_annualized_volatility,
+    'calculate_cagr': calculate_cagr,
+    'calculate_total_return': calculate_total_return,
+    'calculate_downside_deviation': calculate_downside_deviation,
+    'calculate_upside_capture': calculate_upside_capture,
+    'calculate_downside_capture': calculate_downside_capture,
+    'calculate_calmar_ratio': calculate_calmar_ratio,
+    'calculate_omega_ratio': calculate_omega_ratio,
+    'calculate_win_rate': calculate_win_rate,
+    'calculate_best_worst_periods': calculate_best_worst_periods
 }
