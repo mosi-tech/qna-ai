@@ -332,6 +332,47 @@ def calculate_cumulative_returns(returns: Union[pd.Series, List, Dict[str, Any]]
         raise ValueError(f"Cumulative return calculation failed: {str(e)}")
 
 
+def calculate_monthly_returns(daily_returns: Union[pd.Series, List, Dict[str, Any]], trading_days_per_month: int = 21) -> List[float]:
+    """
+    Convert daily returns to monthly returns using compounding.
+    
+    From financial-analysis-function-library.json time_series_processing category
+    Groups daily returns into monthly periods and compounds them
+    
+    Args:
+        daily_returns: Daily return series
+        trading_days_per_month: Number of trading days to group per month (default: 21)
+        
+    Returns:
+        List[float]: Monthly return series
+    """
+    try:
+        returns_series = validate_return_data(daily_returns)
+        
+        if len(returns_series) == 0:
+            return []
+        
+        # Convert to list for processing
+        returns_list = returns_series.tolist()
+        monthly_returns = []
+        
+        # Group daily returns into months
+        for i in range(0, len(returns_list), trading_days_per_month):
+            month_returns = returns_list[i:i + trading_days_per_month]
+            if len(month_returns) > 0:
+                # Calculate compound monthly return: (1+r1)(1+r2)...(1+rn) - 1
+                compound_return = 1.0
+                for daily_return in month_returns:
+                    compound_return *= (1 + daily_return)
+                monthly_return = compound_return - 1
+                monthly_returns.append(monthly_return)
+        
+        return monthly_returns
+        
+    except Exception as e:
+        raise ValueError(f"Monthly return calculation failed: {str(e)}")
+
+
 # Registry of utility functions
 DATA_UTILS_FUNCTIONS = {
     'validate_price_data': validate_price_data,
@@ -339,6 +380,7 @@ DATA_UTILS_FUNCTIONS = {
     'prices_to_returns': prices_to_returns,
     'calculate_log_returns': calculate_log_returns,
     'calculate_cumulative_returns': calculate_cumulative_returns,
+    'calculate_monthly_returns': calculate_monthly_returns,
     'align_series': align_series,
     'resample_data': resample_data,
     'standardize_output': standardize_output
