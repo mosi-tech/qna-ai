@@ -79,8 +79,10 @@ def calculate_risk_metrics(returns: Union[pd.Series, Dict[str, Any]],
         calmar_ratio = empyrical.calmar_ratio(returns_series)
         var_95 = empyrical.value_at_risk(returns_series, cutoff=0.05)
         cvar_95 = empyrical.conditional_value_at_risk(returns_series, cutoff=0.05)
-        skewness = empyrical.stats.skew(returns_series)
-        kurtosis = empyrical.stats.kurtosis(returns_series)
+        # Use scipy.stats for skew and kurtosis since empyrical.stats may not have them
+        from scipy import stats
+        skewness = stats.skew(returns_series)
+        kurtosis = stats.kurtosis(returns_series)
         
         result = {
             "volatility": float(volatility),
@@ -197,7 +199,10 @@ def calculate_drawdown_analysis(returns: Union[pd.Series, Dict[str, Any]]) -> Di
         else:
             # Use empyrical library - leveraging requirements.txt
             max_drawdown = empyrical.max_drawdown(returns_series)
-            drawdown_series = empyrical.drawdown_details(empyrical.cum_returns(returns_series))
+            # Calculate drawdown series manually since drawdown_details may not exist
+            cumulative = empyrical.cum_returns(returns_series)
+            running_max = cumulative.expanding().max()
+            drawdown_series = (cumulative - running_max) / running_max
         
         result = {
             "max_drawdown": float(max_drawdown),

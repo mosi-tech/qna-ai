@@ -12,7 +12,6 @@ import logging
 from typing import Dict, List, Any, Optional
 
 # MCP Server Framework
-from mcp import server, get_model_name
 from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
 import mcp.server.stdio

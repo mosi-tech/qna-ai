@@ -146,7 +146,7 @@ def calculate_cvar(returns: Union[pd.Series, Dict[str, Any]],
         return {"success": False, "error": f"CVaR calculation failed: {str(e)}"}
 
 
-def calculate_correlation_analysis(returns: Union[pd.DataFrame, Dict[str, Any]],
+def calculate_correlation_analysis(returns: Union[pd.DataFrame, Dict[str, Any], List[List[float]]],
                                   method: str = "pearson") -> Dict[str, Any]:
     """
     Calculate correlation analysis using pandas and scipy.
@@ -155,7 +155,7 @@ def calculate_correlation_analysis(returns: Union[pd.DataFrame, Dict[str, Any]],
     Uses pandas/scipy libraries instead of manual calculations - no code duplication
     
     Args:
-        returns: Return data for multiple assets
+        returns: Return data for multiple assets (DataFrame, dict, or list of lists)
         method: Correlation method ('pearson', 'spearman', 'kendall')
         
     Returns:
@@ -164,6 +164,14 @@ def calculate_correlation_analysis(returns: Union[pd.DataFrame, Dict[str, Any]],
     try:
         if isinstance(returns, dict):
             returns_df = pd.DataFrame(returns)
+        elif isinstance(returns, list):
+            # Handle list of lists (each list is an asset's returns)
+            if len(returns) > 0 and isinstance(returns[0], list):
+                returns_df = pd.DataFrame(returns).T  # Transpose so each column is an asset
+                returns_df.columns = [f"Asset_{i}" for i in range(len(returns))]
+            else:
+                # Single list of returns - convert to single column
+                returns_df = pd.DataFrame({"Asset_0": returns})
         else:
             returns_df = returns.copy()
         
