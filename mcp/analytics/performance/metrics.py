@@ -575,6 +575,126 @@ def calculate_best_worst_periods(returns: Union[pd.Series, Dict[str, Any]], wind
         raise ValueError(f"Best/worst periods calculation failed: {str(e)}")
 
 
+def calculate_dividend_yield(dividends: Union[list, np.ndarray, pd.Series], price: float) -> float:
+    """
+    Calculate dividend yield.
+    
+    From financial-analysis-function-library.json specialized_analysis category
+    Simple dividend yield calculation using numpy - no code duplication
+    
+    Args:
+        dividends: List or array of dividend payments over period
+        price: Current stock price
+        
+    Returns:
+        float: Dividend yield as decimal
+    """
+    try:
+        if price <= 0:
+            raise ValueError("Price must be positive")
+        
+        # Convert dividends to numpy array
+        if isinstance(dividends, (list, pd.Series)):
+            dividend_array = np.array(dividends)
+        else:
+            dividend_array = np.array(dividends)
+        
+        # Remove NaN values and negative dividends
+        dividend_clean = dividend_array[~np.isnan(dividend_array)]
+        dividend_clean = dividend_clean[dividend_clean >= 0]
+        
+        # Calculate total annual dividends
+        total_dividends = np.sum(dividend_clean)
+        
+        # Calculate dividend yield
+        dividend_yield = total_dividends / price
+        
+        return float(dividend_yield)
+        
+    except Exception as e:
+        raise ValueError(f"Dividend yield calculation failed: {str(e)}")
+
+
+def analyze_leverage_fund(prices: Union[pd.Series, Dict[str, Any]], 
+                         leverage: float, 
+                         underlying_prices: Union[pd.Series, Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    Analyze leveraged fund characteristics and performance.
+    
+    From financial-analysis-function-library.json specialized_analysis category
+    Uses pandas and numpy for leveraged fund analysis - no code duplication
+    
+    Args:
+        prices: Leveraged fund price series
+        leverage: Target leverage ratio (e.g., 2.0 for 2x, 3.0 for 3x)
+        underlying_prices: Underlying asset price series
+        
+    Returns:
+        Dict: Leveraged fund analysis data
+    """
+    try:
+        leveraged_prices = validate_price_data(prices)
+        underlying_series = validate_price_data(underlying_prices)
+        
+        # Align series
+        from ..utils.data_utils import align_series, prices_to_returns
+        leveraged_aligned, underlying_aligned = align_series(leveraged_prices, underlying_series)
+        
+        # Calculate returns
+        leveraged_returns = prices_to_returns(leveraged_aligned)
+        underlying_returns = prices_to_returns(underlying_aligned)
+        
+        # Calculate tracking metrics
+        actual_leverage = leveraged_returns.corr(underlying_returns) * (leveraged_returns.std() / underlying_returns.std())
+        
+        # Calculate daily leverage decay
+        expected_returns = underlying_returns * leverage
+        tracking_error = (leveraged_returns - expected_returns).std() * np.sqrt(252)
+        
+        # Calculate compounding drag effect
+        underlying_vol = underlying_returns.std() * np.sqrt(252)
+        theoretical_drag = 0.5 * (leverage - 1) * (underlying_vol ** 2)
+        
+        # Performance comparison
+        leveraged_total = (1 + leveraged_returns).prod() - 1
+        underlying_total = (1 + underlying_returns).prod() - 1
+        expected_total = (1 + underlying_returns * leverage).prod() - 1
+        
+        # Daily rebalancing cost estimation
+        daily_vol = underlying_returns.std()
+        estimated_daily_cost = (leverage - 1) * (daily_vol ** 2) / 2
+        annualized_cost = estimated_daily_cost * 252
+        
+        result = {
+            "target_leverage": float(leverage),
+            "actual_leverage": float(actual_leverage),
+            "leverage_efficiency": float(actual_leverage / leverage) if leverage != 0 else 0,
+            "tracking_error": float(tracking_error),
+            "tracking_error_pct": f"{tracking_error * 100:.2f}%",
+            "theoretical_drag": float(theoretical_drag),
+            "theoretical_drag_pct": f"{theoretical_drag * 100:.2f}%",
+            "leveraged_total_return": float(leveraged_total),
+            "leveraged_total_return_pct": f"{leveraged_total * 100:.2f}%",
+            "underlying_total_return": float(underlying_total),
+            "underlying_total_return_pct": f"{underlying_total * 100:.2f}%",
+            "expected_leveraged_return": float(expected_total),
+            "expected_leveraged_return_pct": f"{expected_total * 100:.2f}%",
+            "performance_gap": float(leveraged_total - expected_total),
+            "performance_gap_pct": f"{(leveraged_total - expected_total) * 100:.2f}%",
+            "estimated_annual_cost": float(annualized_cost),
+            "estimated_annual_cost_pct": f"{annualized_cost * 100:.2f}%",
+            "underlying_volatility": float(underlying_vol),
+            "underlying_volatility_pct": f"{underlying_vol * 100:.2f}%",
+            "leveraged_volatility": float(leveraged_returns.std() * np.sqrt(252)),
+            "leveraged_volatility_pct": f"{leveraged_returns.std() * np.sqrt(252) * 100:.2f}%"
+        }
+        
+        return standardize_output(result, "analyze_leverage_fund")
+        
+    except Exception as e:
+        return {"success": False, "error": f"Leveraged fund analysis failed: {str(e)}"}
+
+
 # Registry using library-based functions - no manual calculations
 PERFORMANCE_METRICS_FUNCTIONS = {
     'calculate_returns_metrics': calculate_returns_metrics,
@@ -591,5 +711,7 @@ PERFORMANCE_METRICS_FUNCTIONS = {
     'calculate_calmar_ratio': calculate_calmar_ratio,
     'calculate_omega_ratio': calculate_omega_ratio,
     'calculate_win_rate': calculate_win_rate,
-    'calculate_best_worst_periods': calculate_best_worst_periods
+    'calculate_best_worst_periods': calculate_best_worst_periods,
+    'calculate_dividend_yield': calculate_dividend_yield,
+    'analyze_leverage_fund': analyze_leverage_fund
 }

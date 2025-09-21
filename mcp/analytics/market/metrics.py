@@ -18,8 +18,7 @@ from scipy.signal import find_peaks
 from sklearn.cluster import KMeans
 
 from ..utils.data_utils import validate_return_data, validate_price_data, align_series, standardize_output
-from ..risk.metrics import calculate_correlation, calculate_var, calculate_volatility
-from ..indicators.technical import calculate_adx
+from ..risk.metrics import calculate_correlation
 
 
 def calculate_trend_strength(prices: Union[pd.Series, Dict[str, Any]], 
@@ -43,58 +42,54 @@ def calculate_trend_strength(prices: Union[pd.Series, Dict[str, Any]],
         if len(price_series) < 20:
             raise ValueError("Insufficient data for trend strength calculation")
         
-        # Convert to OHLC format for ADX if needed
-        if method == "adx":
-            # For ADX we need OHLC, use price as close and create synthetic OHLC
-            ohlc_data = []
-            returns = price_series.pct_change().dropna()
+        # Simple moving average trend strength
+        if method == "adx" or method == "moving_average":
+            # Calculate moving averages for trend strength
+            sma_10 = price_series.rolling(window=10).mean()
+            sma_20 = price_series.rolling(window=20).mean()
+            sma_50 = price_series.rolling(window=50).mean() if len(price_series) > 50 else sma_20
             
-            for i, (date, close) in enumerate(price_series.items()):
-                if i == 0:
-                    continue
-                    
-                # Create synthetic OHLC from price movement
-                prev_close = price_series.iloc[i-1]
-                daily_return = returns.iloc[i-1] if i-1 < len(returns) else 0
-                
-                # Synthetic high/low based on volatility
-                volatility = abs(daily_return)
-                high = close + (volatility * close * 0.5)
-                low = close - (volatility * close * 0.5)
-                open_price = prev_close
-                
-                ohlc_data.append({
-                    'open': open_price,
-                    'high': max(high, close, open_price),
-                    'low': min(low, close, open_price),
-                    'close': close,
-                    'volume': 1000000  # Synthetic volume
-                })
+            # Current price position relative to moving averages
+            current_price = price_series.iloc[-1]
+            current_sma10 = sma_10.iloc[-1] if len(sma_10.dropna()) > 0 else current_price
+            current_sma20 = sma_20.iloc[-1] if len(sma_20.dropna()) > 0 else current_price
+            current_sma50 = sma_50.iloc[-1] if len(sma_50.dropna()) > 0 else current_price
             
-            ohlc_df = pd.DataFrame(ohlc_data, index=price_series.index[1:])
-            adx_result = calculate_adx(ohlc_df)
+            # Trend alignment score
+            alignment_score = 0
+            if current_price > current_sma10:
+                alignment_score += 1
+            if current_price > current_sma20:
+                alignment_score += 1
+            if current_price > current_sma50:
+                alignment_score += 1
+            if current_sma10 > current_sma20:
+                alignment_score += 1
+            if current_sma20 > current_sma50:
+                alignment_score += 1
             
-            current_adx = adx_result['adx'][-1] if len(adx_result['adx']) > 0 else 0
-            avg_adx = np.mean(adx_result['adx'][-20:]) if len(adx_result['adx']) >= 20 else current_adx
+            # Normalize to 0-100 scale
+            trend_strength_score = (alignment_score / 5) * 100
             
-            # ADX interpretation
-            if current_adx > 40:
+            # Strength rating
+            if trend_strength_score > 80:
                 strength_rating = "very_strong"
-            elif current_adx > 25:
+            elif trend_strength_score > 60:
                 strength_rating = "strong"
-            elif current_adx > 15:
+            elif trend_strength_score > 40:
                 strength_rating = "moderate"
             else:
                 strength_rating = "weak"
             
             trend_strength = {
-                "method": "adx",
-                "current_strength": float(current_adx),
-                "average_strength_20d": float(avg_adx),
+                "method": "moving_average",
+                "current_strength": float(trend_strength_score),
                 "strength_rating": strength_rating,
-                "adx_details": {
-                    "plus_di": float(adx_result['plus_di'][-1]) if len(adx_result['plus_di']) > 0 else 0,
-                    "minus_di": float(adx_result['minus_di'][-1]) if len(adx_result['minus_di']) > 0 else 0
+                "moving_averages": {
+                    "sma_10": float(current_sma10),
+                    "sma_20": float(current_sma20),
+                    "sma_50": float(current_sma50),
+                    "alignment_score": alignment_score
                 }
             }
             
@@ -1176,6 +1171,196 @@ def detect_crisis_periods(returns: Union[pd.Series, Dict[str, Any]],
         return {"success": False, "error": f"Crisis period detection failed: {str(e)}"}
 
 
+def calculate_crypto_metrics(prices: Union[pd.Series, Dict[str, Any]], 
+                           volumes: Union[pd.Series, Dict[str, Any], None] = None) -> Dict[str, Any]:
+    """
+    Calculate cryptocurrency-specific metrics.
+    
+    From financial-analysis-function-library.json specialized_analysis category
+    Uses pandas and numpy for crypto-specific analysis - no code duplication
+    
+    Args:
+        prices: Crypto price series
+        volumes: Optional volume series
+        
+    Returns:
+        Dict: Cryptocurrency metrics data
+    """
+    try:
+        price_series = validate_price_data(prices)
+        
+        if len(price_series) < 30:
+            raise ValueError("Need at least 30 observations for crypto analysis")
+        
+        # Basic price metrics
+        returns = price_series.pct_change().dropna()
+        
+        # Crypto-specific volatility (higher than traditional assets)
+        daily_volatility = returns.std()
+        annualized_volatility = daily_volatility * np.sqrt(365)  # 365 days for crypto
+        
+        # Extreme price movements (more common in crypto)
+        extreme_up_days = (returns > 0.10).sum()  # >10% daily gains
+        extreme_down_days = (returns < -0.10).sum()  # >10% daily losses
+        extreme_movement_ratio = (extreme_up_days + extreme_down_days) / len(returns)
+        
+        # Price momentum (crypto tends to have strong momentum)
+        momentum_7d = (price_series.iloc[-1] / price_series.iloc[-8] - 1) if len(price_series) > 7 else 0
+        momentum_30d = (price_series.iloc[-1] / price_series.iloc[-31] - 1) if len(price_series) > 30 else 0
+        momentum_90d = (price_series.iloc[-1] / price_series.iloc[-91] - 1) if len(price_series) > 90 else 0
+        
+        # Drawdown analysis (crypto can have severe drawdowns)
+        cumulative_returns = (1 + returns).cumprod()
+        running_max = cumulative_returns.expanding().max()
+        drawdown = (cumulative_returns - running_max) / running_max
+        max_drawdown = drawdown.min()
+        current_drawdown = drawdown.iloc[-1]
+        
+        # Recovery from drawdowns
+        drawdown_periods = []
+        in_drawdown = False
+        drawdown_start = None
+        
+        for i, (date, dd) in enumerate(drawdown.items()):
+            if dd < -0.05 and not in_drawdown:  # 5% drawdown threshold
+                in_drawdown = True
+                drawdown_start = i
+            elif dd >= -0.01 and in_drawdown:  # Recovery threshold
+                in_drawdown = False
+                recovery_days = i - drawdown_start
+                drawdown_periods.append(recovery_days)
+        
+        avg_recovery_days = np.mean(drawdown_periods) if drawdown_periods else 0
+        
+        # Price ranges and support/resistance
+        recent_high = price_series.tail(90).max() if len(price_series) > 90 else price_series.max()
+        recent_low = price_series.tail(90).min() if len(price_series) > 90 else price_series.min()
+        current_price = price_series.iloc[-1]
+        
+        distance_from_high = (recent_high - current_price) / recent_high
+        distance_from_low = (current_price - recent_low) / recent_low if recent_low > 0 else 0
+        
+        # Volume analysis (if available)
+        volume_metrics = {}
+        if volumes is not None:
+            try:
+                if isinstance(volumes, dict):
+                    volume_series = pd.Series(volumes)
+                else:
+                    volume_series = pd.Series(volumes) if not isinstance(volumes, pd.Series) else volumes
+                
+                # Align with prices
+                volume_aligned = volume_series[:len(price_series)]
+                
+                # Volume trends
+                avg_volume_30d = volume_aligned.tail(30).mean() if len(volume_aligned) > 30 else volume_aligned.mean()
+                current_volume = volume_aligned.iloc[-1] if len(volume_aligned) > 0 else 0
+                volume_ratio = current_volume / avg_volume_30d if avg_volume_30d > 0 else 1
+                
+                # Price-volume correlation
+                price_volume_corr = returns.corr(volume_aligned.pct_change().dropna()) if len(volume_aligned) > 1 else 0
+                
+                volume_metrics = {
+                    "current_volume": float(current_volume),
+                    "avg_volume_30d": float(avg_volume_30d),
+                    "volume_ratio": float(volume_ratio),
+                    "price_volume_correlation": float(price_volume_corr),
+                    "volume_trend": "increasing" if volume_ratio > 1.2 else "decreasing" if volume_ratio < 0.8 else "stable"
+                }
+            except:
+                volume_metrics = {"error": "Volume data processing failed"}
+        
+        # Crypto market sentiment indicators
+        rsi_14 = []
+        if len(returns) >= 14:
+            gains = returns.where(returns > 0, 0)
+            losses = -returns.where(returns < 0, 0)
+            avg_gain = gains.rolling(window=14).mean()
+            avg_loss = losses.rolling(window=14).mean()
+            rs = avg_gain / avg_loss
+            rsi = 100 - (100 / (1 + rs))
+            current_rsi = rsi.iloc[-1] if len(rsi) > 0 else 50
+        else:
+            current_rsi = 50
+        
+        # Fear & Greed approximation
+        fear_greed_components = {
+            "volatility_score": min(100, (annualized_volatility * 100)),  # High vol = fear
+            "momentum_score": max(0, min(100, (momentum_30d + 1) * 50)),  # Positive momentum = greed
+            "volume_score": min(100, volume_metrics.get("volume_ratio", 1) * 50) if volume_metrics else 50,
+            "rsi_score": current_rsi
+        }
+        
+        fear_greed_index = np.mean(list(fear_greed_components.values()))
+        
+        if fear_greed_index > 75:
+            market_sentiment = "extreme_greed"
+        elif fear_greed_index > 55:
+            market_sentiment = "greed"
+        elif fear_greed_index > 45:
+            market_sentiment = "neutral"
+        elif fear_greed_index > 25:
+            market_sentiment = "fear"
+        else:
+            market_sentiment = "extreme_fear"
+        
+        result = {
+            "crypto_volatility": {
+                "daily_volatility": float(daily_volatility),
+                "annualized_volatility": float(annualized_volatility),
+                "volatility_pct": f"{annualized_volatility * 100:.2f}%",
+                "extreme_movement_ratio": float(extreme_movement_ratio),
+                "extreme_up_days": int(extreme_up_days),
+                "extreme_down_days": int(extreme_down_days)
+            },
+            "momentum_analysis": {
+                "momentum_7d": float(momentum_7d),
+                "momentum_7d_pct": f"{momentum_7d * 100:.2f}%",
+                "momentum_30d": float(momentum_30d),
+                "momentum_30d_pct": f"{momentum_30d * 100:.2f}%",
+                "momentum_90d": float(momentum_90d),
+                "momentum_90d_pct": f"{momentum_90d * 100:.2f}%"
+            },
+            "drawdown_analysis": {
+                "max_drawdown": float(max_drawdown),
+                "max_drawdown_pct": f"{max_drawdown * 100:.2f}%",
+                "current_drawdown": float(current_drawdown),
+                "current_drawdown_pct": f"{current_drawdown * 100:.2f}%",
+                "avg_recovery_days": float(avg_recovery_days),
+                "drawdown_periods_count": len(drawdown_periods)
+            },
+            "price_levels": {
+                "current_price": float(current_price),
+                "recent_high_90d": float(recent_high),
+                "recent_low_90d": float(recent_low),
+                "distance_from_high": float(distance_from_high),
+                "distance_from_high_pct": f"{distance_from_high * 100:.2f}%",
+                "distance_from_low": float(distance_from_low),
+                "distance_from_low_pct": f"{distance_from_low * 100:.2f}%"
+            },
+            "market_sentiment": {
+                "fear_greed_index": float(fear_greed_index),
+                "sentiment": market_sentiment,
+                "rsi_14": float(current_rsi),
+                "fear_greed_components": {k: float(v) for k, v in fear_greed_components.items()}
+            },
+            "trading_characteristics": {
+                "total_observations": len(price_series),
+                "trading_range_90d": float((recent_high - recent_low) / recent_low) if recent_low > 0 else 0,
+                "price_stability": "volatile" if annualized_volatility > 1.0 else "moderate" if annualized_volatility > 0.5 else "stable"
+            }
+        }
+        
+        # Add volume metrics if available
+        if volume_metrics and "error" not in volume_metrics:
+            result["volume_analysis"] = volume_metrics
+        
+        return standardize_output(result, "calculate_crypto_metrics")
+        
+    except Exception as e:
+        return {"success": False, "error": f"Crypto metrics calculation failed: {str(e)}"}
+
+
 # Registry of market analysis functions - both simple and complex
 MARKET_ANALYSIS_FUNCTIONS = {
     'calculate_trend_strength': calculate_trend_strength,
@@ -1185,5 +1370,6 @@ MARKET_ANALYSIS_FUNCTIONS = {
     'analyze_volatility_clustering': analyze_volatility_clustering,
     'analyze_seasonality': analyze_seasonality,
     'detect_structural_breaks': detect_structural_breaks,
-    'detect_crisis_periods': detect_crisis_periods
+    'detect_crisis_periods': detect_crisis_periods,
+    'calculate_crypto_metrics': calculate_crypto_metrics
 }
