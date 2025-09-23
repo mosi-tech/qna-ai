@@ -25,12 +25,13 @@ from mcp.server.models import InitializationOptions
 import mcp.server.stdio
 import mcp.types as types
 
-# Import analytics functions
+# Import analytics functions and schema utilities
 from analytics.indicators.technical import TECHNICAL_INDICATORS_FUNCTIONS
 from analytics.portfolio.metrics import PORTFOLIO_ANALYSIS_FUNCTIONS
 from analytics.performance.metrics import PERFORMANCE_METRICS_FUNCTIONS
 from analytics.risk.metrics import RISK_METRICS_FUNCTIONS
 from analytics.utils.data_utils import DATA_UTILS_FUNCTIONS
+from schema_utils import initialize_schema_cache
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
