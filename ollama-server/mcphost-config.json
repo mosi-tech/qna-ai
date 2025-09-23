@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "financial-server": {
+      "command": "python",
+      "args": ["../mcp/financial_server.py"],
+      "env": {
+        "USE_MOCK_FINANCIAL_DATA": "false"
+      }
+    },
+    "analytics-server": {
+      "command": "python", 
+      "args": ["../mcp/analytics_server.py"]
+    }
+  }
+}
