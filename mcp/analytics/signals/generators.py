@@ -11,7 +11,8 @@ import warnings
 warnings.filterwarnings('ignore')
 
 from ..utils.data_utils import validate_return_data, validate_price_data, standardize_output
-from ..indicators.technical import calculate_rsi, calculate_macd, calculate_bollinger_bands, calculate_stochastic
+from ..indicators.momentum import calculate_rsi, calculate_macd, calculate_stochastic
+from ..indicators.volatility import calculate_bollinger_bands
 
 
 def generate_signals(indicator: Union[pd.Series, List[float], Dict[str, Any]], 

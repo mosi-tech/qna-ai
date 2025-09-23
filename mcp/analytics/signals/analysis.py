@@ -533,7 +533,7 @@ def optimize_signal_parameters(prices: Union[pd.Series, Dict[str, Any]],
                 
                 # Generate signals based on strategy
                 if strategy == "rsi":
-                    from ..indicators.technical import calculate_rsi
+                    from ..indicators.momentum import calculate_rsi
                     rsi_result = calculate_rsi(price_series, period=params['period'])
                     if not rsi_result.get("success", True):
                         continue
@@ -549,7 +549,7 @@ def optimize_signal_parameters(prices: Union[pd.Series, Dict[str, Any]],
                     )
                 
                 elif strategy == "macd":
-                    from ..indicators.technical import calculate_macd
+                    from ..indicators.momentum import calculate_macd
                     macd_result = calculate_macd(
                         price_series, 
                         fast_period=params['fast_period'],
