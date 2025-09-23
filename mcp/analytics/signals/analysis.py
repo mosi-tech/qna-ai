@@ -1,8 +1,32 @@
-"""
-Signal Analysis Functions
+"""Advanced signal analysis functions for trading strategy evaluation and optimization.
 
-Complex signal analysis functions for quality assessment and optimization.
-From financial-analysis-function-library.json signal_analysis category.
+This module provides sophisticated signal analysis capabilities including signal quality
+assessment, false signal identification, and parameter optimization. These functions are
+essential for developing and validating automated trading strategies by analyzing the
+historical performance and reliability of trading signals.
+
+The module includes:
+- Signal quality analysis with comprehensive backtesting
+- False signal detection using multiple validation criteria
+- Parameter optimization using grid search and performance metrics
+- Statistical significance testing and risk assessment
+
+All functions integrate with the financial-analysis-function-library.json specification
+and use proven libraries (scipy, empyrical, pandas) for statistical analysis.
+
+Example:
+    Basic signal analysis workflow:
+    
+    >>> from mcp.analytics.signals.analysis import analyze_signal_quality
+    >>> signals = [{'timestamp': '2023-01-01', 'signal': 'buy', 'strength': 0.8}, ...]
+    >>> prices = pd.Series(...)  # Historical price data
+    >>> quality_analysis = analyze_signal_quality(signals, prices)
+    >>> print(f"Signal quality: {quality_analysis['quality_metrics']['quality_rating']}")
+    >>> print(f"Win rate: {quality_analysis['quality_metrics']['win_loss_metrics']['win_rate']}")
+    
+Note:
+    Functions require aligned price data and properly formatted signal lists with
+    timestamps for accurate backtesting and analysis.
 """
 
 import pandas as pd
@@ -21,18 +45,60 @@ from .generators import generate_signals
 
 def analyze_signal_quality(signals: List[Dict[str, Any]], 
                           prices: Union[pd.Series, Dict[str, Any]]) -> Dict[str, Any]:
-    """
-    Analyze signal quality and reliability through backtesting.
+    """Analyze trading signal quality through comprehensive backtesting and statistical evaluation.
     
-    From financial-analysis-function-library.json signal_analysis category
-    Complex analytical function requiring backtesting and statistical evaluation
+    This function performs detailed quality assessment of trading signals by backtesting
+    them against historical price data. It calculates performance metrics, risk measures,
+    and statistical significance to determine the reliability and effectiveness of the
+    signals for trading strategy development.
     
     Args:
-        signals: List of signal dictionaries with timestamps
-        prices: Price series for backtesting
-        
+        signals: List of signal dictionaries containing trading signals. Each signal
+            must have the following keys:
+            - 'timestamp': Signal generation time (string or datetime)
+            - 'signal': Signal type ('buy', 'sell', or other)
+            - 'strength': Optional signal confidence (0.0 to 1.0)
+            Additional fields are preserved in the analysis.
+        prices: Historical price data for backtesting. Can be provided as pandas
+            Series with datetime index, or dictionary with dates as keys and
+            prices as values.
+            
     Returns:
-        Dict: Signal quality analysis with performance metrics
+        Dict[str, Any]: Comprehensive signal quality analysis including:
+            - analysis_summary: Overview of signals analyzed and time period
+            - quality_metrics: Overall quality score, rating, and component scores
+            - return_statistics: Average, median, volatility, and total returns
+            - win_loss_metrics: Win rate, average wins/losses, profit factor
+            - risk_metrics: Sharpe ratio, maximum drawdown, consistency score
+            - statistical_significance: T-test results and significance flags
+            - signal_type_analysis: Performance breakdown by signal type
+            - recent_performance: Latest signal results for trend analysis
+            
+    Raises:
+        Exception: If signal quality analysis fails due to data issues or calculation errors.
+        
+    Example:
+        >>> import pandas as pd
+        >>> # Create sample signals
+        >>> signals = [
+        ...     {'timestamp': '2023-01-02', 'signal': 'buy', 'strength': 0.8},
+        ...     {'timestamp': '2023-01-05', 'signal': 'sell', 'strength': 0.7},
+        ...     {'timestamp': '2023-01-10', 'signal': 'buy', 'strength': 0.9}
+        ... ]
+        >>> prices = pd.Series([100, 102, 98, 105, 103], 
+        ...                   index=pd.date_range('2023-01-01', periods=5))
+        >>> quality_result = analyze_signal_quality(signals, prices)
+        >>> print(f"Quality rating: {quality_result['quality_metrics']['quality_rating']}")
+        >>> print(f"Win rate: {quality_result['quality_metrics']['win_loss_metrics']['win_rate']:.1%}")
+        >>> print(f"Sharpe ratio: {quality_result['quality_metrics']['risk_metrics']['sharpe_ratio']:.2f}")
+        
+    Note:
+        - Signals are backtested using forward-looking returns for 1, 5, 10, and 20 day periods
+        - Quality score combines return performance, win rate, risk-adjusted returns, and consistency
+        - Quality ratings: excellent (80+), good (60-79), fair (40-59), poor (<40)
+        - Statistical significance tested using t-test against zero mean hypothesis
+        - Requires at least overlapping periods between signals and prices for analysis
+        - Returns empty results if no signals can be aligned with price data
     """
     try:
         if not signals:
@@ -232,19 +298,65 @@ def analyze_signal_quality(signals: List[Dict[str, Any]],
 def identify_false_signals(signals: List[Dict[str, Any]], 
                           prices: Union[pd.Series, Dict[str, Any]], 
                           threshold: float = 0.02) -> Dict[str, Any]:
-    """
-    Identify and analyze false signals using price action validation.
+    """Identify and analyze false trading signals using multi-criteria validation.
     
-    From financial-analysis-function-library.json signal_analysis category
-    Complex analytical function requiring market context and validation logic
+    False signals are trading signals that fail to generate the expected price movement
+    or quickly reverse against the signal direction. This function applies four validation
+    criteria to identify problematic signals and provides detailed analysis to improve
+    signal generation algorithms.
     
     Args:
-        signals: List of signal dictionaries
-        prices: Price series for validation
-        threshold: Return threshold for determining false signals
-        
+        signals: List of signal dictionaries to analyze. Each signal must contain:
+            - 'timestamp': Signal generation time
+            - 'signal': Signal type ('buy' or 'sell')
+            - 'strength': Optional signal confidence level
+        prices: Historical price data for validation. Can be pandas Series with
+            datetime index or dictionary with dates as keys and prices as values.
+        threshold: Return threshold for determining signal success. Defaults to 0.02
+            (2%). Signals must achieve at least this return in the expected direction
+            to be considered valid.
+            
     Returns:
-        Dict: False signal identification and analysis
+        Dict[str, Any]: False signal analysis including:
+            - analysis_summary: Total signals analyzed, threshold used, time period
+            - false_signal_analysis: Count, rate, and patterns of false signals
+            - detailed_false_signals: First 10 false signals with failure reasons
+            - improvement_opportunities: Actionable suggestions for signal enhancement
+            - validation_criteria: Explanation of the four validation tests applied
+            
+        Validation criteria applied:
+            1. Immediate direction: Signal matches next 1-3 period price movement
+            2. Threshold reached: Price moves ≥threshold in signal direction within 20 periods
+            3. Quick reversal: Price doesn't reverse >threshold against signal within 10 periods
+            4. Volatility justified: Move size justified by recent volatility context
+            
+    Raises:
+        Exception: If false signal identification fails due to data or calculation issues.
+        
+    Example:
+        >>> import pandas as pd
+        >>> signals = [
+        ...     {'timestamp': '2023-01-02', 'signal': 'buy', 'strength': 0.8},
+        ...     {'timestamp': '2023-01-05', 'signal': 'sell', 'strength': 0.6}
+        ... ]
+        >>> prices = pd.Series([100, 95, 102, 98, 94],  # Buy signal fails, sell succeeds
+        ...                   index=pd.date_range('2023-01-01', periods=5))
+        >>> false_analysis = identify_false_signals(signals, prices, threshold=0.03)
+        >>> print(f"False signal rate: {false_analysis['false_signal_analysis']['false_signal_rate']:.1%}")
+        >>> print(f"Common failures: {false_analysis['false_signal_analysis']['false_signal_patterns']}")
+        >>> 
+        >>> # Review improvement suggestions
+        >>> for suggestion in false_analysis['improvement_opportunities']:
+        ...     print(f"Suggestion: {suggestion}")
+        
+    Note:
+        - Signal requires ≥2 failed criteria to be classified as false
+        - Immediate direction checked over next 1-3 trading periods
+        - Threshold achievement checked over next 20 trading periods
+        - Quick reversal checked over next 10 trading periods
+        - Volatility context uses 10-period rolling standard deviation
+        - False signal rate >30% suggests need for stricter signal criteria
+        - Analysis includes breakdown by signal type and failure patterns
     """
     try:
         if not signals:
@@ -471,20 +583,77 @@ def identify_false_signals(signals: List[Dict[str, Any]],
 def optimize_signal_parameters(prices: Union[pd.Series, Dict[str, Any]], 
                               strategy: str = "rsi", 
                               parameter_ranges: Optional[Dict[str, List]] = None) -> Dict[str, Any]:
-    """
-    Optimize signal parameters for best performance using grid search.
+    """Optimize trading signal parameters using systematic grid search and backtesting.
     
-    From financial-analysis-function-library.json signal_analysis category
-    Complex analytical function requiring backtesting and parameter search
+    This function performs comprehensive parameter optimization for technical analysis
+    strategies by testing all combinations of specified parameter ranges. Each combination
+    is backtested and evaluated using multiple performance metrics to identify the
+    optimal configuration for the given price series.
     
     Args:
-        prices: Price series for optimization
-        strategy: Strategy to optimize ("rsi", "macd", "bollinger", "momentum")
-        parameter_ranges: Ranges for each parameter to test
-        
+        prices: Historical price data for optimization. Can be pandas Series with
+            datetime index or dictionary with dates as keys and prices as values.
+            Requires at least 100 price points for reliable optimization.
+        strategy: Technical analysis strategy to optimize. Supported strategies:
+            - "rsi": Relative Strength Index with overbought/oversold thresholds
+            - "macd": Moving Average Convergence Divergence with crossover signals
+            - "bollinger": Bollinger Bands mean reversion strategy
+            - "momentum": Price momentum breakout strategy
+            Defaults to "rsi".
+        parameter_ranges: Optional dictionary specifying parameter ranges to test.
+            If not provided, uses default ranges for the selected strategy:
+            - RSI: period (10-30), upper_threshold (65-80), lower_threshold (20-35)
+            - MACD: fast_period (8-16), slow_period (21-31), signal_period (6-12)
+            - Momentum: lookback (3-15), momentum_threshold (0.01-0.05)
+            
     Returns:
-        Dict: Optimized parameters and performance results
-    """
+        Dict[str, Any]: Optimization results including:
+            - optimization_summary: Strategy tested, combinations tried, success rate
+            - best_parameters: Optimal parameter configuration found
+            - best_performance: Performance metrics for optimal parameters
+            - parameter_importance: Correlation between each parameter and performance
+            - performance_stability: Analysis of top performer consistency
+            - top_10_results: Best 10 parameter combinations for comparison
+            - optimization_recommendations: Key insights and suggested parameters
+            
+        Performance metrics calculated:
+            - Total return, average return, volatility, Sharpe ratio
+            - Win rate, maximum drawdown, signal count
+            - Composite score (weighted combination of metrics)
+            
+    Raises:
+        ValueError: If insufficient data (<100 points) or invalid strategy specified.
+        Exception: If optimization fails due to technical indicator calculation errors.
+        
+    Example:
+        >>> import pandas as pd
+        >>> # Generate sample price data
+        >>> prices = pd.Series([100 + i + np.random.normal(0, 2) for i in range(200)],
+        ...                   index=pd.date_range('2023-01-01', periods=200))
+        >>> 
+        >>> # Optimize RSI strategy with custom ranges
+        >>> custom_ranges = {
+        ...     'period': [14, 21, 28],
+        ...     'upper_threshold': [70, 75, 80],
+        ...     'lower_threshold': [20, 25, 30]
+        ... }
+        >>> optimization = optimize_signal_parameters(prices, strategy="rsi", 
+        ...                                         parameter_ranges=custom_ranges)
+        >>> 
+        >>> print(f"Best parameters: {optimization['best_parameters']}")
+        >>> print(f"Best Sharpe ratio: {optimization['best_performance']['sharpe_ratio']:.2f}")
+        >>> print(f"Most important parameter: {optimization['optimization_recommendations']['most_important_parameter']}")
+        
+    Note:
+        - Grid search tests all combinations of provided parameter ranges
+        - Signals generated using 5-day forward returns for backtesting
+        - Composite score weights: Sharpe ratio (40%), total return (30%), win rate (20%), max drawdown (-10%)
+        - Parameter importance calculated using correlation with performance scores
+        - Stability analysis examines consistency among top 10% of results
+        - Minimum 5 signals required for reliable performance calculation
+        - Failed parameter combinations are skipped automatically
+        - Results sorted by composite score for easy identification of best performers
+    ""\
     try:
         price_series = validate_price_data(prices)
         
@@ -732,7 +901,7 @@ def optimize_signal_parameters(prices: Union[pd.Series, Dict[str, Any]],
         return {"success": False, "error": f"Signal parameter optimization failed: {str(e)}"}
 
 
-# Registry of signal analysis functions
+# Registry of signal analysis functions - all using proven libraries
 SIGNAL_ANALYSIS_FUNCTIONS = {
     'analyze_signal_quality': analyze_signal_quality,
     'identify_false_signals': identify_false_signals,

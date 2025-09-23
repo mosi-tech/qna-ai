@@ -1,8 +1,26 @@
-"""
-Portfolio Strategy Simulation using libraries
+"""Portfolio strategy simulation using industry-standard libraries.
 
-All strategy simulation using empyrical and PyPortfolioOpt from requirements.txt
-From financial-analysis-function-library.json
+This module provides comprehensive portfolio and investment strategy simulation
+functionality including Dollar Cost Averaging (DCA) strategies, portfolio
+backtesting, and Monte Carlo simulation. All calculations leverage established
+libraries from requirements.txt (empyrical, numpy) to ensure accuracy and
+avoid code duplication.
+
+Functions are designed to integrate with the financial-analysis-function-library.json
+specification and provide standardized outputs for the MCP analytics server.
+
+Example:
+    Basic strategy simulation workflow:
+    
+    >>> from mcp.analytics.portfolio.simulation import simulate_dca_strategy
+    >>> import pandas as pd
+    >>> price_data = pd.Series(...)  # Historical price data
+    >>> dca_results = simulate_dca_strategy(price_data, investment_amount=1000)
+    >>> print(f"Total return: {dca_results['total_return_pct']}")
+    
+Note:
+    All simulation functions use empyrical for performance calculations
+    and provide comprehensive metrics for strategy evaluation.
 """
 
 import pandas as pd
@@ -12,7 +30,11 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # Use libraries from requirements.txt - no manual calculations
-import empyrical
+try:
+    import empyrical
+    EMPYRICAL_AVAILABLE = True
+except ImportError:
+    EMPYRICAL_AVAILABLE = False
 
 from ..utils.data_utils import validate_price_data, prices_to_returns, standardize_output
 from ..performance.metrics import calculate_returns_metrics, calculate_risk_metrics
@@ -23,21 +45,59 @@ def simulate_dca_strategy(prices: Union[pd.Series, Dict[str, Any]],
                          frequency: str = "M",
                          start_date: Optional[str] = None,
                          end_date: Optional[str] = None) -> Dict[str, Any]:
-    """
-    Simulate Dollar Cost Averaging strategy using empyrical.
+    """Simulate Dollar Cost Averaging (DCA) investment strategy.
     
-    From financial-analysis-function-library.json
-    Uses empyrical library for performance calculations - no code duplication
+    Dollar Cost Averaging involves investing a fixed amount at regular intervals
+    regardless of market conditions. This function simulates the strategy by
+    calculating shares purchased at each interval, tracking portfolio value over
+    time, and computing comprehensive performance metrics using the empyrical library.
     
     Args:
-        prices: Price data
-        investment_amount: Amount to invest each period
-        frequency: Investment frequency ('D', 'W', 'M')
-        start_date: Start date for simulation
-        end_date: End date for simulation
-        
+        prices: Historical price data for the asset. Can be provided as pandas
+            Series with dates as index, or dictionary with dates as keys and
+            prices as values.
+        investment_amount: Fixed dollar amount to invest at each interval.
+            Defaults to $1000.
+        frequency: Investment frequency for DCA strategy. Options:
+            - "D": Daily investment
+            - "W": Weekly investment (first trading day of week)
+            - "M": Monthly investment (first trading day of month)
+            Defaults to "M" (monthly).
+        start_date: Optional start date for simulation. If provided, only
+            price data from this date onwards will be used. Format: 'YYYY-MM-DD'.
+        end_date: Optional end date for simulation. If provided, only
+            price data up to this date will be used. Format: 'YYYY-MM-DD'.
+            
     Returns:
-        Dict: DCA simulation results with performance metrics
+        Dict[str, Any]: DCA simulation results including:
+            - total_investment: Total amount invested over the period
+            - final_portfolio_value: Final value of accumulated shares
+            - total_shares: Total shares accumulated through DCA
+            - average_cost_basis: Average price paid per share
+            - Performance metrics: Total return, annual return, volatility, Sharpe ratio
+            - Risk metrics: Maximum drawdown, Calmar ratio
+            - Strategy details: Investment frequency, number of investments, time series data
+            
+    Raises:
+        ValueError: If invalid frequency specified or no data in date range.
+        Exception: If DCA simulation fails due to data or calculation issues.
+        
+    Example:
+        >>> import pandas as pd
+        >>> # Simulate monthly DCA of $1000 into AAPL
+        >>> aapl_prices = pd.Series(...)  # Historical AAPL prices
+        >>> dca_result = simulate_dca_strategy(aapl_prices, investment_amount=1000, frequency="M")
+        >>> print(f"Total invested: ${dca_result['total_investment']:,.0f}")
+        >>> print(f"Final value: ${dca_result['final_portfolio_value']:,.0f}")
+        >>> print(f"Total return: {dca_result['total_return_pct']}")
+        >>> print(f"Average cost: ${dca_result['average_cost_basis']:.2f}")
+        
+    Note:
+        - Investments occur at the first available price in each period
+        - Shares are accumulated and valued at current market prices
+        - Performance metrics calculated using empyrical library when available
+        - Returns include both capital appreciation and the dollar-cost averaging effect
+        - Strategy assumes immediate investment (no cash drag)
     """
     try:
         price_series = validate_price_data(prices)
@@ -127,21 +187,57 @@ def backtest_strategy(prices: Union[pd.DataFrame, Dict[str, Any]],
                      rebalance_frequency: str = "M",
                      initial_value: float = 10000,
                      transaction_cost: float = 0.001) -> Dict[str, Any]:
-    """
-    Backtest portfolio strategy using empyrical.
+    """Backtest a portfolio strategy with rebalancing and transaction costs.
     
-    From financial-analysis-function-library.json
-    Uses empyrical library for performance calculations - no code duplication
+    This function simulates the historical performance of a portfolio strategy
+    by applying specified weights to asset returns, accounting for rebalancing
+    frequency and transaction costs. Provides comprehensive performance analysis
+    using the empyrical library for proven metrics calculations.
     
     Args:
-        prices: Price data for assets
-        strategy_weights: Portfolio weights (static dict or time-varying DataFrame)
-        rebalance_frequency: Rebalancing frequency ('D', 'W', 'M', 'Q')
-        initial_value: Initial portfolio value
-        transaction_cost: Transaction cost as fraction
-        
+        prices: Historical price data for portfolio assets. Can be provided as
+            pandas DataFrame with dates as index and assets as columns, or
+            dictionary with asset names as keys and price series as values.
+        strategy_weights: Portfolio allocation strategy. Can be:
+            - Dict[str, float]: Static weights applied throughout the period
+            - pd.DataFrame: Time-varying weights with dates as index and assets as columns
+        rebalance_frequency: Frequency of portfolio rebalancing. Options:
+            - "D": Daily rebalancing (transaction costs applied daily)
+            - "W": Weekly rebalancing (transaction costs applied weekly)
+            - "M": Monthly rebalancing (transaction costs applied monthly)
+            - "Q": Quarterly rebalancing (transaction costs applied quarterly)
+            Defaults to "M" (monthly).
+        initial_value: Starting portfolio value in dollars. Defaults to $10,000.
+        transaction_cost: Transaction cost as fraction of portfolio value on
+            rebalancing dates. Defaults to 0.001 (0.1% or 10 basis points).
+            
     Returns:
-        Dict: Backtest results with performance metrics
+        Dict[str, Any]: Backtest results including:
+            - Performance metrics: Total return, annual return, volatility, Sharpe ratio
+            - Risk metrics: Maximum drawdown, Calmar ratio, VaR, skewness, kurtosis
+            - Strategy analysis: Hit rate, win/loss ratios, transaction costs impact
+            - Time series: Portfolio values and returns over the backtest period
+            - Advanced metrics: Sortino ratio, stability, tail ratio (if empyrical available)
+            
+    Raises:
+        Exception: If strategy backtest fails due to data issues or calculation errors.
+        
+    Example:
+        >>> import pandas as pd
+        >>> # Backtest 60/40 stock/bond portfolio
+        >>> prices = pd.DataFrame({'SPY': [...], 'AGG': [...]})
+        >>> weights = {'SPY': 0.6, 'AGG': 0.4}
+        >>> results = backtest_strategy(prices, weights, rebalance_frequency="M")
+        >>> print(f"Annual return: {results['annual_return_pct']}")
+        >>> print(f"Sharpe ratio: {results['sharpe_ratio']:.2f}")
+        >>> print(f"Max drawdown: {results['max_drawdown_pct']}")
+        
+    Note:
+        - Portfolio returns calculated as weighted sum of asset returns
+        - Transaction costs applied on rebalancing dates only
+        - Time-varying weights are forward-filled for missing dates
+        - All weights normalized to sum to 1 at each point in time
+        - Uses empyrical library for comprehensive performance metrics
     """
     try:
         if isinstance(prices, dict):
@@ -277,22 +373,59 @@ def monte_carlo_simulation(expected_returns: Union[List[float], np.ndarray],
                           time_horizon: int = 252,
                           n_simulations: int = 1000,
                           initial_value: float = 10000) -> Dict[str, Any]:
-    """
-    Monte Carlo portfolio simulation using numpy.
+    """Perform Monte Carlo simulation of portfolio performance.
     
-    From financial-analysis-function-library.json
-    Uses numpy for random sampling - leveraging requirements.txt
+    Monte Carlo simulation generates thousands of possible future portfolio
+    value paths based on expected returns and risk characteristics. This function
+    uses numpy for efficient random sampling and provides statistical analysis
+    of potential outcomes including percentile distributions and risk metrics.
     
     Args:
-        expected_returns: Expected returns for assets
-        covariance_matrix: Covariance matrix
-        weights: Portfolio weights
-        time_horizon: Number of periods to simulate
-        n_simulations: Number of simulation paths
-        initial_value: Initial portfolio value
-        
+        expected_returns: Expected annual returns for each asset in the portfolio.
+            Can be provided as list or numpy array. Order must match weights and
+            covariance matrix.
+        covariance_matrix: Asset return covariance matrix. Can be provided as
+            nested list or numpy array. Must be square matrix with dimensions
+            matching the number of assets.
+        weights: Portfolio allocation weights. Can be provided as list (order
+            must match expected_returns) or dictionary mapping positions.
+        time_horizon: Number of trading days to simulate forward. Defaults to
+            252 (approximately one trading year). Use 22 for monthly, 63 for quarterly.
+        n_simulations: Number of simulation paths to generate. More simulations
+            provide more stable statistics but increase computation time.
+            Defaults to 1000.
+        initial_value: Starting portfolio value in dollars. Defaults to $10,000.
+            
     Returns:
-        Dict: Monte Carlo simulation results
+        Dict[str, Any]: Monte Carlo simulation results including:
+            - Statistical summary: Mean, std dev, min, max of final portfolio values
+            - Percentile analysis: 5th, 10th, 25th, 50th, 75th, 90th, 95th percentiles
+            - Risk analysis: Probability of loss, expected shortfall in worst 5% scenarios
+            - Portfolio characteristics: Expected return, volatility used in simulation
+            - Simulation parameters: Time horizon, number of paths, initial value
+            
+    Raises:
+        Exception: If Monte Carlo simulation fails due to invalid inputs or numerical issues.
+        
+    Example:
+        >>> import numpy as np
+        >>> # Simulate 3-asset portfolio
+        >>> expected_rets = [0.08, 0.06, 0.04]  # 8%, 6%, 4% expected returns
+        >>> cov_matrix = np.array([[0.04, 0.01, 0.01],
+        ...                        [0.01, 0.02, 0.005],
+        ...                        [0.01, 0.005, 0.01]])
+        >>> weights = [0.5, 0.3, 0.2]
+        >>> results = monte_carlo_simulation(expected_rets, cov_matrix, weights)
+        >>> print(f"Expected final value: ${results['mean_final_value']:,.0f}")
+        >>> print(f"5th percentile: ${results['percentile_5']:,.0f}")
+        >>> print(f"Probability of loss: {results['probability_of_loss_pct']}")
+        
+    Note:
+        - Assumes normal distribution of returns (log-normal for prices)
+        - Uses daily return simulation with sqrt(252) volatility scaling
+        - Random seed set to 42 for reproducible results
+        - Expected shortfall calculated as average of worst 5% outcomes
+        - Portfolio statistics calculated from individual asset characteristics
     """
     try:
         # Convert inputs to numpy arrays
@@ -366,7 +499,7 @@ def monte_carlo_simulation(expected_returns: Union[List[float], np.ndarray],
         return {"success": False, "error": f"Monte Carlo simulation failed: {str(e)}"}
 
 
-# Registry of simulation functions - all using libraries
+# Registry of simulation functions - all using proven libraries
 PORTFOLIO_SIMULATION_FUNCTIONS = {
     'simulate_dca_strategy': simulate_dca_strategy,
     'backtest_strategy': backtest_strategy,

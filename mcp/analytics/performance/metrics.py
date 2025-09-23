@@ -1,8 +1,51 @@
-"""
-Performance Metrics using empyrical library
+"""Performance Metrics Module using empyrical library.
 
-All performance calculations using empyrical from requirements.txt
-From financial-analysis-function-library.json
+This module provides comprehensive performance analysis functions using the industry-standard
+empyrical library for proven accuracy and reliability. All functions implement performance
+metrics from the financial-analysis-function-library.json with focus on leveraging established
+libraries rather than manual calculations to ensure consistency with industry standards.
+
+The module covers the complete spectrum of performance analysis from basic return calculations
+to advanced risk-adjusted metrics, benchmark comparisons, and specialized analysis for complex
+financial instruments like leveraged funds.
+
+Key Features:
+    - Complete reliance on empyrical library for core financial calculations
+    - Comprehensive return metrics (total, annual, cumulative, CAGR)
+    - Advanced risk metrics (volatility, Sharpe, Sortino, Calmar, Omega ratios)
+    - Benchmark comparison metrics (alpha, beta, tracking error, capture ratios)
+    - Detailed drawdown analysis with time series and recovery metrics
+    - Specialized analysis for leveraged funds with decay calculations
+    - Value-at-Risk and Conditional Value-at-Risk calculations
+    - Distribution analysis (skewness, kurtosis) for return characteristics
+
+Dependencies:
+    - empyrical: Core financial performance and risk calculations
+    - pandas: Data manipulation and time series handling
+    - numpy: Numerical computations and array operations
+    - scipy: Statistical analysis for distribution metrics
+
+Example:
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> from mcp.analytics.performance.metrics import calculate_returns_metrics, calculate_risk_metrics
+    >>> 
+    >>> # Create sample return data
+    >>> dates = pd.date_range('2020-01-01', periods=252, freq='D')
+    >>> returns = pd.Series(np.random.normal(0.0008, 0.015, 252), index=dates)
+    >>> 
+    >>> # Calculate comprehensive performance metrics
+    >>> performance = calculate_returns_metrics(returns)
+    >>> risk = calculate_risk_metrics(returns, risk_free_rate=0.02)
+    >>> 
+    >>> print(f"Annual Return: {performance['annual_return_pct']}")
+    >>> print(f"Sharpe Ratio: {risk['sharpe_ratio']:.3f}")
+    >>> print(f"Max Drawdown: {risk['max_drawdown_pct']}")
+
+Note:
+    All functions return standardized dictionary outputs with success indicators and detailed
+    error handling. The module prioritizes accuracy through established libraries over
+    custom implementations.
 """
 
 import pandas as pd
@@ -18,17 +61,61 @@ from ..utils.data_utils import validate_return_data, validate_price_data, standa
 
 
 def calculate_returns_metrics(returns: Union[pd.Series, Dict[str, Any]]) -> Dict[str, Any]:
-    """
-    Calculate comprehensive return metrics using empyrical.
+    """Calculate comprehensive return metrics using industry-standard empyrical library.
     
-    From financial-analysis-function-library.json
-    Uses empyrical library instead of manual calculations - no code duplication
+    Computes essential return metrics including total return, annualized return, and cumulative
+    return series using the empyrical library for proven accuracy. This function provides the
+    foundation for performance analysis by calculating time-weighted returns that account for
+    the compounding effect over multiple periods.
+    
+    The function uses empyrical's industry-standard implementations to ensure consistency with
+    professional portfolio management and performance reporting standards.
     
     Args:
-        returns: Return series
-        
+        returns (Union[pd.Series, Dict[str, Any]]): Return series as pandas Series with datetime
+            index or dictionary with return values. Values should be decimal returns 
+            (e.g., 0.05 for 5% return, -0.02 for -2% return).
+    
     Returns:
-        Dict: Comprehensive return metrics
+        Dict[str, Any]: Comprehensive return analysis with keys:
+            - total_return (float): Cumulative return over entire period (decimal)
+            - total_return_pct (str): Total return as percentage string
+            - annual_return (float): Annualized return (decimal)
+            - annual_return_pct (str): Annualized return as percentage string
+            - cumulative_returns (pd.Series): Time series of cumulative returns
+            - num_observations (int): Number of return observations
+            - success (bool): Whether calculation succeeded
+            - function_name (str): Function identifier for tracking
+    
+    Raises:
+        ValueError: If returns data cannot be converted to valid return series.
+        TypeError: If input data format is invalid or incompatible.
+        
+    Example:
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> 
+        >>> # Create sample daily return data for one year
+        >>> dates = pd.date_range('2023-01-01', periods=252, freq='D')
+        >>> daily_returns = pd.Series(np.random.normal(0.0008, 0.015, 252), index=dates)
+        >>> 
+        >>> # Calculate return metrics
+        >>> result = calculate_returns_metrics(daily_returns)
+        >>> print(f"Total Return: {result['total_return_pct']}")
+        >>> print(f"Annualized Return: {result['annual_return_pct']}")
+        >>> print(f"Number of Observations: {result['num_observations']}")
+        >>> 
+        >>> # Access cumulative return series for plotting
+        >>> cumulative_series = result['cumulative_returns']
+        >>> print(f"Final Cumulative Return: {cumulative_series.iloc[-1]:.3f}")
+        
+    Note:
+        - Uses empyrical.cum_returns_final() for total return calculation
+        - Uses empyrical.annual_return() for annualized return with automatic period detection
+        - Cumulative returns series shows portfolio growth over time (starting from 0)
+        - Annualized return calculation accounts for compounding effects
+        - Function handles both daily and other frequency data automatically
+        - Returns are calculated using time-weighted methodology for accurate performance measurement
     """
     try:
         returns_series = validate_return_data(returns)
@@ -55,18 +142,74 @@ def calculate_returns_metrics(returns: Union[pd.Series, Dict[str, Any]]) -> Dict
 
 def calculate_risk_metrics(returns: Union[pd.Series, Dict[str, Any]], 
                           risk_free_rate: float = 0.02) -> Dict[str, Any]:
-    """
-    Calculate comprehensive risk metrics using empyrical.
+    """Calculate comprehensive risk metrics using industry-standard empyrical library.
     
-    From financial-analysis-function-library.json
-    Uses empyrical library instead of manual calculations - no code duplication
+    Computes essential risk and risk-adjusted performance metrics including volatility, Sharpe ratio,
+    Sortino ratio, maximum drawdown, Value-at-Risk (VaR), Conditional Value-at-Risk (CVaR), and
+    distribution characteristics. Uses empyrical library for proven accuracy and consistency with
+    professional risk management standards.
+    
+    This function provides a complete risk profile essential for portfolio management, regulatory
+    reporting, and investment decision-making by implementing industry-standard risk calculations.
     
     Args:
-        returns: Return series
-        risk_free_rate: Risk-free rate
-        
+        returns (Union[pd.Series, Dict[str, Any]]): Return series as pandas Series with datetime
+            index or dictionary with return values. Values should be decimal returns 
+            (e.g., 0.02 for 2% return, -0.01 for -1% return).
+        risk_free_rate (float, optional): Risk-free rate for risk-adjusted calculations. 
+            Defaults to 0.02 (2%). Should be in annual decimal format.
+    
     Returns:
-        Dict: Comprehensive risk metrics
+        Dict[str, Any]: Comprehensive risk analysis with keys:
+            - volatility (float): Annualized volatility (standard deviation)
+            - volatility_pct (str): Volatility as percentage string
+            - sharpe_ratio (float): Risk-adjusted return ratio (excess return / volatility)
+            - sortino_ratio (float): Downside risk-adjusted return ratio
+            - calmar_ratio (float): Return to maximum drawdown ratio
+            - max_drawdown (float): Maximum peak-to-trough decline (decimal)
+            - max_drawdown_pct (str): Maximum drawdown as percentage string
+            - var_95 (float): 95% Value-at-Risk (expected worst 5% loss)
+            - var_95_pct (str): VaR as percentage string
+            - cvar_95 (float): 95% Conditional Value-at-Risk (expected loss given VaR breach)
+            - cvar_95_pct (str): CVaR as percentage string
+            - skewness (float): Return distribution asymmetry
+            - kurtosis (float): Return distribution tail thickness
+            - success (bool): Whether calculation succeeded
+            - function_name (str): Function identifier for tracking
+    
+    Raises:
+        ValueError: If returns data cannot be converted to valid return series.
+        TypeError: If input data format is invalid or risk_free_rate is not numeric.
+        
+    Example:
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> 
+        >>> # Create sample return data with some volatility
+        >>> dates = pd.date_range('2023-01-01', periods=252, freq='D')
+        >>> returns = pd.Series(np.random.normal(0.0008, 0.015, 252), index=dates)
+        >>> 
+        >>> # Calculate risk metrics
+        >>> result = calculate_risk_metrics(returns, risk_free_rate=0.02)
+        >>> print(f"Annualized Volatility: {result['volatility_pct']}")
+        >>> print(f"Sharpe Ratio: {result['sharpe_ratio']:.3f}")
+        >>> print(f"Maximum Drawdown: {result['max_drawdown_pct']}")
+        >>> print(f"VaR 95%: {result['var_95_pct']}")
+        >>> print(f"Sortino Ratio: {result['sortino_ratio']:.3f}")
+        >>> 
+        >>> # Check distribution characteristics
+        >>> print(f"Skewness: {result['skewness']:.3f}")
+        >>> print(f"Kurtosis: {result['kurtosis']:.3f}")
+        
+    Note:
+        - Volatility is annualized using square root of time scaling
+        - Sharpe ratio measures excess return per unit of total risk
+        - Sortino ratio focuses on downside risk only (more relevant for asymmetric returns)
+        - VaR and CVaR use historical simulation methodology
+        - Skewness > 0 indicates positive tail (more upside potential)
+        - Kurtosis > 0 indicates fat tails (more extreme events than normal distribution)
+        - All ratios use the specified risk-free rate for excess return calculations
+        - Maximum drawdown represents the worst peak-to-trough decline experienced
     """
     try:
         returns_series = validate_return_data(returns)
@@ -109,19 +252,72 @@ def calculate_risk_metrics(returns: Union[pd.Series, Dict[str, Any]],
 def calculate_benchmark_metrics(returns: Union[pd.Series, Dict[str, Any]],
                                 benchmark_returns: Union[pd.Series, Dict[str, Any]],
                                 risk_free_rate: float = 0.02) -> Dict[str, Any]:
-    """
-    Calculate benchmark comparison metrics using empyrical.
+    """Calculate comprehensive benchmark comparison metrics using empyrical library.
     
-    From financial-analysis-function-library.json
-    Uses empyrical library instead of manual calculations - no code duplication
+    Computes relative performance metrics including alpha, beta, tracking error, information ratio,
+    and upside/downside capture ratios to evaluate portfolio performance against a benchmark.
+    These metrics are essential for understanding active management effectiveness and systematic
+    risk exposure relative to market indices.
+    
+    The function uses empyrical's industry-standard implementations for consistent calculation
+    of benchmark comparison metrics used in professional portfolio management and performance attribution.
     
     Args:
-        returns: Portfolio returns
-        benchmark_returns: Benchmark returns
-        risk_free_rate: Risk-free rate
-        
+        returns (Union[pd.Series, Dict[str, Any]]): Portfolio return series as pandas Series with
+            datetime index or dictionary with return values. Values should be decimal returns.
+        benchmark_returns (Union[pd.Series, Dict[str, Any]]): Benchmark return series with same
+            format as portfolio returns. Will be automatically aligned with portfolio returns.
+        risk_free_rate (float, optional): Risk-free rate for alpha calculation. Defaults to 0.02 (2%).
+            Should be in annual decimal format.
+    
     Returns:
-        Dict: Benchmark comparison metrics
+        Dict[str, Any]: Comprehensive benchmark comparison with keys:
+            - alpha (float): Jensen's alpha (excess return after adjusting for systematic risk)
+            - alpha_pct (str): Alpha as percentage string
+            - beta (float): Systematic risk (sensitivity to benchmark movements)
+            - tracking_error (float): Standard deviation of excess returns
+            - tracking_error_pct (str): Tracking error as percentage string
+            - information_ratio (float): Excess return per unit of tracking error
+            - up_capture (float): Upside capture ratio (participation in positive benchmark periods)
+            - down_capture (float): Downside capture ratio (participation in negative benchmark periods)
+            - success (bool): Whether calculation succeeded
+            - function_name (str): Function identifier for tracking
+    
+    Raises:
+        ValueError: If return data cannot be converted to valid return series or alignment fails.
+        TypeError: If input data format is invalid or risk_free_rate is not numeric.
+        
+    Example:
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> 
+        >>> # Create sample portfolio and benchmark return data
+        >>> dates = pd.date_range('2023-01-01', periods=252, freq='D')
+        >>> benchmark_returns = pd.Series(np.random.normal(0.0005, 0.012, 252), index=dates)
+        >>> # Portfolio with some alpha and higher beta
+        >>> portfolio_returns = pd.Series(
+        ...     benchmark_returns * 1.2 + np.random.normal(0.0002, 0.005, 252), 
+        ...     index=dates
+        ... )
+        >>> 
+        >>> # Calculate benchmark comparison metrics
+        >>> result = calculate_benchmark_metrics(portfolio_returns, benchmark_returns)
+        >>> print(f"Alpha: {result['alpha_pct']}")
+        >>> print(f"Beta: {result['beta']:.3f}")
+        >>> print(f"Information Ratio: {result['information_ratio']:.3f}")
+        >>> print(f"Tracking Error: {result['tracking_error_pct']}")
+        >>> print(f"Upside Capture: {result['up_capture']:.3f}")
+        >>> print(f"Downside Capture: {result['down_capture']:.3f}")
+        
+    Note:
+        - Alpha measures risk-adjusted excess return (positive = outperformance)
+        - Beta measures systematic risk (1.0 = same volatility as benchmark)
+        - Information ratio measures active management efficiency (higher = better)
+        - Tracking error measures consistency of performance relative to benchmark
+        - Upside capture > 1.0 indicates strong participation in market gains
+        - Downside capture < 1.0 indicates protection during market declines
+        - Returns are automatically aligned for fair comparison
+        - Uses CAPM framework for alpha and beta calculations
     """
     try:
         portfolio_returns = validate_return_data(returns)
@@ -623,19 +819,77 @@ def calculate_dividend_yield(dividends: Union[list, np.ndarray, pd.Series], pric
 def analyze_leverage_fund(prices: Union[pd.Series, Dict[str, Any]], 
                          leverage: float, 
                          underlying_prices: Union[pd.Series, Dict[str, Any]]) -> Dict[str, Any]:
-    """
-    Analyze leveraged fund characteristics and performance.
+    """Analyze leveraged fund characteristics including tracking efficiency and decay effects.
     
-    From financial-analysis-function-library.json specialized_analysis category
-    Uses pandas and numpy for leveraged fund analysis - no code duplication
+    Performs comprehensive analysis of leveraged fund performance including tracking efficiency,
+    volatility decay, compounding effects, and daily rebalancing costs. This analysis is crucial
+    for understanding the performance differences between leveraged funds and their theoretical
+    leveraged returns, particularly the impact of volatility drag over time.
+    
+    Leveraged funds use daily rebalancing to maintain target leverage, which creates compounding
+    effects that deviate from simple leverage multiplication, especially in volatile markets.
     
     Args:
-        prices: Leveraged fund price series
-        leverage: Target leverage ratio (e.g., 2.0 for 2x, 3.0 for 3x)
-        underlying_prices: Underlying asset price series
-        
+        prices (Union[pd.Series, Dict[str, Any]]): Leveraged fund price series as pandas Series
+            with datetime index or dictionary with price values. Values should be absolute prices.
+        leverage (float): Target leverage ratio of the fund (e.g., 2.0 for 2x fund, 3.0 for 3x fund,
+            -1.0 for inverse fund). Positive values indicate long leverage, negative for inverse.
+        underlying_prices (Union[pd.Series, Dict[str, Any]]): Underlying asset price series with
+            same format as leveraged fund prices. Will be automatically aligned.
+    
     Returns:
-        Dict: Leveraged fund analysis data
+        Dict[str, Any]: Comprehensive leveraged fund analysis with keys:
+            - target_leverage (float): Target leverage ratio
+            - actual_leverage (float): Realized leverage based on correlation and volatility
+            - leverage_efficiency (float): Actual leverage / target leverage ratio
+            - tracking_error (float): Standard deviation of tracking differences
+            - theoretical_drag (float): Theoretical volatility drag impact
+            - leveraged_total_return (float): Actual leveraged fund total return
+            - underlying_total_return (float): Underlying asset total return
+            - expected_leveraged_return (float): Theoretical leveraged return
+            - performance_gap (float): Difference between actual and expected returns
+            - estimated_annual_cost (float): Estimated annual cost of daily rebalancing
+            - underlying_volatility (float): Underlying asset annualized volatility
+            - leveraged_volatility (float): Leveraged fund annualized volatility
+            - success (bool): Whether calculation succeeded
+            - function_name (str): Function identifier for tracking
+    
+    Raises:
+        ValueError: If price data cannot be converted to valid price series or alignment fails.
+        TypeError: If input data format is invalid or leverage is not numeric.
+        ZeroDivisionError: If leverage is zero or underlying volatility calculations fail.
+        
+    Example:
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> 
+        >>> # Create sample underlying asset and leveraged fund data
+        >>> dates = pd.date_range('2023-01-01', periods=252, freq='D')
+        >>> underlying_returns = pd.Series(np.random.normal(0.0005, 0.015, 252), index=dates)
+        >>> underlying_prices = pd.Series(100 * np.cumprod(1 + underlying_returns), index=dates)
+        >>> 
+        >>> # Simulate 2x leveraged fund with some tracking error and decay
+        >>> leverage_ratio = 2.0
+        >>> leveraged_returns = underlying_returns * leverage_ratio + np.random.normal(0, 0.002, 252)
+        >>> leveraged_prices = pd.Series(100 * np.cumprod(1 + leveraged_returns), index=dates)
+        >>> 
+        >>> # Analyze leveraged fund performance
+        >>> result = analyze_leverage_fund(leveraged_prices, leverage_ratio, underlying_prices)
+        >>> print(f"Target Leverage: {result['target_leverage']:.1f}x")
+        >>> print(f"Actual Leverage: {result['actual_leverage']:.3f}x")
+        >>> print(f"Leverage Efficiency: {result['leverage_efficiency']:.3f}")
+        >>> print(f"Performance Gap: {result['performance_gap_pct']}")
+        >>> print(f"Theoretical Drag: {result['theoretical_drag_pct']}")
+        >>> print(f"Estimated Annual Cost: {result['estimated_annual_cost_pct']}")
+        
+    Note:
+        - Actual leverage calculated as correlation × (leveraged_vol / underlying_vol)
+        - Theoretical drag = 0.5 × (leverage - 1) × underlying_volatility²
+        - Performance gap shows actual vs theoretical leveraged returns
+        - Daily rebalancing costs increase with underlying asset volatility
+        - Leveraged funds typically underperform theoretical leverage in volatile markets
+        - Analysis accounts for compounding effects of daily rebalancing
+        - Negative leverage values supported for inverse funds
     """
     try:
         leveraged_prices = validate_price_data(prices)

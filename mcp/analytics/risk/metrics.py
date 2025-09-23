@@ -1,8 +1,33 @@
-"""
-Risk Metrics using empyrical and scipy
+"""Risk metrics and analysis using industry-standard libraries.
 
-All risk calculations using libraries from requirements.txt
-From financial-analysis-function-library.json
+This module provides comprehensive risk measurement and analysis functionality including
+Value at Risk (VaR), Conditional Value at Risk (CVaR), correlation analysis, beta analysis,
+stress testing, and various risk decomposition techniques. All calculations leverage
+established libraries from requirements.txt (empyrical, scipy, numpy) to ensure accuracy
+and avoid code duplication.
+
+The module supports multiple risk measurement approaches including:
+- Historical, parametric, and Cornish-Fisher VaR calculation
+- Component and marginal VaR for risk attribution
+- Correlation and concentration analysis
+- Tail risk and stress testing
+- Portfolio risk decomposition and budgeting
+
+Functions are designed to integrate with the financial-analysis-function-library.json
+specification and provide standardized outputs for the MCP analytics server.
+
+Example:
+    Basic risk analysis workflow:
+    
+    >>> from mcp.analytics.risk.metrics import calculate_var, calculate_beta_analysis
+    >>> import pandas as pd
+    >>> returns = pd.Series(...)  # Historical returns data
+    >>> var_result = calculate_var(returns, confidence_level=0.05, method="historical")
+    >>> print(f"95% VaR: {var_result['var_daily_pct']}")
+    
+Note:
+    All functions return standardized output dictionaries compatible with the
+    MCP analytics server architecture and use proven financial risk metrics.
 """
 
 import pandas as pd
@@ -21,19 +46,50 @@ from ..utils.data_utils import validate_return_data, align_series, standardize_o
 def calculate_var(returns: Union[pd.Series, Dict[str, Any]], 
                   confidence_level: float = 0.05,
                   method: str = "historical") -> Dict[str, Any]:
-    """
-    Calculate Value at Risk using empyrical and scipy.
+    """Calculate Value at Risk (VaR) using multiple methodologies.
     
-    From financial-analysis-function-library.json
-    Uses empyrical/scipy libraries instead of manual calculations - no code duplication
+    Value at Risk estimates the maximum potential loss for a portfolio over a
+    specified time horizon at a given confidence level. This function supports
+    three different calculation methods: historical simulation, parametric
+    (normal distribution), and Cornish-Fisher expansion for non-normal distributions.
     
     Args:
-        returns: Return series
-        confidence_level: Confidence level (e.g., 0.05 for 95% VaR)
-        method: Calculation method ('historical', 'parametric', 'cornish_fisher')
-        
+        returns: Historical returns data. Can be provided as pandas Series with
+            dates as index, or dictionary with dates as keys and returns as values.
+        confidence_level: Confidence level for VaR calculation. Defaults to 0.05
+            for 95% VaR (5% tail probability). Common values: 0.01, 0.05, 0.10.
+        method: VaR calculation method. Options:
+            - "historical": Uses empirical distribution of returns (non-parametric)
+            - "parametric": Assumes normal distribution of returns
+            - "cornish_fisher": Adjusts for skewness and kurtosis using Cornish-Fisher expansion
+            Defaults to "historical".
+            
     Returns:
-        Dict: VaR values and analysis
+        Dict[str, Any]: VaR analysis results including:
+            - var_daily/var_annual: Daily and annualized VaR values
+            - confidence_level: Confidence level used in calculations
+            - method: VaR calculation method applied
+            - violations: Number of actual returns below VaR threshold
+            - violation_rate: Percentage of violations vs expected
+            - backtesting_ratio: Ratio of actual vs expected violations (for model validation)
+            
+    Raises:
+        Exception: If VaR calculation fails due to invalid inputs or computation errors.
+        
+    Example:
+        >>> import pandas as pd
+        >>> returns = pd.Series([-0.02, 0.01, -0.015, 0.005, -0.03, ...])  # Daily returns
+        >>> var_result = calculate_var(returns, confidence_level=0.05, method="historical")
+        >>> print(f"95% Daily VaR: {var_result['var_daily_pct']}")
+        >>> print(f"Violations: {var_result['violations']} out of {len(returns)} observations")
+        >>> print(f"Backtesting ratio: {var_result['backtesting_ratio']:.2f}")
+        
+    Note:
+        - Historical method uses actual return percentiles (most conservative)
+        - Parametric method assumes returns are normally distributed
+        - Cornish-Fisher adjusts normal distribution for higher moments
+        - Backtesting ratio should be close to 1.0 for well-calibrated models
+        - Annual VaR calculated using √252 scaling factor
     """
     try:
         returns_series = validate_return_data(returns)
@@ -101,18 +157,44 @@ def calculate_var(returns: Union[pd.Series, Dict[str, Any]],
 
 def calculate_cvar(returns: Union[pd.Series, Dict[str, Any]], 
                    confidence_level: float = 0.05) -> Dict[str, Any]:
-    """
-    Calculate Conditional Value at Risk (Expected Shortfall) using empyrical.
+    """Calculate Conditional Value at Risk (Expected Shortfall).
     
-    From financial-analysis-function-library.json
-    Uses empyrical library instead of manual calculations - no code duplication
+    Conditional Value at Risk (CVaR), also known as Expected Shortfall, measures
+    the average loss in the worst-case scenarios beyond the VaR threshold. It provides
+    a more comprehensive risk measure than VaR by considering the severity of tail losses,
+    not just their probability.
     
     Args:
-        returns: Return series
-        confidence_level: Confidence level
-        
+        returns: Historical returns data. Can be provided as pandas Series with
+            dates as index, or dictionary with dates as keys and returns as values.
+        confidence_level: Confidence level for CVaR calculation. Defaults to 0.05
+            for 95% CVaR (average loss in worst 5% of scenarios). Should match
+            VaR confidence level for meaningful comparison.
+            
     Returns:
-        Dict: CVaR values and analysis
+        Dict[str, Any]: CVaR analysis results including:
+            - cvar_daily/cvar_annual: Daily and annualized CVaR values
+            - var_daily: Corresponding VaR value for comparison
+            - cvar_var_ratio: Ratio of CVaR to VaR (measures tail risk severity)
+            - confidence_level: Confidence level used in calculations
+            
+    Raises:
+        Exception: If CVaR calculation fails due to invalid inputs.
+        
+    Example:
+        >>> import pandas as pd
+        >>> returns = pd.Series([-0.02, 0.01, -0.015, 0.005, -0.03, ...])  # Daily returns
+        >>> cvar_result = calculate_cvar(returns, confidence_level=0.05)
+        >>> print(f"95% CVaR: {cvar_result['cvar_daily_pct']}")
+        >>> print(f"95% VaR: {cvar_result['var_daily_pct']}")
+        >>> print(f"CVaR/VaR ratio: {cvar_result['cvar_var_ratio']:.2f}")
+        
+    Note:
+        - CVaR is always more conservative (higher loss) than VaR
+        - CVaR/VaR ratio > 1.2 suggests significant tail risk
+        - CVaR is a coherent risk measure (satisfies all coherence axioms)
+        - Uses empyrical library for consistent calculation with industry standards
+        - Annual CVaR calculated using √252 scaling factor
     """
     try:
         returns_series = validate_return_data(returns)
@@ -148,18 +230,57 @@ def calculate_cvar(returns: Union[pd.Series, Dict[str, Any]],
 
 def calculate_correlation_analysis(returns: Union[pd.DataFrame, Dict[str, Any], List[List[float]]],
                                   method: str = "pearson") -> Dict[str, Any]:
-    """
-    Calculate correlation analysis using pandas and scipy.
+    """Calculate comprehensive correlation analysis for multiple assets.
     
-    From financial-analysis-function-library.json
-    Uses pandas/scipy libraries instead of manual calculations - no code duplication
+    This function computes correlation matrices and provides detailed analysis
+    of relationships between assets including highest/lowest correlations,
+    average correlation levels, and diversification implications. Supports
+    multiple correlation methods to handle different data characteristics.
     
     Args:
-        returns: Return data for multiple assets (DataFrame, dict, or list of lists)
-        method: Correlation method ('pearson', 'spearman', 'kendall')
-        
+        returns: Multi-asset return data. Can be provided as:
+            - pandas DataFrame: Assets as columns, dates as index
+            - Dictionary: Asset names as keys, return series as values
+            - List of lists: Each inner list contains returns for one asset
+        method: Correlation calculation method. Options:
+            - "pearson": Linear correlation (assumes normal distributions)
+            - "spearman": Rank correlation (non-parametric, handles outliers)
+            - "kendall": Rank correlation (robust to outliers, smaller samples)
+            Defaults to "pearson".
+            
     Returns:
-        Dict: Correlation matrix and analysis
+        Dict[str, Any]: Correlation analysis results including:
+            - correlation_matrix: Full correlation matrix between all assets
+            - pairwise_correlations: List of all unique asset pair correlations
+            - highest_correlation: Asset pair with strongest positive correlation
+            - lowest_correlation: Asset pair with strongest negative correlation
+            - average_correlation: Mean correlation across all asset pairs
+            - diversification_ratio: 1 - |average_correlation| (higher = better diversification)
+            - n_assets: Number of assets analyzed
+            - n_observations: Number of time periods used
+            
+    Raises:
+        ValueError: If fewer than 2 assets provided.
+        Exception: If correlation analysis fails due to data issues.
+        
+    Example:
+        >>> import pandas as pd
+        >>> returns_df = pd.DataFrame({
+        ...     'STOCKS': [0.01, -0.02, 0.015, ...],
+        ...     'BONDS': [-0.005, 0.008, -0.002, ...],
+        ...     'GOLD': [0.002, 0.012, -0.008, ...]
+        ... })
+        >>> corr_analysis = calculate_correlation_analysis(returns_df, method="pearson")
+        >>> print(f"Average correlation: {corr_analysis['average_correlation']:.3f}")
+        >>> print(f"Diversification ratio: {corr_analysis['diversification_ratio']:.3f}")
+        >>> print(f"Highest correlation: {corr_analysis['highest_correlation']}")
+        
+    Note:
+        - Pearson correlation measures linear relationships
+        - Spearman correlation captures monotonic relationships
+        - Kendall correlation is more robust but computationally intensive
+        - Diversification benefits decrease as average correlation increases
+        - NaN values are automatically removed before calculation
     """
     try:
         if isinstance(returns, dict):
@@ -236,19 +357,53 @@ def calculate_correlation_analysis(returns: Union[pd.DataFrame, Dict[str, Any], 
 def calculate_beta_analysis(asset_returns: Union[pd.Series, Dict[str, Any]],
                            market_returns: Union[pd.Series, Dict[str, Any]],
                            risk_free_rate: float = 0.02) -> Dict[str, Any]:
-    """
-    Calculate beta analysis using empyrical and scipy.
+    """Calculate comprehensive beta analysis relative to market benchmark.
     
-    From financial-analysis-function-library.json
-    Uses empyrical/scipy libraries instead of manual calculations - no code duplication
+    Beta measures the sensitivity of an asset's returns to market movements.
+    This function calculates beta along with alpha, correlation, tracking error,
+    and other measures that help assess systematic risk and relative performance
+    characteristics using the empyrical library for proven calculations.
     
     Args:
-        asset_returns: Asset return series
-        market_returns: Market return series
-        risk_free_rate: Risk-free rate
-        
+        asset_returns: Asset return series. Can be provided as pandas Series
+            with dates as index, or dictionary with dates as keys and returns as values.
+        market_returns: Market benchmark return series. Must have overlapping
+            periods with asset_returns. Can be provided as pandas Series or dictionary.
+        risk_free_rate: Annual risk-free rate used for alpha and excess return
+            calculations. Defaults to 0.02 (2%).
+            
     Returns:
-        Dict: Beta analysis results
+        Dict[str, Any]: Beta analysis results including:
+            - beta: Systematic risk coefficient (market sensitivity)
+            - alpha: Risk-adjusted excess return (Jensen's alpha)
+            - correlation: Linear correlation with market
+            - r_squared: Proportion of variance explained by market (beta²×correlation²)
+            - tracking_error: Standard deviation of excess returns (annualized)
+            - information_ratio: Excess return divided by tracking error
+            - beta_interpretation: Classification (high/moderate/low/negative beta)
+            - n_observations: Number of overlapping return periods
+            
+    Raises:
+        Exception: If beta analysis fails due to insufficient data or calculation errors.
+        
+    Example:
+        >>> import pandas as pd
+        >>> asset_rets = pd.Series([0.02, -0.01, 0.015, -0.008, ...])  # Stock returns
+        >>> market_rets = pd.Series([0.015, -0.005, 0.01, -0.002, ...])  # Market returns
+        >>> beta_analysis = calculate_beta_analysis(asset_rets, market_rets, risk_free_rate=0.03)
+        >>> print(f"Beta: {beta_analysis['beta']:.2f}")
+        >>> print(f"Alpha: {beta_analysis['alpha_pct']}")
+        >>> print(f"R-squared: {beta_analysis['r_squared']:.3f}")
+        >>> print(f"Risk profile: {beta_analysis['beta_interpretation']}")
+        
+    Note:
+        - Beta > 1.2: High beta (aggressive, more volatile than market)
+        - Beta 0.8-1.2: Moderate beta (similar volatility to market)
+        - Beta < 0.8: Low beta (defensive, less volatile than market)
+        - Beta < 0: Negative beta (tends to move opposite to market)
+        - Alpha > 0 indicates outperformance after adjusting for systematic risk
+        - R-squared shows how much of asset's movement is explained by market
+        - Uses empyrical library for consistent industry-standard calculations
     """
     try:
         asset_series = validate_return_data(asset_returns)
@@ -307,18 +462,58 @@ def calculate_beta_analysis(asset_returns: Union[pd.Series, Dict[str, Any]],
 
 def stress_test_portfolio(returns: Union[pd.Series, Dict[str, Any]],
                          stress_scenarios: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
-    """
-    Conduct portfolio stress testing using scipy.
+    """Conduct comprehensive portfolio stress testing under adverse scenarios.
     
-    From financial-analysis-function-library.json
-    Uses scipy for statistical analysis - no code duplication
+    Stress testing evaluates portfolio performance under extreme market conditions
+    by applying various shock scenarios to historical return characteristics.
+    This function calculates expected returns, volatility, VaR, and loss probabilities
+    under each stress scenario using scipy for statistical analysis.
     
     Args:
-        returns: Portfolio return series
-        stress_scenarios: Custom stress scenarios
-        
+        returns: Portfolio return series. Can be provided as pandas Series with
+            dates as index, or dictionary with dates as keys and returns as values.
+        stress_scenarios: Optional list of custom stress scenarios. If not provided,
+            uses default scenarios (market crash, moderate correction, high volatility,
+            low growth). Each scenario should be a dictionary with:
+            - "name": Scenario description
+            - "return_shock": Additional return impact (e.g., -0.20 for 20% loss)
+            - "volatility_multiplier": Volatility scaling factor (e.g., 2.0 for double volatility)
+            
     Returns:
-        Dict: Stress test results
+        Dict[str, Any]: Stress test results including:
+            - base_annual_return/volatility: Original portfolio characteristics
+            - stress_scenarios: Detailed results for each scenario
+            - worst_case_scenario: Scenario with lowest expected return
+            - n_scenarios: Number of scenarios tested
+            
+        Each scenario result includes:
+            - stressed_annual_return/volatility: Adjusted performance metrics
+            - var_95_annual/cvar_95_annual: Risk measures under stress
+            - prob_loss_X%: Probability of various loss thresholds
+            
+    Raises:
+        Exception: If stress testing fails due to invalid inputs or calculation errors.
+        
+    Example:
+        >>> import pandas as pd
+        >>> portfolio_returns = pd.Series([0.001, -0.015, 0.008, ...])  # Daily returns
+        >>> # Custom stress scenario
+        >>> custom_scenarios = [
+        ...     {"name": "Financial Crisis", "return_shock": -0.30, "volatility_multiplier": 3.0},
+        ...     {"name": "Inflation Spike", "return_shock": -0.15, "volatility_multiplier": 1.8}
+        ... ]
+        >>> stress_results = stress_test_portfolio(portfolio_returns, custom_scenarios)
+        >>> worst_case = stress_results['worst_case_scenario']
+        >>> print(f"Worst scenario: {worst_case['scenario_name']}")
+        >>> print(f"Expected return under stress: {worst_case['stressed_annual_return_pct']}")
+        
+    Note:
+        - Default scenarios cover major market stress types
+        - Uses normal distribution assumptions for probability calculations
+        - Return shocks are applied as additive adjustments to daily returns
+        - Volatility multipliers scale the historical standard deviation
+        - Probability calculations assume stressed returns follow normal distribution
+        - Results help assess portfolio resilience and potential tail losses
     """
     try:
         returns_series = validate_return_data(returns)
@@ -947,18 +1142,50 @@ def calculate_risk_budget(weights: Union[pd.Series, Dict[str, Any], List[float]]
 
 
 def calculate_tail_risk(returns: Union[pd.Series, Dict[str, Any]], threshold: float) -> Dict[str, Any]:
-    """
-    Calculate tail risk statistics.
+    """Calculate comprehensive tail risk statistics for extreme events.
     
-    From financial-analysis-function-library.json risk_analysis category
-    Uses scipy and numpy for tail risk analysis - no code duplication
+    Tail risk analysis focuses on the statistical properties of extreme negative
+    returns (tail events) that exceed a specified threshold. This function provides
+    detailed analysis of tail frequency, severity, and distributional characteristics
+    to help assess the risk of extreme losses.
     
     Args:
-        returns: Return series
-        threshold: Threshold for tail definition (e.g., -0.05 for 5% loss)
-        
+        returns: Historical returns data. Can be provided as pandas Series with
+            dates as index, or dictionary with dates as keys and returns as values.
+        threshold: Threshold defining tail events (e.g., -0.05 for returns
+            worse than -5%). All returns at or below this level are considered
+            tail events for analysis.
+            
     Returns:
-        Dict: Tail risk statistics
+        Dict[str, Any]: Tail risk analysis including:
+            - threshold: Threshold value used to define tail events
+            - tail_frequency: Proportion of observations in the tail
+            - tail_mean: Average return among tail events (expected tail loss)
+            - tail_volatility: Standard deviation of tail event returns
+            - tail_events_count: Number of tail events observed
+            - expected_tail_loss: Mean loss given a tail event occurs
+            - tail_skewness/kurtosis: Higher moments of tail distribution
+            - total_observations: Total number of return observations
+            
+    Raises:
+        ValueError: If tail risk calculation fails due to data issues.
+        
+    Example:
+        >>> import pandas as pd
+        >>> returns = pd.Series([0.01, -0.02, 0.005, -0.08, -0.12, ...])  # Daily returns
+        >>> tail_analysis = calculate_tail_risk(returns, threshold=-0.05)
+        >>> print(f"Tail frequency: {tail_analysis['tail_frequency_pct']}")
+        >>> print(f"Expected tail loss: {tail_analysis['expected_tail_loss_pct']}")
+        >>> print(f"Tail events: {tail_analysis['tail_events_count']} out of {tail_analysis['total_observations']}")
+        
+    Note:
+        - Tail frequency shows how often extreme losses occur
+        - Expected tail loss provides conditional expectation given tail event
+        - Tail volatility measures dispersion of extreme losses
+        - Higher tail skewness indicates more extreme outliers in tail
+        - Tail kurtosis measures thickness of extreme tail distribution
+        - Returns empty statistics if no tail events found in data
+        - Useful for stress testing and extreme risk scenario planning
     """
     try:
         returns_series = validate_return_data(returns)
@@ -1066,17 +1293,48 @@ def calculate_diversification_ratio(portfolio_vol: float, weighted_avg_vol: floa
 
 
 def calculate_concentration_metrics(weights: Union[pd.Series, Dict[str, Any], List[float]]) -> Dict[str, Any]:
-    """
-    Calculate various concentration measures.
+    """Calculate comprehensive portfolio concentration and diversification metrics.
     
-    From financial-analysis-function-library.json risk_analysis category
-    Uses numpy and scipy for concentration analysis - no code duplication
+    Portfolio concentration analysis measures how equally assets are weighted
+    within a portfolio. High concentration increases specific risk, while better
+    diversification (lower concentration) can reduce portfolio volatility through
+    the benefits of diversification. This function calculates multiple established
+    concentration measures.
     
     Args:
-        weights: Portfolio weights
-        
+        weights: Portfolio allocation weights. Can be provided as pandas Series
+            with asset names as index, dictionary mapping asset names to weights,
+            or list of weights. Weights will be normalized to sum to 1.
+            
     Returns:
-        Dict: Concentration metrics
+        Dict[str, Any]: Concentration analysis including:
+            - herfindahl_index: Sum of squared weights (0=perfectly diversified, 1=concentrated)
+            - effective_assets: 1/HHI - equivalent number of equally weighted assets
+            - concentration_ratio_N: Percentage held in top N positions (1,3,5,10)
+            - gini_coefficient: Inequality measure (0=equal weights, 1=maximum inequality)
+            - max_weight: Largest individual position size
+            - shannon_entropy: Information-theoretic diversity measure
+            - total_assets: Number of assets in portfolio
+            
+    Raises:
+        ValueError: If concentration calculation fails due to invalid weights.
+        
+    Example:
+        >>> weights = {'AAPL': 0.30, 'GOOGL': 0.25, 'MSFT': 0.20, 'AMZN': 0.15, 'Others': 0.10}
+        >>> concentration = calculate_concentration_metrics(weights)
+        >>> print(f"Herfindahl Index: {concentration['herfindahl_index']:.3f}")
+        >>> print(f"Effective assets: {concentration['effective_assets']:.1f}")
+        >>> print(f"Top 3 concentration: {concentration['concentration_ratio_3_pct']}")
+        >>> print(f"Max position: {concentration['max_weight_pct']}")
+        
+    Note:
+        - HHI = 1/N for equally weighted portfolio with N assets
+        - HHI approaches 1.0 as portfolio becomes more concentrated
+        - Effective assets shows diversification equivalent in equal-weight terms
+        - Concentration ratios show cumulative weight in largest positions
+        - Gini coefficient borrowed from income inequality measurement
+        - Shannon entropy higher when weights are more equally distributed
+        - All weights converted to absolute values and normalized
     """
     try:
         # Convert to numpy array
@@ -1148,7 +1406,7 @@ def calculate_concentration_metrics(weights: Union[pd.Series, Dict[str, Any], Li
         raise ValueError(f"Concentration metrics calculation failed: {str(e)}")
 
 
-# Registry of risk metrics functions - all using libraries
+# Registry of risk metrics functions - all using proven libraries
 RISK_METRICS_FUNCTIONS = {
     'calculate_var': calculate_var,
     'calculate_cvar': calculate_cvar,
