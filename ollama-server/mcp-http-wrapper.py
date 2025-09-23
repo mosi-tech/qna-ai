@@ -119,6 +119,110 @@ class MCPHttpWrapper:
             
         # Return empty tools list if failed
         return {"tools": []}
+    
+    async def execute_tool(self, tool_name: str, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute a specific tool via MCP server"""
+        try:
+            # Start MCP server process
+            process = await asyncio.create_subprocess_exec(
+                sys.executable, self.server_path,
+                stdin=asyncio.subprocess.PIPE,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            
+            # Send initialization
+            init_message = {
+                "jsonrpc": "2.0",
+                "id": 1,
+                "method": "initialize",
+                "params": {
+                    "protocolVersion": "2024-11-05",
+                    "capabilities": {},
+                    "clientInfo": {
+                        "name": "mcp-http-wrapper",
+                        "version": "1.0.0"
+                    }
+                }
+            }
+            
+            init_data = json.dumps(init_message) + "\n"
+            process.stdin.write(init_data.encode())
+            await process.stdin.drain()
+            
+            # Read initialization response
+            init_response = await process.stdout.readline()
+            logger.debug(f"Init response: {init_response.decode().strip()}")
+            
+            # Send initialization complete
+            init_complete = {
+                "jsonrpc": "2.0",
+                "method": "notifications/initialized",
+                "params": {}
+            }
+            
+            complete_data = json.dumps(init_complete) + "\n"
+            process.stdin.write(complete_data.encode())
+            await process.stdin.drain()
+            
+            # Send tool execution request
+            execute_message = {
+                "jsonrpc": "2.0",
+                "id": 2,
+                "method": "tools/call",
+                "params": {
+                    "name": tool_name,
+                    "arguments": args
+                }
+            }
+            
+            execute_data = json.dumps(execute_message) + "\n"
+            process.stdin.write(execute_data.encode())
+            await process.stdin.drain()
+            
+            # Read execution response
+            execute_response = await process.stdout.readline()
+            logger.debug(f"Execute response: {execute_response.decode().strip()}")
+            
+            # Close process
+            process.stdin.close()
+            await process.wait()
+            
+            # Parse response
+            if execute_response:
+                response_data = json.loads(execute_response.decode())
+                logger.info(f"Tool execution response for {tool_name}: {response_data}")
+                
+                if "result" in response_data:
+                    return {
+                        "success": True,
+                        "tool": tool_name,
+                        "args": args,
+                        "result": response_data["result"],
+                        "server": self.server_name
+                    }
+                elif "error" in response_data:
+                    return {
+                        "success": False,
+                        "error": response_data["error"],
+                        "tool": tool_name,
+                        "args": args,
+                        "server": self.server_name
+                    }
+                    
+        except Exception as e:
+            logger.error(f"Failed to execute tool {tool_name} on {self.server_name}: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
+            
+        # Return error result if failed
+        return {
+            "success": False,
+            "error": f"Tool execution failed for {tool_name}",
+            "tool": tool_name,
+            "args": args,
+            "server": self.server_name
+        }
 
 # Create wrapper instances  
 import os
@@ -156,6 +260,16 @@ async def financial_tools():
         logger.error(f"Error in financial tools endpoint: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@financial_app.post("/execute/{tool_name}")
+async def execute_financial_tool(tool_name: str, args: dict):
+    try:
+        logger.info(f"Executing financial tool: {tool_name} with args: {args}")
+        result = await financial_wrapper.execute_tool(tool_name, args)
+        return result
+    except Exception as e:
+        logger.error(f"Error executing financial tool {tool_name}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @analytics_app.get("/health")  
 async def analytics_health():
     return {"status": "healthy", "server": "mcp-analytics-server", "timestamp": datetime.now().isoformat()}
@@ -170,6 +284,16 @@ async def analytics_tools():
         return tools
     except Exception as e:
         logger.error(f"Error in analytics tools endpoint: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@analytics_app.post("/execute/{tool_name}")
+async def execute_analytics_tool(tool_name: str, args: dict):
+    try:
+        logger.info(f"Executing analytics tool: {tool_name} with args: {args}")
+        result = await analytics_wrapper.execute_tool(tool_name, args)
+        return result
+    except Exception as e:
+        logger.error(f"Error executing analytics tool {tool_name}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 async def run_financial_server():

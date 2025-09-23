@@ -45,22 +45,60 @@ class AnalysisResponse(BaseModel):
 
 class OllamaToolCallService:
     def __init__(self):
-        self.system_prompt_path = "system-prompt.txt"
+        # Use absolute path for system prompt file
+        import os
+        self.system_prompt_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "system-prompt.txt")
         self.ollama_base_url = "http://localhost:11434"
         self.mcp_servers = {
             "mcp-financial-server": "http://localhost:8001",
             "mcp-analytics-server": "http://localhost:8002"
         }
         self.available_tools = {}
+        self.enhanced_system_prompt = None  # Cache for system prompt + tools
+        self.conversation_messages = []  # Store conversation history
         
     async def load_system_prompt(self) -> str:
-        """Load the system prompt from file"""
+        """Load the base system prompt from file"""
         try:
+            logger.debug(f"Loading system prompt from: {self.system_prompt_path}")
             with open(self.system_prompt_path, 'r') as f:
-                return f.read().strip()
+                content = f.read().strip()
+                logger.debug(f"System prompt loaded successfully ({len(content)} characters)")
+                return content
         except Exception as e:
-            logger.error(f"Failed to load system prompt: {e}")
+            logger.error(f"Failed to load system prompt from {self.system_prompt_path}: {e}")
             return "You are a helpful financial analysis assistant that generates tool calls for financial data analysis."
+    
+    async def get_enhanced_system_prompt(self) -> str:
+        """Get system prompt enhanced with tool descriptions (cached)"""
+        if self.enhanced_system_prompt:
+            return self.enhanced_system_prompt
+            
+        # Load base system prompt
+        base_system_prompt = await self.load_system_prompt()
+        
+        # Discover available tools
+        available_tools = await self.discover_tools()
+        
+        # Create tool descriptions
+        tools_description = []
+        for tool_name, tool_info in available_tools.items():
+            params = list(tool_info.get("parameters", {}).keys())
+            tools_description.append(f"- {tool_name}: {tool_info['description']} (params: {', '.join(params)})")
+        
+        # Enhance system prompt with tool descriptions
+        if tools_description:
+            self.enhanced_system_prompt = f"""{base_system_prompt}
+
+Available MCP Functions:
+{chr(10).join(tools_description)}
+
+Analyze each question and generate appropriate function calls using the DSL format above.
+Return only valid JSON with "steps" array where each step has "fn" and "args"."""
+        else:
+            self.enhanced_system_prompt = base_system_prompt
+            
+        return self.enhanced_system_prompt
     
     async def check_mcp_server(self, server_name: str) -> bool:
         """Check if MCP server is running"""
@@ -177,24 +215,57 @@ class OllamaToolCallService:
         self.available_tools = all_tools
         return all_tools
     
-    async def call_ollama(self, model: str, prompt: str, system_prompt: str) -> str:
-        """Call Ollama API directly"""
+    async def initialize_conversation(self, model: str) -> None:
+        """Initialize conversation with system prompt (called once)"""
+        if not self.conversation_messages:
+            enhanced_system_prompt = await self.get_enhanced_system_prompt()
+            self.conversation_messages = [
+                {
+                    "role": "system",
+                    "content": enhanced_system_prompt
+                }
+            ]
+            logger.info(f"Initialized conversation with system prompt ({len(enhanced_system_prompt)} characters)")
+    
+    async def call_ollama_chat(self, model: str, user_message: str) -> str:
+        """Call Ollama chat API with conversation context"""
         try:
+            # Initialize conversation if needed (system prompt set once)
+            await self.initialize_conversation(model)
+            
+            # Add user message to conversation
+            messages = self.conversation_messages + [
+                {
+                    "role": "user", 
+                    "content": user_message
+                }
+            ]
+            
             async with httpx.AsyncClient(timeout=120.0) as client:
                 response = await client.post(
-                    f"{self.ollama_base_url}/api/generate",
+                    f"{self.ollama_base_url}/api/chat",
                     json={
                         "model": model,
-                        "prompt": prompt,
-                        "system": system_prompt,
+                        "messages": messages,
                         "stream": False
                     }
                 )
                 response.raise_for_status()
                 result = response.json()
-                return result.get("response", "")
+                
+                # Get assistant response
+                assistant_response = result.get("message", {}).get("content", "")
+                
+                # Update conversation history (optional - for future multi-turn support)
+                # self.conversation_messages.extend([
+                #     {"role": "user", "content": user_message},
+                #     {"role": "assistant", "content": assistant_response}
+                # ])
+                
+                return assistant_response
+                
         except Exception as e:
-            logger.error(f"Ollama API call failed: {e}")
+            logger.error(f"Ollama chat API call failed: {e}")
             raise
     
     async def generate_tool_calls_only(self, tools_needed: list) -> Dict[str, Any]:
@@ -223,31 +294,11 @@ class OllamaToolCallService:
     async def analyze_question(self, question: str, model: str = "llama3.2") -> Dict[str, Any]:
         """Analyze question and generate tool calls without execution"""
         try:
-            # Discover available tools from MCP servers
-            available_tools = await self.discover_tools()
+            # Simple user message - just the question (system prompt set once in conversation)
+            user_message = f"Question: {question}"
             
-            # Load system prompt
-            system_prompt = await self.load_system_prompt()
-            
-            # Create tool list for Ollama
-            tools_description = []
-            for tool_name, tool_info in available_tools.items():
-                params = list(tool_info.get("parameters", {}).keys())
-                tools_description.append(f"- {tool_name}: {tool_info['description']} (params: {', '.join(params)})")
-            
-            # Ask Ollama to plan the analysis using DSL format
-            planning_prompt = f"""
-            Question: {question}
-            
-            Available MCP functions:
-            {chr(10).join(tools_description)}
-            
-            Analyze the question and generate function calls using the DSL format specified in your system prompt.
-            Return only valid JSON with "steps" array where each step has "fn" and "args".
-            """
-            
-            # Get tool planning from Ollama
-            tool_plan = await self.call_ollama(model, planning_prompt, system_prompt)
+            # Get tool planning from Ollama using chat API
+            tool_plan = await self.call_ollama_chat(model, user_message)
             
             # Parse DSL format response
             try:
@@ -278,6 +329,9 @@ class OllamaToolCallService:
             # Generate tool calls output (no execution)
             tool_calls_data = await self.generate_tool_calls_only(tool_calls)
             
+            # Get available tools count for reporting
+            available_tools = await self.discover_tools()
+            
             # Generate final structured response
             return {
                 "success": True,
@@ -288,6 +342,11 @@ class OllamaToolCallService:
                             "key": "question",
                             "value": question,
                             "description": "The financial question that was analyzed"
+                        },
+                        {
+                            "key": "available_tools",
+                            "value": len(available_tools),
+                            "description": "Number of MCP tools available for analysis"
                         },
                         {
                             "key": "tool_calls_planned",
@@ -309,7 +368,9 @@ class OllamaToolCallService:
                         "timestamp": datetime.now().isoformat(),
                         "data_sources": ["ollama", "mcp_tool_discovery"],
                         "calculation_methods": ["tool_call_planning"],
-                        "execution_mode": "planning_only"
+                        "execution_mode": "planning_only",
+                        "system_prompt_cached": self.enhanced_system_prompt is not None,
+                        "conversation_initialized": len(self.conversation_messages) > 0
                     }
                 }
             }
@@ -324,7 +385,9 @@ class OllamaToolCallService:
     async def close_sessions(self):
         """Cleanup method (no persistent connections to close)"""
         self.available_tools.clear()
-        logger.info("Cleaned up tool cache")
+        self.enhanced_system_prompt = None
+        self.conversation_messages.clear()
+        logger.info("Cleaned up tool, system prompt, and conversation caches")
 
 # Initialize service
 ollama_service = OllamaToolCallService()
@@ -388,8 +451,9 @@ if __name__ == "__main__":
     print("   - Analytics server: http://localhost:8002")
     print("\nThis server will:")
     print("- Connect to native MCP servers via HTTP to discover available tools")
+    print("- Use Ollama chat API with persistent system prompt (set once per session)")
     print("- Generate appropriate tool calls for financial questions")
     print("- Return tool call plans WITHOUT executing them")
-    print("- No FastMCP dependency required")
+    print("- Optimized for performance with conversation context")
     
     uvicorn.run(app, host="0.0.0.0", port=8000)
