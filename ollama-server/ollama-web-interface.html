@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ollama MCP Financial Analysis</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .input-section {
+            margin-bottom: 30px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .loading {
+            display: none;
+            color: #666;
+            font-style: italic;
+        }
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .json-output {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+        .examples {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-left: 4px solid #007bff;
+        }
+        .examples h3 {
+            margin-top: 0;
+            color: #007bff;
+        }
+        .example {
+            cursor: pointer;
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            background: white;
+        }
+        .example:hover {
+            background-color: #e3f2fd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Ollama MCP Financial Analysis</h1>
+        
+        <div class="input-section">
+            <label for="question">Financial Question:</label>
+            <textarea id="question" placeholder="Enter your financial question here..."></textarea>
+        </div>
+        
+        <div class="input-section">
+            <label for="model">Model:</label>
+            <input type="text" id="model" value="gpt-oss:20b">
+        </div>
+        
+        <button onclick="analyzeQuestion()" id="analyzeBtn">Analyze</button>
+        <button onclick="clearResults()">Clear</button>
+        
+        <div class="loading" id="loading">
+            ⏳ Processing your question... This may take a moment.
+        </div>
+        
+        <div class="examples">
+            <h3>📋 Example Questions:</h3>
+            <div class="example" onclick="setQuestion('What are the top 5 most active stocks today?')">
+                What are the top 5 most active stocks today?
+            </div>
+            <div class="example" onclick="setQuestion('Calculate the 20-day moving average for AAPL')">
+                Calculate the 20-day moving average for AAPL
+            </div>
+            <div class="example" onclick="setQuestion('Show me risk metrics for a portfolio with 60% stocks and 40% bonds')">
+                Show me risk metrics for a portfolio with 60% stocks and 40% bonds
+            </div>
+            <div class="example" onclick="setQuestion('What are the top gainers in the market today?')">
+                What are the top gainers in the market today?
+            </div>
+            <div class="example" onclick="setQuestion('Calculate RSI for TSLA over the last 14 days')">
+                Calculate RSI for TSLA over the last 14 days
+            </div>
+        </div>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000';
+        
+        function setQuestion(question) {
+            document.getElementById('question').value = question;
+        }
+        
+        function clearResults() {
+            document.getElementById('result').innerHTML = '';
+        }
+        
+        async function analyzeQuestion() {
+            const question = document.getElementById('question').value.trim();
+            const model = document.getElementById('model').value.trim();
+            
+            if (!question) {
+                alert('Please enter a question');
+                return;
+            }
+            
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            const loading = document.getElementById('loading');
+            const resultDiv = document.getElementById('result');
+            
+            // Show loading state
+            analyzeBtn.disabled = true;
+            loading.style.display = 'block';
+            resultDiv.innerHTML = '';
+            
+            try {
+                const response = await fetch(`${API_URL}/analyze`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        question: question,
+                        model: model
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    displayResult(result, 'success');
+                } else {
+                    displayResult(result, 'error');
+                }
+                
+            } catch (error) {
+                displayResult({
+                    success: false,
+                    error: `Network error: ${error.message}`,
+                    timestamp: new Date().toISOString()
+                }, 'error');
+            } finally {
+                analyzeBtn.disabled = false;
+                loading.style.display = 'none';
+            }
+        }
+        
+        function displayResult(result, type) {
+            const resultDiv = document.getElementById('result');
+            
+            let html = `<div class="result ${type}">`;
+            
+            if (result.success && result.data) {
+                html += `<h3>✅ Analysis Complete</h3>`;
+                html += `<div class="json-output">${JSON.stringify(result.data, null, 2)}</div>`;
+            } else {
+                html += `<h3>❌ Analysis Failed</h3>`;
+                html += `<p><strong>Error:</strong> ${result.error || 'Unknown error'}</p>`;
+            }
+            
+            html += `<p><small><strong>Timestamp:</strong> ${result.timestamp}</small></p>`;
+            html += `</div>`;
+            
+            resultDiv.innerHTML = html;
+        }
+        
+        // Allow Enter key to submit
+        document.getElementById('question').addEventListener('keydown', function(event) {
+            if (event.ctrlKey && event.key === 'Enter') {
+                analyzeQuestion();
+            }
+        });
+        
+        // Check server health on load
+        window.onload = async function() {
+            try {
+                const response = await fetch(`${API_URL}/health`);
+                if (!response.ok) {
+                    throw new Error('Server not responding');
+                }
+                console.log('✅ Server is healthy');
+            } catch (error) {
+                console.warn('⚠️ Server may not be running:', error.message);
+                const resultDiv = document.getElementById('result');
+                resultDiv.innerHTML = `<div class="result error">
+                    <h3>⚠️ Server Not Available</h3>
+                    <p>The Ollama MCP server doesn't appear to be running.</p>
+                    <p>Start it with: <code>./start-ollama-server.sh</code></p>
+                </div>`;
+            }
+        };
+    </script>
+</body>
+</html>
