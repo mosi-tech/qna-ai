@@ -1,8 +1,44 @@
-"""
-Comparison Analysis Metrics using empyrical and pandas
+"""Comparison Analysis Metrics Module using empyrical and pandas.
 
-Atomic comparison functions for assets, strategies, and portfolios
-From financial-analysis-function-library.json comparison_analysis category
+This module provides comprehensive atomic comparison functions for assets, strategies, and 
+portfolios. All functions use industry-standard libraries (empyrical, pandas, scipy) for
+proven accuracy and implement standardized return formats with detailed winner analysis
+and statistical significance testing.
+
+The module implements atomic comparison functions from the financial-analysis-function-library.json
+comparison_analysis category, focusing on statistical accuracy and comprehensive analysis
+rather than reinventing financial calculations.
+
+Key Features:
+    - Industry-standard empyrical library implementation for proven accuracy
+    - Comprehensive winner determination with category-based scoring
+    - Support for both price and return data with automatic alignment
+    - Statistical significance testing and confidence intervals where applicable
+    - Performance optimized using pandas and numpy for large datasets
+    - Detailed error handling with informative error messages
+
+Dependencies:
+    - empyrical: Core financial performance and risk calculations
+    - pandas: Data manipulation and time series handling
+    - numpy: Numerical computations and array operations
+    - scipy: Statistical analysis and hypothesis testing
+
+Example:
+    >>> import pandas as pd
+    >>> from mcp.analytics.comparison.metrics import compare_performance_metrics
+    >>> 
+    >>> # Create sample return data
+    >>> returns_spy = pd.Series([0.01, -0.02, 0.015, 0.008, -0.005])
+    >>> returns_qqq = pd.Series([0.02, -0.025, 0.018, 0.012, -0.008])
+    >>> 
+    >>> # Compare performance
+    >>> result = compare_performance_metrics(returns_spy, returns_qqq)
+    >>> print(f"Overall Winner: {result['summary']['overall_winner']}")
+    >>> print(f"Sharpe Ratio Difference: {result['metrics_comparison']['sharpe_ratio']['difference']:.3f}")
+
+Note:
+    All functions return standardized dictionary outputs with success indicators and detailed
+    error handling. Missing data is handled gracefully with appropriate error messages.
 """
 
 import pandas as pd
@@ -36,18 +72,66 @@ from ..risk.metrics import (
 
 def compare_performance_metrics(returns1: Union[pd.Series, Dict[str, Any]], 
                                returns2: Union[pd.Series, Dict[str, Any]]) -> Dict[str, Any]:
-    """
-    Compare key performance metrics between two assets/strategies.
+    """Compare key performance metrics between two assets or strategies using empyrical library.
     
-    From financial-analysis-function-library.json comparison_analysis category
-    Uses existing performance functions - no code duplication
+    Performs comprehensive performance comparison between two return series, calculating
+    key metrics like annual returns, total returns, volatility, Sharpe ratio, maximum drawdown,
+    and win rates. Uses industry-standard empyrical library for proven accuracy and provides
+    detailed winner analysis with both absolute and relative differences.
+    
+    The function automatically aligns time series data and handles missing values, ensuring
+    fair comparison between assets with different data availability periods.
     
     Args:
-        returns1: First asset/strategy returns
-        returns2: Second asset/strategy returns
-        
+        returns1 (Union[pd.Series, Dict[str, Any]]): Return series for first asset/strategy.
+            Can be pandas Series with datetime index or dictionary with return values.
+            Values should be decimal returns (e.g., 0.05 for 5% return).
+        returns2 (Union[pd.Series, Dict[str, Any]]): Return series for second asset/strategy.
+            Same format requirements as returns1. Will be aligned with returns1 automatically.
+    
     Returns:
-        Dict: Performance comparison data
+        Dict[str, Any]: Comprehensive performance comparison with keys:
+            - comparison_period (str): Number of observations used in comparison
+            - metrics_comparison (Dict): Detailed comparison of each metric with keys:
+                - annual_return: Annualized return comparison
+                - total_return: Cumulative return comparison  
+                - volatility: Annualized volatility comparison
+                - sharpe_ratio: Risk-adjusted return comparison
+                - max_drawdown: Maximum peak-to-trough decline comparison
+                - win_rate: Percentage of positive return periods
+            - summary (Dict): Overall comparison summary with winner counts
+            - correlation (float): Correlation coefficient between the two return series
+            - success (bool): Whether calculation succeeded
+            - function_name (str): Function identifier for tracking
+    
+    Raises:
+        ValueError: If returns data cannot be converted to valid return series.
+        TypeError: If input data format is invalid or incompatible.
+        
+    Example:
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> 
+        >>> # Create sample return data
+        >>> dates = pd.date_range('2020-01-01', periods=252, freq='D')
+        >>> returns_spy = pd.Series(np.random.normal(0.0008, 0.015, 252), index=dates)
+        >>> returns_qqq = pd.Series(np.random.normal(0.001, 0.018, 252), index=dates)
+        >>> 
+        >>> # Compare performance
+        >>> result = compare_performance_metrics(returns_spy, returns_qqq)
+        >>> print(f"Overall Winner: {result['summary']['overall_winner']}")
+        >>> print(f"Annual Return - SPY: {result['metrics_comparison']['annual_return']['asset_1']:.2%}")
+        >>> print(f"Annual Return - QQQ: {result['metrics_comparison']['annual_return']['asset_2']:.2%}")
+        >>> print(f"Sharpe Ratio Difference: {result['metrics_comparison']['sharpe_ratio']['difference']:.3f}")
+        >>> print(f"Correlation: {result['correlation']:.3f}")
+        
+    Note:
+        - Uses empyrical library for industry-standard financial calculations
+        - Automatically handles data alignment and missing values
+        - Winner determination is based on standard financial criteria (higher is better for returns/Sharpe, lower is better for volatility/drawdown)
+        - All metrics are calculated on aligned data for fair comparison
+        - Returns are assumed to be in decimal format (not percentage)
+        - Function handles both daily and other frequency data automatically
     """
     try:
         returns_series1 = validate_return_data(returns1)
@@ -131,18 +215,68 @@ def compare_performance_metrics(returns1: Union[pd.Series, Dict[str, Any]],
 
 def compare_risk_metrics(returns1: Union[pd.Series, Dict[str, Any]], 
                         returns2: Union[pd.Series, Dict[str, Any]]) -> Dict[str, Any]:
-    """
-    Compare risk metrics between two assets/strategies.
+    """Compare comprehensive risk metrics between two assets or strategies using empyrical and scipy.
     
-    From financial-analysis-function-library.json comparison_analysis category
-    Uses existing risk functions - no code duplication
+    Performs detailed risk analysis comparison between two return series, calculating volatility,
+    Value at Risk (VaR), Conditional Value at Risk (CVaR), maximum drawdown, and distribution
+    characteristics (skewness, kurtosis). Uses industry-standard risk calculations and provides
+    comprehensive winner analysis based on risk-adjusted criteria.
+    
+    The function employs multiple risk measures to provide a holistic view of risk characteristics,
+    including both traditional volatility measures and tail risk metrics that capture extreme events.
     
     Args:
-        returns1: First asset/strategy returns
-        returns2: Second asset/strategy returns
-        
+        returns1 (Union[pd.Series, Dict[str, Any]]): Return series for first asset/strategy.
+            Can be pandas Series with datetime index or dictionary with return values.
+            Values should be decimal returns (e.g., -0.03 for -3% return).
+        returns2 (Union[pd.Series, Dict[str, Any]]): Return series for second asset/strategy.
+            Same format requirements as returns1. Will be aligned with returns1 automatically.
+    
     Returns:
-        Dict: Risk comparison data
+        Dict[str, Any]: Comprehensive risk comparison with keys:
+            - comparison_period (str): Number of observations used in comparison
+            - risk_comparison (Dict): Detailed comparison of each risk metric with keys:
+                - volatility: Annualized volatility comparison
+                - var_95: 95% Value at Risk (expected worst 5% loss)
+                - cvar_95: 95% Conditional Value at Risk (expected loss given VaR breach)
+                - max_drawdown: Maximum peak-to-trough decline
+                - skewness: Distribution asymmetry (positive = right skewed)
+                - kurtosis: Distribution tail thickness (higher = fatter tails)
+            - summary (Dict): Overall risk assessment with lower-risk asset identification
+            - correlation (float): Correlation coefficient between return series
+            - success (bool): Whether calculation succeeded
+            - function_name (str): Function identifier for tracking
+    
+    Raises:
+        ValueError: If returns data cannot be converted to valid return series.
+        TypeError: If input data format is invalid or incompatible.
+        
+    Example:
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> 
+        >>> # Create sample return data with different risk characteristics
+        >>> dates = pd.date_range('2020-01-01', periods=252, freq='D')
+        >>> returns_spy = pd.Series(np.random.normal(0.0008, 0.015, 252), index=dates)
+        >>> returns_crypto = pd.Series(np.random.normal(0.002, 0.045, 252), index=dates)
+        >>> 
+        >>> # Compare risk profiles
+        >>> result = compare_risk_metrics(returns_spy, returns_crypto)
+        >>> print(f"Lower Risk Asset: {result['summary']['lower_risk_asset']}")
+        >>> print(f"Volatility - SPY: {result['risk_comparison']['volatility']['asset_1']:.2%}")
+        >>> print(f"Volatility - Crypto: {result['risk_comparison']['volatility']['asset_2']:.2%}")
+        >>> print(f"VaR 95% - SPY: {result['risk_comparison']['var_95']['asset_1']:.2%}")
+        >>> print(f"VaR 95% - Crypto: {result['risk_comparison']['var_95']['asset_2']:.2%}")
+        >>> print(f"Risk Wins - Asset 1: {result['summary']['asset_1_wins']}")
+        
+    Note:
+        - Lower values are generally better for risk metrics (except positive skewness)
+        - VaR and CVaR calculations use historical simulation method
+        - Skewness interpretation: positive = more upside potential, negative = more downside risk
+        - Kurtosis interpretation: higher values = more extreme events (fat tails)
+        - All calculations use industry-standard empyrical and scipy implementations
+        - Winner determination prioritizes lower risk across multiple dimensions
+        - Function handles both daily and other frequency data automatically
     """
     try:
         returns_series1 = validate_return_data(returns1)
@@ -230,18 +364,66 @@ def compare_risk_metrics(returns1: Union[pd.Series, Dict[str, Any]],
 
 def compare_drawdowns(prices1: Union[pd.Series, Dict[str, Any]], 
                      prices2: Union[pd.Series, Dict[str, Any]]) -> Dict[str, Any]:
-    """
-    Compare drawdown characteristics.
+    """Compare comprehensive drawdown characteristics between two assets using empyrical library.
     
-    From financial-analysis-function-library.json comparison_analysis category
-    Uses existing drawdown functions - no code duplication
+    Analyzes and compares drawdown patterns between two price series, including maximum drawdown,
+    frequency of significant drawdowns, and time spent in drawdown periods. Uses empyrical library
+    for industry-standard drawdown calculations and provides detailed analysis of downside risk
+    characteristics that complement traditional volatility measures.
+    
+    Drawdown analysis is crucial for understanding the worst-case scenarios and recovery patterns
+    of investments, particularly important for risk management and investor psychology.
     
     Args:
-        prices1: First asset price series
-        prices2: Second asset price series
-        
+        prices1 (Union[pd.Series, Dict[str, Any]]): Price series for first asset.
+            Can be pandas Series with datetime index or dictionary with price values.
+            Values should be absolute prices (e.g., 100.50, 95.25, etc.).
+        prices2 (Union[pd.Series, Dict[str, Any]]): Price series for second asset.
+            Same format requirements as prices1. Will be aligned with prices1 automatically.
+    
     Returns:
-        Dict: Drawdown comparison data
+        Dict[str, Any]: Comprehensive drawdown comparison with keys:
+            - comparison_period (str): Number of observations used in comparison
+            - drawdown_comparison (Dict): Detailed comparison of drawdown metrics with keys:
+                - max_drawdown: Maximum peak-to-trough decline (worst single drawdown)
+                - significant_drawdowns: Count of drawdowns exceeding 5% threshold
+                - time_in_drawdown: Percentage of time spent below previous peak
+            - summary (Dict): Overall drawdown assessment with better profile identification
+            - success (bool): Whether calculation succeeded
+            - function_name (str): Function identifier for tracking
+    
+    Raises:
+        ValueError: If price data cannot be converted to valid price series.
+        TypeError: If input data format is invalid or incompatible.
+        ZeroDivisionError: If price series contains zero or negative values.
+        
+    Example:
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> 
+        >>> # Create sample price data with different drawdown characteristics
+        >>> dates = pd.date_range('2020-01-01', periods=252, freq='D')
+        >>> # Stable growth with occasional pullbacks
+        >>> prices_spy = pd.Series(100 * np.cumprod(1 + np.random.normal(0.0008, 0.015, 252)), index=dates)
+        >>> # More volatile with larger drawdowns
+        >>> prices_growth = pd.Series(100 * np.cumprod(1 + np.random.normal(0.001, 0.025, 252)), index=dates)
+        >>> 
+        >>> # Compare drawdown profiles
+        >>> result = compare_drawdowns(prices_spy, prices_growth)
+        >>> print(f"Better Drawdown Profile: {result['summary']['better_drawdown_profile']}")
+        >>> print(f"Max Drawdown - SPY: {result['drawdown_comparison']['max_drawdown']['asset_1']:.2%}")
+        >>> print(f"Max Drawdown - Growth: {result['drawdown_comparison']['max_drawdown']['asset_2']:.2%}")
+        >>> print(f"Time in Drawdown - SPY: {result['drawdown_comparison']['time_in_drawdown']['asset_1']:.1f}%")
+        >>> print(f"Significant Drawdowns - Growth: {result['drawdown_comparison']['significant_drawdowns']['asset_2']}")
+        
+    Note:
+        - Prices are converted to returns internally for drawdown calculation
+        - Significant drawdowns are defined as declines exceeding 5% from peak
+        - Time in drawdown measures periods when price is below previous high
+        - Empyrical library used for industry-standard drawdown calculations
+        - Lower drawdown values and shorter recovery periods are preferable
+        - Maximum drawdown is the single worst peak-to-trough decline
+        - Function automatically handles data alignment and missing values
     """
     try:
         price_series1 = validate_price_data(prices1)
@@ -322,19 +504,74 @@ def compare_drawdowns(prices1: Union[pd.Series, Dict[str, Any]],
 def compare_volatility_profiles(returns1: Union[pd.Series, Dict[str, Any]], 
                                returns2: Union[pd.Series, Dict[str, Any]], 
                                window: int = 30) -> Dict[str, Any]:
-    """
-    Compare rolling volatility profiles.
+    """Compare rolling volatility profiles and stability between two assets using pandas calculations.
     
-    From financial-analysis-function-library.json comparison_analysis category
-    Uses pandas rolling calculations - no code duplication
+    Analyzes and compares rolling volatility patterns between two return series, including average
+    volatility, volatility of volatility (regime stability), extreme volatility periods, and
+    correlation of volatility patterns. This analysis helps identify which asset has more stable
+    risk characteristics over time and how volatility regimes compare.
+    
+    Rolling volatility analysis is essential for understanding dynamic risk characteristics and
+    identifying periods of market stress that affect different assets differently.
     
     Args:
-        returns1: First asset returns
-        returns2: Second asset returns
-        window: Rolling window size
-        
+        returns1 (Union[pd.Series, Dict[str, Any]]): Return series for first asset.
+            Can be pandas Series with datetime index or dictionary with return values.
+            Values should be decimal returns (e.g., 0.02 for 2% return).
+        returns2 (Union[pd.Series, Dict[str, Any]]): Return series for second asset.
+            Same format requirements as returns1. Will be aligned with returns1 automatically.
+        window (int, optional): Rolling window size for volatility calculation. Defaults to 30.
+            Common values: 21 (monthly), 30, 60 (quarterly), 252 (annual). Larger windows
+            provide smoother but less responsive volatility estimates.
+    
     Returns:
-        Dict: Volatility profile comparison
+        Dict[str, Any]: Comprehensive volatility profile comparison with keys:
+            - window_size (int): Rolling window size used for calculations
+            - comparison_period (str): Number of rolling periods used in comparison
+            - volatility_comparison (Dict): Detailed volatility profile metrics with keys:
+                - average_volatility: Mean rolling volatility over the period
+                - volatility_volatility: Standard deviation of volatility (stability measure)
+                - max_volatility: Highest volatility period observed
+                - min_volatility: Lowest volatility period observed
+                - high_volatility_periods: Count of periods above 90th percentile
+            - volatility_correlation (float): Correlation between volatility series
+            - summary (Dict): Overall volatility stability assessment
+            - success (bool): Whether calculation succeeded
+            - function_name (str): Function identifier for tracking
+    
+    Raises:
+        ValueError: If returns data cannot be converted to valid return series.
+        TypeError: If window parameter is not an integer or data format is invalid.
+        
+    Example:
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> 
+        >>> # Create sample return data with different volatility characteristics
+        >>> dates = pd.date_range('2020-01-01', periods=300, freq='D')
+        >>> # Stable volatility asset
+        >>> returns_bond = pd.Series(np.random.normal(0.0002, 0.005, 300), index=dates)
+        >>> # Variable volatility asset with regime changes
+        >>> vol_regimes = np.concatenate([np.full(150, 0.015), np.full(150, 0.030)])
+        >>> returns_stock = pd.Series([np.random.normal(0.0008, vol) for vol in vol_regimes], index=dates)
+        >>> 
+        >>> # Compare volatility profiles
+        >>> result = compare_volatility_profiles(returns_bond, returns_stock, window=30)
+        >>> print(f"More Stable Volatility: {result['summary']['more_stable_volatility']}")
+        >>> print(f"Average Vol - Bonds: {result['volatility_comparison']['average_volatility']['asset_1']:.2%}")
+        >>> print(f"Average Vol - Stocks: {result['volatility_comparison']['average_volatility']['asset_2']:.2%}")
+        >>> print(f"Vol of Vol - Bonds: {result['volatility_comparison']['volatility_volatility']['asset_1']:.3f}")
+        >>> print(f"Vol of Vol - Stocks: {result['volatility_comparison']['volatility_volatility']['asset_2']:.3f}")
+        >>> print(f"Volatility Correlation: {result['volatility_correlation']:.3f}")
+        
+    Note:
+        - Rolling volatility is annualized (multiplied by sqrt(252) for daily data)
+        - Volatility of volatility measures regime stability (lower is more stable)
+        - High volatility periods are defined as above 90th percentile of each asset
+        - Window size affects responsiveness vs. noise trade-off
+        - Correlation shows how synchronized volatility regimes are between assets
+        - Lower and more stable volatility is generally preferable for risk management
+        - Function handles both daily and other frequency data automatically
     """
     try:
         returns_series1 = validate_return_data(returns1)
@@ -845,18 +1082,79 @@ def compare_liquidity(volumes1: Union[pd.Series, Dict[str, Any], List[float]],
 
 def compare_fundamental(fundamentals1: Dict[str, Any], 
                        fundamentals2: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    Compare fundamental metrics between companies.
+    """Compare comprehensive fundamental metrics between two companies across multiple categories.
     
-    From financial-analysis-function-library.json comparison_analysis category
-    Simple fundamental comparison - no code duplication
+    Performs detailed fundamental analysis comparison between two companies, evaluating valuation,
+    financial health, profitability, and growth metrics. Uses standard financial ratio analysis
+    with category-based scoring to determine overall fundamental strength and identify specific
+    areas where each company excels.
+    
+    The analysis covers key fundamental categories that professional analysts use for stock
+    evaluation, providing both individual metric comparisons and categorical assessments.
     
     Args:
-        fundamentals1: First company fundamental data
-        fundamentals2: Second company fundamental data
-        
+        fundamentals1 (Dict[str, Any]): Fundamental data dictionary for first company.
+            Should contain financial metrics like pe_ratio, debt_to_equity, return_on_equity, etc.
+            Standard keys include: pe_ratio, price_to_book, price_to_sales, price_to_cash_flow,
+            debt_to_equity, current_ratio, quick_ratio, return_on_equity, return_on_assets,
+            profit_margin, operating_margin, revenue_growth, earnings_growth, dividend_yield,
+            market_cap, name, symbol, sector.
+        fundamentals2 (Dict[str, Any]): Fundamental data dictionary for second company.
+            Same format requirements as fundamentals1.
+    
     Returns:
-        Dict: Fundamental comparison data
+        Dict[str, Any]: Comprehensive fundamental comparison with keys:
+            - metrics_compared (int): Number of metrics successfully compared
+            - fundamental_comparison (Dict): Individual metric comparisons with keys for each metric:
+                - company_1: First company's value
+                - company_2: Second company's value  
+                - difference: Absolute difference
+                - relative_difference: Percentage difference
+                - winner: Which company has better value for this metric
+            - category_analysis (Dict): Category-based assessment with keys:
+                - valuation: P/E, P/B, P/S, P/CF ratios comparison
+                - financial_health: Debt/equity, current ratio, quick ratio comparison
+                - profitability: ROE, ROA, profit margin, operating margin comparison
+                - growth: Revenue growth, earnings growth comparison
+            - summary (Dict): Overall fundamental assessment and company information
+            - success (bool): Whether calculation succeeded
+            - function_name (str): Function identifier for tracking
+    
+    Raises:
+        ValueError: If fundamental data dictionaries are empty or missing required structure.
+        TypeError: If fundamental values cannot be converted to numeric format.
+        KeyError: If critical fundamental metrics are completely missing.
+        
+    Example:
+        >>> # Sample fundamental data
+        >>> apple_fundamentals = {
+        ...     'name': 'Apple Inc.', 'symbol': 'AAPL', 'sector': 'Technology',
+        ...     'pe_ratio': 25.5, 'price_to_book': 8.2, 'debt_to_equity': 1.8,
+        ...     'return_on_equity': 0.84, 'profit_margin': 0.25, 'revenue_growth': 0.08
+        ... }
+        >>> microsoft_fundamentals = {
+        ...     'name': 'Microsoft Corp.', 'symbol': 'MSFT', 'sector': 'Technology',
+        ...     'pe_ratio': 28.1, 'price_to_book': 12.1, 'debt_to_equity': 0.9,
+        ...     'return_on_equity': 0.42, 'profit_margin': 0.31, 'revenue_growth': 0.12
+        ... }
+        >>> 
+        >>> # Compare fundamentals
+        >>> result = compare_fundamental(apple_fundamentals, microsoft_fundamentals)
+        >>> print(f"Overall Winner: {result['summary']['overall_fundamental_winner']}")
+        >>> print(f"Valuation Winner: {result['category_analysis']['valuation']['winner']}")
+        >>> print(f"Profitability Winner: {result['category_analysis']['profitability']['winner']}")
+        >>> print(f"P/E Ratio - AAPL: {result['fundamental_comparison']['pe_ratio']['company_1']:.1f}")
+        >>> print(f"P/E Ratio - MSFT: {result['fundamental_comparison']['pe_ratio']['company_2']:.1f}")
+        >>> print(f"ROE - AAPL: {result['fundamental_comparison']['return_on_equity']['company_1']:.1%}")
+        
+    Note:
+        - Lower values are better for valuation metrics (P/E, P/B, P/S, P/CF, Debt/Equity)
+        - Higher values are better for profitability and efficiency metrics (ROE, ROA, margins)
+        - Higher values are better for growth metrics (revenue growth, earnings growth)
+        - Category winners are determined by majority wins within each category
+        - Missing metrics are skipped rather than causing errors
+        - Relative differences show percentage change from company_1 to company_2
+        - Function handles various data formats and missing values gracefully
     """
     try:
         # Define key fundamental metrics to compare

@@ -12,11 +12,5 @@ from .indicators import *
 from .portfolio import *
 from .risk import *
 
-# Export main interface
-from .main import AnalyticsEngine, get_all_functions
-
 __version__ = "2.0.0"
-__all__ = [
-    'AnalyticsEngine',
-    'get_all_functions'
-]
+__all__ = []

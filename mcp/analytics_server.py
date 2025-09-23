@@ -15,7 +15,9 @@ comprehensive market analysis capabilities.
 import asyncio
 import json
 import logging
-from typing import Dict, List, Any, Optional
+import inspect
+import re
+from typing import Dict, List, Any, Optional, get_type_hints
 
 # MCP Server Framework
 from mcp.server import NotificationOptions, Server
@@ -23,12 +25,13 @@ from mcp.server.models import InitializationOptions
 import mcp.server.stdio
 import mcp.types as types
 
-# Import analytics functions
+# Import analytics functions and schema utilities
 from analytics.indicators.technical import TECHNICAL_INDICATORS_FUNCTIONS
 from analytics.portfolio.metrics import PORTFOLIO_ANALYSIS_FUNCTIONS
 from analytics.performance.metrics import PERFORMANCE_METRICS_FUNCTIONS
 from analytics.risk.metrics import RISK_METRICS_FUNCTIONS
 from analytics.utils.data_utils import DATA_UTILS_FUNCTIONS
+from schema_utils import initialize_schema_cache
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -37,11 +40,13 @@ logger = logging.getLogger("mcp-analytics-server")
 # Create server instance
 app = Server("mcp-analytics-server")
 
-# Register all analytics functions as MCP tools
-@app.list_tools()
-async def handle_list_tools() -> List[types.Tool]:
-    """List all available analytics tools"""
-    tools = []
+# Cache for generated schemas - populated once at startup
+_schema_cache = {}
+
+
+def initialize_schema_cache():
+    """Initialize the schema cache at startup to avoid repeated generation."""
+    global _schema_cache
     
     # Combine all analytics function registries
     all_functions = {
@@ -52,290 +57,202 @@ async def handle_list_tools() -> List[types.Tool]:
         **DATA_UTILS_FUNCTIONS
     }
     
-    # Generate tools dynamically from all available functions
-    function_schemas = {
-        # Technical Indicators
-        "calculate_sma": {
-            "description": "Simple Moving Average - Calculate simple moving average of closing prices",
+    logger.info("Generating schemas for all analytics functions...")
+    
+    for func_name, func in all_functions.items():
+        try:
+            schema = extract_schema_from_docstring(func)
+            if schema:
+                _schema_cache[func_name] = schema
+                logger.debug(f"Cached schema for {func_name}")
+            else:
+                # Fallback schema for functions without proper docstrings
+                _schema_cache[func_name] = {
+                    "description": f"Analytics function: {func_name}",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "data": {"type": "array", "description": "Input data"}
+                        },
+                        "required": ["data"]
+                    }
+                }
+                logger.warning(f"Using fallback schema for {func_name}")
+        except Exception as e:
+            logger.error(f"Failed to generate schema for {func_name}: {e}")
+            continue
+    
+    logger.info(f"Schema cache initialized with {len(_schema_cache)} functions")
+
+
+def extract_schema_from_docstring(func) -> Optional[Dict[str, Any]]:
+    """Extract MCP tool schema from function docstring and type hints.
+    
+    Parses Google-style docstrings to extract parameter descriptions
+    and combines with type hints to generate MCP tool schema.
+    
+    Args:
+        func: Function to analyze
+        
+    Returns:
+        Dict containing description and inputSchema for MCP tool
+    """
+    try:
+        # Get function signature and type hints
+        sig = inspect.signature(func)
+        type_hints = get_type_hints(func)
+        docstring = inspect.getdoc(func)
+        
+        if not docstring:
+            return None
+            
+        # Extract description (first paragraph of docstring)
+        lines = docstring.strip().split('\n')
+        description = lines[0].strip()
+        
+        # Find Args section
+        in_args = False
+        args_lines = []
+        
+        for line in lines:
+            line = line.strip()
+            if line.startswith('Args:'):
+                in_args = True
+                continue
+            elif in_args and (line.startswith('Returns:') or line.startswith('Raises:') or line.startswith('Example:') or line.startswith('Note:')):
+                break
+            elif in_args and line:
+                args_lines.append(line)
+        
+        # Parse parameter descriptions
+        param_descriptions = {}
+        current_param = None
+        
+        for line in args_lines:
+            # Match parameter definition: "param_name: description"
+            param_match = re.match(r'^(\w+):\s*(.+)', line)
+            if param_match:
+                current_param = param_match.group(1)
+                param_descriptions[current_param] = param_match.group(2)
+            elif current_param and line.startswith(' '):
+                # Continuation of previous parameter description
+                param_descriptions[current_param] += ' ' + line.strip()
+        
+        # Build schema properties
+        properties = {}
+        required = []
+        
+        for param_name, param in sig.parameters.items():
+            if param_name in ['self', 'cls']:
+                continue
+                
+            # Get type information
+            param_type = type_hints.get(param_name, param.annotation)
+            json_type = python_type_to_json_type(param_type)
+            
+            # Get description
+            param_desc = param_descriptions.get(param_name, f"Parameter {param_name}")
+            
+            # Build property schema
+            prop_schema = {
+                "type": json_type,
+                "description": param_desc
+            }
+            
+            # Add default value if available
+            if param.default != inspect.Parameter.empty:
+                prop_schema["default"] = param.default
+            else:
+                required.append(param_name)
+            
+            properties[param_name] = prop_schema
+        
+        # Build complete schema
+        schema = {
+            "description": description,
             "inputSchema": {
                 "type": "object",
-                "properties": {
-                    "data": {"type": "array", "description": "Price data array"},
-                    "period": {"type": "integer", "default": 20}
-                },
-                "required": ["data"]
-            }
-        },
-        "calculate_ema": {
-            "description": "Exponential Moving Average - Calculate exponential moving average",
-            "inputSchema": {
-                "type": "object", 
-                "properties": {
-                    "data": {"type": "array", "description": "Price data array"},
-                    "period": {"type": "integer", "default": 20}
-                },
-                "required": ["data"]
-            }
-        },
-        "calculate_rsi": {
-            "description": "Relative Strength Index - Momentum oscillator (0-100)",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "data": {"type": "array", "description": "Price data array"},
-                    "period": {"type": "integer", "default": 14}
-                },
-                "required": ["data"]
-            }
-        },
-        "calculate_macd": {
-            "description": "MACD - Moving Average Convergence Divergence",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "data": {"type": "array", "description": "Price data array"},
-                    "fast_period": {"type": "integer", "default": 12},
-                    "slow_period": {"type": "integer", "default": 26},
-                    "signal_period": {"type": "integer", "default": 9}
-                },
-                "required": ["data"]
-            }
-        },
-        "calculate_bollinger_bands": {
-            "description": "Bollinger Bands - Volatility bands analysis",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "data": {"type": "array", "description": "Price data array"},
-                    "period": {"type": "integer", "default": 20},
-                    "std_dev": {"type": "number", "default": 2.0}
-                },
-                "required": ["data"]
-            }
-        },
-        "calculate_atr": {
-            "description": "Average True Range - Measure market volatility",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "data": {"type": "array", "description": "OHLC data array"},
-                    "period": {"type": "integer", "default": 14}
-                },
-                "required": ["data"]
-            }
-        },
-        "calculate_stochastic": {
-            "description": "Stochastic Oscillator - %K and %D momentum indicators",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "data": {"type": "array", "description": "OHLC data array"},
-                    "k_period": {"type": "integer", "default": 14},
-                    "d_period": {"type": "integer", "default": 3}
-                },
-                "required": ["data"]
-            }
-        },
-        "detect_sma_crossover": {
-            "description": "Detect SMA crossover signals for trend analysis",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "prices": {"type": "array", "description": "Price data array"},
-                    "fast_period": {"type": "integer", "default": 20},
-                    "slow_period": {"type": "integer", "default": 50}
-                },
-                "required": ["prices"]
-            }
-        },
-        "detect_ema_crossover": {
-            "description": "Detect EMA crossover signals for trend analysis",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "prices": {"type": "array", "description": "Price data array"},
-                    "fast_period": {"type": "integer", "default": 12},
-                    "slow_period": {"type": "integer", "default": 26}
-                },
-                "required": ["prices"]
-            }
-        },
-        # Portfolio Analysis
-        "calculate_portfolio_metrics": {
-            "description": "Comprehensive portfolio metrics including returns, risk, and Sharpe ratio",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "weights": {"type": "array", "description": "Portfolio weights"},
-                    "returns": {"type": "array", "description": "Asset returns matrix"},
-                    "benchmark_returns": {"type": "array", "description": "Benchmark returns (optional)"},
-                    "risk_free_rate": {"type": "number", "default": 0.02}
-                },
-                "required": ["weights", "returns"]
-            }
-        },
-        "analyze_portfolio_concentration": {
-            "description": "Analyze portfolio concentration and diversification metrics",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "weights": {"type": "array", "description": "Portfolio weights"},
-                    "asset_names": {"type": "array", "description": "Asset names (optional)"}
-                },
-                "required": ["weights"]
-            }
-        },
-        "calculate_portfolio_beta": {
-            "description": "Calculate portfolio beta using individual asset betas",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "weights": {"type": "array", "description": "Portfolio weights"},
-                    "asset_betas": {"type": "array", "description": "Individual asset betas"}
-                },
-                "required": ["weights", "asset_betas"]
-            }
-        },
-        "calculate_active_share": {
-            "description": "Calculate active share vs benchmark portfolio",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "portfolio_weights": {"type": "array", "description": "Portfolio weights"},
-                    "benchmark_weights": {"type": "array", "description": "Benchmark weights"},
-                    "asset_names": {"type": "array", "description": "Asset names (optional)"}
-                },
-                "required": ["portfolio_weights", "benchmark_weights"]
-            }
-        },
-        "calculate_portfolio_var": {
-            "description": "Calculate portfolio Value at Risk using covariance matrix",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "weights": {"type": "array", "description": "Portfolio weights"},
-                    "covariance_matrix": {"type": "array", "description": "Asset covariance matrix"},
-                    "confidence": {"type": "number", "default": 0.05},
-                    "time_horizon": {"type": "integer", "default": 1}
-                },
-                "required": ["weights", "covariance_matrix"]
-            }
-        },
-        "stress_test_portfolio": {
-            "description": "Perform portfolio stress testing under various scenarios",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "weights": {"type": "array", "description": "Portfolio weights"},
-                    "returns": {"type": "array", "description": "Historical asset returns"},
-                    "scenarios": {"type": "array", "description": "Custom stress scenarios (optional)"}
-                },
-                "required": ["weights", "returns"]
-            }
-        },
-        # Performance Metrics
-        "calculate_returns_metrics": {
-            "description": "Calculate comprehensive return metrics including total and annual returns",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "returns": {"type": "array", "description": "Return series"}
-                },
-                "required": ["returns"]
-            }
-        },
-        "calculate_risk_metrics": {
-            "description": "Calculate comprehensive risk metrics including volatility, Sharpe, Sortino",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "returns": {"type": "array", "description": "Return series"},
-                    "risk_free_rate": {"type": "number", "default": 0.02}
-                },
-                "required": ["returns"]
-            }
-        },
-        "calculate_benchmark_metrics": {
-            "description": "Calculate benchmark comparison metrics including alpha and beta",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "returns": {"type": "array", "description": "Portfolio returns"},
-                    "benchmark_returns": {"type": "array", "description": "Benchmark returns"},
-                    "risk_free_rate": {"type": "number", "default": 0.02}
-                },
-                "required": ["returns", "benchmark_returns"]
-            }
-        },
-        "calculate_drawdown_analysis": {
-            "description": "Calculate detailed drawdown analysis and recovery periods",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "returns": {"type": "array", "description": "Return series"}
-                },
-                "required": ["returns"]
-            }
-        },
-        # Risk Metrics
-        "calculate_var": {
-            "description": "Calculate Value at Risk using multiple methods",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "returns": {"type": "array", "description": "Return series"},
-                    "confidence_level": {"type": "number", "default": 0.05},
-                    "method": {"type": "string", "default": "historical"}
-                },
-                "required": ["returns"]
-            }
-        },
-        "calculate_cvar": {
-            "description": "Calculate Conditional Value at Risk (Expected Shortfall)",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "returns": {"type": "array", "description": "Return series"},
-                    "confidence_level": {"type": "number", "default": 0.05}
-                },
-                "required": ["returns"]
-            }
-        },
-        "calculate_correlation_analysis": {
-            "description": "Calculate correlation analysis for multiple assets",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "returns": {"type": "array", "description": "Multi-asset return matrix"},
-                    "method": {"type": "string", "default": "pearson"}
-                },
-                "required": ["returns"]
-            }
-        },
-        "calculate_beta_analysis": {
-            "description": "Calculate comprehensive beta analysis vs market",
-            "inputSchema": {
-                "type": "object",
-                "properties": {
-                    "asset_returns": {"type": "array", "description": "Asset return series"},
-                    "market_returns": {"type": "array", "description": "Market return series"},
-                    "risk_free_rate": {"type": "number", "default": 0.02}
-                },
-                "required": ["asset_returns", "market_returns"]
+                "properties": properties
             }
         }
-    }
+        
+        if required:
+            schema["inputSchema"]["required"] = required
+            
+        return schema
+        
+    except Exception as e:
+        logger.warning(f"Failed to extract schema for {func.__name__}: {e}")
+        return None
+
+
+def python_type_to_json_type(python_type) -> str:
+    """Convert Python type hints to JSON schema types.
     
-    # Create tools for available functions
-    for func_name, func in all_functions.items():
-        if func_name in function_schemas:
-            schema = function_schemas[func_name]
-            tools.append(types.Tool(
-                name=func_name,
-                description=schema['description'],
-                inputSchema=schema["inputSchema"]
-            ))
+    Handles common Python types including pandas DataFrame and Series
+    which are frequently used in analytics functions.
+    """
+    if python_type == inspect.Parameter.empty:
+        return "string"
     
+    # Handle string representation of types
+    if isinstance(python_type, str):
+        python_type = python_type.lower()
+        if 'int' in python_type:
+            return "integer"
+        elif 'float' in python_type or 'number' in python_type:
+            return "number"
+        elif 'bool' in python_type:
+            return "boolean"
+        elif 'list' in python_type or 'array' in python_type:
+            return "array"
+        elif 'dict' in python_type or 'dataframe' in python_type or 'series' in python_type:
+            return "object"
+        else:
+            return "string"
+    
+    # Handle actual type objects
+    type_str = str(python_type).lower()
+    
+    # Check for pandas types first (most specific)
+    if 'dataframe' in type_str or 'series' in type_str:
+        return "object"
+    # Check for numpy types
+    elif 'ndarray' in type_str or 'numpy' in type_str:
+        return "array"
+    # Check for Union types (common in analytics functions)
+    elif 'union' in type_str:
+        # For Union types, default to object since they can accept multiple types
+        return "object"
+    # Standard Python types
+    elif 'int' in type_str:
+        return "integer"
+    elif 'float' in type_str or 'number' in type_str:
+        return "number"
+    elif 'bool' in type_str:
+        return "boolean"
+    elif 'list' in type_str or 'array' in type_str:
+        return "array"
+    elif 'dict' in type_str:
+        return "object"
+    else:
+        return "string"
+
+# Register all analytics functions as MCP tools
+@app.list_tools()
+async def handle_list_tools() -> List[types.Tool]:
+    """List all available analytics tools"""
+    # Use cached schemas for performance
+    tools = []
+    
+    for func_name, schema in _schema_cache.items():
+        tools.append(types.Tool(
+            name=func_name,
+            description=schema['description'],
+            inputSchema=schema['inputSchema']
+        ))
+    
+    logger.debug(f"Returned {len(tools)} analytics tools from cache")
     return tools
 
 
@@ -387,16 +304,11 @@ async def handle_call_tool(name: str, arguments: Dict[str, Any]) -> List[types.T
 async def main():
     """Run the MCP Analytics Server"""
     logger.info("Starting MCP Analytics Server...")
-    # Combine all function registries for logging
-    all_functions = {
-        **TECHNICAL_INDICATORS_FUNCTIONS,
-        **PORTFOLIO_ANALYSIS_FUNCTIONS, 
-        **PERFORMANCE_METRICS_FUNCTIONS,
-        **RISK_METRICS_FUNCTIONS,
-        **DATA_UTILS_FUNCTIONS
-    }
-    logger.info(f"Available analytics functions: {list(all_functions.keys())}")
-    logger.info(f"Total functions exposed: {len(all_functions)}")
+    
+    # Initialize schema cache once at startup
+    initialize_schema_cache()
+    
+    logger.info(f"Total functions exposed: {len(_schema_cache)}")
     
     async with mcp.server.stdio.stdio_server() as (read_stream, write_stream):
         await app.run(
