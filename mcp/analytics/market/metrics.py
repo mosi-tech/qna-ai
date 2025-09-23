@@ -1,8 +1,52 @@
-"""
-Market Analysis Metrics using empyrical and pandas
+"""Market Analysis Metrics Module using empyrical, pandas, scipy, and scikit-learn.
 
-Market analysis functions from financial-analysis-function-library.json market_analysis category.
-Both simple atomic functions and complex analytical functions.
+This module provides comprehensive market analysis functions ranging from simple atomic calculations
+to complex analytical functions that combine multiple statistical and machine learning techniques.
+All functions implement atomic and complex market analysis patterns from the 
+financial-analysis-function-library.json market_analysis category.
+
+The module focuses on practical market analysis applications including trend detection, regime
+identification, stress testing, and structural break analysis using industry-standard libraries
+for proven accuracy and statistical rigor.
+
+Key Features:
+    - Multi-methodology trend strength analysis (technical, statistical, momentum-based)
+    - Comprehensive market stress indicators using correlation breakdown and tail risk
+    - Advanced regime detection using volatility clustering and machine learning
+    - Statistical structural break detection using CUSUM tests
+    - Crisis period identification with multiple threshold methods
+    - Market breadth analysis for participation measurement
+    - Seasonality detection with statistical significance testing
+    - Cryptocurrency-specific metrics including fear/greed index
+
+Dependencies:
+    - empyrical: Core financial performance and risk calculations
+    - pandas: Data manipulation and time series handling
+    - numpy: Numerical computations and array operations
+    - scipy: Statistical analysis, signal processing, and hypothesis testing
+    - scikit-learn: Machine learning algorithms for clustering and pattern recognition
+
+Example:
+    >>> import pandas as pd
+    >>> import numpy as np
+    >>> from mcp.analytics.market.metrics import calculate_trend_strength, detect_market_regime
+    >>> 
+    >>> # Create sample market data
+    >>> dates = pd.date_range('2020-01-01', periods=500, freq='D')
+    >>> prices = pd.Series(100 * np.cumprod(1 + np.random.normal(0.0008, 0.015, 500)), index=dates)
+    >>> 
+    >>> # Multi-method trend analysis
+    >>> trend_result = calculate_trend_strength(prices, method="regression")
+    >>> print(f"Trend R²: {trend_result['r_squared']:.3f}")
+    >>> print(f"Strength: {trend_result['strength_rating']}")
+    >>> 
+    >>> # Market regime detection
+    >>> regime_result = detect_market_regime(prices, method="volatility_trend")
+    >>> print(f"Current Regime: {regime_result['current_regime']}")
+
+Note:
+    All functions return standardized dictionary outputs with success indicators and detailed
+    error handling. Missing data is handled gracefully with appropriate statistical adjustments.
 """
 
 import pandas as pd
@@ -23,18 +67,76 @@ from ..risk.metrics import calculate_correlation
 
 def calculate_trend_strength(prices: Union[pd.Series, Dict[str, Any]], 
                            method: str = "adx") -> Dict[str, Any]:
-    """
-    Measure trend strength using various methods.
+    """Calculate trend strength using multiple methodologies for comprehensive market analysis.
     
-    From financial-analysis-function-library.json market_analysis category
-    Uses existing technical indicators - no code duplication
+    Measures trend strength using various analytical approaches including moving average alignment,
+    statistical regression analysis, and momentum-based calculations. Each method provides different
+    insights into market trend characteristics, from technical analysis perspectives to statistical
+    significance testing of directional movements.
+    
+    The function implements multiple methodologies to provide robust trend analysis suitable for
+    different market conditions and analytical requirements.
     
     Args:
-        prices: Price series data
-        method: Method to use ("adx", "regression", "momentum")
-        
+        prices (Union[pd.Series, Dict[str, Any]]): Price series data as pandas Series with datetime
+            index or dictionary with price values. Values should be absolute prices (e.g., 100.50, 95.25).
+        method (str, optional): Analysis method to use. Defaults to "adx". Available methods:
+            - "adx" or "moving_average": Moving average alignment analysis
+            - "regression": Linear regression trend strength with statistical significance
+            - "momentum": Momentum-based trend consistency analysis
+    
     Returns:
-        Dict: Trend strength analysis
+        Dict[str, Any]: Comprehensive trend strength analysis with keys:
+            - method (str): Method used for analysis
+            - current_strength or r_squared (float): Primary strength metric (0-100 or 0-1)
+            - strength_rating (str): Qualitative strength assessment ("very_strong", "strong", "moderate", "weak")
+            - current_price (float): Latest price in series
+            - period_high (float): Maximum price in period
+            - period_low (float): Minimum price in period
+            - distance_from_high (float): Percentage distance from period high
+            - distance_from_low (float): Percentage distance from period low
+            - data_points (int): Number of observations used
+            - success (bool): Whether calculation succeeded
+            - function_name (str): Function identifier for tracking
+            
+            Method-specific additional keys:
+            - Moving Average: moving_averages (Dict) with SMA values and alignment score
+            - Regression: slope, p_value, trend_direction, is_significant
+            - Momentum: momentum periods (5d, 20d, 60d), trend_consistency, average_momentum
+    
+    Raises:
+        ValueError: If insufficient data for calculation or unknown method specified.
+        TypeError: If price data cannot be converted to valid price series.
+        
+    Example:
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> 
+        >>> # Create sample price data with uptrend
+        >>> dates = pd.date_range('2023-01-01', periods=100, freq='D')
+        >>> trend_factor = np.linspace(0.95, 1.05, 100)  # Gradual uptrend
+        >>> prices = pd.Series(100 * trend_factor * np.cumprod(1 + np.random.normal(0, 0.01, 100)), index=dates)
+        >>> 
+        >>> # Regression-based trend analysis
+        >>> result = calculate_trend_strength(prices, method="regression")
+        >>> print(f"Trend Strength (R²): {result['r_squared']:.3f}")
+        >>> print(f"Trend Direction: {result['trend_direction']}")
+        >>> print(f"Statistical Significance: {result['is_significant']}")
+        >>> print(f"Strength Rating: {result['strength_rating']}")
+        >>> 
+        >>> # Moving average alignment analysis
+        >>> ma_result = calculate_trend_strength(prices, method="moving_average")
+        >>> print(f"MA Alignment Score: {ma_result['moving_averages']['alignment_score']}/5")
+        >>> print(f"Current Strength: {ma_result['current_strength']:.1f}/100")
+        
+    Note:
+        - Moving average method requires at least 20 observations for basic analysis
+        - Regression method provides statistical significance testing (p-value < 0.05)
+        - Momentum method measures trend consistency across multiple timeframes
+        - Higher R² values (>0.6) indicate stronger statistical trends
+        - Alignment scores of 4-5 indicate strong moving average trend alignment
+        - Function handles both daily and other frequency data automatically
+        - Missing values are handled gracefully with appropriate warnings
     """
     try:
         price_series = validate_price_data(prices)
@@ -186,18 +288,71 @@ def calculate_trend_strength(prices: Union[pd.Series, Dict[str, Any]],
 
 def calculate_market_stress(returns: Union[pd.Series, Dict[str, Any]], 
                            benchmark_returns: Union[pd.Series, Dict[str, Any]]) -> Dict[str, Any]:
-    """
-    Calculate market stress indicators.
+    """Calculate comprehensive market stress indicators using multiple risk and correlation metrics.
     
-    From financial-analysis-function-library.json market_analysis category
-    Uses empyrical and scipy - no code duplication
+    Analyzes market stress conditions by examining correlation breakdown, volatility spikes, tail risk
+    events, drawdown severity, and beta instability. The function creates a composite stress index
+    that combines multiple stress indicators to provide a holistic view of market conditions and
+    potential systemic risk.
+    
+    Market stress analysis is crucial for risk management, portfolio allocation, and understanding
+    periods when normal market relationships break down, often signaling broader financial instability.
     
     Args:
-        returns: Asset return series
-        benchmark_returns: Benchmark return series (e.g., market index)
-        
+        returns (Union[pd.Series, Dict[str, Any]]): Asset return series as pandas Series with datetime
+            index or dictionary with return values. Values should be decimal returns (e.g., 0.02 for 2%).
+        benchmark_returns (Union[pd.Series, Dict[str, Any]]): Benchmark return series (e.g., market index)
+            with same format as returns. Used for correlation and beta analysis.
+    
     Returns:
-        Dict: Market stress analysis
+        Dict[str, Any]: Comprehensive market stress analysis with keys:
+            - composite_stress_index (float): Overall stress level (0-1, higher = more stress)
+            - stress_level (str): Qualitative stress assessment ("low", "moderate", "high", "extreme")
+            - stress_components (Dict): Individual stress metrics with keys:
+                - correlation_stress: Breakdown in normal correlations
+                - volatility_stress: Elevated volatility relative to average
+                - tail_stress: Frequency of extreme negative events
+                - drawdown_stress: Current drawdown severity
+                - beta_stress: Instability in beta relationships
+            - current_metrics (Dict): Current market conditions
+            - benchmark_comparison (Dict): Relative performance vs historical averages
+            - data_points (int): Number of observations used
+            - success (bool): Whether calculation succeeded
+            - function_name (str): Function identifier for tracking
+    
+    Raises:
+        ValueError: If insufficient data for stress calculation or data alignment issues.
+        TypeError: If return data cannot be converted to valid return series.
+        
+    Example:
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> 
+        >>> # Create sample return data with stress period
+        >>> dates = pd.date_range('2020-01-01', periods=300, freq='D')
+        >>> # Normal period followed by stress period
+        >>> normal_returns = np.random.normal(0.0008, 0.012, 200)
+        >>> stress_returns = np.random.normal(-0.002, 0.035, 100)  # Higher vol, negative bias
+        >>> asset_returns = pd.Series(np.concatenate([normal_returns, stress_returns]), index=dates)
+        >>> benchmark_returns = pd.Series(np.random.normal(0.0005, 0.015, 300), index=dates)
+        >>> 
+        >>> # Calculate market stress
+        >>> result = calculate_market_stress(asset_returns, benchmark_returns)
+        >>> print(f"Stress Level: {result['stress_level']}")
+        >>> print(f"Composite Stress Index: {result['composite_stress_index']:.3f}")
+        >>> print(f"Correlation Stress: {result['stress_components']['correlation_stress']:.3f}")
+        >>> print(f"Volatility Stress: {result['stress_components']['volatility_stress']:.3f}")
+        >>> print(f"Current Correlation: {result['current_metrics']['correlation']:.3f}")
+        
+    Note:
+        - Composite stress index combines weighted stress components (volatility 30%, correlation 20%, etc.)
+        - Correlation stress measures deviation from historical correlation patterns
+        - Volatility stress identifies periods of elevated market volatility
+        - Tail stress counts recent extreme negative events (below 5th percentile)
+        - Beta stress measures instability in systematic risk relationships
+        - Requires minimum 20 observations for rolling calculations
+        - Higher stress values indicate deteriorating market conditions
+        - Function handles data alignment automatically
     """
     try:
         returns_series = validate_return_data(returns)
@@ -446,18 +601,80 @@ def calculate_market_breadth(returns_matrix: List[List[float]]) -> Dict[str, Any
 
 def detect_market_regime(prices: Union[pd.Series, Dict[str, Any]], 
                         method: str = "volatility_trend") -> Dict[str, Any]:
-    """
-    Detect market regimes (bull/bear/sideways).
+    """Detect market regimes using multiple methodologies including machine learning clustering.
     
-    From financial-analysis-function-library.json market_analysis category
-    Complex analytical function combining multiple analytics - uses existing functions
+    Identifies market regimes (bull, bear, sideways, volatile) using various analytical approaches
+    from traditional technical analysis to advanced machine learning clustering. The function provides
+    comprehensive regime detection with transition analysis, regime stability metrics, and historical
+    pattern recognition for better understanding of market cycles.
+    
+    Market regime detection is essential for adaptive trading strategies, risk management, and
+    understanding structural shifts in market behavior patterns.
     
     Args:
-        prices: Price series data
-        method: Detection method ("volatility_trend", "returns_clustering", "technical")
-        
+        prices (Union[pd.Series, Dict[str, Any]]): Price series data as pandas Series with datetime
+            index or dictionary with price values. Values should be absolute prices (e.g., 100.50, 95.25).
+        method (str, optional): Detection methodology. Defaults to "volatility_trend". Available methods:
+            - "volatility_trend": Combines volatility and trend strength analysis
+            - "returns_clustering": K-means clustering of return characteristics
+            - "technical": Technical indicator-based regime classification
+    
     Returns:
-        Dict: Market regime detection results
+        Dict[str, Any]: Comprehensive market regime analysis with keys:
+            - method (str): Detection method used
+            - total_periods (int): Number of periods analyzed
+            - current_regime (str): Current market regime ("bull", "bear", "sideways", "volatile")
+            - regime_timeline (List): Recent regime history (last 10 periods)
+            - regime_statistics (Dict): Regime distribution with counts and percentages
+            - regime_transitions (List): Recent regime changes (last 5 transitions)
+            - regime_stability (Dict): Stability metrics with keys:
+                - total_transitions: Number of regime changes
+                - avg_regime_duration: Average periods per regime
+                - most_common_regime: Dominant regime type
+            - success (bool): Whether calculation succeeded
+            - function_name (str): Function identifier for tracking
+    
+    Raises:
+        ValueError: If insufficient data for regime detection (minimum 60 observations required).
+        TypeError: If price data cannot be converted to valid price series.
+        
+    Example:
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> 
+        >>> # Create sample price data with multiple regimes
+        >>> dates = pd.date_range('2020-01-01', periods=400, freq='D')
+        >>> # Bull market phase
+        >>> bull_prices = 100 * np.cumprod(1 + np.random.normal(0.001, 0.012, 150))
+        >>> # Bear market phase  
+        >>> bear_prices = bull_prices[-1] * np.cumprod(1 + np.random.normal(-0.0015, 0.025, 100))
+        >>> # Sideways phase
+        >>> sideways_prices = bear_prices[-1] * np.cumprod(1 + np.random.normal(0.0002, 0.008, 150))
+        >>> prices = pd.Series(np.concatenate([bull_prices, bear_prices, sideways_prices]), index=dates)
+        >>> 
+        >>> # Detect regimes using volatility-trend method
+        >>> result = detect_market_regime(prices, method="volatility_trend")
+        >>> print(f"Current Regime: {result['current_regime']}")
+        >>> print(f"Most Common Regime: {result['regime_stability']['most_common_regime']}")
+        >>> print(f"Total Transitions: {result['regime_stability']['total_transitions']}")
+        >>> print(f"Avg Regime Duration: {result['regime_stability']['avg_regime_duration']:.1f} periods")
+        >>> 
+        >>> # Machine learning clustering approach
+        >>> ml_result = detect_market_regime(prices, method="returns_clustering")
+        >>> print(f"ML Current Regime: {ml_result['current_regime']}")
+        >>> regime_stats = ml_result['regime_statistics']['percentages']
+        >>> for regime, pct in regime_stats.items():
+        ...     print(f"{regime}: {pct:.1f}%")
+        
+    Note:
+        - Volatility-trend method combines rolling volatility with trend strength analysis
+        - Returns clustering uses K-means on return characteristics (mean, vol, skew, drawdown)
+        - Technical method uses moving averages, Bollinger Bands, and volatility indicators
+        - Minimum 60 observations required for reliable regime detection
+        - Machine learning method automatically normalizes features for clustering
+        - Regime transitions help identify market turning points
+        - Higher transition frequency indicates market instability
+        - Function handles various data frequencies automatically
     """
     try:
         price_series = validate_price_data(prices)

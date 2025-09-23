@@ -1,8 +1,24 @@
-"""
-Portfolio Analysis Metrics using libraries
+"""Portfolio analysis metrics using industry-standard libraries.
 
-Portfolio analysis functions from financial-analysis-function-library.json portfolio_analysis category.
-Uses empyrical, numpy, scipy for proven calculations - no code duplication.
+This module provides comprehensive portfolio analysis functionality including metrics
+calculation, concentration analysis, beta calculation, turnover analysis, active share
+measurement, attribution analysis, Value at Risk (VaR) calculations, and stress testing.
+
+All calculations leverage established libraries from requirements.txt (empyrical, scipy,
+numpy) to ensure accuracy and avoid code duplication. Functions are designed to integrate
+with the financial-analysis-function-library.json specification.
+
+Example:
+    Basic usage of portfolio metrics:
+    
+    >>> from mcp.analytics.portfolio.metrics import calculate_portfolio_metrics
+    >>> weights = {'AAPL': 0.4, 'GOOGL': 0.3, 'MSFT': 0.3}
+    >>> returns_data = pd.DataFrame(...)  # Historical returns
+    >>> metrics = calculate_portfolio_metrics(weights, returns_data)
+    
+Note:
+    All functions return standardized output dictionaries compatible with the
+    MCP analytics server architecture.
 """
 
 import pandas as pd
@@ -24,20 +40,50 @@ def calculate_portfolio_metrics(weights: Union[pd.Series, Dict[str, Any], List[f
                                returns: Union[pd.DataFrame, Dict[str, Any]],
                                benchmark_returns: Optional[Union[pd.Series, Dict[str, Any]]] = None,
                                risk_free_rate: float = 0.02) -> Dict[str, Any]:
-    """
-    Calculate comprehensive portfolio metrics using empyrical and scipy.
+    """Calculate comprehensive portfolio performance and risk metrics.
     
-    From financial-analysis-function-library.json portfolio_analysis category
-    Uses empyrical library for all performance metrics - no code duplication
+    This function computes a wide range of portfolio metrics including return
+    characteristics, risk measures, risk-adjusted ratios, rolling metrics, and
+    benchmark comparisons using the empyrical library for proven calculations.
     
     Args:
-        weights: Portfolio weights
-        returns: Asset returns matrix
-        benchmark_returns: Benchmark returns for comparison
-        risk_free_rate: Risk-free rate for calculations
-        
+        weights: Portfolio allocation weights. Can be provided as a pandas Series
+            with asset names as index, a dictionary mapping asset names to weights,
+            or a list of weights (assumes order matches returns columns).
+        returns: Historical returns data for portfolio assets. Can be provided as
+            a pandas DataFrame with assets as columns and dates as index, or a
+            dictionary with asset names as keys and return series as values.
+        benchmark_returns: Optional benchmark returns for relative performance analysis.
+            Can be provided as a pandas Series, dictionary, or any format compatible
+            with validate_return_data(). Defaults to None.
+        risk_free_rate: Annual risk-free rate used for Sharpe ratio and alpha
+            calculations. Defaults to 0.02 (2%).
+            
     Returns:
-        Dict: Comprehensive portfolio metrics
+        Dict[str, Any]: Comprehensive portfolio metrics including:
+            - portfolio_composition: Asset count, concentration, diversification metrics
+            - return_metrics: Total return, annual return, excess return
+            - risk_metrics: Volatility, max drawdown, VaR, CVaR
+            - risk_adjusted_metrics: Sharpe, Sortino, Calmar ratios
+            - rolling_metrics: Rolling Sharpe ratio and volatility statistics
+            - benchmark_comparison: Beta, alpha, tracking error, capture ratios (if benchmark provided)
+            
+    Raises:
+        Exception: If portfolio metrics calculation fails due to invalid inputs
+            or computational errors.
+            
+    Example:
+        >>> weights = pd.Series({'AAPL': 0.4, 'GOOGL': 0.3, 'MSFT': 0.3})
+        >>> returns_df = pd.DataFrame(...)  # Daily returns data
+        >>> metrics = calculate_portfolio_metrics(weights, returns_df)
+        >>> print(f"Annual Return: {metrics['return_metrics']['annual_return_pct']}")
+        >>> print(f"Sharpe Ratio: {metrics['risk_adjusted_metrics']['sharpe_ratio']:.2f}")
+        
+    Note:
+        - Weights are automatically normalized to sum to 1
+        - Uses empyrical library for all performance calculations
+        - Rolling metrics use 252-day windows (approximate trading year)
+        - All percentage values are provided in both decimal and formatted string forms
     """
     try:
         # Validate and convert inputs
@@ -166,18 +212,41 @@ def calculate_portfolio_metrics(weights: Union[pd.Series, Dict[str, Any], List[f
 
 def analyze_portfolio_concentration(weights: Union[pd.Series, Dict[str, Any], List[float]],
                                    asset_names: Optional[List[str]] = None) -> Dict[str, Any]:
-    """
-    Analyze portfolio concentration and diversification using numpy and scipy.
+    """Analyze portfolio concentration and diversification characteristics.
     
-    From financial-analysis-function-library.json portfolio_analysis category
-    Uses established concentration measures - no code duplication
+    This function calculates various concentration indices and diversification
+    metrics to assess how concentrated or diversified a portfolio is across
+    its holdings. Uses established financial concentration measures.
     
     Args:
-        weights: Portfolio weights
-        asset_names: Asset names for detailed analysis
-        
+        weights: Portfolio allocation weights. Can be provided as a pandas Series
+            with asset names as index, a dictionary mapping asset names to weights,
+            or a list of weights.
+        asset_names: Optional list of asset names for detailed analysis and reporting.
+            If not provided, generic names will be generated (Asset_1, Asset_2, etc.).
+            
     Returns:
-        Dict: Concentration analysis results
+        Dict[str, Any]: Concentration analysis results including:
+            - concentration_indices: HHI, effective number of assets, Gini coefficient
+            - concentration_ratios: Top 1, 3, 5, 10 holdings percentages
+            - diversification_metrics: Entropy, variance, concentration deviation
+            - top_holdings: Ranked list of largest positions
+            - concentration_outliers: Assets with unusually large weights
+            
+    Raises:
+        Exception: If concentration analysis fails due to invalid inputs.
+        
+    Example:
+        >>> weights = {'AAPL': 0.25, 'GOOGL': 0.20, 'MSFT': 0.15, 'AMZN': 0.40}
+        >>> analysis = analyze_portfolio_concentration(weights)
+        >>> print(f"Concentration Level: {analysis['concentration_indices']['concentration_level']}")
+        >>> print(f"Top Holding: {analysis['concentration_ratios']['top_1_holding_pct']}")
+        
+    Note:
+        - Weights are automatically normalized to sum to 1
+        - HHI > 0.25 indicates high concentration
+        - Effective number of assets = 1 / HHI
+        - Outliers are identified as weights > mean + 2*std
     """
     try:
         # Validate and convert inputs
@@ -294,18 +363,46 @@ def analyze_portfolio_concentration(weights: Union[pd.Series, Dict[str, Any], Li
 
 def calculate_portfolio_beta(weights: Union[pd.Series, Dict[str, Any], List[float]],
                            asset_betas: Union[pd.Series, Dict[str, Any], List[float]]) -> Dict[str, Any]:
-    """
-    Calculate portfolio beta using weights and individual asset betas.
+    """Calculate portfolio beta as weighted average of individual asset betas.
     
-    From financial-analysis-function-library.json portfolio_analysis category
-    Simple weighted average calculation - no code duplication
+    Portfolio beta measures the portfolio's sensitivity to market movements.
+    A beta > 1 indicates higher volatility than the market, while beta < 1
+    indicates lower volatility. This function computes the weighted average
+    beta and provides interpretation of the portfolio's risk profile.
     
     Args:
-        weights: Portfolio weights
-        asset_betas: Individual asset betas
-        
+        weights: Portfolio allocation weights. Must have same length as asset_betas.
+            Can be provided as pandas Series, dictionary, or list.
+        asset_betas: Individual asset beta coefficients relative to market.
+            Must have same length as weights. Can be provided as pandas Series,
+            dictionary, or list.
+            
     Returns:
-        Dict: Portfolio beta calculation results
+        Dict[str, Any]: Portfolio beta analysis including:
+            - portfolio_beta: Weighted average beta
+            - beta_interpretation: Classification (high/moderate/low/negative)
+            - risk_profile: Risk assessment (aggressive/balanced/conservative/hedge)
+            - beta_statistics: Min, max, range, standard deviation of individual betas
+            - top_beta_contributors: Assets contributing most to portfolio beta
+            - portfolio_characteristics: Market sensitivity and volatility expectations
+            
+    Raises:
+        ValueError: If weights and betas have different lengths.
+        Exception: If portfolio beta calculation fails.
+        
+    Example:
+        >>> weights = {'AAPL': 0.4, 'GOOGL': 0.3, 'BONDS': 0.3}
+        >>> betas = {'AAPL': 1.2, 'GOOGL': 1.1, 'BONDS': 0.1}
+        >>> beta_analysis = calculate_portfolio_beta(weights, betas)
+        >>> print(f"Portfolio Beta: {beta_analysis['portfolio_beta']:.2f}")
+        >>> print(f"Risk Profile: {beta_analysis['risk_profile']}")
+        
+    Note:
+        - Portfolio beta = Σ(weight_i * beta_i)
+        - Beta > 1.2: High beta (aggressive)
+        - Beta 0.8-1.2: Moderate beta (balanced)
+        - Beta < 0.8: Low beta (conservative)
+        - Beta < 0: Negative beta (hedge characteristics)
     """
     try:
         # Validate and convert inputs
@@ -389,18 +486,42 @@ def calculate_portfolio_beta(weights: Union[pd.Series, Dict[str, Any], List[floa
 
 def analyze_portfolio_turnover(weights_history: Union[pd.DataFrame, Dict[str, Any]],
                               timeframes: Optional[List[str]] = None) -> Dict[str, Any]:
-    """
-    Analyze portfolio turnover metrics using pandas and numpy.
+    """Analyze portfolio turnover patterns and trading activity over time.
     
-    From financial-analysis-function-library.json portfolio_analysis category
-    Uses pandas for time series analysis - no code duplication
+    Portfolio turnover measures how frequently assets are bought and sold within
+    the portfolio. High turnover may indicate active management or instability,
+    while low turnover suggests a buy-and-hold approach. This function analyzes
+    turnover patterns, identifies high-activity periods, and assesses portfolio stability.
     
     Args:
-        weights_history: Historical portfolio weights over time
-        timeframes: Specific timeframes to analyze
-        
+        weights_history: Historical portfolio weights over time. Can be provided as
+            a pandas DataFrame with dates as index and assets as columns, or a
+            dictionary with date keys and weight dictionaries as values.
+        timeframes: Optional specific timeframes to analyze. Currently not implemented
+            but reserved for future functionality. Defaults to None.
+            
     Returns:
-        Dict: Portfolio turnover analysis
+        Dict[str, Any]: Portfolio turnover analysis including:
+            - turnover_summary: Average, median, annualized turnover rates
+            - turnover_distribution: Min, max, percentiles, high-activity periods
+            - asset_level_analysis: Most volatile assets, portfolio drift metrics
+            - time_series_analysis: Period coverage, cumulative turnover, trends
+            
+    Raises:
+        ValueError: If less than 2 time periods provided (need at least 2 for comparison).
+        Exception: If turnover analysis fails due to data issues.
+        
+    Example:
+        >>> weights_df = pd.DataFrame(...)  # Historical weights data
+        >>> turnover_analysis = analyze_portfolio_turnover(weights_df)
+        >>> print(f"Annual Turnover: {turnover_analysis['turnover_summary']['annualized_turnover_pct']}")
+        >>> print(f"Stability Score: {turnover_analysis['turnover_distribution']['stability_score']:.2f}")
+        
+    Note:
+        - Turnover = Σ|weight_change_i| / 2 for each period
+        - Annualized turnover extrapolated based on data frequency
+        - High turnover periods identified as > (mean + 1 std dev)
+        - Stability score = 1 - average absolute weight change
     """
     try:
         # Validate and convert inputs
@@ -516,19 +637,46 @@ def analyze_portfolio_turnover(weights_history: Union[pd.DataFrame, Dict[str, An
 def calculate_active_share(portfolio_weights: Union[pd.Series, Dict[str, Any], List[float]],
                           benchmark_weights: Union[pd.Series, Dict[str, Any], List[float]],
                           asset_names: Optional[List[str]] = None) -> Dict[str, Any]:
-    """
-    Calculate active share vs benchmark using numpy.
+    """Calculate active share relative to a benchmark portfolio.
     
-    From financial-analysis-function-library.json portfolio_analysis category
-    Simple mathematical calculation - no code duplication
+    Active share measures the percentage of portfolio holdings that differ from
+    the benchmark index. It quantifies how actively managed a portfolio is,
+    with higher active share indicating more deviation from the benchmark.
+    This function also identifies the largest overweight and underweight positions.
     
     Args:
-        portfolio_weights: Portfolio weights
-        benchmark_weights: Benchmark weights
-        asset_names: Asset names for detailed analysis
-        
+        portfolio_weights: Portfolio allocation weights. Can be provided as pandas
+            Series, dictionary, or list. Will be normalized to sum to 1.
+        benchmark_weights: Benchmark allocation weights for comparison. Can be
+            provided as pandas Series, dictionary, or list. Will be normalized to sum to 1.
+        asset_names: Optional list of asset names for detailed reporting.
+            If not provided, asset indices will be used in reports.
+            
     Returns:
-        Dict: Active share analysis results
+        Dict[str, Any]: Active share analysis including:
+            - active_share_metrics: Active share percentage, activity level classification
+            - position_analysis: Count of overweight/underweight positions
+            - largest_overweights: Top 5 positions above benchmark weights
+            - largest_underweights: Top 5 positions below benchmark weights
+            
+    Raises:
+        Exception: If active share calculation fails due to invalid inputs.
+        
+    Example:
+        >>> portfolio = {'AAPL': 0.25, 'GOOGL': 0.25, 'MSFT': 0.25, 'CASH': 0.25}
+        >>> benchmark = {'AAPL': 0.20, 'GOOGL': 0.30, 'MSFT': 0.30, 'CASH': 0.20}
+        >>> active_analysis = calculate_active_share(portfolio, benchmark)
+        >>> print(f"Active Share: {active_analysis['active_share_metrics']['active_share_pct']}")
+        >>> print(f"Activity Level: {active_analysis['active_share_metrics']['activity_level']}")
+        
+    Note:
+        - Active Share = Σ|portfolio_weight_i - benchmark_weight_i| / 2
+        - Active Share > 80%: Very active management
+        - Active Share 60-80%: Active management  
+        - Active Share 40-60%: Moderately active
+        - Active Share 20-40%: Somewhat active
+        - Active Share < 20%: Closet indexing
+        - Assets missing from either portfolio are treated as 0% weight
     """
     try:
         # Validate and convert inputs
@@ -637,20 +785,52 @@ def perform_attribution(portfolio_returns: Union[pd.Series, Dict[str, Any]],
                        benchmark_returns: Union[pd.Series, Dict[str, Any]],
                        weights_history: Union[pd.DataFrame, Dict[str, Any]],
                        asset_returns: Optional[Union[pd.DataFrame, Dict[str, Any]]] = None) -> Dict[str, Any]:
-    """
-    Perform return attribution analysis using pandas and numpy.
+    """Perform return attribution analysis to explain portfolio performance vs benchmark.
     
-    From financial-analysis-function-library.json portfolio_analysis category
-    Uses standard attribution methodology - no code duplication
+    Return attribution analyzes the sources of portfolio excess returns relative
+    to a benchmark. It measures the portfolio manager's skill in generating alpha
+    and provides detailed analysis of performance consistency, risk metrics, and
+    win/loss patterns. Optionally includes asset-level attribution when individual
+    asset returns are provided.
     
     Args:
-        portfolio_returns: Portfolio returns time series
-        benchmark_returns: Benchmark returns time series
-        weights_history: Historical portfolio weights
-        asset_returns: Individual asset returns for detailed attribution
-        
+        portfolio_returns: Portfolio returns time series. Can be provided as pandas
+            Series or dictionary with dates as keys and returns as values.
+        benchmark_returns: Benchmark returns time series for comparison. Must have
+            overlapping periods with portfolio returns.
+        weights_history: Historical portfolio weights over time. Used for advanced
+            attribution analysis (currently validates input but not fully utilized).
+        asset_returns: Optional individual asset returns for detailed asset-level
+            attribution analysis. If provided, calculates contribution of each
+            asset to portfolio performance.
+            
     Returns:
-        Dict: Return attribution analysis results
+        Dict[str, Any]: Attribution analysis including:
+            - attribution_summary: Total and annualized excess returns
+            - risk_metrics: Tracking error, information ratio, excess volatility
+            - performance_consistency: Hit rate, correlation with benchmark
+            - win_loss_analysis: Average wins/losses, win/loss ratio, best/worst periods
+            - time_series_analysis: Recent performance trends, period coverage
+            - asset_level_attribution: Top/bottom contributing assets (if asset_returns provided)
+            
+    Raises:
+        ValueError: If no overlapping periods between portfolio and benchmark returns.
+        Exception: If attribution analysis fails due to data issues.
+        
+    Example:
+        >>> portfolio_rets = pd.Series(...)  # Portfolio daily returns
+        >>> benchmark_rets = pd.Series(...)  # Benchmark daily returns
+        >>> weights_df = pd.DataFrame(...)   # Historical weights
+        >>> attribution = perform_attribution(portfolio_rets, benchmark_rets, weights_df)
+        >>> print(f"Information Ratio: {attribution['risk_metrics']['information_ratio']:.2f}")
+        >>> print(f"Hit Rate: {attribution['performance_consistency']['hit_rate_pct']}")
+        
+    Note:
+        - Excess return = Portfolio return - Benchmark return
+        - Information ratio = Excess return / Tracking error
+        - Hit rate = % of periods with positive excess returns
+        - Tracking error annualized using √252 factor
+        - Win/loss ratio = |Average win| / |Average loss|
     """
     try:
         # Validate and convert inputs
@@ -798,20 +978,47 @@ def calculate_portfolio_var(weights: Union[pd.Series, Dict[str, Any], List[float
                            covariance_matrix: Union[pd.DataFrame, Dict[str, Any], np.ndarray],
                            confidence: float = 0.05,
                            time_horizon: int = 1) -> Dict[str, Any]:
-    """
-    Calculate portfolio Value at Risk using covariance matrix approach.
+    """Calculate portfolio Value at Risk (VaR) using parametric approach.
     
-    From financial-analysis-function-library.json portfolio_analysis category
-    Uses scipy and numpy for VaR calculation - no code duplication
+    Value at Risk estimates the maximum potential loss for a portfolio over a
+    specified time horizon at a given confidence level. This function uses the
+    parametric (analytical) method based on portfolio volatility and assumes
+    normal distribution of returns. Also calculates component VaR and incremental
+    VaR for risk decomposition analysis.
     
     Args:
-        weights: Portfolio weights
-        covariance_matrix: Asset covariance matrix
-        confidence: Confidence level (e.g., 0.05 for 95% VaR)
-        time_horizon: Time horizon in days
-        
+        weights: Portfolio allocation weights. Will be normalized to sum to 1.
+            Can be provided as pandas Series, dictionary, or list.
+        covariance_matrix: Asset return covariance matrix. Must be square matrix
+            with dimensions matching the number of assets in weights.
+        confidence: Confidence level for VaR calculation. Defaults to 0.05 for
+            95% VaR (5% tail probability). Common values: 0.01, 0.05, 0.10.
+        time_horizon: Time horizon in days for VaR calculation. Defaults to 1
+            for daily VaR. Use 22 for monthly, 252 for annual.
+            
     Returns:
-        Dict: Portfolio VaR analysis results
+        Dict[str, Any]: Portfolio VaR analysis including:
+            - var_metrics: Portfolio VaR, confidence level, volatility measures
+            - diversification_analysis: Undiversified VaR, diversification benefit
+            - component_analysis: Individual asset contributions to portfolio VaR
+            - incremental_analysis: VaR impact if individual assets removed
+            
+    Raises:
+        Exception: If VaR calculation fails due to invalid inputs or matrix issues.
+        
+    Example:
+        >>> weights = pd.Series({'AAPL': 0.4, 'GOOGL': 0.3, 'MSFT': 0.3})
+        >>> cov_matrix = pd.DataFrame(...)  # Covariance matrix
+        >>> var_analysis = calculate_portfolio_var(weights, cov_matrix, confidence=0.05)
+        >>> print(f"95% Daily VaR: {var_analysis['var_metrics']['portfolio_var_pct']}")
+        >>> print(f"Diversification Benefit: {var_analysis['diversification_analysis']['risk_reduction']}")
+        
+    Note:
+        - Uses normal distribution assumption (parametric VaR)
+        - VaR = |Z-score| × Portfolio volatility × √(time_horizon)
+        - Component VaR measures marginal contribution of each asset
+        - Incremental VaR shows impact of removing individual assets
+        - Diversification benefit = Undiversified VaR - Portfolio VaR
     """
     try:
         # Validate and convert inputs
@@ -935,19 +1142,46 @@ def calculate_portfolio_var(weights: Union[pd.Series, Dict[str, Any], List[float
 def stress_test_portfolio(weights: Union[pd.Series, Dict[str, Any], List[float]],
                          returns: Union[pd.DataFrame, Dict[str, Any]],
                          scenarios: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
-    """
-    Perform portfolio stress testing using scipy and numpy.
+    """Perform comprehensive portfolio stress testing under adverse scenarios.
     
-    From financial-analysis-function-library.json portfolio_analysis category
-    Uses statistical methods for stress testing - no code duplication
+    Stress testing evaluates portfolio performance under extreme market conditions
+    to assess potential losses and risk exposure. This function applies various
+    stress scenarios (market crashes, volatility spikes) and calculates expected
+    losses, Value at Risk, and probability of significant losses under each scenario.
     
     Args:
-        weights: Portfolio weights
-        returns: Historical asset returns
-        scenarios: Custom stress scenarios
-        
+        weights: Portfolio allocation weights. Will be normalized to sum to 1.
+            Can be provided as pandas Series, dictionary, or list.
+        returns: Historical asset returns data used to calculate base portfolio
+            statistics and apply stress scenarios. Can be DataFrame or dictionary.
+        scenarios: Optional custom stress scenarios. If not provided, uses default
+            scenarios including market crash (-20%), moderate stress (-10%),
+            severe stress (-30%), extreme stress (-40%), and volatility spike.
+            Each scenario should be a dict with 'name', 'description', and 'factor' keys.
+            
     Returns:
-        Dict: Stress test results
+        Dict[str, Any]: Stress test results including:
+            - stress_test_summary: Overview of scenarios tested, worst/best cases
+            - portfolio_resilience: Base metrics, resilience score, vulnerability assessment
+            - detailed_scenarios: Complete results for each stress scenario
+            - risk_assessment: Maximum potential losses, recommendations
+            
+    Raises:
+        Exception: If stress testing fails due to invalid inputs or calculation errors.
+        
+    Example:
+        >>> weights = {'AAPL': 0.4, 'GOOGL': 0.3, 'BONDS': 0.3}
+        >>> returns_df = pd.DataFrame(...)  # Historical returns
+        >>> stress_results = stress_test_portfolio(weights, returns_df)
+        >>> print(f"Worst Case VaR: {stress_results['stress_test_summary']['worst_case_var_95_pct']}")
+        >>> print(f"Resilience: {stress_results['portfolio_resilience']['vulnerability_assessment']}")
+        
+    Note:
+        - Default scenarios: -10%, -20%, -30%, -40% shocks, volatility spike
+        - Calculates VaR at 95% and 99% confidence levels for each scenario
+        - Expected shortfall (CVaR) calculated as average of worst 5% outcomes
+        - Resilience score based on stress amplification factor
+        - Recommendations provided based on maximum potential losses
     """
     try:
         # Validate and convert inputs

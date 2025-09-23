@@ -1,8 +1,27 @@
-"""
-Portfolio Optimization using PyPortfolioOpt and cvxpy
+"""Portfolio optimization using PyPortfolioOpt and industry-standard libraries.
 
-All portfolio optimization calculations using libraries from requirements.txt
-From financial-analysis-function-library.json
+This module provides comprehensive portfolio optimization functionality including
+efficient frontier calculation, maximum Sharpe ratio optimization, minimum volatility
+optimization, risk parity strategies, and discrete allocation. All calculations
+leverage established libraries from requirements.txt (PyPortfolioOpt, cvxpy) to
+ensure accuracy and avoid code duplication.
+
+Functions are designed to integrate with the financial-analysis-function-library.json
+specification and provide standardized outputs for the MCP analytics server.
+
+Example:
+    Basic portfolio optimization workflow:
+    
+    >>> from mcp.analytics.portfolio.optimization import optimize_portfolio
+    >>> import pandas as pd
+    >>> price_data = pd.DataFrame(...)  # Historical price data
+    >>> results = optimize_portfolio(price_data, method="max_sharpe")
+    >>> print(f"Optimal weights: {results['weights']}")
+    >>> print(f"Expected return: {results['expected_return']:.2%}")
+    
+Note:
+    All optimization functions use PyPortfolioOpt for proven implementations
+    of modern portfolio theory and avoid manual calculation of complex algorithms.
 """
 
 import pandas as pd
@@ -27,21 +46,58 @@ def optimize_portfolio(prices: Union[pd.DataFrame, Dict[str, Any]],
                       risk_free_rate: float = 0.02,
                       target_return: Optional[float] = None,
                       target_volatility: Optional[float] = None) -> Dict[str, Any]:
-    """
-    Optimize portfolio using PyPortfolioOpt.
+    """Optimize portfolio allocation using various optimization objectives.
     
-    From financial-analysis-function-library.json
-    Uses PyPortfolioOpt library instead of manual calculations - no code duplication
+    This function provides a unified interface for portfolio optimization using
+    PyPortfolioOpt library. Supports multiple optimization methods including
+    maximum Sharpe ratio, minimum volatility, and efficient frontier targeting
+    specific return or risk levels.
     
     Args:
-        prices: Price data for assets
-        method: Optimization method ('max_sharpe', 'min_volatility', 'efficient_return', 'efficient_risk')
-        risk_free_rate: Risk-free rate
-        target_return: Target return for efficient_return method
-        target_volatility: Target volatility for efficient_risk method
-        
+        prices: Historical price data for assets. Can be provided as pandas
+            DataFrame with dates as index and assets as columns, or dictionary
+            with asset names as keys and price series as values.
+        method: Optimization method to use. Options:
+            - "max_sharpe": Maximize Sharpe ratio (risk-adjusted return)
+            - "min_volatility": Minimize portfolio volatility
+            - "efficient_return": Target specific return level (requires target_return)
+            - "efficient_risk": Target specific volatility level (requires target_volatility)
+            Defaults to "max_sharpe".
+        risk_free_rate: Annual risk-free rate used for Sharpe ratio calculation
+            and excess return computation. Defaults to 0.02 (2%).
+        target_return: Target annual return for efficient_return method.
+            Required when method="efficient_return", ignored otherwise.
+        target_volatility: Target annual volatility for efficient_risk method.
+            Required when method="efficient_risk", ignored otherwise.
+            
     Returns:
-        Dict: Optimized weights and portfolio metrics
+        Dict[str, Any]: Optimization results including:
+            - weights: Dictionary of optimized asset weights (cleaned, >0.1% positions)
+            - expected_return: Expected annual return of optimized portfolio
+            - expected_volatility: Expected annual volatility of optimized portfolio
+            - sharpe_ratio: Sharpe ratio of optimized portfolio
+            - method: Optimization method used
+            - risk_free_rate: Risk-free rate used in calculations
+            - n_assets: Number of assets with meaningful allocations (>0.1%)
+            
+    Raises:
+        ValueError: If no price data provided or invalid method specified.
+        Exception: If optimization fails due to numerical or data issues.
+        
+    Example:
+        >>> import pandas as pd
+        >>> prices = pd.DataFrame({'AAPL': [...], 'GOOGL': [...], 'MSFT': [...]})
+        >>> result = optimize_portfolio(prices, method="max_sharpe", risk_free_rate=0.03)
+        >>> print(f"Optimal Sharpe ratio: {result['sharpe_ratio']:.2f}")
+        >>> for asset, weight in result['weights'].items():
+        ...     print(f"{asset}: {weight:.1%}")
+        
+    Note:
+        - Uses PyPortfolioOpt library for proven optimization algorithms
+        - Expected returns calculated using mean historical return
+        - Risk model uses sample covariance matrix
+        - Weights are cleaned to remove positions <0.1%
+        - Falls back to max_sharpe if invalid method or missing targets
     """
     try:
         if isinstance(prices, dict):
@@ -101,19 +157,53 @@ def optimize_portfolio(prices: Union[pd.DataFrame, Dict[str, Any]],
 def calculate_efficient_frontier(prices: Union[pd.DataFrame, Dict[str, Any]], 
                                 n_points: int = 20,
                                 risk_free_rate: float = 0.02) -> Dict[str, Any]:
-    """
-    Calculate efficient frontier using PyPortfolioOpt.
+    """Calculate the efficient frontier for a set of assets.
     
-    From financial-analysis-function-library.json
-    Uses PyPortfolioOpt library instead of manual calculations - no code duplication
+    The efficient frontier represents the set of optimal portfolios offering
+    the highest expected return for each level of risk. This function calculates
+    multiple points along the frontier and identifies key portfolios like the
+    maximum Sharpe ratio and minimum volatility portfolios.
     
     Args:
-        prices: Price data for assets
-        n_points: Number of points on frontier
-        risk_free_rate: Risk-free rate
-        
+        prices: Historical price data for assets. Can be provided as pandas
+            DataFrame with dates as index and assets as columns, or dictionary
+            with asset names as keys and price series as values.
+        n_points: Number of points to calculate along the efficient frontier.
+            More points provide a smoother curve but increase computation time.
+            Defaults to 20.
+        risk_free_rate: Annual risk-free rate used for Sharpe ratio calculations.
+            Defaults to 0.02 (2%).
+            
     Returns:
-        Dict: Efficient frontier data
+        Dict[str, Any]: Efficient frontier data including:
+            - returns: List of expected returns for each frontier point
+            - volatilities: List of volatilities for each frontier point
+            - sharpe_ratios: List of Sharpe ratios for each frontier point
+            - max_sharpe_portfolio: Details of maximum Sharpe ratio portfolio
+            - min_volatility_portfolio: Details of minimum volatility portfolio
+            - n_points: Actual number of valid points calculated
+            - risk_free_rate: Risk-free rate used in calculations
+            
+    Raises:
+        Exception: If efficient frontier calculation fails due to optimization issues.
+        
+    Example:
+        >>> import pandas as pd
+        >>> prices = pd.DataFrame({'AAPL': [...], 'GOOGL': [...], 'MSFT': [...]})
+        >>> frontier = calculate_efficient_frontier(prices, n_points=25)
+        >>> # Plot frontier
+        >>> import matplotlib.pyplot as plt
+        >>> plt.scatter(frontier['volatilities'], frontier['returns'])
+        >>> plt.xlabel('Volatility')
+        >>> plt.ylabel('Expected Return')
+        >>> plt.title('Efficient Frontier')
+        
+    Note:
+        - Target returns range from minimum to maximum individual asset returns
+        - Some frontier points may be skipped if optimization fails
+        - Maximum Sharpe and minimum volatility portfolios calculated separately
+        - Uses PyPortfolioOpt's EfficientFrontier class for calculations
+        - Returns and volatilities are annualized values
     """
     try:
         if isinstance(prices, dict):
@@ -195,37 +285,93 @@ def calculate_efficient_frontier(prices: Union[pd.DataFrame, Dict[str, Any]],
 
 def optimize_max_sharpe(prices: Union[pd.DataFrame, Dict[str, Any]], 
                        risk_free_rate: float = 0.02) -> Dict[str, Any]:
-    """
-    Optimize for maximum Sharpe ratio using PyPortfolioOpt.
+    """Optimize portfolio for maximum Sharpe ratio.
     
-    From financial-analysis-function-library.json
-    Uses PyPortfolioOpt library instead of manual calculations - no code duplication
+    This is a convenience function that calls optimize_portfolio with
+    method="max_sharpe". The maximum Sharpe ratio portfolio provides
+    the best risk-adjusted return according to modern portfolio theory.
+    
+    Args:
+        prices: Historical price data for assets. See optimize_portfolio
+            for detailed format requirements.
+        risk_free_rate: Annual risk-free rate for Sharpe ratio calculation.
+            Defaults to 0.02 (2%).
+            
+    Returns:
+        Dict[str, Any]: Same format as optimize_portfolio function.
+            
+    Example:
+        >>> result = optimize_max_sharpe(price_data, risk_free_rate=0.03)
+        >>> print(f"Max Sharpe ratio: {result['sharpe_ratio']:.2f}")
+        
+    Note:
+        This function is equivalent to:
+        optimize_portfolio(prices, method="max_sharpe", risk_free_rate=risk_free_rate)
     """
     return optimize_portfolio(prices, method="max_sharpe", risk_free_rate=risk_free_rate)
 
 
 def optimize_min_volatility(prices: Union[pd.DataFrame, Dict[str, Any]]) -> Dict[str, Any]:
-    """
-    Optimize for minimum volatility using PyPortfolioOpt.
+    """Optimize portfolio for minimum volatility.
     
-    From financial-analysis-function-library.json
-    Uses PyPortfolioOpt library instead of manual calculations - no code duplication
+    This is a convenience function that calls optimize_portfolio with
+    method="min_volatility". The minimum volatility portfolio provides
+    the lowest possible risk for the given set of assets.
+    
+    Args:
+        prices: Historical price data for assets. See optimize_portfolio
+            for detailed format requirements.
+            
+    Returns:
+        Dict[str, Any]: Same format as optimize_portfolio function.
+            
+    Example:
+        >>> result = optimize_min_volatility(price_data)
+        >>> print(f"Minimum volatility: {result['expected_volatility']:.1%}")
+        
+    Note:
+        This function is equivalent to:
+        optimize_portfolio(prices, method="min_volatility")
     """
     return optimize_portfolio(prices, method="min_volatility")
 
 
 def calculate_risk_parity(prices: Union[pd.DataFrame, Dict[str, Any]]) -> Dict[str, Any]:
-    """
-    Calculate risk parity portfolio using PyPortfolioOpt.
+    """Calculate risk parity portfolio allocation.
     
-    From financial-analysis-function-library.json
-    Uses PyPortfolioOpt library instead of manual calculations - no code duplication
+    Risk parity portfolios allocate capital such that each asset contributes
+    equally to the portfolio's overall risk. This approach aims to achieve
+    better diversification than market-cap weighted portfolios by preventing
+    any single asset from dominating the portfolio's risk profile.
     
     Args:
-        prices: Price data for assets
-        
+        prices: Historical price data for assets. Can be provided as pandas
+            DataFrame with dates as index and assets as columns, or dictionary
+            with asset names as keys and price series as values.
+            
     Returns:
-        Dict: Risk parity weights and metrics
+        Dict[str, Any]: Risk parity allocation including:
+            - weights: Dictionary of risk parity weights (cleaned, >0.1% positions)
+            - method: "risk_parity" identifier
+            - optimization_status: Status from cvxpy optimization solver
+            
+    Raises:
+        Exception: If risk parity calculation fails due to optimization issues.
+        
+    Example:
+        >>> import pandas as pd
+        >>> prices = pd.DataFrame({'STOCKS': [...], 'BONDS': [...], 'COMMODITIES': [...]})
+        >>> result = calculate_risk_parity(prices)
+        >>> for asset, weight in result['weights'].items():
+        ...     print(f"{asset}: {weight:.1%}")
+        >>> print(f"Optimization status: {result['optimization_status']}")
+        
+    Note:
+        - Uses cvxpy for constrained optimization
+        - Current implementation is simplified; true risk parity is more complex
+        - Falls back to equal weights if optimization fails
+        - Weights cleaned to remove positions <0.1%
+        - Equal risk contribution means: weight_i * (Cov * weight)_i = constant
     """
     try:
         if isinstance(prices, dict):
@@ -289,19 +435,44 @@ def calculate_risk_parity(prices: Union[pd.DataFrame, Dict[str, Any]]) -> Dict[s
 def discrete_allocation(weights: Dict[str, float], 
                        latest_prices: Dict[str, float], 
                        total_portfolio_value: float) -> Dict[str, Any]:
-    """
-    Calculate discrete allocation using PyPortfolioOpt.
+    """Calculate discrete share allocation for a given portfolio value.
     
-    From financial-analysis-function-library.json
-    Uses PyPortfolioOpt library instead of manual calculations - no code duplication
+    Convert continuous portfolio weights into discrete share quantities
+    that can actually be purchased. This function determines how many
+    whole shares of each asset to buy given a specific portfolio value
+    and current asset prices, while minimizing tracking error to target weights.
     
     Args:
-        weights: Portfolio weights
-        latest_prices: Latest prices for assets
-        total_portfolio_value: Total value to allocate
-        
+        weights: Target portfolio weights as dictionary mapping asset names
+            to allocation percentages (should sum to approximately 1.0).
+        latest_prices: Current market prices for each asset as dictionary
+            mapping asset names to prices per share.
+        total_portfolio_value: Total dollar amount available for investment.
+            Used to determine how many shares can be purchased.
+            
     Returns:
-        Dict: Discrete allocation and leftover cash
+        Dict[str, Any]: Discrete allocation results including:
+            - allocation: Dictionary mapping asset names to number of shares to purchase
+            - leftover_cash: Amount of cash remaining after purchasing whole shares
+            - total_value: Original total portfolio value provided
+            - allocated_value: Amount actually invested in shares (total - leftover)
+            
+    Raises:
+        Exception: If discrete allocation fails due to invalid inputs or optimization issues.
+        
+    Example:
+        >>> weights = {'AAPL': 0.4, 'GOOGL': 0.3, 'MSFT': 0.3}
+        >>> prices = {'AAPL': 150.0, 'GOOGL': 2500.0, 'MSFT': 300.0}
+        >>> allocation = discrete_allocation(weights, prices, 10000)
+        >>> print(f"Buy {allocation['allocation']['AAPL']} shares of AAPL")
+        >>> print(f"Leftover cash: ${allocation['leftover_cash']:.2f}")
+        
+    Note:
+        - Uses PyPortfolioOpt's DiscreteAllocation with linear programming
+        - Optimization minimizes tracking error between actual and target weights
+        - Only whole shares can be purchased (no fractional shares)
+        - Leftover cash typically small but depends on asset prices
+        - Higher portfolio values generally result in lower tracking error
     """
     try:
         
@@ -322,7 +493,7 @@ def discrete_allocation(weights: Dict[str, float],
         return {"success": False, "error": f"Discrete allocation failed: {str(e)}"}
 
 
-# Registry of portfolio optimization functions - all using libraries
+# Registry of portfolio optimization functions - all using proven libraries
 PORTFOLIO_OPTIMIZATION_FUNCTIONS = {
     'optimize_portfolio': optimize_portfolio,
     'calculate_efficient_frontier': calculate_efficient_frontier,

@@ -1,7 +1,38 @@
-"""
-Signal Generation and Manipulation Functions
+"""Signal generation and manipulation functions for automated trading strategies.
 
-Atomic signal functions from financial-analysis-function-library.json signal_analysis category.
+This module provides comprehensive signal generation capabilities for technical analysis
+and algorithmic trading. It includes universal signal generators that can work with
+various technical indicators, frequency analysis tools, signal combination methods,
+and advanced filtering capabilities.
+
+The module supports multiple signal generation approaches:
+- Threshold-based signals (RSI overbought/oversold)
+- Crossover signals (moving average, MACD crossovers)
+- Momentum signals (price momentum breakouts)
+- Mean reversion signals (statistical overbought/oversold)
+
+Additional functionality includes:
+- Signal frequency analysis and distribution statistics
+- Multi-source signal combination with various consensus methods
+- Advanced signal filtering with customizable criteria
+
+All functions integrate with the financial-analysis-function-library.json specification
+and provide standardized outputs for the MCP analytics server.
+
+Example:
+    Basic signal generation workflow:
+    
+    >>> from mcp.analytics.signals.generators import generate_signals, combine_signals
+    >>> import pandas as pd
+    >>> # Generate RSI-based signals
+    >>> rsi_data = pd.Series([30, 25, 75, 80, 45])  # RSI values
+    >>> signals = generate_signals(rsi_data, method="threshold", 
+    ...                          parameters={"upper_threshold": 70, "lower_threshold": 30})
+    >>> print(f"Generated {signals['signal_statistics']['total_signals']} signals")
+    
+Note:
+    All signal generation functions return timestamps, signal types, and strength
+    indicators for comprehensive trading strategy development.
 """
 
 import pandas as pd
@@ -11,25 +42,85 @@ import warnings
 warnings.filterwarnings('ignore')
 
 from ..utils.data_utils import validate_return_data, validate_price_data, standardize_output
-from ..indicators.technical import calculate_rsi, calculate_macd, calculate_bollinger_bands, calculate_stochastic
+from ..indicators.momentum import calculate_rsi, calculate_macd, calculate_stochastic
+from ..indicators.volatility import calculate_bollinger_bands
 
 
 def generate_signals(indicator: Union[pd.Series, List[float], Dict[str, Any]], 
                     method: str = "threshold", 
                     parameters: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """
-    Generate buy/sell signals from indicators.
+    """Generate trading signals from technical indicators using various methodologies.
     
-    From financial-analysis-function-library.json signal_analysis category
-    Universal signal generator using various methods - uses existing functions
+    This universal signal generator can process different types of technical indicators
+    and price data to produce buy/sell signals. It supports multiple signal generation
+    methods commonly used in algorithmic trading and provides detailed signal metadata
+    including timestamps, strength, and generation method.
     
     Args:
-        indicator: Indicator values or price data
-        method: Signal generation method ("threshold", "crossover", "momentum", "mean_reversion")
-        parameters: Method-specific parameters
-        
+        indicator: Technical indicator values or price data. Can be provided as:
+            - pandas Series: Preferred format with datetime index
+            - List of floats: Numeric indicator values
+            - Dictionary: With 'data' key containing values or direct value mapping
+        method: Signal generation methodology. Available methods:
+            - "threshold": Fixed level signals (e.g., RSI >70 = sell, <30 = buy)
+            - "crossover": Moving average or reference line crossovers
+            - "momentum": Price momentum breakout signals
+            - "mean_reversion": Statistical overbought/oversold signals
+            Defaults to "threshold".
+        parameters: Method-specific configuration parameters. If None, uses defaults:
+            - Threshold: upper_threshold=70, lower_threshold=30
+            - Crossover: ma_period=20, or reference_line for fixed level crossovers
+            - Momentum: lookback=5, momentum_threshold=0.02
+            - Mean reversion: window=20, std_threshold=2.0
+            
     Returns:
-        Dict: Generated signals with timestamps and strength
+        Dict[str, Any]: Signal generation results including:
+            - method: Signal generation method used
+            - parameters: Parameters applied during generation
+            - signals: List of signal dictionaries with timestamp, signal type, strength
+            - signal_statistics: Summary statistics (total, buy/sell counts, percentages)
+            - data_points: Number of input data points processed
+            
+        Each signal dictionary contains:
+            - timestamp: Signal generation time
+            - index: Position in original data series
+            - signal: 'buy', 'sell', or 'hold'
+            - strength: Confidence level (0.0 to 1.0)
+            - indicator_value: Original indicator value at signal time
+            - method: Specific sub-method used (e.g., 'threshold', 'ma_crossover_above')
+            
+    Raises:
+        ValueError: If unknown method specified.
+        Exception: If signal generation fails due to invalid data or parameters.
+        
+    Example:
+        >>> import pandas as pd
+        >>> # Generate RSI threshold signals
+        >>> rsi_values = pd.Series([45, 30, 25, 35, 75, 80, 70, 65],
+        ...                       index=pd.date_range('2023-01-01', periods=8))
+        >>> rsi_signals = generate_signals(rsi_values, method="threshold",
+        ...                              parameters={"upper_threshold": 70, "lower_threshold": 30})
+        >>> print(f"RSI signals: {len(rsi_signals['signals'])}")
+        >>> 
+        >>> # Generate momentum signals
+        >>> prices = pd.Series([100, 102, 105, 103, 108, 112],
+        ...                   index=pd.date_range('2023-01-01', periods=6))
+        >>> momentum_signals = generate_signals(prices, method="momentum",
+        ...                                   parameters={"lookback": 3, "momentum_threshold": 0.03})
+        >>> 
+        >>> # Generate crossover signals
+        >>> price_ma = pd.Series([100, 101, 103, 102, 105],
+        ...                      index=pd.date_range('2023-01-01', periods=5))
+        >>> crossover_signals = generate_signals(price_ma, method="crossover",
+        ...                                     parameters={"reference_line": 102})
+        
+    Note:
+        - Signals only generated when conditions are met (no 'hold' signals by default)
+        - Strength calculation varies by method and measures signal conviction
+        - Timestamps preserve original index from input data series
+        - Multiple signals can be generated from the same data series
+        - Mean reversion method uses z-score calculation for signal strength
+        - Momentum method compares current vs lookback period percentage change
     """
     try:
         if parameters is None:
@@ -252,18 +343,62 @@ def generate_signals(indicator: Union[pd.Series, List[float], Dict[str, Any]],
 
 def calculate_signal_frequency(signals: List[Dict[str, Any]], 
                               timeframe: str = "daily") -> Dict[str, Any]:
-    """
-    Calculate signal frequency statistics.
+    """Calculate comprehensive signal frequency statistics and distribution patterns.
     
-    From financial-analysis-function-library.json signal_analysis category
-    Simple statistical calculation - uses pandas
+    This function analyzes the temporal distribution of trading signals to understand
+    signal generation patterns, clustering, and consistency. It provides insights into
+    signal frequency that are crucial for risk management and strategy evaluation.
     
     Args:
-        signals: List of signal dictionaries
-        timeframe: Time aggregation ("daily", "weekly", "monthly")
-        
+        signals: List of signal dictionaries to analyze. Each signal must contain:
+            - 'timestamp': Signal generation time (string or datetime)
+            - 'signal': Signal type ('buy', 'sell', etc.)
+            Optional fields: 'strength', 'method' for additional analysis
+        timeframe: Time aggregation level for frequency analysis. Options:
+            - "daily": Group signals by calendar day
+            - "weekly": Group signals by calendar week
+            - "monthly": Group signals by calendar month
+            Defaults to "daily".
+            
     Returns:
-        Dict: Signal frequency analysis
+        Dict[str, Any]: Signal frequency analysis including:
+            - timeframe: Aggregation level used
+            - analysis_period: Start/end dates and total periods covered
+            - frequency_statistics: Signals per period (avg, max, min, std dev)
+            - time_between_signals: Average, median, min, max days between signals
+            - signal_distribution: Breakdown by type, method, and clustering patterns
+            - strength_analysis: Signal strength statistics (if available)
+            
+        Clustering analysis includes:
+            - periods_with_signals: Count of active periods
+            - periods_without_signals: Count of inactive periods
+            - signal_concentration: Standard deviation of signals per period
+            - most_active_period: Period with highest signal count
+            
+    Raises:
+        ValueError: If timeframe is invalid or signals lack required 'timestamp' field.
+        Exception: If frequency calculation fails due to data issues.
+        
+    Example:
+        >>> signals = [
+        ...     {'timestamp': '2023-01-02', 'signal': 'buy', 'strength': 0.8},
+        ...     {'timestamp': '2023-01-02', 'signal': 'buy', 'strength': 0.6},  # Same day
+        ...     {'timestamp': '2023-01-05', 'signal': 'sell', 'strength': 0.9},
+        ...     {'timestamp': '2023-01-12', 'signal': 'buy', 'strength': 0.7}
+        ... ]
+        >>> freq_analysis = calculate_signal_frequency(signals, timeframe="daily")
+        >>> print(f"Average signals per day: {freq_analysis['frequency_statistics']['signals_per_period']['average']:.1f}")
+        >>> print(f"Average days between signals: {freq_analysis['frequency_statistics']['time_between_signals']['average_days']:.1f}")
+        >>> print(f"Buy percentage: {freq_analysis['signal_distribution']['by_type']['percentages']['buy']:.1f}%")
+        
+    Note:
+        - Timestamps automatically converted to pandas datetime for analysis
+        - Empty signal lists return zero statistics with no errors
+        - Time between signals calculated using consecutive signal timestamps
+        - Signal clustering helps identify burst periods vs steady generation
+        - Strength analysis only available if signals contain 'strength' field
+        - Method distribution analysis available if signals contain 'method' field
+        - All time differences reported in days for consistency
     """
     try:
         if not signals:
@@ -395,18 +530,71 @@ def calculate_signal_frequency(signals: List[Dict[str, Any]],
 
 def combine_signals(signals_list: List[List[Dict[str, Any]]], 
                    method: str = "majority") -> Dict[str, Any]:
-    """
-    Combine multiple signals using various methods.
+    """Combine multiple signal sources using various consensus methods.
     
-    From financial-analysis-function-library.json signal_analysis category
-    Signal combination logic - uses pandas for alignment
+    This function merges signals from multiple sources (e.g., different technical
+    indicators or timeframes) to create a unified signal stream. It uses temporal
+    alignment and various consensus methods to reduce false signals and improve
+    signal quality through diversification.
     
     Args:
-        signals_list: List of signal lists to combine
-        method: Combination method ("majority", "unanimous", "weighted", "any")
-        
+        signals_list: List of signal lists to combine. Each list should contain
+            signal dictionaries with 'timestamp', 'signal', and optionally 'strength'.
+            Requires at least 2 non-empty signal lists for combination.
+        method: Signal combination methodology. Available methods:
+            - "majority": Require majority agreement (>50%) for signal generation
+            - "unanimous": Require all sources to agree for signal generation
+            - "weighted": Use strength-weighted voting (requires 'strength' field)
+            - "any": Generate buy if any source says buy, else sell if any says sell
+            Defaults to "majority".
+            
     Returns:
-        Dict: Combined signals
+        Dict[str, Any]: Signal combination results including:
+            - combination_method: Method used for combining signals
+            - input_sources: Number of input signal lists
+            - combined_signals: List of consensus signals with metadata
+            - combination_statistics: Reduction rates, confidence levels, distribution
+            - source_statistics: Signal counts from each input source
+            
+        Each combined signal contains:
+            - timestamp: Consensus signal time (rounded to nearest minute)
+            - signal: Consensus signal type ('buy' or 'sell')
+            - strength: Average strength of agreeing sources
+            - confidence: Confidence level based on agreement percentage
+            - sources_count: Number of sources contributing to this signal
+            - source_signals: Detailed breakdown of contributing source signals
+            
+    Raises:
+        ValueError: If fewer than 2 signal lists provided or insufficient valid signals.
+        Exception: If signal combination fails due to data processing issues.
+        
+    Example:
+        >>> # Combine RSI and MACD signals
+        >>> rsi_signals = [
+        ...     {'timestamp': '2023-01-02 10:00', 'signal': 'buy', 'strength': 0.8},
+        ...     {'timestamp': '2023-01-05 14:30', 'signal': 'sell', 'strength': 0.7}
+        ... ]
+        >>> macd_signals = [
+        ...     {'timestamp': '2023-01-02 10:01', 'signal': 'buy', 'strength': 0.6},  # Near same time
+        ...     {'timestamp': '2023-01-05 14:25', 'signal': 'buy', 'strength': 0.5}   # Disagrees
+        ... ]
+        >>> combined = combine_signals([rsi_signals, macd_signals], method="majority")
+        >>> print(f"Combined signals: {len(combined['combined_signals'])}")
+        >>> print(f"Signal reduction: {combined['combination_statistics']['signal_reduction_percentage']:.1f}%")
+        >>> 
+        >>> # Try unanimous consensus
+        >>> unanimous = combine_signals([rsi_signals, macd_signals], method="unanimous")
+        >>> print(f"Unanimous signals: {len(unanimous['combined_signals'])}")
+        
+    Note:
+        - Signals aligned by timestamp with 1-minute precision for grouping
+        - Only periods with signals from multiple sources are considered
+        - Signal reduction typically occurs as consensus filters out weak signals
+        - Confidence reflects the degree of agreement among sources
+        - Weighted method requires all signals to have 'strength' field
+        - 'Any' method prioritizes buy signals over sell signals
+        - Timestamps rounded to nearest minute to handle slight timing differences
+        - Source signals preserved in output for traceability
     """
     try:
         if not signals_list or len(signals_list) < 2:
@@ -544,19 +732,79 @@ def combine_signals(signals_list: List[List[Dict[str, Any]]],
 
 def filter_signals(signals: List[Dict[str, Any]], 
                   filters: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """
-    Filter signals based on various criteria.
+    """Filter trading signals based on customizable criteria for quality improvement.
     
-    From financial-analysis-function-library.json signal_analysis category
-    Signal filtering logic - uses pandas for efficient filtering
+    This function applies multiple filtering criteria to remove low-quality or
+    unwanted signals from a signal stream. It supports various filter types
+    including strength thresholds, time ranges, frequency limits, and custom
+    functions to create cleaner, higher-quality signal streams.
     
     Args:
-        signals: List of signal dictionaries
-        filters: List of filter criteria
-        
+        signals: List of signal dictionaries to filter. Each signal should contain
+            'timestamp' and 'signal' at minimum. Additional fields like 'strength',
+            'method' enable additional filtering options.
+        filters: List of filter configuration dictionaries. Each filter must have
+            a 'type' field and relevant parameters. Supported filter types:
+            
+            - strength: Filter by signal strength range
+              Parameters: min_strength (default 0), max_strength (default 1)
+            - signal_type: Filter by allowed signal types
+              Parameters: allowed_signals (list, default ['buy', 'sell'])
+            - time_range: Filter by date/time range
+              Parameters: start_date, end_date (optional datetime strings)
+            - frequency: Remove signals too close together
+              Parameters: min_interval_hours (default 24)
+            - method: Filter by signal generation method
+              Parameters: allowed_methods (list of method names)
+            - custom: Apply custom filtering function
+              Parameters: function (callable that takes signal dict, returns bool)
+              
     Returns:
-        Dict: Filtered signals and statistics
-    """
+        Dict[str, Any]: Signal filtering results including:
+            - filters_applied: Number of filters applied
+            - original_count: Number of signals before filtering
+            - final_count: Number of signals after all filters
+            - removed_count: Total signals removed
+            - removal_percentage: Percentage of signals filtered out
+            - filtered_signals: List of signals passing all filters
+            - filter_statistics: Detailed breakdown of removals by each filter
+            - final_distribution: Signal type distribution after filtering
+            - filter_efficiency: Retention rate and final signal statistics
+            
+    Raises:
+        Exception: If signal filtering fails due to invalid filter configuration or data issues.
+        
+    Example:
+        >>> signals = [
+        ...     {'timestamp': '2023-01-01 09:00', 'signal': 'buy', 'strength': 0.9},
+        ...     {'timestamp': '2023-01-01 10:00', 'signal': 'buy', 'strength': 0.3},  # Low strength
+        ...     {'timestamp': '2023-01-01 11:00', 'signal': 'sell', 'strength': 0.8}, # Too frequent
+        ...     {'timestamp': '2023-01-03 14:00', 'signal': 'sell', 'strength': 0.7}
+        ... ]
+        >>> 
+        >>> # Apply multiple filters
+        >>> filters = [
+        ...     {"type": "strength", "min_strength": 0.5},  # Remove weak signals
+        ...     {"type": "frequency", "min_interval_hours": 24}  # Space out signals
+        ... ]
+        >>> filtered = filter_signals(signals, filters)
+        >>> print(f"Filtered from {filtered['original_count']} to {filtered['final_count']} signals")
+        >>> print(f"Removal rate: {filtered['removal_percentage']:.1f}%")
+        >>> 
+        >>> # Time range filter example
+        >>> time_filter = [{"type": "time_range", "start_date": "2023-01-02", "end_date": "2023-01-31"}]
+        >>> recent_signals = filter_signals(signals, time_filter)
+        
+    Note:
+        - Filters applied sequentially in the order provided
+        - Each filter operates on the result of the previous filter
+        - Frequency filter maintains chronological order and removes later signals
+        - Custom filters receive entire signal dictionary for maximum flexibility
+        - Time range filters accept various datetime string formats
+        - Empty signal lists return gracefully with zero statistics
+        - Filter statistics show removal count and criteria for each filter
+        - All timestamps converted to pandas datetime for consistent processing
+    ""\
     try:
         if not signals:
             return standardize_output({
@@ -718,7 +966,7 @@ def filter_signals(signals: List[Dict[str, Any]],
         return {"success": False, "error": f"Signal filtering failed: {str(e)}"}
 
 
-# Registry of signal generator functions
+# Registry of signal generator functions - all using proven libraries
 SIGNAL_GENERATORS_FUNCTIONS = {
     'generate_signals': generate_signals,
     'calculate_signal_frequency': calculate_signal_frequency,

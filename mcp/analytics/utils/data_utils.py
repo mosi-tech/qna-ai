@@ -1,8 +1,33 @@
-"""
-Data Processing Utilities
+"""Data processing utilities for financial analysis and MCP server integration.
 
-Centralized data processing using libraries from requirements.txt
-From financial-analysis-function-library.json
+This module provides essential data validation, transformation, and utility functions
+for the MCP analytics server. It handles data format standardization, time series
+processing, and output formatting to ensure consistent data flow throughout the
+analytics pipeline.
+
+The module includes:
+- Data validation functions for prices and returns in various formats
+- Time series transformation utilities (returns calculation, resampling)
+- Series alignment and data cleaning functions
+- Output standardization for MCP server compatibility
+
+All functions are designed to handle common data formats from MCP financial servers
+and external APIs, ensuring robust data processing regardless of input format.
+
+Example:
+    Basic data processing workflow:
+    
+    >>> from mcp.analytics.utils.data_utils import validate_price_data, prices_to_returns
+    >>> import pandas as pd
+    >>> # Handle various price data formats
+    >>> price_dict = {'2023-01-01': 100, '2023-01-02': 102, '2023-01-03': 98}
+    >>> prices = validate_price_data(price_dict)
+    >>> returns = prices_to_returns(prices)
+    >>> print(f"Generated {len(returns)} return observations")
+    
+Note:
+    All functions use pandas and numpy for efficient data processing and
+    return standardized formats compatible with the MCP analytics ecosystem.
 """
 
 import pandas as pd
@@ -16,17 +41,58 @@ from scipy import stats
 import empyrical
 
 def validate_price_data(data: Union[pd.Series, pd.DataFrame, List, Dict]) -> pd.Series:
-    """
-    Validate and convert price data to standardized format.
+    """Validate and standardize price data from various input formats.
     
-    From financial-analysis-function-library.json
-    Uses pandas for standardized data processing
+    This function handles the complexity of different price data formats commonly
+    encountered in financial APIs and MCP servers. It automatically detects the
+    data structure and extracts price information while performing data cleaning
+    and validation to ensure consistent output format.
     
     Args:
-        data: Price data in various formats
-        
+        data: Price data in any of the following formats:
+            - pandas Series: Direct price series (preferred format)
+            - pandas DataFrame: Uses 'close'/'Close' column or first column
+            - Dictionary: Looks for 'prices', 'close', 'data' keys or uses values directly
+            - List: Simple numeric list or list of dictionaries with price fields
+            - List of dicts: Extracts 'close'/'Close' or first numeric value
+            
     Returns:
-        pd.Series: Validated price series
+        pd.Series: Validated price series with numeric values and NaN values removed.
+            Index preserved from original data when available.
+            
+    Raises:
+        ValueError: If data type is unsupported, no valid price data found after
+            cleaning, or data structure cannot be interpreted as price data.
+            
+    Example:
+        >>> import pandas as pd
+        >>> # Handle different input formats
+        >>> dict_data = {'2023-01-01': 100.5, '2023-01-02': 102.3, '2023-01-03': 98.7}
+        >>> prices1 = validate_price_data(dict_data)
+        >>> 
+        >>> # List of dictionaries (common MCP format)
+        >>> mcp_data = [
+        ...     {'timestamp': '2023-01-01', 'close': 100.5, 'volume': 1000},
+        ...     {'timestamp': '2023-01-02', 'close': 102.3, 'volume': 1200}
+        ... ]
+        >>> prices2 = validate_price_data(mcp_data)
+        >>> 
+        >>> # DataFrame with multiple columns
+        >>> df_data = pd.DataFrame({
+        ...     'open': [100, 101], 'high': [102, 104], 'low': [99, 100], 'close': [101, 103]
+        ... })
+        >>> prices3 = validate_price_data(df_data)  # Uses 'close' column
+        >>> 
+        >>> print(f"Prices1 length: {len(prices1)}, type: {type(prices1)}")
+        
+    Note:
+        - Automatically converts all values to numeric, coercing errors to NaN
+        - Removes NaN values after conversion for clean price series
+        - Preserves original index when input has datetime or meaningful index
+        - For DataFrames, prioritizes 'close' > 'Close' > first column
+        - For dictionaries, prioritizes 'prices' > 'close' > 'data' > direct values
+        - List of dictionaries extracts first numeric value if no price fields found
+        - Returns empty series if no valid data points remain after cleaning
     """
     try:
         if isinstance(data, dict):
@@ -84,17 +150,56 @@ def validate_price_data(data: Union[pd.Series, pd.DataFrame, List, Dict]) -> pd.
 
 
 def validate_return_data(data: Union[pd.Series, pd.DataFrame, List, Dict]) -> pd.Series:
-    """
-    Validate and convert return data to standardized format.
+    """Validate and standardize return data from various input formats.
     
-    From financial-analysis-function-library.json
-    Uses pandas for standardized data processing
+    Similar to validate_price_data but specifically designed for return data
+    which may have different field names and characteristics. This function
+    handles the various ways return data can be structured and ensures
+    consistent output for return-based calculations.
     
     Args:
-        data: Return data in various formats
-        
+        data: Return data in any of the following formats:
+            - pandas Series: Direct return series (preferred format)
+            - pandas DataFrame: Uses 'returns' column or first column
+            - Dictionary: Looks for 'returns', 'return', 'data' keys or uses values directly
+            - List: Simple numeric list or list of dictionaries with return fields
+            - List of dicts: Extracts 'returns'/'return' or first numeric value
+            
     Returns:
-        pd.Series: Validated return series
+        pd.Series: Validated return series with numeric values and NaN values removed.
+            Index preserved from original data when available.
+            
+    Raises:
+        ValueError: If data type is unsupported, no valid return data found after
+            cleaning, or data structure cannot be interpreted as return data.
+            
+    Example:
+        >>> import pandas as pd
+        >>> # Handle different return data formats
+        >>> return_dict = {'2023-01-01': 0.01, '2023-01-02': -0.02, '2023-01-03': 0.015}
+        >>> returns1 = validate_return_data(return_dict)
+        >>> 
+        >>> # List of return calculations
+        >>> return_list = [0.01, -0.005, 0.02, -0.01]
+        >>> returns2 = validate_return_data(return_list)
+        >>> 
+        >>> # DataFrame with return column
+        >>> df_returns = pd.DataFrame({
+        ...     'date': pd.date_range('2023-01-01', periods=3),
+        ...     'returns': [0.01, -0.02, 0.015]
+        ... })
+        >>> returns3 = validate_return_data(df_returns)
+        >>> 
+        >>> print(f"Returns range: {returns3.min():.3f} to {returns3.max():.3f}")
+        
+    Note:
+        - Designed specifically for return data (typically between -1 and 1)
+        - Automatically converts all values to numeric, coercing errors to NaN
+        - Removes NaN values after conversion for clean return series
+        - For DataFrames, prioritizes 'returns' > first column
+        - For dictionaries, prioritizes 'returns' > 'return' > 'data' > direct values
+        - Preserves original datetime index when available for time series analysis
+        - Return data validation is similar to price validation but with return-specific field names
     """
     try:
         if isinstance(data, dict):
@@ -148,18 +253,58 @@ def validate_return_data(data: Union[pd.Series, pd.DataFrame, List, Dict]) -> pd
 
 
 def prices_to_returns(prices: pd.Series, method: str = "simple") -> pd.Series:
-    """
-    Convert prices to returns using pandas.
+    """Convert price series to returns using standard financial calculations.
     
-    From financial-analysis-function-library.json
-    Uses pandas built-in methods instead of manual calculation
+    This function transforms price data into return data using either simple
+    (arithmetic) returns or logarithmic returns. Both methods are commonly
+    used in financial analysis, with simple returns being more intuitive
+    and log returns having better statistical properties for analysis.
     
     Args:
-        prices: Price series
-        method: 'simple' or 'log'
-        
+        prices: Price series to convert. Will be validated using validate_price_data
+            to ensure consistent input format. Must contain at least 2 price points
+            to calculate returns.
+        method: Return calculation method. Options:
+            - "simple": Simple returns = (P_t - P_{t-1}) / P_{t-1}
+            - "log": Logarithmic returns = ln(P_t / P_{t-1})
+            Defaults to "simple".
+            
     Returns:
-        pd.Series: Return series
+        pd.Series: Return series with one fewer observation than input prices.
+            Index aligned to the later price date for each return calculation.
+            NaN values automatically removed.
+            
+    Raises:
+        ValueError: If invalid method specified or price conversion fails.
+        
+    Example:
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> # Create sample price series
+        >>> prices = pd.Series([100, 102, 98, 105, 103],
+        ...                   index=pd.date_range('2023-01-01', periods=5))
+        >>> 
+        >>> # Calculate simple returns
+        >>> simple_rets = prices_to_returns(prices, method="simple")
+        >>> print(f"Simple returns: {simple_rets.tolist()}")
+        >>> # Output: [0.02, -0.0392, 0.0714, -0.0190]
+        >>> 
+        >>> # Calculate log returns
+        >>> log_rets = prices_to_returns(prices, method="log")
+        >>> print(f"Log returns: {log_rets.tolist()}")
+        >>> 
+        >>> # Log returns are approximately equal to simple returns for small changes
+        >>> diff = abs(simple_rets - log_rets).max()
+        >>> print(f"Max difference: {diff:.6f}")  # Should be small for normal returns
+        
+    Note:
+        - Simple returns are easier to interpret (0.02 = 2% gain)
+        - Log returns have better properties for statistical analysis and aggregation
+        - Log returns can be summed across time: total_return = sum(log_returns)
+        - Simple returns must be compounded: total_return = prod(1 + simple_returns) - 1
+        - Log returns are approximately equal to simple returns for small changes (<10%)
+        - Uses pandas pct_change() for simple returns and numpy log for logarithmic returns
+        - Output length is always len(prices) - 1 due to differencing
     """
     try:
         prices = validate_price_data(prices)
@@ -178,17 +323,57 @@ def prices_to_returns(prices: pd.Series, method: str = "simple") -> pd.Series:
 
 
 def align_series(*series_list: pd.Series) -> List[pd.Series]:
-    """
-    Align multiple time series by their common index.
+    """Align multiple time series by their common index for consistent analysis.
     
-    From financial-analysis-function-library.json
-    Uses pandas built-in alignment instead of manual indexing
+    This function is essential for financial analysis involving multiple data series
+    (e.g., comparing stock returns, calculating correlations, or portfolio analysis).
+    It ensures all series have the same index points, removing periods where any
+    series has missing data.
     
     Args:
-        *series_list: Multiple pandas Series to align
-        
+        *series_list: Variable number of pandas Series to align. Each series
+            should have a meaningful index (preferably datetime) for alignment.
+            Requires at least 2 series for alignment to be meaningful.
+            
     Returns:
-        List[pd.Series]: Aligned series
+        List[pd.Series]: List of aligned series in the same order as input.
+            All returned series will have identical indices containing only
+            the intersection of all input series indices. NaN values are removed.
+            
+    Raises:
+        ValueError: If fewer than 2 series provided or no common data points
+            exist after alignment.
+            
+    Example:
+        >>> import pandas as pd
+        >>> # Create series with different but overlapping indices
+        >>> series1 = pd.Series([1, 2, 3, 4], index=['A', 'B', 'C', 'D'])
+        >>> series2 = pd.Series([10, 20, 30], index=['B', 'C', 'E'])  # Missing 'A', 'D'
+        >>> series3 = pd.Series([100, 200, 300], index=['A', 'B', 'C'])  # Missing 'D', 'E'
+        >>> 
+        >>> # Align series - only 'B' and 'C' are common to all
+        >>> aligned = align_series(series1, series2, series3)
+        >>> print(f"Aligned indices: {aligned[0].index.tolist()}")  # ['B', 'C']
+        >>> print(f"Series 1 aligned: {aligned[0].tolist()}")  # [2, 3]
+        >>> print(f"Series 2 aligned: {aligned[1].tolist()}")  # [10, 20]
+        >>> print(f"Series 3 aligned: {aligned[2].tolist()}")  # [100, 200]
+        >>> 
+        >>> # Common use case: align stock returns for correlation analysis
+        >>> stock_a_returns = pd.Series([0.01, 0.02, -0.01], 
+        ...                           index=pd.date_range('2023-01-01', periods=3))
+        >>> stock_b_returns = pd.Series([0.015, -0.005], 
+        ...                           index=pd.date_range('2023-01-02', periods=2))
+        >>> aligned_returns = align_series(stock_a_returns, stock_b_returns)
+        >>> correlation = aligned_returns[0].corr(aligned_returns[1])
+        
+    Note:
+        - Uses pandas DataFrame inner join for efficient alignment
+        - Preserves original data types and names when possible
+        - Essential for financial calculations requiring synchronized data
+        - Common use cases: correlation analysis, portfolio calculations, regression
+        - Automatically handles different index types (datetime, string, numeric)
+        - Returns empty series if no common index points exist
+        - Order of returned series matches order of input series
     """
     try:
         if len(series_list) < 2:
@@ -244,18 +429,59 @@ def resample_data(data: pd.Series, frequency: str, method: str = "last") -> pd.S
 
 
 def standardize_output(result: Dict[str, Any], function_name: str) -> Dict[str, Any]:
-    """
-    Standardize function output format.
+    """Standardize function output format for MCP server compatibility.
     
-    From financial-analysis-function-library.json
-    Ensures consistent output format across all functions
+    This function ensures all analytics functions return consistently formatted
+    results that are compatible with the MCP server architecture. It handles
+    data type conversion, adds metadata, and ensures JSON serializability for
+    network transmission.
     
     Args:
-        result: Function result dictionary
-        function_name: Name of the function
-        
+        result: Function result dictionary containing the analysis results.
+            Should contain the actual results and any relevant metadata.
+        function_name: Name of the calling function for tracking and debugging.
+            Used to identify the source of results in logs and error messages.
+            
     Returns:
-        Dict: Standardized output
+        Dict[str, Any]: Standardized output dictionary with:
+            - success: Boolean indicating successful execution (defaults to True)
+            - function: Name of the function that generated the results
+            - All original result keys with converted data types
+            - Metadata fields for MCP compatibility
+            
+    Raises:
+        Exception: Returns error dictionary if standardization fails, containing
+            success=False, error message, and function name for debugging.
+            
+    Example:
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> # Example function result with mixed data types
+        >>> raw_result = {
+        ...     'analysis_type': 'correlation',
+        ...     'correlation_value': np.float64(0.85),
+        ...     'sample_size': np.int32(100),
+        ...     'price_series': pd.Series([100, 102, 98]),
+        ...     'data_frame': pd.DataFrame({'A': [1, 2], 'B': [3, 4]}),
+        ...     'numpy_array': np.array([1, 2, 3])
+        ... }
+        >>> 
+        >>> standardized = standardize_output(raw_result, 'calculate_correlation')
+        >>> print(f"Success: {standardized['success']}")  # True
+        >>> print(f"Function: {standardized['function']}")  # 'calculate_correlation'
+        >>> print(f"Correlation: {standardized['correlation_value']}")  # 0.85 (Python float)
+        >>> print(type(standardized['price_series']))  # <class 'list'>
+        >>> print(type(standardized['data_frame']))   # <class 'list'> (records format)
+        
+    Note:
+        - Converts numpy scalar types (float64, int32, etc.) to Python native types
+        - Converts pandas Series to Python lists for JSON compatibility
+        - Converts pandas DataFrames to list of records format
+        - Converts numpy arrays to Python lists
+        - Preserves all original keys and adds 'success' and 'function' metadata
+        - Ensures all output is JSON serializable for MCP network transmission
+        - Handles nested data structures recursively
+        - Returns error format if conversion fails to maintain API consistency
     """
     try:
         standardized = {
@@ -373,7 +599,7 @@ def calculate_monthly_returns(daily_returns: Union[pd.Series, List, Dict[str, An
         raise ValueError(f"Monthly return calculation failed: {str(e)}")
 
 
-# Registry of utility functions
+# Registry of utility functions - all using proven libraries
 DATA_UTILS_FUNCTIONS = {
     'validate_price_data': validate_price_data,
     'validate_return_data': validate_return_data,
