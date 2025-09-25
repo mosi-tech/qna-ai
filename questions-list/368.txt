@@ -1,0 +1,1 @@
+Which symbols most frequently finish with closing range > 80%?

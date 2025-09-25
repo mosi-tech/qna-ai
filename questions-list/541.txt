@@ -1,0 +1,1 @@
+Which symbols most often registered higher closes after positive sentiment headlines?

@@ -17,6 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
 import httpx
+from mcp_client import mcp_client, initialize_mcp_client
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -49,13 +50,10 @@ class OllamaToolCallService:
         import os
         self.system_prompt_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "system-prompt.txt")
         self.ollama_base_url = "http://localhost:11434"
-        self.mcp_servers = {
-            "mcp-financial-server": "http://localhost:8001",
-            "mcp-analytics-server": "http://localhost:8002"
-        }
-        self.available_tools = {}
-        self.enhanced_system_prompt = None  # Cache for system prompt + tools
+        self.system_prompt = None  # Cache for system prompt
         self.conversation_messages = []  # Store conversation history
+        self.mcp_client = mcp_client  # Use singleton MCP client
+        self.mcp_initialized = False
         
     async def load_system_prompt(self) -> str:
         """Load the base system prompt from file"""
@@ -69,163 +67,70 @@ class OllamaToolCallService:
             logger.error(f"Failed to load system prompt from {self.system_prompt_path}: {e}")
             return "You are a helpful financial analysis assistant that generates tool calls for financial data analysis."
     
-    async def get_enhanced_system_prompt(self) -> str:
-        """Get system prompt enhanced with tool descriptions (cached)"""
-        if self.enhanced_system_prompt:
-            return self.enhanced_system_prompt
+    async def get_system_prompt(self) -> str:
+        """Get system prompt with dynamically discovered MCP tools (cached)"""
+        if self.system_prompt:
+            return self.system_prompt
             
         # Load base system prompt
-        base_system_prompt = await self.load_system_prompt()
+        base_prompt = await self.load_system_prompt()
         
-        # Discover available tools
-        available_tools = await self.discover_tools()
-        
-        # Create tool descriptions
-        tools_description = []
-        for tool_name, tool_info in available_tools.items():
-            params = list(tool_info.get("parameters", {}).keys())
-            tools_description.append(f"- {tool_name}: {tool_info['description']} (params: {', '.join(params)})")
-        
-        # Enhance system prompt with tool descriptions
-        if tools_description:
-            self.enhanced_system_prompt = f"""{base_system_prompt}
-
-Available MCP Functions:
-{chr(10).join(tools_description)}
-
-Analyze each question and generate appropriate function calls using the DSL format above.
-Return only valid JSON with "steps" array where each step has "fn" and "args"."""
-        else:
-            self.enhanced_system_prompt = base_system_prompt
+        # Add dynamically discovered MCP functions if client is initialized
+        if self.mcp_initialized and self.mcp_client.available_tools:
+            tools_summary = self.mcp_client.get_tools_summary()
             
-        return self.enhanced_system_prompt
+            tools_info = []
+            for server_name, tool_names in tools_summary.items():
+                # Show up to 15 tools per server, then summarize
+                displayed_tools = tool_names[:15]
+                tools_line = f"**{server_name}**: {', '.join(displayed_tools)}"
+                if len(tool_names) > 15:
+                    tools_line += f" (and {len(tool_names) - 15} more)"
+                tools_info.append(tools_line)
+            
+            self.system_prompt = f"""{base_prompt}
+
+**Dynamically Discovered MCP Functions:**
+{chr(10).join(tools_info)}
+
+Use only the exact function names listed above. All functions have been discovered from live MCP servers."""
+        else:
+            self.system_prompt = base_prompt
+            
+        return self.system_prompt
     
-    async def check_mcp_server(self, server_name: str) -> bool:
-        """Check if MCP server is running"""
-        if server_name not in self.mcp_servers:
-            return False
+    async def ensure_mcp_initialized(self) -> bool:
+        """Ensure MCP client is initialized"""
+        if self.mcp_initialized:
+            return True
             
         try:
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                response = await client.get(f"{self.mcp_servers[server_name]}/health")
-                return response.status_code == 200
-        except Exception as e:
-            logger.error(f"MCP server {server_name} not available: {e}")
-            return False
-    
-    async def discover_tools(self) -> Dict[str, Any]:
-        """Discover available tools from MCP servers"""
-        if self.available_tools:
-            return self.available_tools
+            # Load MCP server configuration
+            config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ollama-mcp-config.json")
+            with open(config_path, 'r') as f:
+                config = json.load(f)
             
-        all_tools = {}
-        
-        # Check financial server
-        if await self.check_mcp_server("mcp-financial-server"):
-            try:
-                async with httpx.AsyncClient(timeout=10.0) as client:
-                    response = await client.get(f"{self.mcp_servers['mcp-financial-server']}/tools")
-                    if response.status_code == 200:
-                        financial_tools = response.json()
-                        logger.info(f"Discovered financial tools: {financial_tools}")
-                        
-                        # Process tools from native MCP server
-                        if isinstance(financial_tools, dict) and "tools" in financial_tools:
-                            for tool in financial_tools["tools"]:
-                                tool_name = tool.get("name", "unknown_tool")
-                                all_tools[tool_name] = {
-                                    "name": tool_name,
-                                    "description": tool.get("description", "Financial tool"),
-                                    "parameters": tool.get("inputSchema", {}).get("properties", {}),
-                                    "server": "mcp-financial-server"
-                                }
-                        
-                        logger.info(f"Discovered {len(financial_tools.get('tools', []))} financial tools")
-                    
-            except Exception as e:
-                logger.error(f"Failed to get tools from financial server: {e}")
-        
-        # Check analytics server
-        if await self.check_mcp_server("mcp-analytics-server"):
-            try:
-                async with httpx.AsyncClient(timeout=10.0) as client:
-                    response = await client.get(f"{self.mcp_servers['mcp-analytics-server']}/tools")
-                    if response.status_code == 200:
-                        analytics_tools = response.json()
-                        logger.info(f"Discovered analytics tools: {analytics_tools}")
-                        
-                        # Process tools from native MCP server
-                        if isinstance(analytics_tools, dict) and "tools" in analytics_tools:
-                            for tool in analytics_tools["tools"]:
-                                tool_name = tool.get("name", "unknown_tool")
-                                all_tools[tool_name] = {
-                                    "name": tool_name,
-                                    "description": tool.get("description", "Analytics tool"),
-                                    "parameters": tool.get("inputSchema", {}).get("properties", {}),
-                                    "server": "mcp-analytics-server"
-                                }
-                        
-                        logger.info(f"Discovered {len(analytics_tools.get('tools', []))} analytics tools")
-                    
-            except Exception as e:
-                logger.error(f"Failed to get tools from analytics server: {e}")
-        
-        # If no tools discovered, add fallback tools
-        if not all_tools:
-            logger.warning("No tools discovered from MCP servers, using fallback tools")
-            all_tools = {
-                "alpaca_market_stocks_bars": {
-                    "name": "alpaca_market_stocks_bars",
-                    "description": "Get historical OHLC price bars for stocks",
-                    "parameters": {"symbols": "string", "timeframe": "string", "start": "string", "end": "string"},
-                    "server": "mcp-financial-server"
-                },
-                "alpaca_market_stocks_snapshots": {
-                    "name": "alpaca_market_stocks_snapshots", 
-                    "description": "Get current market snapshot with all data",
-                    "parameters": {"symbols": "string"},
-                    "server": "mcp-financial-server"
-                },
-                "alpaca_market_screener_most_actives": {
-                    "name": "alpaca_market_screener_most_actives",
-                    "description": "Get most active stocks by volume", 
-                    "parameters": {"top": "integer"},
-                    "server": "mcp-financial-server"
-                },
-                "calculate_sma": {
-                    "name": "calculate_sma",
-                    "description": "Calculate simple moving average of closing prices",
-                    "parameters": {"data": "array", "period": "integer"}, 
-                    "server": "mcp-analytics-server"
-                },
-                "calculate_rsi": {
-                    "name": "calculate_rsi",
-                    "description": "Calculate Relative Strength Index momentum oscillator",
-                    "parameters": {"data": "array", "period": "integer"},
-                    "server": "mcp-analytics-server"
-                },
-                "calculate_portfolio_metrics": {
-                    "name": "calculate_portfolio_metrics", 
-                    "description": "Calculate comprehensive portfolio metrics including returns and risk",
-                    "parameters": {"weights": "array", "returns": "array"},
-                    "server": "mcp-analytics-server"
-                }
-            }
-        
-        self.available_tools = all_tools
-        return all_tools
+            # Initialize MCP client
+            await initialize_mcp_client(config)
+            self.mcp_initialized = True
+            logger.info(f"MCP client initialized with {len(self.mcp_client.available_tools)} tools")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to initialize MCP client: {e}")
+            return False
     
     async def initialize_conversation(self, model: str) -> None:
         """Initialize conversation with system prompt (called once)"""
         if not self.conversation_messages:
-            enhanced_system_prompt = await self.get_enhanced_system_prompt()
+            system_prompt = await self.get_system_prompt()
             self.conversation_messages = [
                 {
                     "role": "system",
-                    "content": enhanced_system_prompt
+                    "content": system_prompt
                 }
             ]
-            logger.info(f"Initialized conversation with system prompt ({len(enhanced_system_prompt)} characters)")
+            logger.info(f"Initialized conversation with system prompt ({len(system_prompt)} characters)")
     
     async def call_ollama_chat(self, model: str, user_message: str) -> str:
         """Call Ollama chat API with conversation context"""
@@ -268,25 +173,60 @@ Return only valid JSON with "steps" array where each step has "fn" and "args".""
             logger.error(f"Ollama chat API call failed: {e}")
             raise
     
-    async def generate_tool_calls_only(self, tools_needed: list) -> Dict[str, Any]:
-        """Generate tool call format without actually executing them"""
-        tool_calls_output = {
-            "planned_tool_calls": [],
-            "execution_plan": "Tool calls generated but not executed (output format only)"
+    def validate_mcp_functions(self, tool_calls: list) -> Dict[str, Any]:
+        """Validate that all function names are valid MCP functions using MCP client"""
+        validation_result = {
+            "valid_functions": [],
+            "invalid_functions": [],
+            "validation_passed": True,
+            "validation_errors": []
         }
         
-        for tool_call in tools_needed:
-            tool_name = tool_call.get("name")
+        for tool_call in tool_calls:
+            tool_name = tool_call.get("name", "")
+            
+            if self.mcp_client.validate_function_exists(tool_name):
+                validation_result["valid_functions"].append(tool_name)
+            else:
+                validation_result["invalid_functions"].append(tool_name)
+                validation_result["validation_passed"] = False
+                validation_result["validation_errors"].append(
+                    f"Function '{tool_name}' is not available in MCP servers"
+                )
+        
+        return validation_result
+    
+    async def generate_tool_calls_only(self, tool_calls: list) -> Dict[str, Any]:
+        """Generate tool call format with validation, without executing them"""
+        
+        # Validate MCP functions first
+        validation = self.validate_mcp_functions(tool_calls)
+        
+        tool_calls_output = {
+            "planned_tool_calls": [],
+            "execution_plan": "Tool calls generated but not executed (output format only)",
+            "validation": validation
+        }
+        
+        # Only process valid tool calls
+        for tool_call in tool_calls:
+            tool_name = tool_call.get("name", "")
             tool_args = tool_call.get("arguments", {})
             
-            # Determine server type
-            server_type = "mcp-financial-server" if tool_name.startswith(("alpaca", "eodhd")) else "mcp-analytics-server"
+            # Get server type from MCP client
+            tool_info = self.mcp_client.available_tools.get(tool_name, {})
+            server_type = tool_info.get("server", "unknown_server")
+            
+            # Mark validation status
+            is_valid = self.mcp_client.validate_function_exists(tool_name)
+            status = "valid_mcp_function" if is_valid else "invalid_function"
             
             tool_calls_output["planned_tool_calls"].append({
                 "tool_name": tool_name,
                 "arguments": tool_args,
                 "server": server_type,
-                "status": "planned_only"
+                "status": status,
+                "valid_mcp": is_valid
             })
         
         return tool_calls_output
@@ -294,6 +234,13 @@ Return only valid JSON with "steps" array where each step has "fn" and "args".""
     async def analyze_question(self, question: str, model: str = "llama3.2") -> Dict[str, Any]:
         """Analyze question and generate tool calls without execution"""
         try:
+            # Ensure MCP client is initialized
+            if not await self.ensure_mcp_initialized():
+                return {
+                    "success": False,
+                    "error": "Failed to initialize MCP client"
+                }
+            
             # Simple user message - just the question (system prompt set once in conversation)
             user_message = f"Question: {question}"
             
@@ -326,17 +273,18 @@ Return only valid JSON with "steps" array where each step has "fn" and "args".""
                 tool_calls = []
                 dsl_response = {"steps": []}
             
-            # Generate tool calls output (no execution)
+            # Generate tool calls output with validation (no execution)
             tool_calls_data = await self.generate_tool_calls_only(tool_calls)
+            validation = tool_calls_data.get("validation", {})
             
             # Get available tools count for reporting
-            available_tools = await self.discover_tools()
+            available_tools = self.mcp_client.available_tools
             
             # Generate final structured response
             return {
                 "success": True,
                 "data": {
-                    "description": f"Tool call plan for: {question}",
+                    "description": f"Tool call plan for: {question} {'✅ All functions valid' if validation.get('validation_passed', False) else '❌ Contains invalid functions'}",
                     "body": [
                         {
                             "key": "question",
@@ -344,14 +292,29 @@ Return only valid JSON with "steps" array where each step has "fn" and "args".""
                             "description": "The financial question that was analyzed"
                         },
                         {
+                            "key": "mcp_validation",
+                            "value": validation,
+                            "description": "Validation results showing which functions are valid MCP functions"
+                        },
+                        {
+                            "key": "valid_mcp_functions",
+                            "value": len(validation.get("valid_functions", [])),
+                            "description": "Number of valid MCP functions in the generated plan"
+                        },
+                        {
+                            "key": "invalid_functions",
+                            "value": validation.get("invalid_functions", []),
+                            "description": "List of invalid function names that are not valid MCP functions"
+                        },
+                        {
                             "key": "available_tools",
                             "value": len(available_tools),
-                            "description": "Number of MCP tools available for analysis"
+                            "description": "Number of MCP tools discovered from servers"
                         },
                         {
                             "key": "tool_calls_planned",
                             "value": len(tool_calls),
-                            "description": "Number of MCP tool calls that would be executed"
+                            "description": "Number of tool calls generated by the LLM"
                         },
                         {
                             "key": "dsl_response",
@@ -361,15 +324,17 @@ Return only valid JSON with "steps" array where each step has "fn" and "args".""
                         {
                             "key": "tool_calls",
                             "value": tool_calls_data,
-                            "description": "Converted tool calls from DSL format"
+                            "description": "Converted tool calls from DSL format with validation status"
                         }
                     ],
                     "metadata": {
                         "timestamp": datetime.now().isoformat(),
-                        "data_sources": ["ollama", "mcp_tool_discovery"],
-                        "calculation_methods": ["tool_call_planning"],
+                        "data_sources": ["ollama", "mcp_orchestration"],
+                        "calculation_methods": ["tool_call_planning", "mcp_function_validation"],
                         "execution_mode": "planning_only",
-                        "system_prompt_cached": self.enhanced_system_prompt is not None,
+                        "system_prompt_approach": "strict_mcp_enforcement",
+                        "validation_enabled": True,
+                        "system_prompt_cached": self.system_prompt is not None,
                         "conversation_initialized": len(self.conversation_messages) > 0
                     }
                 }
@@ -383,11 +348,12 @@ Return only valid JSON with "steps" array where each step has "fn" and "args".""
             }
     
     async def close_sessions(self):
-        """Cleanup method (no persistent connections to close)"""
-        self.available_tools.clear()
-        self.enhanced_system_prompt = None
+        """Cleanup method and close MCP client sessions"""
+        await self.mcp_client.close_all_sessions()
+        self.system_prompt = None
         self.conversation_messages.clear()
-        logger.info("Cleaned up tool, system prompt, and conversation caches")
+        self.mcp_initialized = False
+        logger.info("Cleaned up MCP client, system prompt, and conversation caches")
 
 # Initialize service
 ollama_service = OllamaToolCallService()
@@ -450,10 +416,13 @@ if __name__ == "__main__":
     print("   - Financial server: http://localhost:8001")
     print("   - Analytics server: http://localhost:8002")
     print("\nThis server will:")
-    print("- Connect to native MCP servers via HTTP to discover available tools")
-    print("- Use Ollama chat API with persistent system prompt (set once per session)")
-    print("- Generate appropriate tool calls for financial questions")
+    print("- Use proper MCP client to connect to MCP servers via stdio")
+    print("- Dynamically discover available MCP functions from connected servers")
+    print("- Provide discovered functions to LLM for accurate orchestration planning")
+    print("- Validate generated function names against actual MCP server implementations")
+    print("- Use Ollama chat API with real-time MCP function discovery")
+    print("- Generate appropriate MCP tool calls with full validation")
     print("- Return tool call plans WITHOUT executing them")
-    print("- Optimized for performance with conversation context")
+    print("- True MCP client integration with stdio server connections")
     
     uvicorn.run(app, host="0.0.0.0", port=8000)

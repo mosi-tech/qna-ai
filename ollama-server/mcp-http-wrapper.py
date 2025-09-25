@@ -226,7 +226,7 @@ class MCPHttpWrapper:
 
 # Create wrapper instances  
 import os
-mcp_path = os.path.abspath("../mcp")
+mcp_path = os.path.abspath("../mcp-server")
 financial_wrapper = MCPHttpWrapper(os.path.join(mcp_path, "financial_server_mock.py"), "mcp-financial-server")
 analytics_wrapper = MCPHttpWrapper(os.path.join(mcp_path, "analytics_server.py"), "mcp-analytics-server")
 

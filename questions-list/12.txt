@@ -1,0 +1,1 @@
+Which tickers have the highest percentage of up days in the last month?

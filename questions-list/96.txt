@@ -1,0 +1,1 @@
+Which symbols had the largest deviation between open-to-close and close-to-close returns?

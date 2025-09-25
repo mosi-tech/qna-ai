@@ -1,0 +1,1 @@
+Which ETFs had the smallest average gap magnitude over 3 months?

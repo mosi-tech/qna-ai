@@ -1,0 +1,1 @@
+Which symbols maintained the longest streak above their 20-day MA?

@@ -1,0 +1,1 @@
+Which of my holdings show the least weekend gap risk (Mon open vs Fri close)?

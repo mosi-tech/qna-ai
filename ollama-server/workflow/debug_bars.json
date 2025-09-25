@@ -1,0 +1,31 @@
+{
+  "question": "Debug bars data extraction",
+  "plan": {
+    "python_fallback": {
+      "data_needed": [
+        {
+          "fn": "alpaca_trading_positions",
+          "args": {},
+          "output": "positions_data"
+        },
+        {
+          "fn": "alpaca_market_stocks_bars", 
+          "args": {
+            "symbols": "AAPL"
+          },
+          "output": "aapl_bars"
+        },
+        {
+          "fn": "alpaca_market_stocks_bars", 
+          "args": {
+            "symbols": "SPY"
+          },
+          "output": "spy_bars"
+        }
+      ],
+      "script_reference": "temp/debug_bars_data.py",
+      "function_name": "debug_bars_data"
+    }
+  },
+  "description": "Debug bars data extraction process"
+}

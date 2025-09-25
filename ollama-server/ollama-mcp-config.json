@@ -2,14 +2,14 @@
   "mcpServers": {
     "financial-server": {
       "command": "python",
-      "args": ["../mcp/financial_server.py"],
+      "args": ["/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp/financial_server.py"],
       "env": {
         "USE_MOCK_FINANCIAL_DATA": "false"
       }
     },
     "analytics-server": {
       "command": "python", 
-      "args": ["../mcp/analytics_server.py"]
+      "args": ["/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp/analytics_server.py"]
     }
   }
 }
