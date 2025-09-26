@@ -596,18 +596,68 @@ def stress_test_portfolio(returns: Union[pd.Series, Dict[str, Any]],
 
 
 def calculate_rolling_volatility(returns: Union[pd.Series, Dict[str, Any]], window: int = 30) -> pd.Series:
-    """
-    Calculate rolling volatility with specified window.
+    """Calculate rolling volatility with specified window for time-series volatility analysis.
     
-    From financial-analysis-function-library.json time_series_processing category
-    Uses pandas rolling calculations for efficiency
+    Rolling volatility measures how the volatility of returns changes over time by
+    calculating the standard deviation within a moving window. This function provides
+    annualized volatility estimates that help identify periods of market stress,
+    volatility clustering, and regime changes in financial time series.
+    
+    The rolling volatility calculation uses a backward-looking window to compute
+    the standard deviation of returns at each point in time, then annualizes the
+    result using the square root of time scaling (√252 for daily data).
     
     Args:
-        returns: Return series
-        window: Rolling window size
-        
+        returns (Union[pd.Series, Dict[str, Any]]): Return series for volatility analysis.
+            Can be provided as pandas Series with datetime index, or dictionary with
+            dates as keys and returns as values. Should contain decimal returns
+            (e.g., 0.01 for 1%, -0.02 for -2%).
+        window (int, optional): Rolling window size in periods for volatility calculation.
+            Defaults to 30. Common values: 30 (monthly), 252 (annual), 21 (business month).
+            Larger windows provide smoother estimates but less sensitivity to recent changes.
+            
     Returns:
-        pd.Series: Rolling volatility series (annualized)
+        pd.Series: Rolling volatility series with annualized volatility values.
+            Index matches input returns (excluding first window-1 observations).
+            Values represent annualized standard deviation of returns within each window.
+            NaN values are automatically dropped from the beginning of the series.
+            
+    Raises:
+        ValueError: If rolling volatility calculation fails due to invalid data or parameters.
+        
+    Example:
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> 
+        >>> # Create sample return data with volatility clustering
+        >>> dates = pd.date_range('2023-01-01', periods=252, freq='D')
+        >>> np.random.seed(42)
+        >>> # First half: low volatility period
+        >>> low_vol_returns = np.random.normal(0.0008, 0.01, 126)
+        >>> # Second half: high volatility period  
+        >>> high_vol_returns = np.random.normal(0.0005, 0.025, 126)
+        >>> returns = pd.Series(np.concatenate([low_vol_returns, high_vol_returns]), index=dates)
+        >>> 
+        >>> # Calculate 30-day rolling volatility
+        >>> rolling_vol = calculate_rolling_volatility(returns, window=30)
+        >>> print(f"Average early-period volatility: {rolling_vol.iloc[:50].mean():.3f}")
+        >>> print(f"Average late-period volatility: {rolling_vol.iloc[-50:].mean():.3f}")
+        >>> 
+        >>> # Plot volatility over time
+        >>> import matplotlib.pyplot as plt
+        >>> rolling_vol.plot(title='30-Day Rolling Volatility (Annualized)')
+        >>> plt.ylabel('Annualized Volatility')
+        >>> plt.show()
+        
+    Note:
+        - Annualization assumes 252 trading days per year (standard for daily data)
+        - For other frequencies, adjust annualization factor accordingly
+        - Early observations (first window-1 periods) will be NaN
+        - Volatility clustering often appears in financial time series
+        - Higher rolling volatility indicates periods of market stress or uncertainty
+        - Can be used for dynamic risk management and volatility-based position sizing
+        - Results are compatible with GARCH models and volatility forecasting
+        - Uses pandas rolling() function for computational efficiency
     """
     try:
         from ..utils.data_utils import validate_return_data
@@ -625,18 +675,82 @@ def calculate_rolling_volatility(returns: Union[pd.Series, Dict[str, Any]], wind
 
 def calculate_beta(stock_returns: Union[pd.Series, Dict[str, Any]], 
                    market_returns: Union[pd.Series, Dict[str, Any]]) -> float:
-    """
-    Calculate beta coefficient vs market.
+    """Calculate beta coefficient measuring systematic risk relative to market movements.
     
-    From financial-analysis-function-library.json time_series_processing category
-    Simple beta calculation wrapper around scipy
+    Beta (β) is a fundamental measure of systematic risk that quantifies how much
+    a security's returns tend to move relative to market returns. A beta of 1.0 means
+    the security moves in line with the market, while beta > 1.0 indicates higher
+    volatility than the market, and beta < 1.0 suggests lower volatility.
+    
+    Beta is calculated as the covariance between stock and market returns divided
+    by the variance of market returns: β = Cov(stock, market) / Var(market).
+    This provides a standardized measure of systematic risk exposure.
     
     Args:
-        stock_returns: Stock return series
-        market_returns: Market return series
-        
+        stock_returns (Union[pd.Series, Dict[str, Any]]): Individual stock or asset
+            return series. Can be provided as pandas Series with datetime index,
+            or dictionary with dates as keys and returns as values. Returns should
+            be in decimal format (e.g., 0.02 for 2%).
+        market_returns (Union[pd.Series, Dict[str, Any]]): Market benchmark return
+            series (e.g., S&P 500, market index). Must have overlapping periods
+            with stock_returns for meaningful calculation. Same format as stock_returns.
+            
     Returns:
-        float: Beta coefficient
+        float: Beta coefficient representing systematic risk:
+            - β = 1.0: Moves exactly with market (systematic risk = market risk)
+            - β > 1.0: More volatile than market (amplifies market movements)
+            - β < 1.0: Less volatile than market (dampens market movements) 
+            - β = 0.0: No correlation with market (no systematic risk)
+            - β < 0.0: Moves opposite to market (rare, often temporary)
+            
+    Raises:
+        ValueError: If beta calculation fails due to data alignment issues,
+            insufficient data, or zero market variance.
+        
+    Example:
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> 
+        >>> # Create sample market and stock return data
+        >>> dates = pd.date_range('2023-01-01', periods=252, freq='D')
+        >>> np.random.seed(42)
+        >>> market_rets = pd.Series(np.random.normal(0.0008, 0.015, 252), index=dates)
+        >>> 
+        >>> # High-beta stock (amplifies market moves)
+        >>> high_beta_stock = pd.Series([
+        ...     market_ret * 1.5 + np.random.normal(0, 0.005) 
+        ...     for market_ret in market_rets
+        ... ], index=dates)
+        >>> 
+        >>> # Low-beta stock (dampens market moves)
+        >>> low_beta_stock = pd.Series([
+        ...     market_ret * 0.6 + np.random.normal(0, 0.003) 
+        ...     for market_ret in market_rets
+        ... ], index=dates)
+        >>> 
+        >>> # Calculate betas
+        >>> high_beta = calculate_beta(high_beta_stock, market_rets)
+        >>> low_beta = calculate_beta(low_beta_stock, market_rets)
+        >>> 
+        >>> print(f"High-beta stock β: {high_beta:.2f}")  # Should be around 1.5
+        >>> print(f"Low-beta stock β: {low_beta:.2f}")    # Should be around 0.6
+        >>> 
+        >>> # Interpretation
+        >>> if high_beta > 1.2:
+        ...     print("High-beta stock is aggressive (high systematic risk)")
+        >>> if low_beta < 0.8:
+        ...     print("Low-beta stock is defensive (low systematic risk)")
+        
+    Note:
+        - Beta measures only systematic (market-related) risk, not total risk
+        - Calculated using historical data; future beta may differ
+        - Beta = 0 doesn't mean risk-free; idiosyncratic risk may still exist
+        - Market benchmark choice affects beta calculation significantly
+        - Rolling beta calculations can reveal changing risk characteristics
+        - Beta is a key input for CAPM (Capital Asset Pricing Model)
+        - High-beta stocks tend to outperform in bull markets, underperform in bear markets
+        - Defensive sectors typically have lower betas than growth/cyclical sectors
+        - Uses covariance/variance calculation for numerical stability
     """
     try:
         from ..utils.data_utils import validate_return_data, align_series
@@ -661,18 +775,83 @@ def calculate_beta(stock_returns: Union[pd.Series, Dict[str, Any]],
 
 def calculate_correlation(series1: Union[pd.Series, Dict[str, Any]], 
                          series2: Union[pd.Series, Dict[str, Any]]) -> float:
-    """
-    Calculate correlation between two series.
+    """Calculate Pearson correlation coefficient between two financial time series.
     
-    From financial-analysis-function-library.json time_series_processing category
-    Simple correlation calculation using pandas
+    Correlation measures the linear relationship between two variables, ranging from
+    -1 to +1. In finance, correlation analysis helps understand how different assets
+    move relative to each other, which is critical for portfolio diversification,
+    risk management, and asset allocation decisions.
+    
+    A correlation of +1 indicates perfect positive linear relationship (assets move
+    together), -1 indicates perfect negative relationship (assets move opposite),
+    and 0 indicates no linear relationship (assets are uncorrelated).
     
     Args:
-        series1: First series
-        series2: Second series
-        
+        series1 (Union[pd.Series, Dict[str, Any]]): First time series for correlation
+            analysis. Can be provided as pandas Series with datetime index, or
+            dictionary with dates as keys and values. Typically represents returns,
+            prices, or other financial metrics.
+        series2 (Union[pd.Series, Dict[str, Any]]): Second time series for correlation
+            analysis. Must have overlapping time periods with series1 for meaningful
+            calculation. Same format as series1.
+            
     Returns:
-        float: Correlation coefficient
+        float: Pearson correlation coefficient between the two series:
+            - +1.0: Perfect positive correlation (move together exactly)
+            - +0.7 to +0.99: Strong positive correlation 
+            - +0.3 to +0.69: Moderate positive correlation
+            - -0.3 to +0.29: Weak correlation (relatively independent)
+            - -0.69 to -0.31: Moderate negative correlation
+            - -0.99 to -0.7: Strong negative correlation
+            - -1.0: Perfect negative correlation (move opposite exactly)
+            
+    Raises:
+        ValueError: If correlation calculation fails due to data alignment issues,
+            insufficient overlapping data, or invalid input formats.
+        
+    Example:
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> 
+        >>> # Create sample time series data
+        >>> dates = pd.date_range('2023-01-01', periods=100, freq='D')
+        >>> 
+        >>> # Positively correlated series (tech stocks)
+        >>> stock_a = pd.Series(np.random.normal(0.001, 0.02, 100), index=dates)
+        >>> stock_b = pd.Series([
+        ...     ret_a * 0.8 + np.random.normal(0, 0.01) 
+        ...     for ret_a in stock_a
+        ... ], index=dates)
+        >>> 
+        >>> # Negatively correlated series (stocks vs bonds)
+        >>> bonds = pd.Series([
+        ...     -ret_a * 0.3 + np.random.normal(0.0002, 0.005) 
+        ...     for ret_a in stock_a
+        ... ], index=dates)
+        >>> 
+        >>> # Calculate correlations
+        >>> tech_correlation = calculate_correlation(stock_a, stock_b)
+        >>> stock_bond_correlation = calculate_correlation(stock_a, bonds)
+        >>> 
+        >>> print(f"Tech stocks correlation: {tech_correlation:.3f}")  # Should be ~0.8
+        >>> print(f"Stock-bond correlation: {stock_bond_correlation:.3f}")  # Should be ~-0.3
+        >>> 
+        >>> # Interpretation for portfolio construction
+        >>> if abs(tech_correlation) > 0.7:
+        ...     print("High correlation - limited diversification benefit")
+        >>> if stock_bond_correlation < -0.2:
+        ...     print("Negative correlation - good for diversification")
+        
+    Note:
+        - Only measures linear relationships; non-linear relationships may exist
+        - Correlation doesn't imply causation between the variables
+        - Financial correlations can change over time (correlation instability)
+        - Extreme market events often increase correlations temporarily
+        - Low correlation (near 0) is generally preferred for diversification
+        - Uses Pearson correlation (assumes normal distributions)
+        - For non-normal data, consider Spearman or Kendall correlations
+        - Missing values are automatically excluded from calculation
+        - Essential for modern portfolio theory and risk parity strategies
     """
     try:
         from ..utils.data_utils import validate_return_data, align_series
@@ -693,17 +872,89 @@ def calculate_correlation(series1: Union[pd.Series, Dict[str, Any]],
 
 
 def calculate_correlation_matrix(series_array: List[Union[pd.Series, Dict[str, Any]]]) -> pd.DataFrame:
-    """
-    Calculate correlation matrix for multiple series.
+    """Calculate pairwise correlation matrix for multiple financial time series.
     
-    From financial-analysis-function-library.json time_series_processing category
-    Uses pandas correlation matrix calculation
+    A correlation matrix provides a comprehensive view of linear relationships between
+    multiple assets or variables simultaneously. Each cell (i,j) contains the correlation
+    coefficient between series i and series j. This matrix is essential for portfolio
+    construction, risk analysis, and understanding diversification benefits across assets.
+    
+    The resulting matrix is symmetric (correlations are the same both ways) with 1.0s
+    along the diagonal (perfect self-correlation) and correlation coefficients ranging
+    from -1 to +1 in off-diagonal elements.
     
     Args:
-        series_array: Array of series to calculate correlations
-        
+        series_array (List[Union[pd.Series, Dict[str, Any]]]): List of time series
+            for correlation analysis. Each element can be a pandas Series with datetime
+            index or dictionary with dates as keys. All series should represent similar
+            metrics (e.g., all returns, all prices) for meaningful comparison.
+            Series will be automatically aligned to common time periods.
+            
     Returns:
-        pd.DataFrame: Correlation matrix
+        pd.DataFrame: Square correlation matrix where:
+            - Rows and columns represent the input series (indexed as series_0, series_1, etc.)
+            - Diagonal elements = 1.0 (perfect self-correlation)
+            - Off-diagonal elements = correlation coefficients between pairs
+            - Matrix is symmetric (correlation(A,B) = correlation(B,A))
+            - Index and columns labeled with series names if available, otherwise numbered
+            
+    Raises:
+        ValueError: If correlation matrix calculation fails due to insufficient data,
+            incompatible series formats, or fewer than 2 series provided.
+            
+    Example:
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> 
+        >>> # Create sample asset return series
+        >>> dates = pd.date_range('2023-01-01', periods=252, freq='D')
+        >>> np.random.seed(42)
+        >>> 
+        >>> # Tech stocks (high correlation with each other)
+        >>> tech_base = np.random.normal(0.001, 0.02, 252)
+        >>> aapl_returns = pd.Series(tech_base + np.random.normal(0, 0.005, 252), index=dates, name='AAPL')
+        >>> msft_returns = pd.Series(tech_base * 0.9 + np.random.normal(0, 0.008, 252), index=dates, name='MSFT')
+        >>> 
+        >>> # Bonds (low/negative correlation with stocks)
+        >>> bond_returns = pd.Series([-r * 0.2 + np.random.normal(0.0001, 0.003, 252) 
+        ...                          for r in tech_base], index=dates, name='Bonds')
+        >>> 
+        >>> # Gold (moderate correlation, flight-to-safety asset)
+        >>> gold_returns = pd.Series([np.random.normal(0.0002, 0.015, 252)[i] + 
+        ...                          (0.5 if tech_base[i] < -0.02 else 0) 
+        ...                          for i in range(252)], index=dates, name='Gold')
+        >>> 
+        >>> # Calculate correlation matrix
+        >>> series_list = [aapl_returns, msft_returns, bond_returns, gold_returns]
+        >>> corr_matrix = calculate_correlation_matrix(series_list)
+        >>> 
+        >>> print("Correlation Matrix:")
+        >>> print(corr_matrix.round(3))
+        >>> print(f"\\nTech stocks correlation: {corr_matrix.loc['AAPL', 'MSFT']:.3f}")
+        >>> print(f"Stock-bond correlation: {corr_matrix.loc['AAPL', 'Bonds']:.3f}")
+        >>> 
+        >>> # Identify diversification opportunities
+        >>> import numpy as np
+        >>> off_diagonal = corr_matrix.values[np.triu_indices_from(corr_matrix.values, k=1)]
+        >>> avg_correlation = np.mean(off_diagonal)
+        >>> print(f"Average pairwise correlation: {avg_correlation:.3f}")
+        >>> 
+        >>> if avg_correlation < 0.3:
+        ...     print("Good diversification potential (low average correlation)")
+        >>> elif avg_correlation > 0.7:
+        ...     print("Limited diversification (high correlation)")
+        
+    Note:
+        - Uses Pearson correlation coefficients (measures linear relationships)
+        - Missing values are automatically handled via pairwise deletion
+        - All input series are aligned to common time periods before calculation
+        - Matrix can be used directly in portfolio optimization algorithms
+        - High correlations (>0.7) indicate limited diversification benefits
+        - Negative correlations (<-0.3) provide natural hedging opportunities
+        - Correlation matrices are used in risk parity and mean-variance optimization
+        - Consider using robust correlation measures for non-normal return distributions
+        - Large matrices (>50 assets) may have numerical stability issues
+        - Essential input for Modern Portfolio Theory and CAPM calculations
     """
     try:
         from ..utils.data_utils import validate_return_data
@@ -726,17 +977,28 @@ def calculate_correlation_matrix(series_array: List[Union[pd.Series, Dict[str, A
 
 
 def calculate_skewness(returns: Union[pd.Series, Dict[str, Any]]) -> float:
-    """
-    Calculate skewness of return distribution.
+    """Calculate skewness measuring asymmetry of return distribution.
     
-    From financial-analysis-function-library.json statistical_analysis category
-    Uses scipy for statistical calculations - no code duplication
+    Skewness quantifies the asymmetry of a probability distribution around its mean.
+    In finance, skewness helps assess tail risk and return distribution characteristics.
+    Positive skewness indicates more frequent small losses and occasional large gains,
+    while negative skewness suggests more frequent small gains and occasional large losses.
     
     Args:
-        returns: Return series
-        
+        returns (Union[pd.Series, Dict[str, Any]]): Return series for skewness analysis.
+            Can be pandas Series with datetime index or dictionary format.
+            
     Returns:
-        float: Skewness coefficient
+        float: Skewness coefficient:
+            - = 0: Symmetric distribution (normal distribution)
+            - > 0: Positive skew (right tail longer, occasional large gains)
+            - < 0: Negative skew (left tail longer, occasional large losses)
+            - |skew| > 1: Highly skewed distribution
+            
+    Note:
+        - Negative skewness often observed in equity returns (crash risk)
+        - Positive skewness may indicate momentum or bubble patterns
+        - Uses scipy.stats.skew for robust calculation
     """
     try:
         from ..utils.data_utils import validate_return_data
@@ -753,17 +1015,26 @@ def calculate_skewness(returns: Union[pd.Series, Dict[str, Any]]) -> float:
 
 
 def calculate_kurtosis(returns: Union[pd.Series, Dict[str, Any]]) -> float:
-    """
-    Calculate kurtosis of return distribution.
+    """Calculate excess kurtosis measuring tail thickness of return distribution.
     
-    From financial-analysis-function-library.json statistical_analysis category
-    Uses scipy for statistical calculations - no code duplication
+    Kurtosis measures the "tailedness" of a probability distribution. Excess kurtosis
+    compares to normal distribution (kurtosis=3). High kurtosis indicates fat tails
+    and higher probability of extreme events, crucial for risk management.
     
     Args:
-        returns: Return series
-        
+        returns (Union[pd.Series, Dict[str, Any]]): Return series for kurtosis analysis.
+            
     Returns:
-        float: Kurtosis coefficient (excess kurtosis)
+        float: Excess kurtosis coefficient:
+            - = 0: Normal distribution tail thickness
+            - > 0: Fat tails (higher extreme event probability)
+            - < 0: Thin tails (lower extreme event probability)
+            - > 3: Significantly fat tails (high tail risk)
+            
+    Note:
+        - Financial returns typically exhibit positive excess kurtosis
+        - High kurtosis suggests higher crash/boom probability than normal distribution
+        - Uses scipy.stats.kurtosis with Fisher=True (excess kurtosis)
     """
     try:
         from ..utils.data_utils import validate_return_data
@@ -780,18 +1051,27 @@ def calculate_kurtosis(returns: Union[pd.Series, Dict[str, Any]]) -> float:
 
 
 def calculate_percentile(data: Union[pd.Series, Dict[str, Any], List[float]], percentile: float) -> float:
-    """
-    Calculate specified percentile of data.
+    """Calculate specified percentile for risk and performance analysis.
     
-    From financial-analysis-function-library.json statistical_analysis category
-    Uses numpy for percentile calculation - no code duplication
+    Percentiles are essential for risk measurement, showing the value below which
+    a certain percentage of observations fall. Commonly used for VaR calculation,
+    performance benchmarking, and outlier identification.
     
     Args:
-        data: Data series or array
-        percentile: Percentile to calculate (0-100)
-        
+        data (Union[pd.Series, Dict[str, Any], List[float]]): Data for percentile calculation.
+        percentile (float): Percentile to calculate (0-100). Common values:
+            - 5th percentile: Bottom 5% threshold (VaR calculation)
+            - 25th percentile: First quartile
+            - 50th percentile: Median
+            - 95th percentile: Top 5% threshold
+            
     Returns:
-        float: Percentile value
+        float: Percentile value representing the threshold.
+        
+    Note:
+        - Used extensively in VaR and stress testing
+        - 5th percentile often represents worst-case scenarios
+        - 95th percentile represents best-case scenarios
     """
     try:
         if isinstance(data, (list, np.ndarray)):
@@ -817,17 +1097,27 @@ def calculate_percentile(data: Union[pd.Series, Dict[str, Any], List[float]], pe
 
 
 def calculate_herfindahl_index(weights: Union[pd.Series, Dict[str, Any], List[float]]) -> float:
-    """
-    Calculate concentration index for portfolio weights.
+    """Calculate Herfindahl-Hirschman Index measuring portfolio concentration.
     
-    From financial-analysis-function-library.json statistical_analysis category
-    Simple concentration measure using numpy - no code duplication
+    HHI measures market concentration by summing squared market shares (weights).
+    In portfolio context, it quantifies how concentrated holdings are. Lower values
+    indicate better diversification, higher values suggest concentration risk.
     
     Args:
-        weights: Portfolio weights
-        
+        weights (Union[pd.Series, Dict[str, Any], List[float]]): Portfolio weights.
+            Automatically normalized to sum to 1.0.
+            
     Returns:
-        float: Herfindahl index (0 = perfectly diversified, 1 = concentrated)
+        float: Herfindahl index:
+            - 1/N (equal weights): Well diversified portfolio
+            - Approaching 1.0: Highly concentrated portfolio
+            - = 1.0: Single asset portfolio (maximum concentration)
+            
+    Note:
+        - HHI = Σ(wi²) where wi are normalized weights
+        - Lower HHI generally indicates better diversification
+        - Regulatory agencies use HHI for market concentration analysis
+        - Effective number of assets ≈ 1/HHI
     """
     try:
         if isinstance(weights, (list, np.ndarray)):
@@ -859,19 +1149,29 @@ def calculate_herfindahl_index(weights: Union[pd.Series, Dict[str, Any], List[fl
 def calculate_treynor_ratio(returns: Union[pd.Series, Dict[str, Any]], 
                            market_returns: Union[pd.Series, Dict[str, Any]], 
                            risk_free_rate: float = 0.02) -> float:
-    """
-    Calculate Treynor ratio.
+    """Calculate Treynor ratio measuring risk-adjusted return per unit of systematic risk.
     
-    From financial-analysis-function-library.json statistical_analysis category
-    Uses existing beta calculation and empyrical functions - no code duplication
+    The Treynor ratio evaluates portfolio performance by comparing excess return
+    to systematic risk (beta). Unlike Sharpe ratio which uses total risk, Treynor
+    ratio focuses on market-related risk, making it ideal for comparing diversified
+    portfolios where unsystematic risk is minimized.
+    
+    Formula: Treynor Ratio = (Portfolio Return - Risk-free Rate) / Beta
     
     Args:
-        returns: Portfolio returns
-        market_returns: Market returns
-        risk_free_rate: Risk-free rate
-        
+        returns (Union[pd.Series, Dict[str, Any]]): Portfolio return series.
+        market_returns (Union[pd.Series, Dict[str, Any]]): Market benchmark returns.
+        risk_free_rate (float, optional): Annual risk-free rate. Defaults to 0.02 (2%).
+            
     Returns:
-        float: Treynor ratio
+        float: Treynor ratio - higher values indicate better risk-adjusted performance.
+            Positive values suggest outperformance after adjusting for market risk.
+            
+    Note:
+        - Higher Treynor ratio indicates better systematic risk-adjusted performance
+        - More appropriate than Sharpe ratio for well-diversified portfolios
+        - Assumes portfolio is well-diversified (unsystematic risk eliminated)
+        - Cannot be calculated if beta is zero
     """
     try:
         from ..utils.data_utils import validate_return_data, align_series
@@ -905,19 +1205,71 @@ def calculate_treynor_ratio(returns: Union[pd.Series, Dict[str, Any]],
 def calculate_portfolio_volatility(weights: Union[pd.Series, Dict[str, Any], List[float]], 
                                   correlation_matrix: Union[pd.DataFrame, Dict[str, Any]], 
                                   volatilities: Union[pd.Series, Dict[str, Any], List[float]]) -> float:
-    """
-    Calculate portfolio volatility using correlation matrix.
+    """Calculate portfolio volatility using correlation matrix and individual asset volatilities.
     
-    From financial-analysis-function-library.json risk_analysis category
-    Uses numpy for portfolio volatility calculation - no code duplication
+    Portfolio volatility calculation incorporates both individual asset volatilities and
+    their correlations. The formula accounts for diversification benefits: when assets
+    are not perfectly correlated, portfolio risk is less than the weighted average of
+    individual risks. This is fundamental to modern portfolio theory.
+    
+    Formula: σp = √(w'Σw) where w is weights vector and Σ is covariance matrix
+    Σ = correlation_matrix * (volatilities ⊗ volatilities)
     
     Args:
-        weights: Portfolio weights
-        correlation_matrix: Asset correlation matrix
-        volatilities: Individual asset volatilities
-        
+        weights (Union[pd.Series, Dict[str, Any], List[float]]): Portfolio allocation weights.
+            Should sum to 1.0 (automatically normalized if needed). Order must match
+            correlation matrix and volatilities.
+        correlation_matrix (Union[pd.DataFrame, Dict[str, Any]]): Asset correlation matrix.
+            Must be square matrix with dimensions matching number of assets.
+            Diagonal should be 1.0, off-diagonal elements between -1 and 1.
+        volatilities (Union[pd.Series, Dict[str, Any], List[float]]): Individual asset
+            volatilities (standard deviations). Should be annualized and match the
+            time period of desired portfolio volatility.
+            
     Returns:
-        float: Portfolio volatility
+        float: Portfolio volatility (annualized standard deviation). Always non-negative.
+            Represents the portfolio's total risk including diversification effects.
+            
+    Raises:
+        ValueError: If dimensions don't match between inputs, or correlation matrix
+            is not properly formatted.
+            
+    Example:
+        >>> import numpy as np
+        >>> import pandas as pd
+        >>> 
+        >>> # 3-asset portfolio example
+        >>> weights = [0.5, 0.3, 0.2]  # 50% stocks, 30% bonds, 20% commodities
+        >>> volatilities = [0.20, 0.08, 0.25]  # 20%, 8%, 25% annual volatility
+        >>> 
+        >>> # Correlation matrix
+        >>> correlation_matrix = pd.DataFrame([
+        ...     [1.0, -0.2, 0.3],   # Stocks vs others
+        ...     [-0.2, 1.0, 0.1],   # Bonds vs others  
+        ...     [0.3, 0.1, 1.0]     # Commodities vs others
+        ... ])
+        >>> 
+        >>> portfolio_vol = calculate_portfolio_volatility(weights, correlation_matrix, volatilities)
+        >>> print(f"Portfolio volatility: {portfolio_vol:.3f}")
+        >>> 
+        >>> # Compare to weighted average (no diversification)
+        >>> weighted_avg_vol = sum(w * v for w, v in zip(weights, volatilities))
+        >>> print(f"Weighted average volatility: {weighted_avg_vol:.3f}")
+        >>> print(f"Diversification benefit: {weighted_avg_vol - portfolio_vol:.3f}")
+        >>> 
+        >>> # Diversification ratio
+        >>> div_ratio = weighted_avg_vol / portfolio_vol
+        >>> print(f"Diversification ratio: {div_ratio:.2f}")
+        
+    Note:
+        - Portfolio volatility is always ≤ weighted average volatility (diversification benefit)
+        - Perfect positive correlation (ρ=1) gives portfolio volatility = weighted average
+        - Perfect negative correlation can theoretically reduce portfolio volatility to zero
+        - Negative correlations provide the greatest diversification benefits
+        - Essential for mean-variance optimization and efficient frontier construction
+        - Assumes returns are normally distributed and correlations are stable
+        - Used in risk budgeting and portfolio risk management
+        - Formula is exact for linear portfolios (no options or derivatives)
     """
     try:
         # Convert inputs to numpy arrays
@@ -966,19 +1318,29 @@ def calculate_portfolio_volatility(weights: Union[pd.Series, Dict[str, Any], Lis
 def calculate_component_var(weights: Union[pd.Series, Dict[str, Any], List[float]], 
                            returns: Union[pd.DataFrame, Dict[str, Any]], 
                            confidence: float) -> List[float]:
-    """
-    Calculate VaR contribution by component.
+    """Calculate Value at Risk contribution by portfolio component.
     
-    From financial-analysis-function-library.json risk_analysis category
-    Uses scipy and numpy for component VaR calculation - no code duplication
+    Component VaR decomposes total portfolio VaR into contributions from each asset,
+    helping identify which positions contribute most to tail risk. This is essential
+    for risk budgeting and position sizing decisions.
+    
+    Formula: Component VaRi = weightᵢ × Marginal VaRᵢ
+    where Marginal VaRᵢ = ∂(Portfolio VaR)/∂weightᵢ
     
     Args:
-        weights: Portfolio weights
-        returns: Multi-asset return matrix
-        confidence: Confidence level (e.g., 0.05 for 95% VaR)
-        
+        weights (Union[pd.Series, Dict[str, Any], List[float]]): Portfolio weights.
+        returns (Union[pd.DataFrame, Dict[str, Any]]): Multi-asset return matrix.
+        confidence (float): Confidence level (0.05 for 95% VaR).
+            
     Returns:
-        List[float]: Component VaR contributions
+        List[float]: Component VaR contributions for each asset.
+            Sum of components equals total portfolio VaR.
+            
+    Note:
+        - Sum of component VaRs equals total portfolio VaR
+        - Larger absolute values indicate higher risk contribution
+        - Used for risk budgeting and capital allocation
+        - Helps identify concentration risks in portfolios
     """
     try:
         # Convert inputs to appropriate formats
@@ -1034,19 +1396,29 @@ def calculate_component_var(weights: Union[pd.Series, Dict[str, Any], List[float
 def calculate_marginal_var(weights: Union[pd.Series, Dict[str, Any], List[float]], 
                           returns: Union[pd.DataFrame, Dict[str, Any]], 
                           confidence: float) -> List[float]:
-    """
-    Calculate marginal VaR for each position.
+    """Calculate marginal Value at Risk for each portfolio position.
     
-    From financial-analysis-function-library.json risk_analysis category
-    Uses numerical differentiation for marginal VaR - no code duplication
+    Marginal VaR measures how much portfolio VaR would change if a position's
+    weight increased by a small amount. This helps optimize portfolio risk
+    allocation and identify positions with highest risk impact per unit weight.
+    
+    Formula: Marginal VaRᵢ = ∂(Portfolio VaR)/∂weightᵢ
+    Calculated using numerical differentiation with small weight perturbations.
     
     Args:
-        weights: Portfolio weights
-        returns: Multi-asset return matrix
-        confidence: Confidence level
-        
+        weights (Union[pd.Series, Dict[str, Any], List[float]]): Portfolio weights.
+        returns (Union[pd.DataFrame, Dict[str, Any]]): Multi-asset return matrix.
+        confidence (float): Confidence level for VaR calculation.
+            
     Returns:
-        List[float]: Marginal VaR for each position
+        List[float]: Marginal VaR for each position.
+            Positive values indicate VaR increases with position size.
+            
+    Note:
+        - Higher marginal VaR indicates position adds more risk per unit weight
+        - Used in risk-adjusted position sizing and portfolio optimization
+        - Essential for risk parity and risk budgeting strategies
+        - Calculated via numerical differentiation (finite differences)
     """
     try:
         # Convert inputs
@@ -1094,18 +1466,30 @@ def calculate_marginal_var(weights: Union[pd.Series, Dict[str, Any], List[float]
 
 def calculate_risk_budget(weights: Union[pd.Series, Dict[str, Any], List[float]], 
                          risk_contributions: Union[pd.Series, Dict[str, Any], List[float]]) -> List[float]:
-    """
-    Calculate risk budget allocation.
+    """Calculate risk budget allocation showing each asset's risk contribution percentage.
     
-    From financial-analysis-function-library.json risk_analysis category
-    Simple risk budget calculation using numpy - no code duplication
+    Risk budgeting allocates portfolio risk rather than capital across assets.
+    This approach ensures each position contributes a target percentage to total
+    portfolio risk, leading to more balanced risk exposure than traditional
+    market-cap weighted approaches.
+    
+    Formula: Risk Budgetᵢ = |Risk Contributionᵢ| / Σ|Risk Contributionⱼ|
     
     Args:
-        weights: Portfolio weights
-        risk_contributions: Risk contributions for each asset
-        
+        weights (Union[pd.Series, Dict[str, Any], List[float]]): Portfolio weights.
+        risk_contributions (Union[pd.Series, Dict[str, Any], List[float]]): 
+            Risk contributions for each asset (e.g., component VaR values).
+            
     Returns:
-        List[float]: Risk budget percentages
+        List[float]: Risk budget percentages for each asset.
+            Values sum to 1.0 and show relative risk contribution.
+            
+    Note:
+        - Risk budget percentages sum to 100% of total portfolio risk
+        - Equal risk budgets (1/N) indicate risk parity portfolio
+        - Unequal budgets show concentration of risk in certain positions
+        - Used in risk parity and equal risk contribution strategies
+        - Helps rebalance portfolios based on risk rather than dollar amounts
     """
     try:
         # Convert to numpy arrays
@@ -1237,18 +1621,26 @@ def calculate_tail_risk(returns: Union[pd.Series, Dict[str, Any]], threshold: fl
 
 
 def calculate_expected_shortfall(returns: Union[pd.Series, Dict[str, Any]], confidence: float) -> float:
-    """
-    Calculate Expected Shortfall (Conditional VaR).
+    """Calculate Expected Shortfall (Conditional VaR) measuring tail risk severity.
     
-    From financial-analysis-function-library.json risk_analysis category
-    Simple wrapper around empyrical CVaR - no code duplication
+    Expected Shortfall (ES) measures the average loss in the worst-case scenarios
+    beyond the VaR threshold. Unlike VaR which only gives the threshold, ES quantifies
+    the severity of tail losses, providing a more complete picture of tail risk.
     
     Args:
-        returns: Return series
-        confidence: Confidence level
-        
+        returns (Union[pd.Series, Dict[str, Any]]): Historical return series.
+        confidence (float): Confidence level (e.g., 0.05 for 95% confidence).
+            
     Returns:
-        float: Expected Shortfall
+        float: Expected Shortfall - average loss in worst-case scenarios.
+            More negative values indicate higher tail risk.
+            
+    Note:
+        - ES is always more conservative (worse) than VaR
+        - Provides expected loss given that VaR threshold is exceeded
+        - Also known as Conditional Value at Risk (CVaR)
+        - Coherent risk measure (satisfies all mathematical risk axioms)
+        - Essential for comprehensive tail risk assessment
     """
     try:
         returns_series = validate_return_data(returns)
@@ -1263,18 +1655,30 @@ def calculate_expected_shortfall(returns: Union[pd.Series, Dict[str, Any]], conf
 
 
 def calculate_diversification_ratio(portfolio_vol: float, weighted_avg_vol: float) -> float:
-    """
-    Calculate diversification ratio.
+    """Calculate diversification ratio measuring portfolio diversification benefits.
     
-    From financial-analysis-function-library.json risk_analysis category
-    Simple diversification ratio calculation - no code duplication
+    The diversification ratio compares the weighted average volatility of individual
+    assets to the actual portfolio volatility. Higher ratios indicate greater
+    diversification benefits from correlation effects between assets.
+    
+    Formula: Diversification Ratio = (Weighted Average Volatility) / (Portfolio Volatility)
     
     Args:
-        portfolio_vol: Portfolio volatility
-        weighted_avg_vol: Weighted average of individual asset volatilities
-        
+        portfolio_vol (float): Actual portfolio volatility (standard deviation).
+        weighted_avg_vol (float): Weighted average of individual asset volatilities.
+            
     Returns:
-        float: Diversification ratio
+        float: Diversification ratio:
+            - = 1.0: No diversification benefit (perfect correlation)
+            - > 1.0: Diversification benefit from correlation < 1
+            - Higher values indicate better diversification
+            - Theoretical maximum depends on correlation structure
+            
+    Note:
+        - Ratio > 1.0 indicates diversification reduces portfolio risk
+        - Higher ratios suggest lower average correlations between assets
+        - Essential for evaluating portfolio construction effectiveness
+        - Used in risk parity and diversification-focused strategies
     """
     try:
         if portfolio_vol <= 0:
@@ -1290,6 +1694,134 @@ def calculate_diversification_ratio(portfolio_vol: float, weighted_avg_vol: floa
         
     except Exception as e:
         raise ValueError(f"Diversification ratio calculation failed: {str(e)}")
+
+
+def calculate_downside_correlation(portfolio_returns: Union[pd.Series, Dict[str, Any]], 
+                                  benchmark_returns: Union[pd.Series, Dict[str, Any]]) -> Dict[str, Any]:
+    """Calculate portfolio correlation with benchmark returns specifically on negative benchmark days.
+    
+    Downside correlation measures how closely a portfolio moves with its benchmark during
+    periods when the benchmark experiences negative returns. This metric is crucial for
+    understanding portfolio behavior during market stress and downturns, providing insight
+    into downside protection and systematic risk exposure when markets decline.
+    
+    Unlike traditional correlation which considers all market conditions equally, downside
+    correlation focuses specifically on adverse market conditions, making it more relevant
+    for risk management and portfolio construction decisions.
+    
+    Args:
+        portfolio_returns (Union[pd.Series, Dict[str, Any]]): Portfolio return series as
+            pandas Series with datetime index or dictionary with return values. Values
+            should be decimal returns (e.g., 0.02 for 2%, -0.01 for -1%).
+        benchmark_returns (Union[pd.Series, Dict[str, Any]]): Benchmark return series with
+            same format as portfolio returns. Will be automatically aligned with portfolio
+            returns for fair comparison.
+    
+    Returns:
+        Dict[str, Any]: Downside correlation analysis with keys:
+            - downside_correlation (float): Correlation coefficient during negative benchmark days
+            - total_observations (int): Total number of overlapping return observations
+            - negative_benchmark_days (int): Number of days when benchmark was negative
+            - negative_days_percentage (str): Percentage of days with negative benchmark returns
+            - portfolio_avg_on_negative_days (float): Average portfolio return on negative benchmark days
+            - benchmark_avg_on_negative_days (float): Average benchmark return on negative benchmark days
+            - portfolio_volatility_downside (float): Portfolio volatility during negative benchmark days
+            - benchmark_volatility_downside (float): Benchmark volatility during negative benchmark days
+            - beta_downside (float): Portfolio beta calculated only on negative benchmark days
+            - success (bool): Whether calculation succeeded
+            - function_name (str): Function identifier for tracking
+    
+    Raises:
+        ValueError: If return data cannot be converted to valid return series or alignment fails.
+        TypeError: If input data format is invalid or incompatible.
+        
+    Example:
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> 
+        >>> # Create sample portfolio and benchmark return data
+        >>> dates = pd.date_range('2023-01-01', periods=252, freq='D')
+        >>> benchmark_rets = pd.Series(np.random.normal(0.0005, 0.015, 252), index=dates)
+        >>> # Portfolio with higher downside correlation (more risk in downturns)
+        >>> portfolio_rets = []
+        >>> for bench_ret in benchmark_rets:
+        ...     if bench_ret < 0:
+        ...         port_ret = bench_ret * 1.3 + np.random.normal(0, 0.005)  # Amplifies losses
+        ...     else:
+        ...         port_ret = bench_ret * 0.8 + np.random.normal(0, 0.003)  # Moderate gains
+        ...     portfolio_rets.append(port_ret)
+        >>> portfolio_rets = pd.Series(portfolio_rets, index=dates)
+        >>> 
+        >>> # Calculate downside correlation
+        >>> result = calculate_downside_correlation(portfolio_rets, benchmark_rets)
+        >>> print(f"Downside Correlation: {result['downside_correlation']:.3f}")
+        >>> print(f"Negative Days: {result['negative_days_percentage']}")
+        >>> print(f"Downside Beta: {result['beta_downside']:.3f}")
+        >>> print(f"Portfolio avg on bad days: {result['portfolio_avg_on_negative_days_pct']}")
+        
+    Note:
+        - Values closer to 1.0 indicate portfolio closely follows benchmark during downturns
+        - Values closer to 0.0 indicate portfolio is less correlated during market stress
+        - Negative values indicate portfolio tends to rise when benchmark falls (rare)
+        - Downside beta > 1.0 suggests portfolio amplifies benchmark losses
+        - Lower downside correlation may indicate better downside protection
+        - Only considers periods when benchmark returns are negative
+        - Useful for evaluating defensive characteristics and tail risk management
+        - Complements traditional correlation analysis by focusing on stress periods
+    """
+    try:
+        portfolio_series = validate_return_data(portfolio_returns)
+        benchmark_series = validate_return_data(benchmark_returns)
+        
+        # Align series to ensure same dates
+        portfolio_aligned, benchmark_aligned = align_series(portfolio_series, benchmark_series)
+        
+        # Filter for negative benchmark days only
+        negative_days_mask = benchmark_aligned < 0
+        negative_benchmark_days = benchmark_aligned[negative_days_mask]
+        negative_portfolio_days = portfolio_aligned[negative_days_mask]
+        
+        # Check if we have sufficient negative days for analysis
+        if len(negative_benchmark_days) < 2:
+            return {
+                "success": False, 
+                "error": "Insufficient negative benchmark days for correlation calculation"
+            }
+        
+        # Calculate downside correlation
+        downside_correlation = negative_portfolio_days.corr(negative_benchmark_days)
+        
+        # Calculate additional downside metrics
+        portfolio_avg_negative = negative_portfolio_days.mean()
+        benchmark_avg_negative = negative_benchmark_days.mean()
+        portfolio_vol_downside = negative_portfolio_days.std()
+        benchmark_vol_downside = negative_benchmark_days.std()
+        
+        # Calculate downside beta (portfolio sensitivity during negative benchmark days)
+        covariance_downside = negative_portfolio_days.cov(negative_benchmark_days)
+        benchmark_variance_downside = negative_benchmark_days.var()
+        beta_downside = covariance_downside / benchmark_variance_downside if benchmark_variance_downside > 0 else 0
+        
+        result = {
+            "downside_correlation": float(downside_correlation) if not pd.isna(downside_correlation) else 0.0,
+            "total_observations": len(portfolio_aligned),
+            "negative_benchmark_days": len(negative_benchmark_days),
+            "negative_days_percentage": f"{len(negative_benchmark_days) / len(portfolio_aligned) * 100:.2f}%",
+            "portfolio_avg_on_negative_days": float(portfolio_avg_negative),
+            "portfolio_avg_on_negative_days_pct": f"{portfolio_avg_negative * 100:.2f}%",
+            "benchmark_avg_on_negative_days": float(benchmark_avg_negative),
+            "benchmark_avg_on_negative_days_pct": f"{benchmark_avg_negative * 100:.2f}%",
+            "portfolio_volatility_downside": float(portfolio_vol_downside),
+            "portfolio_volatility_downside_pct": f"{portfolio_vol_downside * 100:.2f}%",
+            "benchmark_volatility_downside": float(benchmark_vol_downside),
+            "benchmark_volatility_downside_pct": f"{benchmark_vol_downside * 100:.2f}%",
+            "beta_downside": float(beta_downside)
+        }
+        
+        return standardize_output(result, "calculate_downside_correlation")
+        
+    except Exception as e:
+        return {"success": False, "error": f"Downside correlation calculation failed: {str(e)}"}
 
 
 def calculate_concentration_metrics(weights: Union[pd.Series, Dict[str, Any], List[float]]) -> Dict[str, Any]:
@@ -1412,6 +1944,7 @@ RISK_METRICS_FUNCTIONS = {
     'calculate_cvar': calculate_cvar,
     'calculate_correlation_analysis': calculate_correlation_analysis,
     'calculate_beta_analysis': calculate_beta_analysis,
+    'calculate_downside_correlation': calculate_downside_correlation,
     'stress_test_portfolio': stress_test_portfolio,
     'calculate_rolling_volatility': calculate_rolling_volatility,
     'calculate_beta': calculate_beta,

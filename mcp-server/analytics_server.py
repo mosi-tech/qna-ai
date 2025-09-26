@@ -26,16 +26,7 @@ import mcp.server.stdio
 import mcp.types as types
 
 # Import analytics functions and schema utilities
-from analytics.comparison import COMPARISON_METRICS_FUNCTIONS
-from analytics.indicators import MOMENTUM_INDICATORS_FUNCTIONS
-from analytics.indicators import VOLUME_INDICATORS_FUNCTIONS
-from analytics.indicators import VOLATILITY_INDICATORS_FUNCTIONS
-from analytics.indicators import TECHNICAL_INDICATORS_FUNCTIONS
-from analytics.market import MARKET_ANALYSIS_FUNCTIONS
-from analytics.portfolio import PORTFOLIO_ANALYSIS_FUNCTIONS, PORTFOLIO_OPTIMIZATION_FUNCTIONS, PORTFOLIO_SIMULATION_FUNCTIONS
-from analytics.performance import PERFORMANCE_METRICS_FUNCTIONS
-from analytics.risk import RISK_METRICS_FUNCTIONS
-from analytics.utils.data_utils import DATA_UTILS_FUNCTIONS
+import analytics
 from schema_utils import initialize_schema_cache
 
 # Configure logging
@@ -48,26 +39,71 @@ app = Server("mcp-analytics-server")
 # Cache for generated schemas - populated once at startup
 _schema_cache = {}
 
+# Output schemas for analytics functions
+ANALYTICS_OUTPUT_SCHEMAS = {
+    "calculate_sma": {
+        "type": "array",
+        "items": {"type": "number"},
+        "description": "Simple moving average values"
+    },
+    "calculate_rsi": {
+        "type": "array", 
+        "items": {"type": "number"},
+        "description": "RSI indicator values"
+    },
+    "calculate_correlation_matrix": {
+        "type": "object",
+        "description": "Correlation matrix between assets"
+    },
+    "calculate_portfolio_metrics": {
+        "type": "object",
+        "properties": {
+            "returns": {"type": "number"},
+            "volatility": {"type": "number"},
+            "sharpe_ratio": {"type": "number"}
+        },
+        "description": "Portfolio performance metrics"
+    }
+}
+
+
+def _get_output_schema_for_function(func_name: str) -> Dict[str, Any]:
+    """Get output schema for specific analytics function"""
+    if func_name in ANALYTICS_OUTPUT_SCHEMAS:
+        return ANALYTICS_OUTPUT_SCHEMAS[func_name]
+    elif "calculate" in func_name:
+        return {"type": "number", "description": f"Calculated result from {func_name}"}
+    elif "matrix" in func_name or "correlation" in func_name:
+        return {"type": "object", "description": f"Matrix or correlation result from {func_name}"}
+    else:
+        return {"type": "object", "description": f"Analytics result from {func_name}"}
+
+
+def _get_function_parameters(func_name: str) -> Dict[str, Any]:
+    """Get parameter definitions for specific analytics function"""
+    return {
+        "required": [],
+        "optional": [],
+        "types": {}
+    }
+
 
 def initialize_schema_cache():
     """Initialize the schema cache at startup to avoid repeated generation."""
     global _schema_cache
     
-    # Combine all analytics function registries
-    all_functions = {
-        **COMPARISON_METRICS_FUNCTIONS,
-        **MOMENTUM_INDICATORS_FUNCTIONS,
-        **VOLUME_INDICATORS_FUNCTIONS,
-        **VOLATILITY_INDICATORS_FUNCTIONS,
-        **TECHNICAL_INDICATORS_FUNCTIONS,
-        **MARKET_ANALYSIS_FUNCTIONS,
-        **PORTFOLIO_ANALYSIS_FUNCTIONS, 
-        **PORTFOLIO_OPTIMIZATION_FUNCTIONS, 
-        **PORTFOLIO_SIMULATION_FUNCTIONS,
-        **PERFORMANCE_METRICS_FUNCTIONS,
-        **RISK_METRICS_FUNCTIONS,
-        **DATA_UTILS_FUNCTIONS
-    }
+    # Automatically discover all analytics functions
+    all_functions = {}
+    
+    # Get all callable functions from the analytics module
+    for name, obj in inspect.getmembers(analytics):
+        if (inspect.isfunction(obj) and 
+            not name.startswith('_') and  # Skip private functions
+            hasattr(obj, '__module__') and  # Has module info
+            obj.__module__ and obj.__module__.startswith('analytics.')):  # From analytics package
+            all_functions[name] = obj
+    
+    logger.info(f"Auto-discovered {len(all_functions)} analytics functions")
     
     logger.info("Generating schemas for all analytics functions...")
     
@@ -257,6 +293,7 @@ async def handle_list_tools() -> List[types.Tool]:
     # Use cached schemas for performance
     tools = []
     
+    # Add all analytics function tools
     for func_name, schema in _schema_cache.items():
         tools.append(types.Tool(
             name=func_name,
@@ -264,7 +301,35 @@ async def handle_list_tools() -> List[types.Tool]:
             inputSchema=schema['inputSchema']
         ))
     
-    logger.debug(f"Returned {len(tools)} analytics tools from cache")
+    # Add schema discovery tools for distributed validation
+    tools.extend([
+        types.Tool(
+            name="get_analytics_function_schemas",
+            description="Get all analytics function schemas for workflow validation",
+            inputSchema={
+                "type": "object",
+                "properties": {},
+                "additionalProperties": False
+            }
+        ),
+        types.Tool(
+            name="get_analytics_function_schema",
+            description="Get schema for specific analytics function",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "function_name": {
+                        "type": "string",
+                        "description": "Name of the analytics function to get schema for"
+                    }
+                },
+                "required": ["function_name"],
+                "additionalProperties": False
+            }
+        )
+    ])
+    
+    logger.debug(f"Returned {len(tools)} analytics tools from cache (including schema tools)")
     return tools
 
 
@@ -274,40 +339,80 @@ async def handle_call_tool(name: str, arguments: Dict[str, Any]) -> List[types.T
     try:
         logger.info(f"Executing analytics tool: {name} with arguments keys: {list(arguments.keys())}")
         
-        # Combine all analytics function registries
-        all_functions = {
-            **COMPARISON_METRICS_FUNCTIONS,
-            **MOMENTUM_INDICATORS_FUNCTIONS,
-            **VOLUME_INDICATORS_FUNCTIONS,
-            **VOLATILITY_INDICATORS_FUNCTIONS,
-            **TECHNICAL_INDICATORS_FUNCTIONS,
-            **MARKET_ANALYSIS_FUNCTIONS,
-            **PORTFOLIO_ANALYSIS_FUNCTIONS, 
-            **PORTFOLIO_OPTIMIZATION_FUNCTIONS, 
-            **PORTFOLIO_SIMULATION_FUNCTIONS,
-            **PERFORMANCE_METRICS_FUNCTIONS,
-            **RISK_METRICS_FUNCTIONS,
-            **DATA_UTILS_FUNCTIONS
-        }
+        # Handle schema discovery tools
+        if name == "get_analytics_function_schemas":
+            # Return all analytics function schemas with output schemas
+            schemas_with_output = {}
+            for func_name, schema in _schema_cache.items():
+                schemas_with_output[func_name] = {
+                    "source": "analytics",
+                    "description": schema["description"],
+                    "input_schema": schema["inputSchema"],
+                    "output_schema": _get_output_schema_for_function(func_name),
+                    "parameters": _get_function_parameters(func_name)
+                }
+            
+            return [types.TextContent(
+                type="text",
+                text=json.dumps({
+                    "functions": schemas_with_output,
+                    "count": len(schemas_with_output),
+                    "source": "analytics",
+                    "server": "mcp-analytics-server"
+                }, indent=2)
+            )]
         
-        if name not in all_functions:
+        elif name == "get_analytics_function_schema":
+            function_name = arguments["function_name"]
+            if function_name not in _schema_cache:
+                return [types.TextContent(
+                    type="text",
+                    text=json.dumps({
+                        "error": f"Function '{function_name}' not found",
+                        "available_functions": list(_schema_cache.keys())[:10],
+                        "suggestions": [fn for fn in _schema_cache.keys() if function_name.lower() in fn.lower()][:5]
+                    })
+                )]
+            
+            schema = _schema_cache[function_name]
+            detailed_schema = {
+                "function_name": function_name,
+                "source": "analytics",
+                "description": schema["description"],
+                "input_schema": schema["inputSchema"],
+                "output_schema": _get_output_schema_for_function(function_name),
+                "parameters": _get_function_parameters(function_name)
+            }
+            
+            return [types.TextContent(
+                type="text",
+                text=json.dumps(detailed_schema, indent=2)
+            )]
+        
+        # Handle regular analytics functions
+        elif hasattr(analytics, name):
+            # Execute the analytics function
+            function = getattr(analytics, name)
+            result = function(**arguments)
+            
+            return [types.TextContent(
+                type="text",
+                text=json.dumps(result, indent=2)
+            )]
+        
+        else:
+            # Get all available functions for error message
+            available_functions = [n for n, obj in inspect.getmembers(analytics) 
+                                 if inspect.isfunction(obj) and not n.startswith('_')]
+            
             return [types.TextContent(
                 type="text",
                 text=json.dumps({
                     "success": False,
                     "error": f"Unknown analytics tool: {name}",
-                    "available_tools": list(all_functions.keys())
+                    "available_tools": available_functions + ["get_analytics_function_schemas", "get_analytics_function_schema"]
                 })
             )]
-        
-        # Execute the analytics function
-        function = all_functions[name]
-        result = function(**arguments)
-        
-        return [types.TextContent(
-            type="text",
-            text=json.dumps(result, indent=2)
-        )]
         
     except Exception as e:
         logger.error(f"Analytics tool execution failed: {e}")

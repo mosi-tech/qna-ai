@@ -653,7 +653,7 @@ def optimize_signal_parameters(prices: Union[pd.Series, Dict[str, Any]],
         - Minimum 5 signals required for reliable performance calculation
         - Failed parameter combinations are skipped automatically
         - Results sorted by composite score for easy identification of best performers
-    ""\
+    """
     try:
         price_series = validate_price_data(prices)
         

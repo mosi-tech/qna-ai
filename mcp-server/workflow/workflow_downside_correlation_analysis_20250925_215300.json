@@ -11,17 +11,17 @@
         {
           "fn": "alpaca_market_stocks_bars", 
           "args": {
-            "symbols": "AAPL,TSLA,MSFT,SPY",
+            "symbols": "AAPL,SPY",
             "timeframe": "1Day",
             "start": "2023-01-01",
             "end": "2024-12-20"
           },
-          "output": "bars_data"
+          "output": "price_data"
         }
       ],
-      "script_reference": "temp/calculate_downside_correlations_20250925_170938.py",
+      "script_reference": "mcp-server/temp/calculate_downside_correlations_20250925_215300.py",
       "function_name": "calculate_downside_correlations"
     }
   },
-  "description": "Calculate downside correlation with simple output variable names"
+  "description": "Analyze downside correlation between portfolio holdings and SPY during market decline periods"
 }

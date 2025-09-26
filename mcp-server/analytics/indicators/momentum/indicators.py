@@ -1644,106 +1644,6 @@ def calculate_roc(data: Union[pd.Series, Dict[str, Any]], period: int = 10) -> D
 # VOLUME-BASED MOMENTUM INDICATORS  
 # =============================================================================
 
-def calculate_mfi(data: Union[pd.DataFrame, Dict[str, Any]], period: int = 14) -> Dict[str, Any]:
-    """Calculate Money Flow Index using TA-Lib library.
-    
-    Computes the Money Flow Index (MFI), which combines price and volume data to measure
-    buying and selling pressure. MFI is often called "Volume-weighted RSI" as it applies
-    RSI calculations to a volume-weighted price series.
-    
-    Args:
-        data (Union[pd.DataFrame, Dict[str, Any]]): OHLCV data as DataFrame or dictionary.
-            Must contain 'high', 'low', 'close', 'volume' columns (case-insensitive).
-        period (int, optional): Number of periods for MFI calculation. Defaults to 14.
-            Standard period; shorter periods increase sensitivity.
-    
-    Returns:
-        Dict[str, Any]: Dictionary containing MFI analysis with keys:
-            - mfi (pd.Series): MFI values (0-100)
-            - latest_value (Optional[float]): Most recent MFI value
-            - signal (str): Market condition ('overbought', 'oversold', 'neutral')
-            - period (int): Period used for calculation
-            - overbought_level (int): Threshold for overbought condition (80)
-            - oversold_level (int): Threshold for oversold condition (20)
-            - success (bool): Whether calculation succeeded
-            - function_name (str): Name of the function for identification
-    
-    Raises:
-        ValueError: If required OHLCV columns are missing or data is invalid.
-        TypeError: If period parameter is not an integer.
-    
-    Example:
-        >>> import pandas as pd
-        >>> ohlcv_data = pd.DataFrame({
-        ...     'high': [105, 108, 112, 110, 115],
-        ...     'low': [98, 102, 105, 107, 110],
-        ...     'close': [102, 106, 109, 108, 113],
-        ...     'volume': [1000, 1200, 800, 1500, 900]
-        ... })
-        >>> result = calculate_mfi(ohlcv_data)
-        >>> print(f"MFI: {result['latest_value']:.1f} - {result['signal']}")
-        MFI: 65.2 - neutral
-        
-    Note:
-        - MFI = 100 - (100 / (1 + Money Flow Ratio))
-        - Money Flow Ratio = Positive Money Flow / Negative Money Flow
-        - Values above 80 typically indicate overbought conditions
-        - Values below 20 typically indicate oversold conditions
-        - Divergence between MFI and price can signal potential reversals
-        - More reliable than RSI in volatile markets due to volume weighting
-    """
-    try:
-        if isinstance(data, dict):
-            df = pd.DataFrame(data)
-        else:
-            df = data.copy()
-        
-        # Ensure we have required columns
-        required_cols = ['high', 'low', 'close', 'volume']
-        if not all(col in df.columns or col.title() in df.columns for col in required_cols):
-            raise ValueError("OHLCV data required for MFI calculation")
-        
-        # Standardize column names
-        high_col = 'high' if 'high' in df.columns else 'High'
-        low_col = 'low' if 'low' in df.columns else 'Low'
-        close_col = 'close' if 'close' in df.columns else 'Close'
-        volume_col = 'volume' if 'volume' in df.columns else 'Volume'
-        
-        # Use talib-binary
-        mfi_values = talib.MFI(
-            df[high_col].values.astype(np.float64),
-            df[low_col].values.astype(np.float64),
-            df[close_col].values.astype(np.float64),
-            df[volume_col].values.astype(np.float64),
-            timeperiod=period
-        )
-        mfi_series = pd.Series(mfi_values, index=df.index).dropna()
-        
-        latest_mfi = float(mfi_series.iloc[-1]) if len(mfi_series) > 0 else None
-        
-        # Generate signals
-        signal = "neutral"
-        if latest_mfi is not None:
-            if latest_mfi > 80:
-                signal = "overbought"
-            elif latest_mfi < 20:
-                signal = "oversold"
-        
-        result = {
-            "mfi": mfi_series,
-            "latest_value": latest_mfi,
-            "signal": signal,
-            "period": period,
-            "overbought_level": 80,
-            "oversold_level": 20
-        }
-        
-        return standardize_output(result, "calculate_mfi")
-        
-    except Exception as e:
-        return {"success": False, "error": f"MFI calculation failed: {str(e)}"}
-
-
 def calculate_cci(data: Union[pd.DataFrame, Dict[str, Any]], period: int = 14) -> Dict[str, Any]:
     """Calculate Commodity Channel Index using TA-Lib library.
     
@@ -2072,7 +1972,6 @@ MOMENTUM_INDICATORS_FUNCTIONS = {
     'calculate_roc': calculate_roc,
     
     # Volume-Based Momentum
-    'calculate_mfi': calculate_mfi,
     'calculate_cci': calculate_cci,
     
     # Specialized Oscillators

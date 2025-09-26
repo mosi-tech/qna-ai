@@ -13,6 +13,7 @@ import traceback
 import tempfile
 import subprocess
 import sys
+import os
 from datetime import datetime
 from typing import Dict, Any, List, Optional, Union
 from fastapi import FastAPI, HTTPException
@@ -20,6 +21,20 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
 import httpx
+
+# Add mcp-server to path for direct function imports
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'mcp-server'))
+
+# Import functions directly from MCP servers
+try:
+    from financial.functions_mock import MOCK_FINANCIAL_FUNCTIONS
+    from analytics.portfolio.metrics import calculate_portfolio_metrics
+    from analytics.risk.metrics import calculate_var, calculate_cvar
+    from analytics.indicators.technical import calculate_sma, calculate_rsi, calculate_macd
+    print("✅ Successfully imported MCP functions directly")
+except ImportError as e:
+    print(f"❌ Failed to import MCP functions: {e}")
+    MOCK_FINANCIAL_FUNCTIONS = {}
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -71,6 +86,25 @@ class EnhancedFinancialExecutionEngine:
         self.tool_server_mapping = {}
         self.execution_results = {}
         
+        # Direct function mapping for bypass
+        self.direct_functions = {}
+        self._setup_direct_functions()
+    
+    def _setup_direct_functions(self):
+        """Setup direct function mapping to bypass MCP HTTP calls"""
+        # Add financial functions
+        if MOCK_FINANCIAL_FUNCTIONS:
+            for func_name, func in MOCK_FINANCIAL_FUNCTIONS.items():
+                self.direct_functions[func_name] = func
+                logger.info(f"Mapped direct function: {func_name}")
+        
+        # Add analytics functions (these would need to be expanded)
+        # self.direct_functions["calculate_portfolio_metrics"] = calculate_portfolio_metrics
+        # self.direct_functions["calculate_var"] = calculate_var
+        # etc.
+        
+        logger.info(f"Direct function mapping complete. {len(self.direct_functions)} functions available.")
+    
     async def initialize(self):
         """Initialize the execution engine by discovering tool mappings"""
         logger.info("Initializing enhanced execution engine...")
@@ -96,16 +130,45 @@ class EnhancedFinancialExecutionEngine:
         logger.info(f"Tool mapping complete. {len(self.tool_server_mapping)} tools available.")
         
     async def execute_tool_call(self, tool_call: ToolCall) -> Dict[str, Any]:
-        """Execute a single tool call via MCP server"""
+        """Execute a single tool call - try direct functions first, then MCP servers"""
         tool_name = tool_call.fn
         tool_args = tool_call.args
         
-        # Find which server hosts this tool
+        # Try direct function call first (bypass MCP HTTP)
+        if tool_name in self.direct_functions:
+            try:
+                logger.info(f"Executing direct function: {tool_name}")
+                result = self.direct_functions[tool_name](**tool_args)
+                
+                # Format result to match MCP response structure
+                return {
+                    "success": True,
+                    "tool": tool_name,
+                    "args": tool_args,
+                    "result": {
+                        "content": [{
+                            "type": "text",
+                            "text": json.dumps(result, indent=2, default=str)
+                        }]
+                    },
+                    "server": "direct-import"
+                }
+            except Exception as e:
+                logger.error(f"Direct function call failed for {tool_name}: {e}")
+                return {
+                    "success": False,
+                    "error": f"Direct function execution error: {str(e)}",
+                    "tool": tool_name,
+                    "args": tool_args,
+                    "server": "direct-import"
+                }
+        
+        # Fall back to MCP HTTP calls
         server_name = self.tool_server_mapping.get(tool_name)
         if not server_name:
             return {
                 "success": False,
-                "error": f"Unknown tool: {tool_name}",
+                "error": f"Unknown tool: {tool_name} (not in direct functions or MCP mapping)",
                 "tool": tool_name,
                 "args": tool_args
             }

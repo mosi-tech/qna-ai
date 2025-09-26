@@ -371,17 +371,59 @@ def calculate_benchmark_metrics(returns: Union[pd.Series, Dict[str, Any]],
 
 
 def calculate_drawdown_analysis(returns: Union[pd.Series, Dict[str, Any]]) -> Dict[str, Any]:
-    """
-    Calculate detailed drawdown analysis using empyrical.
+    """Calculate detailed drawdown analysis using empyrical library.
     
-    From financial-analysis-function-library.json
-    Uses empyrical library instead of manual calculations - no code duplication
+    Performs comprehensive drawdown analysis including maximum drawdown calculation and
+    drawdown time series generation. Drawdowns represent peak-to-trough declines in
+    portfolio value, which are essential for understanding risk exposure and worst-case
+    performance scenarios during adverse market conditions.
+    
+    This function uses empyrical library for proven accuracy in calculating drawdown
+    metrics that are standard in professional risk management and performance reporting.
     
     Args:
-        returns: Return series
-        
+        returns (Union[pd.Series, Dict[str, Any]]): Return series as pandas Series with
+            datetime index or dictionary with return values. Values should be decimal
+            returns (e.g., 0.02 for 2% return, -0.01 for -1% return).
+    
     Returns:
-        Dict: Drawdown analysis
+        Dict[str, Any]: Comprehensive drawdown analysis with keys:
+            - max_drawdown (float): Maximum peak-to-trough decline (decimal, negative)
+            - max_drawdown_pct (str): Maximum drawdown as percentage string
+            - drawdown_series (pd.Series): Time series of drawdown values at each point
+            - success (bool): Whether calculation succeeded
+            - function_name (str): Function identifier for tracking
+    
+    Raises:
+        ValueError: If returns data cannot be converted to valid return series.
+        TypeError: If input data format is invalid or incompatible.
+        
+    Example:
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> 
+        >>> # Create sample return data with some drawdown periods
+        >>> dates = pd.date_range('2023-01-01', periods=252, freq='D')
+        >>> returns = pd.Series(np.random.normal(0.0005, 0.015, 252), index=dates)
+        >>> # Add some significant negative returns to create drawdowns
+        >>> returns.iloc[100:110] = np.random.normal(-0.02, 0.01, 10)
+        >>> 
+        >>> # Calculate drawdown analysis
+        >>> result = calculate_drawdown_analysis(returns)
+        >>> print(f"Maximum Drawdown: {result['max_drawdown_pct']}")
+        >>> 
+        >>> # Access drawdown time series for visualization
+        >>> drawdown_series = result['drawdown_series']
+        >>> print(f"Average Drawdown: {drawdown_series.mean():.3f}")
+        >>> print(f"Periods in Drawdown: {(drawdown_series < 0).sum()} out of {len(drawdown_series)}")
+        
+    Note:
+        - Uses empyrical.max_drawdown() for maximum drawdown calculation
+        - Drawdown series shows portfolio decline from previous peak at each point
+        - Negative values indicate portfolio is below previous high-water mark
+        - Zero values indicate portfolio is at new high-water mark
+        - Drawdown calculation accounts for compounding effects of returns
+        - Essential metric for risk management and capital preservation strategies
     """
     try:
         returns_series = validate_return_data(returns)
@@ -413,18 +455,60 @@ def calculate_drawdown_analysis(returns: Union[pd.Series, Dict[str, Any]]) -> Di
 
 
 def calculate_annualized_return(prices: Union[pd.Series, Dict[str, Any]], periods: int) -> float:
-    """
-    Calculate annualized return from price series.
+    """Calculate annualized return from price series using empyrical library.
     
-    From financial-analysis-function-library.json performance_analysis category
-    Uses empyrical library instead of manual calculations - no code duplication
+    Converts price series to returns and calculates the annualized return rate,
+    representing the geometric average return per year. This standardizes returns
+    across different time periods for meaningful performance comparison and is
+    essential for evaluating investment performance on a consistent basis.
+    
+    Uses empyrical library for proven accuracy in annualized return calculations
+    that account for compounding effects and varying observation frequencies.
     
     Args:
-        prices: Price series
-        periods: Number of periods per year (252 for daily, 12 for monthly)
+        prices (Union[pd.Series, Dict[str, Any]]): Price series as pandas Series with
+            datetime index or dictionary with price values. Values should be absolute
+            prices (e.g., 100.50, 99.75, 101.20).
+        periods (int): Number of periods per year for annualization. Common values:
+            - 252: Daily data (trading days per year)
+            - 12: Monthly data
+            - 4: Quarterly data
+            - 1: Annual data
         
     Returns:
-        float: Annualized return
+        float: Annualized return as decimal (e.g., 0.08 for 8% annual return).
+    
+    Raises:
+        ValueError: If prices cannot be converted to valid price series or periods is invalid.
+        TypeError: If input data format is invalid or periods is not integer.
+        ZeroDivisionError: If insufficient data for calculation or periods is zero.
+        
+    Example:
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> 
+        >>> # Create sample daily price data for one year
+        >>> dates = pd.date_range('2023-01-01', periods=252, freq='D')
+        >>> # Starting at $100, with some growth
+        >>> returns = pd.Series(np.random.normal(0.0008, 0.012, 252), index=dates)
+        >>> prices = pd.Series(100 * np.cumprod(1 + returns), index=dates)
+        >>> 
+        >>> # Calculate annualized return
+        >>> annual_return = calculate_annualized_return(prices, periods=252)
+        >>> print(f"Annualized Return: {annual_return:.2%}")
+        >>> 
+        >>> # For monthly data
+        >>> monthly_prices = prices.resample('M').last()
+        >>> annual_return_monthly = calculate_annualized_return(monthly_prices, periods=12)
+        >>> print(f"Annualized Return (from monthly): {annual_return_monthly:.2%}")
+        
+    Note:
+        - Automatically converts prices to returns using percentage change
+        - Uses empyrical.annual_return() with specified period parameter
+        - Accounts for compounding effects through geometric mean calculation
+        - Result represents compound annual growth rate (CAGR) for the price series
+        - Essential for comparing investments with different time horizons
+        - Handles missing values by dropping NaN returns before calculation
     """
     try:
         price_series = validate_price_data(prices)
@@ -442,18 +526,58 @@ def calculate_annualized_return(prices: Union[pd.Series, Dict[str, Any]], period
 
 
 def calculate_annualized_volatility(returns: Union[pd.Series, Dict[str, Any]], periods_per_year: int) -> float:
-    """
-    Calculate annualized volatility.
+    """Calculate annualized volatility using empyrical library.
     
-    From financial-analysis-function-library.json performance_analysis category
-    Uses empyrical library instead of manual calculations - no code duplication
+    Computes the annualized standard deviation of returns, representing the volatility
+    or risk level of an investment. Volatility measures the degree of variation in
+    returns over time and is a fundamental risk metric used in portfolio management,
+    option pricing, and risk assessment.
+    
+    Uses empyrical library for proven accuracy in volatility calculations with proper
+    time-scaling adjustments for different data frequencies.
     
     Args:
-        returns: Return series
-        periods_per_year: Number of periods per year
+        returns (Union[pd.Series, Dict[str, Any]]): Return series as pandas Series with
+            datetime index or dictionary with return values. Values should be decimal
+            returns (e.g., 0.02 for 2% return, -0.01 for -1% return).
+        periods_per_year (int): Number of periods per year for annualization. Common values:
+            - 252: Daily returns (trading days per year)
+            - 12: Monthly returns
+            - 4: Quarterly returns
+            - 1: Annual returns
         
     Returns:
-        float: Annualized volatility
+        float: Annualized volatility as decimal (e.g., 0.15 for 15% annual volatility).
+    
+    Raises:
+        ValueError: If returns cannot be converted to valid return series or periods_per_year is invalid.
+        TypeError: If input data format is invalid or periods_per_year is not integer.
+        ZeroDivisionError: If insufficient data for calculation or periods_per_year is zero.
+        
+    Example:
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> 
+        >>> # Create sample daily return data
+        >>> dates = pd.date_range('2023-01-01', periods=252, freq='D')
+        >>> daily_returns = pd.Series(np.random.normal(0.0008, 0.015, 252), index=dates)
+        >>> 
+        >>> # Calculate annualized volatility from daily returns
+        >>> annual_vol = calculate_annualized_volatility(daily_returns, periods_per_year=252)
+        >>> print(f"Annual Volatility: {annual_vol:.2%}")
+        >>> 
+        >>> # For monthly returns
+        >>> monthly_returns = daily_returns.resample('M').apply(lambda x: (1+x).prod()-1)
+        >>> annual_vol_monthly = calculate_annualized_volatility(monthly_returns, periods_per_year=12)
+        >>> print(f"Annual Volatility (from monthly): {annual_vol_monthly:.2%}")
+        
+    Note:
+        - Uses empyrical.annual_volatility() with specified period parameter
+        - Applies square root of time scaling: volatility × √(periods_per_year)
+        - Represents one standard deviation of annual returns
+        - Higher values indicate more volatile (risky) investments
+        - Essential input for Sharpe ratio, VaR calculations, and option pricing
+        - Assumes returns are normally distributed for scaling accuracy
     """
     try:
         returns_series = validate_return_data(returns)
@@ -468,19 +592,52 @@ def calculate_annualized_volatility(returns: Union[pd.Series, Dict[str, Any]], p
 
 
 def calculate_cagr(start_value: float, end_value: float, years: float) -> float:
-    """
-    Calculate Compound Annual Growth Rate.
+    """Calculate Compound Annual Growth Rate (CAGR).
     
-    From financial-analysis-function-library.json performance_analysis category
-    Simple CAGR calculation using numpy - no code duplication
+    Computes the geometric mean annual growth rate of an investment over a specified
+    time period. CAGR represents the rate of return that would be required for an
+    investment to grow from its beginning balance to its ending balance, assuming
+    profits were reinvested at the end of each year.
+    
+    CAGR is particularly useful for comparing investments with different time horizons
+    and for smoothing out the effects of volatility over multiple periods.
     
     Args:
-        start_value: Starting value
-        end_value: Ending value
-        years: Number of years
+        start_value (float): Initial investment value or starting price. Must be positive
+            as negative values would make the calculation meaningless.
+        end_value (float): Final investment value or ending price. Can be any value
+            as investments can lose money (negative CAGR).
+        years (float): Number of years for the investment period. Must be positive.
+            Can be fractional for periods less than one year (e.g., 0.5 for 6 months).
         
     Returns:
-        float: CAGR as decimal
+        float: CAGR as decimal (e.g., 0.08 for 8% annual growth, -0.03 for 3% annual decline).
+    
+    Raises:
+        ValueError: If start_value is not positive or years is not positive.
+        TypeError: If any input is not numeric.
+        OverflowError: If calculation results in extremely large numbers.
+        
+    Example:
+        >>> # Investment grew from $10,000 to $15,000 over 3 years
+        >>> cagr = calculate_cagr(start_value=10000, end_value=15000, years=3)
+        >>> print(f"CAGR: {cagr:.2%}")  # Output: CAGR: 14.47%
+        >>> 
+        >>> # Stock declined from $50 to $35 over 2.5 years
+        >>> cagr_loss = calculate_cagr(start_value=50, end_value=35, years=2.5)
+        >>> print(f"CAGR: {cagr_loss:.2%}")  # Output: CAGR: -13.64%
+        >>> 
+        >>> # Portfolio doubled in 5 years
+        >>> cagr_double = calculate_cagr(start_value=100, end_value=200, years=5)
+        >>> print(f"CAGR: {cagr_double:.2%}")  # Output: CAGR: 14.87%
+        
+    Note:
+        - Formula: CAGR = (end_value / start_value)^(1/years) - 1
+        - CAGR assumes reinvestment of all gains and constant growth rate
+        - Useful for comparing investments over different time periods
+        - Smooths out volatility to show average annual growth
+        - Does not account for interim cash flows (dividends, contributions)
+        - Result can be negative if end_value < start_value (investment loss)
     """
     try:
         if start_value <= 0:
@@ -498,19 +655,60 @@ def calculate_cagr(start_value: float, end_value: float, years: float) -> float:
 
 
 def calculate_total_return(start_price: float, end_price: float, dividends: Optional[list] = None) -> float:
-    """
-    Calculate total return including dividends.
+    """Calculate total return including dividends.
     
-    From financial-analysis-function-library.json performance_analysis category
-    Simple calculation using numpy - no code duplication
+    Computes the total return of an investment including both capital appreciation
+    (price change) and income generation (dividends, distributions). Total return
+    provides a complete picture of investment performance by accounting for all
+    sources of return, making it essential for accurate performance comparison.
+    
+    This calculation is fundamental for evaluating dividend-paying stocks, REITs,
+    and other income-generating investments where price appreciation alone would
+    understate actual returns.
     
     Args:
-        start_price: Starting price
-        end_price: Ending price
-        dividends: Optional list of dividend payments
+        start_price (float): Initial price or investment value. Must be positive
+            as it serves as the denominator for return calculation.
+        end_price (float): Final price or investment value. Can be any value
+            as investments can appreciate or depreciate.
+        dividends (Optional[list], optional): List of dividend or distribution
+            payments received during the holding period. Values should be absolute
+            amounts (e.g., [2.50, 2.60, 2.55] for quarterly dividends). Defaults to None.
         
     Returns:
-        float: Total return as decimal
+        float: Total return as decimal (e.g., 0.15 for 15% total return, -0.05 for 5% loss).
+    
+    Raises:
+        ValueError: If start_price is not positive.
+        TypeError: If inputs are not numeric or dividends is not a list-like object.
+        
+    Example:
+        >>> # Stock price appreciation only
+        >>> total_return = calculate_total_return(start_price=100, end_price=110)
+        >>> print(f"Price Return Only: {total_return:.2%}")  # Output: 10.00%
+        >>> 
+        >>> # Stock with dividends
+        >>> dividends_paid = [2.50, 2.60, 2.55, 2.65]  # Quarterly dividends
+        >>> total_return_with_divs = calculate_total_return(
+        ...     start_price=100, end_price=105, dividends=dividends_paid
+        ... )
+        >>> print(f"Total Return: {total_return_with_divs:.2%}")  # Output: 15.30%
+        >>> 
+        >>> # REIT with monthly distributions
+        >>> monthly_distributions = [0.25] * 12  # $0.25 monthly for 1 year
+        >>> reit_return = calculate_total_return(
+        ...     start_price=50, end_price=52, dividends=monthly_distributions
+        ... )
+        >>> print(f"REIT Total Return: {reit_return:.2%}")  # Output: 10.00%
+        
+    Note:
+        - Price return = (end_price - start_price) / start_price
+        - Dividend return = sum(dividends) / start_price
+        - Total return = price return + dividend return
+        - Assumes dividends are not reinvested (simple total return)
+        - For reinvested dividends, consider using time-weighted return calculations
+        - Negative values indicate total losses exceed gains
+        - Essential metric for dividend growth and income investing strategies
     """
     try:
         if start_price <= 0:
@@ -535,18 +733,59 @@ def calculate_total_return(start_price: float, end_price: float, dividends: Opti
 
 
 def calculate_downside_deviation(returns: Union[pd.Series, Dict[str, Any]], target_return: Optional[float] = None) -> float:
-    """
-    Calculate downside deviation below target.
+    """Calculate downside deviation below target using empyrical library.
     
-    From financial-analysis-function-library.json performance_analysis category
-    Uses empyrical library instead of manual calculations - no code duplication
+    Computes the downside risk measure that focuses only on returns below a specified
+    target threshold. Unlike standard deviation which treats upside and downside
+    volatility equally, downside deviation considers only "bad" volatility that
+    represents actual risk to investors.
+    
+    This metric is particularly valuable for risk-averse investors who care more
+    about downside protection than upside capture, and is a key component of the
+    Sortino ratio calculation.
     
     Args:
-        returns: Return series
-        target_return: Target return threshold (default: 0)
+        returns (Union[pd.Series, Dict[str, Any]]): Return series as pandas Series with
+            datetime index or dictionary with return values. Values should be decimal
+            returns (e.g., 0.02 for 2% return, -0.01 for -1% return).
+        target_return (Optional[float], optional): Minimum acceptable return threshold
+            below which returns are considered "downside". Defaults to 0.0 (zero return).
+            Should be in same units as returns (decimal format).
         
     Returns:
-        float: Downside deviation
+        float: Downside deviation as decimal (e.g., 0.08 for 8% downside deviation).
+    
+    Raises:
+        ValueError: If returns cannot be converted to valid return series.
+        TypeError: If input data format is invalid or target_return is not numeric.
+        
+    Example:
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> 
+        >>> # Create return series with some negative periods
+        >>> dates = pd.date_range('2023-01-01', periods=252, freq='D')
+        >>> returns = pd.Series(np.random.normal(0.0008, 0.015, 252), index=dates)
+        >>> # Add some significant negative returns
+        >>> returns.iloc[100:110] = np.random.normal(-0.02, 0.01, 10)
+        >>> 
+        >>> # Calculate downside deviation with default zero target
+        >>> downside_dev = calculate_downside_deviation(returns)
+        >>> print(f"Downside Deviation (0% target): {downside_dev:.3f}")
+        >>> 
+        >>> # Calculate with 5% annual target (daily equivalent)
+        >>> target_daily = 0.05 / 252  # Convert annual to daily
+        >>> downside_dev_5pct = calculate_downside_deviation(returns, target_return=target_daily)
+        >>> print(f"Downside Deviation (5% target): {downside_dev_5pct:.3f}")
+        
+    Note:
+        - Uses empyrical.downside_risk() with specified required_return parameter
+        - Only considers returns below the target threshold in calculation
+        - Square root of mean squared deviations below target
+        - Lower values indicate better downside protection
+        - Essential component for Sortino ratio and downside risk metrics
+        - More relevant than standard deviation for asymmetric return distributions
+        - Commonly used target thresholds: 0% (zero), risk-free rate, or minimum acceptable return
     """
     try:
         returns_series = validate_return_data(returns)
@@ -565,18 +804,63 @@ def calculate_downside_deviation(returns: Union[pd.Series, Dict[str, Any]], targ
 
 def calculate_upside_capture(returns: Union[pd.Series, Dict[str, Any]], 
                            benchmark_returns: Union[pd.Series, Dict[str, Any]]) -> float:
-    """
-    Calculate upside capture ratio vs benchmark.
+    """Calculate upside capture ratio vs benchmark using empyrical library.
     
-    From financial-analysis-function-library.json performance_analysis category
-    Uses empyrical library instead of manual calculations - no code duplication
+    Measures how well a portfolio participates in positive benchmark performance.
+    The upside capture ratio indicates the percentage of benchmark gains that the
+    portfolio captures during periods when the benchmark performs positively.
+    
+    This metric is essential for evaluating active management effectiveness and
+    understanding whether a portfolio benefits proportionally from favorable
+    market conditions.
     
     Args:
-        returns: Portfolio returns
-        benchmark_returns: Benchmark returns
+        returns (Union[pd.Series, Dict[str, Any]]): Portfolio return series as pandas
+            Series with datetime index or dictionary with return values. Values should
+            be decimal returns (e.g., 0.02 for 2% return, -0.01 for -1% return).
+        benchmark_returns (Union[pd.Series, Dict[str, Any]]): Benchmark return series
+            with same format as portfolio returns. Will be automatically aligned
+            with portfolio returns for fair comparison.
         
     Returns:
-        float: Upside capture ratio
+        float: Upside capture ratio as decimal (e.g., 1.05 for 105% upside capture,
+               0.85 for 85% upside capture).
+    
+    Raises:
+        ValueError: If return data cannot be converted to valid return series or alignment fails.
+        TypeError: If input data format is invalid or incompatible.
+        
+    Example:
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> 
+        >>> # Create benchmark and portfolio return data
+        >>> dates = pd.date_range('2023-01-01', periods=252, freq='D')
+        >>> benchmark_returns = pd.Series(np.random.normal(0.0005, 0.012, 252), index=dates)
+        >>> # Portfolio with higher beta (more volatile)
+        >>> portfolio_returns = pd.Series(
+        ...     benchmark_returns * 1.2 + np.random.normal(0, 0.003, 252),
+        ...     index=dates
+        ... )
+        >>> 
+        >>> # Calculate upside capture
+        >>> upside_capture = calculate_upside_capture(portfolio_returns, benchmark_returns)
+        >>> print(f"Upside Capture: {upside_capture:.2f} ({upside_capture:.1%})")
+        >>> 
+        >>> if upside_capture > 1.0:
+        ...     print("Portfolio captures more than 100% of benchmark gains")
+        >>> else:
+        ...     print(f"Portfolio captures {upside_capture:.1%} of benchmark gains")
+        
+    Note:
+        - Uses empyrical.up_capture() for proven calculation accuracy
+        - Values > 1.0 indicate the portfolio outperforms during positive benchmark periods
+        - Values < 1.0 indicate the portfolio underperforms during positive benchmark periods
+        - Only considers periods when benchmark returns are positive
+        - Complementary metric to downside capture ratio
+        - Essential for evaluating active management during bull markets
+        - Returns are automatically aligned for consistent comparison
+        - Useful for understanding portfolio behavior in different market conditions
     """
     try:
         portfolio_returns = validate_return_data(returns)
@@ -597,18 +881,67 @@ def calculate_upside_capture(returns: Union[pd.Series, Dict[str, Any]],
 
 def calculate_downside_capture(returns: Union[pd.Series, Dict[str, Any]], 
                              benchmark_returns: Union[pd.Series, Dict[str, Any]]) -> float:
-    """
-    Calculate downside capture ratio vs benchmark.
+    """Calculate downside capture ratio vs benchmark using empyrical library.
     
-    From financial-analysis-function-library.json performance_analysis category
-    Uses empyrical library instead of manual calculations - no code duplication
+    Measures how much a portfolio participates in negative benchmark performance.
+    The downside capture ratio indicates the percentage of benchmark losses that the
+    portfolio experiences during periods when the benchmark performs negatively.
+    Lower values indicate better downside protection.
+    
+    This metric is crucial for evaluating defensive characteristics and risk
+    management effectiveness during adverse market conditions.
     
     Args:
-        returns: Portfolio returns
-        benchmark_returns: Benchmark returns
+        returns (Union[pd.Series, Dict[str, Any]]): Portfolio return series as pandas
+            Series with datetime index or dictionary with return values. Values should
+            be decimal returns (e.g., 0.02 for 2% return, -0.01 for -1% return).
+        benchmark_returns (Union[pd.Series, Dict[str, Any]]): Benchmark return series
+            with same format as portfolio returns. Will be automatically aligned
+            with portfolio returns for fair comparison.
         
     Returns:
-        float: Downside capture ratio
+        float: Downside capture ratio as decimal (e.g., 0.85 for 85% downside capture,
+               1.10 for 110% downside capture).
+    
+    Raises:
+        ValueError: If return data cannot be converted to valid return series or alignment fails.
+        TypeError: If input data format is invalid or incompatible.
+        
+    Example:
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> 
+        >>> # Create benchmark and defensive portfolio return data
+        >>> dates = pd.date_range('2023-01-01', periods=252, freq='D')
+        >>> benchmark_returns = pd.Series(np.random.normal(0.0005, 0.015, 252), index=dates)
+        >>> # Defensive portfolio with lower beta during downturns
+        >>> portfolio_returns = []
+        >>> for bench_ret in benchmark_returns:
+        ...     if bench_ret < 0:
+        ...         port_ret = bench_ret * 0.7 + np.random.normal(0, 0.002)  # Less downside
+        ...     else:
+        ...         port_ret = bench_ret * 0.9 + np.random.normal(0, 0.002)  # Some upside
+        ...     portfolio_returns.append(port_ret)
+        >>> portfolio_returns = pd.Series(portfolio_returns, index=dates)
+        >>> 
+        >>> # Calculate downside capture
+        >>> downside_capture = calculate_downside_capture(portfolio_returns, benchmark_returns)
+        >>> print(f"Downside Capture: {downside_capture:.2f} ({downside_capture:.1%})")
+        >>> 
+        >>> if downside_capture < 1.0:
+        ...     print("Portfolio provides downside protection")
+        >>> else:
+        ...     print("Portfolio amplifies benchmark losses")
+        
+    Note:
+        - Uses empyrical.down_capture() for proven calculation accuracy
+        - Values < 1.0 indicate the portfolio has better downside protection (desirable)
+        - Values > 1.0 indicate the portfolio amplifies benchmark losses (undesirable)
+        - Only considers periods when benchmark returns are negative
+        - Complementary metric to upside capture ratio
+        - Essential for evaluating defensive portfolio characteristics
+        - Returns are automatically aligned for consistent comparison
+        - Lower downside capture with reasonable upside capture indicates skilled management
     """
     try:
         portfolio_returns = validate_return_data(returns)
@@ -628,17 +961,61 @@ def calculate_downside_capture(returns: Union[pd.Series, Dict[str, Any]],
 
 
 def calculate_calmar_ratio(returns: Union[pd.Series, Dict[str, Any]]) -> float:
-    """
-    Calculate Calmar ratio (return/max drawdown).
+    """Calculate Calmar ratio (annualized return / maximum drawdown) using empyrical library.
     
-    From financial-analysis-function-library.json performance_analysis category
-    Uses empyrical library instead of manual calculations - no code duplication
+    Computes the Calmar ratio, which measures risk-adjusted returns by comparing
+    annualized return to maximum drawdown. This ratio evaluates how much return
+    an investment generates relative to its worst peak-to-trough decline, making
+    it particularly useful for assessing tail risk and capital preservation.
+    
+    The Calmar ratio is especially valuable for evaluating hedge funds, managed
+    futures, and other alternative investments where drawdown control is important.
     
     Args:
-        returns: Return series
+        returns (Union[pd.Series, Dict[str, Any]]): Return series as pandas Series with
+            datetime index or dictionary with return values. Values should be decimal
+            returns (e.g., 0.02 for 2% return, -0.01 for -1% return).
         
     Returns:
-        float: Calmar ratio
+        float: Calmar ratio as decimal (e.g., 2.5 means 2.5 units of annual return
+               per unit of maximum drawdown).
+    
+    Raises:
+        ValueError: If returns cannot be converted to valid return series.
+        TypeError: If input data format is invalid or incompatible.
+        ZeroDivisionError: If maximum drawdown is zero (no losses experienced).
+        
+    Example:
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> 
+        >>> # Create return series with some drawdown periods
+        >>> dates = pd.date_range('2023-01-01', periods=252, freq='D')
+        >>> returns = pd.Series(np.random.normal(0.001, 0.012, 252), index=dates)
+        >>> # Add a drawdown period
+        >>> returns.iloc[100:120] = np.random.normal(-0.015, 0.008, 20)
+        >>> 
+        >>> # Calculate Calmar ratio
+        >>> calmar = calculate_calmar_ratio(returns)
+        >>> print(f"Calmar Ratio: {calmar:.3f}")
+        >>> 
+        >>> # Interpret the result
+        >>> if calmar > 1.0:
+        ...     print("Good risk-adjusted returns relative to drawdown")
+        >>> elif calmar > 0.5:
+        ...     print("Moderate risk-adjusted returns")
+        >>> else:
+        ...     print("Low risk-adjusted returns or high drawdown")
+        
+    Note:
+        - Uses empyrical.calmar_ratio() for proven calculation accuracy
+        - Formula: Calmar = Annual Return / |Maximum Drawdown|
+        - Higher values indicate better risk-adjusted performance
+        - More conservative than Sharpe ratio as it focuses on worst-case losses
+        - Particularly relevant for evaluating downside risk management
+        - Values above 1.0 are generally considered attractive
+        - Complements Sharpe ratio by focusing on tail risk rather than volatility
+        - Infinite value possible if no drawdown occurred (theoretical case)
     """
     try:
         returns_series = validate_return_data(returns)
@@ -653,18 +1030,61 @@ def calculate_calmar_ratio(returns: Union[pd.Series, Dict[str, Any]]) -> float:
 
 
 def calculate_omega_ratio(returns: Union[pd.Series, Dict[str, Any]], threshold: Optional[float] = None) -> float:
-    """
-    Calculate Omega ratio.
+    """Calculate Omega ratio using empyrical library.
     
-    From financial-analysis-function-library.json performance_analysis category
-    Uses empyrical library instead of manual calculations - no code duplication
+    Computes the Omega ratio, which measures the probability-weighted ratio of
+    gains to losses above and below a specified threshold. Unlike traditional
+    risk metrics that assume normal distributions, Omega ratio uses the actual
+    return distribution, making it more accurate for skewed or fat-tailed returns.
+    
+    The Omega ratio is particularly valuable for evaluating alternative investments,
+    hedge funds, and strategies with non-normal return distributions.
     
     Args:
-        returns: Return series
-        threshold: Return threshold (default: 0)
+        returns (Union[pd.Series, Dict[str, Any]]): Return series as pandas Series with
+            datetime index or dictionary with return values. Values should be decimal
+            returns (e.g., 0.02 for 2% return, -0.01 for -1% return).
+        threshold (Optional[float], optional): Return threshold above which gains are
+            measured and below which losses are measured. Defaults to 0.0 (zero return).
+            Should be in same units as returns (decimal format).
         
     Returns:
-        float: Omega ratio
+        float: Omega ratio as decimal (e.g., 1.5 means 1.5 units of gains per unit of losses).
+    
+    Raises:
+        ValueError: If returns cannot be converted to valid return series.
+        TypeError: If input data format is invalid or threshold is not numeric.
+        ZeroDivisionError: If no returns fall below the threshold (no losses).
+        
+    Example:
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> 
+        >>> # Create return series with some skewness
+        >>> dates = pd.date_range('2023-01-01', periods=252, freq='D')
+        >>> returns = pd.Series(np.random.normal(0.001, 0.015, 252), index=dates)
+        >>> # Add some large positive outliers (positive skew)
+        >>> returns.iloc[50] = 0.05
+        >>> returns.iloc[150] = 0.04
+        >>> 
+        >>> # Calculate Omega ratio with zero threshold
+        >>> omega = calculate_omega_ratio(returns)
+        >>> print(f"Omega Ratio (0% threshold): {omega:.3f}")
+        >>> 
+        >>> # Calculate with risk-free rate threshold
+        >>> risk_free_daily = 0.02 / 252  # 2% annual to daily
+        >>> omega_rf = calculate_omega_ratio(returns, threshold=risk_free_daily)
+        >>> print(f"Omega Ratio (2% threshold): {omega_rf:.3f}")
+        
+    Note:
+        - Uses empyrical.omega_ratio() with specified risk_free parameter as threshold
+        - Formula: Omega = [Integral of (1-F(x))dx from threshold to +∞] / [Integral of F(x)dx from -∞ to threshold]
+        - Values > 1.0 indicate more gains than losses above/below threshold
+        - Values < 1.0 indicate more losses than gains above/below threshold
+        - Captures full return distribution, not just mean and variance
+        - More robust for non-normal returns compared to Sharpe ratio
+        - Commonly used thresholds: 0% (zero), risk-free rate, or target return
+        - Higher values indicate better risk-adjusted performance
     """
     try:
         returns_series = validate_return_data(returns)
@@ -682,17 +1102,54 @@ def calculate_omega_ratio(returns: Union[pd.Series, Dict[str, Any]], threshold: 
 
 
 def calculate_win_rate(returns: Union[pd.Series, Dict[str, Any]]) -> float:
-    """
-    Calculate percentage of positive returns.
+    """Calculate percentage of positive returns (win rate).
     
-    From financial-analysis-function-library.json performance_analysis category
-    Simple calculation using pandas - no code duplication
+    Computes the proportion of periods with positive returns, providing a simple
+    measure of consistency and the frequency of favorable outcomes. Win rate is
+    particularly useful for understanding trading strategy effectiveness and
+    investment consistency over time.
+    
+    While win rate doesn't account for magnitude of wins and losses, it provides
+    valuable insight into the reliability and consistency of returns.
     
     Args:
-        returns: Return series
+        returns (Union[pd.Series, Dict[str, Any]]): Return series as pandas Series with
+            datetime index or dictionary with return values. Values should be decimal
+            returns (e.g., 0.02 for 2% return, -0.01 for -1% return).
         
     Returns:
-        float: Win rate as decimal (0.0 to 1.0)
+        float: Win rate as decimal between 0.0 and 1.0 (e.g., 0.65 for 65% win rate).
+    
+    Raises:
+        ValueError: If returns cannot be converted to valid return series.
+        TypeError: If input data format is invalid or incompatible.
+        
+    Example:
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> 
+        >>> # Create return series with mixed positive and negative returns
+        >>> dates = pd.date_range('2023-01-01', periods=100, freq='D')
+        >>> returns = pd.Series(np.random.normal(0.001, 0.015, 100), index=dates)
+        >>> 
+        >>> # Calculate win rate
+        >>> win_rate = calculate_win_rate(returns)
+        >>> print(f"Win Rate: {win_rate:.2%}")
+        >>> print(f"Positive periods: {int(win_rate * len(returns))} out of {len(returns)}")
+        >>> 
+        >>> # Create a more consistent strategy with higher win rate
+        >>> consistent_returns = pd.Series(np.random.normal(0.003, 0.008, 100), index=dates)
+        >>> consistent_win_rate = calculate_win_rate(consistent_returns)
+        >>> print(f"Consistent Strategy Win Rate: {consistent_win_rate:.2%}")
+        
+    Note:
+        - Formula: Win Rate = Number of Positive Returns / Total Number of Returns
+        - Values closer to 1.0 indicate more consistent positive performance
+        - Values around 0.5 suggest random walk behavior (for normal distributions)
+        - High win rate doesn't guarantee profitability (need to consider magnitude)
+        - Useful complement to other performance metrics like Sharpe ratio
+        - Particularly relevant for evaluating trading strategies and market timing
+        - Should be analyzed alongside average win/loss sizes for complete picture
     """
     try:
         returns_series = validate_return_data(returns)
@@ -713,18 +1170,65 @@ def calculate_win_rate(returns: Union[pd.Series, Dict[str, Any]]) -> float:
 
 
 def calculate_best_worst_periods(returns: Union[pd.Series, Dict[str, Any]], window_size: int) -> Dict[str, Any]:
-    """
-    Identify best and worst performing periods.
+    """Identify best and worst performing periods using rolling window analysis.
     
-    From financial-analysis-function-library.json performance_analysis category
-    Uses pandas rolling calculations - no code duplication
+    Analyzes rolling returns over specified window sizes to identify the best and worst
+    performing periods in the return series. This analysis helps understand extreme
+    performance scenarios, volatility clustering, and provides context for risk
+    management and performance evaluation.
+    
+    This function is valuable for stress testing, scenario analysis, and understanding
+    the range of possible outcomes over different time horizons.
     
     Args:
-        returns: Return series
-        window_size: Rolling window size for periods
+        returns (Union[pd.Series, Dict[str, Any]]): Return series as pandas Series with
+            datetime index or dictionary with return values. Values should be decimal
+            returns (e.g., 0.02 for 2% return, -0.01 for -1% return).
+        window_size (int): Number of consecutive periods to analyze in each rolling window.
+            For example, 21 for monthly periods in daily data, 252 for annual periods.
         
     Returns:
-        Dict: Best and worst period data
+        Dict[str, Any]: Comprehensive analysis with keys:
+            - window_size (int): The rolling window size used
+            - best_period (Dict): Best performing period with start_date, end_date, return, return_pct
+            - worst_period (Dict): Worst performing period with start_date, end_date, return, return_pct
+            - total_periods (int): Total number of rolling periods analyzed
+            - average_rolling_return (float): Average return across all rolling periods
+            - rolling_volatility (float): Volatility of rolling period returns
+            - success (bool): Whether calculation succeeded
+            - function_name (str): Function identifier for tracking
+    
+    Raises:
+        ValueError: If returns cannot be converted to valid return series or insufficient data for window size.
+        TypeError: If input data format is invalid or window_size is not integer.
+        
+    Example:
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> 
+        >>> # Create return series with some volatile periods
+        >>> dates = pd.date_range('2023-01-01', periods=252, freq='D')
+        >>> returns = pd.Series(np.random.normal(0.001, 0.015, 252), index=dates)
+        >>> # Add a very good month and a very bad month
+        >>> returns.iloc[50:71] = np.random.normal(0.008, 0.01, 21)  # Good 21-day period
+        >>> returns.iloc[150:171] = np.random.normal(-0.012, 0.008, 21)  # Bad 21-day period
+        >>> 
+        >>> # Analyze best and worst 21-day periods (approximately monthly)
+        >>> result = calculate_best_worst_periods(returns, window_size=21)
+        >>> print(f"Best 21-day period: {result['best_period']['return_pct']}")
+        >>> print(f"  From {result['best_period']['start_date']} to {result['best_period']['end_date']}")
+        >>> print(f"Worst 21-day period: {result['worst_period']['return_pct']}")
+        >>> print(f"  From {result['worst_period']['start_date']} to {result['worst_period']['end_date']}")
+        >>> print(f"Average rolling return: {result['average_rolling_return']:.3f}")
+        
+    Note:
+        - Uses pandas rolling window with compound return calculation: (1+returns).prod()-1
+        - Identifies exact date ranges for best and worst performance periods
+        - Rolling volatility shows consistency of performance across different periods
+        - Useful for understanding tail events and extreme scenarios
+        - Can reveal clustering of good/bad performance periods
+        - Window size should be chosen based on analysis timeframe (daily, monthly, quarterly)
+        - Helps identify whether extreme returns are isolated or part of extended periods
     """
     try:
         returns_series = validate_return_data(returns)
@@ -777,18 +1281,63 @@ def calculate_best_worst_periods(returns: Union[pd.Series, Dict[str, Any]], wind
 
 
 def calculate_dividend_yield(dividends: Union[list, np.ndarray, pd.Series], price: float) -> float:
-    """
-    Calculate dividend yield.
+    """Calculate dividend yield from dividend payments and current price.
     
-    From financial-analysis-function-library.json specialized_analysis category
-    Simple dividend yield calculation using numpy - no code duplication
+    Computes the dividend yield, which represents the annual dividend income as
+    a percentage of the current stock price. Dividend yield is a key metric for
+    income-focused investors and helps evaluate the income-generating potential
+    of dividend-paying stocks relative to their market price.
+    
+    This calculation is essential for dividend growth investing, REIT analysis,
+    and income portfolio construction.
     
     Args:
-        dividends: List or array of dividend payments over period
-        price: Current stock price
+        dividends (Union[list, np.ndarray, pd.Series]): Collection of dividend payments
+            over the analysis period. Values should be absolute dividend amounts
+            (e.g., [2.50, 2.60, 2.55] for quarterly dividends). Can be provided as
+            list, numpy array, or pandas Series.
+        price (float): Current stock price or average price for yield calculation.
+            Must be positive as it serves as the denominator for yield calculation.
         
     Returns:
-        float: Dividend yield as decimal
+        float: Dividend yield as decimal (e.g., 0.04 for 4% dividend yield).
+    
+    Raises:
+        ValueError: If price is not positive or dividend data contains invalid values.
+        TypeError: If inputs are not numeric or dividends is not array-like.
+        
+    Example:
+        >>> # Quarterly dividend payments over one year
+        >>> quarterly_dividends = [2.50, 2.60, 2.55, 2.65]
+        >>> current_price = 125.00
+        >>> 
+        >>> # Calculate dividend yield
+        >>> div_yield = calculate_dividend_yield(quarterly_dividends, current_price)
+        >>> print(f"Dividend Yield: {div_yield:.2%}")  # Output: ~8.24%
+        >>> 
+        >>> # REIT with monthly distributions
+        >>> import numpy as np
+        >>> monthly_distributions = np.array([0.25] * 12)  # $0.25 monthly
+        >>> reit_price = 50.00
+        >>> reit_yield = calculate_dividend_yield(monthly_distributions, reit_price)
+        >>> print(f"REIT Yield: {reit_yield:.2%}")  # Output: 6.00%
+        >>> 
+        >>> # Handle pandas Series
+        >>> import pandas as pd
+        >>> dividend_series = pd.Series([1.20, 1.25, 1.30, 1.35])
+        >>> stock_price = 80.00
+        >>> yield_from_series = calculate_dividend_yield(dividend_series, stock_price)
+        >>> print(f"Yield from Series: {yield_from_series:.2%}")
+        
+    Note:
+        - Formula: Dividend Yield = Sum(Dividends) / Current Price
+        - Automatically filters out NaN values and negative dividends
+        - Assumes dividends represent total annual payments (sum all provided dividends)
+        - For trailing twelve months yield, provide last 12 months of dividend payments
+        - For forward yield estimates, provide expected next 12 months of dividends
+        - Higher yields may indicate value opportunities or higher risk (yield trap)
+        - Should be compared to historical yields and peer companies
+        - Important for dividend growth and income investing strategies
     """
     try:
         if price <= 0:
@@ -819,7 +1368,7 @@ def calculate_dividend_yield(dividends: Union[list, np.ndarray, pd.Series], pric
 def analyze_leverage_fund(prices: Union[pd.Series, Dict[str, Any]], 
                          leverage: float, 
                          underlying_prices: Union[pd.Series, Dict[str, Any]]) -> Dict[str, Any]:
-    """Analyze leveraged fund characteristics including tracking efficiency and decay effects.
+    """Analyze leveraged fund characteristics including tracking efficiency and decay effects using industry-standard calculations.
     
     Performs comprehensive analysis of leveraged fund performance including tracking efficiency,
     volatility decay, compounding effects, and daily rebalancing costs. This analysis is crucial

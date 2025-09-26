@@ -1,0 +1,27 @@
+{
+  "question": "Which symbols had the largest downside gap fills today?",
+  "plan": {
+    "python_fallback": {
+      "data_needed": [
+        {
+          "fn": "alpaca_market_screener_most_actives",
+          "args": {
+            "top": 100
+          }
+        },
+        {
+          "fn": "alpaca_market_stocks_bars",
+          "args": {
+            "symbols": "{{symbols_from_step1}}",
+            "timeframe": "1Day", 
+            "start": "2025-09-24",
+            "end": "2025-09-26"
+          }
+        }
+      ],
+      "script_reference": "mcp-server/temp/calculate_downside_gap_fills_20250926.py",
+      "function_name": "calculate_downside_gap_fills"
+    }
+  },
+  "description": "Analysis to identify stocks with largest downside gap fills by comparing opening gaps to intraday recovery using Python fallback for specialized gap fill calculations"
+}

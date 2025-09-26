@@ -1,0 +1,27 @@
+{
+  "question": "Which watchlist symbols have the strongest 6-month price momentum?",
+  "plan": {
+    "python_fallback": {
+      "data_needed": [
+        {
+          "fn": "mcp__mcp-financial-server__alpaca_trading_positions",
+          "args": {},
+          "output": "positions_data"
+        },
+        {
+          "fn": "mcp__mcp-financial-server__alpaca_market_stocks_bars", 
+          "args": {
+            "symbols": "AAPL,MSFT,GOOGL,TSLA,NVDA,META,AMZN,NFLX,AMD,CRM",
+            "timeframe": "1Day",
+            "start": "2025-03-26",
+            "end": "2025-09-26"
+          },
+          "output": "historical_bars"
+        }
+      ],
+      "script_reference": "mcp-server/temp/analyze_watchlist_momentum_wx7k9.py",
+      "function_name": "analyze_watchlist_momentum"
+    }
+  },
+  "description": "Python fallback analysis to calculate 6-month price momentum for watchlist symbols from position data and rank by strongest performance"
+}

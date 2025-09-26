@@ -599,6 +599,166 @@ def calculate_monthly_returns(daily_returns: Union[pd.Series, List, Dict[str, An
         raise ValueError(f"Monthly return calculation failed: {str(e)}")
 
 
+def extract_symbols_from_alpaca_data(data: Union[Dict[str, Any], List[Dict[str, Any]], Any]) -> List[str]:
+    """Extract symbol list from various Alpaca API data structures.
+    
+    This utility function parses different Alpaca API response formats (positions, orders,
+    watchlists, bars, quotes, etc.) and extracts the unique stock symbols contained within.
+    Essential for streamlining workflow between Alpaca trading/market data and analytics
+    functions that require symbol lists as input.
+    
+    The function intelligently handles various Alpaca data structures including nested
+    dictionaries, lists of records, and mixed-format responses from different endpoints.
+    
+    Args:
+        data (Union[Dict[str, Any], List[Dict[str, Any]], Any]): Alpaca API data structure.
+            Supported formats include:
+            - Positions response: List/dict with 'symbol' fields
+            - Orders response: List/dict with 'symbol' fields  
+            - Watchlist response: List/dict with 'symbol' or 'assets' fields
+            - Market data bars: Dict with symbols as keys or nested symbol fields
+            - Market data quotes/trades: Dict with symbols as keys
+            - Portfolio history: Dict with symbols in metadata
+            - Account response: May contain 'positions' or 'orders' nested data
+            - Any nested structure containing symbol information
+            
+    Returns:
+        List[str]: Sorted list of unique stock symbols found in the data.
+            Symbols are uppercase and deduplicated. Empty list if no symbols found.
+            Common formats: ['AAPL', 'MSFT', 'GOOGL', 'AMZN']
+            
+    Raises:
+        ValueError: If data extraction fails due to unexpected format or processing errors.
+        TypeError: If input data type cannot be processed.
+        
+    Example:
+        >>> # Extract from positions response
+        >>> positions_data = [
+        ...     {"symbol": "AAPL", "qty": "10", "market_value": "1500"},
+        ...     {"symbol": "MSFT", "qty": "5", "market_value": "1600"},
+        ...     {"symbol": "GOOGL", "qty": "2", "market_value": "800"}
+        ... ]
+        >>> symbols = extract_symbols_from_alpaca_data(positions_data)
+        >>> print(symbols)  # ['AAPL', 'GOOGL', 'MSFT']
+        >>> 
+        >>> # Extract from orders response
+        >>> orders_data = {
+        ...     "orders": [
+        ...         {"symbol": "TSLA", "side": "buy", "qty": "3"},
+        ...         {"symbol": "NVDA", "side": "sell", "qty": "1"}
+        ...     ]
+        ... }
+        >>> symbols = extract_symbols_from_alpaca_data(orders_data)
+        >>> print(symbols)  # ['NVDA', 'TSLA']
+        >>> 
+        >>> # Extract from market data bars  
+        >>> bars_data = {
+        ...     "bars": {
+        ...         "AAPL": [{"t": "2023-01-01", "o": 150, "h": 152, "l": 148, "c": 151}],
+        ...         "MSFT": [{"t": "2023-01-01", "o": 250, "h": 255, "l": 248, "c": 253}]
+        ...     }
+        ... }
+        >>> symbols = extract_symbols_from_alpaca_data(bars_data)
+        >>> print(symbols)  # ['AAPL', 'MSFT']
+        >>> 
+        >>> # Extract from watchlist
+        >>> watchlist_data = {
+        ...     "name": "Tech Stocks",
+        ...     "assets": [
+        ...         {"symbol": "AAPL", "name": "Apple Inc"},
+        ...         {"symbol": "GOOGL", "name": "Alphabet Inc"}
+        ...     ]
+        ... }
+        >>> symbols = extract_symbols_from_alpaca_data(watchlist_data)
+        >>> print(symbols)  # ['AAPL', 'GOOGL']
+        
+    Note:
+        - Function handles both single records and lists of records
+        - Symbols are automatically converted to uppercase for consistency
+        - Duplicates are removed and results are sorted alphabetically
+        - Empty or malformed data returns empty list rather than error
+        - Supports nested data structures with recursive symbol extraction
+        - Compatible with all major Alpaca API endpoints (trading and market data)
+        - Useful for bridging Alpaca data with analytics functions requiring symbol lists
+        - Handles both live and paper trading account data formats
+        - Works with historical and real-time market data responses
+    """
+    try:
+        symbols = set()  # Use set to automatically handle duplicates
+        
+        def _extract_symbols_recursive(obj: Any) -> None:
+            """Recursively extract symbols from nested data structures."""
+            if isinstance(obj, dict):
+                # Handle direct symbol field
+                if 'symbol' in obj:
+                    symbol = str(obj['symbol']).upper().strip()
+                    if symbol and len(symbol) <= 10:  # Basic symbol validation
+                        symbols.add(symbol)
+                
+                # Handle various Alpaca response structures
+                for key, value in obj.items():
+                    if key.lower() in ['positions', 'orders', 'assets', 'bars', 'quotes', 'trades']:
+                        _extract_symbols_recursive(value)
+                    elif key.lower() == 'symbols' and isinstance(value, (list, tuple)):
+                        # Direct symbols list
+                        for sym in value:
+                            if isinstance(sym, str):
+                                clean_sym = sym.upper().strip()
+                                if clean_sym and len(clean_sym) <= 10:
+                                    symbols.add(clean_sym)
+                    elif isinstance(value, (dict, list)):
+                        _extract_symbols_recursive(value)
+            
+            elif isinstance(obj, (list, tuple)):
+                for item in obj:
+                    _extract_symbols_recursive(item)
+            
+            elif isinstance(obj, str) and len(obj) <= 10:
+                # Handle case where data might be a direct symbol string
+                clean_sym = obj.upper().strip()
+                if clean_sym.isalpha() and 1 <= len(clean_sym) <= 10:
+                    symbols.add(clean_sym)
+        
+        # Handle various input formats
+        if data is None:
+            return []
+        
+        # Handle direct symbol string
+        if isinstance(data, str):
+            clean_sym = data.upper().strip()
+            if clean_sym and len(clean_sym) <= 10:
+                return [clean_sym]
+            return []
+        
+        # Handle bars/quotes data where symbols are keys
+        if isinstance(data, dict):
+            # Check if this looks like market data with symbols as keys
+            potential_symbols = []
+            for key in data.keys():
+                if (isinstance(key, str) and 
+                    key.isupper() and 
+                    1 <= len(key) <= 10 and 
+                    key.isalpha()):
+                    potential_symbols.append(key)
+            
+            # If we found symbol-like keys, they're probably symbols
+            if potential_symbols:
+                symbols.update(potential_symbols)
+        
+        # Recursive extraction for all data types
+        _extract_symbols_recursive(data)
+        
+        # Convert to sorted list
+        symbol_list = sorted(list(symbols))
+        
+        return symbol_list
+        
+    except Exception as e:
+        # Log error but don't fail - return empty list
+        print(f"Warning: Symbol extraction failed: {str(e)}")
+        return []
+
+
 # Registry of utility functions - all using proven libraries
 DATA_UTILS_FUNCTIONS = {
     'validate_price_data': validate_price_data,
@@ -609,5 +769,6 @@ DATA_UTILS_FUNCTIONS = {
     'calculate_monthly_returns': calculate_monthly_returns,
     'align_series': align_series,
     'resample_data': resample_data,
-    'standardize_output': standardize_output
+    'standardize_output': standardize_output,
+    'extract_symbols_from_alpaca_data': extract_symbols_from_alpaca_data
 }

@@ -1,16 +1,17 @@
 """
-Analytics New - Reorganized Financial Analysis Engine
+Analytics - Financial Analysis Engine
 
-Complete rewrite using libraries from requirements.txt - no manual calculations
-From financial-analysis-function-library.json
+Complete analytics suite using industry-standard libraries.
+Auto-discovery enabled - all functions automatically exported.
 """
 
-# Import all modules
 from .utils import *
+from .comparison import *
 from .performance import *
 from .indicators import *
+from .market import *
 from .portfolio import *
 from .risk import *
+from .signals import *
 
 __version__ = "2.0.0"
-__all__ = []

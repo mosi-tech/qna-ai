@@ -804,7 +804,7 @@ def filter_signals(signals: List[Dict[str, Any]],
         - Empty signal lists return gracefully with zero statistics
         - Filter statistics show removal count and criteria for each filter
         - All timestamps converted to pandas datetime for consistent processing
-    ""\
+    """
     try:
         if not signals:
             return standardize_output({

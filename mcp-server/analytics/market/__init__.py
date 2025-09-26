@@ -25,6 +25,8 @@ Available Market Analysis Functions:
         
     Specialized Analysis:
         - calculate_crypto_metrics: Cryptocurrency-specific metrics including fear/greed index
+        - analyze_weekday_performance: Day-of-week effect and trading anomaly analysis
+        - analyze_monthly_performance: Monthly seasonal pattern and calendar effect analysis
 
 Features:
     - Industry-standard statistical methods using empyrical, scipy, and scikit-learn
@@ -65,26 +67,5 @@ Note:
     - Results include both quantitative metrics and qualitative interpretations
 """
 
-from .metrics import (
-    calculate_trend_strength,
-    calculate_market_stress,
-    calculate_market_breadth,
-    detect_market_regime,
-    analyze_volatility_clustering,
-    analyze_seasonality,
-    detect_structural_breaks,
-    detect_crisis_periods,
-    MARKET_ANALYSIS_FUNCTIONS
-)
+from .metrics import *
 
-__all__ = [
-    'calculate_trend_strength',
-    'calculate_market_stress', 
-    'calculate_market_breadth',
-    'detect_market_regime',
-    'analyze_volatility_clustering',
-    'analyze_seasonality',
-    'detect_structural_breaks',
-    'detect_crisis_periods',
-    'MARKET_ANALYSIS_FUNCTIONS'
-]

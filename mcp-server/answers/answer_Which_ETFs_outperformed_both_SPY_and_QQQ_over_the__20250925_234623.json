@@ -1,0 +1,60 @@
+{
+  "description": "Analysis to identify ETFs that outperformed both SPY and QQQ over the last 30 days using template variable substitution for dynamic symbol selection",
+  "body": [
+    {
+      "key": "question",
+      "value": "Which ETFs outperformed both SPY and QQQ over the last 30 days?",
+      "description": "Question analyzed"
+    },
+    {
+      "key": "analysis_method",
+      "value": "Direct Engine",
+      "description": "Direct function calls"
+    },
+    {
+      "key": "data_source_1",
+      "value": "alpaca_market_stocks_bars via direct",
+      "description": "Data from alpaca_market_stocks_bars"
+    },
+    {
+      "key": "data_source_2",
+      "value": "alpaca_market_screener_most_actives via direct",
+      "description": "Data from alpaca_market_screener_most_actives"
+    },
+    {
+      "key": "data_source_3",
+      "value": "alpaca_market_stocks_bars via direct",
+      "description": "Data from alpaca_market_stocks_bars"
+    },
+    {
+      "key": "analysis_results",
+      "value": {
+        "benchmark_returns": {
+          "SPY": 5.71,
+          "QQQ": -9.71
+        },
+        "outperforming_etfs": [
+          {
+            "symbol": "TSLA",
+            "return_30d": 17.05,
+            "outperformance_vs_spy": 11.35,
+            "outperformance_vs_qqq": 26.76,
+            "start_price": 248.57,
+            "end_price": 290.96
+          }
+        ],
+        "total_analyzed": 2,
+        "outperformers_count": 1,
+        "template_substitution_used": true,
+        "active_symbols_from_step2": [
+          "AAPL",
+          "TSLA"
+        ]
+      },
+      "description": "Python script results"
+    }
+  ],
+  "metadata": {
+    "timestamp": "2025-09-25T23:46:23.528682"
+  }
+}

@@ -1267,6 +1267,246 @@ def compare_fundamental(fundamentals1: Dict[str, Any],
         return {"success": False, "error": f"Fundamental comparison failed: {str(e)}"}
 
 
+def compute_outperformance(returns: Union[pd.DataFrame, Dict[str, pd.Series]], 
+                          benchmark_returns: Union[pd.Series, Dict[str, Any]]) -> Dict[str, Any]:
+    """Calculate outperformance of multiple stocks against a benchmark.
+    
+    Outperformance analysis measures how individual assets or portfolios perform
+    relative to a benchmark over time. This function computes comprehensive
+    outperformance metrics for multiple assets simultaneously, including
+    excess returns, alpha, tracking error, and statistical significance tests.
+    
+    The analysis helps identify which assets consistently beat the benchmark,
+    by how much, and with what level of statistical confidence. Essential for
+    active portfolio management and fund performance evaluation.
+    
+    Args:
+        returns (Union[pd.DataFrame, Dict[str, pd.Series]]): Multi-asset return data.
+            Can be provided as:
+            - pandas DataFrame: Assets as columns, dates as index
+            - Dictionary: Asset names as keys, return series (pd.Series) as values
+            All return series should contain decimal returns (e.g., 0.02 for 2%).
+        benchmark_returns (Union[pd.Series, Dict[str, Any]]): Benchmark return series
+            for comparison (e.g., S&P 500, market index). Must have overlapping
+            periods with asset returns. Can be provided as pandas Series with
+            datetime index or dictionary with dates as keys.
+            
+    Returns:
+        Dict[str, Any]: Comprehensive outperformance analysis including:
+            - asset_outperformance: Individual asset performance vs benchmark
+                * excess_return_annualized: Annual excess return over benchmark
+                * alpha_annualized: Risk-adjusted excess return (Jensen's alpha)
+                * tracking_error_annualized: Volatility of excess returns
+                * information_ratio: Excess return per unit of tracking error
+                * outperformance_periods: Number/percentage of periods beating benchmark
+                * beta: Systematic risk relative to benchmark
+                * correlation: Linear correlation with benchmark
+            - portfolio_summary: Aggregate statistics across all assets
+                * best_performer: Asset with highest excess return
+                * worst_performer: Asset with lowest excess return
+                * average_outperformance: Mean excess return across assets
+                * outperforming_assets_count: Number of assets beating benchmark
+                * statistical_significance: Assets with significant outperformance
+            - benchmark_info: Benchmark performance characteristics
+                * annual_return: Benchmark annualized return
+                * annual_volatility: Benchmark annualized volatility
+                * total_periods: Number of observation periods
+            
+    Raises:
+        ValueError: If outperformance calculation fails due to data alignment issues,
+            insufficient overlapping data, or invalid input formats.
+            
+    Example:
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> 
+        >>> # Create sample multi-asset return data
+        >>> dates = pd.date_range('2023-01-01', periods=252, freq='D')
+        >>> np.random.seed(42)
+        >>> 
+        >>> # Simulate asset returns with different performance characteristics
+        >>> benchmark_rets = pd.Series(np.random.normal(0.0005, 0.015, 252), index=dates, name='SPY')
+        >>> 
+        >>> asset_returns = pd.DataFrame({
+        ...     'AAPL': benchmark_rets * 1.2 + np.random.normal(0.0002, 0.008, 252),  # Outperformer
+        ...     'MSFT': benchmark_rets * 1.1 + np.random.normal(0.0001, 0.007, 252),  # Slight outperformer  
+        ...     'T': benchmark_rets * 0.7 + np.random.normal(0, 0.005, 252),         # Underperformer
+        ...     'AMZN': benchmark_rets * 1.5 + np.random.normal(0.0003, 0.020, 252)  # Volatile outperformer
+        ... }, index=dates)
+        >>> 
+        >>> # Calculate outperformance
+        >>> outperf_analysis = compute_outperformance(asset_returns, benchmark_rets)
+        >>> 
+        >>> # Review results
+        >>> print("=== OUTPERFORMANCE ANALYSIS ===")
+        >>> best = outperf_analysis['portfolio_summary']['best_performer']
+        >>> print(f"Best Performer: {best['asset']} (+{best['excess_return_pct']})")
+        >>> 
+        >>> print("\\n=== INDIVIDUAL ASSET PERFORMANCE ===")
+        >>> for asset, metrics in outperf_analysis['asset_outperformance'].items():
+        ...     print(f"{asset}:")
+        ...     print(f"  Excess Return: {metrics['excess_return_pct']}")
+        ...     print(f"  Information Ratio: {metrics['information_ratio']:.3f}")
+        ...     print(f"  Outperformance Rate: {metrics['outperformance_periods_pct']}")
+        ...     print(f"  Alpha: {metrics['alpha_pct']}")
+        
+    Note:
+        - Uses empyrical library for industry-standard financial calculations
+        - Excess returns calculated as: asset_return - benchmark_return
+        - Alpha calculated using CAPM: α = (Rp - Rf) - β(Rm - Rf)
+        - Information ratio = Excess Return / Tracking Error (higher is better)
+        - Tracking error is annualized standard deviation of excess returns
+        - Statistical significance based on t-test of excess returns vs zero
+        - Outperformance periods show consistency of beating benchmark
+        - Beta > 1 indicates higher systematic risk than benchmark
+        - All return metrics are annualized assuming 252 trading days per year
+        - Missing data is handled via pairwise alignment of time series
+        - Particularly useful for fund analysis, stock selection, and manager evaluation
+    """
+    try:
+        # Validate and prepare data
+        if isinstance(returns, dict):
+            returns_df = pd.DataFrame(returns)
+        elif isinstance(returns, pd.DataFrame):
+            returns_df = returns.copy()
+        else:
+            raise ValueError("Returns must be DataFrame or dict of Series")
+            
+        # Validate benchmark returns
+        from ..utils.data_utils import validate_return_data, align_series
+        benchmark_series = validate_return_data(benchmark_returns)
+        
+        # Results storage
+        asset_outperformance = {}
+        
+        # Analyze each asset
+        for asset_name in returns_df.columns:
+            asset_returns = returns_df[asset_name].dropna()
+            
+            # Align asset and benchmark returns
+            asset_aligned, benchmark_aligned = align_series(asset_returns, benchmark_series)
+            
+            if len(asset_aligned) < 30:  # Minimum periods for meaningful analysis
+                asset_outperformance[asset_name] = {
+                    "error": "Insufficient overlapping data (minimum 30 periods required)",
+                    "periods_available": len(asset_aligned)
+                }
+                continue
+            
+            # Calculate excess returns
+            excess_returns = asset_aligned - benchmark_aligned
+            
+            # Core performance metrics using empyrical
+            import empyrical
+            
+            # Annualized metrics
+            excess_return_annual = empyrical.annual_return(excess_returns)
+            tracking_error_annual = empyrical.annual_volatility(excess_returns)
+            
+            # Alpha calculation (CAPM)
+            beta = empyrical.beta(asset_aligned, benchmark_aligned)
+            alpha_annual = empyrical.alpha(asset_aligned, benchmark_aligned, risk_free=0.02)
+            
+            # Information ratio
+            information_ratio = excess_return_annual / tracking_error_annual if tracking_error_annual > 0 else 0
+            
+            # Outperformance frequency
+            outperformance_periods = (excess_returns > 0).sum()
+            outperformance_rate = outperformance_periods / len(excess_returns)
+            
+            # Correlation
+            correlation = asset_aligned.corr(benchmark_aligned)
+            
+            # Statistical significance (t-test of excess returns)
+            from scipy import stats
+            t_stat, p_value = stats.ttest_1samp(excess_returns.dropna(), 0)
+            is_significant = p_value < 0.05
+            
+            # Compile asset results
+            asset_outperformance[asset_name] = {
+                "excess_return_annualized": float(excess_return_annual),
+                "excess_return_pct": f"{excess_return_annual * 100:+.2f}%",
+                "alpha_annualized": float(alpha_annual),
+                "alpha_pct": f"{alpha_annual * 100:+.2f}%",
+                "tracking_error_annualized": float(tracking_error_annual),
+                "tracking_error_pct": f"{tracking_error_annual * 100:.2f}%",
+                "information_ratio": float(information_ratio),
+                "beta": float(beta),
+                "correlation": float(correlation),
+                "outperformance_periods": int(outperformance_periods),
+                "outperformance_periods_pct": f"{outperformance_rate * 100:.1f}%",
+                "total_periods": len(asset_aligned),
+                "statistical_significance": {
+                    "is_significant": bool(is_significant),
+                    "t_statistic": float(t_stat),
+                    "p_value": float(p_value)
+                }
+            }
+        
+        # Calculate portfolio summary statistics
+        valid_assets = {k: v for k, v in asset_outperformance.items() if "error" not in v}
+        
+        if not valid_assets:
+            return {
+                "success": False,
+                "error": "No assets had sufficient data for analysis"
+            }
+        
+        # Find best and worst performers
+        excess_returns = [(asset, metrics["excess_return_annualized"]) 
+                         for asset, metrics in valid_assets.items()]
+        best_performer = max(excess_returns, key=lambda x: x[1])
+        worst_performer = min(excess_returns, key=lambda x: x[1])
+        
+        # Summary statistics
+        avg_excess_return = np.mean([metrics["excess_return_annualized"] 
+                                   for metrics in valid_assets.values()])
+        outperforming_count = sum(1 for metrics in valid_assets.values() 
+                                if metrics["excess_return_annualized"] > 0)
+        significant_count = sum(1 for metrics in valid_assets.values() 
+                              if metrics["statistical_significance"]["is_significant"] and 
+                              metrics["excess_return_annualized"] > 0)
+        
+        # Benchmark characteristics  
+        benchmark_annual_return = empyrical.annual_return(benchmark_series)
+        benchmark_annual_vol = empyrical.annual_volatility(benchmark_series)
+        
+        result = {
+            "asset_outperformance": asset_outperformance,
+            "portfolio_summary": {
+                "best_performer": {
+                    "asset": best_performer[0],
+                    "excess_return_annualized": float(best_performer[1]),
+                    "excess_return_pct": f"{best_performer[1] * 100:+.2f}%"
+                },
+                "worst_performer": {
+                    "asset": worst_performer[0], 
+                    "excess_return_annualized": float(worst_performer[1]),
+                    "excess_return_pct": f"{worst_performer[1] * 100:+.2f}%"
+                },
+                "average_outperformance": float(avg_excess_return),
+                "average_outperformance_pct": f"{avg_excess_return * 100:+.2f}%",
+                "assets_analyzed": len(valid_assets),
+                "outperforming_assets_count": outperforming_count,
+                "outperforming_assets_pct": f"{outperforming_count / len(valid_assets) * 100:.1f}%",
+                "statistically_significant_count": significant_count
+            },
+            "benchmark_info": {
+                "annual_return": float(benchmark_annual_return),
+                "annual_return_pct": f"{benchmark_annual_return * 100:.2f}%",
+                "annual_volatility": float(benchmark_annual_vol),
+                "annual_volatility_pct": f"{benchmark_annual_vol * 100:.2f}%",
+                "total_periods": len(benchmark_series)
+            }
+        }
+        
+        from ..utils.data_utils import standardize_output
+        return standardize_output(result, "compute_outperformance")
+        
+    except Exception as e:
+        return {"success": False, "error": f"Outperformance calculation failed: {str(e)}"}
+
+
 # Registry of comparison metrics functions - all using libraries and existing functions
 COMPARISON_METRICS_FUNCTIONS = {
     'compare_performance_metrics': compare_performance_metrics,
@@ -1277,5 +1517,6 @@ COMPARISON_METRICS_FUNCTIONS = {
     'compare_sector_exposure': compare_sector_exposure,
     'compare_expense_ratios': compare_expense_ratios,
     'compare_liquidity': compare_liquidity,
-    'compare_fundamental': compare_fundamental
+    'compare_fundamental': compare_fundamental,
+    'compute_outperformance': compute_outperformance
 }

@@ -1,0 +1,33 @@
+{
+  "description": "Extract watchlist symbols from positions, fetch 6-month historical data, and calculate price momentum rankings",
+  "body": [
+    {
+      "key": "question",
+      "value": "Which watchlist symbols have the strongest 6-month price momentum?",
+      "description": "Question analyzed"
+    },
+    {
+      "key": "analysis_method",
+      "value": "Direct Engine",
+      "description": "Direct function calls"
+    },
+    {
+      "key": "data_source_1",
+      "value": "alpaca_trading_positions via direct",
+      "description": "Data from alpaca_trading_positions"
+    },
+    {
+      "key": "analysis_results",
+      "value": {
+        "symbols_analyzed": "AAPL",
+        "analysis_period": "2025-03-30 to 2025-09-26",
+        "momentum_rankings": [],
+        "total_symbols": 0
+      },
+      "description": "Python script results"
+    }
+  ],
+  "metadata": {
+    "timestamp": "2025-09-26T00:26:12.196626"
+  }
+}
