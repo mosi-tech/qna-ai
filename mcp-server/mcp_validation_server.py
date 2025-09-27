@@ -201,11 +201,7 @@ async def handle_call_tool(name: str, arguments: dict) -> list[TextContent | Ima
         validation_function = MCP_VALIDATION_FUNCTIONS[name]
         
         # Handle different argument patterns
-        if name == "get_available_functions":
-            result = validation_function(arguments["function_schemas"])
-        elif name == "get_function_schema":
-            result = validation_function(arguments["function_name"], arguments["function_schemas"])
-        elif name == "validate_workflow_step":
+        if name == "validate_workflow_step":
             result = validation_function(arguments["step_definition"], arguments["function_schemas"])
         elif name == "validate_template_variables":
             result = validation_function(arguments["template_string"], arguments["available_variables"])

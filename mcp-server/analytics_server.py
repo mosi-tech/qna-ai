@@ -301,35 +301,8 @@ async def handle_list_tools() -> List[types.Tool]:
             inputSchema=schema['inputSchema']
         ))
     
-    # Add schema discovery tools for distributed validation
-    tools.extend([
-        types.Tool(
-            name="get_analytics_function_schemas",
-            description="Get all analytics function schemas for workflow validation",
-            inputSchema={
-                "type": "object",
-                "properties": {},
-                "additionalProperties": False
-            }
-        ),
-        types.Tool(
-            name="get_analytics_function_schema",
-            description="Get schema for specific analytics function",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "function_name": {
-                        "type": "string",
-                        "description": "Name of the analytics function to get schema for"
-                    }
-                },
-                "required": ["function_name"],
-                "additionalProperties": False
-            }
-        )
-    ])
     
-    logger.debug(f"Returned {len(tools)} analytics tools from cache (including schema tools)")
+    logger.debug(f"Returned {len(tools)} analytics tools from cache")
     return tools
 
 
@@ -339,58 +312,8 @@ async def handle_call_tool(name: str, arguments: Dict[str, Any]) -> List[types.T
     try:
         logger.info(f"Executing analytics tool: {name} with arguments keys: {list(arguments.keys())}")
         
-        # Handle schema discovery tools
-        if name == "get_analytics_function_schemas":
-            # Return all analytics function schemas with output schemas
-            schemas_with_output = {}
-            for func_name, schema in _schema_cache.items():
-                schemas_with_output[func_name] = {
-                    "source": "analytics",
-                    "description": schema["description"],
-                    "input_schema": schema["inputSchema"],
-                    "output_schema": _get_output_schema_for_function(func_name),
-                    "parameters": _get_function_parameters(func_name)
-                }
-            
-            return [types.TextContent(
-                type="text",
-                text=json.dumps({
-                    "functions": schemas_with_output,
-                    "count": len(schemas_with_output),
-                    "source": "analytics",
-                    "server": "mcp-analytics-server"
-                }, indent=2)
-            )]
-        
-        elif name == "get_analytics_function_schema":
-            function_name = arguments["function_name"]
-            if function_name not in _schema_cache:
-                return [types.TextContent(
-                    type="text",
-                    text=json.dumps({
-                        "error": f"Function '{function_name}' not found",
-                        "available_functions": list(_schema_cache.keys())[:10],
-                        "suggestions": [fn for fn in _schema_cache.keys() if function_name.lower() in fn.lower()][:5]
-                    })
-                )]
-            
-            schema = _schema_cache[function_name]
-            detailed_schema = {
-                "function_name": function_name,
-                "source": "analytics",
-                "description": schema["description"],
-                "input_schema": schema["inputSchema"],
-                "output_schema": _get_output_schema_for_function(function_name),
-                "parameters": _get_function_parameters(function_name)
-            }
-            
-            return [types.TextContent(
-                type="text",
-                text=json.dumps(detailed_schema, indent=2)
-            )]
-        
-        # Handle regular analytics functions
-        elif hasattr(analytics, name):
+        # Handle analytics functions
+        if hasattr(analytics, name):
             # Execute the analytics function
             function = getattr(analytics, name)
             result = function(**arguments)
@@ -410,7 +333,7 @@ async def handle_call_tool(name: str, arguments: Dict[str, Any]) -> List[types.T
                 text=json.dumps({
                     "success": False,
                     "error": f"Unknown analytics tool: {name}",
-                    "available_tools": available_functions + ["get_analytics_function_schemas", "get_analytics_function_schema"]
+                    "available_tools": available_functions
                 })
             )]
         

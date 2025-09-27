@@ -1,0 +1,59 @@
+{
+  "question": "Which ETFs outperformed both SPY and QQQ over the last 30 days?",
+  "plan": {
+    "workflow": {
+      "steps": [
+        {
+          "id": "get_active_etfs",
+          "type": "mcp_call",
+          "fn": "alpaca_market_screener_most_actives",
+          "args": {
+            "top": 50
+          },
+          "output_variable": "active_securities"
+        },
+        {
+          "id": "extract_etf_symbols", 
+          "type": "python_function",
+          "function_file": "mcp-server/temp/extract_etf_symbols_20250926_143022.py",
+          "function_name": "extract_etf_symbols",
+          "input_variables": ["active_securities"],
+          "output_variable": "etf_symbols_csv"
+        },
+        {
+          "id": "get_historical_data",
+          "type": "mcp_call",
+          "fn": "alpaca_market_stocks_bars", 
+          "args": {
+            "symbols": "{{etf_symbols_csv}},SPY,QQQ",
+            "timeframe": "1Day",
+            "start": "2025-08-27",
+            "end": "2025-09-26"
+          },
+          "output_variable": "historical_bars"
+        },
+        {
+          "id": "calculate_outperformers",
+          "type": "python_function",
+          "function_file": "mcp-server/temp/calculate_outperformers_20250926_143022.py",
+          "function_name": "calculate_outperformers", 
+          "input_variables": ["historical_bars"],
+          "output_variable": "outperforming_etfs"
+        }
+      ]
+    }
+  },
+  "description": "Validated workflow to identify ETFs that outperformed both SPY and QQQ benchmarks over 30-day period using distributed MCP validation",
+  "validation_status": {
+    "schemas_validated": true,
+    "data_flow_validated": true,
+    "template_variables_validated": true,
+    "python_functions_saved": true
+  },
+  "metadata": {
+    "created_at": "2025-09-26T14:30:22Z",
+    "validation_method": "distributed_mcp",
+    "schemas_used": ["alpaca_market_screener_most_actives", "alpaca_market_stocks_bars", "calculate_returns_metrics"],
+    "execution_guarantee": true
+  }
+}
