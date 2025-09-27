@@ -106,7 +106,7 @@ async def execute_script_endpoint(request: ScriptExecutionRequest) -> ExecutionR
         )
 
 def display_results_server_side(response: dict, script_name: str):
-    """Display analysis results on server console"""
+    """Display analysis results on server console - generic formatter"""
     
     print("\n" + "="*100)
     print(f"🔬 FINANCIAL ANALYSIS RESULTS: {script_name}")
@@ -127,53 +127,17 @@ def display_results_server_side(response: dict, script_name: str):
         print("="*100 + "\n")
         return
     
-    # Extract nested results if they exist
-    analysis_results = response.get("results", response)
+    # Display the full results as formatted JSON
+    print("\n📊 ANALYSIS RESULTS:")
+    print("-" * 50)
     
-    # Display key results
-    if "outperformers" in analysis_results:
-        etfs = analysis_results["outperformers"]
-        print(f"\n🏆 Found {len(etfs)} ETFs outperforming benchmarks:")
-        
-        for i, etf in enumerate(etfs[:10], 1):  # Top 10
-            symbol = etf.get("symbol", "N/A")
-            return_pct = etf.get("total_return_pct", "N/A")
-            vs_spy = etf.get("excess_return_vs_spy", "N/A")
-            vs_qqq = etf.get("excess_return_vs_qqq", "N/A")
-            
-            print(f"  {i:2d}. {symbol:6s} | Return: {return_pct:>6}% | vs SPY: +{vs_spy:>5}% | vs QQQ: +{vs_qqq:>5}%")
-    
-    # Display benchmarks
-    if "benchmarks" in analysis_results:
-        benchmarks = analysis_results["benchmarks"]
-        print(f"\n📊 Benchmark Performance:")
-        
-        for symbol, data in benchmarks.items():
-            return_pct = data.get("return_pct", "N/A")
-            volatility = data.get("volatility_pct", "N/A")
-            print(f"  {symbol}: {return_pct}% return | {volatility}% volatility")
-    
-    # Display summary
-    if "analysis_summary" in analysis_results:
-        summary = analysis_results["analysis_summary"]
-        total_analyzed = summary.get("total_etfs_analyzed", 0)
-        outperformers = summary.get("etfs_outperforming_both", 0)
-        success_rate = summary.get("outperformance_rate", "N/A")
-        
-        print(f"\n📈 Summary:")
-        print(f"  Total ETFs Analyzed: {total_analyzed}")
-        print(f"  Outperformers Found: {outperformers}")
-        print(f"  Success Rate: {success_rate}%")
-    
-    # Display metadata
-    if "metadata" in response:
-        metadata = response["metadata"]
-        timestamp = metadata.get("timestamp", "N/A")
-        analysis_method = metadata.get("analysis_method", "N/A")
-        
-        print(f"\n🔬 Analysis Details:")
-        print(f"  Timestamp: {timestamp}")
-        print(f"  Method: {analysis_method}")
+    # Pretty print the entire response as JSON
+    try:
+        formatted_json = json.dumps(response, indent=2, default=str, ensure_ascii=False)
+        print(formatted_json)
+    except Exception as e:
+        print(f"Error formatting results: {e}")
+        print(str(response))
     
     print("="*100 + "\n")
 
