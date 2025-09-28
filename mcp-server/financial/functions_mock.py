@@ -1141,7 +1141,7 @@ def alpaca_trading_clock() -> Dict[str, Any]:
 
 
 # Alpaca Market Data API Mock Functions  
-def alpaca_market_stocks_bars(symbols: str, timeframe: str = "1Day", start: Optional[str] = None, end: Optional[str] = None) -> Dict[str, Any]:
+def alpaca_market_stocks_bars(symbols: List[str], timeframe: str = "1Day", start: Optional[str] = None, end: Optional[str] = None) -> Dict[str, Any]:
     """Generate mock historical OHLC price bars for multiple stocks.
     
     Creates realistic simulated time-series price data including open, high,
@@ -1149,7 +1149,7 @@ def alpaca_market_stocks_bars(symbols: str, timeframe: str = "1Day", start: Opti
     but deterministic price patterns based on symbol-based seeding.
     
     Args:
-        symbols: Comma-separated list of stock symbols (e.g., 'AAPL,TSLA,MSFT').
+        symbols: List of stock symbols (e.g., 'AAPL,TSLA,MSFT').
             Each symbol generates unique price patterns.
         timeframe: Bar duration (returned in structure but not used in calculation).
         start: Start date in 'YYYY-MM-DD' format. If None, defaults to 1 year ago.
@@ -1166,7 +1166,7 @@ def alpaca_market_stocks_bars(symbols: str, timeframe: str = "1Day", start: Opti
                 - v: Volume (realistic random values)
             
     Example:
-        >>> bars = alpaca_market_stocks_bars('AAPL,GOOGL,MSFT', '1Day', '2024-01-01')
+        >>> bars = alpaca_market_stocks_bars(['AAPL','GOOGL','MSFT'], '1Day', '2024-01-01')
         >>> for symbol, symbol_bars in bars['bars'].items():
         ...     if symbol_bars:
         ...         latest = symbol_bars[-1]
@@ -1183,7 +1183,7 @@ def alpaca_market_stocks_bars(symbols: str, timeframe: str = "1Day", start: Opti
         - Excludes weekends, includes only trading days
         - Volume based on lognormal distribution for realism
     """
-    symbol_list = [s.strip().upper() for s in symbols.split(',')]
+    symbol_list = symbols
     
     # Parse dates
     if start:
@@ -1243,7 +1243,7 @@ def alpaca_market_stocks_bars(symbols: str, timeframe: str = "1Day", start: Opti
     return {"bars": bars}
 
 
-def alpaca_market_stocks_snapshots(symbols: str) -> Dict[str, Any]:
+def alpaca_market_stocks_snapshots(symbols: List[str]) -> Dict[str, Any]:
     """Generate mock comprehensive current market snapshots for multiple stocks.
     
     Creates simulated real-time market data including latest quotes, trades,
@@ -1251,7 +1251,7 @@ def alpaca_market_stocks_snapshots(symbols: str) -> Dict[str, Any]:
     per symbol for predictable testing.
     
     Args:
-        symbols: Comma-separated list of stock symbols (e.g., 'AAPL,TSLA,SPY').
+        symbols: List of stock symbols (e.g., ['AAPL','TSLA','SPY']).
             Each symbol gets its own mock snapshot data.
             
     Returns:
@@ -1279,7 +1279,7 @@ def alpaca_market_stocks_snapshots(symbols: str) -> Dict[str, Any]:
         - Fixed timestamps for consistent testing
         - Useful for testing real-time dashboard displays
     """
-    symbol_list = [s.strip().upper() for s in symbols.split(',')]
+    symbol_list = symbols
     
     snapshots = {}
     for symbol in symbol_list:
@@ -1293,7 +1293,7 @@ def alpaca_market_stocks_snapshots(symbols: str) -> Dict[str, Any]:
     return {"snapshots": snapshots}
 
 
-def alpaca_market_stocks_quotes_latest(symbols: str) -> Dict[str, Any]:
+def alpaca_market_stocks_quotes_latest(symbols: List[str]) -> Dict[str, Any]:
     """Generate mock latest bid/ask quotes for multiple stocks.
     
     Creates simulated current market maker quotes with realistic spreads
@@ -1301,7 +1301,7 @@ def alpaca_market_stocks_quotes_latest(symbols: str) -> Dict[str, Any]:
     of liquid stocks.
     
     Args:
-        symbols: Comma-separated list of stock symbols (e.g., 'AAPL,TSLA,SPY').
+        symbols: List of stock symbols (e.g., ['AAPL','TSLA','SPY']).
             Each symbol gets its own quote data.
             
     Returns:
@@ -1333,7 +1333,7 @@ def alpaca_market_stocks_quotes_latest(symbols: str) -> Dict[str, Any]:
         - Fixed bid/ask sizes for consistent testing
         - Useful for testing limit order pricing logic
     """
-    symbol_list = [s.strip().upper() for s in symbols.split(',')]
+    symbol_list = symbols
     
     quotes = {}
     for symbol in symbol_list:
@@ -1349,7 +1349,7 @@ def alpaca_market_stocks_quotes_latest(symbols: str) -> Dict[str, Any]:
     return {"quotes": quotes}
 
 
-def alpaca_market_stocks_trades_latest(symbols: str) -> Dict[str, Any]:
+def alpaca_market_stocks_trades_latest(symbols: List[str]) -> Dict[str, Any]:
     """Generate mock latest trade execution data for multiple stocks.
     
     Creates simulated most recent trade transactions using base prices
@@ -1357,7 +1357,7 @@ def alpaca_market_stocks_trades_latest(symbols: str) -> Dict[str, Any]:
     consistent testing scenarios.
     
     Args:
-        symbols: Comma-separated list of stock symbols (e.g., 'AAPL,TSLA,SPY').
+        symbols: List of stock symbols (e.g., ['AAPL','TSLA','SPY']).
             Each symbol gets its own latest trade data.
             
     Returns:
@@ -1387,7 +1387,7 @@ def alpaca_market_stocks_trades_latest(symbols: str) -> Dict[str, Any]:
         - Same timestamp for all symbols in single request
         - Useful for testing last price display and trade monitoring
     """
-    symbol_list = [s.strip().upper() for s in symbols.split(',')]
+    symbol_list = symbols
     
     trades = {}
     for symbol in symbol_list:
@@ -1533,7 +1533,7 @@ def alpaca_market_screener_top_losers(top: int = 10) -> Dict[str, Any]:
     }
 
 
-def alpaca_market_news(symbols: str = "", start: Optional[str] = None, end: Optional[str] = None, sort: str = "desc", include_content: bool = True) -> Dict[str, Any]:
+def alpaca_market_news(symbols: List[str] = "", start: Optional[str] = None, end: Optional[str] = None, sort: str = "desc", include_content: bool = True) -> Dict[str, Any]:
     """Generate mock financial news articles and market information.
     
     Returns fixed sample news article about Apple earnings. Useful for
@@ -1557,7 +1557,7 @@ def alpaca_market_news(symbols: str = "", start: Optional[str] = None, end: Opti
                 - created_at: Publication timestamp
             
     Example:
-        >>> news = alpaca_market_news('AAPL')
+        >>> news = alpaca_market_news(['AAPL'])
         >>> if news:
         ...     articles = news['news']
         ...     print(f"Found {len(articles)} mock articles:")

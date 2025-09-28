@@ -1141,14 +1141,70 @@ def alpaca_trading_clock() -> Dict[str, Any]:
 
 
 # Alpaca Market Data API Real Functions (Stubs)
-def alpaca_market_stocks_bars(symbols: str, timeframe: str = "1Day", start: Optional[str] = None, end: Optional[str] = None) -> Dict[str, Any]:
-    """Historical OHLC price bars for stocks"""
+def alpaca_market_stocks_bars(symbols: List[str], timeframe: str = "1Day", start: Optional[str] = None, end: Optional[str] = None) -> Dict[str, Any]:
+    """Retrieve historical OHLC price bars for multiple stocks using Alpaca Market Data API.
+    
+    Fetches time-series price data including open, high, low, close, and volume
+    for specified symbols across various timeframes. Essential for technical analysis,
+    backtesting, and chart generation with real market data.
+    
+    Args:
+        symbols: List of stock symbols (e.g., [AAPL,TSLA,MSFT]).
+            Each symbol must be valid and tradeable on supported exchanges.
+        timeframe: Bar duration for the data. Options:
+            - '1Min', '5Min', '15Min', '30Min': Minute intervals
+            - '1Hour', '2Hour', '4Hour': Hourly intervals  
+            - '1Day': Daily bars (default)
+            - '1Week': Weekly bars
+            - '1Month': Monthly bars
+        start: Start date for historical data in 'YYYY-MM-DD' format.
+            If None, defaults to API's default historical range.
+        end: End date for historical data in 'YYYY-MM-DD' format.
+            If None, defaults to most recent trading day.
+            
+    Returns:
+        Dict[str, Any]: Historical price data containing:
+            - bars: Dictionary with symbol keys, each containing array of bars:
+                - t: Timestamp in ISO 8601 format
+                - o: Open price for the period
+                - h: Highest price during the period
+                - l: Lowest price during the period
+                - c: Close price for the period
+                - v: Volume traded during the period
+                - n: Number of trades during the period
+                - vw: Volume weighted average price (VWAP)
+            - next_page_token: Pagination token for additional data (if applicable)
+            - On error: {'error': 'error_description'}
+            
+    Raises:
+        ValueError: If Alpaca API credentials are not configured.
+        requests.exceptions.RequestException: If API request fails.
+        
+    Example:
+        >>> # Get daily bars for tech stocks over last month
+        >>> bars = alpaca_market_stocks_bars([AAPL,GOOGL,MSFT], '1Day', '2024-01-01')
+        >>> for symbol, symbol_bars in bars['bars'].items():
+        ...     if symbol_bars:
+        ...         latest = symbol_bars[-1]
+        ...         first = symbol_bars[0]
+        ...         total_return = (latest['c'] / first['o'] - 1) * 100
+        ...         print(f"{symbol}: {len(symbol_bars)} bars")
+        ...         print(f"  Return: {total_return:+.2f}%")
+        ...         print(f"  Latest: ${latest['c']:.2f} (Vol: {latest['v']:,})")
+        
+    Note:
+        - Requires ALPACA_API_KEY and ALPACA_SECRET_KEY environment variables
+        - Higher frequency data (minute bars) limited to recent periods
+        - Weekend and holiday dates excluded from results
+        - Volume weighted average price (VWAP) useful for execution analysis
+        - API rate limits apply - use pagination for large date ranges
+    """
     try:
         if not ALPACA_API_KEY or not ALPACA_SECRET_KEY:
             raise ValueError("Alpaca API credentials not configured")
         
         params = {
-            'symbols': symbols,
+            'symbols': ",".join(symbols),
             'timeframe': timeframe
         }
         
@@ -1167,13 +1223,54 @@ def alpaca_market_stocks_bars(symbols: str, timeframe: str = "1Day", start: Opti
         return {"error": f"Bars request failed: {str(e)}"}
 
 
-def alpaca_market_stocks_snapshots(symbols: str) -> Dict[str, Any]:
-    """Current market snapshot with all data"""
+def alpaca_market_stocks_snapshots(symbols: List[str]) -> Dict[str, Any]:
+    """Retrieve comprehensive current market snapshots for multiple stocks.
+    
+    Fetches real-time market data including latest quotes, trades, and daily bars
+    for each requested symbol. Provides complete market picture including current
+    prices, spreads, and trading activity.
+    
+    Args:
+        symbols: List of stock symbols (e.g., ["AAPL","TSLA","SPY"]).
+            Each symbol must be valid and actively traded.
+            
+    Returns:
+        Dict[str, Any]: Comprehensive market snapshots containing:
+            - snapshots: Dictionary with symbol keys, each containing:
+                - latestTrade: Most recent trade data (price, size, timestamp)
+                - latestQuote: Current bid/ask quote (spread, sizes, timestamp)
+                - dailyBar: Current day's OHLC data (open, high, low, close, volume)
+                - minuteBar: Latest minute bar data
+                - prevDailyBar: Previous trading day's OHLC data
+            - On error: {'error': 'error_description'}
+            
+    Raises:
+        ValueError: If Alpaca API credentials are not configured.
+        requests.exceptions.RequestException: If API request fails.
+        
+    Example:
+        >>> snapshots = alpaca_market_stocks_snapshots([AAPL,MSFT,GOOGL])
+        >>> for symbol, data in snapshots['snapshots'].items():
+        ...     trade = data.get('latestTrade', {})
+        ...     quote = data.get('latestQuote', {})
+        ...     daily = data.get('dailyBar', {})
+        ...     
+        ...     print(f"{symbol} Current Snapshot:")
+        ...     print(f"  Last Trade: ${trade.get('p', 'N/A')}")
+        ...     print(f"  Bid/Ask: ${quote.get('bp', 'N/A')} / ${quote.get('ap', 'N/A')}")
+        ...     print(f"  Volume: {daily.get('v', 0):,} shares")
+        
+    Note:
+        - Requires ALPACA_API_KEY and ALPACA_SECRET_KEY environment variables
+        - Real-time data during market hours, delayed outside hours
+        - Includes comprehensive market microstructure data
+        - Useful for real-time dashboards and trading applications
+    """
     try:
         if not ALPACA_API_KEY or not ALPACA_SECRET_KEY:
             raise ValueError("Alpaca API credentials not configured")
         
-        params = {'symbols': symbols}
+        params = {'symbols': ",".join(symbols)}
         
         url = f"{ALPACA_DATA_URL}/v2/stocks/snapshots"
         response = requests.get(url, headers=get_headers(), params=params)
@@ -1185,13 +1282,58 @@ def alpaca_market_stocks_snapshots(symbols: str) -> Dict[str, Any]:
         return {"error": f"Snapshots request failed: {str(e)}"}
 
 
-def alpaca_market_stocks_quotes_latest(symbols: str) -> Dict[str, Any]:
-    """Latest bid/ask quotes for stocks"""
+def alpaca_market_stocks_quotes_latest(symbols: List[str]) -> Dict[str, Any]:
+    """Retrieve latest bid/ask quotes for multiple stocks.
+    
+    Fetches current market maker quotes with bid/ask prices and sizes.
+    Essential for understanding current market depth, spread analysis,
+    and optimal order placement strategies.
+    
+    Args:
+        symbols: List of stock symbols (e.g., ["AAPL","TSLA","SPY"]).
+            Each symbol must be valid and actively quoted.
+            
+    Returns:
+        Dict[str, Any]: Latest market quotes containing:
+            - quotes: Dictionary with symbol keys, each containing:
+                - t: Quote timestamp in ISO 8601 format
+                - bp: Best bid price (highest price buyers are willing to pay)
+                - bs: Bid size (number of shares at bid price)
+                - ap: Best ask price (lowest price sellers are willing to accept)
+                - as: Ask size (number of shares at ask price)
+                - c: Conditions/flags for the quote
+            - On error: {'error': 'error_description'}
+            
+    Raises:
+        ValueError: If Alpaca API credentials are not configured.
+        requests.exceptions.RequestException: If API request fails.
+        
+    Example:
+        >>> quotes = alpaca_market_stocks_quotes_latest('AAPL,MSFT,GOOGL')
+        >>> for symbol, quote in quotes['quotes'].items():
+        ...     bid = quote['bp']
+        ...     ask = quote['ap']
+        ...     spread = ask - bid
+        ...     mid_price = (bid + ask) / 2
+        ...     
+        ...     print(f"{symbol}:")
+        ...     print(f"  Bid: ${bid:.2f} x {quote['bs']:,}")
+        ...     print(f"  Ask: ${ask:.2f} x {quote['as']:,}")
+        ...     print(f"  Spread: ${spread:.2f}")
+        ...     print(f"  Mid: ${mid_price:.2f}")
+        
+    Note:
+        - Requires ALPACA_API_KEY and ALPACA_SECRET_KEY environment variables
+        - Quotes updated continuously during market hours
+        - Spread indicates market liquidity (tighter = more liquid)
+        - Use mid-price for fair value estimates
+        - Quote sizes show market depth at best prices
+    """
     try:
         if not ALPACA_API_KEY or not ALPACA_SECRET_KEY:
             raise ValueError("Alpaca API credentials not configured")
         
-        params = {'symbols': symbols}
+        params = {'symbols': ",".join(symbols)}
         
         url = f"{ALPACA_DATA_URL}/v2/stocks/quotes/latest"
         response = requests.get(url, headers=get_headers(), params=params)
@@ -1203,13 +1345,58 @@ def alpaca_market_stocks_quotes_latest(symbols: str) -> Dict[str, Any]:
         return {"error": f"Latest quotes request failed: {str(e)}"}
 
 
-def alpaca_market_stocks_trades_latest(symbols: str) -> Dict[str, Any]:
-    """Latest trade data for stocks"""
+def alpaca_market_stocks_trades_latest(symbols: List[str]) -> Dict[str, Any]:
+    """Retrieve latest trade execution data for multiple stocks.
+    
+    Fetches most recent trade transactions showing actual execution prices
+    and volumes. Essential for understanding current market prices and
+    recent trading activity patterns.
+    
+    Args:
+        symbols: List of stock symbols (e.g., []"AAPL","TSLA","SPY"]).
+            Each symbol must be valid and actively traded.
+            
+    Returns:
+        Dict[str, Any]: Latest trade executions containing:
+            - trades: Dictionary with symbol keys, each containing:
+                - t: Trade timestamp in ISO 8601 format
+                - p: Trade execution price
+                - s: Trade size (number of shares executed)
+                - c: Trade conditions/flags
+                - i: Trade ID
+                - x: Exchange where trade occurred
+            - On error: {'error': 'error_description'}
+            
+    Raises:
+        ValueError: If Alpaca API credentials are not configured.
+        requests.exceptions.RequestException: If API request fails.
+        
+    Example:
+        >>> trades = alpaca_market_stocks_trades_latest('AAPL,MSFT,TSLA')
+        >>> for symbol, trade in trades['trades'].items():
+        ...     price = trade['p']
+        ...     size = trade['s']
+        ...     value = price * size
+        ...     timestamp = trade['t']
+        ...     
+        ...     print(f"{symbol} Latest Trade:")
+        ...     print(f"  Price: ${price:.2f}")
+        ...     print(f"  Size: {size:,} shares")
+        ...     print(f"  Value: ${value:,.2f}")
+        ...     print(f"  Time: {timestamp}")
+        
+    Note:
+        - Requires ALPACA_API_KEY and ALPACA_SECRET_KEY environment variables
+        - Trade prices represent actual execution levels
+        - Large trades may indicate institutional activity
+        - Use for current price discovery and market timing
+        - Trade conditions provide execution context
+    """
     try:
         if not ALPACA_API_KEY or not ALPACA_SECRET_KEY:
             raise ValueError("Alpaca API credentials not configured")
         
-        params = {'symbols': symbols}
+        params = {'symbols': ",".join(symbols)}
         
         url = f"{ALPACA_DATA_URL}/v2/stocks/trades/latest"
         response = requests.get(url, headers=get_headers(), params=params)
@@ -1222,7 +1409,49 @@ def alpaca_market_stocks_trades_latest(symbols: str) -> Dict[str, Any]:
 
 
 def alpaca_market_screener_most_actives(top: int = 10) -> Dict[str, Any]:
-    """Screen for most active stocks by volume"""
+    """Screen for most actively traded stocks by volume using Alpaca Market Data API.
+    
+    Identifies stocks with highest trading volume for the current or most recent
+    trading session. High volume often indicates significant news, earnings,
+    or institutional activity driving increased interest.
+    
+    Args:
+        top: Number of most active stocks to return. Range typically 1-50.
+            Defaults to 10. Larger values may take longer to process.
+            
+    Returns:
+        Dict[str, Any]: Most active stocks by volume containing:
+            - most_actives: List of active stocks, each containing:
+                - symbol: Stock symbol
+                - volume: Current day trading volume
+                - trade_count: Number of individual trades
+                - price: Current or last trade price
+                - change: Price change from previous close
+                - percent_change: Percentage change from previous close
+            - On error: {'error': 'error_description'}
+            
+    Raises:
+        ValueError: If Alpaca API credentials are not configured.
+        requests.exceptions.RequestException: If API request fails.
+        
+    Example:
+        >>> actives = alpaca_market_screener_most_actives(20)
+        >>> if actives and 'most_actives' in actives:
+        ...     stocks = actives['most_actives']
+        ...     print(f"Top {len(stocks)} Most Active Stocks:")
+        ...     for stock in stocks:
+        ...         volume_millions = stock['volume'] / 1_000_000
+        ...         print(f"{stock['symbol']}: {volume_millions:.1f}M shares")
+        ...         print(f"  Price: ${stock['price']:.2f} ({stock['percent_change']:+.2f}%)")
+        ...         print(f"  Trades: {stock['trade_count']:,}")
+        
+    Note:
+        - Requires ALPACA_API_KEY and ALPACA_SECRET_KEY environment variables
+        - Volume data reflects current or most recent trading session
+        - High volume may indicate breakout opportunities or news-driven moves
+        - Useful for momentum strategies and trend identification
+        - Data updated throughout trading day
+    """
     try:
         if not ALPACA_API_KEY or not ALPACA_SECRET_KEY:
             raise ValueError("Alpaca API credentials not configured")
@@ -1240,7 +1469,51 @@ def alpaca_market_screener_most_actives(top: int = 10) -> Dict[str, Any]:
 
 
 def alpaca_market_screener_top_gainers(top: int = 10) -> Dict[str, Any]:
-    """Screen for biggest stock gainers"""
+    """Screen for stocks with biggest percentage gains using Alpaca Market Data API.
+    
+    Identifies stocks with highest percentage price increases for the current
+    or most recent trading session. Useful for momentum strategies, breakout
+    detection, and identifying stocks benefiting from positive news or sentiment.
+    
+    Args:
+        top: Number of top gaining stocks to return. Range typically 1-50.
+            Defaults to 10. Larger values may include smaller gains.
+            
+    Returns:
+        Dict[str, Any]: Top gaining stocks containing:
+            - top_gainers: List of gaining stocks, each containing:
+                - symbol: Stock symbol
+                - percent_change: Percentage gain from previous close
+                - change: Absolute price change in dollars
+                - price: Current stock price
+                - volume: Trading volume for the session
+            - On error: {'error': 'error_description'}
+            
+    Raises:
+        ValueError: If Alpaca API credentials are not configured.
+        requests.exceptions.RequestException: If API request fails.
+        
+    Example:
+        >>> gainers = alpaca_market_screener_top_gainers(15)
+        >>> if gainers and 'top_gainers' in gainers:
+        ...     stocks = gainers['top_gainers']
+        ...     print(f"Top {len(stocks)} Gaining Stocks:")
+        ...     for stock in stocks:
+        ...         gain_pct = stock['percent_change']
+        ...         price_change = stock['change']
+        ...         current_price = stock['price']
+        ...         
+        ...         print(f"{stock['symbol']}:")
+        ...         print(f"  Gain: +{gain_pct:.2f}% (+${price_change:.2f})")
+        ...         print(f"  Price: ${current_price:.2f}")
+        
+    Note:
+        - Requires ALPACA_API_KEY and ALPACA_SECRET_KEY environment variables
+        - Percentage changes calculated from previous close
+        - High gains may indicate momentum or news-driven moves
+        - Useful for identifying breakout candidates and trend followers
+        - Consider volume for confirming strength of moves
+    """
     try:
         if not ALPACA_API_KEY or not ALPACA_SECRET_KEY:
             raise ValueError("Alpaca API credentials not configured")
@@ -1258,7 +1531,51 @@ def alpaca_market_screener_top_gainers(top: int = 10) -> Dict[str, Any]:
 
 
 def alpaca_market_screener_top_losers(top: int = 10) -> Dict[str, Any]:
-    """Screen for biggest stock losers"""
+    """Screen for stocks with biggest percentage losses using Alpaca Market Data API.
+    
+    Identifies stocks with largest percentage price decreases for the current
+    or most recent trading session. Useful for contrarian strategies, oversold
+    opportunity identification, and risk monitoring.
+    
+    Args:
+        top: Number of top losing stocks to return. Range typically 1-50.
+            Defaults to 10. Larger values may include smaller losses.
+            
+    Returns:
+        Dict[str, Any]: Top losing stocks containing:
+            - top_losers: List of losing stocks, each containing:
+                - symbol: Stock symbol
+                - percent_change: Percentage loss from previous close (negative)
+                - change: Absolute price change in dollars (negative)
+                - price: Current stock price
+                - volume: Trading volume for the session
+            - On error: {'error': 'error_description'}
+            
+    Raises:
+        ValueError: If Alpaca API credentials are not configured.
+        requests.exceptions.RequestException: If API request fails.
+        
+    Example:
+        >>> losers = alpaca_market_screener_top_losers(15)
+        >>> if losers and 'top_losers' in losers:
+        ...     stocks = losers['top_losers']
+        ...     print(f"Top {len(stocks)} Losing Stocks:")
+        ...     for stock in stocks:
+        ...         loss_pct = stock['percent_change']
+        ...         price_change = stock['change']
+        ...         current_price = stock['price']
+        ...         
+        ...         print(f"{stock['symbol']}:")
+        ...         print(f"  Loss: {loss_pct:.2f}% (${price_change:.2f})")
+        ...         print(f"  Price: ${current_price:.2f}")
+        
+    Note:
+        - Requires ALPACA_API_KEY and ALPACA_SECRET_KEY environment variables
+        - Percentage changes calculated from previous close
+        - Large losses may indicate oversold opportunities or fundamental issues
+        - Useful for contrarian strategies and value opportunity identification
+        - Consider reasons for decline before assuming oversold conditions
+    """
     try:
         if not ALPACA_API_KEY or not ALPACA_SECRET_KEY:
             raise ValueError("Alpaca API credentials not configured")
@@ -1275,8 +1592,66 @@ def alpaca_market_screener_top_losers(top: int = 10) -> Dict[str, Any]:
         return {"error": f"Top losers request failed: {str(e)}"}
 
 
-def alpaca_market_news(symbols: str = "", start: Optional[str] = None, end: Optional[str] = None, sort: str = "desc", include_content: bool = True) -> Dict[str, Any]:
-    """Financial news articles"""
+def alpaca_market_news(symbols: List[str] = [], start: Optional[str] = None, end: Optional[str] = None, sort: str = "desc", include_content: bool = True) -> Dict[str, Any]:
+    """Retrieve financial news articles and market information using Alpaca Market Data API.
+    
+    Fetches relevant financial news articles filtered by symbols, date ranges,
+    and other criteria. Essential for fundamental analysis, sentiment tracking,
+    and staying informed about market-moving events.
+    
+    Args:
+        symbols: List of symbols to filter news (e.g., ["AAPL","TSLA"]).
+            If empty, returns general market news without symbol filtering.
+        start: Start date for news articles in 'YYYY-MM-DD' format.
+            If None, returns recent news without date filtering.
+        end: End date for news articles in 'YYYY-MM-DD' format.
+            If None, includes news up to current date.
+        sort: Sort order for returned articles. Options:
+            - 'desc': Newest articles first (default)
+            - 'asc': Oldest articles first
+        include_content: Whether to include full article content.
+            If True, returns complete article text. If False, returns headlines only.
+            
+    Returns:
+        Dict[str, Any]: Financial news articles containing:
+            - news: List of news articles, each containing:
+                - id: Unique article identifier
+                - headline: Article headline/title
+                - summary: Brief article summary (if available)
+                - content: Full article content (if include_content=True)
+                - symbols: List of related stock symbols mentioned
+                - created_at: Publication timestamp in ISO 8601 format
+                - updated_at: Last update timestamp
+                - url: Original article URL
+                - source: News source/publisher
+            - next_page_token: Pagination token for additional articles
+            - On error: {'error': 'error_description'}
+            
+    Raises:
+        ValueError: If Alpaca API credentials are not configured.
+        requests.exceptions.RequestException: If API request fails.
+        
+    Example:
+        >>> # Get recent Apple news
+        >>> news = alpaca_market_news(['AAPL'], start='2024-01-01', include_content=False)
+        >>> if news and 'news' in news:
+        ...     articles = news['news']
+        ...     print(f"Found {len(articles)} Apple articles:")
+        ...     for article in articles[:5]:  # Show first 5
+        ...         symbols = ', '.join(article.get('symbols', []))
+        ...         print(f"Headline: {article['headline']}")
+        ...         print(f"Source: {article.get('source', 'N/A')}")
+        ...         print(f"Symbols: {symbols}")
+        ...         print(f"Published: {article['created_at']}")
+        ...         print()
+        
+    Note:
+        - Requires ALPACA_API_KEY and ALPACA_SECRET_KEY environment variables
+        - News articles updated continuously throughout trading day
+        - Symbol filtering helps focus on relevant company news
+        - Full content useful for sentiment analysis and detailed research
+        - Consider rate limits when requesting large date ranges
+    """
     try:
         if not ALPACA_API_KEY or not ALPACA_SECRET_KEY:
             raise ValueError("Alpaca API credentials not configured")
@@ -1287,7 +1662,7 @@ def alpaca_market_news(symbols: str = "", start: Optional[str] = None, end: Opti
         }
         
         if symbols:
-            params['symbols'] = symbols
+            params['symbols'] = ",".join(symbols)
         if start:
             params['start'] = start
         if end:

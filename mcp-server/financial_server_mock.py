@@ -31,89 +31,6 @@ app = Server("mcp-financial-server-mock")
 # Cache for generated schemas - populated once at startup
 _schema_cache = {}
 
-# Output schemas for financial functions
-OUTPUT_SCHEMAS = {
-    "alpaca_trading_positions": {
-        "type": "array",
-        "items": {
-            "type": "object",
-            "properties": {
-                "symbol": {"type": "string", "description": "Stock symbol"},
-                "qty": {"type": "number", "description": "Quantity held"},
-                "market_value": {"type": "number", "description": "Current market value"},
-                "unrealized_pl": {"type": "number", "description": "Unrealized P&L"}
-            }
-        }
-    },
-    "alpaca_market_stocks_bars": {
-        "type": "object",
-        "properties": {
-            "bars": {
-                "type": "object",
-                "description": "OHLC bars by symbol",
-                "patternProperties": {
-                    "^[A-Z]+$": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "t": {"type": "string", "description": "timestamp"},
-                                "o": {"type": "number", "description": "open price"},
-                                "h": {"type": "number", "description": "high price"},
-                                "l": {"type": "number", "description": "low price"},
-                                "c": {"type": "number", "description": "close price"},
-                                "v": {"type": "number", "description": "volume"}
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    },
-    "alpaca_market_stocks_snapshots": {
-        "type": "object",
-        "properties": {
-            "snapshots": {
-                "type": "object",
-                "patternProperties": {
-                    "^[A-Z]+$": {
-                        "type": "object",
-                        "properties": {
-                            "dailyBar": {"type": "object"},
-                            "latestQuote": {"type": "object"},
-                            "latestTrade": {"type": "object"}
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-
-def _get_output_schema_for_function(func_name: str) -> Dict[str, Any]:
-    """Get output schema for specific function"""
-    if func_name in OUTPUT_SCHEMAS:
-        return OUTPUT_SCHEMAS[func_name]
-    elif "positions" in func_name:
-        return OUTPUT_SCHEMAS["alpaca_trading_positions"]
-    elif "bars" in func_name:
-        return OUTPUT_SCHEMAS["alpaca_market_stocks_bars"] 
-    elif "snapshots" in func_name:
-        return OUTPUT_SCHEMAS["alpaca_market_stocks_snapshots"]
-    else:
-        return {"type": "object", "description": f"Output from {func_name}"}
-
-
-def _get_function_parameters(func_name: str) -> Dict[str, Any]:
-    """Get parameter definitions for specific function"""
-    return {
-        "required": [],
-        "optional": [],
-        "types": {}
-    }
-
-
 @app.list_tools()
 async def handle_list_tools() -> List[types.Tool]:
     """List all available financial tools using dynamic schema generation"""
@@ -122,11 +39,25 @@ async def handle_list_tools() -> List[types.Tool]:
     
     # Add all financial function tools
     for func_name, schema in _schema_cache.items():
-        tools.append(types.Tool(
-            name=func_name,
-            description=schema['description'],
-            inputSchema=schema['inputSchema']
-        ))
+        # Build Tool with all available schema fields
+        tool_kwargs = {
+            "name": func_name,
+            "description": schema['description'],
+            "inputSchema": schema['inputSchema']
+        }
+        
+        # Add title if present
+        if 'title' in schema:
+            tool_kwargs["title"] = schema['title']
+        
+        # Add optional fields if present
+        if 'outputSchema' in schema:
+            tool_kwargs["outputSchema"] = schema['outputSchema']
+        
+        if 'annotations' in schema:
+            tool_kwargs["annotations"] = schema['annotations']
+            
+        tools.append(types.Tool(**tool_kwargs))
     
     
     logger.debug(f"Returned {len(tools)} financial tools from cache")

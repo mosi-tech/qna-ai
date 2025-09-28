@@ -14,16 +14,17 @@ logger = logging.getLogger(__name__)
 
 
 def extract_schema_from_docstring(func) -> Optional[Dict[str, Any]]:
-    """Extract MCP tool schema from function docstring and type hints.
+    """Extract complete MCP tool schema from function docstring and type hints.
     
-    Parses Google-style docstrings to extract parameter descriptions
-    and combines with type hints to generate MCP tool schema.
+    Parses Google-style docstrings to extract parameter descriptions, return type info,
+    and annotations to generate complete MCP tool schema with all supported fields.
     
     Args:
         func: Function to analyze
         
     Returns:
-        Dict containing description and inputSchema for MCP tool
+        Dict containing complete MCP tool schema with description, inputSchema, 
+        outputSchema, and annotations
     """
     try:
         # Get function signature and type hints
@@ -34,29 +35,61 @@ def extract_schema_from_docstring(func) -> Optional[Dict[str, Any]]:
         if not docstring:
             return None
             
-        # Extract description (first paragraph of docstring)
+        # Parse docstring sections
         lines = docstring.strip().split('\n')
-        description = lines[0].strip()
         
-        # Find Args section
-        in_args = False
-        args_lines = []
+        # Extract title (first line) and description (following lines until first section)
+        title = lines[0].strip()
+        description_lines = []
         
-        for line in lines:
-            line = line.strip()
-            if line.startswith('Args:'):
-                in_args = True
-                continue
-            elif in_args and (line.startswith('Returns:') or line.startswith('Raises:') or line.startswith('Example:') or line.startswith('Note:')):
+        # Find description (lines after title until first section marker)
+        description_start = 1
+        for line in lines[1:]:
+            line_stripped = line.strip()
+            if line_stripped.startswith(('Args:', 'Parameters:', 'Returns:', 'Annotations:', 'Hints:', 'Raises:', 'Example:', 'Examples:', 'Note:', 'Notes:')):
                 break
-            elif in_args and line:
-                args_lines.append(line)
+            elif line_stripped:  # Non-empty line
+                description_lines.append(line_stripped)
+                description_start += 1
+            else:
+                description_start += 1
+        
+        # Join description lines, using title as fallback if no description
+        description = ' '.join(description_lines).strip() if description_lines else title
+        
+        # Initialize section trackers
+        sections = {
+            'args': [],
+            'returns': [],
+            'annotations': []
+        }
+        current_section = None
+        
+        # Parse all sections (start from where description ended)
+        section_start = description_start + len(description_lines)
+        for line in lines[section_start:]:
+            line_stripped = line.strip()
+            
+            if line_stripped.startswith('Args:'):
+                current_section = 'args'
+                continue
+            elif line_stripped.startswith('Returns:'):
+                current_section = 'returns'
+                continue
+            elif line_stripped.startswith('Annotations:') or line_stripped.startswith('Hints:'):
+                current_section = 'annotations'
+                continue
+            elif line_stripped.startswith(('Raises:', 'Example:', 'Note:', 'Examples:')):
+                current_section = None
+                continue
+            elif current_section and line_stripped:
+                sections[current_section].append(line_stripped)
         
         # Parse parameter descriptions
         param_descriptions = {}
         current_param = None
         
-        for line in args_lines:
+        for line in sections['args']:
             # Match parameter definition: "param_name: description"
             param_match = re.match(r'^(\w+):\s*(.+)', line)
             if param_match:
@@ -66,7 +99,7 @@ def extract_schema_from_docstring(func) -> Optional[Dict[str, Any]]:
                 # Continuation of previous parameter description
                 param_descriptions[current_param] += ' ' + line.strip()
         
-        # Build schema properties
+        # Build inputSchema properties
         properties = {}
         required = []
         
@@ -95,9 +128,11 @@ def extract_schema_from_docstring(func) -> Optional[Dict[str, Any]]:
             
             properties[param_name] = prop_schema
         
-        # Build complete schema
+        # Build complete MCP tool schema
         schema = {
-            "description": description,
+            "name": func.__name__,  # Include function name for completeness
+            "title": title,  # First line of docstring
+            "description": description,  # Detailed description
             "inputSchema": {
                 "type": "object",
                 "properties": properties
@@ -106,12 +141,111 @@ def extract_schema_from_docstring(func) -> Optional[Dict[str, Any]]:
         
         if required:
             schema["inputSchema"]["required"] = required
+        
+        # Add outputSchema if Returns section is present
+        if sections['returns']:
+            output_schema = _parse_returns_section(sections['returns'], type_hints.get('return'))
+            if output_schema:
+                schema["outputSchema"] = output_schema
+        
+        # Add annotations if present
+        annotations = _parse_annotations_section(sections['annotations'])
+        if annotations:
+            schema["annotations"] = annotations
             
         return schema
         
     except Exception as e:
         logger.warning(f"Failed to extract schema for {func.__name__}: {e}")
         return None
+
+
+def _parse_returns_section(returns_lines: List[str], return_type_hint=None) -> Optional[Dict[str, Any]]:
+    """Parse Returns section to generate outputSchema.
+    
+    Args:
+        returns_lines: Lines from the Returns section
+        return_type_hint: Type hint for return value
+        
+    Returns:
+        OutputSchema dict or None
+    """
+    if not returns_lines:
+        return None
+    
+    # Get return type
+    json_type = python_type_to_json_type(return_type_hint) if return_type_hint else "object"
+    
+    # Join all return description lines
+    description = ' '.join(returns_lines).strip()
+    
+    # Basic output schema structure
+    output_schema = {
+        "type": json_type,
+        "description": description
+    }
+    
+    # If it's an object type, try to infer structure from description
+    if json_type == "object" and any(keyword in description.lower() for keyword in ['dict', 'dictionary', 'object', 'json']):
+        # Look for property descriptions in the returns section
+        properties = {}
+        
+        # Simple pattern matching for common return formats
+        # Example: "Dict with 'result': calculation result, 'metadata': additional info"
+        prop_matches = re.findall(r"['\"](\w+)['\"]:\s*([^,]+)", description)
+        
+        if prop_matches:
+            for prop_name, prop_desc in prop_matches:
+                properties[prop_name] = {
+                    "type": "string",  # Default to string, could be enhanced
+                    "description": prop_desc.strip()
+                }
+            
+            output_schema["properties"] = properties
+    
+    return output_schema
+
+
+def _parse_annotations_section(annotations_lines: List[str]) -> Optional[Dict[str, Any]]:
+    """Parse Annotations/Hints section to generate tool annotations.
+    
+    Args:
+        annotations_lines: Lines from the Annotations section
+        
+    Returns:
+        Annotations dict or None
+    """
+    if not annotations_lines:
+        return None
+    
+    annotations = {}
+    
+    for line in annotations_lines:
+        # Parse annotation entries like "destructive: true" or "title: Calculate metrics"
+        if ':' in line:
+            key, value = line.split(':', 1)
+            key = key.strip().lower()
+            value = value.strip()
+            
+            # Map common annotation keys to MCP standard names
+            key_mapping = {
+                'destructive': 'destructiveHint',
+                'readonly': 'readOnlyHint', 
+                'read_only': 'readOnlyHint',
+                'idempotent': 'idempotentHint',
+                'open_world': 'openWorldHint',
+                'title': 'title'
+            }
+            
+            mcp_key = key_mapping.get(key, key)
+            
+            # Convert string boolean values
+            if value.lower() in ('true', 'false'):
+                annotations[mcp_key] = value.lower() == 'true'
+            else:
+                annotations[mcp_key] = value
+    
+    return annotations if annotations else None
 
 
 def python_type_to_json_type(python_type) -> str:
@@ -189,6 +323,8 @@ def initialize_schema_cache(functions_dict: Dict[str, Any]) -> Dict[str, Dict[st
             else:
                 # Fallback schema for functions without proper docstrings
                 schema_cache[func_name] = {
+                    "name": func_name,
+                    "title": func_name.replace('_', ' ').title(),
                     "description": f"Function: {func_name}",
                     "inputSchema": {
                         "type": "object",

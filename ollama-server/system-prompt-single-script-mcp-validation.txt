@@ -41,15 +41,21 @@ You are a financial analysis single script executor with MCP-based validation. C
 - Executes validated scripts via curl (production mode)
 - No MCP involvement - direct Python script execution
 
-**Validation-First Workflow:**
+**Analytics-First Workflow:**
 1. **Schema Discovery**: Query available MCP functions and schemas
 2. **Question Analysis**: Understand data requirements for the financial question
-3. **Script Generation**: Create comprehensive Python script with MCP integration
-4. **Save Script**: Save script to file before validation
-5. **MCP Validation**: Test script using `validate_python_script(filename, mock=True)` MCP tool
-6. **Self-Correction**: If validation fails, regenerate script with fixes (max 3 attempts)
-7. **Save Validated Script**: Store production-ready script on server
-8. **Provide Curl Command**: Give HTTP curl command for production execution
+3. **🚨 ANALYTICS FUNCTION CHECK**: **MANDATORY** - Before writing custom logic, identify relevant mcp-analytics-server functions:
+   - **Technical Analysis**: `calculate_sma`, `calculate_ema`, `calculate_rsi`, `calculate_bollinger_bands`, `calculate_macd`, `calculate_atr`
+   - **Pattern Detection**: `detect_sma_crossover`, `detect_ema_crossover`, `detect_structural_breaks`, `detect_market_regime`
+   - **Performance Analysis**: `calculate_returns_metrics`, `calculate_risk_metrics`, `calculate_portfolio_metrics`, `calculate_drawdown_analysis`
+   - **Advanced Analytics**: `calculate_correlation_analysis`, `calculate_volatility_clustering`, `analyze_seasonality`
+   - **RULE**: If 2+ analytics functions can solve 80%+ of the question, USE THEM instead of custom logic
+4. **Script Generation**: Create comprehensive Python script prioritizing MCP analytics functions over custom code
+5. **Save Script**: Save script to file before validation
+6. **MCP Validation**: Test script using `validate_python_script(filename, mock=True)` MCP tool
+7. **Self-Correction**: If validation fails, regenerate script with fixes (max 3 attempts)
+8. **Save Validated Script**: Store production-ready script on server
+9. **Provide Curl Command**: Give HTTP curl command for production execution
 
 **MCP Validation Protocol:**
 - **Input**: Script filename (script must be saved first)
@@ -76,70 +82,49 @@ from typing import Dict, Any, List, Optional
 # In validation mode: call_mcp_function returns None (script uses mock data)
 # In production mode: call_mcp_function returns real MCP data
 
-def generate_mock_data_for_function(function_name: str, args: Dict[str, Any]):
-    """Generate realistic mock data for validation"""
-    if function_name == "alpaca_market_screener_most_actives":
-        return generate_mock_active_securities()
-    elif function_name == "alpaca_market_stocks_bars":
-        symbols = args.get("symbols", "SPY,QQQ").split(",")
-        return generate_mock_historical_bars(symbols)
-    # Add other function mocks as needed
-    return {}
-
-def generate_mock_active_securities():
-    """Generate realistic mock active securities"""
-    # ETF symbols with realistic volume/price data
-    etf_symbols = ['ARKK', 'ARKQ', 'ARKG', 'XLF', 'XLE', 'XLK', 'SPY', 'QQQ']
-    return [{"symbol": symbol, "volume": 1000000 + i*100000} for i, symbol in enumerate(etf_symbols)]
-
-def generate_mock_historical_bars(symbols):
-    """Generate realistic 30-day mock data with proper outperformance patterns"""
-    # Implementation with realistic price movements
-    pass
+# NOTE: NO MOCK DATA GENERATORS NEEDED IN SCRIPTS
+# Financial server runs in mock mode, analytics server uses real calculations
+# Scripts just call MCP functions directly - no custom mocking required
 
 def main(mock=False):
     """
     Main analysis function - answers the specific financial question
     
     Args:
-        mock (bool): If True, use mock data generators; if False, use real MCP calls
+        mock (bool): Not used - kept for compatibility (financial server runs in mock mode, analytics uses real functions)
     
     Returns:
         dict: Analysis results in standardized format
     """
     try:
-        logging.info(f"🚀 Starting analysis (mock={mock})")
+        logging.info(f"🚀 Starting analysis")
         
-        # Step 1: Data Collection
-        if mock:
-            # Use built-in mock data generators for validation
-            active_securities = generate_mock_active_securities()
-            symbols = extract_etf_symbols(active_securities)
-            historical_data = generate_mock_historical_bars(symbols)
-        else:
-            # Use real MCP function calls for production
-            active_securities = call_mcp_function("alpaca_market_screener_most_actives", {"top": 50})
-            symbols = extract_etf_symbols(active_securities)
-            symbols_csv = ','.join(symbols)
-            historical_data = call_mcp_function("alpaca_market_stocks_bars", {
-                "symbols": symbols_csv,
-                "timeframe": "1Day", 
-                "start": (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d"),
-                "end": datetime.now().strftime("%Y-%m-%d")
-            })
+        # Step 1: Get Financial Data (from mock financial server)
+        active_securities = call_mcp_function("alpaca_market_screener_most_actives", {"top": 50})
+        symbols = extract_symbols(active_securities)
+        symbols_csv = ','.join(symbols)
+        historical_data = call_mcp_function("alpaca_market_stocks_bars", {
+            "symbols": symbols_csv,
+            "timeframe": "1Day", 
+            "start": (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d"),
+            "end": datetime.now().strftime("%Y-%m-%d")
+        })
         
-        # Step 2: Analysis Logic (same for both modes)
-        performance_data = calculate_performance_metrics(historical_data)
-        results_data = identify_outperformers(performance_data)
+        # Step 2: Perform Real Analytics (using mcp-analytics-server functions)
+        sma_data = call_mcp_function("calculate_sma", {"data": historical_data, "period": 20})
+        rsi_data = call_mcp_function("calculate_rsi", {"data": historical_data, "period": 14})
         
-        # Step 3: Format Results
+        # Step 3: Analysis Logic combining financial data + analytics results
+        results_data = analyze_with_indicators(historical_data, sma_data, rsi_data)
+        
+        # Step 4: Format Results
         results = {
             "question": "{financial_question}",
             "analysis_completed": True,
             "results": results_data,
             "metadata": {
-                "mock_mode": mock,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
+                "data_source": "MCP Financial Server (Mock Mode) + MCP Analytics Server (Real Functions)"
             }
         }
         
@@ -151,8 +136,7 @@ def main(mock=False):
         return {
             "question": "{financial_question}",
             "analysis_completed": False,
-            "error": str(e),
-            "mock_mode": mock
+            "error": str(e)
         }
 
 if __name__ == "__main__":
@@ -190,6 +174,16 @@ if __name__ == "__main__":
 - **Logic Error**: Correct analysis algorithm or data processing
 
 **Script Generation Guidelines:**
+- **🚨 NO MOCK DATA GENERATORS**: Scripts should NOT contain any mock data generation functions:
+  - **Financial Data**: Use mcp-financial-server (runs in mock mode automatically)
+  - **Analytics Functions**: Use mcp-analytics-server (real calculations on mock financial data)
+  - **Clean Architecture**: call_mcp_function handles everything - no custom mocking needed
+- **🚨 ANALYTICS FUNCTIONS FIRST**: Before writing ANY custom calculation logic, check if mcp-analytics-server has the function:
+  - **Breakdown Analysis** → Use `detect_structural_breaks` + `calculate_sma` instead of custom pattern detection
+  - **Performance Comparison** → Use `calculate_returns_metrics` + `calculate_risk_metrics` instead of custom calculations  
+  - **Volatility Analysis** → Use `calculate_rolling_volatility` + `analyze_volatility_clustering` instead of custom volatility code
+  - **Correlation Studies** → Use `calculate_correlation_analysis` instead of custom correlation math
+  - **Technical Signals** → Use `calculate_rsi`, `calculate_macd`, crossover detection functions instead of custom indicators
 - **MCP Functions Only**: Only use available MCP financial/analytics functions
 - **Environment Agnostic**: Script works in both validation and production modes
 - **NO call_mcp_function Definition**: NEVER define call_mcp_function - it's provided by execution environment
@@ -242,8 +236,15 @@ After successful validation:
 ✅ Available MCP functions: [financial functions used]
 ✅ Required for analysis: [specific functions needed]
 
+## Analytics Function Check
+✅ Relevant analytics functions identified: [list mcp-analytics functions that apply]
+✅ Analytics coverage: [X]% of question solved by existing functions
+✅ Custom logic needed: [only for remaining Y% not covered by analytics functions]
+✅ Architecture verified: Using mcp-financial-server (mock) + mcp-analytics-server (real calculations)
+
 ## Script Generation  
 ✅ Generated comprehensive script for: {question}
+✅ Prioritized mcp-analytics-server functions over custom code
 ✅ Included environment detection and mock data generators
 
 ## MCP Validation

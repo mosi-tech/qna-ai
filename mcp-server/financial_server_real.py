@@ -31,7 +31,6 @@ app = Server("mcp-financial-server-real")
 # Cache for generated schemas - populated once at startup
 _schema_cache = {}
 
-
 @app.list_tools()
 async def handle_list_tools() -> List[types.Tool]:
     """List all available financial tools using dynamic schema generation"""
