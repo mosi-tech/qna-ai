@@ -19,7 +19,7 @@ import mcp.types as types
 
 # Import mock financial functions and schema utilities
 from financial.functions_mock import MOCK_FINANCIAL_FUNCTIONS
-from schema_utils import initialize_schema_cache
+from schema_utils import initialize_schema_cache, get_function_docstring
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -59,6 +59,21 @@ async def handle_list_tools() -> List[types.Tool]:
             
         tools.append(types.Tool(**tool_kwargs))
     
+    # Add get_function_docstring tool
+    tools.append(types.Tool(
+        name="get_function_docstring",
+        description="Get complete Google docstring for any financial function - use when function schema is unclear",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "function_name": {
+                    "type": "string",
+                    "description": "Name of the financial function to get docstring for"
+                }
+            },
+            "required": ["function_name"]
+        }
+    ))
     
     logger.debug(f"Returned {len(tools)} financial tools from cache")
     return tools
@@ -70,8 +85,18 @@ async def handle_call_tool(name: str, arguments: Dict[str, Any]) -> List[types.T
     try:
         logger.info(f"Executing mock tool: {name} with arguments: {arguments}")
         
+        # Handle get_function_docstring special tool
+        if name == "get_function_docstring":
+            function_name = arguments.get("function_name")
+            result = get_function_docstring(function_name, MOCK_FINANCIAL_FUNCTIONS)
+            
+            return [types.TextContent(
+                type="text",
+                text=json.dumps(result, indent=2)
+            )]
+        
         # Handle financial functions
-        if name in MOCK_FINANCIAL_FUNCTIONS:
+        elif name in MOCK_FINANCIAL_FUNCTIONS:
             # Execute the function
             function = MOCK_FINANCIAL_FUNCTIONS[name]
             result = function(**arguments)

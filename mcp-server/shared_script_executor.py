@@ -12,11 +12,13 @@ import os
 import sys
 import subprocess
 import tempfile
+import shutil
 from datetime import datetime
 from typing import Dict, Any, Optional
 
 # Add paths for direct MCP imports
-sys.path.append(os.path.dirname(__file__))
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, current_dir)
 
 # Direct imports from MCP modules
 try:
@@ -46,23 +48,29 @@ import os
 import json
 import logging
 
-# Add MCP paths
-sys.path.append(os.path.dirname(__file__))
+# Add MCP server directory to Python path
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = "/Users/shivc/Documents/Workspace/JS/qna-ai-admin"
+mcp_server_dir = os.path.join(project_root, 'mcp-server')
+
+# Add both possible locations to path
+for path in [script_dir, mcp_server_dir]:
+    if os.path.exists(path) and path not in sys.path:
+        sys.path.insert(0, path)
+
+import financial.functions_mock as financial_lib
+import analytics as analytics_lib
 
 def call_mcp_function(function_name: str, args: dict):
     """Call real MCP functions in production mode"""
     try:
         # Direct imports for production
-        if function_name.startswith('alpaca_') or function_name.startswith('eodhd_'):
-            import financial.functions_mock as financial_lib
-            if hasattr(financial_lib, function_name):
+        if hasattr(financial_lib, function_name):
                 func = getattr(financial_lib, function_name)
                 result = func(**args)
                 logging.info(f"✅ MCP call successful: {function_name}")
                 return result
-        elif function_name.startswith('calculate_'):
-            import analytics as analytics_lib
-            if hasattr(analytics_lib, function_name):
+        elif hasattr(analytics_lib, function_name):
                 func = getattr(analytics_lib, function_name)
                 result = func(**args)
                 logging.info(f"✅ MCP call successful: {function_name}")
@@ -79,18 +87,49 @@ def call_mcp_function(function_name: str, args: dict):
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 '''
     else:
-        # Validation mode: Stub MCP functions (script should use mock=True)
+        # Validation mode: Use actual modules but with mock data
         return '''
+import sys
+import os
 import json
 import logging
 
+# Add MCP server directory to Python path
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = "/Users/shivc/Documents/Workspace/JS/qna-ai-admin"
+mcp_server_dir = os.path.join(project_root, 'mcp-server')
+
+# Add both possible locations to path
+for path in [script_dir, mcp_server_dir]:
+    if os.path.exists(path) and path not in sys.path:
+        sys.path.insert(0, path)
+
+import financial.functions_mock as financial_lib
+import analytics as analytics_lib
+
 def call_mcp_function(function_name: str, args: dict):
-    """
-    Stub MCP function for validation mode.
-    Scripts should use mock=True and not call this.
-    """
-    logging.warning(f"⚠️ call_mcp_function called during validation: {function_name}")
-    return None
+    """Call actual MCP functions in validation mode"""
+    try:
+        # Check financial functions first
+        if hasattr(financial_lib, function_name):
+            func = getattr(financial_lib, function_name)
+            result = func(**args)
+            logging.info(f"✅ MCP call successful: {function_name}")
+            return result
+        elif hasattr(analytics_lib, function_name):
+            func = getattr(analytics_lib, function_name)
+            result = func(**args)
+            logging.info(f"✅ MCP call successful: {function_name}")
+            return result
+        
+        logging.error(f"❌ Unknown MCP function: {function_name}")
+        return None
+        
+    except Exception as e:
+        import traceback
+        logging.error(f"❌ MCP call failed {function_name}: {e}")
+        logging.error(f"Full traceback: {traceback.format_exc()}")
+        return None
 
 # Validation logging  
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -108,107 +147,106 @@ def execute_script(script_content: str, mock_mode: bool = True, timeout: int = 3
     Returns:
         Dict with execution results
     """
-    
+
     logger.info(f"🚀 Executing script (mock={mock_mode}, timeout={timeout}s)")
     
     try:
-        # Get project root directory
-        project_root = os.getcwd()
+        # Get project root directory - hardcoded for MCP testing
+        project_root = "/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server"
         
         # Create MCP injection wrapper
         mcp_wrapper = create_mcp_injection_wrapper(production_mode=not mock_mode)
         enhanced_script = mcp_wrapper + "\n" + script_content
-
+        
         # logger.info(enhanced_script)
         
-        # Create temporary file in project directory instead of system temp
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False, dir=project_root) as f:
+        # Create temporary file in project directory with predictable name for debugging
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        script_path = os.path.join(project_root, "temp", f"temp_validation_script_{timestamp}.py")
+        with open(script_path, 'w') as f:
             f.write(enhanced_script)
-            script_path = f.name
         
-        try:
-            # Execute script with appropriate flags
-            cmd = [sys.executable, script_path]
-            if mock_mode:
-                cmd.append("--mock")
-            
-            start_time = datetime.now()
-            
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=timeout,
-                cwd=project_root
-            )
+        # Execute script with appropriate flags
+        cmd = [sys.executable, script_path]
+        if mock_mode:
+            cmd.append("--mock")
+        
+        start_time = datetime.now()
+        
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            cwd=project_root
+        )
 
-            print(result)
-            
-            execution_time = (datetime.now() - start_time).total_seconds()
-            
-            if result.returncode == 0:
-                # Execution successful
-                try:
-                    # Try to parse as JSON
-                    output_data = json.loads(result.stdout)
+        execution_time = (datetime.now() - start_time).total_seconds()
+        
+        if result.returncode == 0:
+
+            # Subprocess executed without crashing
+            try:
+                # Try to parse as JSON
+                output_data = json.loads(result.stdout)
+                
+                # Check if the script itself reports analysis success/failure
+                script_success = output_data.get("analysis_completed", True)
+                script_error = output_data.get("error", None)
+                
+                if script_success:
                     logger.info("✅ Script executed successfully")
-                    
-                    # In mock mode, validate schema but don't return full data
-                    if mock_mode:
-                        try:
-                            from output_schema_validator import validate_output_schema
-                            schema_validation = validate_output_schema(output_data, "server_display")
-                            
-                            return {
-                                "success": True,
-                                "output": {"schema_validation": schema_validation},
-                                "execution_time": execution_time,
-                                "mock_mode": mock_mode
-                            }
-                        except ImportError:
-                            # Fallback if schema validator not available
-                            logger.warning("Schema validator not available, returning success only")
-                            return {
-                                "success": True,
-                                "output": {"validation_note": "Schema validation not available"},
-                                "execution_time": execution_time,
-                                "mock_mode": mock_mode
-                            }
-                    else:
-                        # Production mode: return full output
-                        return {
-                            "success": True,
-                            "output": output_data,
-                            "execution_time": execution_time,
-                            "mock_mode": mock_mode
-                        }
-                except json.JSONDecodeError:
-                    # Non-JSON output
-                    return {
-                        "success": True,
-                        "output": {"raw_output": result.stdout},
+                else:
+                    logger.warning(f"❌ Script analysis failed: {script_error}")
+                
+                # In mock mode, validate schema but check script success
+                if mock_mode:
+                    # Validation mode: return script success and include error if present
+                    result_data = {
+                        "success": script_success,
                         "execution_time": execution_time,
                         "mock_mode": mock_mode
                     }
-            else:
-                # Execution failed
-                error_output = result.stderr.strip() or result.stdout.strip()
-                logger.warning(f"❌ Script execution failed: {error_output}")
-                
+                    if not script_success and script_error:
+                        result_data["success"] = False
+                        result_data["error"] = script_error
+                        result_data["output"] = output_data
+                        # Include error_traceback if present
+                        if "error_traceback" in output_data:
+                            result_data["error_traceback"] = output_data["error_traceback"]
+                    return result_data
+                else:
+                    # Production mode: return script success and full output
+                    return {
+                        "success": script_success,
+                        "output": output_data,
+                        "execution_time": execution_time,
+                        "mock_mode": mock_mode
+                    }
+            except json.JSONDecodeError:
+                # Non-JSON output - treat as failure in validation
+                logger.warning("❌ Script produced non-JSON output")
                 return {
                     "success": False,
-                    "error": error_output,
-                    "error_type": classify_error(error_output),
+                    "output": {"raw_output": result.stdout},
                     "execution_time": execution_time,
-                    "mock_mode": mock_mode
+                    "mock_mode": mock_mode,
+                    "error": "Script produced non-JSON output"
                 }
-                
-        finally:
-            # Cleanup temporary file
-            try:
-                os.unlink(script_path)
-            except:
-                pass
+        else:
+            # Execution failed
+            error_output = result.stderr.strip() or result.stdout.strip()
+            logger.warning(f"❌ Script execution failed: {error_output}")
+            
+            return {
+                "success": False,
+                "error": error_output,
+                "error_type": classify_error(error_output),
+                "execution_time": execution_time,
+                "mock_mode": mock_mode,
+                "full_stderr": result.stderr,
+                "full_stdout": result.stdout
+            }
                 
     except subprocess.TimeoutExpired:
         logger.error(f"❌ Script execution timed out after {timeout}s")

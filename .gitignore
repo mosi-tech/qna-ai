@@ -65,3 +65,4 @@ venv.bak/
 .Trashes
 ehthumbs.db
 Thumbs.db
+mcp-server/temp/*

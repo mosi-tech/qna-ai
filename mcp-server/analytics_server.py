@@ -27,7 +27,7 @@ import mcp.types as types
 
 # Import analytics functions and schema utilities
 import analytics
-from schema_utils import initialize_schema_cache, extract_schema_from_docstring, python_type_to_json_type
+from schema_utils import initialize_schema_cache, extract_schema_from_docstring, python_type_to_json_type, get_function_docstring
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -38,26 +38,25 @@ app = Server("mcp-analytics-server")
 
 # Cache for generated schemas - populated once at startup
 _schema_cache = {}
+_analytics_functions = {}
 
 def initialize_analytics_schema_cache():
     """Initialize the schema cache at startup to avoid repeated generation."""
-    global _schema_cache
+    global _schema_cache, _analytics_functions
     
     # Automatically discover all analytics functions
-    all_functions = {}
+    _analytics_functions = {}
     
     # Get all callable functions from the analytics module
     for name, obj in inspect.getmembers(analytics):
         if (inspect.isfunction(obj) and 
-            not name.startswith('_') and  # Skip private functions
-            hasattr(obj, '__module__') and  # Has module info
-            obj.__module__ and obj.__module__.startswith('analytics.')):  # From analytics package
-            all_functions[name] = obj
+            not name.startswith('_')):  # Skip private functions only
+            _analytics_functions[name] = obj
     
-    logger.info(f"Auto-discovered {len(all_functions)} analytics functions")
+    logger.info(f"Auto-discovered {len(_analytics_functions)} analytics functions")
     
     # Use shared schema utility
-    _schema_cache = initialize_schema_cache(all_functions)
+    _schema_cache = initialize_schema_cache(_analytics_functions)
 
 
 
@@ -90,6 +89,21 @@ async def handle_list_tools() -> List[types.Tool]:
             
         tools.append(types.Tool(**tool_kwargs))
     
+    # Add get_function_docstring tool
+    tools.append(types.Tool(
+        name="get_function_docstring",
+        description="Get complete Google docstring for any analytics function - use when function schema is unclear",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "function_name": {
+                    "type": "string",
+                    "description": "Name of the analytics function to get docstring for"
+                }
+            },
+            "required": ["function_name"]
+        }
+    ))
     
     logger.debug(f"Returned {len(tools)} analytics tools from cache")
     return tools
@@ -101,8 +115,18 @@ async def handle_call_tool(name: str, arguments: Dict[str, Any]) -> List[types.T
     try:
         logger.info(f"Executing analytics tool: {name} with arguments keys: {list(arguments.keys())}")
         
+        # Handle get_function_docstring special tool
+        if name == "get_function_docstring":
+            function_name = arguments.get("function_name")
+            result = get_function_docstring(function_name, _analytics_functions)
+            
+            return [types.TextContent(
+                type="text",
+                text=json.dumps(result, indent=2)
+            )]
+        
         # Handle analytics functions
-        if hasattr(analytics, name):
+        elif hasattr(analytics, name):
             # Execute the analytics function
             function = getattr(analytics, name)
             result = function(**arguments)

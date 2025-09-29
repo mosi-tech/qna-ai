@@ -57,23 +57,10 @@ def validate_server_display_schema(output_data: dict) -> dict:
             "analysis_status": "failed_with_error"
         }
     
-    # For successful analysis, check display fields
-    expected_display_fields = ["outperforming_etfs", "benchmarks", "summary"]
-    display_field_status = {}
-    
-    for field in expected_display_fields:
-        if field in output_data:
-            # Validate field structure without exposing data
-            field_valid = validate_display_field_structure(field, output_data[field])
-            display_field_status[field] = field_valid
-        else:
-            display_field_status[field] = {"present": False}
-    
     return {
         "valid": True,
         "schema_type": "server_display", 
         "analysis_status": "completed",
-        "display_fields": display_field_status,
         "metadata_present": "metadata" in output_data
     }
 

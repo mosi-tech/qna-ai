@@ -13,5 +13,6 @@ from .market import *
 from .portfolio import *
 from .risk import *
 from .signals import *
+from .analysis import *
 
 __version__ = "2.0.0"

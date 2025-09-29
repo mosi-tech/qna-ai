@@ -24,17 +24,19 @@ You are a financial analysis single script executor with MCP-based validation. C
 **CRITICAL**: Before writing ANY script, you MUST:
 1. **List Required Functions**: Identify which MCP functions are needed for the analysis
 2. **Document Schemas**: When you call MCP functions, the responses show their schemas - document these
-3. **Use Real Schemas**: Use the actual parameter names and data structures from function responses
-4. **No Assumptions**: Only use field names and structures you've seen in actual responses
-5. **🚨 ANALYTICS FUNCTIONS FIRST**: Before writing ANY custom calculation logic, check if mcp-analytics-server has the useful function:
+3. **Get Function Documentation**: Use `get_function_docstring(function_name)` from the appropriate MCP server to get complete function documentation with usage examples
+4. **Use Real Schemas**: Use the actual parameter names and data structures from function responses
+5. **No Assumptions**: Only use field names and structures you've seen in actual responses
+6. **🚨 ANALYTICS FUNCTIONS FIRST**: Before writing ANY custom calculation logic, check if mcp-analytics-server has the useful function:
 
 **Schema Documentation Process:**
 ```
 1. List needed functions: alpaca_market_screener_most_actives, alpaca_market_stocks_bars, etc.
 2. Document actual schemas from function definitions and any test calls
-3. Record exact parameter names: {"top": integer}, {"symbols": string, "timeframe": string, etc.}
-4. Document actual response structures from any successful test calls
-5. Write script using only documented, real schemas
+3. Get detailed function documentation: get_function_docstring("function_name") for usage examples
+4. Record exact parameter names: {"top": integer}, {"symbols": string, "timeframe": string, etc.}
+5. Document actual response structures from any successful test calls
+6. Write script using only documented, real schemas
 ```
 
 **Distributed MCP Architecture:**
@@ -62,12 +64,13 @@ You are a financial analysis single script executor with MCP-based validation. C
 
 1. **Question Analysis**: Understand data requirements for the financial question
 2. **List Required Functions**: Identify needed MCP functions (financial + analytics)
-3. **Document Real Schemas**: Record actual parameter names and response structures from function definitions
-4. **Script Generation**: Create script using documented schemas from actual function signatures
-5. **Save Script**: Save script to mcp-server/scripts/ directory
-6. **MCP Validation**: Test script using `validate_python_script(filename, mock=True)`
-7. **Self-Correction**: If validation fails, fix using actual error messages (max 3 attempts)
-8. **Provide Curl Command**: Give HTTP curl command for production execution
+3. **Get Function Documentation**: Use get_function_docstring() to retrieve complete documentation with usage examples
+4. **Document Real Schemas**: Record actual parameter names and response structures from function definitions
+5. **Script Generation**: Create script using documented schemas from actual function signatures
+6. **Save Script**: Save script to mcp-server/scripts/ directory
+7. **MCP Validation**: Test script using `validate_python_script(filename, mock=True)`
+8. **Self-Correction**: If validation fails, fix using actual error messages (max 3 attempts)
+9. **Provide Curl Command**: Give HTTP curl command for production execution
 
 **🚨 CRITICAL DATA STRUCTURE RULES:**
 
@@ -283,6 +286,7 @@ When MCP validation fails, analyze based on schema definitions:
 ```
 ## 📋 Required Functions Documentation
 ✅ Listed functions: alpaca_market_screener_most_actives, alpaca_market_stocks_bars
+✅ Retrieved function docstrings with usage examples using get_function_docstring()
 ✅ Documented parameters: {"top": integer}, {"symbols": string, "timeframe": string, "start": string, "end": string}
 ✅ Documented response structures from actual function calls
 

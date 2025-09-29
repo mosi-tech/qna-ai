@@ -173,8 +173,10 @@ def _parse_returns_section(returns_lines: List[str], return_type_hint=None) -> O
     if not returns_lines:
         return None
     
-    # Get return type
-    json_type = python_type_to_json_type(return_type_hint) if return_type_hint else "object"
+    # Get return type - ensure it's always "object" for MCP compliance
+    # MCP outputSchema type must be "object", not array or other types
+    # Note: return_type_hint is preserved for future extensibility
+    json_type = "object"
     
     # Join all return description lines
     description = ' '.join(returns_lines).strip()
@@ -299,6 +301,64 @@ def python_type_to_json_type(python_type) -> str:
         return "object"
     else:
         return "string"
+
+
+def get_function_docstring(function_name: str, functions_dict: Dict[str, Any]) -> Dict[str, Any]:
+    """Get complete Google docstring for any MCP function.
+    
+    Returns the full docstring with examples, parameter descriptions, return types,
+    and usage information. This provides comprehensive documentation for script generation.
+    
+    Args:
+        function_name: Name of the function to get docstring for
+        functions_dict: Dictionary of available functions
+        
+    Returns:
+        Dict containing:
+            - success (bool): Whether docstring retrieval succeeded
+            - function_name (str): Name of the function
+            - docstring (str): Complete Google-style docstring
+            - signature (str): Function signature with type hints
+            - module (str): Module where function is defined
+    """
+    try:
+        if function_name not in functions_dict:
+            return {
+                "success": False,
+                "error": f"Function '{function_name}' not found",
+                "available_functions": list(functions_dict.keys())
+            }
+        
+        func = functions_dict[function_name]
+        
+        # Get complete docstring
+        docstring = inspect.getdoc(func)
+        if not docstring:
+            docstring = f"No docstring available for {function_name}"
+        
+        # Get function signature
+        sig = inspect.signature(func)
+        signature = f"def {function_name}{sig}"
+        
+        # Get module information
+        module = getattr(func, '__module__', 'unknown')
+        
+        return {
+            "success": True,
+            "function_name": function_name,
+            "docstring": docstring,
+            "signature": signature,
+            "module": module,
+            "usage_note": "This docstring contains complete parameter descriptions, return types, and examples for reliable script generation."
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get docstring for {function_name}: {e}")
+        return {
+            "success": False,
+            "error": f"Failed to retrieve docstring: {str(e)}",
+            "function_name": function_name
+        }
 
 
 def initialize_schema_cache(functions_dict: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:

@@ -117,22 +117,10 @@ async def validate_script(arguments: dict) -> list[TextContent]:
         # Use absolute path as provided
         script_path = script_filename
     else:
-        # Try multiple possible script locations
-        possible_paths = [
-            os.path.join("scripts", script_filename),  # Current working directory/scripts
-            os.path.join("mcp-server", "scripts", script_filename),  # mcp-server/scripts
-            script_filename  # Current working directory
-        ]
-        
-        script_path = None
-        for path in possible_paths:
-            if os.path.exists(path):
-                script_path = path
-                break
-        
-        if script_path is None:
-            script_path = os.path.join("scripts", script_filename)  # Default for error message
-    
+        # Get the directory where this server script is located
+        server_dir = os.path.dirname(os.path.abspath(__file__))
+        script_path =  os.path.join(server_dir, "scripts", script_filename)  # current_dir/
+
     if not os.path.exists(script_path):
         return [TextContent(
             type="text",
@@ -156,6 +144,7 @@ async def validate_script(arguments: dict) -> list[TextContent]:
             }, indent=2)
         )]
     
+
     # First, check for forbidden imports
     forbidden_check = check_forbidden_imports(script_content)
     if not forbidden_check["valid"]:
@@ -163,6 +152,7 @@ async def validate_script(arguments: dict) -> list[TextContent]:
             type="text",
             text=json.dumps(forbidden_check, indent=2)
         )]
+    
     
     # Execute script in validation mode (mock=True)
     execution_result = execute_script(
@@ -173,33 +163,22 @@ async def validate_script(arguments: dict) -> list[TextContent]:
     
     # Convert execution result to validation result
     if execution_result["success"]:
-        # Extract schema validation info if available
-        output_info = execution_result.get("output", {})
-        schema_validation = output_info.get("schema_validation", {})
-        
-        if schema_validation:
-            validation_result = {
-                "valid": schema_validation.get("valid", True),
-                "message": "Script executed successfully in validation environment",
-                "schema_compliance": schema_validation
-            }
-            if not schema_validation.get("valid", True):
-                validation_result["error"] = schema_validation.get("error", "Schema validation failed")
-                logger.warning(f"❌ Schema validation failed: {schema_validation.get('error')}")
-            else:
-                logger.info("✅ Script validation and schema compliance successful")
-        else:
-            validation_result = {
-                "valid": True,
-                "message": "Script executed successfully in validation environment"
-            }
-            logger.info("✅ Script validation successful")
+        validation_result = {
+            "valid": True,
+            "message": "Script executed successfully in validation environment",
+            "execution_time": execution_result.get("execution_time")
+        }
+        logger.info("✅ Script validation successful")
     else:
         validation_result = {
             "valid": False,
-            "error": execution_result["error"],
-            "error_type": execution_result["error_type"]
+            "error": execution_result["error"]
         }
+        # Include error_traceback if present
+        if "error_traceback" in execution_result:
+            validation_result["error_traceback"] = execution_result["error_traceback"]
+        if "error_type" in execution_result:
+            validation_result["error_type"] = execution_result["error_type"]
         logger.warning(f"❌ Script validation failed: {execution_result['error']}")
     
     return [TextContent(

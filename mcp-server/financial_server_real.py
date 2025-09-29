@@ -19,7 +19,7 @@ import mcp.types as types
 
 # Import real financial functions and schema utilities
 from financial.functions_real import REAL_FINANCIAL_FUNCTIONS
-from schema_utils import initialize_schema_cache
+from schema_utils import initialize_schema_cache, get_function_docstring
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -44,6 +44,22 @@ async def handle_list_tools() -> List[types.Tool]:
             inputSchema=schema['inputSchema']
         ))
     
+    # Add get_function_docstring tool
+    tools.append(types.Tool(
+        name="get_function_docstring",
+        description="Get complete Google docstring for any financial function - use when function schema is unclear",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "function_name": {
+                    "type": "string",
+                    "description": "Name of the financial function to get docstring for"
+                }
+            },
+            "required": ["function_name"]
+        }
+    ))
+    
     logger.debug(f"Returned {len(tools)} financial tools from cache")
     return tools
 
@@ -54,7 +70,17 @@ async def handle_call_tool(name: str, arguments: Dict[str, Any]) -> List[types.T
     try:
         logger.info(f"Executing real tool: {name} with arguments: {arguments}")
         
-        if name not in REAL_FINANCIAL_FUNCTIONS:
+        # Handle get_function_docstring special tool
+        if name == "get_function_docstring":
+            function_name = arguments.get("function_name")
+            result = get_function_docstring(function_name, REAL_FINANCIAL_FUNCTIONS)
+            
+            return [types.TextContent(
+                type="text",
+                text=json.dumps(result, indent=2)
+            )]
+        
+        elif name not in REAL_FINANCIAL_FUNCTIONS:
             return [types.TextContent(
                 type="text",
                 text=json.dumps({
