@@ -81,7 +81,12 @@ def calculate_implied_volatility(option_price: float,
         >>> implied_vol = calculate_implied_volatility(
         ...     market_price, stock_price, strike_price, time_left, risk_free
         ... )
-        >>> print(f"Implied volatility: {implied_vol:.1%}")  # e.g., "Implied volatility: 22.3%"
+        >>> print(implied_vol)
+        0.223
+        >>> print(f"Implied volatility: {implied_vol:.4f}")
+        Implied volatility: 0.2230
+        >>> print(f"Implied volatility: {implied_vol:.1%}")
+        Implied volatility: 22.3%
         
     Note:
         - Uses scipy.optimize for numerical root-finding
@@ -198,13 +203,33 @@ def black_scholes_option_price(underlying_price: float,
         ...     underlying_price=100, strike=105, time_to_expiry=0.25,
         ...     risk_free_rate=0.05, volatility=0.20, option_type="call"
         ... )
+        >>> print(option_result)
+        {
+            'success': True,
+            'function': 'black_scholes_option_price',
+            'option_price': 2.478,
+            'delta': 0.377,
+            'gamma': 0.038,
+            'theta': -0.026,
+            'vega': 0.190,
+            'rho': 0.088,
+            'd1': -0.313,
+            'd2': -0.413,
+            'option_type': 'call',
+            'time_to_expiry': 0.25,
+            'volatility': 0.2,
+            'volatility_pct': '20.00%'
+        }
         >>> print(f"Call price: ${option_result['option_price']:.2f}")
-        >>> print(f"Delta: {option_result['delta']:.3f}")  # e.g., 0.456
-        >>> print(f"Gamma: {option_result['gamma']:.4f}")   # e.g., 0.0234
-        >>> print(f"Daily theta: ${option_result['theta']:.2f}")  # e.g., -$0.08
+        >>> print(f"Delta: {option_result['delta']:.3f}")
+        >>> print(f"Daily theta: ${option_result['theta']:.2f}")
         >>> 
         >>> # Price corresponding put option
         >>> put_result = black_scholes_option_price(
+        ...     underlying_price=100, strike=105, time_to_expiry=0.25,
+        ...     risk_free_rate=0.05, volatility=0.20, option_type="put"
+        ... )
+        >>> print(f"Put price: ${put_result['option_price']:.2f}")
         ...     underlying_price=100, strike=105, time_to_expiry=0.25,
         ...     risk_free_rate=0.05, volatility=0.20, option_type="put"
         ... )

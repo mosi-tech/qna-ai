@@ -35,6 +35,7 @@ app.add_middleware(
 class ScriptExecutionRequest(BaseModel):
     script_name: str
     production: bool = True
+    parameters: Optional[Dict[str, Any]] = None
 
 class ScriptContentRequest(BaseModel):
     script_content: str
@@ -71,7 +72,8 @@ async def execute_script_endpoint(request: ScriptExecutionRequest) -> ExecutionR
         execution_result = execute_script(
             script_content=script_content,
             mock_mode=False,  # Production mode
-            timeout=300  # 5 minute timeout
+            timeout=300,  # 5 minute timeout
+            parameters=request.parameters
         )
         
         if execution_result["success"]:

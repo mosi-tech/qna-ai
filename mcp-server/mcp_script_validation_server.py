@@ -56,6 +56,10 @@ async def handle_list_tools() -> list[Tool]:
                         "type": "integer",
                         "default": 30,
                         "description": "Execution timeout in seconds"
+                    },
+                    "parameters": {
+                        "type": "object",
+                        "description": "Optional parameters to inject into script for validation"
                     }
                 },
                 "required": ["script_filename"],
@@ -106,6 +110,7 @@ async def validate_script(arguments: dict) -> list[TextContent]:
     """Validate Python script using shared execution logic"""
     script_filename = arguments.get("script_filename", "")
     timeout = arguments.get("timeout", 30)
+    parameters = arguments.get("parameters", None)
     
     logger.info(f"🧪 Validating Python script: {script_filename} (timeout={timeout}s)")
     
@@ -158,7 +163,8 @@ async def validate_script(arguments: dict) -> list[TextContent]:
     execution_result = execute_script(
         script_content=script_content,
         mock_mode=True,  # Always validation mode
-        timeout=timeout
+        timeout=timeout,
+        parameters=parameters
     )
     
     # Convert execution result to validation result

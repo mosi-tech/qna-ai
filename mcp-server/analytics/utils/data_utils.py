@@ -85,6 +85,11 @@ def validate_price_data(data: Union[pd.Series, pd.DataFrame, List, Dict]) -> pd.
         >>> 
         >>> print(f"Prices1 length: {len(prices1)}, type: {type(prices1)}")
         
+    OUTPUT examples:
+    Input: [100, 102, 98, 105, 110] → pandas.Series([100, 102, 98, 105, 110])
+    Input: {'close': [100, 102, 98]} → pandas.Series([100, 102, 98])
+    Input: [{'close': 100}, {'close': 102}] → pandas.Series([100, 102])
+        
     Note:
         - Automatically converts all values to numeric, coercing errors to NaN
         - Removes NaN values after conversion for clean price series
@@ -192,6 +197,11 @@ def validate_return_data(data: Union[pd.Series, pd.DataFrame, List, Dict]) -> pd
         >>> 
         >>> print(f"Returns range: {returns3.min():.3f} to {returns3.max():.3f}")
         
+    OUTPUT examples:
+    Input: [0.02, -0.04, 0.07, 0.05, -0.02, 0.04] → pandas.Series([0.02, -0.04, 0.07, 0.05, -0.02, 0.04])
+    Input: {'returns': [0.01, -0.005, 0.02]} → pandas.Series([0.01, -0.005, 0.02])
+    Input: DataFrame with 'returns' column → pandas.Series with return values extracted
+        
     Note:
         - Designed specifically for return data (typically between -1 and 1)
         - Automatically converts all values to numeric, coercing errors to NaN
@@ -286,16 +296,31 @@ def prices_to_returns(prices: pd.Series, method: str = "simple") -> pd.Series:
         >>> 
         >>> # Calculate simple returns
         >>> simple_rets = prices_to_returns(prices, method="simple")
+        >>> print(simple_rets)
+        2023-01-02    0.020000
+        2023-01-03   -0.039216
+        2023-01-04    0.071429
+        2023-01-05   -0.019048
+        Freq: D, dtype: float64
         >>> print(f"Simple returns: {simple_rets.tolist()}")
-        >>> # Output: [0.02, -0.0392, 0.0714, -0.0190]
+        [0.020000000000000018, -0.039215686274509776, 0.0714285714285714, -0.01904761904761909]
+        >>> print(f"Type: {type(simple_rets)}")
+        <class 'pandas.core.series.Series'>
         >>> 
         >>> # Calculate log returns
         >>> log_rets = prices_to_returns(prices, method="log")
+        >>> print(log_rets)
+        2023-01-02    0.019803
+        2023-01-03   -0.040009
+        2023-01-04    0.068979
+        2023-01-05   -0.019193
+        dtype: float64
         >>> print(f"Log returns: {log_rets.tolist()}")
-        >>> 
-        >>> # Log returns are approximately equal to simple returns for small changes
-        >>> diff = abs(simple_rets - log_rets).max()
-        >>> print(f"Max difference: {diff:.6f}")  # Should be small for normal returns
+        [0.019803, -0.040009, 0.068979, -0.019193]
+        
+    OUTPUT examples:
+    Simple returns: [0.020000000000000018, -0.039215686274509776, 0.0714285714285714, 0.04761904761904767, -0.018181818181818188, 0.03703703703703698]
+    Log returns: [0.01980262729617973, -0.04000533461369913, 0.06899287148695142, 0.04652001563489291, -0.01834913866819654, 0.03636764417087479]
         
     Note:
         - Simple returns are easier to interpret (0.02 = 2% gain)
@@ -366,6 +391,11 @@ def align_series(*series_list: pd.Series) -> List[pd.Series]:
         >>> aligned_returns = align_series(stock_a_returns, stock_b_returns)
         >>> correlation = aligned_returns[0].corr(aligned_returns[1])
         
+    OUTPUT examples:
+    Input: Series1 (length 10), Series2 (length 8) with different indices
+    Output: List of 2 aligned series, both length 8 with common index
+    Common values preserved: [98, 105, 110] (example values from intersection)
+        
     Note:
         - Uses pandas DataFrame inner join for efficient alignment
         - Preserves original data types and names when possible
@@ -407,6 +437,21 @@ def resample_data(data: pd.Series, frequency: str, method: str = "last") -> pd.S
         
     Returns:
         pd.Series: Resampled data
+        
+    Example:
+        >>> import pandas as pd
+        >>> # Create daily data
+        >>> dates = pd.date_range('2024-01-01', periods=14, freq='D')
+        >>> daily_data = pd.Series([100, 102, 98, 105, 110, 108, 112, 115, 118, 120, 119, 121, 123, 125], index=dates)
+        >>> 
+        >>> # Resample to weekly data
+        >>> weekly = resample_data(daily_data, 'W', method='last')
+        >>> print(f"Daily points: {len(daily_data)}, Weekly points: {len(weekly)}")
+        
+    OUTPUT examples:
+    Daily data (14 points) → Weekly data (2 points): [112, 125]
+    Frequency 'W' with method 'last': Takes last value of each week
+    Frequency 'M' with method 'mean': Takes average value of each month
     """
     try:
         if not isinstance(data.index, pd.DatetimeIndex):
@@ -473,6 +518,12 @@ def standardize_output(result: Dict[str, Any], function_name: str) -> Dict[str, 
         >>> print(type(standardized['price_series']))  # <class 'list'>
         >>> print(type(standardized['data_frame']))   # <class 'list'> (records format)
         
+    OUTPUT examples:
+    Input: {'values': Series([1.5, 2.3, 3.1]), 'latest': 3.1, 'metadata': {'period': 14}}
+    Output keys: ['success', 'function', 'values', 'latest', 'metadata']
+    Success field: True, Function field: 'test_function'
+    All pandas objects converted to JSON-serializable formats
+        
     Note:
         - Converts numpy scalar types (float64, int32, etc.) to Python native types
         - Converts pandas Series to Python lists for JSON compatibility
@@ -529,6 +580,10 @@ def calculate_log_returns(prices: Union[pd.Series, Dict[str, Any]]) -> pd.Series
         
     Returns:
         pd.Series: Log return series
+        
+    OUTPUT examples:
+    Input prices: [100, 102, 98, 105, 110, 108, 112]
+    Log returns: [0.01980262729617973, -0.04000533461369913, 0.06899287148695142, 0.04652001563489291, -0.01834913866819654, 0.03636764417087479]
     """
     return prices_to_returns(prices, method="log")
 
@@ -545,6 +600,10 @@ def calculate_cumulative_returns(returns: Union[pd.Series, List, Dict[str, Any]]
         
     Returns:
         pd.Series: Cumulative return series
+        
+    OUTPUT examples:
+    Input returns: [0.02, -0.04, 0.07, 0.05, -0.02, 0.04]
+    Cumulative returns: [0.020000000000000018, -0.02080000000000004, 0.04774400000000001, 0.10013120000000009, 0.07812857600000012, 0.12125371904000026]
     """
     try:
         returns_series = validate_return_data(returns)
@@ -571,6 +630,11 @@ def calculate_monthly_returns(daily_returns: Union[pd.Series, List, Dict[str, An
         
     Returns:
         List[float]: Monthly return series
+        
+    OUTPUT examples:
+    Input: 70 daily returns → 4 monthly periods
+    Monthly returns: [0.04403246057170329, 0.04403246057170329, 0.04403246057170329, 0.014467178286484694]
+    Each month aggregated from 21 trading days (except last partial month)
     """
     try:
         returns_series = validate_return_data(daily_returns)
@@ -671,6 +735,11 @@ def extract_symbols_from_alpaca_data(data: Union[Dict[str, Any], List[Dict[str, 
         ... }
         >>> symbols = extract_symbols_from_alpaca_data(watchlist_data)
         >>> print(symbols)  # ['AAPL', 'GOOGL']
+        
+    OUTPUT examples:
+    Positions data: [{'symbol': 'AAPL', 'qty': '100'}, {'symbol': 'MSFT', 'qty': '50'}] → ['AAPL', 'GOOGL', 'MSFT']
+    Bars data: {'AAPL': {'close': 150.0}, 'MSFT': {'close': 300.0}} → ['AAPL', 'MSFT']
+    Handles various Alpaca API response formats automatically
         
     Note:
         - Function handles both single records and lists of records

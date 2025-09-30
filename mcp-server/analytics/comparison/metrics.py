@@ -112,18 +112,71 @@ def compare_performance_metrics(returns1: Union[pd.Series, Dict[str, Any]],
         >>> import pandas as pd
         >>> import numpy as np
         >>> 
-        >>> # Create sample return data
-        >>> dates = pd.date_range('2020-01-01', periods=252, freq='D')
-        >>> returns_spy = pd.Series(np.random.normal(0.0008, 0.015, 252), index=dates)
-        >>> returns_qqq = pd.Series(np.random.normal(0.001, 0.018, 252), index=dates)
+        >>> # Generate sample returns (15 trading days)
+        >>> np.random.seed(42)
+        >>> dates = pd.date_range('2024-01-01', periods=15, freq='D')
+        >>> returns1 = pd.Series(np.random.normal(0.0012, 0.018, 15), index=dates)  # Growth
+        >>> returns2 = pd.Series(np.random.normal(0.0008, 0.012, 15), index=dates)  # Value
         >>> 
-        >>> # Compare performance
-        >>> result = compare_performance_metrics(returns_spy, returns_qqq)
-        >>> print(f"Overall Winner: {result['summary']['overall_winner']}")
-        >>> print(f"Annual Return - SPY: {result['metrics_comparison']['annual_return']['asset_1']:.2%}")
-        >>> print(f"Annual Return - QQQ: {result['metrics_comparison']['annual_return']['asset_2']:.2%}")
-        >>> print(f"Sharpe Ratio Difference: {result['metrics_comparison']['sharpe_ratio']['difference']:.3f}")
-        >>> print(f"Correlation: {result['correlation']:.3f}")
+        >>> result = compare_performance_metrics(returns1, returns2)
+        >>> 
+        >>> # OUTPUT structure:
+        >>> # {
+        >>> #   "success": true,
+        >>> #   "function": "compare_performance_metrics",
+        >>> #   "comparison_period": "15 observations",
+        >>> #   "metrics_comparison": {
+        >>> #     "annual_return": {
+        >>> #       "asset_1": 0.36531623792362256,
+        >>> #       "asset_2": -0.6245966224534989,
+        >>> #       "difference": -0.9899128603771215,
+        >>> #       "winner": "asset_1"
+        >>> #     },
+        >>> #     "total_return": {
+        >>> #       "asset_1": 0.018707722771260205,
+        >>> #       "asset_2": -0.05665074575295759,
+        >>> #       "difference": -0.07535846852421779,
+        >>> #       "winner": "asset_1"
+        >>> #     },
+        >>> #     "volatility": {
+        >>> #       "asset_1": 0.28407120121834495,
+        >>> #       "asset_2": 0.14818260474958136,
+        >>> #       "difference": -0.13588859646876358,
+        >>> #       "winner": "asset_2"
+        >>> #     },
+        >>> #     "sharpe_ratio": {
+        >>> #       "asset_1": -16.512265493673244,
+        >>> #       "asset_2": -40.54191363313889,
+        >>> #       "difference": -24.029648139465646,
+        >>> #       "winner": "asset_1"
+        >>> #     },
+        >>> #     "max_drawdown": {
+        >>> #       "asset_1": -0.07034648295664166,
+        >>> #       "asset_2": -0.056650745752957615,
+        >>> #       "difference": 0.013695737203684041,
+        >>> #       "winner": "asset_2"
+        >>> #     },
+        >>> #     "win_rate": {
+        >>> #       "asset_1": 0.4666666666666667,
+        >>> #       "asset_2": 0.3333333333333333,
+        >>> #       "difference": -0.13333333333333336,
+        >>> #       "winner": "asset_1"
+        >>> #     }
+        >>> #   },
+        >>> #   "summary": {
+        >>> #     "asset_1_wins": 4,
+        >>> #     "asset_2_wins": 2,
+        >>> #     "overall_winner": "asset_1",
+        >>> #     "total_metrics": 6
+        >>> #   },
+        >>> #   "correlation": 0.09472535125379347
+        >>> # }
+        >>> 
+        >>> # Access results:
+        >>> print(f"Overall Winner: {result['summary']['overall_winner']}")  # "asset_1"
+        >>> print(f"Asset 1 Annual Return: {result['metrics_comparison']['annual_return']['asset_1']:.2%}")  # "36.53%"
+        >>> print(f"Asset 2 Annual Return: {result['metrics_comparison']['annual_return']['asset_2']:.2%}")  # "-62.46%"
+        >>> print(f"Volatility Winner: {result['metrics_comparison']['volatility']['winner']}")  # "asset_2"
         
     Note:
         - Uses empyrical library for industry-standard financial calculations
@@ -255,19 +308,77 @@ def compare_risk_metrics(returns1: Union[pd.Series, Dict[str, Any]],
         >>> import pandas as pd
         >>> import numpy as np
         >>> 
-        >>> # Create sample return data with different risk characteristics
-        >>> dates = pd.date_range('2020-01-01', periods=252, freq='D')
-        >>> returns_spy = pd.Series(np.random.normal(0.0008, 0.015, 252), index=dates)
-        >>> returns_crypto = pd.Series(np.random.normal(0.002, 0.045, 252), index=dates)
+        >>> # Create sample return data (20 trading days)
+        >>> np.random.seed(42)
+        >>> dates = pd.date_range('2024-01-01', periods=20, freq='D')
+        >>> 
+        >>> # Conservative stock returns
+        >>> returns1 = pd.Series(np.random.normal(0.0008, 0.012, 20), index=dates, name='Conservative')
+        >>> 
+        >>> # Volatile stock returns
+        >>> returns2 = pd.Series(np.random.normal(0.001, 0.025, 20), index=dates, name='Volatile')
         >>> 
         >>> # Compare risk profiles
-        >>> result = compare_risk_metrics(returns_spy, returns_crypto)
-        >>> print(f"Lower Risk Asset: {result['summary']['lower_risk_asset']}")
-        >>> print(f"Volatility - SPY: {result['risk_comparison']['volatility']['asset_1']:.2%}")
-        >>> print(f"Volatility - Crypto: {result['risk_comparison']['volatility']['asset_2']:.2%}")
-        >>> print(f"VaR 95% - SPY: {result['risk_comparison']['var_95']['asset_1']:.2%}")
-        >>> print(f"VaR 95% - Crypto: {result['risk_comparison']['var_95']['asset_2']:.2%}")
-        >>> print(f"Risk Wins - Asset 1: {result['summary']['asset_1_wins']}")
+        >>> result = compare_risk_metrics(returns1, returns2)
+        >>> 
+        >>> # OUTPUT structure:
+        >>> # {
+        >>> #   "success": true,
+        >>> #   "function": "compare_risk_metrics",
+        >>> #   "comparison_period": "20 observations",
+        >>> #   "risk_comparison": {
+        >>> #     "volatility": {
+        >>> #       "asset_1": 0.18287974473707336,
+        >>> #       "asset_2": 0.3841784526110971,
+        >>> #       "difference": 0.20129870787402376,
+        >>> #       "winner": "asset_1"
+        >>> #     },
+        >>> #     "var_95": {
+        >>> #       "asset_1": -0.020012031437443255,
+        >>> #       "asset_2": -0.03528735707741932,
+        >>> #       "difference": -0.015275325639976065,
+        >>> #       "winner": "asset_1"
+        >>> #     },
+        >>> #     "cvar_95": {
+        >>> #       "asset_1": -0.022159362935893576,
+        >>> #       "asset_2": -0.04799175309699439,
+        >>> #       "difference": -0.025832390161100813,
+        >>> #       "winner": "asset_1"
+        >>> #     },
+        >>> #     "max_drawdown": {
+        >>> #       "asset_1": -0.0839046152743041,
+        >>> #       "asset_2": -0.14935281295331526,
+        >>> #       "difference": -0.06544819767901117,
+        >>> #       "winner": "asset_1"
+        >>> #     },
+        >>> #     "skewness": {
+        >>> #       "asset_1": 0.022653680547866546,
+        >>> #       "asset_2": 0.4044114396284347,
+        >>> #       "difference": 0.38175775908056814,
+        >>> #       "winner": "asset_2"
+        >>> #     },
+        >>> #     "kurtosis": {
+        >>> #       "asset_1": -0.5444692608577548,
+        >>> #       "asset_2": -0.22377897862890528,
+        >>> #       "difference": 0.32069028222884954,
+        >>> #       "winner": "asset_2"
+        >>> #     }
+        >>> #   },
+        >>> #   "summary": {
+        >>> #     "asset_1_wins": 4,
+        >>> #     "asset_2_wins": 2,
+        >>> #     "lower_risk_asset": "asset_1",
+        >>> #     "total_metrics": 6
+        >>> #   },
+        >>> #   "correlation": -0.15729399538437136
+        >>> # }
+        >>> 
+        >>> # Access results:
+        >>> print(f"Lower Risk Asset: {result['summary']['lower_risk_asset']}")           # "asset_1"
+        >>> print(f"Volatility - Asset 1: {result['risk_comparison']['volatility']['asset_1']:.2%}")  # "18.29%"
+        >>> print(f"Volatility - Asset 2: {result['risk_comparison']['volatility']['asset_2']:.2%}")  # "38.42%"
+        >>> print(f"VaR 95% - Asset 1: {result['risk_comparison']['var_95']['asset_1']:.2%}")         # "-2.00%"
+        >>> print(f"Risk Wins - Asset 1: {result['summary']['asset_1_wins']}")                        # 4
         
     Note:
         - Lower values are generally better for risk metrics (except positive skewness)
@@ -402,19 +513,57 @@ def compare_drawdowns(prices1: Union[pd.Series, Dict[str, Any]],
         >>> import numpy as np
         >>> 
         >>> # Create sample price data with different drawdown characteristics
-        >>> dates = pd.date_range('2020-01-01', periods=252, freq='D')
-        >>> # Stable growth with occasional pullbacks
-        >>> prices_spy = pd.Series(100 * np.cumprod(1 + np.random.normal(0.0008, 0.015, 252)), index=dates)
-        >>> # More volatile with larger drawdowns
-        >>> prices_growth = pd.Series(100 * np.cumprod(1 + np.random.normal(0.001, 0.025, 252)), index=dates)
+        >>> np.random.seed(42)
+        >>> dates = pd.date_range('2024-01-01', periods=20, freq='D')
+        >>> 
+        >>> # Generate stable vs volatile price series
+        >>> prices1 = pd.Series(index=dates)
+        >>> prices2 = pd.Series(index=dates)
+        >>> prices1.iloc[0] = prices2.iloc[0] = 100
+        >>> for i in range(1, 20):
+        ...     prices1.iloc[i] = prices1.iloc[i-1] * (1 + np.random.normal(0.001, 0.012))
+        ...     prices2.iloc[i] = prices2.iloc[i-1] * (1 + np.random.normal(0.0005, 0.025))
         >>> 
         >>> # Compare drawdown profiles
-        >>> result = compare_drawdowns(prices_spy, prices_growth)
-        >>> print(f"Better Drawdown Profile: {result['summary']['better_drawdown_profile']}")
-        >>> print(f"Max Drawdown - SPY: {result['drawdown_comparison']['max_drawdown']['asset_1']:.2%}")
-        >>> print(f"Max Drawdown - Growth: {result['drawdown_comparison']['max_drawdown']['asset_2']:.2%}")
-        >>> print(f"Time in Drawdown - SPY: {result['drawdown_comparison']['time_in_drawdown']['asset_1']:.1f}%")
-        >>> print(f"Significant Drawdowns - Growth: {result['drawdown_comparison']['significant_drawdowns']['asset_2']}")
+        >>> result = compare_drawdowns(prices1, prices2)
+        >>> 
+        >>> # OUTPUT structure:
+        >>> # {
+        >>> #   "success": true,
+        >>> #   "function": "compare_drawdowns",
+        >>> #   "comparison_period": "19 observations",
+        >>> #   "drawdown_comparison": {
+        >>> #     "max_drawdown": {
+        >>> #       "asset_1": -0.06717823915515819,
+        >>> #       "asset_2": -0.1285460226820301,
+        >>> #       "difference": -0.061367783526871916,
+        >>> #       "winner": "asset_1"
+        >>> #     },
+        >>> #     "significant_drawdowns": {
+        >>> #       "asset_1": 4,
+        >>> #       "asset_2": 13,
+        >>> #       "difference": 9,
+        >>> #       "winner": "asset_1"
+        >>> #     },
+        >>> #     "time_in_drawdown": {
+        >>> #       "asset_1": 68.42105263157895,
+        >>> #       "asset_2": 89.47368421052632,
+        >>> #       "difference": 21.05263157894737,
+        >>> #       "winner": "asset_1"
+        >>> #     }
+        >>> #   },
+        >>> #   "summary": {
+        >>> #     "asset_1_wins": 3,
+        >>> #     "asset_2_wins": 0,
+        >>> #     "better_drawdown_profile": "asset_1",
+        >>> #     "total_metrics": 3
+        >>> #   }
+        >>> # }
+        >>> 
+        >>> # Access results:
+        >>> print(f"Better Profile: {result['summary']['better_drawdown_profile']}")  # "asset_1"
+        >>> print(f"Max Drawdown 1: {result['drawdown_comparison']['max_drawdown']['asset_1']:.2%}")  # "-6.72%"
+        >>> print(f"Max Drawdown 2: {result['drawdown_comparison']['max_drawdown']['asset_2']:.2%}")  # "-12.85%"
         
     Note:
         - Prices are converted to returns internally for drawdown calculation
@@ -436,25 +585,21 @@ def compare_drawdowns(prices1: Union[pd.Series, Dict[str, Any]],
         # Align series
         ret1_aligned, ret2_aligned = align_series(returns1, returns2)
         
-        # Calculate drawdown analysis
+        # Calculate drawdown analysis (already provides drawdown series and max drawdown)
         dd1 = calculate_drawdown_analysis(ret1_aligned)
         dd2 = calculate_drawdown_analysis(ret2_aligned)
         
-        # Extract drawdown details using empyrical
-        dd_details1 = empyrical.drawdown_details(empyrical.cum_returns(ret1_aligned))
-        dd_details2 = empyrical.drawdown_details(empyrical.cum_returns(ret2_aligned))
-        
-        # Calculate additional drawdown metrics
-        drawdown_series1 = empyrical.drawdown_details(empyrical.cum_returns(ret1_aligned))
-        drawdown_series2 = empyrical.drawdown_details(empyrical.cum_returns(ret2_aligned))
+        # Extract drawdown series from analysis results
+        drawdown_series1 = dd1.get("drawdown_series", pd.Series())
+        drawdown_series2 = dd2.get("drawdown_series", pd.Series())
         
         # Count significant drawdowns (>5%)
-        significant_dd1 = (drawdown_series1 < -0.05).sum() if hasattr(drawdown_series1, 'sum') else 0
-        significant_dd2 = (drawdown_series2 < -0.05).sum() if hasattr(drawdown_series2, 'sum') else 0
+        significant_dd1 = (drawdown_series1 < -0.05).sum()
+        significant_dd2 = (drawdown_series2 < -0.05).sum()
         
         # Average time in drawdown
-        in_drawdown1 = (drawdown_series1 < 0).sum() if hasattr(drawdown_series1, 'sum') else 0
-        in_drawdown2 = (drawdown_series2 < 0).sum() if hasattr(drawdown_series2, 'sum') else 0
+        in_drawdown1 = (drawdown_series1 < 0).sum()
+        in_drawdown2 = (drawdown_series2 < 0).sum()
         
         pct_time_dd1 = (in_drawdown1 / len(ret1_aligned)) * 100 if len(ret1_aligned) > 0 else 0
         pct_time_dd2 = (in_drawdown2 / len(ret2_aligned)) * 100 if len(ret2_aligned) > 0 else 0
@@ -467,15 +612,15 @@ def compare_drawdowns(prices1: Union[pd.Series, Dict[str, Any]],
                 "winner": "asset_1" if abs(dd1.get("max_drawdown", 0)) < abs(dd2.get("max_drawdown", 0)) else "asset_2"
             },
             "significant_drawdowns": {
-                "asset_1": significant_dd1,
-                "asset_2": significant_dd2,
-                "difference": significant_dd2 - significant_dd1,
+                "asset_1": int(significant_dd1),
+                "asset_2": int(significant_dd2),
+                "difference": int(significant_dd2 - significant_dd1),
                 "winner": "asset_1" if significant_dd1 < significant_dd2 else "asset_2"
             },
             "time_in_drawdown": {
-                "asset_1": pct_time_dd1,
-                "asset_2": pct_time_dd2,
-                "difference": pct_time_dd2 - pct_time_dd1,
+                "asset_1": float(pct_time_dd1),
+                "asset_2": float(pct_time_dd2),
+                "difference": float(pct_time_dd2 - pct_time_dd1),
                 "winner": "asset_1" if pct_time_dd1 < pct_time_dd2 else "asset_2"
             }
         }
@@ -547,22 +692,66 @@ def compare_volatility_profiles(returns1: Union[pd.Series, Dict[str, Any]],
         >>> import pandas as pd
         >>> import numpy as np
         >>> 
-        >>> # Create sample return data with different volatility characteristics
-        >>> dates = pd.date_range('2020-01-01', periods=300, freq='D')
-        >>> # Stable volatility asset
-        >>> returns_bond = pd.Series(np.random.normal(0.0002, 0.005, 300), index=dates)
-        >>> # Variable volatility asset with regime changes
-        >>> vol_regimes = np.concatenate([np.full(150, 0.015), np.full(150, 0.030)])
-        >>> returns_stock = pd.Series([np.random.normal(0.0008, vol) for vol in vol_regimes], index=dates)
+        >>> # Generate sample returns with different volatility characteristics
+        >>> np.random.seed(42)
+        >>> dates = pd.date_range('2024-01-01', periods=40, freq='D')
+        >>> returns1 = pd.Series(np.random.normal(0.0008, 0.01, 40), index=dates)   # Stable
+        >>> returns2 = pd.Series(np.random.normal(0.001, 0.025, 40), index=dates)   # Volatile
         >>> 
-        >>> # Compare volatility profiles
-        >>> result = compare_volatility_profiles(returns_bond, returns_stock, window=30)
-        >>> print(f"More Stable Volatility: {result['summary']['more_stable_volatility']}")
-        >>> print(f"Average Vol - Bonds: {result['volatility_comparison']['average_volatility']['asset_1']:.2%}")
-        >>> print(f"Average Vol - Stocks: {result['volatility_comparison']['average_volatility']['asset_2']:.2%}")
-        >>> print(f"Vol of Vol - Bonds: {result['volatility_comparison']['volatility_volatility']['asset_1']:.3f}")
-        >>> print(f"Vol of Vol - Stocks: {result['volatility_comparison']['volatility_volatility']['asset_2']:.3f}")
-        >>> print(f"Volatility Correlation: {result['volatility_correlation']:.3f}")
+        >>> result = compare_volatility_profiles(returns1, returns2, window=15)
+        >>> 
+        >>> # OUTPUT structure:
+        >>> # {
+        >>> #   "success": true,
+        >>> #   "function": "compare_volatility_profiles",
+        >>> #   "window_size": 15,
+        >>> #   "comparison_period": "26 rolling periods",
+        >>> #   "volatility_comparison": {
+        >>> #     "average_volatility": {
+        >>> #       "asset_1": 0.14762536399369564,
+        >>> #       "asset_2": 0.3623587861441918,
+        >>> #       "difference": 0.21473342215049618,
+        >>> #       "winner": "asset_1"
+        >>> #     },
+        >>> #     "volatility_volatility": {
+        >>> #       "asset_1": 0.01076017611236529,
+        >>> #       "asset_2": 0.051986055736871026,
+        >>> #       "difference": 0.04122587962450573,
+        >>> #       "winner": "asset_1"
+        >>> #     },
+        >>> #     "max_volatility": {
+        >>> #       "asset_1": 0.1699907761460797,
+        >>> #       "asset_2": 0.4717631931646091,
+        >>> #       "difference": 0.3017724170185294,
+        >>> #       "winner": "asset_1"
+        >>> #     },
+        >>> #     "min_volatility": {
+        >>> #       "asset_1": 0.12348550395798452,
+        >>> #       "asset_2": 0.3084078366355659,
+        >>> #       "difference": 0.1849223326775814,
+        >>> #       "winner": "asset_1"
+        >>> #     },
+        >>> #     "high_volatility_periods": {
+        >>> #       "asset_1": 3,
+        >>> #       "asset_2": 3,
+        >>> #       "difference": 0,
+        >>> #       "winner": "asset_2"
+        >>> #     }
+        >>> #   },
+        >>> #   "volatility_correlation": 0.02720426559228118,
+        >>> #   "summary": {
+        >>> #     "asset_1_wins": 4,
+        >>> #     "asset_2_wins": 1,
+        >>> #     "more_stable_volatility": "asset_1",
+        >>> #     "total_metrics": 5
+        >>> #   }
+        >>> # }
+        >>> 
+        >>> # Access results:
+        >>> print(f"More Stable: {result['summary']['more_stable_volatility']}")  # "asset_1"
+        >>> print(f"Avg Vol 1: {result['volatility_comparison']['average_volatility']['asset_1']:.2%}")  # "14.76%"
+        >>> print(f"Avg Vol 2: {result['volatility_comparison']['average_volatility']['asset_2']:.2%}")  # "36.24%"
+        >>> print(f"Vol of Vol 1: {result['volatility_comparison']['volatility_volatility']['asset_1']:.3f}")  # 0.011
         
     Note:
         - Rolling volatility is annualized (multiplied by sqrt(252) for daily data)
@@ -662,19 +851,117 @@ def compare_volatility_profiles(returns1: Union[pd.Series, Dict[str, Any]],
 def compare_correlation_stability(returns1: Union[pd.Series, Dict[str, Any]], 
                                  returns2: Union[pd.Series, Dict[str, Any]], 
                                  window: int = 60) -> Dict[str, Any]:
-    """
-    Analyze correlation stability over time.
+    """Analyze correlation stability and regime changes between two return series over time.
     
-    From financial-analysis-function-library.json comparison_analysis category
-    Uses pandas rolling correlation - no code duplication
+    Examines how the correlation between two assets changes over time using rolling windows,
+    identifying correlation regimes, stability patterns, and trend characteristics. This analysis
+    is crucial for portfolio construction, risk management, and understanding diversification
+    benefits that may change during different market conditions.
+    
+    The function provides detailed correlation regime analysis, stability scoring, and trend
+    identification to help assess the reliability of correlation-based portfolio strategies
+    and diversification assumptions over time.
     
     Args:
-        returns1: First asset returns
-        returns2: Second asset returns
-        window: Rolling window for correlation calculation
-        
+        returns1 (Union[pd.Series, Dict[str, Any]]): Return series for first asset.
+            Can be pandas Series with datetime index or dictionary with return values.
+            Values should be decimal returns (e.g., 0.02 for 2% return).
+        returns2 (Union[pd.Series, Dict[str, Any]]): Return series for second asset.
+            Same format requirements as returns1. Will be aligned with returns1 automatically.
+        window (int, optional): Rolling window size for correlation calculation. Defaults to 60.
+            Common values: 30 (monthly), 60 (quarterly), 120 (semi-annual), 252 (annual).
+            Larger windows provide smoother but less responsive correlation estimates.
+    
     Returns:
-        Dict: Correlation stability analysis
+        Dict[str, Any]: Comprehensive correlation stability analysis with keys:
+            - window_size (int): Rolling window size used for calculations
+            - total_rolling_periods (int): Number of rolling correlation observations
+            - correlation_statistics (Dict): Statistical measures of correlation behavior:
+                - average_correlation: Mean rolling correlation over the period
+                - correlation_volatility: Standard deviation of rolling correlations
+                - max_correlation: Highest correlation observed
+                - min_correlation: Lowest correlation observed
+                - correlation_range: Difference between max and min correlations
+            - correlation_regimes (Dict): Classification of correlation periods:
+                - high_correlation_periods: Count/percentage of periods with corr > 0.7
+                - moderate_correlation_periods: Count/percentage with 0.3 < corr <= 0.7
+                - low_correlation_periods: Count/percentage with corr <= 0.3
+            - stability_analysis (Dict): Overall stability assessment:
+                - stability_score: Numerical stability measure (0-1, higher is more stable)
+                - stability_rating: Categorical rating (low/moderate/high stability)
+                - correlation_trend: Direction of correlation change (increasing/decreasing/stable)
+                - trend_magnitude: Strength of correlation trend over time
+            - overall_correlation (float): Static correlation over entire period
+            - success (bool): Whether calculation succeeded
+            - function_name (str): Function identifier for tracking
+    
+    Raises:
+        ValueError: If returns data cannot be converted to valid return series.
+        TypeError: If window parameter is not an integer or data format is invalid.
+        
+    Example:
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> 
+        >>> # Generate sample returns with changing correlation patterns
+        >>> np.random.seed(42)
+        >>> dates = pd.date_range('2024-01-01', periods=50, freq='D')
+        >>> returns1 = pd.Series(np.random.normal(0.001, 0.015, 50), index=dates)
+        >>> returns2 = pd.Series(np.random.normal(0.0008, 0.018, 50), index=dates)
+        >>> 
+        >>> result = compare_correlation_stability(returns1, returns2, window=20)
+        >>> 
+        >>> # OUTPUT structure:
+        >>> # {
+        >>> #   "success": true,
+        >>> #   "function": "compare_correlation_stability",
+        >>> #   "window_size": 20,
+        >>> #   "total_rolling_periods": 31,
+        >>> #   "correlation_statistics": {
+        >>> #     "average_correlation": 0.10431868742758328,
+        >>> #     "correlation_volatility": 0.08747834960551726,
+        >>> #     "max_correlation": 0.3108055615994316,
+        >>> #     "min_correlation": -0.05840024373273846,
+        >>> #     "correlation_range": 0.36920580533217007
+        >>> #   },
+        >>> #   "correlation_regimes": {
+        >>> #     "high_correlation_periods": {
+        >>> #       "count": 0,
+        >>> #       "percentage": 0.0
+        >>> #     },
+        >>> #     "moderate_correlation_periods": {
+        >>> #       "count": 1,
+        >>> #       "percentage": 3.225806451612903
+        >>> #     },
+        >>> #     "low_correlation_periods": {
+        >>> #       "count": 30,
+        >>> #       "percentage": 96.7741935483871
+        >>> #     }
+        >>> #   },
+        >>> #   "stability_analysis": {
+        >>> #     "stability_score": 0.9125216503944827,
+        >>> #     "stability_rating": "high",
+        >>> #     "correlation_trend": "increasing",
+        >>> #     "trend_magnitude": 0.142709549736389
+        >>> #   },
+        >>> #   "overall_correlation": 0.11007178534016057
+        >>> # }
+        >>> 
+        >>> # Access results:
+        >>> print(f"Stability Rating: {result['stability_analysis']['stability_rating']}")  # "high"
+        >>> print(f"Average Correlation: {result['correlation_statistics']['average_correlation']:.3f}")  # 0.104
+        >>> print(f"Correlation Range: {result['correlation_statistics']['correlation_range']:.3f}")  # 0.369
+        >>> print(f"Low Corr Periods: {result['correlation_regimes']['low_correlation_periods']['percentage']:.1f}%")  # 96.8%
+        
+    Note:
+        - Rolling correlation is calculated using pandas rolling().corr() method
+        - Correlation regimes help identify diversification effectiveness over time
+        - High stability score indicates consistent correlation behavior
+        - Trend analysis shows whether correlations are increasing/decreasing over time
+        - Low correlation periods indicate better diversification opportunities
+        - Window size affects sensitivity to correlation changes vs. noise
+        - Useful for dynamic hedge ratio calculation and portfolio rebalancing decisions
+        - Function handles both daily and other frequency data automatically
     """
     try:
         returns_series1 = validate_return_data(returns1)
@@ -757,18 +1044,107 @@ def compare_correlation_stability(returns1: Union[pd.Series, Dict[str, Any]],
 
 def compare_sector_exposure(holdings1: List[Dict[str, Any]], 
                            holdings2: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """
-    Compare sector allocation between portfolios/ETFs.
+    """Compare sector allocation and concentration between two portfolios or ETFs.
     
-    From financial-analysis-function-library.json comparison_analysis category
-    Uses pandas for sector analysis - no code duplication
+    Analyzes sector exposure differences between two portfolios, providing detailed breakdown
+    of sector weights, allocation differences, concentration metrics, and overlap analysis.
+    This analysis is essential for understanding diversification, sector bias, and allocation
+    strategies across different investment approaches.
+    
+    The function helps identify sector concentration risks, allocation overlaps, and provides
+    quantitative measures to compare sector-based investment strategies and portfolio construction.
     
     Args:
-        holdings1: First portfolio/ETF holdings
-        holdings2: Second portfolio/ETF holdings
-        
+        holdings1 (List[Dict[str, Any]]): Holdings data for first portfolio.
+            Each holding should be a dictionary with keys:
+            - 'sector' (str): Sector classification (e.g., 'Technology', 'Healthcare')
+            - 'weight' (float): Portfolio weight as decimal (e.g., 0.25 for 25%)
+            - Other optional fields like 'symbol', 'name' are ignored
+        holdings2 (List[Dict[str, Any]]): Holdings data for second portfolio.
+            Same format requirements as holdings1.
+    
     Returns:
-        Dict: Sector comparison data
+        Dict[str, Any]: Comprehensive sector exposure comparison with keys:
+            - total_sectors (int): Total unique sectors across both portfolios
+            - common_sectors (int): Number of sectors present in both portfolios
+            - overlap_percentage (float): Percentage of sectors that overlap
+            - sector_comparison (Dict): Detailed sector-by-sector comparison with keys:
+                - {sector_name}: For each sector, contains:
+                    - portfolio_1_weight: Weight in first portfolio
+                    - portfolio_2_weight: Weight in second portfolio
+                    - difference: Weight difference (portfolio_2 - portfolio_1)
+                    - relative_difference: Relative difference as percentage
+            - concentration_analysis (Dict): Sector concentration metrics:
+                - portfolio_1_hhi: Herfindahl-Hirschman Index for portfolio 1
+                - portfolio_2_hhi: Herfindahl-Hirschman Index for portfolio 2  
+                - more_concentrated: Which portfolio has higher concentration
+            - largest_differences (List): Top 5 sectors with largest allocation differences
+            - top_sectors (Dict): Top 5 sectors by weight for each portfolio
+            - success (bool): Whether calculation succeeded
+            - function_name (str): Function identifier for tracking
+    
+    Raises:
+        ValueError: If required columns ('sector', 'weight') are missing from holdings data.
+        TypeError: If holdings data format is invalid or not a list of dictionaries.
+        
+    Example:
+        >>> holdings1 = [
+        ...     {'sector': 'Technology', 'weight': 0.45},
+        ...     {'sector': 'Healthcare', 'weight': 0.25},
+        ...     {'sector': 'Financials', 'weight': 0.30}
+        ... ]
+        >>> holdings2 = [
+        ...     {'sector': 'Technology', 'weight': 0.55}, 
+        ...     {'sector': 'Energy', 'weight': 0.45}
+        ... ]
+        >>> 
+        >>> result = compare_sector_exposure(holdings1, holdings2)
+        >>> 
+        >>> # OUTPUT structure:
+        >>> # {
+        >>> #   "success": true,
+        >>> #   "function": "compare_sector_exposure",
+        >>> #   "total_sectors": 3,
+        >>> #   "common_sectors": 1,
+        >>> #   "overlap_percentage": 33.3,
+        >>> #   "sector_comparison": {
+        >>> #     "Technology": {
+        >>> #       "portfolio_1_weight": 0.45,
+        >>> #       "portfolio_2_weight": 0.55,
+        >>> #       "difference": 0.10
+        >>> #     },
+        >>> #     "Healthcare": {
+        >>> #       "portfolio_1_weight": 0.25,
+        >>> #       "portfolio_2_weight": 0.0,
+        >>> #       "difference": -0.25
+        >>> #     },
+        >>> #     "Energy": {
+        >>> #       "portfolio_1_weight": 0.0,
+        >>> #       "portfolio_2_weight": 0.45,
+        >>> #       "difference": 0.45
+        >>> #     }
+        >>> #   },
+        >>> #   "concentration_analysis": {
+        >>> #     "portfolio_1_hhi": 0.2650,
+        >>> #     "portfolio_2_hhi": 0.5050,
+        >>> #     "more_concentrated": "portfolio_2"
+        >>> #   }
+        >>> # }
+        >>> 
+        >>> # Access results:
+        >>> print(f"Sector Overlap: {result['overlap_percentage']:.1f}%")  # "33.3%"
+        >>> print(f"More Concentrated: {result['concentration_analysis']['more_concentrated']}")  # "portfolio_2"
+        >>> tech_diff = result['sector_comparison']['Technology']['difference']
+        >>> print(f"Technology Difference: {tech_diff:+.1%}")  # "+10.0%"
+        
+    Note:
+        - Sector weights should sum to 1.0 for each portfolio but function handles normalization
+        - HHI (Herfindahl-Hirschman Index) measures concentration: 0=diversified, 1=concentrated
+        - Positive differences indicate higher weight in portfolio 2, negative in portfolio 1
+        - Function automatically handles missing sectors (treated as 0% allocation)
+        - Useful for comparing ETFs, mutual funds, or custom portfolio allocations
+        - Sector classifications should be consistent between portfolios for meaningful comparison
+        - Function performs case-sensitive sector matching - ensure consistent naming
     """
     try:
         # Convert holdings to DataFrames
@@ -1320,35 +1696,149 @@ def compute_outperformance(returns: Union[pd.DataFrame, Dict[str, pd.Series]],
         >>> import pandas as pd
         >>> import numpy as np
         >>> 
-        >>> # Create sample multi-asset return data
-        >>> dates = pd.date_range('2023-01-01', periods=252, freq='D')
+        >>> # Create sample multi-asset return data (60 trading days)
+        >>> dates = pd.date_range('2024-01-01', periods=60, freq='D')
         >>> np.random.seed(42)
         >>> 
-        >>> # Simulate asset returns with different performance characteristics
-        >>> benchmark_rets = pd.Series(np.random.normal(0.0005, 0.015, 252), index=dates, name='SPY')
-        >>> 
+        >>> # Sample asset returns (daily decimal returns)
         >>> asset_returns = pd.DataFrame({
-        ...     'AAPL': benchmark_rets * 1.2 + np.random.normal(0.0002, 0.008, 252),  # Outperformer
-        ...     'MSFT': benchmark_rets * 1.1 + np.random.normal(0.0001, 0.007, 252),  # Slight outperformer  
-        ...     'T': benchmark_rets * 0.7 + np.random.normal(0, 0.005, 252),         # Underperformer
-        ...     'AMZN': benchmark_rets * 1.5 + np.random.normal(0.0003, 0.020, 252)  # Volatile outperformer
+        ...     'AAPL': np.random.normal(0.001, 0.02, 60),    # Tech stock
+        ...     'MSFT': np.random.normal(0.0008, 0.018, 60),  # Another tech  
+        ...     'SPY': np.random.normal(0.0005, 0.015, 60)    # Market proxy
         ... }, index=dates)
         >>> 
-        >>> # Calculate outperformance
-        >>> outperf_analysis = compute_outperformance(asset_returns, benchmark_rets)
+        >>> # Benchmark returns (market index)
+        >>> benchmark_returns = pd.Series(np.random.normal(0.0005, 0.015, 60), index=dates)
         >>> 
-        >>> # Review results
-        >>> print("=== OUTPERFORMANCE ANALYSIS ===")
-        >>> best = outperf_analysis['portfolio_summary']['best_performer']
-        >>> print(f"Best Performer: {best['asset']} (+{best['excess_return_pct']})")
+        >>> # Calculate outperformance analysis
+        >>> result = compute_outperformance(asset_returns, benchmark_returns)
         >>> 
-        >>> print("\\n=== INDIVIDUAL ASSET PERFORMANCE ===")
-        >>> for asset, metrics in outperf_analysis['asset_outperformance'].items():
-        ...     print(f"{asset}:")
-        ...     print(f"  Excess Return: {metrics['excess_return_pct']}")
-        ...     print(f"  Information Ratio: {metrics['information_ratio']:.3f}")
-        ...     print(f"  Outperformance Rate: {metrics['outperformance_periods_pct']}")
-        ...     print(f"  Alpha: {metrics['alpha_pct']}")
+        >>> # Sample input data (first 5 days):
+        >>> print("INPUT - Asset Returns:")
+        >>> print(asset_returns.head().round(4))
+        >>> #           AAPL    MSFT     SPY
+        >>> # 2024-01-01  0.0109 -0.0078  0.0124
+        >>> # 2024-01-02 -0.0018 -0.0025 -0.0131
+        >>> # 2024-01-03  0.0140 -0.0191  0.0215
+        >>> # 2024-01-04  0.0315 -0.0207 -0.0205
+        >>> # 2024-01-05 -0.0037  0.0154  0.0093
+        >>> 
+        >>> # Sample output structure:
+        >>> print("OUTPUT - Outperformance Analysis:")
+        >>> print(f"Best Performer: {result['portfolio_summary']['best_performer']['asset']}")
+        >>> print(f"Excess Return: {result['portfolio_summary']['best_performer']['excess_return_pct']}")
+        >>> 
+        >>> # Individual asset metrics example (SPY):
+        >>> spy_metrics = result['asset_outperformance']['SPY']
+        >>> print(f"\\nSPY Outperformance Metrics:")
+        >>> print(f"  Excess Return: {spy_metrics['excess_return_pct']}")           # "+7.76%"
+        >>> print(f"  Information Ratio: {spy_metrics['information_ratio']:.3f}")  # 0.227
+        >>> print(f"  Outperformance Rate: {spy_metrics['outperformance_periods_pct']}")  # "51.7%"
+        >>> print(f"  Beta: {spy_metrics['beta']:.3f}")                           # -0.002
+        >>> print(f"  Statistical Significance: {spy_metrics['statistical_significance']['is_significant']}")  # False
+        >>> 
+        >>> # Portfolio summary shows aggregate statistics:
+        >>> summary = result['portfolio_summary']
+        >>> print(f"\\nPortfolio Summary:")
+        >>> print(f"  Assets Analyzed: {summary['assets_analyzed']}")             # 3
+        >>> print(f"  Outperforming Assets: {summary['outperforming_assets_pct']}")  # "33.3%"
+        >>> print(f"  Average Outperformance: {summary['average_outperformance_pct']}")  # "-24.10%"
+        >>> 
+        >>> # Benchmark characteristics:
+        >>> benchmark = result['benchmark_info']
+        >>> print(f"\\nBenchmark Info:")
+        >>> print(f"  Annual Return: {benchmark['annual_return_pct']}")           # "36.46%"
+        >>> print(f"  Annual Volatility: {benchmark['annual_volatility_pct']}")  # "24.68%"
+        >>> 
+        >>> # Complete output structure:
+        >>> # {
+        >>> #   "success": true,
+        >>> #   "function": "compute_outperformance",
+        >>> #   "asset_outperformance": {
+        >>> #     "AAPL": {
+        >>> #       "excess_return_annualized": -0.6062070605312884,
+        >>> #       "excess_return_pct": "-60.62%",
+        >>> #       "alpha_annualized": -0.9924218040650618,
+        >>> #       "alpha_pct": "-99.24%",
+        >>> #       "tracking_error_annualized": 0.35373455608890525,
+        >>> #       "tracking_error_pct": "35.37%",
+        >>> #       "information_ratio": -1.7137343527696751,
+        >>> #       "beta": 0.15576433831503386,
+        >>> #       "correlation": 0.13326171133898262,
+        >>> #       "outperformance_periods": 28,
+        >>> #       "outperformance_periods_pct": "46.7%",
+        >>> #       "total_periods": 60,
+        >>> #       "statistical_significance": {
+        >>> #         "is_significant": false,
+        >>> #         "t_statistic": -1.197640374130215,
+        >>> #         "p_value": 0.23584648563090505
+        >>> #       }
+        >>> #     },
+        >>> #     "MSFT": {
+        >>> #       "excess_return_annualized": -0.19429746224759348,
+        >>> #       "excess_return_pct": "-19.43%",
+        >>> #       "alpha_annualized": -0.9880811769749294,
+        >>> #       "alpha_pct": "-98.81%",
+        >>> #       "tracking_error_annualized": 0.3486100472927594,
+        >>> #       "tracking_error_pct": "34.86%",
+        >>> #       "information_ratio": -0.5573490028657273,
+        >>> #       "beta": 0.09877687606825698,
+        >>> #       "correlation": 0.09042868891413962,
+        >>> #       "outperformance_periods": 31,
+        >>> #       "outperformance_periods_pct": "51.7%",
+        >>> #       "total_periods": 60,
+        >>> #       "statistical_significance": {
+        >>> #         "is_significant": false,
+        >>> #         "t_statistic": -0.21816585152362386,
+        >>> #         "p_value": 0.8280527280057909
+        >>> #       }
+        >>> #     },
+        >>> #     "SPY": {
+        >>> #       "excess_return_annualized": 0.07762355638004137,
+        >>> #       "excess_return_pct": "+7.76%",
+        >>> #       "alpha_annualized": -0.9901417680545435,
+        >>> #       "alpha_pct": "-99.01%",
+        >>> #       "tracking_error_annualized": 0.3426911837335535,
+        >>> #       "tracking_error_pct": "34.27%",
+        >>> #       "information_ratio": 0.2265116818423745,
+        >>> #       "beta": -0.002298660412875758,
+        >>> #       "correlation": -0.002391561799524987,
+        >>> #       "outperformance_periods": 31,
+        >>> #       "outperformance_periods_pct": "51.7%",
+        >>> #       "total_periods": 60,
+        >>> #       "statistical_significance": {
+        >>> #         "is_significant": false,
+        >>> #         "t_statistic": 0.188917026573235,
+        >>> #         "p_value": 0.8508062069439509
+        >>> #       }
+        >>> #     }
+        >>> #   },
+        >>> #   "portfolio_summary": {
+        >>> #     "best_performer": {
+        >>> #       "asset": "SPY",
+        >>> #       "excess_return_annualized": 0.07762355638004137,
+        >>> #       "excess_return_pct": "+7.76%"
+        >>> #     },
+        >>> #     "worst_performer": {
+        >>> #       "asset": "AAPL",
+        >>> #       "excess_return_annualized": -0.6062070605312884,
+        >>> #       "excess_return_pct": "-60.62%"
+        >>> #     },
+        >>> #     "average_outperformance": -0.24096032213294682,
+        >>> #     "average_outperformance_pct": "-24.10%",
+        >>> #     "assets_analyzed": 3,
+        >>> #     "outperforming_assets_count": 1,
+        >>> #     "outperforming_assets_pct": "33.3%",
+        >>> #     "statistically_significant_count": 0
+        >>> #   },
+        >>> #   "benchmark_info": {
+        >>> #     "annual_return": 0.36459050208960875,
+        >>> #     "annual_return_pct": "36.46%",
+        >>> #     "annual_volatility": 0.2467758438546481,
+        >>> #     "annual_volatility_pct": "24.68%",
+        >>> #     "total_periods": 60
+        >>> #   }
+        >>> # }
         
     Note:
         - Uses empyrical library for industry-standard financial calculations

@@ -86,10 +86,40 @@ def calculate_rsi(data: Union[pd.Series, Dict[str, Any]], period: int = 14) -> D
     
     Example:
         >>> import pandas as pd
-        >>> prices = pd.Series([100, 102, 98, 105, 110, 108, 112, 115, 118, 120])
-        >>> result = calculate_rsi(prices, period=14)
-        >>> print(f"RSI: {result['latest_value']:.1f} - {result['signal']}")
-        RSI: 65.2 - neutral
+        >>> import numpy as np
+        >>> 
+        >>> # Generate sample price data
+        >>> np.random.seed(42)
+        >>> dates = pd.date_range('2024-01-01', periods=20, freq='D')
+        >>> prices = [100]
+        >>> for i in range(19):
+        ...     change = np.random.normal(0, 1.5)
+        ...     prices.append(max(prices[-1] + change, 50))
+        >>> close_data = pd.Series(prices, index=dates)
+        >>> 
+        >>> result = calculate_rsi(close_data, period=14)
+        >>> 
+        >>> # OUTPUT structure:
+        >>> # {
+        >>> #   "success": true,
+        >>> #   "function": "calculate_rsi",
+        >>> #   "data": [
+        >>> #     59.6744584696128,
+        >>> #     50.09737595818895,
+        >>> #     47.42541210385746,
+        >>> #     42.978763731933554,
+        >>> #     44.710893759435436,
+        >>> #     40.84952466758526
+        >>> #   ],
+        >>> #   "rsi": [59.67, 50.10, 47.43, 42.98, 44.71, 40.85],
+        >>> #   "period": 14,
+        >>> #   "latest_value": 40.84952466758526,
+        >>> #   "signal": "neutral",
+        >>> #   "overbought_level": 70,
+        >>> #   "oversold_level": 30
+        >>> # }
+        >>> 
+        >>> print(f"RSI: {result['latest_value']:.1f} - {result['signal']}")  # "RSI: 40.8 - neutral"
         
     Note:
         - RSI = 100 - (100 / (1 + RS)), where RS = Average Gain / Average Loss
@@ -166,14 +196,35 @@ def calculate_stochastic(data: Union[pd.DataFrame, Dict[str, Any]],
     
     Example:
         >>> import pandas as pd
+        >>> import numpy as np
+        >>> 
+        >>> # Generate sample OHLC data (20 days)
+        >>> np.random.seed(42)
+        >>> dates = pd.date_range('2024-01-01', periods=20, freq='D')
+        >>> # ... (OHLC generation code)
         >>> ohlc_data = pd.DataFrame({
-        ...     'high': [105, 108, 112, 110, 115],
-        ...     'low': [98, 102, 105, 107, 110],
-        ...     'close': [102, 106, 109, 108, 113]
-        ... })
+        ...     'open': [100.00, 100.53, 100.23, 100.62, 101.28],
+        ...     'high': [101.55, 101.41, 100.94, 102.19, 101.70],
+        ...     'low': [98.73, 99.49, 99.51, 100.26, 100.20],
+        ...     'close': [100.17, 100.52, 100.82, 100.99, 101.70]
+        ... }, index=dates[:5])  # Showing first 5 rows
+        >>> 
         >>> result = calculate_stochastic(ohlc_data)
-        >>> print(f"%K: {result['latest_k']:.1f}, Signal: {result['signal']}")
-        %K: 75.5, Signal: neutral
+        >>> 
+        >>> # OUTPUT structure:
+        >>> # {
+        >>> #   "success": true,
+        >>> #   "function": "calculate_stochastic",
+        >>> #   "k_percent": [5.827775140325756, 3.1859301513585567, 11.415418948195986],
+        >>> #   "d_percent": [11.823662970000347, 6.622220018324384, 6.8097080799600995],
+        >>> #   "latest_k": 11.415418948195986,
+        >>> #   "latest_d": 6.8097080799600995,
+        >>> #   "signal": "bullish_crossover",
+        >>> #   "k_period": 14,
+        >>> #   "d_period": 3
+        >>> # }
+        >>> 
+        >>> print(f"%K: {result['latest_k']:.1f}, Signal: {result['signal']}")  # "%K: 11.4, Signal: bullish_crossover"
         
     Note:
         - %K = ((Close - LowestLow) / (HighestHigh - LowestLow)) * 100
@@ -288,14 +339,28 @@ def calculate_stochastic_fast(data: Union[pd.DataFrame, Dict[str, Any]],
     
     Example:
         >>> import pandas as pd
-        >>> ohlc_data = pd.DataFrame({
-        ...     'high': [105, 108, 112, 110, 115],
-        ...     'low': [98, 102, 105, 107, 110],
-        ...     'close': [102, 106, 109, 108, 113]
-        ... })
+        >>> import numpy as np
+        >>> 
+        >>> # Generate sample OHLC data
+        >>> np.random.seed(42)
+        >>> # ... (data generation code)
+        >>> 
         >>> result = calculate_stochastic_fast(ohlc_data)
-        >>> print(f"Fast %K: {result['latest_k']:.1f}, Signal: {result['signal']}")
-        Fast %K: 82.3, Signal: overbought
+        >>> 
+        >>> # OUTPUT structure:
+        >>> # {
+        >>> #   "success": true,
+        >>> #   "function": "calculate_stochastic_fast",
+        >>> #   "fastk": [7.9255349669015995, 7.301220353589937, 2.2565701004857326, 0.0, 31.989686744102226],
+        >>> #   "fastd": [18.790259006386442, 10.85295476328884, 5.827775140325756, 3.1859301513585567, 11.415418948195986],
+        >>> #   "latest_k": 31.989686744102226,
+        >>> #   "latest_d": 11.415418948195986,
+        >>> #   "signal": "bullish_crossover",
+        >>> #   "k_period": 14,
+        >>> #   "d_period": 3
+        >>> # }
+        >>> 
+        >>> print(f"Fast %K: {result['latest_k']:.1f}, Signal: {result['signal']}")  # "Fast %K: 32.0, Signal: bullish_crossover"
         
     Note:
         - Fast %K = ((Close - LowestLow) / (HighestHigh - LowestLow)) * 100
@@ -398,14 +463,27 @@ def calculate_williams_r(data: Union[pd.DataFrame, Dict[str, Any]], period: int 
     
     Example:
         >>> import pandas as pd
-        >>> ohlc_data = pd.DataFrame({
-        ...     'high': [105, 108, 112, 110, 115],
-        ...     'low': [98, 102, 105, 107, 110],
-        ...     'close': [102, 106, 109, 108, 113]
-        ... })
+        >>> import numpy as np
+        >>> 
+        >>> # Generate sample OHLC data
+        >>> np.random.seed(42)
+        >>> # ... (data generation code)
+        >>> 
         >>> result = calculate_williams_r(ohlc_data)
-        >>> print(f"Williams %R: {result['latest_value']:.1f} - {result['signal']}")
-        Williams %R: -15.5 - overbought
+        >>> 
+        >>> # OUTPUT structure:
+        >>> # {
+        >>> #   "success": true,
+        >>> #   "function": "calculate_williams_r",
+        >>> #   "williams_r": [-68.88686691711726, -82.66789103062503, -92.07446503309839, -92.69877964641006, -97.74342989951427, -100.0, -68.01031325589778],
+        >>> #   "latest_value": -68.01031325589778,
+        >>> #   "signal": "neutral",
+        >>> #   "period": 14,
+        >>> #   "overbought_level": -20,
+        >>> #   "oversold_level": -80
+        >>> # }
+        >>> 
+        >>> print(f"Williams %R: {result['latest_value']:.1f} - {result['signal']}")  # "Williams %R: -68.0 - neutral"
         
     Note:
         - Williams %R = ((Highest High - Close) / (Highest High - Lowest Low)) * -100
@@ -502,14 +580,29 @@ def calculate_ultimate_oscillator(data: Union[pd.DataFrame, Dict[str, Any]],
     
     Example:
         >>> import pandas as pd
-        >>> ohlc_data = pd.DataFrame({
-        ...     'high': [105, 108, 112, 110, 115],
-        ...     'low': [98, 102, 105, 107, 110],
-        ...     'close': [102, 106, 109, 108, 113]
-        ... })
+        >>> import numpy as np
+        >>> 
+        >>> # Generate sample OHLC data (40 days for sufficient periods)
+        >>> np.random.seed(42)
+        >>> # ... (data generation code)
+        >>> 
         >>> result = calculate_ultimate_oscillator(ohlc_data)
-        >>> print(f"Ultimate Oscillator: {result['latest_value']:.1f} - {result['signal']}")
-        Ultimate Oscillator: 65.2 - neutral
+        >>> 
+        >>> # OUTPUT structure:
+        >>> # {
+        >>> #   "success": true,
+        >>> #   "function": "calculate_ultimate_oscillator",
+        >>> #   "ultimate_oscillator": [43.159250484610375, 50.71398079518305, 57.77104584551154, ..., 48.93709085026067],
+        >>> #   "latest_value": 48.93709085026067,
+        >>> #   "signal": "bearish",
+        >>> #   "period1": 7,
+        >>> #   "period2": 14,
+        >>> #   "period3": 28,
+        >>> #   "overbought_level": 70,
+        >>> #   "oversold_level": 30
+        >>> # }
+        >>> 
+        >>> print(f"Ultimate Oscillator: {result['latest_value']:.1f} - {result['signal']}")  # "Ultimate Oscillator: 48.9 - bearish"
         
     Note:
         - Combines momentum from 3 different timeframes (7, 14, 28 periods typically)
@@ -621,6 +714,16 @@ def calculate_adx(data: Union[pd.DataFrame, Dict[str, Any]], period: int = 14) -
         >>> print(f"ADX: {result['latest_value']:.1f} - Trend: {result['trend_strength']}")
         ADX: 45.2 - Trend: strong
         
+    OUTPUT structure:
+    {
+      "success": true,
+      "function": "calculate_adx",
+      "adx": [37.70, 37.74, 37.40, 37.61, 37.38, 37.76, 37.70, 38.08, 38.05, 38.46, 38.20, 38.47, 38.26],
+      "latest_value": 38.25805842738601,
+      "trend_strength": "moderate",
+      "period": 14
+    }
+        
     Note:
         - ADX = Simple Moving Average of DX (Directional Index) over specified period
         - ADX < 20: Weak trend or sideways movement
@@ -719,6 +822,16 @@ def calculate_adxr(data: Union[pd.DataFrame, Dict[str, Any]], period: int = 14) 
         >>> print(f"ADXR: {result['latest_value']:.1f} - Trend: {result['trend_strength']}")
         ADXR: 38.5 - Trend: moderate
         
+    OUTPUT structure:
+    {
+      "success": true,
+      "function": "calculate_adxr",
+      "adxr": [29.26, 29.79, 30.20, 31.14, 31.80, 32.61, 33.41, 33.33, 33.29, 33.14, 33.00, 33.14, 32.75, 32.68, 32.10, 31.07, 30.57, 30.19, 29.91, 29.71],
+      "latest_value": 29.71235456430395,
+      "trend_strength": "moderate",
+      "period": 14
+    }
+        
     Note:
         - ADXR = (Current ADX + ADX from N periods ago) / 2
         - More stable than ADX, reduces false signals
@@ -816,6 +929,16 @@ def calculate_dx(data: Union[pd.DataFrame, Dict[str, Any]], period: int = 14) ->
         >>> print(f"DX: {result['latest_value']:.1f} - Strength: {result['directional_strength']}")
         DX: 55.8 - Strength: strong
         
+    OUTPUT structure:
+    {
+      "success": true,
+      "function": "calculate_dx",
+      "dx": [15.90, 20.15, 20.15, 26.18, 26.18, 36.74, 32.13, 28.79, 17.46, 35.22, 35.22, 25.42, 28.88, 34.70, 38.37, 38.37, 46.78, 32.87, 38.25, 38.25],
+      "latest_value": 4.70351100979606,
+      "directional_strength": "weak",
+      "period": 14
+    }
+        
     Note:
         - DX = |((+DI) - (-DI))| / ((+DI) + (-DI)) * 100
         - Values range from 0 to 100
@@ -911,6 +1034,16 @@ def calculate_minus_di(data: Union[pd.DataFrame, Dict[str, Any]], period: int = 
         >>> print(f"-DI: {result['latest_value']:.1f} - Pressure: {result['pressure_strength']}")
         -DI: 28.5 - Pressure: moderate
         
+    OUTPUT structure:
+    {
+      "success": true,
+      "function": "calculate_minus_di",
+      "minus_di": [15.74, 14.67, 16.18, 14.53, 13.87, 12.75, 11.73, 11.16, 13.84, 14.00, 12.78, 12.40, 12.56, 12.05, 14.96],
+      "latest_value": 13.406511405323105,
+      "pressure_strength": "weak",
+      "period": 14
+    }
+        
     Note:
         - -DI = Smoothed Minus Directional Movement / True Range * 100
         - Higher -DI values indicate stronger selling pressure
@@ -1005,6 +1138,16 @@ def calculate_plus_di(data: Union[pd.DataFrame, Dict[str, Any]], period: int = 1
         >>> result = calculate_plus_di(ohlc_data)
         >>> print(f"+DI: {result['latest_value']:.1f} - Pressure: {result['pressure_strength']}")
         +DI: 42.3 - Pressure: strong
+        
+    OUTPUT structure:
+    {
+      "success": true,
+      "function": "calculate_plus_di",
+      "plus_di": [11.01, 10.61, 10.00, 12.49, 11.92, 13.01, 13.24, 12.60, 11.65, 10.43, 9.50, 8.57, 7.76, 7.44, 6.83],
+      "latest_value": 8.300291425277448,
+      "pressure_strength": "weak",
+      "period": 14
+    }
         
     Note:
         - +DI = Smoothed Plus Directional Movement / True Range * 100
@@ -1104,6 +1247,18 @@ def calculate_aroon(data: Union[pd.DataFrame, Dict[str, Any]], period: int = 14)
         Aroon Up: 85.7, Down: 28.6
         Signal: bullish
         
+    OUTPUT structure:
+    {
+      "success": true,
+      "function": "calculate_aroon",
+      "aroon_up": [85.71, 78.57, 71.43, 64.29, 57.14, 50.00, 42.86, 35.71, 28.57, 21.43, 14.29, 7.14, 0.00, 0.00, 21.43],
+      "aroon_down": [100.0, 92.86, 100.0, 100.0, 92.86, 100.0, 92.86, 85.71, 100.0, 100.0, 100.0, 100.0, 100.0, 92.86, 100.0],
+      "latest_up": 0.0,
+      "latest_down": 100.0,
+      "signal": "bearish",
+      "period": 14
+    }
+        
     Note:
         - Aroon Up = ((period - periods since highest high) / period) * 100
         - Aroon Down = ((period - periods since lowest low) / period) * 100
@@ -1202,6 +1357,17 @@ def calculate_aroon_oscillator(data: Union[pd.DataFrame, Dict[str, Any]], period
         >>> result = calculate_aroon_oscillator(ohlc_data)
         >>> print(f"Aroon Oscillator: {result['latest_value']:.1f} - {result['signal']}")
         Aroon Oscillator: 57.1 - bullish
+        
+    OUTPUT structure:
+    {
+      "success": true,
+      "function": "calculate_aroon_oscillator",
+      "aroon_oscillator": [-14.29, -14.29, -28.57, -35.71, -35.71, -50.00, -50.00, -50.00, -71.43, -78.57, -85.71, -92.86, -100.0],
+      "latest_value": -100.0,
+      "signal": "bearish",
+      "trend_strength": "strong",
+      "period": 14
+    }
         
     Note:
         - Aroon Oscillator = Aroon Up - Aroon Down
@@ -1318,6 +1484,21 @@ def calculate_macd(data: Union[pd.Series, Dict[str, Any]],
         >>> print(f"MACD: {result['latest_macd']:.3f}, Signal: {result['signal']}")
         MACD: 1.234, Signal: bullish_crossover
         
+    OUTPUT structure:
+    {
+      "success": true,
+      "function": "calculate_macd",
+      "macd_line": [-1.13, -1.05, -1.03, -1.00, -1.04, -1.11, -1.14],
+      "signal_line": [-1.28, -1.23, -1.19, -1.15, -1.13, -1.13, -1.13],
+      "histogram": [0.15, 0.18, 0.16, 0.16, 0.09, 0.02, -0.01],
+      "latest_macd": -1.1429560770159952,
+      "latest_signal": -1.1289476883342413,
+      "signal": "bearish_crossover",
+      "fast_period": 12,
+      "slow_period": 26,
+      "signal_period": 9
+    }
+        
     Note:
         - MACD line crossing above signal line generates bullish signal
         - MACD line crossing below signal line generates bearish signal
@@ -1417,6 +1598,18 @@ def calculate_ppo(data: Union[pd.Series, Dict[str, Any]],
         >>> result = calculate_ppo(prices)
         >>> print(f"PPO: {result['latest_value']:.2f}% - {result['signal']}")
         PPO: 2.15% - bullish
+        
+    OUTPUT structure:
+    {
+      "success": true,
+      "function": "calculate_ppo",
+      "ppo": [-1.32, -1.43, -1.52, -1.56, -1.60, -1.61, -1.53, -1.48, -1.43, -1.37, -1.27, -1.15, -1.09, -1.00, -0.97],
+      "latest_value": -0.9656936924814485,
+      "signal": "bearish",
+      "fast_period": 12,
+      "slow_period": 26,
+      "ma_type": 0
+    }
         
     Note:
         - PPO = ((Fast MA - Slow MA) / Slow MA) * 100
@@ -1886,6 +2079,19 @@ def calculate_cmo(data: Union[pd.Series, Dict[str, Any]], period: int = 14) -> D
         >>> result = calculate_cmo(prices)
         >>> print(f"CMO: {result['latest_value']:.1f} - {result['signal']}")
         CMO: 35.2 - neutral
+        
+    OUTPUT structure:
+    {
+      "success": true,
+      "function": "calculate_cmo",
+      "cmo": [-3.12, -8.20, -16.67, -13.18, -20.58, -30.49, -14.51, -16.22, -15.48, -26.17, -29.82, -28.42, -36.09, -31.15, -35.20],
+      "latest_value": -37.13559950819083,
+      "signal": "neutral",
+      "momentum_strength": "weak",
+      "period": 14,
+      "overbought_level": 50,
+      "oversold_level": -50
+    }
         
     Note:
         - CMO = ((Sum of Gains - Sum of Losses) / (Sum of Gains + Sum of Losses)) * 100

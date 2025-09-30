@@ -135,7 +135,7 @@ def call_mcp_function(function_name: str, args: dict):
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 '''
 
-def execute_script(script_content: str, mock_mode: bool = True, timeout: int = 30) -> Dict[str, Any]:
+def execute_script(script_content: str, mock_mode: bool = True, timeout: int = 30, parameters: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """
     Execute Python script with MCP function injection
     
@@ -143,6 +143,7 @@ def execute_script(script_content: str, mock_mode: bool = True, timeout: int = 3
         script_content: Complete Python script content
         mock_mode: If True, runs in validation mode; if False, production mode
         timeout: Execution timeout in seconds
+        parameters: Optional dictionary of parameters to inject into script
         
     Returns:
         Dict with execution results
@@ -156,7 +157,13 @@ def execute_script(script_content: str, mock_mode: bool = True, timeout: int = 3
         
         # Create MCP injection wrapper
         mcp_wrapper = create_mcp_injection_wrapper(production_mode=not mock_mode)
-        enhanced_script = mcp_wrapper + "\n" + script_content
+        
+        # Add parameter injection if parameters provided
+        parameter_injection = ""
+        if parameters:
+            parameter_injection = f"\n# Parameter injection\nPARAMETERS = {json.dumps(parameters, indent=2)}\n\n"
+        
+        enhanced_script = mcp_wrapper + parameter_injection + script_content
         
         # logger.info(enhanced_script)
         

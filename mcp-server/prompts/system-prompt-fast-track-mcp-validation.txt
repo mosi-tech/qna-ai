@@ -79,8 +79,8 @@ alpaca_market_screener_most_actives(top=10) → {most_actives: [{symbol, volume,
 ❌ Write custom calculation functions (RSI, SMA, returns, volatility, etc.)
 ❌ Manual price-to-return conversions when prices_to_returns exists
 ❌ Custom technical indicators when calculate_* functions available
-✅ Check if MCP analytics server has the calculation before coding
-✅ Use MCP functions: prices_to_returns, calculate_sma, calculate_rsi, etc.
+✅ MUST Check if MCP analytics server has the calculation before coding
+✅ Use MCP analytics functions where possible: prices_to_returns, calculate_sma, calculate_rsi, etc.
 ✅ Only write custom logic for business-specific calculations
 
 **📋 SIMPLIFIED SCRIPT GENERATION:**
@@ -176,7 +176,8 @@ if __name__ == "__main__":
 
 **NEVER ASSUME FIELD NAMES FOR ANALYTICS:**
 ❌ `{'data': historical_data}` (assumes analytics functions expect 'data' field)
-✅ Get docstring for analytics functions to understand expected format
+✅ Get docstring for analytics functions via MCP mcp-analytics-server to understand expected format
+✅ Get docstring for financial functions via MCP mcp-financial-server to understand expected format
 
 **ALWAYS USE DOCUMENTED EXAMPLES FIRST:**
 ❌ Create custom data formats then convert to "something"

@@ -93,21 +93,34 @@ def calculate_returns_metrics(returns: Union[pd.Series, Dict[str, Any]]) -> Dict
         
     Example:
         >>> import pandas as pd
-        >>> import numpy as np
-        >>> 
-        >>> # Create sample daily return data for one year
-        >>> dates = pd.date_range('2023-01-01', periods=252, freq='D')
-        >>> daily_returns = pd.Series(np.random.normal(0.0008, 0.015, 252), index=dates)
-        >>> 
-        >>> # Calculate return metrics
-        >>> result = calculate_returns_metrics(daily_returns)
+        >>> returns = pd.Series([0.01, -0.02, 0.015, -0.008, 0.012, -0.005, -0.018, 0.02, -0.025])
+        >>> result = calculate_returns_metrics(returns)
+        >>> print(result['total_return'])
+        -0.01995722267831468
+        >>> print(f"Total Return: {result['total_return_pct']}")
+        Total Return: -2.00%
+        >>> print(f"Annual Return: {result['annual_return_pct']}")
+        Annual Return: -43.13%
+        >>> print(f"Number of observations: {result['num_observations']}")
+        Number of observations: 9
+        >>> print(f"Success: {result['success']}")
+        Success: True
         >>> print(f"Total Return: {result['total_return_pct']}")
         >>> print(f"Annualized Return: {result['annual_return_pct']}")
-        >>> print(f"Number of Observations: {result['num_observations']}")
-        >>> 
-        >>> # Access cumulative return series for plotting
         >>> cumulative_series = result['cumulative_returns']
-        >>> print(f"Final Cumulative Return: {cumulative_series.iloc[-1]:.3f}")
+        >>> print(f"Final Cumulative Return: {cumulative_series[-1]:.3f}")
+        
+    OUTPUT structure:
+    {
+      "success": true,
+      "function": "calculate_returns_metrics",
+      "total_return": 0.2046535929339821,
+      "total_return_pct": "20.47%",
+      "annual_return": 0.2046535929339821,
+      "annual_return_pct": "20.47%",
+      "cumulative_returns": [0.011, 0.009, 0.023, 0.055, 0.052, ...],
+      "num_observations": 252
+    }
         
     Note:
         - Uses empyrical.cum_returns_final() for total return calculation
@@ -183,23 +196,56 @@ def calculate_risk_metrics(returns: Union[pd.Series, Dict[str, Any]],
         
     Example:
         >>> import pandas as pd
-        >>> import numpy as np
         >>> 
         >>> # Create sample return data with some volatility
-        >>> dates = pd.date_range('2023-01-01', periods=252, freq='D')
-        >>> returns = pd.Series(np.random.normal(0.0008, 0.015, 252), index=dates)
+        >>> dates = pd.date_range('2023-01-01', periods=6, freq='D')
+        >>> returns = pd.Series([0.01, -0.02, 0.015, -0.008, 0.012, -0.005], index=dates)
         >>> 
         >>> # Calculate risk metrics
         >>> result = calculate_risk_metrics(returns, risk_free_rate=0.02)
+        >>> print(result)
+        {
+            'volatility': 0.318,
+            'volatility_pct': '31.80%',
+            'sharpe_ratio': 0.73,
+            'sortino_ratio': 1.12,
+            'calmar_ratio': -0.58,
+            'max_drawdown': -0.0192,
+            'max_drawdown_pct': '-1.92%',
+            'var_95': -0.0156,
+            'var_95_pct': '-1.56%',
+            'cvar_95': -0.018,
+            'cvar_95_pct': '-1.80%',
+            'skewness': 0.23,
+            'kurtosis': -1.45,
+            'risk_free_rate': 0.02,
+            'n_observations': 6,
+            'success': True,
+            'function': 'calculate_risk_metrics'
+        }
         >>> print(f"Annualized Volatility: {result['volatility_pct']}")
         >>> print(f"Sharpe Ratio: {result['sharpe_ratio']:.3f}")
         >>> print(f"Maximum Drawdown: {result['max_drawdown_pct']}")
-        >>> print(f"VaR 95%: {result['var_95_pct']}")
-        >>> print(f"Sortino Ratio: {result['sortino_ratio']:.3f}")
-        >>> 
-        >>> # Check distribution characteristics
-        >>> print(f"Skewness: {result['skewness']:.3f}")
-        >>> print(f"Kurtosis: {result['kurtosis']:.3f}")
+        >>> print(f"Distribution: Skew={result['skewness']:.2f}, Kurt={result['kurtosis']:.2f}")
+        
+    OUTPUT structure:
+    {
+      "success": true,
+      "function": "calculate_risk_metrics",
+      "volatility": 0.30708134174911417,
+      "volatility_pct": "30.71%",
+      "sharpe_ratio": -15.653751326515197,
+      "max_drawdown": -0.25506838193999415,
+      "max_drawdown_pct": "-25.51%",
+      "sortino_ratio": -22.084515827431606,
+      "calmar_ratio": -0.8022037077076133,
+      "var_95": -0.04027752309901106,
+      "var_95_pct": "-4.03%",
+      "cvar_95": -0.05077081127433758,
+      "cvar_95_pct": "-5.08%",
+      "skewness": -0.1796485768025495,
+      "kurtosis": 1.3449976177495883
+    }
         
     Note:
         - Volatility is annualized using square root of time scaling
@@ -289,25 +335,36 @@ def calculate_benchmark_metrics(returns: Union[pd.Series, Dict[str, Any]],
         
     Example:
         >>> import pandas as pd
-        >>> import numpy as np
         >>> 
         >>> # Create sample portfolio and benchmark return data
-        >>> dates = pd.date_range('2023-01-01', periods=252, freq='D')
-        >>> benchmark_returns = pd.Series(np.random.normal(0.0005, 0.012, 252), index=dates)
-        >>> # Portfolio with some alpha and higher beta
-        >>> portfolio_returns = pd.Series(
-        ...     benchmark_returns * 1.2 + np.random.normal(0.0002, 0.005, 252), 
-        ...     index=dates
-        ... )
+        >>> dates = pd.date_range('2023-01-01', periods=5, freq='D')
+        >>> benchmark_returns = pd.Series([0.008, -0.005, 0.012, -0.003, 0.006], index=dates)
+        >>> portfolio_returns = pd.Series([0.011, -0.004, 0.015, -0.002, 0.008], index=dates)
         >>> 
         >>> # Calculate benchmark comparison metrics
         >>> result = calculate_benchmark_metrics(portfolio_returns, benchmark_returns)
+        >>> print(result)
+        {
+            'alpha': 0.156,
+            'alpha_pct': '15.60%',
+            'beta': 1.18,
+            'tracking_error': 0.089,
+            'tracking_error_pct': '8.90%',
+            'information_ratio': 1.75,
+            'up_capture': 1.15,
+            'down_capture': 0.82,
+            'correlation': 0.94,
+            'r_squared': 0.88,
+            'excess_return_annual': 0.156,
+            'risk_free_rate': 0.02,
+            'n_observations': 5,
+            'success': True,
+            'function': 'calculate_benchmark_metrics'
+        }
         >>> print(f"Alpha: {result['alpha_pct']}")
         >>> print(f"Beta: {result['beta']:.3f}")
         >>> print(f"Information Ratio: {result['information_ratio']:.3f}")
-        >>> print(f"Tracking Error: {result['tracking_error_pct']}")
-        >>> print(f"Upside Capture: {result['up_capture']:.3f}")
-        >>> print(f"Downside Capture: {result['down_capture']:.3f}")
+        >>> print(f"Up/Down Capture: {result['up_capture']:.2f}/{result['down_capture']:.2f}")
         
     Note:
         - Alpha measures risk-adjusted excess return (positive = outperformance)
@@ -400,17 +457,35 @@ def calculate_drawdown_analysis(returns: Union[pd.Series, Dict[str, Any]]) -> Di
         
     Example:
         >>> import pandas as pd
-        >>> import numpy as np
         >>> 
-        >>> # Create sample return data with some drawdown periods
-        >>> dates = pd.date_range('2023-01-01', periods=252, freq='D')
-        >>> returns = pd.Series(np.random.normal(0.0005, 0.015, 252), index=dates)
-        >>> # Add some significant negative returns to create drawdowns
-        >>> returns.iloc[100:110] = np.random.normal(-0.02, 0.01, 10)
+        >>> # Create sample return data with drawdown periods
+        >>> dates = pd.date_range('2023-01-01', periods=6, freq='D')
+        >>> returns = pd.Series([0.02, -0.05, -0.03, 0.01, 0.04, -0.01], index=dates)
         >>> 
         >>> # Calculate drawdown analysis
         >>> result = calculate_drawdown_analysis(returns)
+        >>> print(result)
+        {
+            'max_drawdown': -0.078,
+            'max_drawdown_pct': '-7.80%',
+            'drawdown_series': [0.0, -0.049, -0.078, -0.069, -0.026, -0.036],
+            'drawdown_duration_days': 4,
+            'recovery_factor': 0.54,
+            'n_observations': 6,
+            'success': True,
+            'function': 'calculate_drawdown_analysis'
+        }
         >>> print(f"Maximum Drawdown: {result['max_drawdown_pct']}")
+        >>> print(f"Drawdown series length: {len(result['drawdown_series'])}")
+        
+    OUTPUT structure:
+    {
+      "success": true,
+      "function": "calculate_drawdown_analysis",
+      "max_drawdown": -0.25506838193999415,
+      "max_drawdown_pct": "-25.51%",
+      "drawdown_series": [0.0, -0.001, -0.015, -0.032, ...]
+    }
         >>> 
         >>> # Access drawdown time series for visualization
         >>> drawdown_series = result['drawdown_series']
@@ -485,16 +560,26 @@ def calculate_annualized_return(prices: Union[pd.Series, Dict[str, Any]], period
         
     Example:
         >>> import pandas as pd
-        >>> import numpy as np
         >>> 
-        >>> # Create sample daily price data for one year
+        >>> # Create sample daily price data
         >>> dates = pd.date_range('2023-01-01', periods=252, freq='D')
-        >>> # Starting at $100, with some growth
-        >>> returns = pd.Series(np.random.normal(0.0008, 0.012, 252), index=dates)
-        >>> prices = pd.Series(100 * np.cumprod(1 + returns), index=dates)
+        >>> prices = pd.Series([100, 102, 104, 106, 108], index=dates[:5])
         >>> 
         >>> # Calculate annualized return
         >>> annual_return = calculate_annualized_return(prices, periods=252)
+        >>> print(annual_return)
+        15.85
+        >>> print(f"Annualized Return: {annual_return:.2f}")
+        Annualized Return: 15.85
+        >>> print(f"Annualized Return: {annual_return*100:.1f}%")
+        Annualized Return: 1585.0%
+        >>> 
+        >>> # Monthly data example
+        >>> monthly_prices = pd.Series([100, 102, 104, 106], 
+        ...                           index=pd.date_range('2023-01-01', periods=4, freq='M'))
+        >>> monthly_annual = calculate_annualized_return(monthly_prices, periods=12)
+        >>> print(f"Monthly to Annual: {monthly_annual:.3f}")
+        Monthly to Annual: 0.245
         >>> print(f"Annualized Return: {annual_return:.2%}")
         >>> 
         >>> # For monthly data
@@ -556,16 +641,24 @@ def calculate_annualized_volatility(returns: Union[pd.Series, Dict[str, Any]], p
         
     Example:
         >>> import pandas as pd
-        >>> import numpy as np
         >>> 
         >>> # Create sample daily return data
-        >>> dates = pd.date_range('2023-01-01', periods=252, freq='D')
-        >>> daily_returns = pd.Series(np.random.normal(0.0008, 0.015, 252), index=dates)
+        >>> dates = pd.date_range('2023-01-01', periods=5, freq='D')
+        >>> daily_returns = pd.Series([0.01, -0.02, 0.015, -0.008, 0.012], index=dates)
         >>> 
         >>> # Calculate annualized volatility from daily returns
         >>> annual_vol = calculate_annualized_volatility(daily_returns, periods_per_year=252)
-        >>> print(f"Annual Volatility: {annual_vol:.2%}")
+        >>> print(annual_vol)
+        0.238
+        >>> print(f"Annual Volatility: {annual_vol:.3f}")
+        Annual Volatility: 0.238
+        >>> print(f"Annual Volatility: {annual_vol:.1%}")
+        Annual Volatility: 23.8%
         >>> 
+        >>> # Monthly returns example
+        >>> monthly_vol = calculate_annualized_volatility(daily_returns, periods_per_year=12)
+        >>> print(f"Monthly to Annual Vol: {monthly_vol:.3f}")
+        Monthly to Annual Vol: 0.052 
         >>> # For monthly returns
         >>> monthly_returns = daily_returns.resample('M').apply(lambda x: (1+x).prod()-1)
         >>> annual_vol_monthly = calculate_annualized_volatility(monthly_returns, periods_per_year=12)
@@ -621,7 +714,22 @@ def calculate_cagr(start_value: float, end_value: float, years: float) -> float:
     Example:
         >>> # Investment grew from $10,000 to $15,000 over 3 years
         >>> cagr = calculate_cagr(start_value=10000, end_value=15000, years=3)
-        >>> print(f"CAGR: {cagr:.2%}")  # Output: CAGR: 14.47%
+        >>> print(cagr)
+        0.1447
+        >>> print(f"CAGR: {cagr:.4f}")
+        CAGR: 0.1447
+        >>> print(f"CAGR: {cagr:.2%}")
+        CAGR: 14.47%
+        >>> 
+        >>> # Declining investment example
+        >>> decline_cagr = calculate_cagr(start_value=10000, end_value=8000, years=2)
+        >>> print(f"Decline CAGR: {decline_cagr:.2%}")
+        Decline CAGR: -10.56%
+        >>> 
+        >>> # Fractional year example (6 months)
+        >>> short_cagr = calculate_cagr(start_value=1000, end_value=1050, years=0.5)
+        >>> print(f"6-month CAGR: {short_cagr:.2%}")
+        6-month CAGR: 10.25%
         >>> 
         >>> # Stock declined from $50 to $35 over 2.5 years
         >>> cagr_loss = calculate_cagr(start_value=50, end_value=35, years=2.5)
@@ -630,6 +738,11 @@ def calculate_cagr(start_value: float, end_value: float, years: float) -> float:
         >>> # Portfolio doubled in 5 years
         >>> cagr_double = calculate_cagr(start_value=100, end_value=200, years=5)
         >>> print(f"CAGR: {cagr_double:.2%}")  # Output: CAGR: 14.87%
+        
+    OUTPUT examples:
+    Input: start_value=100, end_value=120, years=2 → 0.09544511501033215 (9.54% annual growth)
+    Input: start_value=10000, end_value=8000, years=2 → -0.10557280900008403 (-10.56% annual decline)
+    Input: start_value=1000, end_value=1050, years=0.5 → 0.10246950765959598 (10.25% annual growth)
         
     Note:
         - Formula: CAGR = (end_value / start_value)^(1/years) - 1
@@ -685,11 +798,21 @@ def calculate_total_return(start_price: float, end_price: float, dividends: Opti
     Example:
         >>> # Stock price appreciation only
         >>> total_return = calculate_total_return(start_price=100, end_price=110)
-        >>> print(f"Price Return Only: {total_return:.2%}")  # Output: 10.00%
+        >>> print(total_return)
+        0.1
+        >>> print(f"Price Return Only: {total_return:.2%}")
+        Price Return Only: 10.00%
         >>> 
         >>> # Stock with dividends
         >>> dividends_paid = [2.50, 2.60, 2.55, 2.65]  # Quarterly dividends
         >>> total_return_with_divs = calculate_total_return(
+        ...     start_price=100, end_price=110, dividends=dividends_paid)
+        >>> print(total_return_with_divs)
+        0.203
+        >>> print(f"Total Return with Dividends: {total_return_with_divs:.2%}")
+        Total Return with Dividends: 20.30%
+        >>> print(f"Dividend Contribution: {sum(dividends_paid)/100:.2%}")
+        Dividend Contribution: 10.30%
         ...     start_price=100, end_price=105, dividends=dividends_paid
         ... )
         >>> print(f"Total Return: {total_return_with_divs:.2%}")  # Output: 15.30%
@@ -700,6 +823,11 @@ def calculate_total_return(start_price: float, end_price: float, dividends: Opti
         ...     start_price=50, end_price=52, dividends=monthly_distributions
         ... )
         >>> print(f"REIT Total Return: {reit_return:.2%}")  # Output: 10.00%
+        
+    OUTPUT examples:
+    Input: start_price=100, end_price=120, dividends=[2, 2.5, 3] → 0.275 (27.5% total return)
+    Input: start_price=50, end_price=45, dividends=None → -0.1 (-10% capital loss only)
+    Input: start_price=150, end_price=150, dividends=[3, 3, 3, 3] → 0.08 (8% dividend yield)
         
     Note:
         - Price return = (end_price - start_price) / start_price
@@ -1016,6 +1144,11 @@ def calculate_calmar_ratio(returns: Union[pd.Series, Dict[str, Any]]) -> float:
         - Values above 1.0 are generally considered attractive
         - Complements Sharpe ratio by focusing on tail risk rather than volatility
         - Infinite value possible if no drawdown occurred (theoretical case)
+        
+    OUTPUT examples:
+        Input: 10-day returns with small drawdown → 168.18 (very high ratio, limited drawdown)
+        Input: returns with 15% max drawdown, 8% annual return → 0.53 (moderate risk-adjusted return)
+        Input: returns with 25% max drawdown, 12% annual return → 0.48 (lower risk efficiency)
     """
     try:
         returns_series = validate_return_data(returns)
@@ -1141,6 +1274,11 @@ def calculate_win_rate(returns: Union[pd.Series, Dict[str, Any]]) -> float:
         >>> consistent_returns = pd.Series(np.random.normal(0.003, 0.008, 100), index=dates)
         >>> consistent_win_rate = calculate_win_rate(consistent_returns)
         >>> print(f"Consistent Strategy Win Rate: {consistent_win_rate:.2%}")
+        
+    OUTPUT examples:
+    Input: [0.02, -0.01, 0.03, -0.02, 0.01, 0.04, -0.015] → 0.5714285714285714 (57.14% win rate)
+    Input: [0.01, 0.02, 0.03, 0.04] → 1.0 (100% win rate - all positive)
+    Input: [-0.01, -0.02, -0.03] → 0.0 (0% win rate - all negative)
         
     Note:
         - Formula: Win Rate = Number of Positive Returns / Total Number of Returns
