@@ -518,11 +518,6 @@ def standardize_output(result: Dict[str, Any], function_name: str) -> Dict[str, 
         >>> print(type(standardized['price_series']))  # <class 'list'>
         >>> print(type(standardized['data_frame']))   # <class 'list'> (records format)
         
-    OUTPUT examples:
-    Input: {'values': Series([1.5, 2.3, 3.1]), 'latest': 3.1, 'metadata': {'period': 14}}
-    Output keys: ['success', 'function', 'values', 'latest', 'metadata']
-    Success field: True, Function field: 'test_function'
-    All pandas objects converted to JSON-serializable formats
         
     Note:
         - Converts numpy scalar types (float64, int32, etc.) to Python native types
@@ -551,12 +546,12 @@ def standardize_output(result: Dict[str, Any], function_name: str) -> Dict[str, 
                 standardized[key] = float(value)
             elif isinstance(value, np.integer):
                 standardized[key] = int(value)
-            elif isinstance(value, np.ndarray):
-                standardized[key] = value.tolist()
-            elif isinstance(value, pd.Series):
-                standardized[key] = value.tolist()
-            elif isinstance(value, pd.DataFrame):
-                standardized[key] = value.to_dict('records')
+            # elif isinstance(value, np.ndarray):
+            #     standardized[key] = value.tolist()
+            # elif isinstance(value, pd.Series):
+                # standardized[key] = value.tolist()
+            # elif isinstance(value, pd.DataFrame):
+            #     standardized[key] = value.to_dict('records')
         
         return standardized
         

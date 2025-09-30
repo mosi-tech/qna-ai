@@ -29,12 +29,8 @@ from typing import Dict, List, Any, Union, Optional, Tuple
 import warnings
 warnings.filterwarnings('ignore')
 
-# Use libraries from requirements.txt - no manual calculations
-try:
-    import empyrical
-    EMPYRICAL_AVAILABLE = True
-except ImportError:
-    EMPYRICAL_AVAILABLE = False
+# Use libraries from requirements.txt - empyrical is guaranteed to be available
+import empyrical
 
 from ..utils.data_utils import validate_price_data, prices_to_returns, standardize_output
 from ..performance.metrics import calculate_returns_metrics, calculate_risk_metrics
@@ -132,22 +128,17 @@ def simulate_dca_strategy(prices: Union[pd.Series, Dict[str, Any]],
         # Calculate returns
         portfolio_returns = portfolio_values.pct_change().dropna()
         
-        # Use empyrical for performance metrics if available
-        if EMPYRICAL_AVAILABLE:
-            total_return = empyrical.cum_returns_final(portfolio_returns)
-            annual_return = empyrical.annual_return(portfolio_returns)
-            annual_vol = empyrical.annual_volatility(portfolio_returns)
-            sharpe_ratio = empyrical.sharpe_ratio(portfolio_returns)
-            max_drawdown = empyrical.max_drawdown(portfolio_returns)
-            calmar_ratio = empyrical.calmar_ratio(portfolio_returns)
-        else:
-            # Basic fallback calculations
-            total_return = (portfolio_values.iloc[-1] / cumulative_investment[-1]) - 1
-            annual_return = portfolio_returns.mean() * 252
-            annual_vol = portfolio_returns.std() * np.sqrt(252)
-            sharpe_ratio = annual_return / annual_vol if annual_vol > 0 else 0
-            max_drawdown = ((portfolio_values / portfolio_values.expanding().max()) - 1).min()
-            calmar_ratio = annual_return / abs(max_drawdown) if max_drawdown < 0 else 0
+        # Use internal analytics functions for performance metrics
+        returns_metrics = calculate_returns_metrics(portfolio_returns)
+        risk_metrics = calculate_risk_metrics(portfolio_returns)
+        
+        # Extract metrics from internal function results
+        total_return = returns_metrics['total_return']
+        annual_return = returns_metrics['annual_return']
+        annual_vol = risk_metrics['volatility']
+        sharpe_ratio = risk_metrics['sharpe_ratio']
+        max_drawdown = risk_metrics['max_drawdown']
+        calmar_ratio = risk_metrics['calmar_ratio']
         
         # Calculate average cost basis
         avg_cost = cumulative_investment[-1] / cumulative_shares.iloc[-1]
@@ -280,39 +271,25 @@ def backtest_strategy(prices: Union[pd.DataFrame, Dict[str, Any]],
         # Calculate cumulative portfolio value
         portfolio_values = initial_value * (1 + portfolio_returns).cumprod()
         
-        # Use empyrical for comprehensive performance metrics
-        if EMPYRICAL_AVAILABLE:
-            total_return = empyrical.cum_returns_final(portfolio_returns)
-            annual_return = empyrical.annual_return(portfolio_returns)
-            annual_vol = empyrical.annual_volatility(portfolio_returns)
-            sharpe_ratio = empyrical.sharpe_ratio(portfolio_returns)
-            sortino_ratio = empyrical.sortino_ratio(portfolio_returns)
-            max_drawdown = empyrical.max_drawdown(portfolio_returns)
-            calmar_ratio = empyrical.calmar_ratio(portfolio_returns)
-            var_95 = empyrical.value_at_risk(portfolio_returns, cutoff=0.05)
-            skewness = empyrical.stats.skew(portfolio_returns)
-            kurtosis = empyrical.stats.kurtosis(portfolio_returns)
-            
-            # Stability metrics
-            stability = empyrical.stability_of_timeseries(portfolio_returns)
-            tail_ratio = empyrical.tail_ratio(portfolio_returns)
-            
-        else:
-            # Basic fallback calculations
-            total_return = (portfolio_values.iloc[-1] / initial_value) - 1
-            annual_return = portfolio_returns.mean() * 252
-            annual_vol = portfolio_returns.std() * np.sqrt(252)
-            sharpe_ratio = annual_return / annual_vol if annual_vol > 0 else 0
-            max_drawdown = ((portfolio_values / portfolio_values.expanding().max()) - 1).min()
-            calmar_ratio = annual_return / abs(max_drawdown) if max_drawdown < 0 else 0
-            
-            # Set advanced metrics to None for fallback
-            sortino_ratio = None
-            var_95 = None
-            skewness = None
-            kurtosis = None
-            stability = None
-            tail_ratio = None
+        # Use internal analytics functions for comprehensive performance metrics
+        returns_metrics = calculate_returns_metrics(portfolio_returns)
+        risk_metrics = calculate_risk_metrics(portfolio_returns)
+        
+        # Extract metrics from internal function results
+        total_return = returns_metrics['total_return']
+        annual_return = returns_metrics['annual_return']
+        annual_vol = risk_metrics['volatility']
+        sharpe_ratio = risk_metrics['sharpe_ratio']
+        sortino_ratio = risk_metrics['sortino_ratio']
+        max_drawdown = risk_metrics['max_drawdown']
+        calmar_ratio = risk_metrics['calmar_ratio']
+        var_95 = risk_metrics['var_95']
+        skewness = risk_metrics['skewness']
+        kurtosis = risk_metrics['kurtosis']
+        
+        # Additional empyrical metrics not in standard risk metrics
+        stability = empyrical.stability_of_timeseries(portfolio_returns)
+        tail_ratio = empyrical.tail_ratio(portfolio_returns)
         
         # Calculate hit rate (percentage of positive returns)
         hit_rate = (portfolio_returns > 0).mean()
@@ -334,9 +311,16 @@ def backtest_strategy(prices: Union[pd.DataFrame, Dict[str, Any]],
             "annual_volatility": float(annual_vol),
             "annual_volatility_pct": f"{annual_vol * 100:.2f}%",
             "sharpe_ratio": float(sharpe_ratio),
+            "sortino_ratio": float(sortino_ratio),
             "max_drawdown": float(max_drawdown),
             "max_drawdown_pct": f"{max_drawdown * 100:.2f}%",
             "calmar_ratio": float(calmar_ratio),
+            "var_95": float(var_95),
+            "var_95_pct": f"{var_95 * 100:.2f}%",
+            "skewness": float(skewness),
+            "kurtosis": float(kurtosis),
+            "stability": float(stability),
+            "tail_ratio": float(tail_ratio),
             "hit_rate": float(hit_rate),
             "hit_rate_pct": f"{hit_rate * 100:.2f}%",
             "avg_win": float(avg_win),
@@ -348,18 +332,6 @@ def backtest_strategy(prices: Union[pd.DataFrame, Dict[str, Any]],
             "portfolio_values": portfolio_values,
             "portfolio_returns": portfolio_returns
         }
-        
-        # Add advanced metrics if available
-        if EMPYRICAL_AVAILABLE:
-            result.update({
-                "sortino_ratio": float(sortino_ratio),
-                "var_95": float(var_95),
-                "var_95_pct": f"{var_95 * 100:.2f}%",
-                "skewness": float(skewness),
-                "kurtosis": float(kurtosis),
-                "stability": float(stability),
-                "tail_ratio": float(tail_ratio)
-            })
         
         return standardize_output(result, "backtest_strategy")
         
