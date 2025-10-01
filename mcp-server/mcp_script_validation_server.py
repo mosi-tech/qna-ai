@@ -74,6 +74,64 @@ async def handle_list_tools() -> list[Tool]:
                 "properties": {},
                 "additionalProperties": False
             }
+        ),
+        Tool(
+            name="write_file",
+            description="Write content to a file in the scripts directory for validation",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "filename": {
+                        "type": "string",
+                        "description": "Name of the file to write (will be saved in scripts directory)"
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "Content to write to the file"
+                    }
+                },
+                "required": ["filename", "content"],
+                "additionalProperties": False
+            }
+        ),
+        Tool(
+            name="read_file",
+            description="Read content from a file in the scripts directory",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "filename": {
+                        "type": "string",
+                        "description": "Name of the file to read from scripts directory"
+                    }
+                },
+                "required": ["filename"],
+                "additionalProperties": False
+            }
+        ),
+        Tool(
+            name="list_files",
+            description="List all files in the scripts directory",
+            inputSchema={
+                "type": "object",
+                "properties": {},
+                "additionalProperties": False
+            }
+        ),
+        Tool(
+            name="delete_file",
+            description="Delete a file from the scripts directory",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "filename": {
+                        "type": "string",
+                        "description": "Name of the file to delete from scripts directory"
+                    }
+                },
+                "required": ["filename"],
+                "additionalProperties": False
+            }
         )
     ]
 
@@ -87,12 +145,20 @@ async def handle_call_tool(name: str, arguments: dict) -> list[TextContent | Ima
             return await validate_script(arguments)
         elif name == "get_validation_capabilities":
             return await get_capabilities()
+        elif name == "write_file":
+            return await write_file(arguments)
+        elif name == "read_file":
+            return await read_file(arguments)
+        elif name == "list_files":
+            return await list_files(arguments)
+        elif name == "delete_file":
+            return await delete_file(arguments)
         else:
             return [TextContent(
                 type="text",
                 text=json.dumps({
                     "error": f"Unknown validation tool: {name}",
-                    "available_tools": ["validate_python_script", "get_validation_capabilities"]
+                    "available_tools": ["validate_python_script", "get_validation_capabilities", "write_file", "read_file", "list_files", "delete_file"]
                 }, indent=2)
             )]
             
@@ -204,16 +270,235 @@ async def get_capabilities() -> list[TextContent]:
             "sandboxed_execution",
             "timeout_protection", 
             "error_classification",
-            "mock_mcp_functions"
+            "mock_mcp_functions",
+            "file_management"
         ],
         "max_timeout": 60,
-        "temp_directory_access": True
+        "temp_directory_access": True,
+        "file_tools": ["write_file", "read_file", "list_files", "delete_file"]
     }
     
     return [TextContent(
         type="text",
         text=json.dumps(capabilities, indent=2)
     )]
+
+def get_scripts_directory():
+    """Get the scripts directory path"""
+    import os
+    server_dir = os.path.dirname(os.path.abspath(__file__))
+    scripts_dir = os.path.join(server_dir, "scripts")
+    # Create directory if it doesn't exist
+    os.makedirs(scripts_dir, exist_ok=True)
+    return scripts_dir
+
+async def write_file(arguments: dict) -> list[TextContent]:
+    """Write content to a file in the scripts directory"""
+    filename = arguments.get("filename", "")
+    content = arguments.get("content", "")
+    
+    if not filename:
+        return [TextContent(
+            type="text",
+            text=json.dumps({
+                "success": False,
+                "error": "Filename is required"
+            }, indent=2)
+        )]
+    
+    try:
+        import os
+        scripts_dir = get_scripts_directory()
+        file_path = os.path.join(scripts_dir, filename)
+        
+        # Security check: ensure filename doesn't contain path traversal
+        if ".." in filename or "/" in filename or "\\" in filename:
+            return [TextContent(
+                type="text",
+                text=json.dumps({
+                    "success": False,
+                    "error": "Invalid filename: path traversal not allowed"
+                }, indent=2)
+            )]
+        
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(content)
+        
+        logger.info(f"📝 File written: {filename} ({len(content)} characters)")
+        
+        return [TextContent(
+            type="text",
+            text=json.dumps({
+                "success": True,
+                "message": f"File {filename} written successfully",
+                "path": file_path,
+                "size": len(content)
+            }, indent=2)
+        )]
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to write file {filename}: {e}")
+        return [TextContent(
+            type="text",
+            text=json.dumps({
+                "success": False,
+                "error": f"Failed to write file: {str(e)}"
+            }, indent=2)
+        )]
+
+async def read_file(arguments: dict) -> list[TextContent]:
+    """Read content from a file in the scripts directory"""
+    filename = arguments.get("filename", "")
+    
+    if not filename:
+        return [TextContent(
+            type="text",
+            text=json.dumps({
+                "success": False,
+                "error": "Filename is required"
+            }, indent=2)
+        )]
+    
+    try:
+        import os
+        scripts_dir = get_scripts_directory()
+        file_path = os.path.join(scripts_dir, filename)
+        
+        # Security check: ensure filename doesn't contain path traversal
+        if ".." in filename or "/" in filename or "\\" in filename:
+            return [TextContent(
+                type="text",
+                text=json.dumps({
+                    "success": False,
+                    "error": "Invalid filename: path traversal not allowed"
+                }, indent=2)
+            )]
+        
+        if not os.path.exists(file_path):
+            return [TextContent(
+                type="text",
+                text=json.dumps({
+                    "success": False,
+                    "error": f"File not found: {filename}"
+                }, indent=2)
+            )]
+        
+        with open(file_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        logger.info(f"📖 File read: {filename} ({len(content)} characters)")
+        
+        return [TextContent(
+            type="text",
+            text=json.dumps({
+                "success": True,
+                "filename": filename,
+                "content": content,
+                "size": len(content)
+            }, indent=2)
+        )]
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to read file {filename}: {e}")
+        return [TextContent(
+            type="text",
+            text=json.dumps({
+                "success": False,
+                "error": f"Failed to read file: {str(e)}"
+            }, indent=2)
+        )]
+
+async def list_files(arguments: dict) -> list[TextContent]:
+    """List all files in the scripts directory"""
+    try:
+        import os
+        scripts_dir = get_scripts_directory()
+        
+        if not os.path.exists(scripts_dir):
+            files = []
+        else:
+            files = [f for f in os.listdir(scripts_dir) if os.path.isfile(os.path.join(scripts_dir, f))]
+        
+        logger.info(f"📂 Listed {len(files)} files in scripts directory")
+        
+        return [TextContent(
+            type="text",
+            text=json.dumps({
+                "success": True,
+                "scripts_directory": scripts_dir,
+                "files": files,
+                "count": len(files)
+            }, indent=2)
+        )]
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to list files: {e}")
+        return [TextContent(
+            type="text",
+            text=json.dumps({
+                "success": False,
+                "error": f"Failed to list files: {str(e)}"
+            }, indent=2)
+        )]
+
+async def delete_file(arguments: dict) -> list[TextContent]:
+    """Delete a file from the scripts directory"""
+    filename = arguments.get("filename", "")
+    
+    if not filename:
+        return [TextContent(
+            type="text",
+            text=json.dumps({
+                "success": False,
+                "error": "Filename is required"
+            }, indent=2)
+        )]
+    
+    try:
+        import os
+        scripts_dir = get_scripts_directory()
+        file_path = os.path.join(scripts_dir, filename)
+        
+        # Security check: ensure filename doesn't contain path traversal
+        if ".." in filename or "/" in filename or "\\" in filename:
+            return [TextContent(
+                type="text",
+                text=json.dumps({
+                    "success": False,
+                    "error": "Invalid filename: path traversal not allowed"
+                }, indent=2)
+            )]
+        
+        if not os.path.exists(file_path):
+            return [TextContent(
+                type="text",
+                text=json.dumps({
+                    "success": False,
+                    "error": f"File not found: {filename}"
+                }, indent=2)
+            )]
+        
+        os.remove(file_path)
+        
+        logger.info(f"🗑️ File deleted: {filename}")
+        
+        return [TextContent(
+            type="text",
+            text=json.dumps({
+                "success": True,
+                "message": f"File {filename} deleted successfully"
+            }, indent=2)
+        )]
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to delete file {filename}: {e}")
+        return [TextContent(
+            type="text",
+            text=json.dumps({
+                "success": False,
+                "error": f"Failed to delete file: {str(e)}"
+            }, indent=2)
+        )]
 
 
 async def main():
