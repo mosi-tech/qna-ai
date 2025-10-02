@@ -61,7 +61,7 @@ class UniversalLLMToolCallService:
         if self.llm_provider == "anthropic":
             self.base_url = "https://api.anthropic.com/v1"
             self.api_key = os.getenv("ANTHROPIC_API_KEY")
-            self.default_model = "claude-3-5-sonnet-20241022"
+            self.default_model = "claude-3-5-haiku-20241022"
             if not self.api_key:
                 logger.warning("ANTHROPIC_API_KEY environment variable not set")
         elif self.llm_provider == "ollama":
@@ -86,43 +86,14 @@ class UniversalLLMToolCallService:
             return "You are a helpful financial analysis assistant that generates tool calls for financial data analysis."
     
     async def get_system_prompt(self) -> str:
-        """Get system prompt with dynamically discovered MCP tools (cached)"""
+        """Get system prompt (cached separately from tools for Anthropic)"""
         if self.system_prompt:
             return self.system_prompt
             
-        # Load base system prompt
-        base_prompt = await self.load_system_prompt()
-        
-        # COMMENTED OUT: Dynamic tool discovery for system prompt
-        # The system prompt already contains instructions to use MCP functions directly
-        # No need to inject discovered tools into the prompt
-        
-        # # Add dynamically discovered MCP functions if client is initialized
-        # if self.mcp_initialized and self.mcp_client.available_tools:
-        #     tools_summary = self.mcp_client.get_tools_summary()
-        #     
-        #     tools_info = []
-        #     for server_name, tool_names in tools_summary.items():
-        #         # Show up to 15 tools per server, then summarize
-        #         displayed_tools = tool_names[:15]
-        #         tools_line = f"**{server_name}**: {', '.join(displayed_tools)}"
-        #         if len(tool_names) > 15:
-        #             tools_line += f" (and {len(tool_names) - 15} more)"
-        #         tools_info.append(tools_line)
-        #     
-        #     self.system_prompt = f"""{base_prompt}
-        # 
-        # **Dynamically Discovered MCP Functions:**
-        # {chr(10).join(tools_info)}
-        # 
-        # Use only the exact function names listed above. All functions have been discovered from live MCP servers."""
-        # else:
-        #     self.system_prompt = base_prompt
-        
-        # Use base system prompt as-is since it already contains MCP instructions
-        self.system_prompt = base_prompt
-            
+        # Load base system prompt - keep it separate from tools for caching
+        self.system_prompt = await self.load_system_prompt()
         return self.system_prompt
+    
     
     async def ensure_mcp_initialized(self) -> bool:
         """Ensure MCP client is initialized"""
@@ -174,6 +145,15 @@ class UniversalLLMToolCallService:
             # Get MCP tools in OpenAI format
             mcp_tools = self.get_mcp_tools_for_openai()
             logger.info(f"🔧 Available MCP tools for LLM: {len(mcp_tools)} tools")
+            logger.info(f"🔧 LLM Provider: {self.llm_provider}")
+            logger.info(f"🔧 Tools will be sent to LLM: {'Yes' if mcp_tools else 'No'}")
+            
+            if mcp_tools:
+                logger.info(f"🔧 Sample tool names: {[tool['function']['name'] for tool in mcp_tools[:5]]}")
+                if self.llm_provider == "anthropic":
+                    logger.info(f"🔧 Anthropic tool format will be used")
+                else:
+                    logger.info(f"🔧 OpenAI tool format will be used")
             
             # Add user message to conversation
             messages = self.conversation_messages + [
@@ -189,7 +169,8 @@ class UniversalLLMToolCallService:
             headers = {"Content-Type": "application/json"}
             if self.llm_provider == "anthropic":
                 headers.update({
-                    "Authorization": f"Bearer {self.api_key}",
+                    "x-api-key": self.api_key,
+                    "anthropic-version": "2023-06-01",
                     "anthropic-beta": "tools-2024-05-16"
                 })
             # Ollama doesn't need special headers
@@ -208,11 +189,33 @@ class UniversalLLMToolCallService:
                     
                     # Configure request based on provider
                     if self.llm_provider == "anthropic":
+                        # Extract system message and user messages for Anthropic format
+                        system_msg = None
+                        user_messages = []
+                        for msg in messages:
+                            if msg["role"] == "system":
+                                system_msg = msg["content"]
+                            else:
+                                user_messages.append(msg)
+                        
                         request_data = {
                             "model": model,
-                            "messages": messages,
-                            "max_tokens": 4000
+                            "max_tokens": 4000,
+                            "messages": user_messages
                         }
+                        
+                        # Add system message with cache control for 1-hour TTL
+                        if system_msg:
+                            request_data["system"] = [
+                                {
+                                    "type": "text",
+                                    "text": system_msg,
+                                    "cache_control": {
+                                        "type": "ephemeral",
+                                        "ttl": "1h"
+                                    }
+                                }
+                            ]
                     else:  # ollama
                         request_data = {
                             "model": model,
@@ -220,41 +223,211 @@ class UniversalLLMToolCallService:
                             "stream": False  # Ensure no streaming for Ollama
                         }
                     
-                    # Add tools if available
-                    if mcp_tools:
-                        request_data["tools"] = mcp_tools
+                    # Add tools if available - ONLY on first iteration to establish context
+                    if mcp_tools and iteration_count == 1:
+                        if self.llm_provider == "anthropic":
+                            # For Anthropic: Add cache control ONLY to the LAST tool to cache entire tools array
+                            anthropic_tools = []
+                            for i, tool in enumerate(mcp_tools):
+                                anthropic_tool = {
+                                    "name": tool["function"]["name"],
+                                    "description": tool["function"]["description"],
+                                    "input_schema": tool["function"]["parameters"]
+                                }
+                                
+                                # Add cache control ONLY to the last tool to cache the entire tools array
+                                if i == len(mcp_tools) - 1:
+                                    anthropic_tool["cache_control"] = {
+                                        "type": "ephemeral",
+                                        "ttl": "1h"
+                                    }
+                                
+                                anthropic_tools.append(anthropic_tool)
+                            request_data["tools"] = anthropic_tools
+                            logger.info(f"🔧 Anthropic: Using {len(anthropic_tools)} tools with cache control on LAST tool (1hr TTL)")
+                        else:
+                            request_data["tools"] = mcp_tools
+                            logger.info(f"🔧 Using {len(mcp_tools)} tools in OpenAI format")
+                    elif mcp_tools:
+                        logger.info(f"🔧 Skipping tools on iteration {iteration_count} (tools sent in iteration 1 only)")
                     
-                    # Log request details
+                    # Log request details with size analysis
                     logger.info(f"📤 LLM Request (iteration {iteration_count}):")
                     logger.info(f"   Model: {model}")
                     logger.info(f"   Messages count: {len(messages)}")
                     logger.info(f"   Tools count: {len(mcp_tools) if mcp_tools else 0}")
                     logger.info(f"   Last message preview: {messages[-1]['content'][:150]}{'...' if len(messages[-1]['content']) > 150 else ''}")
                     
+                    # Calculate and log request size breakdown
+                    import json
+                    total_request_size = len(json.dumps(request_data))
+                    logger.info(f"   📊 REQUEST SIZE ANALYSIS:")
+                    logger.info(f"      Total request: {total_request_size:,} characters")
+                    
+                    if 'system' in request_data and self.llm_provider == "anthropic":
+                        system_size = len(json.dumps(request_data['system']))
+                        logger.info(f"      System (cached): {system_size:,} characters")
+                    
+                    if 'tools' in request_data:
+                        tools_size = len(json.dumps(request_data['tools']))
+                        tools_count = len(request_data['tools'])
+                        avg_tool_size = tools_size // tools_count if tools_count > 0 else 0
+                        logger.info(f"      Tools: {tools_size:,} characters ({tools_count} tools, ~{avg_tool_size} chars each)")
+                    
+                    if 'messages' in request_data:
+                        messages_size = len(json.dumps(request_data['messages']))
+                        logger.info(f"      Messages: {messages_size:,} characters")
+                    
                     # Configure endpoint based on provider
                     if self.llm_provider == "anthropic":
-                        endpoint = f"{self.base_url}/chat/completions"
+                        endpoint = f"{self.base_url}/messages"  # Use native Anthropic endpoint
                     else:  # ollama
                         endpoint = f"{self.base_url}/api/chat"
                     
                     logger.info(f"🌐 Sending request to {endpoint}")
+                    
+                    # Debug: Log the request structure for Anthropic
+                    if self.llm_provider == "anthropic":
+                        logger.info(f"🔍 Anthropic request structure:")
+                        logger.info(f"   Model: {request_data.get('model')}")
+                        logger.info(f"   Messages count: {len(request_data.get('messages', []))}")
+                        logger.info(f"   Tools count: {len(request_data.get('tools', []))}")
+                        if 'system' in request_data:
+                            system_content = request_data['system']
+                            logger.info(f"   System content type: {type(system_content)}")
+                            if isinstance(system_content, list) and len(system_content) > 0:
+                                first_item = system_content[0]
+                                logger.info(f"   First system item keys: {list(first_item.keys())}")
+                                if 'cache_control' in first_item:
+                                    logger.info(f"   Cache control: {first_item['cache_control']}")
+                    
                     response = await client.post(
                         endpoint,
                         json=request_data,
                         headers=headers
                     )
+                    
+                    # Detailed error logging for rate limits and other issues
+                    if response.status_code != 200:
+                        logger.error(f"❌ API Request failed with status {response.status_code}")
+                        logger.error(f"   Endpoint: {endpoint}")
+                        logger.error(f"   Headers: {headers}")
+                        
+                        # Log response details
+                        try:
+                            error_response = response.json()
+                            logger.error(f"   Error response: {error_response}")
+                        except:
+                            logger.error(f"   Raw response text: {response.text}")
+                        
+                        # Special handling for rate limits
+                        if response.status_code == 429:
+                            logger.error(f"🚨 RATE LIMIT HIT - Analyzing request size:")
+                            
+                            # Calculate request size
+                            import json
+                            request_json = json.dumps(request_data)
+                            request_size = len(request_json)
+                            logger.error(f"   Total request size: {request_size:,} characters")
+                            
+                            # Break down request components
+                            if 'system' in request_data:
+                                system_size = len(json.dumps(request_data['system']))
+                                logger.error(f"   System content size: {system_size:,} characters")
+                            
+                            if 'tools' in request_data:
+                                tools_size = len(json.dumps(request_data['tools']))
+                                tools_count = len(request_data['tools'])
+                                logger.error(f"   Tools size: {tools_size:,} characters ({tools_count} tools)")
+                            
+                            if 'messages' in request_data:
+                                messages_size = len(json.dumps(request_data['messages']))
+                                messages_count = len(request_data['messages'])
+                                logger.error(f"   Messages size: {messages_size:,} characters ({messages_count} messages)")
+                            
+                            # Check if we have cache headers in response
+                            cache_headers = {k: v for k, v in response.headers.items() if 'cache' in k.lower()}
+                            if cache_headers:
+                                logger.error(f"   Cache-related headers: {cache_headers}")
+                            else:
+                                logger.error(f"   No cache headers found in response")
+                    
                     response.raise_for_status()
                     result = response.json()
                     
                     logger.info(f"📥 LLM Response received (iteration {iteration_count})")
                     
+                    # Debug: Log the full response structure
+                    if self.llm_provider == "anthropic":
+                        logger.info(f"🔍 Anthropic response structure:")
+                        logger.info(f"   Response keys: {list(result.keys())}")
+                        logger.info(f"   Content field exists: {'content' in result}")
+                        if 'content' in result:
+                            content = result['content']
+                            logger.info(f"   Content type: {type(content)}")
+                            logger.info(f"   Content length: {len(content) if isinstance(content, list) else 'N/A'}")
+                            if isinstance(content, list) and len(content) > 0:
+                                logger.info(f"   First content item: {content[0]}")
+                            else:
+                                logger.info(f"   Content is empty or not a list: {content}")
+                        else:
+                            logger.info(f"   Full response: {result}")
+                    
+                    # Log token usage for successful requests
+                    if self.llm_provider == "anthropic" and "usage" in result:
+                        usage = result["usage"]
+                        logger.info(f"🎯 TOKEN USAGE ANALYSIS:")
+                        logger.info(f"   Input tokens: {usage.get('input_tokens', 0):,}")
+                        logger.info(f"   Output tokens: {usage.get('output_tokens', 0):,}")
+                        logger.info(f"   Total tokens: {usage.get('input_tokens', 0) + usage.get('output_tokens', 0):,}")
+                        
+                        # Check for cache performance if available
+                        if "cache_creation_input_tokens" in usage:
+                            logger.info(f"   Cache creation tokens: {usage.get('cache_creation_input_tokens', 0):,}")
+                        if "cache_read_input_tokens" in usage:
+                            logger.info(f"   Cache read tokens: {usage.get('cache_read_input_tokens', 0):,}")
+                            cache_hit_ratio = usage.get('cache_read_input_tokens', 0) / max(usage.get('input_tokens', 1), 1)
+                            logger.info(f"   Cache hit ratio: {cache_hit_ratio:.2%}")
+                    elif "usage" in result:
+                        # For other providers
+                        usage = result["usage"]
+                        logger.info(f"🎯 TOKEN USAGE: {usage}")
+                    
                     # Handle different response formats
                     if self.llm_provider == "anthropic":
-                        # OpenAI format response - get first choice
-                        choices = result.get("choices", [])
-                        if not choices:
-                            raise Exception("No choices in Anthropic response")
-                        message = choices[0].get("message", {})
+                        # Keep Anthropic response in native format for conversation
+                        response_content = result.get("content", [])
+                        if not response_content:
+                            raise Exception("No content in Anthropic response")
+                        
+                        # Add assistant message to conversation in Anthropic format
+                        assistant_message = {"role": "assistant", "content": response_content}
+                        
+                        # Extract tool calls for execution (still need OpenAI format for our MCP calls)
+                        tool_calls = []
+                        text_content = ""
+                        
+                        for block in response_content:
+                            if block.get("type") == "text":
+                                text_content += block.get("text", "")
+                            elif block.get("type") == "tool_use":
+                                # Convert Anthropic tool_use to OpenAI format for MCP execution
+                                tool_call = {
+                                    "id": block.get("id", ""),
+                                    "type": "function",
+                                    "function": {
+                                        "name": block.get("name", ""),
+                                        "arguments": block.get("input", {})
+                                    },
+                                    "anthropic_block": block  # Keep original for tool_result linking
+                                }
+                                tool_calls.append(tool_call)
+                        
+                        message = {
+                            "content": text_content,
+                            "tool_calls": tool_calls,
+                            "assistant_message": assistant_message  # Keep for conversation
+                        }
                     else:  # ollama
                         # Ollama format response - get message directly
                         message = result.get("message", {})
@@ -266,6 +439,11 @@ class UniversalLLMToolCallService:
                     # Check if there are tool calls
                     tool_calls = message.get("tool_calls", [])
                     logger.info(f"🔧 Tool calls in response: {len(tool_calls)}")
+                    logger.info(f"🔧 Message keys: {list(message.keys())}")
+                    logger.info(f"🔧 Message content type: {type(message.get('content', ''))}")
+                    logger.info(f"🔧 Tool calls type: {type(tool_calls)}")
+                    logger.info(f"🔧 Tool calls content: {tool_calls}")
+                    
                     if tool_calls:
                         logger.info(f"🔧 LLM requested {len(tool_calls)} tool calls in iteration {iteration_count}")
                         for i, tool_call in enumerate(tool_calls):
@@ -278,6 +456,10 @@ class UniversalLLMToolCallService:
                             arguments = tool_call["function"]["arguments"]
                             
                             try:
+                                # Path massaging for file tools before calling MCP
+                                if function_name in ["validation-server__write_file", "validation-server__read_file"]:
+                                    arguments = self.massage_file_tool_paths(function_name, arguments)
+                                
                                 # Execute MCP function
                                 logger.info(f"🔧 Executing MCP tool {i+1}/{len(tool_calls)}: {function_name}")
                                 logger.info(f"   Arguments: {arguments}")
@@ -311,31 +493,62 @@ class UniversalLLMToolCallService:
                         all_tool_calls.extend(tool_calls)
                         all_tool_results.extend(tool_results)
                         
-                        # Add assistant message with tool calls to conversation
-                        messages.append(message)
-                        
-                        # Add tool results as user message (for next iteration)
-                        tool_results_text = "Tool results:\n\n"
-                        for i, tool_result in enumerate(tool_results):
-                            func_name = tool_calls[i]["function"]["name"]
-                            if "result" in tool_result:
-                                content = tool_result["result"]
-                                if isinstance(content, str):
-                                    tool_content = content
-                                else:
-                                    tool_content = json.dumps(content, default=str)
-                            else:
-                                tool_content = f"Error: {tool_result['error']}"
+                        if self.llm_provider == "anthropic":
+                            # Add assistant message in Anthropic format
+                            messages.append(message["assistant_message"])
                             
-                            tool_results_text += f"**{func_name}**:\n{tool_content}\n\n"
-                        
-                        logger.info(f"📝 Tool results message preview: {tool_results_text[:400]}{'...' if len(tool_results_text) > 400 else ''}")
-                        
-                        # Add tool results as user message and continue the loop
-                        messages.append({
-                            "role": "user",
-                            "content": tool_results_text
-                        })
+                            # Create tool results in Anthropic format
+                            anthropic_tool_results = []
+                            for i, tool_result in enumerate(tool_results):
+                                tool_call = tool_calls[i]
+                                anthropic_block = tool_call.get("anthropic_block", {})
+                                tool_use_id = anthropic_block.get("id", tool_call.get("id", ""))
+                                
+                                if "result" in tool_result:
+                                    content = tool_result["result"]
+                                    if isinstance(content, str):
+                                        tool_content = content
+                                    else:
+                                        tool_content = json.dumps(content, default=str)
+                                else:
+                                    tool_content = f"Error: {tool_result['error']}"
+                                
+                                anthropic_tool_results.append({
+                                    "type": "tool_result",
+                                    "tool_use_id": tool_use_id,
+                                    "content": tool_content
+                                })
+                            
+                            # Add tool results as user message in Anthropic format
+                            messages.append({
+                                "role": "user",
+                                "content": anthropic_tool_results
+                            })
+                            
+                            logger.info(f"📝 Added {len(anthropic_tool_results)} tool results in Anthropic format")
+                        else:
+                            # Ollama format (keep existing logic)
+                            messages.append(message)
+                            
+                            # Add tool results as text for Ollama
+                            tool_results_text = "Tool results:\n\n"
+                            for i, tool_result in enumerate(tool_results):
+                                func_name = tool_calls[i]["function"]["name"]
+                                if "result" in tool_result:
+                                    content = tool_result["result"]
+                                    if isinstance(content, str):
+                                        tool_content = content
+                                    else:
+                                        tool_content = json.dumps(content, default=str)
+                                else:
+                                    tool_content = f"Error: {tool_result['error']}"
+                                
+                                tool_results_text += f"**{func_name}**:\n{tool_content}\n\n"
+                            
+                            messages.append({
+                                "role": "user",
+                                "content": tool_results_text
+                            })
                         
                         logger.info(f"🔄 Added tool results to conversation, continuing to iteration {iteration_count + 1}")
                         # Continue the while loop - Claude can now request more tools or provide final answer
@@ -365,19 +578,50 @@ class UniversalLLMToolCallService:
             raise
     
     def get_mcp_tools_for_openai(self) -> List[Dict[str, Any]]:
-        """Convert ALL MCP tools to OpenAI tool format (like Claude Code)"""
+        """Convert ALL MCP tools to OpenAI tool format with enhanced descriptions"""
         if not self.mcp_client.available_tools:
             return []
         
         openai_tools = []
         
-        # Convert ALL available MCP functions (like Claude Code does)
+        # Create function mapping for enhanced descriptions
+        financial_functions = []
+        analytics_functions = []
+        validation_functions = []
+        
         for func_name, tool_info in self.mcp_client.available_tools.items():
+            server = tool_info["server"]
+            original_name = tool_info.get("original_name", func_name)
+            
+            if server == "financial-server":
+                financial_functions.append(original_name)
+            elif server == "analytics-server":
+                analytics_functions.append(original_name)
+            elif server == "validation-server":
+                validation_functions.append(original_name)
+        
+        # Convert ALL available MCP functions with enhanced descriptions
+        for func_name, tool_info in self.mcp_client.available_tools.items():
+            server = tool_info["server"]
+            original_name = tool_info.get("original_name", func_name)
+            base_description = tool_info.get("description", f"MCP function: {func_name}")
+            
+            # Enhance get_function_docstring descriptions with server mappings
+            if original_name == "get_function_docstring":
+                if server == "financial-server":
+                    enhanced_description = f"{base_description} | Financial functions: {', '.join(financial_functions[:10])}{'...' if len(financial_functions) > 10 else ''}"
+                elif server == "analytics-server":
+                    enhanced_description = f"{base_description} | Analytics functions: {', '.join(analytics_functions[:10])}{'...' if len(analytics_functions) > 10 else ''}"
+                else:
+                    enhanced_description = base_description
+            else:
+                enhanced_description = base_description
+            
             openai_tool = {
                 "type": "function",
                 "function": {
                     "name": func_name,
-                    "description": tool_info.get("description", f"MCP function: {func_name}"),
+                    "description": enhanced_description,
                     "parameters": tool_info.get("inputSchema", {
                         "type": "object",
                         "properties": {},
@@ -387,13 +631,37 @@ class UniversalLLMToolCallService:
             }
             openai_tools.append(openai_tool)
         
-        logger.info(f"Converted {len(openai_tools)} MCP tools for OpenAI format (ALL available tools)")
+        logger.info(f"Converted {len(openai_tools)} MCP tools with enhanced descriptions")
         return openai_tools
     
     async def call_llm_chat(self, model: str, user_message: str) -> str:
         """Call LLM chat API (legacy method - now uses tool calling)"""
         result = await self.call_llm_chat_with_tools(model, user_message)
         return result["content"]
+    
+    def massage_file_tool_paths(self, function_name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Massage file tool paths to use absolute paths for LLM-provided relative filenames"""
+        # Get current working directory and append scripts directory
+        current_dir = os.getcwd()
+        scripts_dir = os.path.join(current_dir, "scripts")
+        
+        # Create a copy to avoid modifying original arguments
+        massaged_args = arguments.copy()
+        
+        if function_name in ["validation-server__write_file", "validation-server__read_file"]:
+            filename = arguments.get("filename", "")
+            
+            # Only massage if it's a relative path (not already absolute)
+            if filename and not os.path.isabs(filename):
+                # Prepend current working directory + scripts to relative filename
+                absolute_path = os.path.join(scripts_dir, filename)
+                massaged_args["filename"] = absolute_path
+                
+                logger.info(f"🔧 Path massaging: '{filename}' → '{absolute_path}'")
+            else:
+                logger.info(f"🔧 Path unchanged (already absolute): '{filename}'")
+        
+        return massaged_args
     
     def validate_mcp_functions(self, tool_calls: list) -> Dict[str, Any]:
         """Validate that all function names are valid MCP functions using MCP client"""
@@ -490,22 +758,100 @@ class UniversalLLMToolCallService:
             tool_calls_made = script_result["tool_calls"]
             tool_results = script_result["tool_results"]
             
-            logger.info(f"LLM made {len(tool_calls_made)} tool calls during generation")
+            logger.info(f"🔧 LLM TOOL CALLING ANALYSIS:")
+            logger.info(f"   Tool calls made: {len(tool_calls_made)}")
+            logger.info(f"   Tool results received: {len(tool_results)}")
+            
+            # Log each tool call in detail
+            for i, tool_call in enumerate(tool_calls_made):
+                logger.info(f"   Tool Call {i+1}:")
+                logger.info(f"     Function: {tool_call.get('function', {}).get('name', 'Unknown')}")
+                logger.info(f"     Arguments: {tool_call.get('function', {}).get('arguments', {})}")
+            
+            # Log tool results
+            for i, result in enumerate(tool_results):
+                logger.info(f"   Tool Result {i+1}:")
+                if 'result' in result:
+                    logger.info(f"     Success: {str(result['result'])[:200]}{'...' if len(str(result['result'])) > 200 else ''}")
+                elif 'error' in result:
+                    logger.info(f"     Error: {result['error']}")
+            
+            logger.info(f"📝 LLM RESPONSE ANALYSIS:")
+            logger.info(f"   Response length: {len(script_response)} characters")
+            logger.info(f"   Contains 'get_function_docstring': {'get_function_docstring' in script_response}")
+            logger.info(f"   Contains 'write_file': {'write_file' in script_response}")
+            logger.info(f"   Contains 'validate_python_script': {'validate_python_script' in script_response}")
+            logger.info(f"   Contains Python code blocks: {'```python' in script_response}")
+            logger.info(f"   Response preview: {script_response[:300]}{'...' if len(script_response) > 300 else ''}")
+            
+            # Check if we got actual Python code or just planning text
+            def is_python_code(text):
+                """Check if text contains actual Python code vs planning text"""
+                # Look for Python code indicators
+                python_indicators = [
+                    'def ', 'import ', 'class ', 'if __name__', '#!/usr/bin/env python',
+                    'call_mcp_function', 'try:', 'except:', 'for ', 'while ', 'with ',
+                    '```python', '```'
+                ]
+                
+                # Check for substantial Python code (not just comments or planning)
+                lines = text.split('\n')
+                code_lines = 0
+                for line in lines:
+                    line = line.strip()
+                    if any(indicator in line for indicator in python_indicators):
+                        code_lines += 1
+                    elif line.startswith('#') and len(line) > 10:  # Substantial comments
+                        code_lines += 0.5
+                
+                # Need at least 3 lines of substantial code
+                return code_lines >= 3 and len(text) > 200
             
             # Parse and save the generated Python script
             try:
-                # Extract Python script from code blocks
-                if '```python' in script_response:
-                    start = script_response.find('```python') + 9
-                    end = script_response.find('```', start)
-                    python_script = script_response[start:end].strip()
-                elif '```' in script_response:
-                    start = script_response.find('```') + 3
-                    end = script_response.find('```', start)
-                    python_script = script_response[start:end].strip()
-                else:
-                    # Fallback: treat entire response as script (unlikely but safe)
+                # Extract the largest Python script from code blocks
+                python_scripts = []
+                
+                # Find all Python code blocks
+                import re
+                python_blocks = re.findall(r'```python\n(.*?)\n```', script_response, re.DOTALL)
+                if python_blocks:
+                    python_scripts.extend(python_blocks)
+                
+                # Find all generic code blocks that might be Python
+                generic_blocks = re.findall(r'```\n(.*?)\n```', script_response, re.DOTALL)
+                for block in generic_blocks:
+                    # Check if it looks like Python (has def, import, class, etc.)
+                    if any(keyword in block for keyword in ['def ', 'import ', 'class ', 'if __name__', '#!/usr/bin/env python']):
+                        python_scripts.append(block)
+                
+                if python_scripts:
+                    # Take the longest script (most likely the main one)
+                    python_script = max(python_scripts, key=len).strip()
+                elif is_python_code(script_response):
+                    # The entire response is Python code
                     python_script = script_response.strip()
+                else:
+                    # This is planning text, not Python code - should continue conversation
+                    logger.warning(f"⚠️ Got planning text instead of Python code: {script_response[:200]}...")
+                    
+                    # Return indication that we need to continue the conversation
+                    return {
+                        "success": False,
+                        "error": f"LLM generated planning text instead of Python code. Response: {script_response[:500]}...",
+                        "suggestion": "LLM should continue conversation to generate actual Python script",
+                        "response_type": "planning_text",
+                        "response_content": script_response
+                    }
+                
+                # If we got here, we have actual Python code
+                if not python_script or len(python_script) < 50:
+                    logger.warning(f"⚠️ Python script too short ({len(python_script)} chars): {python_script}")
+                    return {
+                        "success": False,
+                        "error": f"Generated Python script too short ({len(python_script)} characters)",
+                        "script_content": python_script
+                    }
                 
                 # Create script filename with timestamp
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -719,9 +1065,7 @@ async def list_models():
         return {
             "provider": "anthropic",
             "models": [
-                "claude-3-5-sonnet-20241022",
                 "claude-3-5-haiku-20241022", 
-                "claude-3-opus-20240229"
             ]
         }
     else:  # ollama
@@ -753,7 +1097,7 @@ if __name__ == "__main__":
     print("\nTo test the server, send a POST request to /analyze with:")
     
     if provider == "anthropic":
-        print('{"question": "What are my portfolio correlations?", "model": "claude-3-5-sonnet-20241022"}')
+        print('{"question": "What are my portfolio correlations?", "model": "claude-3-5-haiku-20241022"}')
         print("\nMake sure you have:")
         print("1. LLM_PROVIDER=anthropic (default)")
         print("2. ANTHROPIC_API_KEY environment variable set")

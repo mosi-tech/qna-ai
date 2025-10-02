@@ -81,24 +81,24 @@ async def handle_list_tools() -> List[types.Tool]:
             tool_kwargs["title"] = schema['title']
         
         # Add optional fields if present
-        if 'outputSchema' in schema:
-            tool_kwargs["outputSchema"] = schema['outputSchema']
+        # if 'outputSchema' in schema:
+        #     tool_kwargs["outputSchema"] = schema['outputSchema']
         
-        if 'annotations' in schema:
-            tool_kwargs["annotations"] = schema['annotations']
+        # if 'annotations' in schema:
+        #     tool_kwargs["annotations"] = schema['annotations']
             
         tools.append(types.Tool(**tool_kwargs))
     
     # Add get_function_docstring tool
     tools.append(types.Tool(
         name="get_function_docstring",
-        description="Get complete Google docstring for any analytics function - use when function schema is unclear",
+        description="Get complete Google docstring for any analytics function (calculate_*, analyze_*, detect_*) - use when function schema is unclear. For financial functions (alpaca_*, eodhd_*), use financial-server instead.",
         inputSchema={
             "type": "object",
             "properties": {
                 "function_name": {
                     "type": "string",
-                    "description": "Name of the analytics function to get docstring for"
+                    "description": "Name of the analytics function to get docstring for (calculate_*, analyze_*, detect_*, optimize_*, etc.)"
                 }
             },
             "required": ["function_name"]
@@ -118,7 +118,20 @@ async def handle_call_tool(name: str, arguments: Dict[str, Any]) -> List[types.T
         # Handle get_function_docstring special tool
         if name == "get_function_docstring":
             function_name = arguments.get("function_name")
-            result = get_function_docstring(function_name, _analytics_functions)
+            
+            # Try to find function in analytics functions first
+            if function_name in _analytics_functions:
+                result = get_function_docstring(function_name, _analytics_functions)
+            else:
+                # Function not found in analytics - provide helpful message about cross-server lookup
+                result = {
+                    "success": False,
+                    "error": f"Function '{function_name}' not found in analytics server",
+                    "help": f"'{function_name}' may be in financial-server or validation-server. Analytics server only has docstrings for analytics functions.",
+                    "analytics_functions_available": len(_analytics_functions),
+                    "sample_analytics_functions": list(_analytics_functions.keys())[:10],
+                    "suggestion": f"If '{function_name}' is a financial function (alpaca_*, eodhd_*), refer to the system prompt or MCP function schemas instead of docstrings."
+                }
             
             return [types.TextContent(
                 type="text",

@@ -77,13 +77,13 @@ async def handle_list_tools() -> list[Tool]:
         ),
         Tool(
             name="write_file",
-            description="Write content to a file in the scripts directory for validation",
+            description="Write content to a file. Use absolute paths for precise file placement, or relative filenames for scripts directory",
             inputSchema={
                 "type": "object",
                 "properties": {
                     "filename": {
                         "type": "string",
-                        "description": "Name of the file to write (will be saved in scripts directory)"
+                        "description": "Absolute path to file (recommended) or relative filename for scripts directory"
                     },
                     "content": {
                         "type": "string",
@@ -96,13 +96,13 @@ async def handle_list_tools() -> list[Tool]:
         ),
         Tool(
             name="read_file",
-            description="Read content from a file in the scripts directory",
+            description="Read content from a file. Use absolute paths for precise file access, or relative filenames for scripts directory",
             inputSchema={
                 "type": "object",
                 "properties": {
                     "filename": {
                         "type": "string",
-                        "description": "Name of the file to read from scripts directory"
+                        "description": "Absolute path to file (recommended) or relative filename for scripts directory"
                     }
                 },
                 "required": ["filename"],
@@ -293,7 +293,7 @@ def get_scripts_directory():
     return scripts_dir
 
 async def write_file(arguments: dict) -> list[TextContent]:
-    """Write content to a file in the scripts directory"""
+    """Write content to a file using absolute path or relative to scripts directory"""
     filename = arguments.get("filename", "")
     content = arguments.get("content", "")
     
@@ -308,30 +308,63 @@ async def write_file(arguments: dict) -> list[TextContent]:
     
     try:
         import os
-        scripts_dir = get_scripts_directory()
-        file_path = os.path.join(scripts_dir, filename)
         
-        # Security check: ensure filename doesn't contain path traversal
-        if ".." in filename or "/" in filename or "\\" in filename:
-            return [TextContent(
-                type="text",
-                text=json.dumps({
-                    "success": False,
-                    "error": "Invalid filename: path traversal not allowed"
+        # Check if filename is an absolute path
+        if os.path.isabs(filename):
+            # Use absolute path directly
+            file_path = os.path.abspath(filename)
+            
+            # Security check: ensure absolute path is within allowed directories
+            allowed_bases = [
+                "/Users/shivc/Documents/Workspace/JS/qna-ai-admin",  # Project root
+                "/tmp",  # Temp directory
+                "/var/tmp"  # Alternative temp
+            ]
+            
+            # Check if the absolute path is within any allowed directory
+            path_allowed = any(
+                file_path.startswith(os.path.abspath(base)) 
+                for base in allowed_bases
+            )
+            
+            if not path_allowed:
+                return [TextContent(
+                    type="text",
+                    text=json.dumps({
+                        "success": False,
+                        "error": f"Absolute path not allowed: {file_path}. Must be within project directory or temp directories."
+                    }, indent=2)
+                )]
+        else:
+            # Relative path - use scripts directory
+            scripts_dir = get_scripts_directory()
+            file_path = os.path.join(scripts_dir, filename)
+            
+            # Security check for relative paths: ensure no path traversal
+            if ".." in filename or "/" in filename or "\\" in filename:
+                return [TextContent(
+                    type="text",
+                    text=json.dumps({
+                        "success": False,
+                        "error": "Invalid relative filename: path traversal not allowed"
                 }, indent=2)
             )]
+        
+        # Ensure parent directory exists
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
         
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(content)
         
-        logger.info(f"📝 File written: {filename} ({len(content)} characters)")
+        logger.info(f"📝 File written: {file_path} ({len(content)} characters)")
         
         return [TextContent(
             type="text",
             text=json.dumps({
                 "success": True,
-                "message": f"File {filename} written successfully",
-                "path": file_path,
+                "message": f"File written successfully",
+                "absolute_path": file_path,
+                "input_filename": filename,
                 "size": len(content)
             }, indent=2)
         )]
@@ -347,7 +380,7 @@ async def write_file(arguments: dict) -> list[TextContent]:
         )]
 
 async def read_file(arguments: dict) -> list[TextContent]:
-    """Read content from a file in the scripts directory"""
+    """Read content from a file using absolute path or relative to scripts directory"""
     filename = arguments.get("filename", "")
     
     if not filename:
@@ -361,18 +394,47 @@ async def read_file(arguments: dict) -> list[TextContent]:
     
     try:
         import os
-        scripts_dir = get_scripts_directory()
-        file_path = os.path.join(scripts_dir, filename)
         
-        # Security check: ensure filename doesn't contain path traversal
-        if ".." in filename or "/" in filename or "\\" in filename:
-            return [TextContent(
-                type="text",
-                text=json.dumps({
-                    "success": False,
-                    "error": "Invalid filename: path traversal not allowed"
-                }, indent=2)
-            )]
+        # Check if filename is an absolute path
+        if os.path.isabs(filename):
+            # Use absolute path directly
+            file_path = os.path.abspath(filename)
+            
+            # Security check: ensure absolute path is within allowed directories
+            allowed_bases = [
+                "/Users/shivc/Documents/Workspace/JS/qna-ai-admin",  # Project root
+                "/tmp",  # Temp directory
+                "/var/tmp"  # Alternative temp
+            ]
+            
+            # Check if the absolute path is within any allowed directory
+            path_allowed = any(
+                file_path.startswith(os.path.abspath(base)) 
+                for base in allowed_bases
+            )
+            
+            if not path_allowed:
+                return [TextContent(
+                    type="text",
+                    text=json.dumps({
+                        "success": False,
+                        "error": f"Absolute path not allowed: {file_path}. Must be within project directory or temp directories."
+                    }, indent=2)
+                )]
+        else:
+            # Relative path - use scripts directory
+            scripts_dir = get_scripts_directory()
+            file_path = os.path.join(scripts_dir, filename)
+            
+            # Security check for relative paths: ensure no path traversal
+            if ".." in filename or "/" in filename or "\\" in filename:
+                return [TextContent(
+                    type="text",
+                    text=json.dumps({
+                        "success": False,
+                        "error": "Invalid relative filename: path traversal not allowed"
+                    }, indent=2)
+                )]
         
         if not os.path.exists(file_path):
             return [TextContent(
@@ -386,13 +448,14 @@ async def read_file(arguments: dict) -> list[TextContent]:
         with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
         
-        logger.info(f"📖 File read: {filename} ({len(content)} characters)")
+        logger.info(f"📖 File read: {file_path} ({len(content)} characters)")
         
         return [TextContent(
             type="text",
             text=json.dumps({
                 "success": True,
-                "filename": filename,
+                "absolute_path": file_path,
+                "input_filename": filename,
                 "content": content,
                 "size": len(content)
             }, indent=2)

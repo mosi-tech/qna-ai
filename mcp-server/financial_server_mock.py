@@ -62,13 +62,13 @@ async def handle_list_tools() -> List[types.Tool]:
     # Add get_function_docstring tool
     tools.append(types.Tool(
         name="get_function_docstring",
-        description="Get complete Google docstring for any financial function - use when function schema is unclear",
+        description="Get complete Google docstring for any financial function (alpaca_*, eodhd_*) - use when function schema is unclear",
         inputSchema={
             "type": "object",
             "properties": {
                 "function_name": {
                     "type": "string",
-                    "description": "Name of the financial function to get docstring for"
+                    "description": "Name of the financial function to get docstring for (alpaca_trading_*, alpaca_market_*, eodhd_*)"
                 }
             },
             "required": ["function_name"]
