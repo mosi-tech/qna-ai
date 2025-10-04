@@ -61,7 +61,7 @@ class UniversalLLMToolCallService:
         if self.llm_provider == "anthropic":
             self.base_url = "https://api.anthropic.com/v1"
             self.api_key = os.getenv("ANTHROPIC_API_KEY")
-            self.default_model = "claude-3-5-haiku-20241022"
+            self.default_model = os.getenv("ANTHROPIC_MODEL", "claude-3-5-haiku-20241022")
             if not self.api_key:
                 logger.warning("ANTHROPIC_API_KEY environment variable not set")
         elif self.llm_provider == "ollama":
@@ -127,6 +127,335 @@ class UniversalLLMToolCallService:
                 }
             ]
             logger.info(f"Initialized conversation with system prompt ({len(system_prompt)} characters)")
+    
+    async def warm_anthropic_cache(self, model: str) -> bool:
+        """Warm Anthropic prompt cache - try all tools first, fallback to batching if rate limited"""
+        try:
+            import asyncio
+            
+            logger.info("🔥 Warming Anthropic prompt cache...")
+            
+            # Get system prompt and tools (reuse existing methods)
+            system_prompt = await self.get_system_prompt()
+            mcp_tools = self.get_mcp_tools_for_openai()
+            
+            # First, cache system prompt only
+            success = await self._cache_system_prompt(model, system_prompt)
+            if not success:
+                return False
+            
+            # Try to cache all tools at once (most token efficient)
+            if mcp_tools:
+                total_tools = len(mcp_tools)
+                logger.info(f"📦 Attempting to cache all {total_tools} tools at once...")
+                
+                success = await self._cache_all_tools(model, system_prompt, mcp_tools)
+                if success:
+                    logger.info("✅ All tools cached successfully in single request")
+                    return True
+                
+                # Fallback to batch caching if all-at-once failed
+                logger.info("📦 Falling back to batch caching due to rate limits...")
+                success = await self._cache_tools_in_batches(model, system_prompt, mcp_tools)
+                
+            logger.info("✅ Cache warming completed")
+            return True
+                    
+        except Exception as e:
+            logger.warning(f"⚠️ Cache warming failed: {e}")
+            return False
+    
+    async def _cache_system_prompt(self, model: str, system_prompt: str, max_retries: int = 3) -> bool:
+        """Cache system prompt with retry logic"""
+        for attempt in range(max_retries):
+            try:
+                request_data = {
+                    "model": model,
+                    "system": [
+                        {
+                            "type": "text",
+                            "text": system_prompt,
+                            "cache_control": {
+                                "type": "ephemeral",
+                                "ttl": "1h"
+                            }
+                        }
+                    ],
+                    "messages": [
+                        {"role": "user", "content": "Warming system prompt cache."}
+                    ],
+                    "max_tokens": 5
+                }
+                
+                headers = {
+                    "Content-Type": "application/json",
+                    "x-api-key": self.api_key,
+                    "anthropic-version": "2023-06-01",
+                }
+                
+                async with httpx.AsyncClient(timeout=60.0) as client:
+                    response = await client.post(
+                        f"{self.base_url}/messages",
+                        json=request_data,
+                        headers=headers
+                    )
+                    
+                    if response.status_code == 200:
+                        response_data = response.json()
+                        if 'usage' in response_data:
+                            input_tokens = response_data['usage'].get('input_tokens', 0)
+                            logger.info(f"✅ System prompt cached - used {input_tokens} input tokens")
+                        else:
+                            logger.info("✅ System prompt cached successfully")
+                        return True
+                    elif response.status_code == 429:
+                        wait_time = 2 ** attempt  # Exponential backoff: 1s, 2s, 4s
+                        logger.warning(f"⚠️ Rate limit hit caching system prompt, attempt {attempt + 1}/{max_retries}, waiting {wait_time}s...")
+                        await asyncio.sleep(wait_time)
+                        continue
+                    else:
+                        logger.warning(f"⚠️ Failed to cache system prompt: {response.status_code}")
+                        return False
+                        
+            except Exception as e:
+                logger.warning(f"⚠️ Error caching system prompt attempt {attempt + 1}: {e}")
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(2 ** attempt)
+                    continue
+                return False
+        
+        logger.warning(f"⚠️ Failed to cache system prompt after {max_retries} attempts")
+        return False
+    
+    async def _cache_all_tools(self, model: str, system_prompt: str, all_tools: list, max_retries: int = 2) -> bool:
+        """Try to cache all tools at once - most token efficient approach"""
+        import asyncio
+        
+        for attempt in range(max_retries):
+            try:
+                # Convert all tools to Anthropic format
+                anthropic_tools = []
+                for i, tool in enumerate(all_tools):
+                    anthropic_tool = {
+                        "name": tool["function"]["name"],
+                        "description": tool["function"]["description"],
+                        "input_schema": tool["function"]["parameters"]
+                    }
+                    
+                    # Add cache control to the last tool
+                    if i == len(all_tools) - 1:
+                        anthropic_tool["cache_control"] = {
+                            "type": "ephemeral",
+                            "ttl": "1h"
+                        }
+                    
+                    anthropic_tools.append(anthropic_tool)
+                
+                request_data = {
+                    "model": model,
+                    "system": [
+                        {
+                            "type": "text",
+                            "text": system_prompt,
+                            "cache_control": {
+                                "type": "ephemeral",
+                                "ttl": "1h"
+                            }
+                        }
+                    ],
+                    "messages": [
+                        {"role": "user", "content": f"Warming cache with all {len(all_tools)} tools."}
+                    ],
+                    "tools": anthropic_tools,
+                    "max_tokens": 5
+                }
+                
+                headers = {
+                    "Content-Type": "application/json",
+                    "x-api-key": self.api_key,
+                    "anthropic-version": "2023-06-01",
+                    "anthropic-beta": "tools-2024-05-16"
+                }
+                
+                async with httpx.AsyncClient(timeout=60.0) as client:
+                    response = await client.post(
+                        f"{self.base_url}/messages",
+                        json=request_data,
+                        headers=headers
+                    )
+                    
+                    if response.status_code == 200:
+                        response_data = response.json()
+                        if 'usage' in response_data:
+                            input_tokens = response_data['usage'].get('input_tokens', 0)
+                            logger.info(f"✅ All {len(all_tools)} tools cached - used {input_tokens} input tokens")
+                        else:
+                            logger.info(f"✅ All {len(all_tools)} tools cached successfully")
+                        return True
+                    elif response.status_code == 429:
+                        logger.warning(f"⚠️ Rate limit hit caching all tools, attempt {attempt + 1}/{max_retries}")
+                        if attempt < max_retries - 1:
+                            wait_time = 2 ** attempt  # Exponential backoff
+                            await asyncio.sleep(wait_time)
+                            continue
+                        else:
+                            logger.warning("⚠️ Rate limit hit - will fallback to batch caching")
+                            return False
+                    else:
+                        logger.warning(f"⚠️ Failed to cache all tools: {response.status_code}")
+                        return False
+                        
+            except Exception as e:
+                logger.warning(f"⚠️ Error caching all tools attempt {attempt + 1}: {e}")
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(2 ** attempt)
+                    continue
+                return False
+        
+        return False
+    
+    async def _cache_tools_in_batches(self, model: str, system_prompt: str, all_tools: list) -> bool:
+        """Fallback: progressive reduction - try all minus 10, minus 20, etc. until success, then cache remaining"""
+        import asyncio
+        
+        total_tools = len(all_tools)
+        reduction_step = 10
+        
+        logger.info(f"📦 Progressive reduction caching for {total_tools} tools...")
+        
+        # Try progressively smaller sets: all-10, all-20, all-30, etc.
+        for reduction in range(reduction_step, total_tools, reduction_step):
+            tools_to_cache = all_tools[:-reduction]  # Remove last 'reduction' tools
+            remaining_tools = all_tools[-reduction:]  # Tools we removed
+            
+            logger.info(f"📦 Trying to cache {len(tools_to_cache)} tools (removing last {reduction})")
+            
+            success = await self._cache_tools_batch(model, system_prompt, tools_to_cache)
+            if success:
+                logger.info(f"✅ Successfully cached {len(tools_to_cache)} tools")
+                
+                # Now cache the remaining tools in small batches
+                if remaining_tools:
+                    logger.info(f"📦 Caching remaining {len(remaining_tools)} tools in batches...")
+                    await self._cache_remaining_tools(model, system_prompt, remaining_tools)
+                
+                return True
+            else:
+                logger.warning(f"⚠️ Still rate limited with {len(tools_to_cache)} tools, reducing further...")
+                await asyncio.sleep(1)
+        
+        # If we get here, even small sets are rate limited - try very small batches
+        logger.warning("⚠️ All reductions failed, falling back to small individual batches...")
+        await self._cache_remaining_tools(model, system_prompt, all_tools, batch_size=5)
+        return True
+    
+    async def _cache_remaining_tools(self, model: str, system_prompt: str, remaining_tools: list, batch_size: int = 10) -> bool:
+        """Cache remaining tools in small batches"""
+        import asyncio
+        
+        total_remaining = len(remaining_tools)
+        total_batches = (total_remaining + batch_size - 1) // batch_size
+        
+        for batch_start in range(0, total_remaining, batch_size):
+            batch_end = min(batch_start + batch_size, total_remaining)
+            batch_tools = remaining_tools[batch_start:batch_end]
+            batch_num = (batch_start // batch_size) + 1
+            
+            logger.info(f"📦 Caching remaining batch {batch_num}/{total_batches} ({len(batch_tools)} tools)")
+            
+            success = await self._cache_tools_batch(model, system_prompt, batch_tools)
+            if not success:
+                logger.warning(f"⚠️ Failed to cache remaining batch {batch_num}")
+            
+            # Small delay between batches
+            if batch_end < total_remaining:
+                await asyncio.sleep(1)
+        
+        return True
+    
+    async def _cache_tools_batch(self, model: str, system_prompt: str, tools_batch: list, max_retries: int = 3) -> bool:
+        """Cache a cumulative batch of tools with retry logic - EVERY batch gets cache control"""
+        import asyncio
+        
+        for attempt in range(max_retries):
+            try:
+                # Convert tools to Anthropic format
+                anthropic_tools = []
+                for i, tool in enumerate(tools_batch):
+                    anthropic_tool = {
+                        "name": tool["function"]["name"],
+                        "description": tool["function"]["description"],
+                        "input_schema": tool["function"]["parameters"]
+                    }
+                    
+                    # Add cache control to EVERY last tool in EVERY batch
+                    if i == len(tools_batch) - 1:
+                        anthropic_tool["cache_control"] = {
+                            "type": "ephemeral",
+                            "ttl": "1h"
+                        }
+                    
+                    anthropic_tools.append(anthropic_tool)
+                
+                request_data = {
+                    "model": model,
+                    "system": [
+                        {
+                            "type": "text",
+                            "text": system_prompt,
+                            "cache_control": {
+                                "type": "ephemeral",
+                                "ttl": "1h"
+                            }
+                        }
+                    ],
+                    "messages": [
+                        {"role": "user", "content": f"Warming tools cache ({len(tools_batch)} tools cumulative)."}
+                    ],
+                    "tools": anthropic_tools,
+                    "max_tokens": 5
+                }
+                
+                headers = {
+                    "Content-Type": "application/json",
+                    "x-api-key": self.api_key,
+                    "anthropic-version": "2023-06-01",
+                    "anthropic-beta": "tools-2024-05-16"
+                }
+                
+                async with httpx.AsyncClient(timeout=60.0) as client:
+                    response = await client.post(
+                        f"{self.base_url}/messages",
+                        json=request_data,
+                        headers=headers
+                    )
+                    
+                    if response.status_code == 200:
+                        response_data = response.json()
+                        if 'usage' in response_data:
+                            input_tokens = response_data['usage'].get('input_tokens', 0)
+                            logger.info(f"✅ {len(tools_batch)} tools cached cumulatively - used {input_tokens} input tokens")
+                        else:
+                            logger.info(f"✅ {len(tools_batch)} tools cached cumulatively")
+                        return True
+                    elif response.status_code == 429:
+                        wait_time = 2 ** attempt  # Exponential backoff: 1s, 2s, 4s
+                        logger.warning(f"⚠️ Rate limit hit caching tools batch, attempt {attempt + 1}/{max_retries}, waiting {wait_time}s...")
+                        await asyncio.sleep(wait_time)
+                        continue
+                    else:
+                        logger.warning(f"⚠️ Failed to cache tools batch: {response.status_code}")
+                        return False
+                        
+            except Exception as e:
+                logger.warning(f"⚠️ Error caching tools batch attempt {attempt + 1}: {e}")
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(2 ** attempt)
+                    continue
+                return False
+        
+        logger.warning(f"⚠️ Failed to cache tools batch after {max_retries} attempts")
+        return False
     
     async def call_llm_chat_with_tools(self, model: str, user_message: str) -> Dict[str, Any]:
         """Call LLM (Anthropic or Ollama) via OpenAI-compatible API with multi-level tool calling support"""
@@ -223,8 +552,8 @@ class UniversalLLMToolCallService:
                             "stream": False  # Ensure no streaming for Ollama
                         }
                     
-                    # Add tools if available - ONLY on first iteration to establish context
-                    if mcp_tools and iteration_count == 1:
+                    # Add tools if available - send tools in EVERY iteration for continued tool calling
+                    if mcp_tools:
                         if self.llm_provider == "anthropic":
                             # For Anthropic: Add cache control ONLY to the LAST tool to cache entire tools array
                             anthropic_tools = []
@@ -248,8 +577,6 @@ class UniversalLLMToolCallService:
                         else:
                             request_data["tools"] = mcp_tools
                             logger.info(f"🔧 Using {len(mcp_tools)} tools in OpenAI format")
-                    elif mcp_tools:
-                        logger.info(f"🔧 Skipping tools on iteration {iteration_count} (tools sent in iteration 1 only)")
                     
                     # Log request details with size analysis
                     logger.info(f"📤 LLM Request (iteration {iteration_count}):")
@@ -400,6 +727,10 @@ class UniversalLLMToolCallService:
                         if not response_content:
                             raise Exception("No content in Anthropic response")
                         
+                        # Check stop reason - if end_turn, LLM considers task complete
+                        stop_reason = result.get("stop_reason", "")
+                        logger.info(f"🛑 Anthropic stop_reason: {stop_reason}")
+                        
                         # Add assistant message to conversation in Anthropic format
                         assistant_message = {"role": "assistant", "content": response_content}
                         
@@ -456,8 +787,18 @@ class UniversalLLMToolCallService:
                             arguments = tool_call["function"]["arguments"]
                             
                             try:
+                                # CRITICAL: Block forbidden financial/analytics function calls
+                                if self.is_forbidden_function_call(function_name):
+                                    forbidden_msg = f"❌ FORBIDDEN: Cannot call '{function_name}'. You can only use get_function_docstring() to inquire about function documentation. Write scripts that call these functions instead of executing them directly."
+                                    logger.warning(f"🚫 Blocked forbidden function call: {function_name}")
+                                    tool_results.append({
+                                        "call": tool_call,
+                                        "result": forbidden_msg
+                                    })
+                                    continue
+                                
                                 # Path massaging for file tools before calling MCP
-                                if function_name in ["validation-server__write_file", "validation-server__read_file"]:
+                                if function_name in ["validation-server__write_file", "validation-server__read_file", "validation-server__validate_python_script"]:
                                     arguments = self.massage_file_tool_paths(function_name, arguments)
                                 
                                 # Execute MCP function
@@ -514,9 +855,14 @@ class UniversalLLMToolCallService:
                                     tool_content = f"Error: {tool_result['error']}"
                                 
                                 anthropic_tool_results.append({
-                                    "type": "tool_result",
                                     "tool_use_id": tool_use_id,
-                                    "content": tool_content
+                                    "type": "tool_result",
+                                    "content": [
+                                        {
+                                            "type": "text",
+                                            "text": tool_content
+                                        }
+                                    ]
                                 })
                             
                             # Add tool results as user message in Anthropic format
@@ -554,14 +900,66 @@ class UniversalLLMToolCallService:
                         # Continue the while loop - Claude can now request more tools or provide final answer
                         
                     else:
-                        # No tool calls - Claude provided final answer
-                        logger.info(f"🏁 Final response received after {iteration_count} iterations")
-                        return {
-                            "content": message.get("content", ""),
-                            "tool_calls": all_tool_calls,
-                            "tool_results": all_tool_results,
-                            "iterations": iteration_count
-                        }
+                        # No tool calls - check if we should continue or stop
+                        content = message.get("content", "")
+                        logger.info(f"🔄 No tool calls in iteration {iteration_count}, content: {content[:100]}...")
+                        
+                        # Check if LLM indicated it's done (for Anthropic)
+                        llm_indicated_done = False
+                        if self.llm_provider == "anthropic" and "stop_reason" in locals():
+                            llm_indicated_done = stop_reason == "end_turn"
+                            logger.info(f"🛑 LLM indicated done (end_turn): {llm_indicated_done}")
+                        
+                        # Check if we've completed the task (validation tool was called and succeeded)
+                        validation_completed = any(
+                            "validate_python_script" in call["function"]["name"] 
+                            for call in all_tool_calls
+                        )
+                        
+                        # Check if we have substantial Python code (task completion indicator)
+                        has_python_code = (
+                            "```python" in content or 
+                            "def " in content or 
+                            "import " in content or
+                            len(content) > 500  # Substantial content
+                        )
+                        
+                        if validation_completed or has_python_code or llm_indicated_done:
+                            # Task appears complete
+                            logger.info(f"🏁 Task completed after {iteration_count} iterations (validation: {validation_completed}, code: {has_python_code}, llm_done: {llm_indicated_done})")
+                            return {
+                                "content": content,
+                                "tool_calls": all_tool_calls,
+                                "tool_results": all_tool_results,
+                                "iterations": iteration_count,
+                                "stop_reason": stop_reason if self.llm_provider == "anthropic" else None
+                            }
+                        else:
+                            # This is likely planning text - continue conversation
+                            logger.info(f"🔄 Planning text detected, continuing conversation...")
+                            
+                            # Add the planning text to conversation and continue
+                            if self.llm_provider == "anthropic":
+                                messages.append(message["assistant_message"] if "assistant_message" in message else {
+                                    "role": "assistant",
+                                    "content": [{"type": "text", "text": content}]
+                                })
+                                
+                                # Add a user message prompting for immediate tool calls
+                                messages.append({
+                                    "role": "user",
+                                    "content": "Please proceed with the specific tool calls you mentioned. Use get_function_docstring() or write_file() now - don't just describe what you plan to do."
+                                })
+                            else:
+                                # Ollama format
+                                messages.append(message)
+                                messages.append({
+                                    "role": "user",
+                                    "content": "Please proceed with the specific tool calls you mentioned. Use get_function_docstring() or write_file() now - don't just describe what you plan to do."
+                                })
+                            
+                            # Continue the loop to get the actual script
+                            continue
                 
                 # If we exit the loop due to max iterations
                 logger.warning(f"⚠️ Reached max iterations ({max_iterations}), returning last response")
@@ -639,6 +1037,18 @@ class UniversalLLMToolCallService:
         result = await self.call_llm_chat_with_tools(model, user_message)
         return result["content"]
     
+    def is_forbidden_function_call(self, function_name: str) -> bool:
+        """Check if function call is forbidden (financial/analytics server functions except get_function_docstring)"""
+        import re
+        
+        # Allow get_function_docstring from any server
+        if function_name.endswith("get_function_docstring"):
+            return False
+        
+        # Block all other financial-server and analytics-server functions
+        forbidden_pattern = r"^(financial-server__|analytics-server__)"
+        return bool(re.match(forbidden_pattern, function_name))
+    
     def massage_file_tool_paths(self, function_name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Massage file tool paths to use absolute paths for LLM-provided relative filenames"""
         # Get current working directory and append scripts directory
@@ -660,6 +1070,19 @@ class UniversalLLMToolCallService:
                 logger.info(f"🔧 Path massaging: '{filename}' → '{absolute_path}'")
             else:
                 logger.info(f"🔧 Path unchanged (already absolute): '{filename}'")
+        
+        elif function_name == "validation-server__validate_python_script":
+            script_filename = arguments.get("script_filename", "")
+            
+            # Only massage if it's a relative path (not already absolute)
+            if script_filename and not os.path.isabs(script_filename):
+                # Prepend current working directory + scripts to relative filename
+                absolute_path = os.path.join(scripts_dir, script_filename)
+                massaged_args["script_filename"] = absolute_path
+                
+                logger.info(f"🔧 Path massaging (validate): '{script_filename}' → '{absolute_path}'")
+            else:
+                logger.info(f"🔧 Path unchanged (validate, already absolute): '{script_filename}'")
         
         return massaged_args
     
@@ -784,110 +1207,27 @@ class UniversalLLMToolCallService:
             logger.info(f"   Contains Python code blocks: {'```python' in script_response}")
             logger.info(f"   Response preview: {script_response[:300]}{'...' if len(script_response) > 300 else ''}")
             
-            # Check if we got actual Python code or just planning text
-            def is_python_code(text):
-                """Check if text contains actual Python code vs planning text"""
-                # Look for Python code indicators
-                python_indicators = [
-                    'def ', 'import ', 'class ', 'if __name__', '#!/usr/bin/env python',
-                    'call_mcp_function', 'try:', 'except:', 'for ', 'while ', 'with ',
-                    '```python', '```'
-                ]
-                
-                # Check for substantial Python code (not just comments or planning)
-                lines = text.split('\n')
-                code_lines = 0
-                for line in lines:
-                    line = line.strip()
-                    if any(indicator in line for indicator in python_indicators):
-                        code_lines += 1
-                    elif line.startswith('#') and len(line) > 10:  # Substantial comments
-                        code_lines += 0.5
-                
-                # Need at least 3 lines of substantial code
-                return code_lines >= 3 and len(text) > 200
+            # No script parsing needed - LLM should use tool calls (write_file → validate_python_script)
+            validation_passed = any("validate" in call["function"]["name"] for call in tool_calls_made)
+            script_saved = any("write_file" in call["function"]["name"] for call in tool_calls_made)
             
-            # Parse and save the generated Python script
-            try:
-                # Extract the largest Python script from code blocks
-                python_scripts = []
-                
-                # Find all Python code blocks
-                import re
-                python_blocks = re.findall(r'```python\n(.*?)\n```', script_response, re.DOTALL)
-                if python_blocks:
-                    python_scripts.extend(python_blocks)
-                
-                # Find all generic code blocks that might be Python
-                generic_blocks = re.findall(r'```\n(.*?)\n```', script_response, re.DOTALL)
-                for block in generic_blocks:
-                    # Check if it looks like Python (has def, import, class, etc.)
-                    if any(keyword in block for keyword in ['def ', 'import ', 'class ', 'if __name__', '#!/usr/bin/env python']):
-                        python_scripts.append(block)
-                
-                if python_scripts:
-                    # Take the longest script (most likely the main one)
-                    python_script = max(python_scripts, key=len).strip()
-                elif is_python_code(script_response):
-                    # The entire response is Python code
-                    python_script = script_response.strip()
-                else:
-                    # This is planning text, not Python code - should continue conversation
-                    logger.warning(f"⚠️ Got planning text instead of Python code: {script_response[:200]}...")
-                    
-                    # Return indication that we need to continue the conversation
-                    return {
-                        "success": False,
-                        "error": f"LLM generated planning text instead of Python code. Response: {script_response[:500]}...",
-                        "suggestion": "LLM should continue conversation to generate actual Python script",
-                        "response_type": "planning_text",
-                        "response_content": script_response
-                    }
-                
-                # If we got here, we have actual Python code
-                if not python_script or len(python_script) < 50:
-                    logger.warning(f"⚠️ Python script too short ({len(python_script)} chars): {python_script}")
-                    return {
-                        "success": False,
-                        "error": f"Generated Python script too short ({len(python_script)} characters)",
-                        "script_content": python_script
-                    }
-                
-                # Create script filename with timestamp
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                script_filename = f"volatility_analysis_{timestamp}.py"
-                
-                # Create scripts directory if it doesn't exist
-                scripts_dir = os.path.join(os.path.dirname(__file__), "executionServer", "scripts")
-                os.makedirs(scripts_dir, exist_ok=True)
-                
-                # Save the script
-                script_path = os.path.join(scripts_dir, script_filename)
-                with open(script_path, 'w') as f:
-                    f.write(python_script)
-                
-                logger.info(f"Saved script: {script_path} ({len(python_script)} characters)")
-                
-                # Check if script contains validation indicators
-                validation_passed = "validate_python_script" in script_response and "success" in script_response.lower()
-                script_saved = True
-                
-            except Exception as e:
-                logger.error(f"Failed to parse or save script: {e}")
-                python_script = script_response
-                script_filename = None
-                script_path = None
-                validation_passed = False
-                script_saved = False
+            # Extract script filename from write_file tool calls
+            script_filename = None
+            for call in tool_calls_made:
+                if "write_file" in call["function"]["name"]:
+                    filename = call["function"]["arguments"].get("filename")
+                    if filename and filename.endswith('.py'):
+                        script_filename = filename
+                        break
             
             # Get available tools count for reporting
             available_tools = self.mcp_client.available_tools
             
-            # Generate final structured response with script details
+            # Generate final structured response with tool call details
             return {
                 "success": True,
                 "data": {
-                    "description": f"Generated and saved Python script for: {question} {'✅ Script saved successfully' if script_saved else '❌ Failed to save script'}",
+                    "description": f"LLM processed financial question using tool calls: {question} {'✅ Script saved via tool calls' if script_saved else '❌ No script saved'}",
                     "body": [
                         {
                             "key": "question",
@@ -895,29 +1235,24 @@ class UniversalLLMToolCallService:
                             "description": "The financial question that was analyzed"
                         },
                         {
-                            "key": "script_filename",
-                            "value": script_filename,
-                            "description": "Filename of the saved Python script"
+                            "key": "tool_calling_approach",
+                            "value": "MCP validation workflow",
+                            "description": "LLM used tool calls (write_file → validate_python_script) instead of direct script generation"
                         },
                         {
-                            "key": "script_path",
-                            "value": script_path,
-                            "description": "Full path where the script was saved"
+                            "key": "script_saved_via_tools",
+                            "value": script_saved,
+                            "description": "Whether script was saved via write_file tool call"
                         },
                         {
-                            "key": "script_content",
-                            "value": python_script if script_saved else None,
-                            "description": "The complete Python script content"
+                            "key": "validation_attempted",
+                            "value": validation_passed,
+                            "description": "Whether validation was attempted via validate_python_script tool call"
                         },
                         {
-                            "key": "script_length",
-                            "value": len(python_script) if script_saved else len(script_response),
-                            "description": "Length of the generated script in characters"
-                        },
-                        {
-                            "key": "validation_status",
-                            "value": "Auto-validated by LLM" if validation_passed else "Generated (validation unclear)",
-                            "description": "Validation status from LLM generation process"
+                            "key": "workflow_status",
+                            "value": "Tool-based workflow completed" if script_saved and validation_passed else "Partial tool workflow",
+                            "description": "Status of the MCP tool-based script generation and validation workflow"
                         },
                         {
                             "key": "tool_calls_made",
@@ -992,6 +1327,60 @@ class UniversalLLMToolCallService:
 # Initialize service
 llm_service = UniversalLLMToolCallService()
 
+def print_progress(step: str, current: int, total: int, details: str = ""):
+    """Print startup progress to terminal"""
+    progress = int((current / total) * 30) if total > 0 else 0
+    bar = "█" * progress + "░" * (30 - progress)
+    percentage = int((current / total) * 100) if total > 0 else 0
+    
+    print(f"\r🚀 [{bar}] {percentage:3d}% | {step:<25} {details}", end="", flush=True)
+    if current >= total:
+        print()  # New line when complete
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize MCP and warm cache on startup with progress display"""
+    print("\n" + "="*80)
+    print("🚀 FINANCIAL ANALYSIS SERVER STARTUP")
+    print("="*80)
+    
+    total_steps = 3 if llm_service.llm_provider == "anthropic" else 2
+    current_step = 0
+    
+    try:
+        # Step 1: Initialize MCP client
+        current_step += 1
+        print_progress("Initializing MCP", current_step - 1, total_steps, "connecting to servers...")
+        success = await llm_service.ensure_mcp_initialized()
+        if success:
+            tool_count = len(llm_service.mcp_client.available_tools) if llm_service.mcp_client else 0
+            print_progress("MCP Initialized", current_step, total_steps, f"({tool_count} tools available)")
+        else:
+            print_progress("MCP Failed", current_step, total_steps, "(continuing without MCP)")
+        
+        # Step 2: Load system prompt
+        current_step += 1
+        print_progress("Loading System Prompt", current_step - 1, total_steps, "reading configuration...")
+        await llm_service.get_system_prompt()
+        print_progress("System Prompt Loaded", current_step, total_steps, f"({len(llm_service.system_prompt)} chars)")
+        
+        # Step 3: Warm Anthropic cache (if using Anthropic)
+        if llm_service.llm_provider == "anthropic":
+            current_step += 1
+            print_progress("Warming Cache", current_step - 1, total_steps, "optimizing response times...")
+            cache_success = await llm_service.warm_anthropic_cache(llm_service.default_model)
+            if cache_success:
+                print_progress("Cache Warmed", current_step, total_steps, "(1h TTL active)")
+            else:
+                print_progress("Cache Skipped", current_step, total_steps, "(will work without cache)")
+        
+        print("\n" + "✅ SERVER READY!")
+        print("="*80)
+        
+    except Exception as e:
+        print(f"\n❌ Startup failed: {e}")
+        print("="*80)
+
 @app.post("/analyze", response_model=AnalysisResponse)
 async def analyze_question(request: QuestionRequest):
     """
@@ -1058,14 +1447,94 @@ async def debug_system_prompt():
     except Exception as e:
         return {"error": str(e)}
 
+@app.post("/debug/test-tool-result-processing")
+async def test_tool_result_processing():
+    """Test endpoint to verify tool result processing without calling LLM"""
+    try:
+        if not await llm_service.ensure_mcp_initialized():
+            return {"error": "MCP client not initialized"}
+        
+        # Simulate a validation tool call that should include error_traceback
+        test_tool_calls = [
+            {
+                "type": "function",
+                "function": {
+                    "name": "validation-server__validate_python_script",
+                    "arguments": {
+                        "script_filename": "test_internal_error.py"
+                    }
+                },
+                "anthropic_block": {"id": "test_id_123"}
+            }
+        ]
+        
+        logger.info("🧪 Testing tool result processing with validation call")
+        
+        # Execute the tool call (same logic as in call_llm_chat_with_tools)
+        tool_results = []
+        for i, tool_call in enumerate(test_tool_calls):
+            function_name = tool_call["function"]["name"]
+            arguments = tool_call["function"]["arguments"]
+            
+            logger.info(f"🔧 Executing test tool: {function_name}")
+            
+            # Path massaging for file tools
+            if function_name in ["validation-server__write_file", "validation-server__read_file", "validation-server__validate_python_script"]:
+                arguments = llm_service.massage_file_tool_paths(function_name, arguments)
+            
+            # Execute MCP function
+            result_data = await llm_service.mcp_client.call_tool(function_name, arguments)
+            
+            # Extract content from MCP CallToolResult
+            if hasattr(result_data, 'content'):
+                if hasattr(result_data.content[0], 'text'):
+                    extracted_result = result_data.content[0].text
+                else:
+                    extracted_result = str(result_data.content[0])
+            else:
+                extracted_result = result_data
+            
+            tool_results.append({
+                "call": tool_call,
+                "result": extracted_result
+            })
+            
+            logger.info(f"✅ Test tool call executed")
+            logger.info(f"   Full result: {extracted_result}")
+        
+        # Parse the extracted result to see if error_traceback is present
+        try:
+            parsed_result = json.loads(extracted_result)
+            has_error_traceback = "error_traceback" in parsed_result
+            error_traceback_preview = parsed_result.get("error_traceback", "")[:200] if has_error_traceback else None
+        except:
+            parsed_result = None
+            has_error_traceback = False
+            error_traceback_preview = None
+        
+        return {
+            "test_successful": True,
+            "tool_calls_made": len(test_tool_calls),
+            "extracted_result_length": len(extracted_result),
+            "extracted_result_preview": extracted_result[:500] + "..." if len(extracted_result) > 500 else extracted_result,
+            "has_error_traceback": has_error_traceback,
+            "error_traceback_preview": error_traceback_preview,
+            "parsed_result_keys": list(parsed_result.keys()) if parsed_result else None
+        }
+        
+    except Exception as e:
+        logger.error(f"❌ Test tool result processing failed: {e}")
+        return {"error": str(e), "test_successful": False}
+
 @app.get("/models")
 async def list_models():
     """List available models based on provider"""
     if llm_service.llm_provider == "anthropic":
+        anthropic_model = os.getenv("ANTHROPIC_MODEL", "claude-3-5-haiku-20241022")
         return {
             "provider": "anthropic",
             "models": [
-                "claude-3-5-haiku-20241022", 
+                anthropic_model, 
             ]
         }
     else:  # ollama
@@ -1097,10 +1566,12 @@ if __name__ == "__main__":
     print("\nTo test the server, send a POST request to /analyze with:")
     
     if provider == "anthropic":
-        print('{"question": "What are my portfolio correlations?", "model": "claude-3-5-haiku-20241022"}')
+        anthropic_model = os.getenv("ANTHROPIC_MODEL", "claude-3-5-haiku-20241022")
+        print(f'{{"question": "What are my portfolio correlations?", "model": "{anthropic_model}"}}')
         print("\nMake sure you have:")
         print("1. LLM_PROVIDER=anthropic (default)")
         print("2. ANTHROPIC_API_KEY environment variable set")
+        print(f"3. Model: {anthropic_model} (set via ANTHROPIC_MODEL or default)")
     else:
         print('{"question": "What are my portfolio correlations?", "model": "llama3.2"}')
         print("\nMake sure you have:")

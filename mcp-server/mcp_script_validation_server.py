@@ -292,6 +292,53 @@ def get_scripts_directory():
     os.makedirs(scripts_dir, exist_ok=True)
     return scripts_dir
 
+def generate_unique_filename(file_path: str) -> tuple[str, str]:
+    """
+    Generate unique filename for Python files to prevent conflicts
+    
+    Args:
+        file_path: Full path to the file
+        
+    Returns:
+        tuple: (new_file_path, filename_only)
+    """
+    import os
+    import random
+    import string
+    from datetime import datetime
+    
+    if not file_path.endswith('.py'):
+        return file_path, os.path.basename(file_path)
+    
+    # Extract directory and base name
+    dir_path = os.path.dirname(file_path)
+    base_name = os.path.splitext(os.path.basename(file_path))[0]  # Remove .py
+    
+    # Generate unique filename with conflict checking
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    counter = 1
+    
+    while True:
+        # Generate random suffix
+        random_suffix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=4))
+        
+        # Create unique filename
+        if counter == 1:
+            unique_filename = f"{base_name}_{timestamp}_{random_suffix}.py"
+        else:
+            unique_filename = f"{base_name}_{timestamp}_{random_suffix}_v{counter}.py"
+        
+        new_file_path = os.path.join(dir_path, unique_filename)
+        
+        # Check if file already exists
+        if not os.path.exists(new_file_path):
+            return new_file_path, unique_filename
+        
+        counter += 1
+        if counter > 100:  # Safety limit
+            logger.warning(f"⚠️ Could not find unique filename after 100 attempts for {file_path}")
+            return new_file_path, unique_filename
+
 async def write_file(arguments: dict) -> list[TextContent]:
     """Write content to a file using absolute path or relative to scripts directory"""
     filename = arguments.get("filename", "")
@@ -308,6 +355,9 @@ async def write_file(arguments: dict) -> list[TextContent]:
     
     try:
         import os
+        
+        # Store original filename for response
+        original_filename = filename
         
         # Check if filename is an absolute path
         if os.path.isabs(filename):
@@ -335,10 +385,14 @@ async def write_file(arguments: dict) -> list[TextContent]:
                         "error": f"Absolute path not allowed: {file_path}. Must be within project directory or temp directories."
                     }, indent=2)
                 )]
+            
+            # Generate unique filename for Python files
+            file_path, filename = generate_unique_filename(file_path)
+            if filename != os.path.basename(original_filename):
+                logger.info(f"🔧 Generated unique filename (absolute): '{os.path.basename(original_filename)}' → '{filename}'")
         else:
             # Relative path - use scripts directory
             scripts_dir = get_scripts_directory()
-            file_path = os.path.join(scripts_dir, filename)
             
             # Security check for relative paths: ensure no path traversal
             if ".." in filename or "/" in filename or "\\" in filename:
@@ -349,6 +403,14 @@ async def write_file(arguments: dict) -> list[TextContent]:
                         "error": "Invalid relative filename: path traversal not allowed"
                 }, indent=2)
             )]
+            
+            # Generate initial file path
+            file_path = os.path.join(scripts_dir, filename)
+            
+            # Generate unique filename for Python files
+            file_path, filename = generate_unique_filename(file_path)
+            if filename != original_filename:
+                logger.info(f"🔧 Generated unique filename (relative): '{original_filename}' → '{filename}'")
         
         # Ensure parent directory exists
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
@@ -364,7 +426,8 @@ async def write_file(arguments: dict) -> list[TextContent]:
                 "success": True,
                 "message": f"File written successfully",
                 "absolute_path": file_path,
-                "input_filename": filename,
+                "input_filename": original_filename,  # Original filename from LLM
+                "actual_filename": filename,  # Actual filename used (with timestamp if Python)
                 "size": len(content)
             }, indent=2)
         )]

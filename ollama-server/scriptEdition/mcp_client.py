@@ -48,9 +48,13 @@ class MCPClient:
                 tools_result = await session.list_tools()
                 
                 for tool in tools_result.tools:
-                    tool_name = tool.name
-                    tools[tool_name] = {
-                        "name": tool_name,
+                    # Create unique tool name by prefixing with server name
+                    original_name = tool.name
+                    prefixed_name = f"{server_name}__{original_name}"
+                    
+                    tools[prefixed_name] = {
+                        "name": prefixed_name,
+                        "original_name": original_name,  # Store original for routing
                         "description": tool.description,
                         "inputSchema": tool.inputSchema,
                         "server": server_name
@@ -85,6 +89,9 @@ class MCPClient:
             raise ValueError(f"Tool {tool_name} not found in available tools")
         
         server_name = tool_info["server"]
+        # Use original name for the actual call to the server
+        original_name = tool_info.get("original_name", tool_name)
+        
         server_config = self.server_configs.get(server_name)
         if not server_config:
             raise ValueError(f"No config found for server {server_name}")
@@ -105,11 +112,12 @@ class MCPClient:
                 session = await exit_stack.enter_async_context(ClientSession(read_stream, write_stream))
                 await session.initialize()
                 
-                result = await session.call_tool(tool_name, arguments)
+                # Call with original name that the server recognizes
+                result = await session.call_tool(original_name, arguments)
                 return result
                 
         except Exception as e:
-            logger.error(f"Failed to call tool {tool_name}: {e}")
+            logger.error(f"Failed to call tool {tool_name} (original: {original_name}): {e}")
             raise
     
     def validate_function_exists(self, function_name: str) -> bool:
@@ -132,6 +140,36 @@ class MCPClient:
                 summary[server] = []
             summary[server].append(tool_name)
         return summary
+    
+    def find_function_server(self, function_name: str) -> Dict[str, Any]:
+        """Find which server contains a specific function"""
+        results = []
+        
+        # Check each server for the function
+        for tool_name, tool_info in self.available_tools.items():
+            original_name = tool_info.get("original_name", tool_name)
+            if original_name == function_name:
+                results.append({
+                    "server": tool_info["server"],
+                    "prefixed_name": tool_name,
+                    "original_name": original_name,
+                    "description": tool_info.get("description", "")
+                })
+        
+        if not results:
+            return {
+                "success": False,
+                "function_name": function_name,
+                "error": f"Function '{function_name}' not found in any server",
+                "suggestion": "Check available functions or verify the function name"
+            }
+        
+        return {
+            "success": True,
+            "function_name": function_name,
+            "found_in_servers": results,
+            "recommendation": f"Use {results[0]['server']}__get_function_docstring to get docstring for this function"
+        }
     
     async def close_all_sessions(self):
         """Clear cached tools and configurations"""
@@ -162,14 +200,14 @@ async def test_mcp_client():
         "mcpServers": {
             "financial-server": {
                 "command": "python",
-                "args": ["/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp/financial_server.py"],
+                "args": ["/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server/financial_server.py"],
                 "env": {
-                    "USE_MOCK_FINANCIAL_DATA": "false"
+                    "USE_MOCK_FINANCIAL_DATA": "true"
                 }
             },
             "analytics-server": {
                 "command": "python", 
-                "args": ["/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp/analytics_server.py"]
+                "args": ["/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server/analytics_server.py"]
             }
         }
     }
@@ -190,7 +228,9 @@ async def test_mcp_client():
     
     # Test validation
     print(f"\nValidation Tests:")
-    print(f"alpaca_market_stocks_bars exists: {client.validate_function_exists('alpaca_market_stocks_bars')}")
+    print(f"financial-server__alpaca_market_stocks_bars exists: {client.validate_function_exists('financial-server__alpaca_market_stocks_bars')}")
+    print(f"financial-server__get_function_docstring exists: {client.validate_function_exists('financial-server__get_function_docstring')}")
+    print(f"analytics-server__get_function_docstring exists: {client.validate_function_exists('analytics-server__get_function_docstring')}")
     print(f"invalid_function exists: {client.validate_function_exists('invalid_function')}")
     
     await client.close_all_sessions()

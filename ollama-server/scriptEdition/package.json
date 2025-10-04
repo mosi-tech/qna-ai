@@ -1,0 +1,12 @@
+{
+  "name": "financial-analysis-server",
+  "version": "1.0.0",
+  "description": "Environment configuration for Financial Analysis Server",
+  "private": true,
+  "dependencies": {
+    "dotenv": "^16.3.1"
+  },
+  "scripts": {
+    "install-deps": "npm install"
+  }
+}

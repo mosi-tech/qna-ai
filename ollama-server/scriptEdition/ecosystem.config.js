@@ -1,3 +1,6 @@
+// Load environment variables from .env file if available
+require('dotenv').config();
+
 module.exports = {
   apps: [
     {
@@ -13,14 +16,15 @@ module.exports = {
         NODE_ENV: 'development',
         PORT: 8010,
         // Choose your LLM provider: 'anthropic' or 'ollama'
-        LLM_PROVIDER: 'ollama',
+        LLM_PROVIDER: process.env.LLM_PROVIDER || 'anthropic',
         
         // Anthropic settings (when LLM_PROVIDER=anthropic)
-        ANTHROPIC_API_KEY: 'your_actual_api_key_here',
+        ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || '',
+        ANTHROPIC_MODEL: process.env.ANTHROPIC_MODEL || "claude-3-5-haiku-20241022",
         
         // Ollama settings (when LLM_PROVIDER=ollama)
-        OLLAMA_BASE_URL: 'http://localhost:11434',
-        OLLAMA_MODEL: 'qwen3:0.6b'
+        OLLAMA_BASE_URL: process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
+        OLLAMA_MODEL: process.env.OLLAMA_MODEL || 'qwen3:0.6b'
       },
       error_file: './logs/err.log',
       out_file: './logs/out.log',
