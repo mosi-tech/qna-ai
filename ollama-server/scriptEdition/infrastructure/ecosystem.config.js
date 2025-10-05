@@ -1,12 +1,12 @@
-// Load environment variables from .env file if available
-require('dotenv').config();
+// Load environment variables from .env file in same directory
+require('dotenv').config({ path: __dirname + '/.env' });
 
 module.exports = {
   apps: [
     {
       name: 'ollama-script-server',
       script: 'python3',
-      args: 'ollama-script-server.py',
+      args: '../apiServer/server.py',
       cwd: '/Users/shivc/Documents/Workspace/JS/qna-ai-admin/ollama-server/scriptEdition',
       instances: 1,
       autorestart: true,

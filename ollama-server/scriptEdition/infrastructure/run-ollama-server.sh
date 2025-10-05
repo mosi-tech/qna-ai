@@ -1,16 +1,16 @@
 #!/bin/bash
 
-# Navigate to the script directory
-cd "$(dirname "$0")"
+# Navigate to the parent directory (scriptEdition)
+cd "$(dirname "$0")/.."
 
-# Load environment variables from .env file if it exists
-if [ -f ".env" ]; then
-    echo "📁 Loading environment variables from .env file..."
-    export $(grep -v '^#' .env | xargs)
+# Load environment variables from infrastructure/.env file if it exists
+if [ -f "infrastructure/.env" ]; then
+    echo "📁 Loading environment variables from infrastructure/.env file..."
+    export $(grep -v '^#' infrastructure/.env | xargs)
 else
-    echo "⚠️  No .env file found. Please create one from .env.example"
-    echo "💡 Run: cp .env.example .env"
-    echo "📝 Then edit .env with your actual API keys"
+    echo "⚠️  No infrastructure/.env file found. Please create one from infrastructure/.env.example"
+    echo "💡 Run: cp infrastructure/.env.example infrastructure/.env"
+    echo "📝 Then edit infrastructure/.env with your actual API keys"
 fi
 
 # Set default environment variables (can be overridden by .env)
@@ -33,5 +33,5 @@ echo "🔧 Provider: $LLM_PROVIDER"
 echo "🔧 Model: ${ANTHROPIC_MODEL:-$OLLAMA_MODEL}"
 echo "🔧 Port: $PORT"
 
-# Run the server
-python3 ollama-script-server.py
+# Run the server using modular architecture
+cd apiServer && python3 server.py
