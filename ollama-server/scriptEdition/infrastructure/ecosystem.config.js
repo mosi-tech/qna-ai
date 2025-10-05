@@ -15,16 +15,21 @@ module.exports = {
       env: {
         NODE_ENV: 'development',
         PORT: 8010,
-        // Choose your LLM provider: 'anthropic' or 'ollama'
-        LLM_PROVIDER: process.env.LLM_PROVIDER || 'anthropic',
+        // Choose your LLM provider: 'anthropic', 'openai', or 'ollama'
+        LLM_PROVIDER: process.env.LLM_PROVIDER || 'openai',
         
         // Anthropic settings (when LLM_PROVIDER=anthropic)
         ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || '',
         ANTHROPIC_MODEL: process.env.ANTHROPIC_MODEL || "claude-3-5-haiku-20241022",
         
-        // Ollama settings (when LLM_PROVIDER=ollama)
+        // OpenAI settings (including Ollama through OpenAI-compatible endpoint)
+        OPENAI_API_KEY: process.env.OPENAI_API_KEY || 'ollama-local-key',
+        OPENAI_MODEL: process.env.OPENAI_MODEL || 'llama3.2',
+        OPENAI_BASE_URL: process.env.OPENAI_BASE_URL || 'http://localhost:11434/v1',
+        
+        // Ollama settings (when LLM_PROVIDER=ollama - not yet implemented)
         OLLAMA_BASE_URL: process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
-        OLLAMA_MODEL: process.env.OLLAMA_MODEL || 'qwen3:0.6b'
+        OLLAMA_MODEL: process.env.OLLAMA_MODEL || 'llama3.2'
       },
       error_file: './logs/err.log',
       out_file: './logs/out.log',
