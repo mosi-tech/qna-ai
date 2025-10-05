@@ -9,6 +9,7 @@ from pydantic import BaseModel
 class QuestionRequest(BaseModel):
     question: str
     model: Optional[str] = None  # Will use provider default if not specified
+    enable_caching: Optional[bool] = True  # Controls whether to use caching
 
 
 class AnalysisResponse(BaseModel):

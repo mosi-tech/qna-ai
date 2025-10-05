@@ -6,7 +6,7 @@ import json
 import logging
 import os
 from typing import Dict, Any, List
-from mcp_client import mcp_client, initialize_mcp_client
+from integrations.mcp.mcp_client import mcp_client, initialize_mcp_client
 
 logger = logging.getLogger("mcp-integration")
 
@@ -25,7 +25,7 @@ class MCPIntegration:
             
         try:
             # Load MCP server configuration
-            config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ollama-mcp-config.json")
+            config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "config", "ollama-mcp-config.json")
             with open(config_path, 'r') as f:
                 config = json.load(f)
             

@@ -8,9 +8,13 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from models import QuestionRequest, AnalysisResponse
-from llm_service import UniversalLLMToolCallService
-from routes import APIRoutes
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from api.models import QuestionRequest, AnalysisResponse
+from services.llm import UnifiedLLMService
+from api.routes import APIRoutes
 
 logger = logging.getLogger("api-server")
 
@@ -22,19 +26,19 @@ async def lifespan(app: FastAPI):
     logger.info("🚀 Starting Financial Analysis Server...")
     
     # Initialize LLM service
-    llm_service = UniversalLLMToolCallService()
+    llm_service = UnifiedLLMService()
     app.state.llm_service = llm_service
     
     # Initialize API routes
     api_routes = APIRoutes(llm_service)
     app.state.api_routes = api_routes
     
-    # Warm Anthropic cache if using Anthropic
-    if llm_service.llm_provider == "anthropic" and llm_service.cache_manager:
-        logger.info("🔥 Warming Anthropic cache...")
+    # Warm cache if provider supports it
+    if llm_service.cache_manager:
+        logger.info("🔥 Warming cache...")
         try:
             await llm_service.ensure_mcp_initialized()
-            cache_success = await llm_service.warm_anthropic_cache(llm_service.default_model)
+            cache_success = await llm_service.warm_cache(llm_service.default_model)
             if cache_success:
                 logger.info("✅ Cache warming completed successfully")
             else:
@@ -42,7 +46,7 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.warning(f"⚠️ Cache warming error: {e}")
     
-    logger.info(f"✅ Server ready with {llm_service.llm_provider.upper()} provider")
+    logger.info(f"✅ Server ready with {llm_service.provider_type.upper()} provider")
     
     yield
     

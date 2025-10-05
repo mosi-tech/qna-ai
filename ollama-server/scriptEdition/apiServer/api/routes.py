@@ -8,8 +8,8 @@ from datetime import datetime
 from fastapi import HTTPException
 from typing import Dict, Any
 
-from models import QuestionRequest, AnalysisResponse
-from llm_service import UniversalLLMToolCallService
+from api.models import QuestionRequest, AnalysisResponse
+from services.llm import UnifiedLLMService
 
 logger = logging.getLogger("api-routes")
 
@@ -17,7 +17,7 @@ logger = logging.getLogger("api-routes")
 class APIRoutes:
     """Handles all API route logic"""
     
-    def __init__(self, llm_service: UniversalLLMToolCallService):
+    def __init__(self, llm_service: UnifiedLLMService):
         self.llm_service = llm_service
     
     async def analyze_question(self, request: QuestionRequest) -> AnalysisResponse:
@@ -32,7 +32,7 @@ class APIRoutes:
             logger.info(f"🤖 Using model: {model}")
             
             # Analyze the question
-            result = await self.llm_service.analyze_question(request.question, model)
+            result = await self.llm_service.analyze_question(request.question, model, request.enable_caching)
             
             if result["success"]:
                 return AnalysisResponse(
@@ -59,9 +59,10 @@ class APIRoutes:
         """Health check endpoint"""
         return {
             "status": "healthy",
-            "provider": self.llm_service.llm_provider,
+            "provider": self.llm_service.provider_type,
             "model": self.llm_service.default_model,
             "mcp_initialized": self.llm_service.mcp_initialized,
+            "caching_supported": self.llm_service.provider.supports_caching(),
             "timestamp": datetime.now().isoformat()
         }
     
@@ -77,7 +78,7 @@ class APIRoutes:
                     "tools": []
                 }
             
-            tools = self.llm_service.get_mcp_tools_for_openai()
+            tools = self.llm_service.get_mcp_tools()
             
             return {
                 "mcp_initialized": self.llm_service.mcp_initialized,
@@ -159,7 +160,7 @@ class APIRoutes:
     async def list_models(self) -> Dict[str, Any]:
         """List available models for the current provider"""
         try:
-            if self.llm_service.llm_provider == "anthropic":
+            if self.llm_service.provider_type == "anthropic":
                 models = [
                     "claude-3-5-haiku-20241022",
                     "claude-3-5-sonnet-20241022", 
@@ -170,27 +171,25 @@ class APIRoutes:
                     "current_model": self.llm_service.default_model,
                     "available_models": models
                 }
+            elif self.llm_service.provider_type == "openai":
+                models = [
+                    "gpt-4-turbo-preview",
+                    "gpt-4-turbo",
+                    "gpt-4o",
+                    "gpt-4o-mini"
+                ]
+                return {
+                    "provider": "openai",
+                    "current_model": self.llm_service.default_model,
+                    "available_models": models
+                }
             else:
-                # For Ollama, we can try to get models from the API
-                try:
-                    async with self.llm_service.httpx.AsyncClient() as client:
-                        response = await client.get(f"{self.llm_service.base_url}/api/tags")
-                        if response.status_code == 200:
-                            data = response.json()
-                            models = [model["name"] for model in data.get("models", [])]
-                            return {
-                                "provider": "ollama",
-                                "current_model": self.llm_service.default_model,
-                                "available_models": models
-                            }
-                        else:
-                            return {"error": "Failed to connect to Ollama"}
-                except:
-                    return {
-                        "provider": "ollama",
-                        "current_model": self.llm_service.default_model,
-                        "available_models": ["llama3.2", "qwen3:0.6b"],
-                        "note": "Could not connect to Ollama to get live model list"
-                    }
+                # For other providers like Ollama
+                return {
+                    "provider": self.llm_service.provider_type,
+                    "current_model": self.llm_service.default_model,
+                    "available_models": [self.llm_service.default_model],
+                    "note": f"Model list not implemented for {self.llm_service.provider_type}"
+                }
         except Exception as e:
             return {"error": str(e)}
