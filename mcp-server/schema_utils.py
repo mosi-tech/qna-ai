@@ -309,19 +309,41 @@ def get_function_docstring(function_name: str, functions_dict: Dict[str, Any]) -
     Returns the full docstring with examples, parameter descriptions, return types,
     and usage information. This provides comprehensive documentation for script generation.
     
+    Automatically strips MCP server name prefixes (e.g., mcp__mcp-financial-server__function_name)
+    to find the actual function name.
+    
     Args:
-        function_name: Name of the function to get docstring for
+        function_name: Name of the function to get docstring for (with or without MCP prefix)
         functions_dict: Dictionary of available functions
         
     Returns:
         Dict containing:
             - success (bool): Whether docstring retrieval succeeded
-            - function_name (str): Name of the function
+            - function_name (str): Name of the function (stripped)
+            - original_name (str): Original function name as provided
             - docstring (str): Complete Google-style docstring
             - signature (str): Function signature with type hints
             - module (str): Module where function is defined
     """
     try:
+        original_name = function_name
+        
+        # Strip everything before the last __ if present
+        if "__" in function_name:
+            stripped_name = function_name.split("__")[-1]
+            
+            # Try the stripped name first
+            if stripped_name in functions_dict:
+                function_name = stripped_name
+            # Fall back to original name if stripped version not found
+            elif function_name not in functions_dict:
+                return {
+                    "success": False,
+                    "error": f"Function '{original_name}' not found. Tried both original name and stripped name '{stripped_name}'",
+                    "available_functions": list(functions_dict.keys()),
+                    "note": "Use function names without prefixes"
+                }
+        
         if function_name not in functions_dict:
             return {
                 "success": False,
@@ -346,6 +368,7 @@ def get_function_docstring(function_name: str, functions_dict: Dict[str, Any]) -
         return {
             "success": True,
             "function_name": function_name,
+            "original_name": original_name,
             "docstring": docstring,
             "signature": signature,
             "module": module,

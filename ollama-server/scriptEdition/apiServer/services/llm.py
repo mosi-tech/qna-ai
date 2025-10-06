@@ -19,8 +19,10 @@ class UnifiedLLMService:
     """Universal LLM service supporting multiple providers with MCP integration"""
     
     def __init__(self):
-        # Use path to system prompt file in config directory
-        self.system_prompt_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "config", "system-prompt.txt")
+        # Use configurable system prompt file (defaults to system-prompt.txt)
+        prompt_filename = os.getenv("SYSTEM_PROMPT_FILE", "system-prompt.txt")
+        self.system_prompt_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "config", prompt_filename)
+        logger.info(f"📝 Using system prompt file: {prompt_filename}")
         self.system_prompt = None  # Cache for system prompt
         
         # Cache for processed tools

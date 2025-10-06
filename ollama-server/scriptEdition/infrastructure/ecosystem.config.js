@@ -27,6 +27,9 @@ module.exports = {
         OPENAI_MODEL: process.env.OPENAI_MODEL || 'llama3.2',
         OPENAI_BASE_URL: process.env.OPENAI_BASE_URL || 'http://localhost:11434/v1',
         
+        // System prompt configuration
+        SYSTEM_PROMPT_FILE: process.env.SYSTEM_PROMPT_FILE || 'system-prompt.txt',
+        
         // Ollama settings (when LLM_PROVIDER=ollama - not yet implemented)
         OLLAMA_BASE_URL: process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
         OLLAMA_MODEL: process.env.OLLAMA_MODEL || 'llama3.2'
