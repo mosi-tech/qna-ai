@@ -10,13 +10,6 @@
     "validation-server": {
       "command": "python",
       "args": ["/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server/mcp_script_validation_server.py"]
-    },
-    "analysis-search-server": {
-      "command": "python",
-      "args": ["/Users/shivc/Documents/Workspace/JS/qna-ai-admin/ollama-server/scriptEdition/mcp-server/search/analysis_library_server.py"],
-      "env": {
-        "ANALYSIS_DB_PATH": "/Users/shivc/Documents/Workspace/JS/qna-ai-admin/ollama-server/scriptEdition/mcp-server/search/data/analysis_library_db"
-      }
     }
   }
 }

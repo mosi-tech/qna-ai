@@ -23,6 +23,56 @@ class OpenAIProvider(LLMProvider):
     def supports_caching(self) -> bool:
         return False  # OpenAI doesn't support explicit caching like Anthropic
     
+    def _parse_tool_arguments(self, arguments_str: str) -> Dict[str, Any]:
+        """Robustly parse tool call arguments that may have malformed JSON"""
+        try:
+            # First try: standard JSON parsing
+            return json.loads(arguments_str)
+        except json.JSONDecodeError as e:
+            logger.warning(f"Initial JSON parsing failed: {e}")
+            
+            try:
+                # Second try: fix common escaping issues
+                # Remove extra backslashes before quotes
+                fixed_str = arguments_str.replace('\\"', '"')
+                # Fix unicode escapes
+                fixed_str = fixed_str.replace('\\u003e', '>')
+                fixed_str = fixed_str.replace('\\u003c', '<')
+                return json.loads(fixed_str)
+            except json.JSONDecodeError:
+                logger.warning("Escape fixing failed, trying manual parsing")
+                
+                try:
+                    # Third try: extract just the core fields manually
+                    result = {}
+                    
+                    # Look for filename field
+                    import re
+                    filename_match = re.search(r'"filename"\s*:\s*"([^"]+)"', arguments_str)
+                    if filename_match:
+                        result["filename"] = filename_match.group(1)
+                    
+                    # Look for content field (more complex due to multiline)
+                    content_match = re.search(r'"content"\s*:\s*"(.*?)"(?=\s*[,}])', arguments_str, re.DOTALL)
+                    if content_match:
+                        content = content_match.group(1)
+                        # Unescape content
+                        content = content.replace('\\"', '"')
+                        content = content.replace('\\n', '\n')
+                        content = content.replace('\\\\', '\\')
+                        result["content"] = content
+                    
+                    if result:
+                        logger.info(f"Manual parsing extracted: {list(result.keys())}")
+                        return result
+                    else:
+                        logger.error("Manual parsing failed to extract any fields")
+                        return {}
+                        
+                except Exception as e:
+                    logger.error(f"Manual parsing failed: {e}")
+                    return {}
+    
     async def call_api(self, model: str, messages: List[Dict[str, Any]], 
                       max_tokens: int = 4000, enable_caching: bool = False,
                       override_system_prompt: Optional[str] = None,
@@ -89,14 +139,28 @@ class OpenAIProvider(LLMProvider):
         # Convert OpenAI tool calls to our internal format
         formatted_tool_calls = []
         for tool_call in tool_calls:
-            formatted_tool_calls.append({
-                "function": {
-                    "name": tool_call["function"]["name"],
-                    "arguments": json.loads(tool_call["function"]["arguments"]) if isinstance(tool_call["function"]["arguments"], str) else tool_call["function"]["arguments"]
-                },
-                "id": tool_call["id"],
-                "openai_tool_call": tool_call  # Preserve original
-            })
+            try:
+                # Handle tool call arguments parsing more robustly
+                arguments = tool_call["function"]["arguments"]
+                
+                if isinstance(arguments, str):
+                    # Try multiple parsing strategies for malformed JSON
+                    parsed_arguments = self._parse_tool_arguments(arguments)
+                else:
+                    parsed_arguments = arguments
+                
+                formatted_tool_calls.append({
+                    "function": {
+                        "name": tool_call["function"]["name"],
+                        "arguments": parsed_arguments
+                    },
+                    "id": tool_call["id"],
+                    "openai_tool_call": tool_call  # Preserve original
+                })
+            except Exception as e:
+                logger.error(f"Failed to parse tool call {tool_call.get('id', 'unknown')}: {e}")
+                # Skip malformed tool calls rather than failing entirely
+                continue
         
         return content, formatted_tool_calls
     

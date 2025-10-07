@@ -108,13 +108,18 @@ def create_app() -> FastAPI:
     return app
 
 
-def run_server(host: str = "0.0.0.0", port: int = 8000, reload: bool = False):
+def run_server(host: str = "0.0.0.0", port: int = 8010, reload: bool = False, debug: bool = False):
     """Run the FastAPI server"""
     # Configure logging
+    # Configure logging based on debug flag
+    log_level = logging.DEBUG if debug else logging.INFO
     logging.basicConfig(
-        level=logging.INFO,
+        level=log_level,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
+    
+    if debug:
+        logger.info("🐛 Debug mode enabled - detailed MCP call logging activated")
     
     # Create and run app
     app = create_app()

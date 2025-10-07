@@ -64,19 +64,22 @@ import analytics as analytics_lib
 def call_mcp_function(function_name: str, args: dict):
     """Call real MCP functions in production mode"""
     try:
+        # Strip server prefix if present (e.g., "financial_server__eodhd_eod_data" -> "eodhd_eod_data")
+        actual_function_name = function_name.split('__')[-1] if '__' in function_name else function_name
+        
         # Direct imports for production
-        if hasattr(financial_lib, function_name):
-                func = getattr(financial_lib, function_name)
+        if hasattr(financial_lib, actual_function_name):
+                func = getattr(financial_lib, actual_function_name)
                 result = func(**args)
-                logging.info(f"✅ MCP call successful: {function_name}")
+                logging.info(f"✅ MCP call successful: {actual_function_name} (from {function_name})")
                 return result
-        elif hasattr(analytics_lib, function_name):
-                func = getattr(analytics_lib, function_name)
+        elif hasattr(analytics_lib, actual_function_name):
+                func = getattr(analytics_lib, actual_function_name)
                 result = func(**args)
-                logging.info(f"✅ MCP call successful: {function_name}")
+                logging.info(f"✅ MCP call successful: {actual_function_name} (from {function_name})")
                 return result
         
-        logging.error(f"❌ Unknown MCP function: {function_name}")
+        logging.error(f"❌ Unknown MCP function: {actual_function_name} (from {function_name})")
         return None
         
     except Exception as e:
@@ -110,19 +113,22 @@ import analytics as analytics_lib
 def call_mcp_function(function_name: str, args: dict):
     """Call actual MCP functions in validation mode"""
     try:
+        # Strip server prefix if present (e.g., "financial_server__eodhd_eod_data" -> "eodhd_eod_data")
+        actual_function_name = function_name.split('__')[-1] if '__' in function_name else function_name
+        
         # Check financial functions first
-        if hasattr(financial_lib, function_name):
-            func = getattr(financial_lib, function_name)
+        if hasattr(financial_lib, actual_function_name):
+            func = getattr(financial_lib, actual_function_name)
             result = func(**args)
-            logging.info(f"✅ MCP call successful: {function_name}")
+            logging.info(f"✅ MCP call successful: {actual_function_name} (from {function_name})")
             return result
-        elif hasattr(analytics_lib, function_name):
-            func = getattr(analytics_lib, function_name)
+        elif hasattr(analytics_lib, actual_function_name):
+            func = getattr(analytics_lib, actual_function_name)
             result = func(**args)
-            logging.info(f"✅ MCP call successful: {function_name}")
+            logging.info(f"✅ MCP call successful: {actual_function_name} (from {function_name})")
             return result
         
-        logging.error(f"❌ Unknown MCP function: {function_name}")
+        logging.error(f"❌ Unknown MCP function: {actual_function_name} (from {function_name})")
         return None
         
     except Exception as e:
@@ -198,7 +204,7 @@ def execute_script(script_content: str, mock_mode: bool = True, timeout: int = 3
                 output_data = json.loads(result.stdout)
                 
                 # Check if the script itself reports analysis success/failure
-                script_success = output_data.get("analysis_completed", True)
+                script_success = output_data.get("analysis_completed", False)
                 script_error = output_data.get("error", None)
                 
                 if script_success:
@@ -333,9 +339,9 @@ def check_forbidden_imports(script_content: str) -> Dict[str, Any]:
 def get_package_suggestion(forbidden_package: str) -> str:
     """Get suggested alternative for forbidden packages"""
     suggestions = {
-        'yfinance': 'Use MCP financial server: call_mcp_function("alpaca_market_stocks_bars", args)',
-        'quandl': 'Use MCP financial server: call_mcp_function("eodhd_real_time", args)',
-        'alpha_vantage': 'Use MCP financial server: call_mcp_function("alpaca_market_stocks_bars", args)',
+        'yfinance': 'Use MCP financial server: call_mcp_function("financial_server__alpaca_market_stocks_bars", args)',
+        'quandl': 'Use MCP financial server: call_mcp_function("financial_server__eodhd_real_time", args)',
+        'alpha_vantage': 'Use MCP financial server: call_mcp_function("financial_server__alpaca_market_stocks_bars", args)',
         'matplotlib': 'Remove visualization - analysis scripts should return data only',
         'plotly': 'Remove visualization - analysis scripts should return data only',
         'seaborn': 'Remove visualization - analysis scripts should return data only',

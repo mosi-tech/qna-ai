@@ -226,16 +226,29 @@ class UnifiedLLMService:
             content, tool_calls = self.provider.parse_response(response["data"])
             
             if tool_calls:
-                # Execute tools and continue conversation
-                return await self._handle_tool_calls(
-                    model, messages, content, tool_calls, enable_caching
+                # Execute tools
+                tool_execution_result = await self._handle_tool_calls(tool_calls)
+                
+                if not tool_execution_result["success"]:
+                    return tool_execution_result
+                
+                # Start conversation loop with initial tool results
+                all_tool_calls = tool_calls
+                all_tool_results = tool_execution_result["tool_results"]
+                
+                return await self._conversation_loop(
+                    model, messages, all_tool_calls, all_tool_results, enable_caching
                 )
             else:
-                # No tool calls - return final response
+                # No tool calls - this means no script was generated
+                logger.warning("❌ Task incomplete: LLM responded without calling any tools (no script generated)")
                 return {
-                    "success": True,
+                    "success": False,
                     "content": content,
                     "provider": self.provider_type,
+                    "task_completed": False,
+                    "completion_reason": "no_tools_called",
+                    "error": "LLM did not generate a script - no tool calls made",
                     "usage": response["data"].get("usage", {})
                 }
                 
@@ -247,10 +260,8 @@ class UnifiedLLMService:
                 "provider": self.provider_type
             }
     
-    async def _handle_tool_calls(self, model: str, messages: List[Dict[str, Any]], 
-                                content: str, tool_calls: List[Dict[str, Any]], 
-                                enable_caching: bool = True) -> Dict[str, Any]:
-        """Handle tool execution and conversation continuation"""
+    async def _handle_tool_calls(self, tool_calls: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Handle tool execution and return results (does not continue conversation)"""
         try:
             # Validate tool calls
             validation = self.mcp_integration.validate_mcp_functions(tool_calls)
@@ -262,27 +273,15 @@ class UnifiedLLMService:
                     "provider": self.provider_type
                 }
             
-            # Execute tool calls
+            # Execute tool calls and return results
             tool_results = await self.mcp_integration.generate_tool_calls_only(tool_calls)
             
-            # Check for successful validation completion
-            validation_completed = self._check_validation_completion(tool_calls, tool_results["tool_results"])
-            if validation_completed:
-                logger.info("🏁 Task completed: Python script validation successful")
-                return {
-                    "success": True,
-                    "content": content,
-                    "tool_calls": tool_calls,
-                    "tool_results": tool_results["tool_results"],
-                    "provider": self.provider_type,
-                    "task_completed": True,
-                    "completion_reason": "validation_successful"
-                }
-            
-            # Continue conversation with tool results
-            return await self._continue_conversation(
-                model, messages, tool_calls, tool_results["tool_results"], enable_caching
-            )
+            return {
+                "success": True,
+                "tool_calls": tool_calls,
+                "tool_results": tool_results["tool_results"],
+                "provider": self.provider_type
+            }
             
         except Exception as e:
             logger.error(f"Tool call handling failed: {e}")
@@ -291,6 +290,24 @@ class UnifiedLLMService:
                 "error": str(e),
                 "provider": self.provider_type
             }
+    
+    def _check_script_generation(self, tool_calls: List[Dict[str, Any]], tool_results: List[Dict[str, Any]]) -> bool:
+        """Check if a script was generated (write_file tool was called successfully)"""
+        for call, result in zip(tool_calls, tool_results):
+            if "write_file" in call["function"]["name"] and result.get("success", False):
+                # Check if the written content looks like a Python script
+                try:
+                    args = call["function"].get("arguments", {})
+                    filename = args.get("filename", "")
+                    content = args.get("content", "")
+                    
+                    # Basic checks for Python script content
+                    if filename.endswith('.py') and len(content) > 50 and 'def ' in content:
+                        return True
+                except Exception:
+                    continue
+        
+        return False
     
     def _check_validation_completion(self, tool_calls: List[Dict[str, Any]], tool_results: List[Dict[str, Any]]) -> bool:
         """Check if validation was completed successfully"""
@@ -319,10 +336,133 @@ class UnifiedLLMService:
         
         return False
     
+    async def _conversation_loop(self, model: str, messages: List[Dict[str, Any]], 
+                               all_tool_calls: List[Dict[str, Any]], all_tool_results: List[Dict[str, Any]], 
+                               enable_caching: bool = True) -> Dict[str, Any]:
+        """Main conversation loop that continues until LLM stops calling tools"""
+        # Track how many tool calls we've processed to know what's "recent"
+        processed_tool_calls = 0
+        
+        # Track script content throughout the conversation
+        generated_script_content = None
+        generated_script_filename = None
+        
+        while True:
+            # Get the most recent unprocessed tool calls/results
+            if processed_tool_calls == 0:
+                # First iteration - use initial tool calls/results
+                recent_tool_calls = all_tool_calls
+                recent_tool_results = all_tool_results
+            else:
+                # Subsequent iterations - use only the newly added ones
+                recent_tool_calls = all_tool_calls[processed_tool_calls:]
+                recent_tool_results = all_tool_results[processed_tool_calls:]
+            
+            processed_tool_calls = len(all_tool_calls)
+            
+            continuation_result = await self._continue_conversation(
+                model, messages, recent_tool_calls, recent_tool_results, enable_caching
+            )
+            
+            # Check if continuation failed
+            if not continuation_result["success"]:
+                return continuation_result
+            
+            # Check if LLM wants to make more tool calls
+            if continuation_result.get("new_tool_calls"):
+                # Execute new tools
+                new_tool_calls = continuation_result["new_tool_calls"]
+                tool_execution_result = await self._handle_tool_calls(new_tool_calls)
+                
+                if not tool_execution_result["success"]:
+                    return tool_execution_result
+                
+                # Accumulate results
+                all_tool_calls.extend(new_tool_calls)
+                all_tool_results.extend(tool_execution_result["tool_results"])
+                
+                # Check for script generation in new tool calls and results
+                for i, tool_call in enumerate(new_tool_calls):
+                    if "write_file" in tool_call.get("function", {}).get("name", ""):
+                        # Get corresponding tool result
+                        tool_result = tool_execution_result["tool_results"][i] if i < len(tool_execution_result["tool_results"]) else None
+                        
+                        # Only track if tool execution was successful
+                        if tool_result and tool_result.get("success", False):
+                            args = tool_call.get("function", {}).get("arguments", {})
+                            filename = args.get("filename", "")
+                            content = args.get("content", "")
+                            
+                            # Only track Python scripts
+                            if filename.endswith('.py') and content and len(content) > 50:
+                                generated_script_content = content
+                                generated_script_filename = filename
+                                logger.info(f"📝 Tracked script generation: {filename} (confirmed by tool result)")
+                
+                logger.info(f"🔄 Continuing conversation loop (total tool calls: {len(all_tool_calls)})")
+                continue
+            else:
+                # No more tool calls - check completion using ALL accumulated results
+                script_generated = self._check_script_generation(all_tool_calls, all_tool_results)
+                validation_completed = self._check_validation_completion(all_tool_calls, all_tool_results)
+                
+                final_content = continuation_result.get("content", "")
+                usage = continuation_result.get("usage", {})
+                
+                if script_generated and validation_completed:
+                    logger.info("🏁 Task completed: Script generated and validated successfully")
+                    return {
+                        "success": True,
+                        "content": final_content,
+                        "tool_calls": all_tool_calls,
+                        "tool_results": all_tool_results,
+                        "provider": self.provider_type,
+                        "task_completed": True,
+                        "completion_reason": "script_generated_and_validated",
+                        "generated_script": {
+                            "content": generated_script_content,
+                            "filename": generated_script_filename
+                        } if generated_script_content else None,
+                        "usage": usage
+                    }
+                elif script_generated:
+                    logger.info("⚠️ Task partially completed: Script generated but not validated")
+                    return {
+                        "success": False,
+                        "content": final_content,
+                        "tool_calls": all_tool_calls,
+                        "tool_results": all_tool_results,
+                        "provider": self.provider_type,
+                        "task_completed": False,
+                        "completion_reason": "script_generated_not_validated",
+                        "generated_script": {
+                            "content": generated_script_content,
+                            "filename": generated_script_filename
+                        } if generated_script_content else None,
+                        "usage": usage
+                    }
+                else:
+                    logger.warning("❌ Task incomplete: No validated script was generated")
+                    return {
+                        "success": False,
+                        "content": final_content,
+                        "tool_calls": all_tool_calls,
+                        "tool_results": all_tool_results,
+                        "provider": self.provider_type,
+                        "task_completed": False,
+                        "completion_reason": "no_script_generated",
+                        "generated_script": {
+                            "content": generated_script_content,
+                            "filename": generated_script_filename
+                        } if generated_script_content else None,
+                        "error": "LLM stopped without generating a validated script",
+                        "usage": usage
+                    }
+
     async def _continue_conversation(self, model: str, messages: List[Dict[str, Any]], 
-                                   tool_calls: List[Dict[str, Any]], tool_results: List[Dict[str, Any]], 
+                                   current_tool_calls: List[Dict[str, Any]], current_tool_results: List[Dict[str, Any]], 
                                    enable_caching: bool = True) -> Dict[str, Any]:
-        """Continue conversation after tool execution"""
+        """Continue conversation after tool execution (single round only)"""
         try:
             # Format tool results for the provider
             if self.provider_type == "anthropic":
@@ -330,11 +470,11 @@ class UnifiedLLMService:
                 assistant_content = []
                 
                 # Add any text content if it exists
-                if hasattr(tool_calls[0], 'content') and tool_calls[0].content:
-                    assistant_content.append({"type": "text", "text": tool_calls[0].content})
+                if hasattr(current_tool_calls[0], 'content') and current_tool_calls[0].content:
+                    assistant_content.append({"type": "text", "text": current_tool_calls[0].content})
                 
                 # Add tool use blocks
-                for tool_call in tool_calls:
+                for tool_call in current_tool_calls:
                     anthropic_block = tool_call.get("anthropic_block")
                     if anthropic_block:
                         assistant_content.append(anthropic_block)
@@ -342,26 +482,26 @@ class UnifiedLLMService:
                 messages.append({"role": "assistant", "content": assistant_content})
                 
                 # Add tool results
-                tool_result_message = self.provider.format_tool_results(tool_calls, tool_results)
+                tool_result_message = self.provider.format_tool_results(current_tool_calls, current_tool_results)
                 messages.append(tool_result_message)
                 
             elif self.provider_type == "openai":
                 # Add assistant and tool messages
-                tool_result_messages = self.provider.format_tool_results(tool_calls, tool_results)
+                tool_result_messages = self.provider.format_tool_results(current_tool_calls, current_tool_results)
                 messages.extend(tool_result_messages)
             
             # Check if we should reduce tokens for validation results
             has_validation_results = any(
                 "validate_python_script" in tr.get("function", "") and 
                 self._is_validation_successful(tr) 
-                for tr in tool_results
+                for tr in current_tool_results
             )
             max_tokens = 5 if has_validation_results else 4000
             
             if has_validation_results:
                 logger.info("🔧 Validation results detected - using max_tokens=5 for efficiency")
             
-            # Make continuation API call (provider already has system prompt and tools set)
+            # Make continuation API call
             response = await self.provider.call_api(
                 model=model,
                 messages=messages,
@@ -372,26 +512,15 @@ class UnifiedLLMService:
             if not response["success"]:
                 return response
             
-            # Parse continuation response
-            final_content, new_tool_calls = self.provider.parse_response(response["data"])
+            # Parse continuation response and return info about new tool calls
+            content, new_tool_calls = self.provider.parse_response(response["data"])
             
-            if new_tool_calls:
-                # More tool calls - recurse
-                logger.info(f"🔄 LLM requested {len(new_tool_calls)} more tool calls, continuing...")
-                return await self._handle_tool_calls(
-                    model, messages, final_content, new_tool_calls, enable_caching
-                )
-            else:
-                # Final response
-                logger.info("✅ Received final response from LLM after tool execution")
-                return {
-                    "success": True,
-                    "content": final_content,
-                    "tool_calls": tool_calls,
-                    "tool_results": tool_results,
-                    "provider": self.provider_type,
-                    "usage": response["data"].get("usage", {})
-                }
+            return {
+                "success": True,
+                "content": content,
+                "new_tool_calls": new_tool_calls,
+                "usage": response["data"].get("usage", {})
+            }
                 
         except Exception as e:
             logger.error(f"Conversation continuation failed: {e}")
@@ -447,18 +576,22 @@ class UnifiedLLMService:
                 }
                 
                 # Add tool information if tools were called
-                if result.get("tool_calls"):
-                    response_data["tool_calls"] = result["tool_calls"]
-                    response_data["tool_results"] = result["tool_results"]
+                # if result.get("tool_calls"):
+                #     response_data["tool_calls"] = result["tool_calls"]
+                #     response_data["tool_results"] = result["tool_results"]
                 
                 # Add usage information if available
-                if result.get("usage"):
-                    response_data["usage"] = result["usage"]
+                # if result.get("usage"):
+                #     response_data["usage"] = result["usage"]
                 
                 # Add completion information if task was completed
                 if result.get("task_completed"):
                     response_data["task_completed"] = result["task_completed"]
                     response_data["completion_reason"] = result.get("completion_reason")
+                
+                # Add generated script information if available
+                if result.get("generated_script"):
+                    response_data["generated_script"] = result["generated_script"]
                 
                 logger.info(f"✅ Question analyzed successfully using {result['provider']}")
                 

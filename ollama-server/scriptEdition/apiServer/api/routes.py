@@ -10,6 +10,7 @@ from typing import Dict, Any
 
 from api.models import QuestionRequest, AnalysisResponse
 from services.llm import UnifiedLLMService
+from services.search import analysis_service
 
 logger = logging.getLogger("api-routes")
 
@@ -27,17 +28,69 @@ class APIRoutes:
         try:
             logger.info(f"📝 Received question: {request.question[:100]}...")
             
+            # Step 1: Search for similar analyses and enhance message
+            enhanced_message, similar_analyses = analysis_service.search_and_enhance_message(request.question)
+            
+            if similar_analyses:
+                logger.info(f"🔍 Enhanced message with {len(similar_analyses)} similar analyses")
+            
             # Use the specified model or default
             model = request.model or self.llm_service.default_model
             logger.info(f"🤖 Using model: {model}")
             
-            # Analyze the question
-            result = await self.llm_service.analyze_question(request.question, model, request.enable_caching)
+            # Step 2: Analyze with enhanced message (original question + context)
+            result = await self.llm_service.analyze_question(enhanced_message, model, request.enable_caching)
             
             if result["success"]:
+                # Step 3: Save completed analysis (use generated script from LLM service)
+                try:
+                    analysis_data = result["data"]
+                    
+                    # Check if script was generated (use generated_script from LLM service)
+                    script_content = None
+                    generated_script = analysis_data.get("generated_script")
+                    if generated_script and generated_script.get("content"):
+                        script_content = generated_script["content"]
+                    
+                    # If script was generated, save the analysis
+                    if script_content:
+                        save_result = analysis_service.save_completed_analysis(
+                            original_question=request.question,  # Use original question, not enhanced
+                            script_content=script_content,
+                            llm_content=analysis_data.get("content", ""),
+                            tool_calls=[]  # No longer parsing tool calls
+                        )
+                        
+                        if save_result.get("success"):
+                            # Add save info to response data
+                            analysis_data["analysis_saved"] = {
+                                "analysis_id": save_result["analysis_id"], 
+                                "function_name": save_result["function_name"]
+                            }
+                        else:
+                            logger.warning(f"Failed to save analysis: {save_result.get('error')}")
+                
+                except Exception as save_error:
+                    logger.error(f"❌ Error saving analysis: {save_error}")
+                    # Don't fail the main request, just log the error
+                
+                # Add similar analyses info to response
+                response_data = result["data"]
+                if similar_analyses:
+                    response_data["similar_analyses_found"] = len(similar_analyses)
+                    response_data["similar_analyses"] = [
+                        {
+                            "function_name": a["function_name"],
+                            "filename": a.get("filename", f"{a['function_name']}.py"),
+                            "similarity": a["similarity"],
+                            "question": a["question"][:100] + "..." if len(a["question"]) > 100 else a["question"]
+                        }
+                        for a in similar_analyses
+                    ]
+                
                 return AnalysisResponse(
                     success=True,
-                    data=result["data"],
+                    data=response_data,
                     timestamp=datetime.now().isoformat()
                 )
             else:
@@ -57,14 +110,35 @@ class APIRoutes:
     
     async def health_check(self) -> Dict[str, Any]:
         """Health check endpoint"""
+        # Get analysis library stats
+        library_stats = analysis_service.get_library_stats()
+        
         return {
             "status": "healthy",
             "provider": self.llm_service.provider_type,
             "model": self.llm_service.default_model,
             "mcp_initialized": self.llm_service.mcp_initialized,
             "caching_supported": self.llm_service.provider.supports_caching(),
+            "analysis_library": library_stats,
             "timestamp": datetime.now().isoformat()
         }
+    
+    async def get_analysis_library_stats(self) -> Dict[str, Any]:
+        """Get analysis library statistics"""
+        try:
+            stats = analysis_service.get_library_stats()
+            return {
+                "success": True,
+                "stats": stats,
+                "timestamp": datetime.now().isoformat()
+            }
+        except Exception as e:
+            logger.error(f"❌ Error getting analysis library stats: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
     
     async def debug_mcp_tools(self) -> Dict[str, Any]:
         """Debug endpoint to check MCP tools"""
