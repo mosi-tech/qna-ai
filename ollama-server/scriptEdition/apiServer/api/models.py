@@ -10,6 +10,8 @@ class QuestionRequest(BaseModel):
     question: str
     model: Optional[str] = None  # Will use provider default if not specified
     enable_caching: Optional[bool] = True  # Controls whether to use caching
+    session_id: Optional[str] = None  # For conversation continuity
+    auto_expand: Optional[bool] = True  # Auto-expand contextual queries
 
 
 class AnalysisResponse(BaseModel):

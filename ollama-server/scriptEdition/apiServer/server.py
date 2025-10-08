@@ -13,7 +13,8 @@ import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from api.models import QuestionRequest, AnalysisResponse
-from services.llm import UnifiedLLMService
+from services.analysis import AnalysisService
+from services.search import SearchService
 from api.routes import APIRoutes
 
 logger = logging.getLogger("api-server")
@@ -25,20 +26,22 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("🚀 Starting Financial Analysis Server...")
     
-    # Initialize LLM service
-    llm_service = UnifiedLLMService()
-    app.state.llm_service = llm_service
+    # Initialize services
+    analysis_service = AnalysisService()
+    search_service = SearchService()
+    app.state.analysis_service = analysis_service
+    app.state.search_service = search_service
     
-    # Initialize API routes
-    api_routes = APIRoutes(llm_service)
+    # Initialize API routes with dependency injection
+    api_routes = APIRoutes(analysis_service, search_service)
     app.state.api_routes = api_routes
     
     # Warm cache if provider supports it
-    if llm_service.cache_manager:
+    if analysis_service.cache_manager:
         logger.info("🔥 Warming cache...")
         try:
-            await llm_service.ensure_mcp_initialized()
-            cache_success = await llm_service.warm_cache(llm_service.default_model)
+            await analysis_service.ensure_mcp_initialized()
+            cache_success = await analysis_service.warm_cache(analysis_service.llm_service.default_model)
             if cache_success:
                 logger.info("✅ Cache warming completed successfully")
             else:
@@ -46,13 +49,13 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.warning(f"⚠️ Cache warming error: {e}")
     
-    logger.info(f"✅ Server ready with {llm_service.provider_type.upper()} provider")
+    logger.info(f"✅ Server ready with {analysis_service.llm_service.provider_type.upper()} provider")
     
     yield
     
     # Shutdown
     logger.info("🛑 Shutting down Financial Analysis Server...")
-    await llm_service.close_sessions()
+    await analysis_service.close_sessions()
     logger.info("✅ Shutdown complete")
 
 
@@ -105,6 +108,21 @@ def create_app() -> FastAPI:
         """List available models for the current provider"""
         return await app.state.api_routes.list_models()
     
+    @app.post("/conversation/confirm")
+    async def confirm_expansion(session_id: str, confirmed: bool):
+        """Handle user confirmation for query expansion"""
+        return await app.state.api_routes.confirm_expansion(session_id, confirmed)
+    
+    @app.get("/conversation/{session_id}/context")
+    async def get_session_context(session_id: str):
+        """Get conversation context for debugging"""
+        return await app.state.api_routes.get_session_context(session_id)
+    
+    @app.get("/conversation/sessions")
+    async def list_sessions():
+        """List active conversation sessions"""
+        return await app.state.api_routes.list_sessions()
+    
     return app
 
 
@@ -144,17 +162,23 @@ if __name__ == "__main__":
     print("🌐 Server will be available at: http://localhost:8010")
     print("📖 API Documentation at: http://localhost:8010/docs")
     print("\n🧪 To test the server, send a POST request to /analyze with:")
+    print("   💬 Complete questions: {'question': 'What are my portfolio correlations?'}")
+    print("   🔄 Contextual questions: {'question': 'what about QQQ to SPY', 'session_id': 'session-123'}")
+    print("\n🆕 Conversation features:")
+    print("   • Contextual queries (references previous questions)")
+    print("   • Session management with auto-cleanup")
+    print("   • Query expansion with confidence scoring")
+    print("   • GET /conversation/sessions - list active sessions")
+    print("   • GET /conversation/{session_id}/context - debug session")
     
     if provider == "anthropic":
         anthropic_model = os.getenv("ANTHROPIC_MODEL", "claude-3-5-haiku-20241022")
-        print(f'   {{"question": "What are my portfolio correlations?", "model": "{anthropic_model}"}}')
-        print("\n✅ Make sure you have:")
+        print(f"\n✅ Make sure you have:")
         print("   1. LLM_PROVIDER=anthropic (default)")
         print("   2. ANTHROPIC_API_KEY environment variable set")
         print(f"   3. Model: {anthropic_model} (set via ANTHROPIC_MODEL or default)")
     else:
-        print('   {"question": "What are my portfolio correlations?", "model": "llama3.2"}')
-        print("\n✅ Make sure you have:")
+        print(f"\n✅ Make sure you have:")
         print("   1. LLM_PROVIDER=ollama")
         print("   2. Ollama running: ollama serve")
         print("   3. OLLAMA_BASE_URL (default: http://localhost:11434)")

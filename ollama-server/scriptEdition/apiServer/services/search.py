@@ -1,40 +1,52 @@
 #!/usr/bin/env python3
 """
-Analysis Service - Handles analysis library integration for apiServer
+Search Service - Handles analysis library search and enhancement
+
+Note: This is different from services/analysis.py which handles LLM-based analysis.
+This service focuses on ChromaDB search, message enhancement, and analysis saving.
 """
 
 import os
 import sys
 import re
 import logging
-from search.client import AnalysisLibraryClient
+from search.library import get_analysis_library
 
-logger = logging.getLogger("analysis-service")
+logger = logging.getLogger("search-service")
 
-class AnalysisService:
-    """Service for managing analysis library integration"""
+class SearchService:
+    """Service for managing analysis library search and enhancement"""
     
     def __init__(self):
-        """Initialize the analysis service"""
+        """Initialize the search service"""
         try:
-            if AnalysisLibraryClient is None:
-                logger.warning("AnalysisLibraryClient not available - analysis library features disabled")
-                self.library_client = None
-            else:
-                self.library_client = AnalysisLibraryClient()
-                logger.info("✅ Analysis library service initialized")
+            # Use lazy initialization via get_analysis_library()
+            self.library_client = None  # Will be created lazily when needed
+            logger.info("✅ Search service initialized (lazy mode)")
         except Exception as e:
-            logger.error(f"❌ Failed to initialize analysis library: {e}")
+            logger.error(f"❌ Failed to initialize search service: {e}")
             self.library_client = None
+    
+    def _get_library_client(self):
+        """Get library instance, creating lazily if needed"""
+        if self.library_client is None:
+            try:
+                self.library_client = get_analysis_library()
+                logger.info("✅ Analysis library initialized on first use")
+            except Exception as e:
+                logger.error(f"❌ Failed to create analysis library: {e}")
+                return None
+        return self.library_client
     
     def search_and_enhance_message(self, user_question: str) -> tuple[str, list]:
         """Search for similar analyses and enhance user message with context"""
-        if not self.library_client:
+        library_client = self._get_library_client()
+        if not library_client:
             return user_question, []
         
         try:
             # Search for similar analyses
-            search_result = self.library_client.search_similar(
+            search_result = library_client.search_similar(
                 query=user_question,
                 top_k=3,
                 similarity_threshold=0.3  # Lower threshold to find more potential matches
@@ -154,7 +166,8 @@ class AnalysisService:
     
     def save_completed_analysis(self, original_question: str, script_content: str, llm_content: str, tool_calls: list = None) -> dict:
         """Save analysis after successful completion"""
-        if not self.library_client:
+        library_client = self._get_library_client()
+        if not library_client:
             return {"success": False, "error": "Analysis library not available"}
         
         try:
@@ -170,7 +183,7 @@ class AnalysisService:
                 filename = self.extract_filename_from_tool_calls(tool_calls)
             
             # Save to library
-            result = self.library_client.save_analysis(
+            result = library_client.save_analysis(
                 question=original_question,
                 function_name=function_name,
                 docstring=docstring,
@@ -190,20 +203,22 @@ class AnalysisService:
     
     def get_library_stats(self) -> dict:
         """Get analysis library statistics"""
-        if not self.library_client:
+        library_client = self._get_library_client()
+        if not library_client:
             return {"success": False, "error": "Analysis library not available"}
         
         try:
-            # Get basic count from ChromaDB
-            count = self.library_client.library.collection.count()
-            return {
-                "success": True, 
-                "total_analyses": count,
-                "status": "operational"
-            }
+            # Get basic count from ChromaDB using the library's get_stats method
+            stats = library_client.get_stats()
+            if stats.get("success"):
+                return {
+                    "success": True, 
+                    "total_analyses": stats["total_analyses"],
+                    "status": "operational"
+                }
+            else:
+                return stats
         except Exception as e:
             logger.error(f"❌ Error getting library stats: {e}")
             return {"success": False, "error": str(e)}
 
-# Global service instance
-analysis_service = AnalysisService()

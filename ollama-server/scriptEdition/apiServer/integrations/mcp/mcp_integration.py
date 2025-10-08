@@ -39,7 +39,7 @@ class MCPIntegration:
             logger.error(f"Failed to initialize MCP client: {e}")
             return False
     
-    def get_mcp_tools_for_openai(self) -> List[Dict[str, Any]]:
+    def get_mcp_tools(self) -> List[Dict[str, Any]]:
         """Convert MCP tools to OpenAI-compatible format for LLM"""
         if not self.mcp_client or not self.mcp_client.available_tools:
             logger.warning("No MCP tools available")

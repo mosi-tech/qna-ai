@@ -5,7 +5,7 @@ Provider-Agnostic Cache Management
 import asyncio
 import logging
 from typing import Dict, Any, List, Optional
-from providers.base import LLMProvider
+from .providers.base import LLMProvider
 
 logger = logging.getLogger("provider-cache-manager")
 

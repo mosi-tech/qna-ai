@@ -301,5 +301,54 @@ class AnalysisLibrary:
                 "analyses": []
             }
 
-# Backward compatibility - alias for old name
-AnalysisLibraryMCP = AnalysisLibrary
+# Module-level library instance (created lazily)
+_analysis_library = None
+
+def get_analysis_library(chroma_host: str = None, chroma_port: int = None) -> AnalysisLibrary:
+    """Get or create analysis library instance"""
+    global _analysis_library
+    if _analysis_library is None:
+        _analysis_library = AnalysisLibrary(chroma_host, chroma_port)
+    return _analysis_library
+
+# Convenience functions for direct import
+def save_analysis(question: str, function_name: str, docstring: str, filename: str = None) -> dict:
+    """Save analysis - convenience function"""
+    library = get_analysis_library()
+    return library.save_analysis(question, function_name, docstring, filename)
+
+def search_similar_analyses(query: str, top_k: int = 5, similarity_threshold: float = 0.3) -> dict:
+    """Search similar analyses - convenience function"""
+    library = get_analysis_library()
+    return library.search_similar(query, top_k, similarity_threshold)
+
+if __name__ == "__main__":
+    # Test the library
+    print("Testing AnalysisLibrary...")
+    
+    # Test direct usage
+    library = AnalysisLibrary()
+    result = library.save_analysis(
+        question="What's the best momentum strategy for AAPL?",
+        function_name="analyze_aapl_momentum_strategy",
+        docstring="Analyzes various momentum indicators for AAPL trading strategy optimization."
+    )
+    print(f"Direct save result: {result}")
+    
+    search_result = library.search_similar("AAPL momentum", top_k=3)
+    print(f"Direct search result: {search_result}")
+    
+    # Test convenience functions
+    print("\nTesting convenience functions...")
+    result2 = save_analysis(
+        question="What happens if I buy AAPL every time it drops 2%?",
+        function_name="analyze_aapl_dip_buying_strategy",
+        docstring="Analyzes the performance of buying AAPL stock whenever it drops 2% from recent highs."
+    )
+    print(f"Convenience save result: {result2}")
+    
+    search_result2 = search_similar_analyses("AAPL dip buying strategy")
+    print(f"Convenience search result: {search_result2}")
+    
+    stats = get_analysis_library().get_stats()
+    print(f"Library stats: {stats}")

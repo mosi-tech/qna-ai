@@ -9,8 +9,9 @@ from fastapi import HTTPException
 from typing import Dict, Any
 
 from api.models import QuestionRequest, AnalysisResponse
-from services.llm import UnifiedLLMService
-from services.search import analysis_service
+from services.analysis import AnalysisService
+from services.search import SearchService
+from dialogue import search_with_context, initialize_dialogue_factory, get_session_manager
 
 logger = logging.getLogger("api-routes")
 
@@ -18,31 +19,77 @@ logger = logging.getLogger("api-routes")
 class APIRoutes:
     """Handles all API route logic"""
     
-    def __init__(self, llm_service: UnifiedLLMService):
-        self.llm_service = llm_service
+    def __init__(self, analysis_service: AnalysisService, search_service: SearchService):
+        self.analysis_service = analysis_service
+        self.search_service = search_service
+        
+        # Initialize dialogue factory using search service's library
+        try:
+            analysis_library = search_service._get_library_client()
+        except Exception:
+            analysis_library = None
+        
+        initialize_dialogue_factory(analysis_library=analysis_library)
     
     async def analyze_question(self, request: QuestionRequest) -> AnalysisResponse:
         """
-        Analyze a financial question and generate tool calls without execution
+        Analyze a financial question with conversation context support
         """
         try:
             logger.info(f"📝 Received question: {request.question[:100]}...")
             
-            # Step 1: Search for similar analyses and enhance message
-            enhanced_message, similar_analyses = analysis_service.search_and_enhance_message(request.question)
+            # Step 1: Use conversation-aware search to handle contextual queries
+            context_result = await search_with_context(
+                query=request.question,
+                session_id=request.session_id,
+                auto_expand=request.auto_expand
+            )
+            
+            if not context_result["success"]:
+                return AnalysisResponse(
+                    success=False,
+                    error=f"Context analysis failed: {context_result.get('error')}",
+                    timestamp=datetime.now().isoformat()
+                )
+            
+            # Get the final query to analyze (expanded if contextual)
+            final_query = context_result.get("expanded_query", request.question)
+            session_id = context_result["session_id"]
+            
+            logger.info(f"🔍 Query type: {context_result.get('query_type', 'unknown')}")
+            if final_query != request.question:
+                logger.info(f"🔄 Expanded to: {final_query[:100]}...")
+            
+            # Step 2: Check if we need confirmation for low-confidence expansions
+            if context_result.get("needs_confirmation") or context_result.get("needs_clarification"):
+                return AnalysisResponse(
+                    success=True,
+                    data={
+                        "needs_user_input": True,
+                        "session_id": session_id,
+                        "context_result": context_result,
+                        "message": context_result.get("message"),
+                        "options": context_result.get("options"),
+                        "suggestion": context_result.get("suggestion")
+                    },
+                    timestamp=datetime.now().isoformat()
+                )
+            
+            # Step 3: Enhance message with similar analyses for full analysis
+            enhanced_message, similar_analyses = self.search_service.search_and_enhance_message(final_query)
             
             if similar_analyses:
                 logger.info(f"🔍 Enhanced message with {len(similar_analyses)} similar analyses")
             
             # Use the specified model or default
-            model = request.model or self.llm_service.default_model
+            model = request.model or self.analysis_service.llm_service.default_model
             logger.info(f"🤖 Using model: {model}")
             
-            # Step 2: Analyze with enhanced message (original question + context)
-            result = await self.llm_service.analyze_question(enhanced_message, model, request.enable_caching)
+            # Step 4: Analyze with enhanced message
+            result = await self.analysis_service.analyze_question(enhanced_message, model, request.enable_caching)
             
             if result["success"]:
-                # Step 3: Save completed analysis (use generated script from LLM service)
+                # Step 5: Save completed analysis and update conversation
                 try:
                     analysis_data = result["data"]
                     
@@ -53,8 +100,9 @@ class APIRoutes:
                         script_content = generated_script["content"]
                     
                     # If script was generated, save the analysis
+                    analysis_summary = None
                     if script_content:
-                        save_result = analysis_service.save_completed_analysis(
+                        save_result = self.search_service.save_completed_analysis(
                             original_question=request.question,  # Use original question, not enhanced
                             script_content=script_content,
                             llm_content=analysis_data.get("content", ""),
@@ -67,15 +115,41 @@ class APIRoutes:
                                 "analysis_id": save_result["analysis_id"], 
                                 "function_name": save_result["function_name"]
                             }
+                            analysis_summary = save_result["function_name"]
                         else:
                             logger.warning(f"Failed to save analysis: {save_result.get('error')}")
+                    
+                    # Step 6: Update conversation with analysis results
+                    try:
+                        session_manager = get_session_manager()
+                        conversation = session_manager.get_session(session_id)
+                        if conversation:
+                            # Update the last turn with analysis results
+                            last_turn = conversation.get_last_turn()
+                            if last_turn and not last_turn.analysis_summary:
+                                last_turn.analysis_summary = analysis_summary or "Financial analysis completed"
+                                logger.info(f"📝 Updated conversation turn with analysis summary")
+                    except Exception as conv_error:
+                        logger.warning(f"Failed to update conversation: {conv_error}")
                 
                 except Exception as save_error:
                     logger.error(f"❌ Error saving analysis: {save_error}")
                     # Don't fail the main request, just log the error
                 
-                # Add similar analyses info to response
+                # Step 7: Build enhanced response with conversation context
                 response_data = result["data"]
+                
+                # Add conversation context info
+                response_data["conversation"] = {
+                    "session_id": session_id,
+                    "query_type": context_result.get("query_type"),
+                    "original_query": request.question,
+                    "final_query": final_query,
+                    "context_used": context_result.get("context_used", False),
+                    "expansion_confidence": context_result.get("expansion_confidence", 0.0)
+                }
+                
+                # Add similar analyses info
                 if similar_analyses:
                     response_data["similar_analyses_found"] = len(similar_analyses)
                     response_data["similar_analyses"] = [
@@ -87,6 +161,10 @@ class APIRoutes:
                         }
                         for a in similar_analyses
                     ]
+                
+                # Add context search results if available
+                if context_result.get("search_results"):
+                    response_data["context_search_results"] = len(context_result["search_results"])
                 
                 return AnalysisResponse(
                     success=True,
@@ -111,14 +189,14 @@ class APIRoutes:
     async def health_check(self) -> Dict[str, Any]:
         """Health check endpoint"""
         # Get analysis library stats
-        library_stats = analysis_service.get_library_stats()
+        library_stats = self.search_service.get_library_stats()
         
         return {
             "status": "healthy",
-            "provider": self.llm_service.provider_type,
-            "model": self.llm_service.default_model,
-            "mcp_initialized": self.llm_service.mcp_initialized,
-            "caching_supported": self.llm_service.provider.supports_caching(),
+            "provider": self.analysis_service.llm_service.provider_type,
+            "model": self.analysis_service.llm_service.default_model,
+            "mcp_initialized": self.analysis_service.mcp_initialized,
+            "caching_supported": self.analysis_service.llm_service.provider.supports_caching(),
             "analysis_library": library_stats,
             "timestamp": datetime.now().isoformat()
         }
@@ -126,7 +204,7 @@ class APIRoutes:
     async def get_analysis_library_stats(self) -> Dict[str, Any]:
         """Get analysis library statistics"""
         try:
-            stats = analysis_service.get_library_stats()
+            stats = self.search_service.get_library_stats()
             return {
                 "success": True,
                 "stats": stats,
@@ -143,19 +221,19 @@ class APIRoutes:
     async def debug_mcp_tools(self) -> Dict[str, Any]:
         """Debug endpoint to check MCP tools"""
         try:
-            await self.llm_service.ensure_mcp_initialized()
+            await self.analysis_service.ensure_mcp_initialized()
             
-            if not self.llm_service.mcp_client:
+            if not self.analysis_service.mcp_client:
                 return {
                     "error": "MCP client not initialized",
                     "tools_count": 0,
                     "tools": []
                 }
             
-            tools = self.llm_service.get_mcp_tools()
+            tools = self.analysis_service.get_mcp_tools()
             
             return {
-                "mcp_initialized": self.llm_service.mcp_initialized,
+                "mcp_initialized": self.analysis_service.mcp_initialized,
                 "tools_count": len(tools),
                 "tools": [
                     {
@@ -177,12 +255,12 @@ class APIRoutes:
     async def debug_system_prompt(self) -> Dict[str, Any]:
         """Debug endpoint to check system prompt"""
         try:
-            system_prompt = await self.llm_service.get_system_prompt()
+            system_prompt = await self.analysis_service.get_system_prompt()
             
             return {
                 "system_prompt_length": len(system_prompt),
                 "system_prompt_preview": system_prompt[:500] + "..." if len(system_prompt) > 500 else system_prompt,
-                "system_prompt_path": self.llm_service.system_prompt_path
+                "system_prompt_path": self.analysis_service.system_prompt_path
             }
             
         except Exception as e:
@@ -205,11 +283,11 @@ class APIRoutes:
             ]
             
             # Process through the validation pipeline
-            validation = self.llm_service.mcp_integration.validate_mcp_functions(mock_tool_calls)
+            validation = self.analysis_service.mcp_integration.validate_mcp_functions(mock_tool_calls)
             
             if validation["all_valid"]:
                 # Test actual tool execution
-                tool_results = await self.llm_service.mcp_integration.generate_tool_calls_only(mock_tool_calls)
+                tool_results = await self.analysis_service.mcp_integration.generate_tool_calls_only(mock_tool_calls)
                 
                 return {
                     "validation_passed": True,
@@ -234,7 +312,7 @@ class APIRoutes:
     async def list_models(self) -> Dict[str, Any]:
         """List available models for the current provider"""
         try:
-            if self.llm_service.provider_type == "anthropic":
+            if self.analysis_service.llm_service.provider_type == "anthropic":
                 models = [
                     "claude-3-5-haiku-20241022",
                     "claude-3-5-sonnet-20241022", 
@@ -242,10 +320,10 @@ class APIRoutes:
                 ]
                 return {
                     "provider": "anthropic",
-                    "current_model": self.llm_service.default_model,
+                    "current_model": self.analysis_service.llm_service.default_model,
                     "available_models": models
                 }
-            elif self.llm_service.provider_type == "openai":
+            elif self.analysis_service.llm_service.provider_type == "openai":
                 models = [
                     "gpt-4-turbo-preview",
                     "gpt-4-turbo",
@@ -254,16 +332,81 @@ class APIRoutes:
                 ]
                 return {
                     "provider": "openai",
-                    "current_model": self.llm_service.default_model,
+                    "current_model": self.analysis_service.llm_service.default_model,
                     "available_models": models
                 }
             else:
                 # For other providers like Ollama
                 return {
-                    "provider": self.llm_service.provider_type,
-                    "current_model": self.llm_service.default_model,
-                    "available_models": [self.llm_service.default_model],
-                    "note": f"Model list not implemented for {self.llm_service.provider_type}"
+                    "provider": self.analysis_service.llm_service.provider_type,
+                    "current_model": self.analysis_service.llm_service.default_model,
+                    "available_models": [self.analysis_service.llm_service.default_model],
+                    "note": f"Model list not implemented for {self.analysis_service.llm_service.provider_type}"
                 }
         except Exception as e:
             return {"error": str(e)}
+    
+    async def confirm_expansion(self, session_id: str, confirmed: bool) -> Dict[str, Any]:
+        """Handle user confirmation for query expansion"""
+        try:
+            from dialogue import get_dialogue_factory
+            
+            factory = get_dialogue_factory()
+            result = factory.get_context_aware_search().confirm_expansion(session_id, confirmed)
+            
+            return {
+                "success": True,
+                "data": result,
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Confirmation error: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
+    
+    async def get_session_context(self, session_id: str) -> Dict[str, Any]:
+        """Get conversation context for debugging"""
+        try:
+            from dialogue import get_dialogue_factory
+            
+            factory = get_dialogue_factory()
+            context = factory.get_context_aware_search().get_session_context(session_id)
+            
+            return {
+                "success": True,
+                "session_id": session_id,
+                "context": context,
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Session context error: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
+    
+    async def list_sessions(self) -> Dict[str, Any]:
+        """List active conversation sessions"""
+        try:
+            session_manager = get_session_manager()
+            stats = session_manager.get_stats()
+            
+            return {
+                "success": True,
+                "stats": stats,
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Session listing error: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
