@@ -237,16 +237,10 @@ class AnalysisService:
                         "error": f"Tool execution failed: {tool_result.get('error')}"
                     }
             else:
-                # No tool calls - this means no script was generated
-                logger.warning("❌ Task incomplete: LLM responded without calling any tools (no script generated)")
-                return {
-                    "success": False,
-                    "content": result.get("content", ""),
-                    "provider": self.llm_service.provider_type,
-                    "task_completed": False,
-                    "completion_reason": "no_tools_called",
-                    "error": "LLM did not generate a script - no tool calls made"
-                }
+                # No tool calls - start conversation loop to handle reuse decisions
+                return await self._conversation_loop(
+                    model, messages, [], [], enable_caching
+                )
                 
         except Exception as e:
             logger.error(f"❌ LLM call error: {e}")
@@ -558,11 +552,26 @@ class AnalysisService:
                     logger.info(f"🔄 Continuing conversation loop (total tool calls: {len(all_tool_calls)})")
                     continue
                 else:
-                    # No more tool calls - check completion using ALL accumulated results
+                    # No more tool calls - first check if this is a reuse decision
+                    final_content = continuation_result.get("content", "")
+                    reuse_decision = self._check_reuse_decision(final_content)
+                    
+                    if reuse_decision:
+                        logger.info("✅ Reuse decision made - existing analysis can be reused")
+                        return {
+                            "success": True,
+                            "content": final_content,
+                            "tool_calls": all_tool_calls,
+                            "tool_results": all_tool_results,
+                            "provider": self.llm_service.provider_type,
+                            "task_completed": True,
+                            "completion_reason": "reuse_decision",
+                            "reuse_decision": reuse_decision
+                        }
+                    
+                    # Not a reuse decision - check completion using ALL accumulated results
                     script_generated = self._check_script_generation(all_tool_results)
                     validation_completed = self._check_validation_completion(all_tool_results)
-                    
-                    final_content = continuation_result.get("content", "")
                     
                     if script_generated and validation_completed:
                         logger.info("🏁 Task completed: Script generated and validated successfully")
@@ -667,6 +676,50 @@ class AnalysisService:
         except:
             return False
     
+    def _check_reuse_decision(self, content: str) -> Optional[Dict[str, Any]]:
+        """Check if content contains a reuse decision JSON response"""
+        try:
+            # Look for JSON code blocks in the content
+            import re
+            
+            # Extract JSON from markdown code blocks
+            json_pattern = r'```json\s*(.*?)\s*```'
+            json_matches = re.findall(json_pattern, content, re.DOTALL)
+            
+            for json_text in json_matches:
+                try:
+                    parsed_json = json.loads(json_text.strip())
+                    
+                    # Check if this is a reuse decision
+                    if "reuse_decision" in parsed_json:
+                        reuse_data = parsed_json["reuse_decision"]
+                        if reuse_data.get("should_reuse") is True:
+                            logger.info(f"🔄 Reuse decision found: {reuse_data.get('existing_function_name')}")
+                            return reuse_data
+                        elif reuse_data.get("should_reuse") is False:
+                            logger.info("🆕 New analysis required - no reusable analysis found")
+                            return None
+                            
+                except json.JSONDecodeError as e:
+                    logger.debug(f"Failed to parse JSON block: {e}")
+                    continue
+            
+            # If no JSON blocks found, try parsing the entire content as JSON
+            try:
+                parsed_content = json.loads(content.strip())
+                if "reuse_decision" in parsed_content:
+                    reuse_data = parsed_content["reuse_decision"]
+                    if reuse_data.get("should_reuse") is True:
+                        return reuse_data
+            except json.JSONDecodeError:
+                pass
+                
+            return None
+            
+        except Exception as e:
+            logger.debug(f"Error checking reuse decision: {e}")
+            return None
+
     def _extract_script_info(self, tool_results: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         """Extract script information from tool results"""
         try:
