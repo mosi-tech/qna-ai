@@ -92,32 +92,38 @@ class APIRoutes:
                 # Step 5: Save completed analysis and update conversation
                 try:
                     analysis_data = result["data"]
+                    response_type = analysis_data.get("response_type")
+                    analysis_result = analysis_data.get("analysis_result", {})
                     
-                    # Check if script was generated (use generated_script from LLM service)
-                    script_content = None
-                    generated_script = analysis_data.get("generated_script")
-                    if generated_script:
-                        # New format has filename/absolute_path instead of content
-                        script_path = generated_script.get("absolute_path") or generated_script.get("filename")
+                    # Extract consistent fields from both reuse and script generation responses
+                    script_name = analysis_result.get("script_name")
+                    execution_info = analysis_result.get("execution", {})
+                    analysis_description = analysis_result.get("analysis_description", "")
                     
-                    # If script was generated, save the analysis
                     analysis_summary = None
-                    if script_path:
+                    if script_name and (
+                        (response_type == "reuse_decision" and analysis_result.get("should_reuse")) or
+                        (response_type == "script_generation" and analysis_result.get("status") == "success")
+                    ):
+                        # Save the analysis with execution metadata
                         save_result = self.search_service.save_completed_analysis(
                             original_question=request.question,  # Use original question, not enhanced
-                            script_path = script_path, 
-                            llm_content=analysis_data.get("content", ""),
+                            script_path=script_name, 
+                            addn_meta={"execution": execution_info, "description": analysis_description}
                         )
                         
                         if save_result.get("success"):
                             # Add save info to response data
-                            analysis_data["analysis_saved"] = {
-                                "analysis_id": save_result["analysis_id"], 
-                                "function_name": save_result["function_name"]
-                            }
-                            analysis_summary = save_result["function_name"]
+                            analysis_data["analysis_id"] = save_result["analysis_id"]
+                            
+                            # Set analysis summary based on response type
+                            analysis_summary = save_result.get("analysis_description", "")
                         else:
                             logger.warning(f"Failed to save analysis: {save_result.get('error')}")
+                    else:
+                        # Handle cases where script couldn't be saved (no script_name or failed conditions)
+                        if response_type == "script_generation" and analysis_result.get("status") == "failed":
+                            analysis_summary = f"Script generation failed: {analysis_result.get('final_error', 'Unknown error')}"
                     
                     # Step 6: Update conversation with analysis results
                     try:

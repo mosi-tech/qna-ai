@@ -456,25 +456,9 @@ class AnalysisService:
                                enable_caching: bool = False) -> Dict[str, Any]:
         """Main conversation loop that continues until LLM stops calling tools"""
         try:
-            # Check if initial tool execution already completed the task
-            script_generated = self._check_script_generation(all_tool_results)
-            validation_completed = self._check_validation_completion(all_tool_results)
-            
-            if script_generated and validation_completed:
-                logger.info("🏁 Task completed after initial tool execution")
-                return {
-                    "success": True,
-                    "tool_calls": all_tool_calls,
-                    "tool_results": all_tool_results,
-                    "provider": self.llm_service.provider_type,
-                    "task_completed": True,
-                    "completion_reason": "script_generated_and_validated",
-                    "generated_script": self._extract_script_info(all_tool_results)
-                }
             
             # Track how many tool calls we've processed to know what's "recent"
             processed_tool_calls = 0
-            
             while True:
                 # Get the most recent unprocessed tool calls/results
                 if processed_tool_calls == 0:
@@ -496,14 +480,17 @@ class AnalysisService:
                 if not continuation_result["success"]:
                     return {
                         "success": False,
-                        "content": continuation_result.get("content", ""),
-                        "tool_calls": all_tool_calls,
-                        "tool_results": all_tool_results,
                         "provider": self.llm_service.provider_type,
                         "task_completed": False,
-                        "completion_reason": "conversation_failed",
-                        "error": continuation_result.get("error", "Conversation continuation failed"),
-                        "generated_script": None
+                        "response_type": "error",
+                        "data": {
+                            "error_type": "conversation_failed",
+                            "message": continuation_result.get("error", "Conversation continuation failed"),
+                            "tool_calls": all_tool_calls,
+                            "tool_results": all_tool_results
+                        },
+                        "raw_content": continuation_result.get("content", ""),
+                        "error": continuation_result.get("error", "Conversation continuation failed")
                     }
                 
                 # Check if LLM wants to make more tool calls
@@ -515,39 +502,22 @@ class AnalysisService:
                     if not tool_execution_result["success"]:
                         return {
                             "success": False,
-                            "content": "",
-                            "tool_calls": all_tool_calls,
-                            "tool_results": all_tool_results,
                             "provider": self.llm_service.provider_type,
                             "task_completed": False,
-                            "completion_reason": "tool_execution_failed",
-                            "error": tool_execution_result.get("error", "Tool execution failed"),
-                            "generated_script": self._extract_script_info(all_tool_results)
+                            "response_type": "error",
+                            "data": {
+                                "error_type": "tool_execution_failed",
+                                "message": tool_execution_result.get("error", "Tool execution failed"),
+                                "tool_calls": all_tool_calls,
+                                "tool_results": all_tool_results
+                            },
+                            "raw_content": "",
+                            "error": tool_execution_result.get("error", "Tool execution failed")
                         }
                     
                     # Accumulate results
                     all_tool_calls.extend(new_tool_calls)
                     all_tool_results.extend(tool_execution_result["tool_results"])
-                    
-                    # Only check completion if we just executed validation tools
-                    validation_just_executed = any("validate" in tc.get("function", {}).get("name", "") 
-                                                  for tc in new_tool_calls)
-                    
-                    if validation_just_executed:
-                        script_generated = self._check_script_generation(all_tool_results)
-                        validation_completed = self._check_validation_completion(all_tool_results)
-                        
-                        if script_generated and validation_completed:
-                            logger.info("🏁 Task completed - script generated and validated")
-                            return {
-                                "success": True,
-                                "tool_calls": all_tool_calls,
-                                "tool_results": all_tool_results,
-                                "provider": self.llm_service.provider_type,
-                                "task_completed": True,
-                                "completion_reason": "script_generated_and_validated",
-                                "generated_script": self._extract_script_info(all_tool_results)
-                            }
                     
                     logger.info(f"🔄 Continuing conversation loop (total tool calls: {len(all_tool_calls)})")
                     continue
@@ -560,56 +530,52 @@ class AnalysisService:
                         logger.info("✅ Reuse decision made - existing analysis can be reused")
                         return {
                             "success": True,
-                            "content": final_content,
-                            "tool_calls": all_tool_calls,
-                            "tool_results": all_tool_results,
                             "provider": self.llm_service.provider_type,
                             "task_completed": True,
-                            "completion_reason": "reuse_decision",
-                            "reuse_decision": reuse_decision
+                            "response_type": "reuse_decision",
+                            "data": reuse_decision,
+                            "raw_content": final_content
                         }
                     
-                    # Not a reuse decision - check completion using ALL accumulated results
-                    script_generated = self._check_script_generation(all_tool_results)
-                    validation_completed = self._check_validation_completion(all_tool_results)
+                    # Check if this is a script generation response
+                    script_generation_response = self._check_script_generation_response(final_content)
+                    if script_generation_response:
+                        if script_generation_response.get("status") == "success":
+                            logger.info("✅ Script generation completed successfully")
+                            return {
+                                "success": True,
+                                "provider": self.llm_service.provider_type,
+                                "task_completed": True,
+                                "response_type": "script_generation",
+                                "data": script_generation_response,
+                                "raw_content": final_content
+                            }
+                        else:  # status == "failed"
+                            logger.error("❌ Script generation failed")
+                            return {
+                                "success": False,
+                                "provider": self.llm_service.provider_type,
+                                "task_completed": False,
+                                "response_type": "script_generation_failed",
+                                "data": script_generation_response,
+                                "raw_content": final_content,
+                                "error": script_generation_response.get("final_error", "Script generation failed")
+                            }
                     
-                    if script_generated and validation_completed:
-                        logger.info("🏁 Task completed: Script generated and validated successfully")
-                        return {
-                            "success": True,
-                            "content": final_content,
-                            "tool_calls": all_tool_calls,
-                            "tool_results": all_tool_results,
-                            "provider": self.llm_service.provider_type,
-                            "task_completed": True,
-                            "completion_reason": "script_generated_and_validated",
-                            "generated_script": self._extract_script_info(all_tool_results)
-                        }
-                    elif script_generated:
-                        logger.info("⚠️ Task partially completed: Script generated but not validated")
-                        return {
-                            "success": False,
-                            "content": final_content,
-                            "tool_calls": all_tool_calls,
-                            "tool_results": all_tool_results,
-                            "provider": self.llm_service.provider_type,
-                            "task_completed": False,
-                            "completion_reason": "script_generated_not_validated",
-                            "generated_script": self._extract_script_info(all_tool_results)
-                        }
-                    else:
-                        logger.warning("❌ Task incomplete: No validated script was generated")
-                        return {
-                            "success": False,
-                            "content": final_content,
-                            "tool_calls": all_tool_calls,
-                            "tool_results": all_tool_results,
-                            "provider": self.llm_service.provider_type,
-                            "task_completed": False,
-                            "completion_reason": "no_script_generated",
-                            "generated_script": None,
-                            "error": "LLM stopped without generating a validated script"
-                        }
+                    # No reuse decision or script generation response found
+                    logger.warning("❌ Task incomplete: No reuse decision or script generation response found")
+                    return {
+                        "success": False,
+                        "provider": self.llm_service.provider_type,
+                        "task_completed": False,
+                        "response_type": "error",
+                        "data": {
+                            "error_type": "no_structured_response",
+                            "message": "LLM response did not contain reuse decision or script generation JSON"
+                        },
+                        "raw_content": final_content,
+                        "error": "LLM response did not contain reuse decision or script generation JSON"
+                    }
                         
         except Exception as e:
             logger.error(f"❌ Conversation loop error: {e}")
@@ -628,10 +594,29 @@ class AnalysisService:
                 "role": "assistant",
                 "content": self.llm_service.provider.format_tool_calls(current_tool_calls)
             })
+
+            foramtted_tool_results = self.llm_service.provider.format_tool_results(current_tool_calls, current_tool_results)
             
             # Add tool results using provider's formatting function
-            tool_result_message = self.llm_service.provider.format_tool_results(current_tool_calls, current_tool_results)
-            messages.append(tool_result_message)
+            if enable_caching and self.llm_service.provider_type == "anthropic":
+                # Define functions that are allowed for caching
+                cacheable_functions = {
+                    "get_function_docstring": "1h",
+                    # "write_file": "5m"
+                }
+                
+                # Add caching metadata to tool results for cacheable functions
+                for i, (tool_call, tool_result) in enumerate(zip(current_tool_calls, foramtted_tool_results.get("content", []))):
+                    function_name = tool_call.get("function", "").get("name", "")
+                    # Strip MCP server prefixes to get base function name
+                    base_function_name = function_name.split("__")[-1] if "__" in function_name else function_name
+                    
+                    if base_function_name in cacheable_functions:
+                        foramtted_tool_results["content"][i]["cache_control"] = {"type": "ephemeral", "ttl": cacheable_functions[base_function_name]}
+                        logger.debug(f"Added caching for function: {function_name}")
+                
+            
+            messages.append(foramtted_tool_results)
             
             # Make request with conversation context
             result = await self.llm_service.make_request(
@@ -676,6 +661,50 @@ class AnalysisService:
         except:
             return False
     
+    def _check_script_generation_response(self, content: str) -> Optional[Dict[str, Any]]:
+        """Check if content contains a script generation JSON response"""
+        try:
+            # Look for JSON code blocks in the content
+            import re
+            
+            # Extract JSON from markdown code blocks
+            json_pattern = r'```json\s*(.*?)\s*```'
+            json_matches = re.findall(json_pattern, content, re.DOTALL)
+            
+            for json_text in json_matches:
+                try:
+                    parsed_json = json.loads(json_text.strip())
+                    
+                    # Check if this is a script generation response
+                    if "script_generation" in parsed_json:
+                        script_data = parsed_json["script_generation"]
+                        if script_data.get("status") == "success":
+                            logger.info(f"📝 Script generation response found: {script_data.get('script_name')}")
+                            return script_data
+                        elif script_data.get("status") == "failed":
+                            logger.info("❌ Script generation failed response found")
+                            return script_data
+                            
+                except json.JSONDecodeError as e:
+                    logger.debug(f"Failed to parse JSON block: {e}")
+                    continue
+            
+            # If no JSON blocks found, try parsing the entire content as JSON
+            try:
+                parsed_content = json.loads(content.strip())
+                if "script_generation" in parsed_content:
+                    script_data = parsed_content["script_generation"]
+                    if script_data.get("status") in ["success", "failed"]:
+                        return script_data
+            except json.JSONDecodeError:
+                pass
+                
+            return None
+            
+        except Exception as e:
+            logger.debug(f"Error checking script generation response: {e}")
+            return None
+
     def _check_reuse_decision(self, content: str) -> Optional[Dict[str, Any]]:
         """Check if content contains a reuse decision JSON response"""
         try:
@@ -781,25 +810,24 @@ class AnalysisService:
             result = await self.call_llm_with_tools(model, question, enable_caching)
             
             if result.get("success"):
-                # Format the successful response
+                # Format the successful response based on new standardized format
                 response_data = {
                     "question": question,
                     "provider": result["provider"],
                     "model": model,
-                    "content": result.get("content", ""),
+                    "response_type": result.get("response_type"),
+                    "raw_content": result.get("raw_content", ""),
                     "timestamp": datetime.now().isoformat()
                 }
                 
-                # Add completion information if task was completed
+                # Add completion information
                 if result.get("task_completed"):
                     response_data["task_completed"] = result["task_completed"]
-                    response_data["completion_reason"] = result.get("completion_reason")
                 
-                # Add generated script information if available
-                if result.get("generated_script"):
-                    response_data["generated_script"] = result["generated_script"]
+                # Always use consistent key structure regardless of response type
+                response_data["analysis_result"] = result.get("data", {})
                 
-                logger.info(f"✅ Question analyzed successfully using {result['provider']}")
+                logger.info(f"✅ Question analyzed successfully using {result['provider']} - Type: {result.get("response_type")}")
                 
                 return {
                     "success": True,
@@ -810,7 +838,8 @@ class AnalysisService:
                 return {
                     "success": False,
                     "error": result.get("error", "Unknown error"),
-                    "provider": result.get("provider", self.llm_service.provider_type)
+                    "provider": result.get("provider", self.llm_service.provider_type),
+                    "timestamp": datetime.now().isoformat()
                 }
                 
         except Exception as e:

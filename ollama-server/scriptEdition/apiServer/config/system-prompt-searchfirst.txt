@@ -53,10 +53,8 @@ When provided with similar analyses in the user message, FIRST evaluate for reus
    {
      "reuse_decision": {
        "should_reuse": true,
-       "existing_function_name": "portfolio_correlation_analysis",
-       "existing_filename": "portfolio_correlation_analysis.py", 
+       "script_name": "portfolio_correlation_analysis.py", 
        "reason": "Same analysis methodology - only parameters differ",
-       "updated_parameters": ["symbols", "timeframe", "correlation_method"],
        "analysis_description": "Brief description of what this analysis does",
        "execution": {
          "script_name": "portfolio_correlation_analysis.py",
@@ -529,14 +527,13 @@ Return the JSON from the REUSE DECISION OUTPUT section above.
     "script_name": "analysis_script.py",
     "validation_attempts": 1,
     "analysis_description": "Brief description of what this analysis does",
-    "key_parameters": {
-      "analysis_period_days": 365,
-      "correlation_threshold": 0.5,
-      "benchmark_symbol": "QQQ"
-    },
     "execution": {
-      "default_curl": "curl -X POST http://localhost:8007/execute-script -H \"Content-Type: application/json\" -d '{\"script_name\": \"analysis_script.py\"}'",
-      "custom_curl": "curl -X POST http://localhost:8007/execute-script -H \"Content-Type: application/json\" -d '{\"script_name\": \"analysis_script.py\", \"parameters\": {\"analysis_period_days\": 365, \"correlation_threshold\": 0.5, \"benchmark_symbol\": \"QQQ\"}}'"
+      "script_name": "portfolio_correlation_analysis.py",
+      "parameters": {
+        "symbols": ["QQQ", "VOO"],
+        "timeframe": "monthly",
+        "correlation_method": "pearson"
+      }
     }
   }
 }

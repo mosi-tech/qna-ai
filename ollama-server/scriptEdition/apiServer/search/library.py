@@ -29,6 +29,7 @@ class AnalysisData:
     function_name: str
     docstring: str
     filename: str
+    metadata: dict
     created_date: str
     usage_count: int
 
@@ -153,7 +154,7 @@ class AnalysisLibrary:
         combined = f"{question}_{datetime.now().isoformat()}"
         return hashlib.md5(combined.encode()).hexdigest()[:12]
     
-    def save_analysis(self, question: str, function_name: str, docstring: str, filename: str = None) -> dict:
+    def save_analysis(self, question: str, function_name: str, docstring: str, filename: str = None, metadata: dict = None) -> dict:
         """Save analysis to the library"""
         try:
             # Generate analysis data
@@ -164,12 +165,16 @@ class AnalysisLibrary:
             if filename is None:
                 filename = f"{function_name}.py"
             
+            if parameters is None:
+                parameters = {}
+            
             analysis_data = AnalysisData(
                 id=analysis_id,
                 question=question,
                 function_name=function_name,
                 docstring=docstring,
                 filename=filename,
+                metadata=addn_meta,
                 created_date=now,
                 usage_count=0
             )

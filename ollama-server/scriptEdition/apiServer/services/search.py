@@ -164,7 +164,7 @@ class SearchService:
             logger.error(f"❌ Error extracting filename: {e}")
             return None
     
-    def save_completed_analysis(self, original_question: str, script_path: str, llm_content: str) -> dict:
+    def save_completed_analysis(self, original_question: str, script_path: str, llm_content: str, addn_meta: dict = None) -> dict:
         """Save analysis after successful completion"""
         library_client = self._get_library_client()
         if not library_client:
@@ -174,9 +174,18 @@ class SearchService:
             script_content = ""
             if script_path:
                 try:
-                    with open(script_path, 'r') as f:
+                    # Get absolute path to MCP scripts directory from environment
+                    scripts_dir = os.getenv("MCP_SCRIPTS_DIR", "/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server/scripts")
+                    
+                    # If script_path is already absolute, use it; otherwise join with scripts_dir
+                    if os.path.isabs(script_path):
+                        full_script_path = script_path
+                    else:
+                        full_script_path = os.path.join(scripts_dir, script_path)
+                    
+                    with open(full_script_path, 'r') as f:
                         script_content = f.read()
-                    logger.info(f"📄 Read script content from: {script_path}")
+                    logger.info(f"📄 Read script content from: {full_script_path}")
                 except Exception as e:
                     logger.error(f"❌ Failed to read script file {script_path}: {e}")
                     # Fallback: check if content is still available (old format)
@@ -187,16 +196,27 @@ class SearchService:
                 # Extract or generate docstring
                 docstring = self.extract_docstring_from_content(llm_content, script_content)
                 
+                # Get analysis description from metadata if available
+                analysis_description = ""
+                if addn_meta and isinstance(addn_meta, dict):
+                    analysis_description = addn_meta.get("description", "")
+                
+                # Use analysis_description if available, otherwise fall back to docstring
+                final_description = analysis_description or docstring
+                
                 # Save to library
                 result = library_client.save_analysis(
                     question=original_question,
                     function_name=function_name,
-                    docstring=docstring,
-                    filename=script_path
+                    docstring=final_description,
+                    filename=os.path.basename(script_path),  # Store just filename, not full path
+                    metadata=addn_meta  # Pass additional metadata
                 )
             
             if result.get("success"):
                 logger.info(f"✅ Saved analysis: {function_name} (ID: {result['analysis_id']})")
+                # Add description to the result for routes.py
+                result["analysis_description"] = final_description
             else:
                 logger.error(f"❌ Failed to save analysis: {result.get('error')}")
             
