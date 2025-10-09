@@ -40,7 +40,7 @@ class AnalysisLibrary:
         if chroma_host is None:
             chroma_host = os.getenv("CHROMA_HOST", "localhost")
         if chroma_port is None:
-            chroma_port = int(os.getenv("CHROMA_PORT", "8000"))
+            chroma_port = int(os.getenv("CHROMA_PORT", "8050"))
         
         # Initialize ChromaDB with HTTP client
         try:
@@ -52,7 +52,7 @@ class AnalysisLibrary:
             logger.info(f"✅ Connected to ChromaDB at {chroma_host}:{chroma_port}")
         except Exception as e:
             logger.error(f"❌ Failed to connect to ChromaDB at {chroma_host}:{chroma_port}: {e}")
-            logger.info("💡 Make sure ChromaDB server is running: docker run -p 8000:8000 chromadb/chroma")
+            logger.info("💡 Make sure ChromaDB server is running: docker run -p 8050:8050 chromadb/chroma")
             raise
         
         # Setup Ollama embedding function for better similarity

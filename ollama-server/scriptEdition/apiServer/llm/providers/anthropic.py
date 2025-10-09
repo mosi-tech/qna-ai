@@ -102,6 +102,16 @@ class AnthropicProvider(LLMProvider):
                 })
         
         return text_content, tool_calls
+
+    def format_tool_calls(self, tool_calls: List[Dict[str, Any]]) -> Dict[str, Any]:
+        formatted_tool_calls = []
+        for tool_call in tool_calls:
+            anthropic_block = tool_call.get("anthropic_block")
+            if anthropic_block:
+                formatted_tool_calls.append(anthropic_block)
+        
+        return formatted_tool_calls
+                
     
     def format_tool_results(self, tool_calls: List[Dict[str, Any]], 
                            tool_results: List[Dict[str, Any]]) -> Dict[str, Any]:

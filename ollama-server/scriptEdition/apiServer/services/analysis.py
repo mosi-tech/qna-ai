@@ -201,17 +201,11 @@ class AnalysisService:
             # Create messages
             messages = [{"role": "user", "content": user_message}]
             
-            # Make request with caching if enabled
-            if enable_caching and self.cache_manager:
-                result = await self.cache_manager.make_cached_request(
-                    messages=messages,
-                    model=model
-                )
-            else:
-                result = await self.llm_service.make_request(
-                    messages=messages,
-                    model=model
-                )
+            result = await self.llm_service.make_request(
+                messages=messages,
+                model=model,
+                enable_caching=enable_caching
+            )
             
             if not result.get("success"):
                 return result
@@ -226,50 +220,33 @@ class AnalysisService:
                 tool_result = await self._handle_tool_calls(tool_calls)
                 
                 if tool_result.get("success"):
-                    # Check if script generation completed
-                    script_generated = self._check_script_generation(tool_calls, tool_result.get("tool_results", []))
-                    validation_completed = self._check_validation_completion(tool_calls, tool_result.get("tool_results", []))
+                    # Start conversation loop with initial tool results
+                    all_tool_calls = tool_calls
+                    all_tool_results = tool_result.get("tool_results", [])
                     
-                    # Start conversation loop if needed
-                    if script_generated or validation_completed:
-                        logger.info("🔄 Starting conversation loop for completion")
-                        
-                        # Add tool results to conversation
-                        messages.append({
-                            "role": "assistant", 
-                            "content": result.get("content", ""),
-                            "tool_calls": tool_calls
-                        })
-                        messages.append({
-                            "role": "user",
-                            "content": f"Tool execution results: {json.dumps(tool_result.get('tool_results', []))}"
-                        })
-                        
-                        # Continue conversation
-                        final_result = await self._conversation_loop(model, messages, enable_caching)
-                        
-                        # Add completion metadata
-                        final_result["task_completed"] = True
-                        final_result["completion_reason"] = "script_generated" if script_generated else "validation_completed"
-                        
-                        # Add script information if generated
-                        if script_generated:
-                            final_result["generated_script"] = self._extract_script_info(tool_result.get("tool_results", []))
-                        
-                        return final_result
-                    else:
-                        # Return with tool results
-                        result["tool_results"] = tool_result.get("tool_results", [])
-                        result["tools_executed"] = len(tool_calls)
-                        return result
+                    return await self._conversation_loop(
+                        model, messages, all_tool_calls, all_tool_results, enable_caching
+                    )
                 else:
                     logger.error(f"❌ Tool execution failed: {tool_result.get('error')}")
-                    result["tool_error"] = tool_result.get("error")
-                    return result
+                    return {
+                        "success": False,
+                        "content": result.get("content", ""),
+                        "provider": self.llm_service.provider_type,
+                        "tool_error": tool_result.get("error"),
+                        "error": f"Tool execution failed: {tool_result.get('error')}"
+                    }
             else:
-                # No tool calls, return direct response
-                logger.info("💬 Direct response (no tool calls)")
-                return result
+                # No tool calls - this means no script was generated
+                logger.warning("❌ Task incomplete: LLM responded without calling any tools (no script generated)")
+                return {
+                    "success": False,
+                    "content": result.get("content", ""),
+                    "provider": self.llm_service.provider_type,
+                    "task_completed": False,
+                    "completion_reason": "no_tools_called",
+                    "error": "LLM did not generate a script - no tool calls made"
+                }
                 
         except Exception as e:
             logger.error(f"❌ LLM call error: {e}")
@@ -283,95 +260,197 @@ class AnalysisService:
         """Execute tool calls using MCP integration"""
         try:
             logger.info(f"🔧 Executing {len(tool_calls)} tool calls")
+
+            # Validate tool calls
+            validation = self.mcp_integration.validate_mcp_functions(tool_calls)
+            if not validation["all_valid"]:
+                return {
+                    "success": False,
+                    "error": "Forbidden tool calls detected",
+                    "validation": validation,
+                    "provider": self.llm_service.provider_type
+                }
             
-            # Use MCP integration to execute tools
+            # Use MCP integration to execute all tools at once
+            mcp_result = await self.mcp_integration.generate_tool_calls_only(tool_calls)
+            
+            if not mcp_result.get("success"):
+                logger.error(f"❌ MCP tool execution failed: {mcp_result.get('error')}")
+                return {
+                    "success": False,
+                    "error": mcp_result.get("error", "MCP tool execution failed")
+                }
+            
+            # Convert MCP results to expected format
             tool_results = []
+            mcp_tool_results = mcp_result.get("tool_results", [])
+            all_tools_succeeded = True
             
-            for tool_call in tool_calls:
-                try:
-                    function_name = tool_call["function"]["name"]
-                    arguments = tool_call["function"]["arguments"]
-                    
-                    logger.debug(f"Calling tool: {function_name}")
-                    
-                    # Execute via MCP
-                    result = await self.mcp_integration.call_mcp_function(function_name, arguments)
-                    
-                    tool_results.append({
-                        "tool_call_id": tool_call.get("id", f"call_{len(tool_results)}"),
-                        "function_name": function_name,
-                        "success": result.get("success", False),
-                        "result": result.get("result"),
-                        "error": result.get("error")
-                    })
-                    
-                except Exception as e:
-                    logger.error(f"❌ Tool call failed: {function_name} - {e}")
-                    tool_results.append({
-                        "tool_call_id": tool_call.get("id", f"call_{len(tool_results)}"),
-                        "function_name": function_name,
-                        "success": False,
-                        "error": str(e)
-                    })
+            for i, (tool_call, mcp_tool_result) in enumerate(zip(tool_calls, mcp_tool_results)):
+                tool_success = mcp_tool_result.get("success", False)
+                if not tool_success:
+                    all_tools_succeeded = False
+                
+                tool_results.append(mcp_tool_result)
             
-            logger.info(f"✅ Executed {len(tool_results)} tool calls")
+            if all_tools_succeeded:
+                logger.info(f"✅ All {len(tool_results)} tool calls succeeded")
+            else:
+                failed_tools = [tr for tr in tool_results if not tr["success"]]
+                logger.error(f"❌ {len(failed_tools)} out of {len(tool_results)} tool calls failed")
             
             return {
-                "success": True,
-                "tool_results": tool_results
+                "success": all_tools_succeeded,
+                "tool_calls": tool_calls,
+                "tool_results": tool_results,
+                "provider": self.llm_service.provider_type
             }
             
         except Exception as e:
             logger.error(f"❌ Tool execution error: {e}")
             return {
                 "success": False,
-                "error": str(e)
+                "error": str(e),
+                "provider": self.llm_service.provider_type
             }
     
-    def _check_script_generation(self, tool_calls: List[Dict[str, Any]], tool_results: List[Dict[str, Any]]) -> bool:
+    def _check_script_generation(self, tool_results: List[Dict[str, Any]]) -> bool:
         """Check if script generation was completed"""
         try:
             # Look for write operations that created Python files
             for result in tool_results:
-                if result.get("success") and result.get("function_name"):
-                    func_name = result["function_name"]
+                if result.get("success") and result.get("function"):
+                    func_name = result["function"]
                     
                     # Check for file write operations
-                    if "write" in func_name.lower() and result.get("result"):
-                        content = str(result["result"])
-                        # Look for Python file creation with substantial content
-                        if any(ext in content.lower() for ext in [".py"]):
-                            # Check if content suggests a complete script
-                            if len(content) > 50 and 'def ' in content:
+                    if "write_file" in func_name.lower() and result.get("result"):
+                        # Parse the result content
+                        result_content = result["result"]
+                        
+                        # Handle CallToolResult structure
+                        if hasattr(result_content, 'content') and result_content.content:
+                            # Extract text from CallToolResult
+                            try:
+                                text_content = result_content.content[0].text
+                                logger.debug(f"Raw text content type: {type(text_content)}")
+                                logger.debug(f"Raw text content repr: {repr(text_content[:200])}")
+                                
+                                # Clean the text and try parsing
+                                cleaned_text = text_content.strip()
+                                parsed_result = json.loads(cleaned_text)
+                                
+                                if (parsed_result.get("success") and 
+                                    parsed_result.get("absolute_path", "").endswith(".py") and
+                                    parsed_result.get("size", 0) > 1000):
+                                    logger.info(f"✅ Script generation detected: {parsed_result.get('absolute_path')}")
+                                    return True
+                            except json.JSONDecodeError as e:
+                                logger.error(f"JSON decode error: {e}")
+                                logger.error(f"Failed text: {repr(text_content)}")
+                                # Fallback pattern matching
+                                if (".py" in text_content and "success" in text_content and "size" in text_content):
+                                    logger.info("✅ Script generation detected (fallback)")
+                                    return True
+                            except (AttributeError, IndexError) as e:
+                                logger.error(f"Structure error: {e}")
+                                pass
+                        
+                        elif isinstance(result_content, dict):
+                            # Direct dictionary access
+                            if (result_content.get("success") and 
+                                result_content.get("absolute_path", "").endswith(".py") and
+                                result_content.get("size", 0) > 1000):  # Substantial file size
                                 return True
+                        elif isinstance(result_content, str):
+                            # JSON string - parse it
+                            try:
+                                parsed_result = json.loads(result_content)
+                                if (parsed_result.get("success") and 
+                                    parsed_result.get("absolute_path", "").endswith(".py") and
+                                    parsed_result.get("size", 0) > 1000):
+                                    return True
+                            except json.JSONDecodeError:
+                                # Fallback to string checking
+                                if (".py" in result_content and 
+                                    "success" in result_content and
+                                    len(result_content) > 200):
+                                    return True
             return False
         except:
             return False
     
-    def _check_validation_completion(self, tool_calls: List[Dict[str, Any]], tool_results: List[Dict[str, Any]]) -> bool:
+    def _check_validation_completion(self, tool_results: List[Dict[str, Any]]) -> bool:
         """Check if validation process was completed"""
         try:
-            # Look for validation tool calls
+            # Look for validation tool calls (including MCP server prefixes)
             validation_tools = [
                 "validate_python_script",
                 "validate_workflow_step", 
                 "validate_template_variables",
-                "validate_complete_workflow"
+                "validate_complete_workflow",
+                # Add MCP server prefix variations
+                "validation-server__validate_python_script",
+                "validation-server__validate_workflow_step",
+                "validation-server__validate_template_variables", 
+                "validation-server__validate_complete_workflow",
+                "mcp__mcp-validation-server__validate_python_script",
+                "mcp__mcp-validation-server__validate_workflow_step",
+                "mcp__mcp-validation-server__validate_template_variables",
+                "mcp__mcp-validation-server__validate_complete_workflow"
             ]
             
             for result in tool_results:
-                if result.get("success") and result.get("function_name"):
-                    func_name = result["function_name"]
+                if result.get("success") and result.get("function"):
+                    func_name = result["function"]
                     
                     # Check if this was a validation tool
                     if any(val_tool in func_name for val_tool in validation_tools):
-                        # Check if validation was successful
-                        if self._is_validation_successful(result):
-                            logger.info(f"✅ Validation completed successfully: {func_name}")
-                            return True
-                        else:
-                            logger.info(f"⚠️ Validation completed with issues: {func_name}")
-                            return True  # Still consider it completion
+                        # Parse the result to check validation status
+                        result_content = result.get("result")
+                        
+                        # Handle CallToolResult structure
+                        if hasattr(result_content, 'content') and result_content.content:
+                            # Extract text from CallToolResult
+                            try:
+                                text_content = result_content.content[0].text
+                                logger.debug(f"Validation - Raw text content type: {type(text_content)}")
+                                logger.debug(f"Validation - Raw text content repr: {repr(text_content[:200])}")
+                                
+                                # Clean the text and try parsing
+                                cleaned_text = text_content.strip()
+                                parsed_result = json.loads(cleaned_text)
+                                
+                                if parsed_result.get("valid") is not None:
+                                    logger.info(f"✅ Validation completed: {func_name} - Valid: {parsed_result.get('valid')}")
+                                    return True
+                            except json.JSONDecodeError as e:
+                                logger.error(f"Validation JSON decode error: {e}")
+                                logger.error(f"Validation failed text: {repr(text_content)}")
+                                # Fallback pattern matching
+                                if any(keyword in text_content.lower() for keyword in ["valid", "validation", "executed successfully"]):
+                                    logger.info(f"✅ Validation completed (fallback): {func_name}")
+                                    return True
+                            except (AttributeError, IndexError) as e:
+                                logger.error(f"Validation structure error: {e}")
+                                pass
+                        
+                        elif isinstance(result_content, dict):
+                            # Direct dictionary access
+                            if result_content.get("valid") is not None:
+                                logger.info(f"✅ Validation completed: {func_name} - Valid: {result_content.get('valid')}")
+                                return True
+                        elif isinstance(result_content, str):
+                            # JSON string - parse it
+                            try:
+                                parsed_result = json.loads(result_content)
+                                if parsed_result.get("valid") is not None:
+                                    logger.info(f"✅ Validation completed: {func_name} - Valid: {parsed_result.get('valid')}")
+                                    return True
+                            except json.JSONDecodeError:
+                                # Fallback - if it contains validation keywords
+                                if any(keyword in result_content.lower() for keyword in ["valid", "validation", "executed successfully"]):
+                                    logger.info(f"✅ Validation completed (fallback): {func_name}")
+                                    return True
             
             return False
         except Exception as e:
@@ -379,73 +458,150 @@ class AnalysisService:
             return False
     
     async def _conversation_loop(self, model: str, messages: List[Dict[str, Any]], 
+                               all_tool_calls: List[Dict[str, Any]], all_tool_results: List[Dict[str, Any]], 
                                enable_caching: bool = False) -> Dict[str, Any]:
-        """Handle multi-turn conversation after tool execution"""
+        """Main conversation loop that continues until LLM stops calling tools"""
         try:
-            max_turns = 5  # Prevent infinite loops
-            turn_count = 0
+            # Check if initial tool execution already completed the task
+            script_generated = self._check_script_generation(all_tool_results)
+            validation_completed = self._check_validation_completion(all_tool_results)
             
-            while turn_count < max_turns:
-                turn_count += 1
-                logger.info(f"🔄 Conversation turn {turn_count}")
-                
-                # Continue conversation
-                result = await self._continue_conversation(model, messages, enable_caching)
-                
-                if not result.get("success"):
-                    logger.error(f"❌ Conversation turn {turn_count} failed")
-                    return result
-                
-                # Check if there are new tool calls
-                new_tool_calls = result.get("tool_calls", [])
-                
-                if new_tool_calls:
-                    logger.info(f"🔧 Processing {len(new_tool_calls)} new tool calls")
-                    
-                    # Execute new tools
-                    tool_result = await self._handle_tool_calls(new_tool_calls)
-                    
-                    # Add to conversation
-                    messages.append({
-                        "role": "assistant",
-                        "content": result.get("content", ""),
-                        "tool_calls": new_tool_calls
-                    })
-                    
-                    if tool_result.get("success"):
-                        messages.append({
-                            "role": "user",
-                            "content": f"Tool results: {json.dumps(tool_result.get('tool_results', []))}"
-                        })
-                        
-                        # Check for completion again
-                        script_generated = self._check_script_generation(new_tool_calls, tool_result.get("tool_results", []))
-                        validation_completed = self._check_validation_completion(new_tool_calls, tool_result.get("tool_results", []))
-                        
-                        if script_generated or validation_completed:
-                            logger.info(f"✅ Task completed in conversation turn {turn_count}")
-                            result["tool_results"] = tool_result.get("tool_results", [])
-                            result["conversation_turns"] = turn_count
-                            return result
-                    else:
-                        logger.error(f"❌ Tool execution failed in turn {turn_count}")
-                        result["tool_error"] = tool_result.get("error")
-                        return result
+            if script_generated and validation_completed:
+                logger.info("🏁 Task completed after initial tool execution")
+                return {
+                    "success": True,
+                    "tool_calls": all_tool_calls,
+                    "tool_results": all_tool_results,
+                    "provider": self.llm_service.provider_type,
+                    "task_completed": True,
+                    "completion_reason": "script_generated_and_validated",
+                    "generated_script": self._extract_script_info(all_tool_results)
+                }
+            
+            # Track how many tool calls we've processed to know what's "recent"
+            processed_tool_calls = 0
+            
+            while True:
+                # Get the most recent unprocessed tool calls/results
+                if processed_tool_calls == 0:
+                    # First iteration - use initial tool calls/results
+                    recent_tool_calls = all_tool_calls
+                    recent_tool_results = all_tool_results
                 else:
-                    # No more tool calls, conversation complete
-                    logger.info(f"✅ Conversation completed after {turn_count} turns")
-                    result["conversation_turns"] = turn_count
-                    return result
-            
-            # Max turns reached
-            logger.warning(f"⚠️ Conversation loop reached max turns ({max_turns})")
-            return {
-                "success": True,
-                "content": "Analysis completed but may be incomplete due to conversation limits.",
-                "conversation_turns": max_turns,
-                "max_turns_reached": True
-            }
-            
+                    # Subsequent iterations - use only the newly added ones
+                    recent_tool_calls = all_tool_calls[processed_tool_calls:]
+                    recent_tool_results = all_tool_results[processed_tool_calls:]
+                
+                processed_tool_calls = len(all_tool_calls)
+                
+                continuation_result = await self._continue_conversation(
+                    model, messages, recent_tool_calls, recent_tool_results, enable_caching
+                )
+                
+                # Check if continuation failed
+                if not continuation_result["success"]:
+                    return {
+                        "success": False,
+                        "content": continuation_result.get("content", ""),
+                        "tool_calls": all_tool_calls,
+                        "tool_results": all_tool_results,
+                        "provider": self.llm_service.provider_type,
+                        "task_completed": False,
+                        "completion_reason": "conversation_failed",
+                        "error": continuation_result.get("error", "Conversation continuation failed"),
+                        "generated_script": None
+                    }
+                
+                # Check if LLM wants to make more tool calls
+                new_tool_calls = continuation_result.get("tool_calls", [])
+                if new_tool_calls:
+                    # Execute new tools
+                    tool_execution_result = await self._handle_tool_calls(new_tool_calls)
+                    
+                    if not tool_execution_result["success"]:
+                        return {
+                            "success": False,
+                            "content": "",
+                            "tool_calls": all_tool_calls,
+                            "tool_results": all_tool_results,
+                            "provider": self.llm_service.provider_type,
+                            "task_completed": False,
+                            "completion_reason": "tool_execution_failed",
+                            "error": tool_execution_result.get("error", "Tool execution failed"),
+                            "generated_script": self._extract_script_info(all_tool_results)
+                        }
+                    
+                    # Accumulate results
+                    all_tool_calls.extend(new_tool_calls)
+                    all_tool_results.extend(tool_execution_result["tool_results"])
+                    
+                    # Only check completion if we just executed validation tools
+                    validation_just_executed = any("validate" in tc.get("function", {}).get("name", "") 
+                                                  for tc in new_tool_calls)
+                    
+                    if validation_just_executed:
+                        script_generated = self._check_script_generation(all_tool_results)
+                        validation_completed = self._check_validation_completion(all_tool_results)
+                        
+                        if script_generated and validation_completed:
+                            logger.info("🏁 Task completed - script generated and validated")
+                            return {
+                                "success": True,
+                                "tool_calls": all_tool_calls,
+                                "tool_results": all_tool_results,
+                                "provider": self.llm_service.provider_type,
+                                "task_completed": True,
+                                "completion_reason": "script_generated_and_validated",
+                                "generated_script": self._extract_script_info(all_tool_results)
+                            }
+                    
+                    logger.info(f"🔄 Continuing conversation loop (total tool calls: {len(all_tool_calls)})")
+                    continue
+                else:
+                    # No more tool calls - check completion using ALL accumulated results
+                    script_generated = self._check_script_generation(all_tool_results)
+                    validation_completed = self._check_validation_completion(all_tool_results)
+                    
+                    final_content = continuation_result.get("content", "")
+                    
+                    if script_generated and validation_completed:
+                        logger.info("🏁 Task completed: Script generated and validated successfully")
+                        return {
+                            "success": True,
+                            "content": final_content,
+                            "tool_calls": all_tool_calls,
+                            "tool_results": all_tool_results,
+                            "provider": self.llm_service.provider_type,
+                            "task_completed": True,
+                            "completion_reason": "script_generated_and_validated",
+                            "generated_script": self._extract_script_info(all_tool_results)
+                        }
+                    elif script_generated:
+                        logger.info("⚠️ Task partially completed: Script generated but not validated")
+                        return {
+                            "success": False,
+                            "content": final_content,
+                            "tool_calls": all_tool_calls,
+                            "tool_results": all_tool_results,
+                            "provider": self.llm_service.provider_type,
+                            "task_completed": False,
+                            "completion_reason": "script_generated_not_validated",
+                            "generated_script": self._extract_script_info(all_tool_results)
+                        }
+                    else:
+                        logger.warning("❌ Task incomplete: No validated script was generated")
+                        return {
+                            "success": False,
+                            "content": final_content,
+                            "tool_calls": all_tool_calls,
+                            "tool_results": all_tool_results,
+                            "provider": self.llm_service.provider_type,
+                            "task_completed": False,
+                            "completion_reason": "no_script_generated",
+                            "generated_script": None,
+                            "error": "LLM stopped without generating a validated script"
+                        }
+                        
         except Exception as e:
             logger.error(f"❌ Conversation loop error: {e}")
             return {
@@ -454,20 +610,26 @@ class AnalysisService:
             }
     
     async def _continue_conversation(self, model: str, messages: List[Dict[str, Any]], 
+                                   current_tool_calls: List[Dict[str, Any]], current_tool_results: List[Dict[str, Any]],
                                    enable_caching: bool = False) -> Dict[str, Any]:
-        """Continue conversation with updated context"""
+        """Continue conversation after tool execution with proper formatting"""
         try:
+            # Add assistant message with tool calls
+            messages.append({
+                "role": "assistant",
+                "content": self.llm_service.provider.format_tool_calls(current_tool_calls)
+            })
+            
+            # Add tool results using provider's formatting function
+            tool_result_message = self.llm_service.provider.format_tool_results(current_tool_calls, current_tool_results)
+            messages.append(tool_result_message)
+            
             # Make request with conversation context
-            if enable_caching and self.cache_manager:
-                result = await self.cache_manager.make_cached_request(
-                    messages=messages,
-                    model=model
-                )
-            else:
-                result = await self.llm_service.make_request(
-                    messages=messages,
-                    model=model
-                )
+            result = await self.llm_service.make_request(
+                messages=messages,
+                model=model,
+                enable_caching=enable_caching
+            )
             
             return result
             
@@ -509,9 +671,35 @@ class AnalysisService:
         """Extract script information from tool results"""
         try:
             for result in tool_results:
-                if result.get("success") and "write" in result.get("function_name", "").lower():
+                if result.get("success") and "write" in result.get("function", "").lower():
                     result_content = result.get("result", {})
-                    if isinstance(result_content, dict):
+                    
+                    # Handle CallToolResult structure
+                    if hasattr(result_content, 'content') and result_content.content:
+                        try:
+                            text_content = result_content.content[0].text
+                            logger.debug(f"Extract script - Raw text: {repr(text_content[:200])}")
+                            
+                            cleaned_text = text_content.strip()
+                            parsed_result = json.loads(cleaned_text)
+                            
+                            # Look for filename and path info
+                            filename = (parsed_result.get("filename") or 
+                                      parsed_result.get("actual_filename") or
+                                      parsed_result.get("absolute_path"))
+                            
+                            if filename and filename.endswith('.py'):
+                                return {
+                                    "filename": filename,
+                                    "absolute_path": parsed_result.get("absolute_path"),
+                                    "size": parsed_result.get("size", 0),
+                                    "success": parsed_result.get("success", False)
+                                }
+                        except (json.JSONDecodeError, AttributeError, IndexError) as e:
+                            logger.debug(f"Extract script JSON error: {e}")
+                            continue
+                    
+                    elif isinstance(result_content, dict):
                         filename = result_content.get("filename") or result_content.get("file_path")
                         content = result_content.get("content") or result_content.get("file_content")
                         

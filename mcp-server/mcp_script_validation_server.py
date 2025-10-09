@@ -109,15 +109,15 @@ async def handle_list_tools() -> list[Tool]:
                 "additionalProperties": False
             }
         ),
-        Tool(
-            name="list_files",
-            description="List all files in the scripts directory",
-            inputSchema={
-                "type": "object",
-                "properties": {},
-                "additionalProperties": False
-            }
-        ),
+        # Tool(
+        #     name="list_files",
+        #     description="List all files in the scripts directory",
+        #     inputSchema={
+        #         "type": "object",
+        #         "properties": {},
+        #         "additionalProperties": False
+        #     }
+        # ),
         Tool(
             name="delete_file",
             description="Delete a file from the scripts directory",
@@ -275,7 +275,8 @@ async def get_capabilities() -> list[TextContent]:
         ],
         "max_timeout": 60,
         "temp_directory_access": True,
-        "file_tools": ["write_file", "read_file", "list_files", "delete_file"]
+        # "file_tools": ["write_file", "read_file", "list_files", "delete_file"],
+        "file_tools": ["write_file", "read_file", "delete_file"]
     }
     
     return [TextContent(

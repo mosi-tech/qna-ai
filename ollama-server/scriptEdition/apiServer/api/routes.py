@@ -96,17 +96,17 @@ class APIRoutes:
                     # Check if script was generated (use generated_script from LLM service)
                     script_content = None
                     generated_script = analysis_data.get("generated_script")
-                    if generated_script and generated_script.get("content"):
-                        script_content = generated_script["content"]
+                    if generated_script:
+                        # New format has filename/absolute_path instead of content
+                        script_path = generated_script.get("absolute_path") or generated_script.get("filename")
                     
                     # If script was generated, save the analysis
                     analysis_summary = None
-                    if script_content:
+                    if script_path:
                         save_result = self.search_service.save_completed_analysis(
                             original_question=request.question,  # Use original question, not enhanced
-                            script_content=script_content,
+                            script_path = script_path, 
                             llm_content=analysis_data.get("content", ""),
-                            tool_calls=[]  # No longer parsing tool calls
                         )
                         
                         if save_result.get("success"):

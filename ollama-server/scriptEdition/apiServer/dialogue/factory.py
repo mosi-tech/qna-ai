@@ -16,12 +16,15 @@ class DialogueFactory:
     """Factory for creating dialogue system components with proper dependencies"""
     
     def __init__(self, llm_service: LLMService = None, analysis_library: AnalysisLibrary = None):
-        self.llm_service = llm_service
         self.analysis_library = analysis_library or AnalysisLibrary()
         
-        # Create context service - always try CONTEXT_LLM_* vars first, fallback to LLM_*
-        from llm import create_context_llm
-        context_llm = create_context_llm()  # Uses CONTEXT_LLM_PROVIDER or LLM_PROVIDER
+        # Create context service - use passed LLM service or create context-optimized one
+        if llm_service:
+            context_llm = llm_service  # Reuse passed LLM service
+        else:
+            from llm import create_context_llm
+            context_llm = create_context_llm()  # Uses CONTEXT_LLM_PROVIDER or LLM_PROVIDER
+        
         self.context_service = create_context_service(context_llm)
         
         # Create dialogue components with dependencies

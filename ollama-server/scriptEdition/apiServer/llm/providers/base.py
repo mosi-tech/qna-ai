@@ -38,6 +38,10 @@ class LLMProvider(ABC):
                            tool_results: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Format tool results for next API call"""
         pass
+
+    def format_tool_calls(self, tool_calls: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Format tool calls for next API call"""
+        pass
     
     @abstractmethod
     def supports_caching(self) -> bool:

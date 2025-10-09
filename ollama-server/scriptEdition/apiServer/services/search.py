@@ -164,31 +164,36 @@ class SearchService:
             logger.error(f"❌ Error extracting filename: {e}")
             return None
     
-    def save_completed_analysis(self, original_question: str, script_content: str, llm_content: str, tool_calls: list = None) -> dict:
+    def save_completed_analysis(self, original_question: str, script_path: str, llm_content: str) -> dict:
         """Save analysis after successful completion"""
         library_client = self._get_library_client()
         if not library_client:
             return {"success": False, "error": "Analysis library not available"}
         
         try:
-            # Extract function name from script
-            function_name = self.extract_function_name_from_script(script_content)
+            script_content = ""
+            if script_path:
+                try:
+                    with open(script_path, 'r') as f:
+                        script_content = f.read()
+                    logger.info(f"📄 Read script content from: {script_path}")
+                except Exception as e:
+                    logger.error(f"❌ Failed to read script file {script_path}: {e}")
+                    # Fallback: check if content is still available (old format)
             
-            # Extract or generate docstring
-            docstring = self.extract_docstring_from_content(llm_content, script_content)
-            
-            # Extract filename from tool calls if available
-            filename = None
-            if tool_calls:
-                filename = self.extract_filename_from_tool_calls(tool_calls)
-            
-            # Save to library
-            result = library_client.save_analysis(
-                question=original_question,
-                function_name=function_name,
-                docstring=docstring,
-                filename=filename
-            )
+                # Extract function name from script
+                function_name = self.extract_function_name_from_script(script_content)
+                
+                # Extract or generate docstring
+                docstring = self.extract_docstring_from_content(llm_content, script_content)
+                
+                # Save to library
+                result = library_client.save_analysis(
+                    question=original_question,
+                    function_name=function_name,
+                    docstring=docstring,
+                    filename=script_path
+                )
             
             if result.get("success"):
                 logger.info(f"✅ Saved analysis: {function_name} (ID: {result['analysis_id']})")

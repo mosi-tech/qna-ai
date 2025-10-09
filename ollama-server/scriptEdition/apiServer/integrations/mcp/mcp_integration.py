@@ -45,12 +45,12 @@ class MCPIntegration:
             logger.warning("No MCP tools available")
             return []
         
-        openai_tools = []
+        all_tools = []
         
         for tool_name, tool_schema in self.mcp_client.available_tools.items():
             try:
                 # Convert MCP tool schema to OpenAI function calling format
-                openai_tool = {
+                tool = {
                     "type": "function",
                     "function": {
                         "name": tool_name,
@@ -58,14 +58,14 @@ class MCPIntegration:
                         "parameters": tool_schema.get("inputSchema", {})
                     }
                 }
-                openai_tools.append(openai_tool)
+                all_tools.append(tool)
                 
             except Exception as e:
                 logger.warning(f"Failed to convert tool {tool_name} to OpenAI format: {e}")
                 continue
         
-        logger.debug(f"Converted {len(openai_tools)} MCP tools to OpenAI format")
-        return openai_tools
+        logger.debug(f"Converted {len(all_tools)} MCP tools to OpenAI format")
+        return all_tools
     
     def is_forbidden_function_call(self, function_name: str) -> bool:
         """Check if function call is forbidden (validation-only functions)"""
