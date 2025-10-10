@@ -24,7 +24,7 @@ from mcp.types import (
 )
 
 # Import shared execution logic
-from shared_script_executor import execute_script, check_forbidden_imports
+from shared_script_executor import execute_script, check_forbidden_imports, check_defensive_programming
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -222,6 +222,14 @@ async def validate_script(arguments: dict) -> list[TextContent]:
         return [TextContent(
             type="text",
             text=json.dumps(forbidden_check, indent=2)
+        )]
+    
+    # Second, check for defensive programming patterns
+    defensive_check = check_defensive_programming(script_content)
+    if not defensive_check["valid"]:
+        return [TextContent(
+            type="text",
+            text=json.dumps(defensive_check, indent=2)
         )]
     
     

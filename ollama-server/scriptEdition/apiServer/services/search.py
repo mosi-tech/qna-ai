@@ -114,7 +114,7 @@ class SearchService:
             logger.error(f"❌ Error extracting function name: {e}")
             return "unknown_function"
     
-    def extract_docstring_from_content(self, llm_content: str, script_content: str) -> str:
+    def extract_docstring_from_content(self, script_content: str) -> str:
         """Extract or generate docstring from LLM content or script"""
         try:
             # First try to extract docstring from script
@@ -124,26 +124,6 @@ class SearchService:
                 if len(docstring) > 50:  # Good docstring found
                     return docstring
             
-            # Fallback: generate from LLM content
-            lines = llm_content.split('\n')
-            description_lines = []
-            
-            for line in lines:
-                line = line.strip()
-                if (line and 
-                    not line.startswith('#') and 
-                    'def ' not in line and
-                    'import ' not in line and
-                    not line.startswith('```')):
-                    description_lines.append(line)
-                    if len(description_lines) >= 2:  # Limit length
-                        break
-            
-            if description_lines:
-                return '. '.join(description_lines)
-            else:
-                return "Financial analysis function generated from user query"
-                
         except Exception as e:
             logger.error(f"❌ Error extracting docstring: {e}")
             return "Financial analysis function"
@@ -164,7 +144,7 @@ class SearchService:
             logger.error(f"❌ Error extracting filename: {e}")
             return None
     
-    def save_completed_analysis(self, original_question: str, script_path: str, llm_content: str, addn_meta: dict = None) -> dict:
+    def save_completed_analysis(self, original_question: str, script_path: str, addn_meta: dict = None) -> dict:
         """Save analysis after successful completion"""
         library_client = self._get_library_client()
         if not library_client:
@@ -194,7 +174,7 @@ class SearchService:
                 function_name = self.extract_function_name_from_script(script_content)
                 
                 # Extract or generate docstring
-                docstring = self.extract_docstring_from_content(llm_content, script_content)
+                docstring = self.extract_docstring_from_content(script_content)
                 
                 # Get analysis description from metadata if available
                 analysis_description = ""

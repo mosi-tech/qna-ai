@@ -79,12 +79,12 @@ def call_mcp_function(function_name: str, args: dict):
                 logging.info(f"✅ MCP call successful: {actual_function_name} (from {function_name})")
                 return result
         
-        logging.error(f"❌ Unknown MCP function: {actual_function_name} (from {function_name})")
-        return None
+        raise Exception(f"Unknown MCP function: {actual_function_name} (from {function_name})") 
         
     except Exception as e:
         logging.error(f"❌ MCP call failed {function_name}: {e}")
-        return None
+        raise
+        
 
 # Production logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -128,14 +128,13 @@ def call_mcp_function(function_name: str, args: dict):
             logging.info(f"✅ MCP call successful: {actual_function_name} (from {function_name})")
             return result
         
-        logging.error(f"❌ Unknown MCP function: {actual_function_name} (from {function_name})")
-        return None
+        raise Exception(f"Unknown MCP function: {actual_function_name} (from {function_name})")
         
     except Exception as e:
         import traceback
         logging.error(f"❌ MCP call failed {function_name}: {e}")
         logging.error(f"Full traceback: {traceback.format_exc()}")
-        return None
+        raise
 
 # Validation logging  
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -333,6 +332,52 @@ def check_forbidden_imports(script_content: str) -> Dict[str, Any]:
                 "Built-in: json, logging, datetime, os, sys, math, statistics, random"
             ]
         }
+    
+    return {"valid": True}
+
+def check_defensive_programming(script_content: str) -> Dict[str, Any]:
+    """Check for forbidden defensive programming patterns - fail fast on first violation"""
+    
+    lines = script_content.split('\n')
+    for i, line in enumerate(lines, 1):
+        line_stripped = line.strip()
+        
+        # Check for assert statements - FAIL FAST
+        if line_stripped.startswith('assert '):
+            return {
+                "valid": False,
+                "error": "Assert statements are forbidden",
+                "error_type": "DefensiveProgrammingError",
+                "line_number": i,
+                "line": line_stripped,
+                "not_allowed": "assert statements",
+                "use_instead": "Direct access that fails with clear KeyError/AttributeError"
+            }
+        
+        # Check for .get() with defaults - FAIL FAST
+        if '.get(' in line and ',' in line:
+            return {
+                "valid": False,
+                "error": "Defensive .get() with defaults is forbidden",
+                "error_type": "DefensiveProgrammingError", 
+                "line_number": i,
+                "line": line_stripped,
+                "not_allowed": ".get(key, default) patterns",
+                "use_instead": "Direct dict access like data['key'] to fail fast"
+            }
+        
+        # Check for defensive if result checks - FAIL FAST
+        if ('if result and result.get' in line or 
+            ('if result:' in line and 'get(' in line)):
+            return {
+                "valid": False,
+                "error": "Defensive result checking is forbidden",
+                "error_type": "DefensiveProgrammingError",
+                "line_number": i, 
+                "line": line_stripped,
+                "not_allowed": "if result and result.get() patterns",
+                "use_instead": "Direct access like result['data'] to fail fast"
+            }
     
     return {"valid": True}
 

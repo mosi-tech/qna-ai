@@ -95,6 +95,12 @@ When provided with similar analyses in the user message, FIRST evaluate for reus
 - If you need docs: call get_function_docstring() NOW
 - If ready to code: call validation-server__write_file NOW
 
+🚨 **MANDATORY: GET DOCSTRINGS BEFORE ANY MCP FUNCTION USE** 🚨
+- NEVER use alpaca_*, eodhd_*, or calculate_* functions without get_function_docstring() FIRST
+- ALWAYS call get_function_docstring() for every MCP function you plan to use
+- NO assumptions about function schemas - get docstring to understand exact format
+- CRITICAL: This prevents data format mismatches and parameter errors
+
 🚨 **CRITICAL: FAIL FAST - NO MOCK DATA** 🚨
 - **IF TOOL CALL FAILS: FAIL FAST** - Don't continue script generation
 - **NEVER CREATE MOCK DATA** when MCP calls fail in scripts
@@ -203,11 +209,12 @@ Example validation workflow:
 - **ITERATIVE IMPROVEMENT**: Each validation failure is a learning opportunity
 - **KNOWLEDGE BUILDING**: Build understanding through MCP calls, don't rely on assumptions
 
-**DOCSTRING CALL TRIGGERS:**
-- Any calculate_* function → get_function_docstring()
-- Unfamiliar data formats → get_function_docstring()
-- Validation errors mentioning functions → get_function_docstring()
-- Complex analytics operations → get_function_docstring()
+**MANDATORY DOCSTRING REQUIREMENTS:**
+- EVERY alpaca_* function → get_function_docstring() FIRST
+- EVERY eodhd_* function → get_function_docstring() FIRST  
+- EVERY calculate_* function → get_function_docstring() FIRST
+- EVERY mcp function → get_function_docstring() FIRST
+- NO EXCEPTIONS - Always get schema before using any MCP function
 
 **📞 EXPECTED TOOL CALL PATTERNS:**
 
@@ -218,13 +225,14 @@ Example validation workflow:
 
 **Example Generation Flow (when new analysis needed):**
 1. "Read existing scripts to confirm new analysis needed..." → validation_server__read_file() calls
-2. "Creating new analysis - getting docstring for calculate_beta..." → get_function_docstring("calculate_beta")
-3. "Now I'll get info on prices_to_returns..." → get_function_docstring("prices_to_returns")  
-4. "Saving the initial script..." → write_file("correlation_analysis.py", script_content)
-5. "Validating the initial script..." → validate_python_script("correlation_analysis.py")
-6. "Validation failed, fixing and re-saving..." → write_file("correlation_analysis.py", fixed_script)
-7. "Re-validating..." → validate_python_script("correlation_analysis.py")
-8. "Script validation successful!"
+2. "MANDATORY: Getting docstring for alpaca_market_stocks_bars..." → get_function_docstring("alpaca_market_stocks_bars")
+3. "MANDATORY: Getting docstring for calculate_returns_metrics..." → get_function_docstring("calculate_returns_metrics")
+4. "MANDATORY: Getting docstring for calculate_correlation_analysis..." → get_function_docstring("calculate_correlation_analysis")
+5. "Saving the initial script..." → write_file("correlation_analysis.py", script_content)
+6. "Validating the initial script..." → validate_python_script("correlation_analysis.py")
+7. "Validation failed, fixing and re-saving..." → write_file("correlation_analysis.py", fixed_script)
+8. "Re-validating..." → validate_python_script("correlation_analysis.py")
+9. "Script validation successful!"
 
 **SHOW YOUR WORK**: Narrate each MCP call and what you learned from it
 
@@ -375,9 +383,16 @@ The validation environment uses mock data and may not accurately simulate all MC
 DO NOT - Write custom calculation functions (RSI, SMA, returns, volatility, etc.)
 DO NOT - Manual price-to-return conversions when prices_to_returns exists
 DO NOT - Custom technical indicators when calculate_* functions available
-MUST Check if MCP analytics server has the calculation before coding
-MUST Use MCP analytics functions where possible: prices_to_returns, calculate_sma, calculate_rsi, etc.
+MUST - Call get_function_docstring() for every MCP function before using it
+MUST - Check if MCP analytics server has the calculation before coding
+MUST - Use MCP analytics functions where possible: prices_to_returns, calculate_sma, calculate_rsi, etc.
 Only write custom logic for business-specific calculations
+
+**🚨 BEFORE USING ANY MCP FUNCTION:**
+1. ALWAYS call get_function_docstring(function_name) FIRST
+2. Read the returned schema and examples carefully
+3. Use the exact parameter names and formats shown
+4. NO assumptions about data formats - follow docstring exactly
 
 **📋 PARAMETERIZED SCRIPT TEMPLATE:**
 
@@ -403,10 +418,20 @@ def safe_mcp_call(function_name, params):
         if result is None:
             raise Exception(f"MCP call {function_name} returned None - function may not be implemented in production environment")
         if isinstance(result, dict) and not result:
-            raise Exception(f"MCP call {function_name} returned empty dict - check function parameters: {params}")
+            raise Exception(f"MCP call {function_name} returned empty dict - check function parameters")
         return result
     except Exception as e:
-        raise Exception(f"MCP call failed for {function_name} with params {params}: {e}")
+        raise Exception(f"MCP call failed for {function_name} with error: {e}")
+
+# ❌ NEVER USE THESE DEFENSIVE PATTERNS:
+# assert symbol in bars, "No data found"  # <- FORBIDDEN
+# data = bars.get(symbol, {})  # <- FORBIDDEN  
+# if result and result.get('success'): # <- FORBIDDEN
+
+# ✅ ALWAYS USE DIRECT ACCESS PATTERNS:
+# data = bars[symbol]  # <- Let it KeyError if missing
+# price = data['close']  # <- Let it KeyError if missing
+# return result['data']  # <- Let it KeyError if missing
 
 def analyze_financial_question(
     # Define parameters based on question type
@@ -546,17 +571,16 @@ Return the JSON from the REUSE DECISION OUTPUT section above.
     "status": "failed",
     "error_type": "Script Logic",
     "validation_attempts": 3,
-    "final_error": "Last validation error message",
-    "reason": "Script cannot be executed via curl due to validation failures"
+    "error": "Last validation error message"
   }
 }
 ```
 
 **Critical Success Criteria:**
 - ✅ **EVALUATE REUSE FIRST**: Check if similar analyses can be reused before creating new
+- ✅ **MANDATORY DOCSTRINGS**: Call get_function_docstring() for EVERY MCP function before using
 - ✅ Create parameterized functions with sensible defaults
 - ✅ **MANDATORY:** main() function MUST accept **kwargs and extract ALL parameters
-- ✅ Get docstrings for analytics and financial server functions
 - ✅ Script validates successfully WITH meaningful error detection
 - ✅ Fail-fast approach: no defensive fallbacks that hide MCP issues
 - ✅ Follow docstring examples exactly - don't invent data formats
