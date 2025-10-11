@@ -37,35 +37,35 @@ app = Server("mcp-script-validation-server")
 async def handle_list_tools() -> list[Tool]:
     """List available script validation tools"""
     return [
-        Tool(
-            name="validate_python_script",
-            description="Validate Python script in sandboxed environment with mock data",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "script_filename": {
-                        "type": "string",
-                        "description": "Python script filename to validate (must exist in scripts directory)"
-                    },
-                    "mock": {
-                        "type": "boolean", 
-                        "default": True,
-                        "description": "Use mock data for validation (always true for LLM validation)"
-                    },
-                    "timeout": {
-                        "type": "integer",
-                        "default": 30,
-                        "description": "Execution timeout in seconds"
-                    },
-                    "parameters": {
-                        "type": "object",
-                        "description": "Optional parameters to inject into script for validation"
-                    }
-                },
-                "required": ["script_filename"],
-                "additionalProperties": False
-            }
-        ),
+        # Tool(
+        #     name="validate_python_script",
+        #     description="Validate Python script in sandboxed environment with mock data",
+        #     inputSchema={
+        #         "type": "object",
+        #         "properties": {
+        #             "script_filename": {
+        #                 "type": "string",
+        #                 "description": "Python script filename to validate (must exist in scripts directory)"
+        #             },
+        #             "mock": {
+        #                 "type": "boolean", 
+        #                 "default": True,
+        #                 "description": "Use mock data for validation (always true for LLM validation)"
+        #             },
+        #             "timeout": {
+        #                 "type": "integer",
+        #                 "default": 30,
+        #                 "description": "Execution timeout in seconds"
+        #             },
+        #             "parameters": {
+        #                 "type": "object",
+        #                 "description": "Optional parameters to inject into script for validation"
+        #             }
+        #         },
+        #         "required": ["script_filename"],
+        #         "additionalProperties": False
+        #     }
+        # ),
         Tool(
             name="get_validation_capabilities",
             description="Get information about validation environment capabilities",
@@ -75,25 +75,25 @@ async def handle_list_tools() -> list[Tool]:
                 "additionalProperties": False
             }
         ),
-        Tool(
-            name="write_file",
-            description="Write content to a file. Use absolute paths for precise file placement, or relative filenames for scripts directory",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "filename": {
-                        "type": "string",
-                        "description": "Absolute path to file (recommended) or relative filename for scripts directory"
-                    },
-                    "content": {
-                        "type": "string",
-                        "description": "Content to write to the file"
-                    }
-                },
-                "required": ["filename", "content"],
-                "additionalProperties": False
-            }
-        ),
+        # Tool(
+        #     name="write_file",
+        #     description="Write content to a file. Use absolute paths for precise file placement, or relative filenames for scripts directory",
+        #     inputSchema={
+        #         "type": "object",
+        #         "properties": {
+        #             "filename": {
+        #                 "type": "string",
+        #                 "description": "Absolute path to file (recommended) or relative filename for scripts directory"
+        #             },
+        #             "content": {
+        #                 "type": "string",
+        #                 "description": "Content to write to the file"
+        #             }
+        #         },
+        #         "required": ["filename", "content"],
+        #         "additionalProperties": False
+        #     }
+        # ),
         Tool(
             name="read_file",
             description="Read content from a file. Use absolute paths for precise file access, or relative filenames for scripts directory",
@@ -132,6 +132,34 @@ async def handle_list_tools() -> list[Tool]:
                 "required": ["filename"],
                 "additionalProperties": False
             }
+        ),
+        Tool(
+            name="write_and_validate",
+            description="Write a Python script to file and immediately validate it in one operation",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "filename": {
+                        "type": "string",
+                        "description": "Absolute path to file (recommended) or relative filename for scripts directory"
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "Python script content to write and validate"
+                    },
+                    "timeout": {
+                        "type": "integer",
+                        "default": 30,
+                        "description": "Execution timeout in seconds for validation"
+                    },
+                    "parameters": {
+                        "type": "object",
+                        "description": "Optional parameters to inject into script for validation"
+                    }
+                },
+                "required": ["filename", "content"],
+                "additionalProperties": False
+            }
         )
     ]
 
@@ -141,24 +169,26 @@ async def handle_call_tool(name: str, arguments: dict) -> list[TextContent | Ima
     try:
         logger.info(f"🔧 Validation tool called: {name}")
         
-        if name == "validate_python_script":
-            return await validate_script(arguments)
-        elif name == "get_validation_capabilities":
+        # if name == "validate_python_script":
+        #     return await validate_script(arguments)
+        if name == "get_validation_capabilities":
             return await get_capabilities()
-        elif name == "write_file":
-            return await write_file(arguments)
+        # elif name == "write_file":
+        #     return await write_file(arguments)
         elif name == "read_file":
             return await read_file(arguments)
         elif name == "list_files":
             return await list_files(arguments)
         elif name == "delete_file":
             return await delete_file(arguments)
+        elif name == "write_and_validate":
+            return await write_and_validate(arguments)
         else:
             return [TextContent(
                 type="text",
                 text=json.dumps({
                     "error": f"Unknown validation tool: {name}",
-                    "available_tools": ["validate_python_script", "get_validation_capabilities", "write_file", "read_file", "list_files", "delete_file"]
+                    "available_tools": ["get_validation_capabilities", "read_file", "list_files", "delete_file", "write_and_validate"]
                 }, indent=2)
             )]
             
@@ -284,7 +314,7 @@ async def get_capabilities() -> list[TextContent]:
         "max_timeout": 60,
         "temp_directory_access": True,
         # "file_tools": ["write_file", "read_file", "list_files", "delete_file"],
-        "file_tools": ["write_file", "read_file", "delete_file"]
+        "file_tools": ["write_file", "read_file", "delete_file", "write_and_validate"]
     }
     
     return [TextContent(
@@ -634,6 +664,62 @@ async def delete_file(arguments: dict) -> list[TextContent]:
                 "error": f"Failed to delete file: {str(e)}"
             }, indent=2)
         )]
+
+async def write_and_validate(arguments: dict) -> list[TextContent]:
+    """Write a Python script to file and immediately validate it in one operation"""
+    filename = arguments.get("filename", "")
+    content = arguments.get("content", "")
+    timeout = arguments.get("timeout", 30)
+    parameters = arguments.get("parameters", None)
+    
+    logger.info(f"🔧 Write and validate: {filename}")
+    
+    # Step 1: Write the file
+    write_result = await write_file({"filename": filename, "content": content})
+    write_response = json.loads(write_result[0].text)
+    
+    if not write_response.get("success", False):
+        return [TextContent(
+            type="text",
+            text=json.dumps({
+                "success": False,
+                "operation": "write",
+                "error": write_response.get("error", "Unknown write error"),
+                "write_result": write_response
+            }, indent=2)
+        )]
+    
+    # Step 2: Validate the written file
+    actual_filename = write_response.get("actual_filename", filename)
+    validate_result = await validate_script({
+        "script_filename": actual_filename,
+        "timeout": timeout,
+        "parameters": parameters
+    })
+    validate_response = json.loads(validate_result[0].text)
+    
+    # Step 3: Combine results
+    combined_result = {
+        "success": validate_response.get("valid", False),
+        "write_result": {
+            "success": True,
+            "absolute_path": write_response.get("absolute_path"),
+            "input_filename": write_response.get("input_filename"),
+            "actual_filename": write_response.get("actual_filename"),
+            "size": write_response.get("size")
+        },
+        "validation_result": validate_response
+    }
+    
+    if combined_result["success"]:
+        logger.info(f"✅ Write and validate successful: {actual_filename}")
+    else:
+        logger.warning(f"❌ Write and validate failed: {validate_response.get('error', 'Validation failed')}")
+    
+    return [TextContent(
+        type="text",
+        text=json.dumps(combined_result, indent=2)
+    )]
 
 
 async def main():

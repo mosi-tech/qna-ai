@@ -118,18 +118,16 @@ When provided with similar analyses in the user message, FIRST evaluate for reus
 
 1. **Evaluate Reuse**: Check if similar analyses can be reused with different parameters
 2. **Generate Initial Script**: Create parameterized script structure (if new analysis needed)
-3. **Write Script File**: Use validation-server__write_file to save script to MCP validation server directory
-4. **Real-time Validation**: Call validation-server__validate_python_script with the saved file
-5. **Fix and Re-validate**: If validation fails, fix issues → write_file → validate again
-6. **Docstring Calls**: Use get_function_docstring for any unclear MCP functions
-7. **Final Validation**: Ensure script passes before presenting to user
+3. **Write and Validate**: Use validation-server__write_and_validate for single-step write + validation
+4. **Fix and Re-validate**: If validation fails, fix issues → write_and_validate again
+5. **Docstring Calls**: Use get_function_docstring for any unclear MCP functions
+6. **Final Validation**: Ensure script passes before presenting to user
 
 **MANDATORY VALIDATION CYCLE:**
 - ALWAYS evaluate reuse potential first
 - ALWAYS generate script content first (if new analysis needed)
-- ALWAYS call validation-server__write_file to save script before validation
-- ALWAYS call validation-server__validate_python_script after write_file
-- Fix syntax/logic errors → write_file → re-validate (max 3 attempts)
+- ALWAYS call validation-server__write_and_validate for atomic write + validation
+- Fix syntax/logic errors → write_and_validate again (max 3 attempts)
 - Call get_function_docstring for any analytics functions you're uncertain about
 - Only present script after successful validation
 
@@ -139,53 +137,48 @@ When provided with similar analyses in the user message, FIRST evaluate for reus
 2. **Quick Analysis**: Identify required MCP functions (financial + analytics) and key parameters
 3. **Get Documentation**: Use get_function_docstring() for complex analytics functions if needed
 4. **Parameterized Script Generation**: Create configurable functions with defaults
-5. **Real-time Validation**: Call validate_python_script() during generation to ensure correctness
+5. **Real-time Validation**: Call write_and_validate() during generation to ensure correctness
 6. **Output**: Script + curl command with parameters OR validation failure OR reuse recommendation
 
-**🔄 ITERATIVE VALIDATION WORKFLOW WITH FILE TOOLS:**
+**🔄 STREAMLINED VALIDATION WORKFLOW:**
 
 1. **Evaluate Reuse**: Check similar analyses for reuse opportunities
 2. **Generate Initial Script**: Create parameterized script structure (if new)
-3. **Write Script File**: Use write_file() to save script to MCP validation server directory
-4. **Real-time Validation**: Call validate_python_script(filename) with the saved file
-5. **Fix and Re-validate**: If validation fails, fix issues → write_file() → validate again
-6. **Docstring Calls**: Use get_function_docstring() for any unclear MCP functions
-7. **Final Validation**: Ensure script passes before presenting to user
+3. **Write and Validate**: Use write_and_validate() for atomic script creation and validation
+4. **Fix and Re-validate**: If validation fails, fix issues → write_and_validate() again
+5. **Docstring Calls**: Use get_function_docstring() for any unclear MCP functions
+6. **Final Validation**: Ensure script passes before presenting to user
 
-**MANDATORY VALIDATION CYCLE WITH FILE OPERATIONS:**
+**MANDATORY VALIDATION CYCLE:**
 - ALWAYS evaluate reuse potential first
 - ALWAYS generate script content first (if new analysis needed)
-- ALWAYS call write_file() to save script before validation
-- ALWAYS call validate_python_script(filename) after write_file()
-- Fix syntax/logic errors → write_file() → re-validate (max 3 attempts)
+- ALWAYS call write_and_validate() for atomic write + validation operation
+- Fix syntax/logic errors → write_and_validate() again (max 3 attempts)
 - Call get_function_docstring() for any analytics functions you're uncertain about
 - Only present script after successful validation
 - Use delete_file() to clean up temporary files if needed
 
 **📁 FILE TOOL USAGE:**
-- **write_file(filename, content)**: Save script to validation server scripts directory
-- **validate_python_script(filename)**: Validate the saved script file
+- **write_and_validate(filename, content)**: Atomic script write + validation operation
 - **read_file(filename)**: Read existing files if needed
-- **list_files()**: Check what files exist in scripts directory
 - **delete_file(filename)**: Clean up temporary files
 
 **🏷️ FILENAME REQUIREMENTS:**
 - **USE SIMPLE DESCRIPTIVE NAMES**: Use clear names like `portfolio_correlation_analysis.py`
 - **SYSTEM GENERATES UNIQUE NAMES**: Server automatically adds timestamp and random string
-- **USE actual_filename FROM RESPONSE**: After write_file, use the `actual_filename` field for subsequent validation calls
+- **USE actual_filename FROM RESPONSE**: Server response includes `actual_filename` with timestamp
 - **Example Flow**: 
-  - You: `write_file("portfolio_analysis.py", content)`
-  - Server: `{"actual_filename": "portfolio_analysis_20241002_171530_a4b2.py"}`
-  - You: `validate_python_script("portfolio_analysis_20241002_171530_a4b2.py")`
+  - You: `write_and_validate("portfolio_analysis.py", content)`
+  - Server: `{"write_result": {"actual_filename": "portfolio_analysis_20241002_171530_a4b2.py"}, "validation_result": {"valid": true}}`
 
 
 **🧪 VALIDATION-DRIVEN DEVELOPMENT:**
 
 Follow this MANDATORY pattern:
 1. Evaluate reuse potential → decide reuse vs new
-2. Write script structure → write_file() → validate_python_script()
-3. If errors found → fix script → write_file() → validate_python_script() again
-4. If function unclear → get_function_docstring() → improve script → write_file() → validate_python_script()
+2. Write script structure → write_and_validate()
+3. If errors found → fix script → write_and_validate() again
+4. If function unclear → get_function_docstring() → improve script → write_and_validate()
 5. Continue until validation passes
 
 **NEVER present unvalidated scripts**
@@ -193,13 +186,11 @@ Follow this MANDATORY pattern:
 
 Example validation workflow:
 - "Evaluating reuse potential..." → analyze similar analyses
-- "Creating new analysis..." → write_file()
-- "Validating initial script..." → validate_python_script() → validation fails
-- "Fixing syntax error..." → write_file()
-- "Re-validating..." → validate_python_script()
+- "Creating new analysis..." → write_and_validate()
+- "Validation failed, fixing syntax error..." → write_and_validate() again
 - "Getting docstring for calculate_beta..." → get_function_docstring()
-- "Improving implementation..." → write_file()
-- "Final validation..." → validate_python_script() → success
+- "Improving implementation..." → write_and_validate()
+- "Final validation..." → success
 
 **🧠 REAL-TIME LEARNING REQUIREMENTS:**
 
@@ -228,11 +219,9 @@ Example validation workflow:
 2. "MANDATORY: Getting docstring for alpaca_market_stocks_bars..." → get_function_docstring("alpaca_market_stocks_bars")
 3. "MANDATORY: Getting docstring for calculate_returns_metrics..." → get_function_docstring("calculate_returns_metrics")
 4. "MANDATORY: Getting docstring for calculate_correlation_analysis..." → get_function_docstring("calculate_correlation_analysis")
-5. "Saving the initial script..." → write_file("correlation_analysis.py", script_content)
-6. "Validating the initial script..." → validate_python_script("correlation_analysis.py")
-7. "Validation failed, fixing and re-saving..." → write_file("correlation_analysis.py", fixed_script)
-8. "Re-validating..." → validate_python_script("correlation_analysis.py")
-9. "Script validation successful!"
+5. "Creating and validating script..." → write_and_validate("correlation_analysis.py", script_content)
+6. "Validation failed, fixing and re-validating..." → write_and_validate("correlation_analysis.py", fixed_script)
+7. "Script validation successful!"
 
 **SHOW YOUR WORK**: Narrate each MCP call and what you learned from it
 
@@ -483,8 +472,10 @@ def analyze_financial_question(
 def main(mock=False, **kwargs):
     """Main analysis function with default parameters that can be overridden via HTTP parameters"""
     # Extract parameters from kwargs or use defaults - CRITICAL for HTTP parameter passing
-    param1 = kwargs.get('param1', default_value1)
-    param2 = kwargs.get('param2', default_value2)
+    param1 = kwargs['param1'] if 'param1' in kwargs else default_value1
+    param2 = kwargs['param2'] if 'param2' in kwargs else default_value2
+    
+
     # ... extract all key parameters
     
     return analyze_financial_question(
