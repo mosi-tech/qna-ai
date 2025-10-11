@@ -24,7 +24,8 @@ class LLMProvider(ABC):
     async def call_api(self, model: str, messages: List[Dict[str, Any]], 
                       max_tokens: int = 4000, enable_caching: bool = False,
                       override_system_prompt: Optional[str] = None,
-                      override_tools: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
+                      override_tools: Optional[List[Dict[str, Any]]] = None,
+                      force_api: bool = False) -> Dict[str, Any]:
         """Make API call to LLM provider using stored system prompt and tools"""
         pass
     

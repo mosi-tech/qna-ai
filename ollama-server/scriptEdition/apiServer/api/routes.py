@@ -9,7 +9,7 @@ from fastapi import HTTPException
 from typing import Dict, Any
 
 from api.models import QuestionRequest, AnalysisResponse
-from services.analysis import AnalysisService
+from services.analysis_simplified import AnalysisService
 from services.search import SearchService
 from dialogue import search_with_context, initialize_dialogue_factory, get_session_manager
 

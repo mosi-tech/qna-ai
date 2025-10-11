@@ -72,6 +72,7 @@ class LLMService:
                          tools: Optional[List[Dict[str, Any]]] = None,
                          max_tokens: Optional[int] = None,
                          temperature: Optional[float] = None,
+                         force_api: bool = False,
                          **kwargs) -> Dict[str, Any]:
         """
         Make a request to the LLM provider
@@ -108,7 +109,8 @@ class LLMService:
                 model=model,
                 messages=messages,
                 max_tokens=max_tokens,
-                enable_caching=kwargs.get('enable_caching', False)
+                enable_caching=kwargs.get('enable_caching', False),
+                force_api=force_api
             )
             
             # Check if the call was successful

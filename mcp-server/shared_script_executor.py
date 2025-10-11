@@ -140,6 +140,20 @@ def call_mcp_function(function_name: str, args: dict):
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 '''
 
+
+def create_enhance_script(script_content: str, mock_mode: bool = True, parameters: Optional[Dict[str, Any]] = None) -> str:
+    # Create MCP injection wrapper
+        mcp_wrapper = create_mcp_injection_wrapper(production_mode=not mock_mode)
+        
+        # Add parameter injection if parameters provided
+        parameter_injection = ""
+        if parameters:
+            parameter_injection = f"\n# Parameter injection\nPARAMETERS = {json.dumps(parameters, indent=2)}\n\n"
+        
+        enhanced_script = mcp_wrapper + parameter_injection + script_content
+        return enhanced_script
+
+
 def execute_script(script_content: str, mock_mode: bool = True, timeout: int = 30, parameters: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """
     Execute Python script with MCP function injection
@@ -160,15 +174,8 @@ def execute_script(script_content: str, mock_mode: bool = True, timeout: int = 3
         # Get project root directory - hardcoded for MCP testing
         project_root = "/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server"
         
-        # Create MCP injection wrapper
-        mcp_wrapper = create_mcp_injection_wrapper(production_mode=not mock_mode)
-        
-        # Add parameter injection if parameters provided
-        parameter_injection = ""
-        if parameters:
-            parameter_injection = f"\n# Parameter injection\nPARAMETERS = {json.dumps(parameters, indent=2)}\n\n"
-        
-        enhanced_script = mcp_wrapper + parameter_injection + script_content
+        # Create enhance script
+        enhanced_script = create_enhance_script(script_content, mock_mode, parameters)
         
         # logger.info(enhanced_script)
         

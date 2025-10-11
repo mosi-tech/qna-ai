@@ -5,6 +5,11 @@ Anthropic Claude API provider implementation
 import json
 import logging
 import httpx
+import subprocess
+import tempfile
+import os
+import threading
+import shlex
 from typing import Dict, Any, List, Tuple, Optional
 
 from .base import LLMProvider
@@ -23,10 +28,246 @@ class AnthropicProvider(LLMProvider):
     def supports_caching(self) -> bool:
         return True
     
+    def _should_use_claude_code_cli(self, messages: List[Dict[str, Any]], force_api: bool = False) -> bool:
+        """Determine if request should use Claude Code CLI"""
+        # Force API usage for specific use cases (like context search)
+        if force_api:
+            return False
+        
+        # Check if Claude CLI is available before attempting to use it
+        cli_available = self._check_claude_cli_available()
+        if not cli_available:
+            logger.warning("⚠️ Claude CLI not available, falling back to API")
+            return False
+            
+        # Use environment variable to control CLI usage regardless of tool presence
+        return os.getenv("USE_CLAUDE_CODE_CLI", "false").lower() == "true"
+    
+    def _check_claude_cli_available(self) -> bool:
+        """Check if Claude CLI is available and accessible"""
+        try:
+            # Try to run claude --version to check availability
+            result = subprocess.run(
+                ["claude", "--version"], 
+                capture_output=True, 
+                text=True, 
+                timeout=5
+            )
+            if result.returncode == 0:
+                logger.debug(f"✅ Claude CLI available: {result.stdout.strip()}")
+                return True
+            else:
+                logger.debug(f"❌ Claude CLI check failed: {result.stderr}")
+                return False
+        except (subprocess.TimeoutExpired, subprocess.CalledProcessError, FileNotFoundError) as e:
+            logger.debug(f"❌ Claude CLI not available: {e}")
+            return False
+    
+    def _stream_subprocess_output(self, process, timeout=300):
+        """Stream subprocess output to console AND capture it"""
+        
+        def stream_and_capture(pipe, prefix, lines_list):
+            """Stream output to logger and capture in list"""
+            try:
+                for line in iter(pipe.readline, ''):
+                    if line:
+                        lines_list.append(line)
+                        # Log to our logger instead of direct print
+                        logger.info(f"[{prefix}] {line.rstrip()}")
+            except Exception as e:
+                logger.error(f"Error in {prefix} stream: {e}")
+            finally:
+                pipe.close()
+        
+        stdout_lines = []
+        stderr_lines = []
+        
+        # Start streaming threads
+        stdout_thread = threading.Thread(
+            target=stream_and_capture,
+            args=(process.stdout, "CLAUDE", stdout_lines)
+        )
+        stderr_thread = threading.Thread(
+            target=stream_and_capture,
+            args=(process.stderr, "DEBUG", stderr_lines)
+        )
+        
+        stdout_thread.start()
+        stderr_thread.start()
+        
+        # Wait for process with timeout
+        try:
+            return_code = process.wait(timeout=timeout)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            stdout_thread.join(timeout=1)
+            stderr_thread.join(timeout=1)
+            raise subprocess.TimeoutExpired(process.args, timeout)
+        
+        # Wait for threads to complete
+        stdout_thread.join()
+        stderr_thread.join()
+        
+        return {
+            "returncode": return_code,
+            "stdout": "".join(stdout_lines),
+            "stderr": "".join(stderr_lines)
+        }
+    
+    async def _call_claude_code_cli(self, model: str, messages: List[Dict[str, Any]], 
+                                   max_tokens: int = 4000, enable_caching: bool = False) -> Dict[str, Any]:
+        """Use Claude Code CLI instead of API for tool-enabled requests"""
+        try:
+            # Extract the user message (last message)
+            user_message = ""
+            for msg in reversed(messages):
+                if msg["role"] == "user":
+                    if isinstance(msg["content"], str):
+                        user_message = msg["content"]
+                    elif isinstance(msg["content"], list):
+                        # Extract text from content blocks
+                        text_parts = []
+                        for block in msg["content"]:
+                            if isinstance(block, dict) and block.get("type") == "text":
+                                text_parts.append(block.get("text", ""))
+                            elif isinstance(block, str):
+                                text_parts.append(block)
+                        user_message = "\n".join(text_parts)
+                    break
+            
+            if not user_message:
+                raise Exception("No user message found for Claude Code CLI")
+            
+            # Create MCP config for Claude Code CLI
+            config_dir = os.path.dirname(os.path.abspath(__file__))
+            mcp_config_path = os.path.join(config_dir, "..", "..", "config", "claude_mcp_servers.json")
+            mcp_config_path = os.path.abspath(mcp_config_path)
+            
+            if not os.path.exists(mcp_config_path):
+                raise Exception(f"MCP config file not found: {mcp_config_path}")
+            
+            # Set working directory for script generation
+            working_dir = "/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server"
+            os.makedirs(working_dir, exist_ok=True)
+            
+            # Get system prompt if available
+            system_prompt = self._raw_system_prompt or "You are a helpful assistant."
+            
+            # Build CLI command - simple approach with just claude
+            cli_command = [
+                "claude",
+                "--append-system-prompt", system_prompt,
+                "-p", user_message,
+                "--output-format", "json",
+                "--mcp-config", mcp_config_path,
+                "--permission-mode", "bypassPermissions",
+                "--verbose"
+                # "--dangerously-skip-permissions"
+            ]
+            
+            # logger.info(f"🚀 Calling Claude Code CLI with MCP config: {mcp_config_path}")
+            # logger.info(f"📄 Using system prompt: {system_prompt[:100]}...")
+            # logger.debug(f"CLI command: {cli_command}")
+            
+            # Set up environment with API key for Claude CLI
+            env = os.environ.copy()
+            if self.api_key and self.api_key != "dummy-key":
+                env["ANTHROPIC_API_KEY"] = self.api_key
+                logger.debug("🔑 Using Anthropic API key from provider")
+            else:
+                logger.warning("⚠️ No valid API key available - Claude CLI will use its own config")
+            
+            # Check if we should stream output in real-time (for debugging)
+            stream_output = os.getenv("CLAUDE_CLI_STREAM", "false").lower() == "true"
+            
+            if stream_output:
+                # Stream output in real-time AND capture it
+                logger.info("🔄 Streaming Claude CLI output in real-time...")
+                
+                process = subprocess.Popen(
+                    cli_command,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    bufsize=1,  # Line buffered
+                    cwd=working_dir
+                )
+                
+                # Use our streaming method
+                result_data = self._stream_subprocess_output(process, timeout=300)
+                
+                # Create result object compatible with the rest of the code
+                result = type('Result', (), {
+                    'returncode': result_data['returncode'],
+                    'stdout': result_data['stdout'],
+                    'stderr': result_data['stderr']
+                })()
+                
+            else:
+                # Standard execution - capture output normally
+                result = subprocess.run(
+                    cli_command,
+                    capture_output=True,
+                    text=True,
+                    timeout=300,
+                    cwd=working_dir
+                )
+            
+            # Log subprocess output for debugging (even on success)
+            logger.debug(f"📤 Claude CLI return code: {result.returncode}")
+            if result.stdout:
+                logger.debug(f"📤 Claude CLI stdout: {result.stdout[:500]}...")
+            if result.stderr:
+                logger.info(f"📤 Claude CLI stderr (verbose output): {result.stderr}")
+            
+            if result.returncode != 0:
+                logger.error(f"❌ Claude Code CLI failed with return code {result.returncode}")
+                logger.error(f"❌ Claude CLI stderr: {result.stderr}")
+                logger.error(f"❌ Claude CLI stdout: {result.stdout}")
+                raise Exception(f"Claude Code CLI failed with return code {result.returncode}: {result.stderr}")
+            
+            # Parse JSON response
+            try:
+                response_data = json.loads(result.stdout)
+            except json.JSONDecodeError as e:
+                logger.error(f"❌ Failed to parse CLI output as JSON")
+                logger.error(f"❌ Raw output: {result.stdout}")
+                logger.error(f"❌ JSON error: {e}")
+                raise Exception(f"Invalid JSON response from Claude Code CLI: {e}")
+            
+            logger.info("✅ Claude Code CLI call successful")
+            
+            # Convert CLI response to provider format
+            return {
+                "success": True,
+                "data": {
+                    "content": [{"type": "text", "text": response_data.get("output", "")}],
+                    "claude_code_result": response_data,
+                    "usage": response_data.get("usage", {})
+                },
+                "provider": "anthropic-cli"
+            }
+            
+        except subprocess.TimeoutExpired:
+            logger.error("Claude Code CLI timed out")
+            return {
+                "success": False,
+                "error": "Claude Code CLI request timed out (300s)",
+                "provider": "anthropic-cli"
+            }
+        except Exception as e:
+            logger.error(f"Claude Code CLI error: {e}")
+            return {
+                "success": False,
+                "error": f"Claude Code CLI error: {str(e)}",
+                "provider": "anthropic-cli"
+            }
+    
     async def call_api(self, model: str, messages: List[Dict[str, Any]], 
                       max_tokens: int = 4000, enable_caching: bool = False,
                       override_system_prompt: Optional[str] = None,
-                      override_tools: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
+                      override_tools: Optional[List[Dict[str, Any]]] = None,
+                      force_api: bool = False) -> Dict[str, Any]:
         """Make Anthropic API call using stored system prompt and tools"""
         
         # Use overrides if provided, otherwise use stored data
@@ -34,6 +275,22 @@ class AnthropicProvider(LLMProvider):
             self.set_system_prompt(override_system_prompt)
         if override_tools is not None:
             self.set_tools(override_tools)
+        
+        # Route to Claude Code CLI if environment variable is set and not forced to use API
+        if self._should_use_claude_code_cli(messages, force_api):
+            logger.info("🔀 Routing to Claude Code CLI (USE_CLAUDE_CODE_CLI=true)")
+            return await self._call_claude_code_cli(model, messages, max_tokens, enable_caching)
+        
+        # Fall back to regular API 
+        if force_api:
+            logger.info("🔀 Using regular Anthropic API (forced - e.g., context search)")
+        else:
+            logger.info("🔀 Using regular Anthropic API (USE_CLAUDE_CODE_CLI=false or unset)")
+        return await self._call_anthropic_api(model, messages, max_tokens, enable_caching)
+    
+    async def _call_anthropic_api(self, model: str, messages: List[Dict[str, Any]], 
+                                 max_tokens: int = 4000, enable_caching: bool = False) -> Dict[str, Any]:
+        """Original Anthropic API implementation"""
         
         # Get processed system data (using stored system prompt)
         system_data = self.get_processed_system_data(enable_caching)
@@ -49,7 +306,7 @@ class AnthropicProvider(LLMProvider):
             "max_tokens": max_tokens
         }
 
-         # Prepare headers
+        # Prepare headers
         headers = {
             "Content-Type": "application/json",
             "x-api-key": self.api_key,
@@ -60,7 +317,6 @@ class AnthropicProvider(LLMProvider):
         if processed_tools:
             request_data["tools"] = processed_tools
             headers["anthropic-beta"] = "tools-2024-05-16"
-        
         
         # Make API call
         async with httpx.AsyncClient(timeout=120.0) as client:
@@ -84,7 +340,27 @@ class AnthropicProvider(LLMProvider):
                 }
     
     def parse_response(self, response_data: Dict[str, Any]) -> Tuple[str, List[Dict[str, Any]]]:
-        """Parse Anthropic response format"""
+        """Parse Anthropic response format (both API and CLI)"""
+        
+        # Check if this is a Claude Code CLI response
+        if "claude_code_result" in response_data:
+            # This is a CLI response
+            text_content = ""
+            tool_calls = []
+            
+            # Extract text from CLI response
+            if "content" in response_data:
+                for block in response_data["content"]:
+                    if isinstance(block, dict) and block.get("type") == "text":
+                        text_content += block.get("text", "")
+                    elif isinstance(block, str):
+                        text_content += block
+            
+            # CLI handles tool execution internally, so no tool_calls to parse
+            # The result is already the final output
+            return text_content, tool_calls
+        
+        # Original API response parsing
         content_blocks = response_data.get("content", [])
         text_content = ""
         tool_calls = []

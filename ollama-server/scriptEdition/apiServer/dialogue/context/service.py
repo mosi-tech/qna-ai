@@ -114,7 +114,8 @@ class ContextService:
                 messages=messages,
                 system_prompt=system_prompt,
                 max_tokens=max_tokens,
-                temperature=0.1  # Low temperature for consistent results
+                temperature=0.1,  # Low temperature for consistent results
+                force_api=True    # Force API usage for context search (no CLI needed)
             )
             
             if response.get("success"):
