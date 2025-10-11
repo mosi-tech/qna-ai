@@ -59,8 +59,10 @@ class SearchService:
             similar_analyses = search_result["analyses"]
             logger.info(f"🔍 Found {len(similar_analyses)} similar analyses")
             
-            # Build enhanced context
+            # Build enhanced context with question first
             context_lines = [
+                "🎯 ORIGINAL QUESTION:",
+                user_question,
                 "",
                 "📋 RELEVANT EXISTING ANALYSES:",
                 "The following similar analyses exist in your library:"
@@ -84,12 +86,10 @@ class SearchService:
                 "- Reference the existing approach and extend it",
                 "- Use similar parameter structure", 
                 "- Build upon the existing methodology",
-                "- Create a variation that addresses the specific differences",
-                "",
-                "🎯 ORIGINAL QUESTION:"
+                "- Create a variation that addresses the specific differences"
             ])
             
-            enhanced_message = "\n".join(context_lines) + "\n" + user_question
+            enhanced_message = "\n".join(context_lines)
             
             return enhanced_message, similar_analyses
             
