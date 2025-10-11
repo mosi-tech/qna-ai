@@ -116,75 +116,44 @@ class AnalysisService:
                 enable_caching=enable_caching
             )
             
-            if result["success"]:
-                # Extract Claude Code CLI result
-                response_content = result.get("content", "")
+            if result.get("success"):
+                # Format the successful response based on new standardized format
+                response_data = {
+                    "question": question,
+                    "provider": result["provider"],
+                    "model": model,
+                    "response_type": result.get("response_type"),
+                    "raw_content": result.get("raw_content", ""),
+                    "timestamp": datetime.now().isoformat()
+                }
                 
-                # Check if this is a Claude Code CLI response
-                provider_name = result.get("provider", "")
-                is_cli_response = "cli" in provider_name.lower()
+                # Add completion information
+                if result.get("task_completed"):
+                    response_data["task_completed"] = result["task_completed"]
                 
-                # Format response based on type
-                if is_cli_response:
-                    logger.info("✅ Question analyzed successfully using Claude Code CLI")
-                    
-                    # Extract script information if available (Claude Code CLI generates scripts)
-                    script_info = self._extract_script_info_from_cli_response(result)
-                    
-                    return {
-                        "success": True,
-                        "data": {
-                            "question": question,
-                            "provider": result["provider"],
-                            "model": model,
-                            "response_type": "claude_code_analysis",
-                            "analysis_result": {
-                                "content": response_content,
-                                "script_generated": script_info["has_script"],
-                                "script_path": script_info.get("script_path"),
-                                "execution_successful": script_info.get("execution_successful", False)
-                            }
-                        },
-                        "timestamp": datetime.now().isoformat()
-                    }
-                else:
-                    # Regular API response
-                    logger.info("✅ Question analyzed successfully using regular API")
-                    return {
-                        "success": True,
-                        "data": {
-                            "question": question,
-                            "provider": result["provider"],
-                            "model": model,
-                            "response_type": "api_response",
-                            "analysis_result": {
-                                "content": response_content
-                            }
-                        },
-                        "timestamp": datetime.now().isoformat()
-                    }
+                # Always use consistent key structure regardless of response type
+                response_data["analysis_result"] = result.get("data", {})
+                
+                logger.info(f"✅ Question analyzed successfully using {result['provider']} - Type: {result.get('response_type')}")
+                
+                return {
+                    "success": True,
+                    "data": response_data
+                }
             else:
                 logger.error(f"❌ Question analysis failed: {result.get('error')}")
                 return {
                     "success": False,
-                    "data": {
-                        "question": question,
-                        "error": result.get("error", "Unknown error"),
-                        "provider": result.get("provider", self.llm_service.provider_type),
-                        "timestamp": datetime.now().isoformat()
-                    }
+                    "error": result.get("error", "Unknown error"),
+                    "provider": result.get("provider", self.llm_service.provider_type),
+                    "timestamp": datetime.now().isoformat()
                 }
                 
         except Exception as e:
             logger.error(f"❌ Analysis error: {e}")
             return {
                 "success": False,
-                "data": {
-                    "question": question,
-                    "error": str(e),
-                    "provider": self.llm_service.provider_type,
-                    "timestamp": datetime.now().isoformat()
-                }
+                "error": str(e)
             }
     
     def _extract_script_info_from_cli_response(self, result: Dict[str, Any]) -> Dict[str, Any]:

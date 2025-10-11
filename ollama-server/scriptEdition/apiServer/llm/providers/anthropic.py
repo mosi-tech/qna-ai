@@ -237,13 +237,28 @@ class AnthropicProvider(LLMProvider):
             
             logger.info("✅ Claude Code CLI call successful")
             
+            # Handle response_data as array - last element contains the result
+            if isinstance(response_data, list) and len(response_data) > 0:
+                # Get the last element which contains the result
+                last_element = response_data[-1]
+                
+                # Extract the result field which is stringified JSON - return as-is
+                if isinstance(last_element, dict) and "result" in last_element:
+                    output_text = last_element["result"]  # Return stringified JSON as-is
+                else:
+                    # Fallback to the entire last element
+                    output_text = json.dumps(last_element, indent=2)
+            else:
+                # Fallback to original behavior if not an array
+                output_text = response_data.get("output", json.dumps(response_data, indent=2))
+            
             # Convert CLI response to provider format
             return {
                 "success": True,
                 "data": {
-                    "content": [{"type": "text", "text": response_data.get("output", "")}],
+                    "content": [{"type": "text", "text": output_text}],
                     "claude_code_result": response_data,
-                    "usage": response_data.get("usage", {})
+                    "usage": response_data[-1].get("usage", {}) if isinstance(response_data, list) and len(response_data) > 0 else {}
                 },
                 "provider": "anthropic-cli"
             }
