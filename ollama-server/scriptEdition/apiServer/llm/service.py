@@ -254,3 +254,11 @@ def create_analysis_llm() -> LLMService:
 def create_context_llm() -> LLMService:
     """Create LLM service optimized for context tasks"""
     return create_llm_service("CONTEXT")
+
+def create_code_prompt_builder_llm() -> LLMService:
+    """Create LLM service optimized for code prompt building tasks"""
+    return create_llm_service("CODE_PROMPT_BUILDER")
+
+def create_reuse_evaluator_llm() -> LLMService:
+    """Create LLM service optimized for reuse evaluation tasks"""
+    return create_llm_service("REUSE_EVALUATOR")

@@ -33,6 +33,10 @@ class AnalysisService:
         # Track MCP initialization
         self.mcp_initialized = True  # Simplified - assume always available
         
+        # Enriched prompt state management
+        self._enriched_prompt = None
+        self._enriched_prompt_mode = False
+        
         logger.info(f"🤖 Initialized Simplified Analysis service with {self.llm_service.provider_type}")
     
     def _load_system_prompt_config(self):
@@ -44,7 +48,17 @@ class AnalysisService:
             "config", 
             prompt_filename
         )
+        
+        # Also load coding-only prompt for enriched prompts
+        self.coding_prompt_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), 
+            "..", 
+            "config", 
+            "system-prompt-coding-only.txt"
+        )
+        
         self.system_prompt = None  # Cache for system prompt
+        self.coding_prompt = None  # Cache for coding prompt
     
     async def get_system_prompt(self) -> str:
         """Get system prompt content"""
@@ -59,8 +73,79 @@ class AnalysisService:
         
         return self.system_prompt
     
+    def _is_enriched_prompt(self, message: str) -> bool:
+        """Detect if message contains enriched prompt from code prompt builder"""
+        enriched_indicators = [
+            "ORIGINAL QUERY:",
+            "ANALYSIS TYPE:",
+            "AVAILABLE FUNCTIONS:",
+            "SUGGESTED PARAMETERS:",
+            "=== alpaca_",
+            "=== eodhd_",
+            "=== calculate_"
+        ]
+        return any(indicator in message for indicator in enriched_indicators)
+    
+    async def get_coding_prompt(self) -> str:
+        """Get coding-only system prompt for enriched prompts"""
+        if self.coding_prompt is None:
+            try:
+                with open(self.coding_prompt_path, 'r', encoding='utf-8') as f:
+                    self.coding_prompt = f.read()
+                logger.info(f"📄 Loaded coding prompt from {self.coding_prompt_path}")
+            except Exception as e:
+                logger.error(f"❌ Failed to load coding prompt: {e}")
+                self.coding_prompt = "You are a financial script generator."
+        
+        return self.coding_prompt
+    
+    def set_enriched_prompt(self, enriched_prompt: str):
+        """Set enriched prompt to override system prompt temporarily"""
+        self._enriched_prompt = enriched_prompt
+        self._enriched_prompt_mode = True
+        # Update provider's raw system prompt so Claude CLI gets the enriched prompt
+        self.llm_service.provider.set_system_prompt(enriched_prompt)
+        logger.info("🔧 Set enriched prompt mode and updated provider")
+    
+    async def clear_enriched_prompt(self):
+        """Clear enriched prompt and return to normal system prompt mode"""
+        self._enriched_prompt = None
+        self._enriched_prompt_mode = False
+        # Restore original system prompt on provider
+        original_prompt = await self.get_system_prompt()
+        self.llm_service.provider.set_system_prompt(original_prompt)
+        logger.info("🔄 Cleared enriched prompt mode and restored original system prompt on provider")
+    
+    def clear_tools(self):
+        """Clear tools but preserve validation tools for enriched prompt mode"""
+        # For simplified service, just clear all tools since Claude CLI will handle MCP tools
+        # The enriched prompt will specify which tools are allowed
+        try:
+            self.llm_service.provider.set_tools([])
+        except:
+            pass
+            
+        logger.info("🧹 Cleared all tools from provider - Claude CLI will handle validation tools")
+    
+    async def get_appropriate_system_prompt(self, message: str) -> str:
+        """Get appropriate system prompt based on enriched prompt mode or message type"""
+        if self._enriched_prompt_mode and self._enriched_prompt:
+            logger.info("🔧 Using enriched prompt from code prompt builder")
+            return self._enriched_prompt
+        elif self._is_enriched_prompt(message):
+            logger.info("🔧 Using coding-only system prompt for enriched prompt")
+            return await self.get_coding_prompt()
+        else:
+            logger.info("📄 Using standard system prompt")
+            return await self.get_system_prompt()
+    
     def get_mcp_tools(self) -> List[Dict[str, Any]]:
-        """Get MCP tools - optional since CLI usage is controlled by environment variable"""
+        """Get MCP tools - respects enriched prompt mode"""
+        # Don't load tools when in enriched prompt mode
+        if self._enriched_prompt_mode:
+            logger.info("🚫 Skipping tool loading - enriched prompt mode active")
+            return []
+            
         # Return tools for MCP functionality (optional - env var controls CLI usage)
         return [
             {
@@ -93,8 +178,8 @@ class AnalysisService:
             
             logger.info(f"🤔 Analyzing question (CLI controlled by USE_CLAUDE_CODE_CLI env var): {question[:100]}...")
             
-            # Get system prompt and set up provider
-            system_prompt = await self.get_system_prompt()
+            # Get appropriate system prompt based on message type
+            system_prompt = await self.get_appropriate_system_prompt(question)
             mcp_tools = self.get_mcp_tools()
             
             # Set system prompt and tools on provider (CLI usage controlled by env var)

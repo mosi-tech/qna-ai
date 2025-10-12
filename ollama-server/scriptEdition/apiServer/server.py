@@ -13,7 +13,7 @@ import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from api.models import QuestionRequest, AnalysisResponse
-from services.analysis_simplified import AnalysisService
+from services.analysis import AnalysisService
 from services.search import SearchService
 from api.routes import APIRoutes
 

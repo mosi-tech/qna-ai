@@ -9,8 +9,10 @@ from fastapi import HTTPException
 from typing import Dict, Any
 
 from api.models import QuestionRequest, AnalysisResponse
-from services.analysis_simplified import AnalysisService
+from services.analysis import AnalysisService
 from services.search import SearchService
+from services.code_prompt_builder import CodePromptBuilderService
+from services.reuse_evaluator import ReuseEvaluatorService
 from dialogue import search_with_context, initialize_dialogue_factory, get_session_manager
 
 logger = logging.getLogger("api-routes")
@@ -19,9 +21,11 @@ logger = logging.getLogger("api-routes")
 class APIRoutes:
     """Handles all API route logic"""
     
-    def __init__(self, analysis_service: AnalysisService, search_service: SearchService):
+    def __init__(self, analysis_service: AnalysisService, search_service: SearchService, code_prompt_builder: CodePromptBuilderService = None, reuse_evaluator: ReuseEvaluatorService = None):
         self.analysis_service = analysis_service
         self.search_service = search_service
+        self.code_prompt_builder = code_prompt_builder or CodePromptBuilderService()
+        self.reuse_evaluator = reuse_evaluator or ReuseEvaluatorService()
         
         # Initialize dialogue factory using search service's library
         try:
@@ -75,8 +79,54 @@ class APIRoutes:
                     timestamp=datetime.now().isoformat()
                 )
             
-            # Step 3: Enhance message with similar analyses for full analysis
+            # Step 2: Get similar analyses for reuse evaluation
+            logger.info("🔍 Searching for similar analyses...")
             enhanced_message, similar_analyses = self.search_service.search_and_enhance_message(final_query)
+            
+            # Step 2.5: Evaluate if existing analyses can be reused
+            reuse_result = None
+            if similar_analyses:
+                logger.info(f"🔄 Evaluating reuse potential for {len(similar_analyses)} similar analyses...")
+                reuse_result = await self.reuse_evaluator.evaluate_reuse(
+                    user_query=final_query,
+                    existing_analyses=similar_analyses,
+                    context={"session_id": request.session_id} if request.session_id else None
+                )
+                
+                if reuse_result["status"] == "success" and reuse_result["reuse_decision"]["should_reuse"]:
+                    logger.info(f"✅ Reuse decision: {reuse_result['reuse_decision']['reason']}")
+                    # Return reuse result immediately - skip code generation
+                    return AnalysisResponse(
+                        success=True,
+                        data={
+                            "response_type": "reuse_decision",
+                            "analysis_result": reuse_result["reuse_decision"],
+                            "message": f"Reusing existing analysis: {reuse_result['reuse_decision']['script_name']}"
+                        },
+                        timestamp=datetime.now().isoformat()
+                    )
+                else:
+                    logger.info("➡️ No suitable analysis for reuse, proceeding with new analysis generation")
+            
+            # Step 3: Build enriched prompt with MCP function selection and schemas (only if not reusing)
+            logger.info("🔧 Building enriched prompt with code prompt builder...")
+            code_prompt_result = await self.code_prompt_builder.build_enriched_prompt(
+                user_query=final_query,
+                context={
+                    "session_id": request.session_id,
+                    "existing_analyses": similar_analyses
+                } if request.session_id else {"existing_analyses": similar_analyses}
+            )
+            
+            if code_prompt_result["status"] != "success":
+                logger.error(f"❌ Code prompt building failed: {code_prompt_result.get('error')}")
+                return AnalysisResponse(
+                    success=False,
+                    error=f"Code prompt building failed: {code_prompt_result.get('error')}",
+                    timestamp=datetime.now().isoformat()
+                )
+            
+            logger.info(f"✅ Built enriched prompt with {len(code_prompt_result['selected_functions'])} MCP functions")
             
             if similar_analyses:
                 logger.info(f"🔍 Enhanced message with {len(similar_analyses)} similar analyses")
@@ -85,8 +135,16 @@ class APIRoutes:
             model = request.model or self.analysis_service.llm_service.default_model
             logger.info(f"🤖 Using model: {model}")
             
-            # Step 4: Analyze with enhanced message
+            # Step 4: Set enriched prompt and clear tools (we know it's successful at this point)
+            enriched_prompt = code_prompt_result["enriched_prompt"]
+            self.analysis_service.set_enriched_prompt(enriched_prompt)
+            await self.analysis_service.clear_tools()
+            
+            # Step 5: Analyze with final enhanced message
             result = await self.analysis_service.analyze_question(enhanced_message, model, request.enable_caching)
+            
+            # Clear enriched prompt after analysis to not affect future requests
+            await self.analysis_service.clear_enriched_prompt()
             
             if result["success"]:
                 # Step 5: Save completed analysis and update conversation
@@ -411,6 +469,33 @@ class APIRoutes:
             
         except Exception as e:
             logger.error(f"❌ Session listing error: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
+    
+    async def build_code_prompt(self, request: QuestionRequest) -> Dict[str, Any]:
+        """
+        Build enriched prompt for code generation by selecting MCP functions and fetching schemas
+        """
+        try:
+            logger.info(f"🔧 Building code prompt for: {request.question[:100]}...")
+            
+            # Build enriched prompt using the code prompt builder service
+            result = await self.code_prompt_builder.build_enriched_prompt(
+                user_query=request.question,
+                context={"session_id": request.session_id} if request.session_id else None
+            )
+            
+            return {
+                "success": result["status"] == "success",
+                "data": result,
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Code prompt building error: {e}")
             return {
                 "success": False,
                 "error": str(e),

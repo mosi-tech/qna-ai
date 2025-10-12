@@ -29,6 +29,7 @@ class AnalysisService:
         self._processed_tools_cache = None
         self._tools_cache_timestamp = None
         self._provider_initialized = False
+        self._enriched_prompt_mode = False
         
         # Load QnA-specific system prompt
         self._load_system_prompt_config()
@@ -72,6 +73,48 @@ class AnalysisService:
         self.system_prompt = await self.load_system_prompt()
         return self.system_prompt
     
+    def set_enriched_prompt(self, enriched_prompt: str):
+        """Set enriched prompt to override the default system prompt"""
+        self.system_prompt = enriched_prompt
+        self._enriched_prompt_mode = True
+        # Update provider's raw system prompt so Claude CLI gets the enriched prompt
+        self.llm_service.provider.set_system_prompt(enriched_prompt)
+        logger.info("✅ Set enriched prompt for analysis and updated provider")
+    
+    async def clear_enriched_prompt(self):
+        """Clear enriched prompt and revert to default system prompt"""
+        self.system_prompt = None
+        self._enriched_prompt_mode = False
+        # Restore original system prompt on provider
+        original_prompt = await self.load_system_prompt()
+        self.llm_service.provider.set_system_prompt(original_prompt)
+        logger.info("🔄 Cleared enriched prompt and restored original system prompt on provider")
+    
+    async def clear_tools(self):
+        """Clear MCP tools but preserve validation tools for enriched prompt mode"""
+        # Ensure MCP is initialized first
+        await self.ensure_mcp_initialized()
+        
+        # Get all available MCP tools directly from integration (bypass enriched prompt mode check)
+        all_tools = self.mcp_integration.get_mcp_tools()
+        
+        # Keep only validation/file management tools that are allowed in enriched prompt mode
+        allowed_tools = []
+        for tool in all_tools:
+            tool_name = tool.get("function", {}).get("name", "")
+            if any(allowed in tool_name for allowed in [
+                "write_and_validate", "read_file", "list_files", "delete_file"
+            ]):
+                allowed_tools.append(tool)
+        
+        # Set the filtered tools on the provider
+        self.llm_service.provider.set_tools(allowed_tools)
+        
+        # Update our processed tools cache
+        self._processed_tools_cache = allowed_tools
+            
+        logger.info(f"🔄 Cleared MCP tools for enriched prompt mode, keeping {len(allowed_tools)} validation tools")
+    
     # === MCP INTEGRATION ===
     
     @property
@@ -114,6 +157,11 @@ class AnalysisService:
     
     async def refresh_provider_tools(self) -> bool:
         """Refresh tools on provider if MCP tools have changed"""
+        # In enriched prompt mode, tools are already set by clear_tools() - no need to refresh
+        if self._enriched_prompt_mode:
+            logger.info("🚫 Skipping tool refresh - in enriched prompt mode (tools already set)")
+            return True
+            
         if not self._provider_initialized:
             return await self.ensure_provider_initialized()
             
@@ -136,6 +184,10 @@ class AnalysisService:
     
     def get_mcp_tools(self) -> List[Dict[str, Any]]:
         """Get processed MCP tools for the provider"""
+        # Return empty tools if in enriched prompt mode
+        if self._enriched_prompt_mode:
+            return []
+            
         try:
             # Use cached tools if available and timestamp matches
             current_timestamp = self._get_mcp_tools_timestamp()
@@ -237,10 +289,21 @@ class AnalysisService:
                         "error": f"Tool execution failed: {tool_result.get('error')}"
                     }
             else:
-                # No tool calls - start conversation loop to handle reuse decisions
-                return await self._conversation_loop(
-                    model, messages, [], [], enable_caching
-                )
+                # No tool calls - parse response directly for structured content
+                logger.info("📝 No tool calls detected, parsing response directly")
+                final_content = result.get("content", "")
+                
+                parsed_response = self._parse_structured_response(final_content)
+                
+                if parsed_response.get("structured_response_found", True):
+                    # Found a structured response (reuse decision or script generation)
+                    return parsed_response
+                else:
+                    # No structured response found - may need tool calls, start conversation loop
+                    logger.info("🔄 No structured response found, starting conversation loop")
+                    return await self._conversation_loop(
+                        model, messages, [], [], enable_caching
+                    )
                 
         except Exception as e:
             logger.error(f"❌ LLM call error: {e}")
@@ -522,60 +585,28 @@ class AnalysisService:
                     logger.info(f"🔄 Continuing conversation loop (total tool calls: {len(all_tool_calls)})")
                     continue
                 else:
-                    # No more tool calls - first check if this is a reuse decision
+                    # No more tool calls - parse response for structured content
                     final_content = continuation_result.get("content", "")
-                    reuse_decision = self._check_reuse_decision(final_content)
+                    parsed_response = self._parse_structured_response(final_content)
                     
-                    if reuse_decision:
-                        logger.info("✅ Reuse decision made - existing analysis can be reused")
+                    if parsed_response.get("structured_response_found", True):
+                        # Found a structured response (reuse decision or script generation)
+                        return parsed_response
+                    else:
+                        # No structured response found
+                        logger.warning("❌ Task incomplete: No reuse decision or script generation response found")
                         return {
-                            "success": True,
+                            "success": False,
                             "provider": self.llm_service.provider_type,
-                            "task_completed": True,
-                            "response_type": "reuse_decision",
-                            "data": reuse_decision,
-                            "raw_content": final_content
+                            "task_completed": False,
+                            "response_type": "error",
+                            "data": {
+                                "error_type": "no_structured_response",
+                                "message": "LLM response did not contain reuse decision or script generation JSON"
+                            },
+                            "raw_content": final_content,
+                            "error": "LLM response did not contain reuse decision or script generation JSON"
                         }
-                    
-                    # Check if this is a script generation response
-                    script_generation_response = self._check_script_generation_response(final_content)
-                    if script_generation_response:
-                        if script_generation_response.get("status") == "success":
-                            logger.info("✅ Script generation completed successfully")
-                            return {
-                                "success": True,
-                                "provider": self.llm_service.provider_type,
-                                "task_completed": True,
-                                "response_type": "script_generation",
-                                "data": script_generation_response,
-                                "raw_content": final_content
-                            }
-                        else:  # status == "failed"
-                            logger.error("❌ Script generation failed")
-                            return {
-                                "success": False,
-                                "provider": self.llm_service.provider_type,
-                                "task_completed": False,
-                                "response_type": "script_generation_failed",
-                                "data": script_generation_response,
-                                "raw_content": final_content,
-                                "error": script_generation_response.get("final_error", "Script generation failed")
-                            }
-                    
-                    # No reuse decision or script generation response found
-                    logger.warning("❌ Task incomplete: No reuse decision or script generation response found")
-                    return {
-                        "success": False,
-                        "provider": self.llm_service.provider_type,
-                        "task_completed": False,
-                        "response_type": "error",
-                        "data": {
-                            "error_type": "no_structured_response",
-                            "message": "LLM response did not contain reuse decision or script generation JSON"
-                        },
-                        "raw_content": final_content,
-                        "error": "LLM response did not contain reuse decision or script generation JSON"
-                    }
                         
         except Exception as e:
             logger.error(f"❌ Conversation loop error: {e}")
@@ -820,13 +851,67 @@ class AnalysisService:
         except:
             return False
     
-    def _check_script_generation_response(self, content: str) -> Optional[Dict[str, Any]]:
-        """Check if content contains a script generation JSON response"""
+    def _parse_structured_response(self, content: str) -> Dict[str, Any]:
+        """Parse LLM response for structured content (reuse decisions or script generation)"""
         try:
-            # Look for JSON code blocks in the content
+            # Check if this is a reuse decision
+            reuse_decision = self._check_reuse_decision(content)
+            if reuse_decision:
+                logger.info("✅ Reuse decision made - existing analysis can be reused")
+                return {
+                    "success": True,
+                    "provider": self.llm_service.provider_type,
+                    "task_completed": True,
+                    "response_type": "reuse_decision",
+                    "data": reuse_decision,
+                    "raw_content": content
+                }
+            
+            # Check if this is a script generation response
+            script_generation_response = self._check_script_generation_response(content)
+            if script_generation_response:
+                if script_generation_response.get("status") == "success":
+                    logger.info("✅ Script generation completed successfully")
+                    return {
+                        "success": True,
+                        "provider": self.llm_service.provider_type,
+                        "task_completed": True,
+                        "response_type": "script_generation",
+                        "data": script_generation_response,
+                        "raw_content": content
+                    }
+                else:  # status == "failed"
+                    logger.error("❌ Script generation failed")
+                    return {
+                        "success": False,
+                        "provider": self.llm_service.provider_type,
+                        "task_completed": False,
+                        "response_type": "script_generation_failed",
+                        "data": script_generation_response,
+                        "raw_content": content,
+                        "error": script_generation_response.get("final_error", "Script generation failed")
+                    }
+            
+            # No structured response found
+            return {
+                "success": False,
+                "structured_response_found": False,
+                "message": "No structured response found"
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error parsing structured response: {e}")
+            return {
+                "success": False,
+                "error": f"Error parsing response: {str(e)}"
+            }
+
+    def _check_script_generation_response(self, content: str) -> Optional[Dict[str, Any]]:
+        """Check if content contains a script generation JSON response or Python script"""
+        try:
             import re
             
-            # Extract JSON from markdown code blocks
+            # First, look for JSON code blocks in the content
             json_pattern = r'```json\s*(.*?)\s*```'
             json_matches = re.findall(json_pattern, content, re.DOTALL)
             
@@ -857,6 +942,23 @@ class AnalysisService:
                         return script_data
             except json.JSONDecodeError:
                 pass
+            
+            # If no JSON structured response found, look for Python scripts in markdown
+            python_pattern = r'```python\s*(.*?)\s*```'
+            python_matches = re.findall(python_pattern, content, re.DOTALL)
+            
+            if python_matches:
+                # Found Python script - create script generation response
+                script_content = python_matches[0].strip()
+                if len(script_content) > 100:  # Ensure it's a substantial script
+                    logger.info("📝 Python script found in markdown content")
+                    return {
+                        "status": "success",
+                        "script_content": script_content,
+                        "script_name": "generated_analysis.py",
+                        "analysis_description": "Python script for financial analysis",
+                        "source": "markdown_extraction"
+                    }
                 
             return None
             

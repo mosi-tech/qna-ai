@@ -76,3 +76,5 @@ ollama-server/scriptEdition/scripts/*
 ollama-server/scriptEdition/data/*
 ollama-server/scriptEdition/apiServer/search/data/*
 ollama-server/scriptEdition/apiServer/data/*
+/serena
+/ollama-server/scriptEdition/apiServer/code_gen

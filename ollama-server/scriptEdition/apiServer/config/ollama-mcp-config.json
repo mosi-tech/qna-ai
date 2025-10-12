@@ -7,6 +7,10 @@
         "USE_MOCK_FINANCIAL_DATA": "true"
       }
     },
+    "analytics-server": {
+      "command": "python",
+      "args": ["/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server/analytics_server.py"]
+    },
     "validation-server": {
       "command": "python",
       "args": ["/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server/mcp_script_validation_server.py"]

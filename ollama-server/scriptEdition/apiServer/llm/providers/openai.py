@@ -73,10 +73,85 @@ class OpenAIProvider(LLMProvider):
                     logger.error(f"Manual parsing failed: {e}")
                     return {}
     
+    def _parse_tool_calls_from_content(self, content: str) -> List[Dict[str, Any]]:
+        """Parse tool calls that are embedded in content as text"""
+        import re
+        import uuid
+        
+        tool_calls = []
+        
+        # Pattern 1: <tool_call> blocks with JSON
+        tool_call_pattern = r'<tool_call>\s*(\{.*?\})\s*</tool_call>'
+        matches = re.findall(tool_call_pattern, content, re.DOTALL)
+        
+        for i, match in enumerate(matches):
+            try:
+                # Parse the JSON content
+                tool_data = json.loads(match.strip())
+                
+                # Extract name and arguments
+                name = tool_data.get("name", "")
+                arguments = tool_data.get("arguments", {})
+                
+                # Create a tool call in our internal format
+                tool_call = {
+                    "function": {
+                        "name": name,
+                        "arguments": arguments
+                    },
+                    "id": f"call_{uuid.uuid4().hex[:8]}",  # Generate a unique ID
+                    "openai_tool_call": {
+                        "id": f"call_{uuid.uuid4().hex[:8]}",
+                        "type": "function", 
+                        "function": {
+                            "name": name,
+                            "arguments": json.dumps(arguments) if isinstance(arguments, dict) else arguments
+                        }
+                    }
+                }
+                
+                tool_calls.append(tool_call)
+                logger.info(f"Parsed tool call from content: {name}")
+                
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse tool call JSON from content: {e}")
+                logger.error(f"Raw content: {match}")
+                continue
+            except Exception as e:
+                logger.error(f"Error parsing tool call from content: {e}")
+                continue
+        
+        # Pattern 2: Look for inline JSON with "name" field (fallback)
+        if not tool_calls:
+            json_pattern = r'\{"name":\s*"([^"]+)"[^}]*\}'
+            json_matches = re.findall(json_pattern, content)
+            
+            for name in json_matches:
+                if name:  # Basic validation
+                    tool_call = {
+                        "function": {
+                            "name": name,
+                            "arguments": {}
+                        },
+                        "id": f"call_{uuid.uuid4().hex[:8]}",
+                        "openai_tool_call": {
+                            "id": f"call_{uuid.uuid4().hex[:8]}",
+                            "type": "function",
+                            "function": {
+                                "name": name,
+                                "arguments": "{}"
+                            }
+                        }
+                    }
+                    tool_calls.append(tool_call)
+                    logger.info(f"Parsed basic tool call from content: {name}")
+        
+        return tool_calls
+    
     async def call_api(self, model: str, messages: List[Dict[str, Any]], 
                       max_tokens: int = 4000, enable_caching: bool = False,
                       override_system_prompt: Optional[str] = None,
-                      override_tools: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
+                      override_tools: Optional[List[Dict[str, Any]]] = None, force_api: bool = True) -> Dict[str, Any]:
         """Make OpenAI API call using stored system prompt and tools"""
         
         # Use overrides if provided, otherwise use stored data
@@ -96,7 +171,8 @@ class OpenAIProvider(LLMProvider):
         request_data = {
             "model": model,
             "messages": openai_messages,
-            "max_tokens": max_tokens
+            "max_tokens": max_tokens,
+            "response_format": { "type": "json_object" }
         }
         
         # Add processed tools if provided
@@ -136,7 +212,15 @@ class OpenAIProvider(LLMProvider):
         content = message.get("content", "")
         tool_calls = message.get("tool_calls", [])
         
-        # Convert OpenAI tool calls to our internal format
+        # Check if tool calls are embedded in content as text and add them to tool_calls
+        if content and "<tool_call>" in content:
+            logger.info("Found tool calls embedded in content field")
+            content_tool_calls = self._parse_tool_calls_from_content(content)
+            # Convert to OpenAI format and add to tool_calls list
+            for content_tool_call in content_tool_calls:
+                tool_calls.append(content_tool_call["openai_tool_call"])
+        
+        # Convert all OpenAI tool calls to our internal format
         formatted_tool_calls = []
         for tool_call in tool_calls:
             try:

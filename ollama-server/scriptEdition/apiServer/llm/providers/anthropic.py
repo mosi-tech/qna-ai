@@ -242,9 +242,26 @@ class AnthropicProvider(LLMProvider):
                 # Get the last element which contains the result
                 last_element = response_data[-1]
                 
-                # Extract the result field which is stringified JSON - return as-is
+                # Extract the result field which is stringified JSON - parse it completely
                 if isinstance(last_element, dict) and "result" in last_element:
-                    output_text = last_element["result"]  # Return stringified JSON as-is
+                    result_content = last_element["result"]
+                    # Try to parse the JSON if it's a string starting with ```json
+                    if isinstance(result_content, str) and result_content.strip().startswith('```json'):
+                        try:
+                            # Extract JSON from markdown code block
+                            json_start = result_content.find('{')
+                            json_end = result_content.rfind('}') + 1
+                            if json_start != -1 and json_end != -1:
+                                json_str = result_content[json_start:json_end]
+                                parsed_json = json.loads(json_str)
+                                output_text = json.dumps(parsed_json, indent=2)
+                            else:
+                                output_text = result_content
+                        except (json.JSONDecodeError, ValueError):
+                            # If parsing fails, return as-is
+                            output_text = result_content
+                    else:
+                        output_text = result_content
                 else:
                     # Fallback to the entire last element
                     output_text = json.dumps(last_element, indent=2)
