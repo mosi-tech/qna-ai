@@ -419,6 +419,101 @@ class AnthropicProvider(LLMProvider):
                 formatted_tool_calls.append(anthropic_block)
         
         return formatted_tool_calls
+    
+    def format_assistant_message_with_tool_calls(self, tool_calls: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Format assistant message with tool calls for Anthropic"""
+        return {
+            "role": "assistant",
+            "content": self.format_tool_calls(tool_calls)
+        }
+    
+    def contains_tool_calls(self, message: Any) -> bool:
+        """Check if message contains Anthropic tool calls"""
+        if not message:
+            return False
+        
+        # For Anthropic, tool calls are embedded in the content array
+        # Extract content from message if this is a full message object
+        content = message
+        if isinstance(message, dict) and "content" in message:
+            content = message["content"]
+        
+        # Handle different content formats
+        if isinstance(content, list):
+            # Content is a list of tool use objects
+            for item in content:
+                if isinstance(item, dict) and item.get("type") == "tool_use":
+                    return True
+        elif isinstance(content, str):
+            # Content is a string representation - check for Anthropic tool indicators
+            tool_indicators = ["tool_use", "function_name", "mcp__", "write_file", "validate_python_script"]
+            return any(indicator in content for indicator in tool_indicators)
+        elif isinstance(content, dict):
+            # Content is a single tool use object
+            if content.get("type") == "tool_use":
+                return True
+        
+        return False
+    
+    def get_tool_result_role(self) -> str:
+        """Anthropic uses 'user' role for tool result messages"""
+        return "user"
+    
+    def message_contains_function(self, message: Any, function_name: str) -> bool:
+        """Check if Anthropic message contains a specific function call"""
+        if not message:
+            return False
+        
+        # Extract content from message if this is a full message object
+        content = message
+        if isinstance(message, dict) and "content" in message:
+            content = message["content"]
+        
+        # Handle different content formats
+        if isinstance(content, list):
+            # Content is a list of tool use objects
+            for item in content:
+                if isinstance(item, dict) and item.get("type") == "tool_use":
+                    tool_name = item.get("name", "")
+                    if function_name in tool_name:
+                        return True
+        elif isinstance(content, str):
+            # Content is a string representation
+            return function_name in content
+        elif isinstance(content, dict):
+            # Content is a single tool use object
+            if content.get("type") == "tool_use":
+                tool_name = content.get("name", "")
+                return function_name in tool_name
+        
+        return False
+    
+    def contains_tool_results(self, message: Any) -> bool:
+        """Check if Anthropic message contains tool results"""
+        if not message:
+            return False
+        
+        # Extract content from message if this is a full message object
+        content = message
+        if isinstance(message, dict) and "content" in message:
+            content = message["content"]
+        
+        # Handle different content formats
+        if isinstance(content, list):
+            # Content is a list of objects, check for tool_result type
+            for item in content:
+                if isinstance(item, dict) and item.get("type") == "tool_result":
+                    return True
+        elif isinstance(content, str):
+            # Content is a string representation - check for Anthropic tool result indicators
+            tool_result_indicators = ["tool_result", "tool_use_id"]
+            return any(indicator in content for indicator in tool_result_indicators)
+        elif isinstance(content, dict):
+            # Content is a single tool result object
+            if content.get("type") == "tool_result":
+                return True
+        
+        return False
                 
     
     def format_tool_results(self, tool_calls: List[Dict[str, Any]], 

@@ -13,46 +13,27 @@ from datetime import datetime
 from typing import Dict, Any, Optional, List
 
 from llm import create_code_prompt_builder_llm, LLMService
-from llm.cache import ProviderCacheManager
-from integrations.mcp.mcp_client import MCPClient
+from .base_service import BaseService
 
-logger = logging.getLogger("code-prompt-builder")
-
-class CodePromptBuilderService:
+class CodePromptBuilderService(BaseService):
     """Service that analyzes queries and builds enriched prompts for code generation"""
     
     def __init__(self, llm_service: Optional[LLMService] = None):
-        self.llm_service = llm_service or create_code_prompt_builder_llm()
-        self.cache_manager = ProviderCacheManager(self.llm_service.provider, enable_caching=True)
-        
-        # Load system prompt for function selection
-        self._load_system_prompt()
-        
+        super().__init__(llm_service=llm_service, service_name="code-prompt-builder")
+    
+    def _create_default_llm(self) -> LLMService:
+        """Create default LLM service for code prompt builder"""
+        return create_code_prompt_builder_llm()
+    
+    def _get_system_prompt_filename(self) -> str:
+        """Use code prompt builder specific system prompt"""
+        return "system-prompt-code-prompt-builder.txt"
+    
+    def _initialize_service_specific(self):
+        """Initialize code prompt builder specific components"""
         # Load code prompt template
         self._load_code_prompt_template()
-        
-        # Initialize MCP client for docstring fetching
-        self.mcp_client = MCPClient()
-        self._mcp_initialized = False
-        
-        logger.info(f"🔧 Initialized Code Prompt Builder with {self.llm_service.provider_type}")
     
-    def _load_system_prompt(self):
-        """Load system prompt for code prompt builder"""
-        prompt_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), 
-            "..", 
-            "config", 
-            "system-prompt-code-prompt-builder.txt"
-        )
-        
-        try:
-            with open(prompt_path, 'r', encoding='utf-8') as f:
-                self.system_prompt = f.read()
-            logger.info("✅ Loaded code prompt builder system prompt")
-        except FileNotFoundError:
-            logger.error(f"❌ System prompt not found: {prompt_path}")
-            self.system_prompt = "You are a financial analysis tool selector."
     
     def _load_code_prompt_template(self):
         """Load code prompt template"""
@@ -60,53 +41,17 @@ class CodePromptBuilderService:
             os.path.dirname(os.path.abspath(__file__)), 
             "..", 
             "config", 
-            "code-prompt-template.txt"
+            "code-prompt-template-optimized.txt"
         )
         
         try:
             with open(template_path, 'r', encoding='utf-8') as f:
                 self.code_prompt_template = f.read()
-            logger.info("✅ Loaded code prompt template")
+            self.logger.info("✅ Loaded code prompt template")
         except FileNotFoundError:
-            logger.error(f"❌ Code prompt template not found: {template_path}")
+            self.logger.error(f"❌ Code prompt template not found: {template_path}")
             self.code_prompt_template = "Generate Python script using the provided functions."
     
-    async def _initialize_mcp_client(self):
-        """Initialize MCP client with server configurations"""
-        try:
-            # Load MCP config
-            config_path = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)), 
-                "..", 
-                "config", 
-                "ollama-mcp-config.json"
-            )
-            
-            with open(config_path, 'r', encoding='utf-8') as f:
-                config = json.load(f)
-            
-            # Store server configurations
-            self.mcp_client.server_configs = config.get("mcpServers", {})
-            logger.info(f"✅ Loaded MCP config with {len(self.mcp_client.server_configs)} servers")
-            
-            # Initialize tools discovery
-            await self.mcp_client.discover_all_tools()
-            logger.info(f"✅ Discovered {len(self.mcp_client.available_tools)} MCP tools")
-            
-        except Exception as e:
-            logger.error(f"❌ Error loading MCP config: {e}")
-            # Set fallback config
-            self.mcp_client.server_configs = {
-                "financial-server": {
-                    "command": "python",
-                    "args": ["/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server/financial_server.py"],
-                    "env": {"USE_MOCK_FINANCIAL_DATA": "true"}
-                },
-                "analytics-server": {
-                    "command": "python",
-                    "args": ["/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server/analytics_server.py"]
-                }
-            }
     
     async def build_enriched_prompt(self, user_query: str, context: Optional[Dict] = None) -> Dict[str, Any]:
         """
@@ -120,18 +65,16 @@ class CodePromptBuilderService:
             Dict containing selected functions, schemas, and enriched prompt
         """
         try:
-            logger.info(f"🔍 Building enriched prompt for query: {user_query[:100]}...")
+            self.logger.info(f"🔍 Building enriched prompt for query: {user_query[:100]}...")
             
-            # Initialize MCP client if not already done
-            if not self._mcp_initialized:
-                await self._initialize_mcp_client()
-                self._mcp_initialized = True
+            # Ensure MCP tools are loaded in LLM service
+            await self.llm_service.ensure_tools_loaded()
             
             # Step 1: Analyze query and select functions
             function_selection = await self._analyze_and_select_functions(user_query, context)
             
-            # Step 2: Fetch docstrings for selected functions
-            function_schemas = await self._fetch_function_schemas(function_selection['selected_functions'])
+            # Step 2: Fetch docstrings for selected functions (simplified)
+            function_schemas = await self._get_function_schemas_from_llm(function_selection['selected_functions'])
             
             # Step 3: Build enriched prompt
             enriched_prompt = self._build_prompt(user_query, function_selection, function_schemas)
@@ -146,11 +89,11 @@ class CodePromptBuilderService:
                 "timestamp": datetime.now().isoformat()
             }
             
-            logger.info(f"✅ Built enriched prompt with {len(function_selection['selected_functions'])} functions")
+            self.logger.info(f"✅ Built enriched prompt with {len(function_selection['selected_functions'])} functions")
             return result
             
         except Exception as e:
-            logger.error(f"❌ Error building enriched prompt: {e}")
+            self.logger.error(f"❌ Error building enriched prompt: {e}")
             return {
                 "status": "error",
                 "error": str(e),
@@ -170,7 +113,6 @@ class CodePromptBuilderService:
         - analysis_type: Single word category (portfolio, correlation, risk, etc.)
         - selected_functions: Array of 3-6 function names only (no descriptions)
         - suggested_parameters: Essential parameters only
-        - workflow_steps: Brief description of analysis approach
         
         Be concise. No function descriptions.
         """
@@ -186,16 +128,16 @@ class CodePromptBuilderService:
             
             # Check if LLM request was successful
             if not response.get("success"):
-                logger.error(f"❌ LLM request failed: {response.get('error')}")
+                self.logger.error(f"❌ LLM request failed: {response.get('error')}")
                 raise Exception(f"LLM request failed: {response.get('error')}")
             
             # Parse JSON response
             function_selection = json.loads(response["content"])
-            logger.info(f"📋 Selected {len(function_selection.get('selected_functions', []))} functions")
+            self.logger.info(f"📋 Selected {len(function_selection.get('selected_functions', []))} functions")
             return function_selection
             
         except Exception as e:
-            logger.error(f"❌ Error selecting functions: {e}")
+            self.logger.error(f"❌ Error selecting functions: {e}")
             # Fallback to basic function set
             return {
                 "analysis_type": "general",
@@ -210,74 +152,112 @@ class CodePromptBuilderService:
                 }
             }
     
-    async def _fetch_function_schemas(self, function_names: List[str]) -> Dict[str, str]:
-        """Fetch docstrings for selected functions via MCP"""
+    async def _get_function_schemas_from_llm(self, function_names: List[str]) -> Dict[str, str]:
+        """Get detailed function schemas with docstrings via LLM service tool calls"""
         schemas = {}
         
-        logger.info(f"🔍 Fetching schemas for {len(function_names)} functions")
-        logger.info(f"📋 Available MCP tools: {len(self.mcp_client.available_tools)}")
+        self.logger.info(f"🔍 Getting detailed schemas for {len(function_names)} functions")
+        
+        # Get available tools from LLM service to verify functions exist
+        available_tools = self.llm_service.default_tools
+        tool_map = {tool.get("function", {}).get("name", ""): tool for tool in available_tools if tool.get("type") == "function"}
+        
+        self.logger.info(f"📋 Available tools in LLM service: {len(tool_map)}")
         
         for function_name in function_names:
             try:
-                # Try financial server first, then analytics server
-                servers_to_try = ["financial-server", "analytics-server"]
+                # First check if function exists in available tools
+                if function_name not in tool_map:
+                    schemas[function_name] = f"Function: {function_name} (not found in available tools)"
+                    self.logger.warning(f"⚠️ Function {function_name} not found in available tools")
+                    continue
                 
-                docstring = None
-                for server in servers_to_try:
-                    tool_name = f"{server}__get_function_docstring"
-                    logger.info(f"🔧 Trying {tool_name} for {function_name}")
-                    
-                    try:
-                        # Check if tool exists
-                        if not self.mcp_client.validate_function_exists(tool_name):
-                            logger.warning(f"⚠️ Tool {tool_name} not found in available tools")
-                            continue
-                            
-                        result = await self.mcp_client.call_tool(
-                            tool_name,
-                            {"function_name": function_name}
-                        )
-                        
-                        # Extract and parse MCP result
-                        result_text = None
-                        if hasattr(result, 'content') and result.content:
-                            result_text = result.content[0].text if hasattr(result.content[0], 'text') else str(result.content[0])
-                        elif isinstance(result, str):
-                            result_text = result
-                        
-                        if result_text:
-                            try:
-                                # Parse JSON response
-                                parsed_result = json.loads(result_text)
-                                if parsed_result.get('success'):
-                                    docstring = parsed_result.get('docstring', '')
-                                    if docstring:
-                                        logger.info(f"✅ Got schema for {function_name} from {server}")
-                                        break
-                                else:
-                                    logger.warning(f"⚠️ MCP call failed for {function_name}: {parsed_result.get('error', 'Unknown error')}")
-                            except json.JSONDecodeError:
-                                # If not JSON, treat as plain text docstring
-                                docstring = result_text
-                                logger.info(f"✅ Got schema for {function_name} from {server} (plain text)")
-                                break
-                            
-                    except Exception as e:
-                        logger.warning(f"⚠️ Error calling {tool_name}: {e}")
-                        continue
+                # Try to get detailed docstring via MCP docstring tools
+                docstring = await self._fetch_function_docstring(function_name)
                 
                 if docstring:
                     schemas[function_name] = docstring
-                    logger.info(f"📖 Fetched schema for {function_name}")
+                    self.logger.info(f"📖 Got detailed docstring for {function_name}")
                 else:
-                    logger.warning(f"⚠️ No schema found for {function_name}")
-                    schemas[function_name] = f"Function: {function_name} (schema not available)"
+                    # Fallback to basic tool schema if docstring fetch fails
+                    tool_func = tool_map[function_name].get("function", {})
+                    schema = f"Function: {function_name}\n"
+                    schema += f"Description: {tool_func.get('description', 'No description available')}\n"
+                    
+                    parameters = tool_func.get('parameters', {})
+                    if parameters:
+                        schema += f"Parameters: {json.dumps(parameters, indent=2)}"
+                    
+                    schemas[function_name] = schema
+                    self.logger.info(f"📖 Used basic schema for {function_name} (docstring unavailable)")
                     
             except Exception as e:
-                logger.error(f"❌ Error fetching schema for {function_name}: {e}")
+                self.logger.error(f"❌ Error getting schema for {function_name}: {e}")
                 schemas[function_name] = f"Function: {function_name} (error fetching schema)"
         
         return schemas
+    
+    async def _fetch_function_docstring(self, function_name: str) -> Optional[str]:
+        """Fetch detailed docstring for a function using server-specific docstring tool"""
+        # Extract server name and base function name
+        # e.g., "financial-analysis__alpaca_market_stocks_bars" -> server="financial-analysis", base="alpaca_market_stocks_bars"
+        if "__" not in function_name:
+            self.logger.debug(f"No server prefix in function name: {function_name}")
+            return None
+            
+        server_name, base_function_name = function_name.split("__", 1)
+        
+        try:
+            self.logger.debug(f"Attempting docstring fetch for: {base_function_name} from server: {server_name}")
+            
+            # Try direct MCP client call
+            from integrations.mcp.mcp_client import mcp_client
+            
+            if not mcp_client:
+                self.logger.debug("MCP client not available")
+                return None
+            
+            # Construct the expected docstring tool name for this server
+            docstring_tool = f"{server_name}__get_function_docstring"
+            
+            # Check if this specific docstring tool is available
+            available_tool_names = {tool.get("function", {}).get("name", "") for tool in self.llm_service.default_tools if tool.get("type") == "function"}
+            
+            if docstring_tool not in available_tool_names:
+                self.logger.debug(f"Docstring tool {docstring_tool} not available")
+                return None
+            
+            self.logger.debug(f"🔧 Using {docstring_tool} for {base_function_name}")
+            
+            try:
+                tool_result = await mcp_client.call_tool(
+                    docstring_tool,
+                    {"function_name": base_function_name}
+                )
+                
+                # Parse the result - handle various formats
+                if hasattr(tool_result, 'content') and tool_result.content:
+                    text_content = tool_result.content[0].text
+                    try:
+                        parsed_result = json.loads(text_content.strip())
+                        if parsed_result.get('success') and parsed_result.get('docstring'):
+                            docstring = parsed_result['docstring']
+                            self.logger.info(f"✅ Got docstring for {base_function_name} from {server_name}")
+                            return docstring
+                    except json.JSONDecodeError:
+                        # Try as plain text if it's substantial
+                        if text_content and len(text_content) > 50:
+                            self.logger.info(f"✅ Got plain text docstring for {base_function_name} from {server_name}")
+                            return text_content
+                            
+            except Exception as e:
+                self.logger.debug(f"⚠️ Error calling {docstring_tool}: {e}")
+            
+            return None
+            
+        except Exception as e:
+            self.logger.debug(f"Error in docstring fetch for {base_function_name}: {e}")
+            return None
     
     def _build_prompt(self, user_query: str, function_selection: Dict, function_schemas: Dict[str, str]) -> str:
         """Build the enriched prompt for code generator using template file"""
@@ -292,7 +272,6 @@ class CodePromptBuilderService:
         enriched_prompt = self.code_prompt_template.format(
             user_query=user_query,
             analysis_type=function_selection.get('analysis_type', 'general'),
-            workflow_steps=function_selection.get('workflow_steps', 'Use selected functions to analyze the query'),
             function_docs=function_docs,
             suggested_parameters=json.dumps(function_selection.get('suggested_parameters', {}), indent=2)
         )
@@ -334,10 +313,10 @@ class CodePromptBuilderService:
             with open(filepath, 'w', encoding='utf-8') as f:
                 f.write(header + prompt)
             
-            logger.info(f"📝 Saved debug prompt to {filename}")
+            self.logger.info(f"📝 Saved debug prompt to {filename}")
             
         except Exception as e:
-            logger.warning(f"⚠️ Failed to save debug prompt: {e}")
+            self.logger.warning(f"⚠️ Failed to save debug prompt: {e}")
             # Don't fail the main operation if debug saving fails
 
 # Factory function for easy initialization

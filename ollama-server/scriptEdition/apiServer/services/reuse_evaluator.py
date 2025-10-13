@@ -13,38 +13,25 @@ from datetime import datetime
 from typing import Dict, Any, Optional, List
 
 from llm import create_reuse_evaluator_llm, LLMService
-from llm.cache import ProviderCacheManager
+from .base_service import BaseService
 
-logger = logging.getLogger("reuse-evaluator")
-
-class ReuseEvaluatorService:
+class ReuseEvaluatorService(BaseService):
     """Service that evaluates whether existing analyses can be reused for new queries"""
     
     def __init__(self, llm_service: Optional[LLMService] = None):
-        self.llm_service = llm_service or create_reuse_evaluator_llm()
-        self.cache_manager = ProviderCacheManager(self.llm_service.provider, enable_caching=True)
-        
-        # Load system prompt for reuse evaluation
-        self._load_system_prompt()
-        
-        logger.info(f"🔄 Initialized Reuse Evaluator with {self.llm_service.provider_type}")
+        super().__init__(llm_service=llm_service, service_name="reuse-evaluator")
     
-    def _load_system_prompt(self):
-        """Load system prompt for reuse evaluation"""
-        prompt_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), 
-            "..", 
-            "config", 
-            "system-prompt-reuse-evaluator.txt"
-        )
-        
-        try:
-            with open(prompt_path, 'r', encoding='utf-8') as f:
-                self.system_prompt = f.read()
-            logger.info("✅ Loaded reuse evaluator system prompt")
-        except FileNotFoundError:
-            logger.error(f"❌ System prompt not found: {prompt_path}")
-            self.system_prompt = "You are a financial analysis reuse evaluator."
+    def _create_default_llm(self) -> LLMService:
+        """Create default LLM service for reuse evaluator"""
+        return create_reuse_evaluator_llm()
+    
+    def _get_system_prompt_filename(self) -> str:
+        """Use reuse evaluator specific system prompt"""
+        return "system-prompt-reuse-evaluator.txt"
+    
+    def _get_default_system_prompt(self) -> str:
+        """Default system prompt for reuse evaluator"""
+        return "You are a financial analysis reuse evaluator."
     
     async def evaluate_reuse(self, user_query: str, existing_analyses: List[Dict], context: Optional[Dict] = None) -> Dict[str, Any]:
         """

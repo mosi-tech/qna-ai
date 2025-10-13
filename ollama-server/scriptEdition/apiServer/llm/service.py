@@ -24,7 +24,55 @@ class LLMService:
         # Create provider
         self.provider = self._create_provider()
         
+        # Store default tools for reset capability
+        self.default_tools = []
+        self._tools_loaded = False
+        
         logger.info(f"🤖 Initialized LLM service: {config.provider_type}/{config.default_model}")
+    
+    async def ensure_tools_loaded(self):
+        """Load MCP tools if not already loaded"""
+        if self._tools_loaded:
+            return
+        
+        try:
+            if self.config.service_name:
+                # Use simplified MCP loader with service-specific configuration
+                from .mcp_tools import _mcp_loader
+                self.default_tools = await _mcp_loader.load_tools_for_service(self.config.service_name)
+                logger.info(f"🔧 Loaded {len(self.default_tools)} MCP tools for service '{self.config.service_name}'")
+            else:
+                # No service name - use default configuration
+                from .mcp_tools import _mcp_loader
+                self.default_tools = await _mcp_loader.load_tools_for_service("default")
+                logger.info(f"🔧 Loaded {len(self.default_tools)} MCP tools using default config")
+                
+            self.provider.set_tools(self.default_tools)
+        except Exception as e:
+            logger.error(f"❌ Failed to load MCP tools: {e}")
+            self.default_tools = []
+        
+        self._tools_loaded = True
+    
+    def override_tools(self, tools: List[Dict[str, Any]]):
+        """Override tools at runtime"""
+        self.provider.set_tools(tools)
+        logger.info(f"🔄 Overrode tools: {len(tools)} tools")
+    
+    def reset_to_default_tools(self):
+        """Reset to default MCP tools"""
+        self.provider.set_tools(self.default_tools)
+        logger.info(f"↩️ Reset to default tools: {len(self.default_tools)} tools")
+    
+    async def load_tools_for_service(self, service_name: str):
+        """Load tools for a specific service (bypasses current service config)"""
+        try:
+            from .mcp_tools import _mcp_loader
+            tools = await _mcp_loader.load_tools_for_service(service_name)
+            self.provider.set_tools(tools)
+            logger.info(f"📁 Loaded {len(tools)} tools for service '{service_name}'")
+        except Exception as e:
+            logger.error(f"❌ Failed to load tools for service '{service_name}': {e}")
     
     def _create_provider(self) -> LLMProvider:
         """Create the appropriate LLM provider"""
@@ -49,8 +97,12 @@ class LLMService:
             )
             
         elif self.config.provider_type == "ollama":
-            # Note: Ollama provider needs to be implemented
-            raise NotImplementedError("Ollama provider not yet implemented in unified service")
+            return create_provider(
+                "ollama",
+                self.config.api_key or "",  # Ollama doesn't require API key
+                default_model=self.config.default_model,
+                base_url=self.config.base_url
+            )
             
         else:
             raise ValueError(f"Unsupported provider: {self.config.provider_type}")
@@ -90,6 +142,9 @@ class LLMService:
             Dict with 'success', 'content', 'tool_calls', etc.
         """
         try:
+            # Ensure MCP tools are loaded
+            await self.ensure_tools_loaded()
+            
             # Use provided values or defaults from config
             model = model or self.default_model
             max_tokens = max_tokens or self.config.max_tokens
@@ -249,16 +304,24 @@ def create_llm_service(task: Optional[str] = None, config: Optional[LLMConfig] =
 # Convenience functions for common configurations
 def create_analysis_llm() -> LLMService:
     """Create LLM service optimized for analysis tasks"""
-    return create_llm_service("ANALYSIS")
+    config = LLMConfig.for_task("ANALYSIS")
+    config.service_name = "analysis"
+    return LLMService(config)
 
 def create_context_llm() -> LLMService:
     """Create LLM service optimized for context tasks"""
-    return create_llm_service("CONTEXT")
+    config = LLMConfig.for_task("CONTEXT") 
+    config.service_name = "context"
+    return LLMService(config)
 
 def create_code_prompt_builder_llm() -> LLMService:
     """Create LLM service optimized for code prompt building tasks"""
-    return create_llm_service("CODE_PROMPT_BUILDER")
+    config = LLMConfig.for_task("CODE_PROMPT_BUILDER")
+    config.service_name = "code-prompt-builder"
+    return LLMService(config)
 
 def create_reuse_evaluator_llm() -> LLMService:
     """Create LLM service optimized for reuse evaluation tasks"""
-    return create_llm_service("REUSE_EVALUATOR")
+    config = LLMConfig.for_task("REUSE_EVALUATOR")
+    config.service_name = "reuse-evaluator"
+    return LLMService(config)

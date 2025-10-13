@@ -66,15 +66,15 @@ async def handle_list_tools() -> list[Tool]:
         #         "additionalProperties": False
         #     }
         # ),
-        Tool(
-            name="get_validation_capabilities",
-            description="Get information about validation environment capabilities",
-            inputSchema={
-                "type": "object",
-                "properties": {},
-                "additionalProperties": False
-            }
-        ),
+        # Tool(
+        #     name="get_validation_capabilities",
+        #     description="Get information about validation environment capabilities",
+        #     inputSchema={
+        #         "type": "object",
+        #         "properties": {},
+        #         "additionalProperties": False
+        #     }
+        # ),
         # Tool(
         #     name="write_file",
         #     description="Write content to a file. Use absolute paths for precise file placement, or relative filenames for scripts directory",
@@ -188,7 +188,7 @@ async def handle_call_tool(name: str, arguments: dict) -> list[TextContent | Ima
                 type="text",
                 text=json.dumps({
                     "error": f"Unknown validation tool: {name}",
-                    "available_tools": ["get_validation_capabilities", "read_file", "list_files", "delete_file", "write_and_validate"]
+                    "available_tools": ["read_file", "list_files", "delete_file", "write_and_validate"]
                 }, indent=2)
             )]
             

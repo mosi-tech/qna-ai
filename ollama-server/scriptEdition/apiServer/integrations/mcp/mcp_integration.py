@@ -19,24 +19,17 @@ class MCPIntegration:
         self.mcp_initialized = False
     
     async def ensure_mcp_initialized(self) -> bool:
-        """Ensure MCP client is initialized"""
+        """Ensure MCP client is initialized - relies on SimplifiedMCPLoader"""
         if self.mcp_initialized:
             return True
             
-        try:
-            # Load MCP server configuration
-            config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "config", "ollama-mcp-config.json")
-            with open(config_path, 'r') as f:
-                config = json.load(f)
-            
-            # Initialize MCP client
-            await initialize_mcp_client(config)
+        # Check if the global MCP client is already initialized by SimplifiedMCPLoader
+        if self.mcp_client and hasattr(self.mcp_client, 'available_tools') and self.mcp_client.available_tools:
             self.mcp_initialized = True
-            logger.info(f"MCP client initialized with {len(self.mcp_client.available_tools)} tools")
+            logger.info(f"✅ MCP client already initialized with {len(self.mcp_client.available_tools)} tools")
             return True
-            
-        except Exception as e:
-            logger.error(f"Failed to initialize MCP client: {e}")
+        else:
+            logger.warning("⚠️ MCP client not initialized - should be initialized by SimplifiedMCPLoader in LLMService")
             return False
     
     def get_mcp_tools(self) -> List[Dict[str, Any]]:
@@ -67,36 +60,18 @@ class MCPIntegration:
         logger.debug(f"Converted {len(all_tools)} MCP tools to OpenAI format")
         return all_tools
     
-    def is_forbidden_function_call(self, function_name: str) -> bool:
-        """Check if function call is forbidden (validation-only functions)"""
-        forbidden_patterns = [
-            "alpaca_market_screener_most_actives",
-            "alpaca_market_stocks_bars", 
-            "alpaca_market_stocks_snapshots",
-            "alpaca_market_stocks_quotes_latest",
-            "alpaca_market_stocks_trades_latest",
-            "alpaca_market_screener_top_gainers",
-            "alpaca_market_screener_top_losers",
-            "alpaca_market_news",
-            "alpaca_trading_account",
-            "alpaca_trading_positions",
-            "alpaca_trading_orders",
-            "alpaca_trading_portfolio_history",
-            "alpaca_trading_clock",
-            "eodhd_eod_data",
-            "eodhd_real_time", 
-            "eodhd_fundamentals",
-            "eodhd_dividends",
-            "eodhd_splits",
-            "eodhd_technical",
-            "eodhd_screener",
-            "eodhd_search",
-            "eodhd_exchanges_list",
-            "eodhd_exchange_symbols",
-            "calculate_"
-        ]
+    def is_forbidden_function_call(self, function_name: str, excluded_tools: List[str] = None) -> bool:
+        """Check if function call is forbidden based on provided exclusion list"""
+        if excluded_tools is None:
+            excluded_tools = []
         
-        return any(pattern in function_name for pattern in forbidden_patterns)
+        # Check both full name and base name (without MCP server prefix)
+        base_function_name = function_name.split("__")[-1] if "__" in function_name else function_name
+        
+        return (function_name in excluded_tools or 
+                base_function_name in excluded_tools or
+                any(pattern in function_name for pattern in excluded_tools) or
+                any(pattern in base_function_name for pattern in excluded_tools))
     
     def massage_file_tool_paths(self, function_name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Convert relative filenames to absolute paths for file tools"""
@@ -129,18 +104,18 @@ class MCPIntegration:
         
         return arguments
     
-    def validate_mcp_functions(self, tool_calls: list) -> Dict[str, Any]:
+    def validate_mcp_functions(self, tool_calls: list, excluded_tools: List[str] = None) -> Dict[str, Any]:
         """Validate that tool calls only use allowed MCP functions"""
         validation_results = []
         
         for tool_call in tool_calls:
             function_name = tool_call.get("function", {}).get("name", "")
             
-            if self.is_forbidden_function_call(function_name):
+            if self.is_forbidden_function_call(function_name, excluded_tools):
                 validation_results.append({
                     "function": function_name,
                     "status": "forbidden",
-                    "reason": "This function is not allowed in script generation. Use validation-server functions only."
+                    "reason": "This function is not allowed for this service type."
                 })
             else:
                 validation_results.append({

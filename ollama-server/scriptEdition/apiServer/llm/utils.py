@@ -16,6 +16,7 @@ class LLMConfig:
     base_url: Optional[str] = None
     max_tokens: Optional[int] = None
     temperature: float = 0.1
+    service_name: Optional[str] = None
     
     @classmethod
     def from_env(cls, prefix: str = "LLM") -> 'LLMConfig':
@@ -43,13 +44,22 @@ class LLMConfig:
         api_key = os.getenv(f"{task_upper}_LLM_API_KEY") or cls._get_api_key(provider)
         base_url = os.getenv(f"{task_upper}_LLM_BASE_URL") or os.getenv(f"{provider.upper()}_BASE_URL")
         
+        # Task-specific temperature defaults
+        temperature_defaults = {
+            "ANALYSIS": "0.2",  # Analysis tasks need slightly more creativity for financial insights
+            "CONTEXT": "0.1",   # Context tasks should be more deterministic
+            "CODE_PROMPT_BUILDER": "0.1",  # Code generation should be deterministic
+            "REUSE_EVALUATOR": "0.1"  # Decision making should be consistent
+        }
+        default_temp = temperature_defaults.get(task_upper, "0.1")
+        
         return cls(
             provider_type=provider.lower(),
             default_model=model,
             api_key=api_key,
             base_url=base_url,
             max_tokens=int(os.getenv(f"{task_upper}_LLM_MAX_TOKENS", "4000")),
-            temperature=float(os.getenv(f"{task_upper}_LLM_TEMPERATURE", "0.1"))
+            temperature=float(os.getenv(f"{task_upper}_LLM_TEMPERATURE", default_temp))
         )
     
     @staticmethod
@@ -60,7 +70,7 @@ class LLMConfig:
             "openai": os.getenv("OPENAI_MODEL") or "gpt-oss:20b", 
             "ollama": os.getenv("OLLAMA_MODEL") or "gpt-oss:20b", 
         }
-        return defaults.get(provider.lower(), "claude-3-5-haiku-20241022")
+        return defaults.get(provider.lower(), "")
     
     @staticmethod
     def _get_api_key(provider: str) -> Optional[str]:
@@ -68,9 +78,10 @@ class LLMConfig:
         keys = {
             "anthropic": os.getenv("ANTHROPIC_API_KEY"),
             "openai": os.getenv("OPENAI_API_KEY"),
-            "ollama": None  # No API key needed
+            "ollama": os.getenv("OLLAMA_API_KEY")  # Support Ollama Cloud API key
         }
         return keys.get(provider.lower())
+    
 
 def validate_llm_config(config: LLMConfig) -> Dict[str, Any]:
     """Validate LLM configuration"""
@@ -84,6 +95,10 @@ def validate_llm_config(config: LLMConfig) -> Dict[str, Any]:
     # Check API key for cloud providers
     if config.provider_type in ["anthropic", "openai"] and not config.api_key:
         issues.append(f"API key required for {config.provider_type}")
+    
+    # Check for Ollama Cloud (if base_url contains ollama.com, API key is required)
+    if config.provider_type == "ollama" and config.base_url and "ollama.com" in config.base_url and not config.api_key:
+        issues.append("API key required for Ollama Cloud")
     
     # Check model name
     if not config.default_model:

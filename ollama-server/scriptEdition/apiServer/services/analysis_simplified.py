@@ -13,22 +13,13 @@ from datetime import datetime
 from typing import Dict, Any, Optional, List
 
 from llm import create_analysis_llm, LLMService
-from llm.cache import ProviderCacheManager
+from .base_service import BaseService
 
-logger = logging.getLogger("analysis-service-simplified")
-
-class AnalysisService:
+class AnalysisService(BaseService):
     """Simplified financial question analysis service using Claude Code CLI"""
     
     def __init__(self, llm_service: Optional[LLMService] = None):
-        # Use provided LLM service or create default analysis LLM
-        self.llm_service = llm_service or create_analysis_llm()
-        
-        # Load QnA-specific system prompt
-        self._load_system_prompt_config()
-        
-        # Initialize cache manager
-        self.cache_manager = ProviderCacheManager(self.llm_service.provider, enable_caching=True)
+        super().__init__(llm_service=llm_service, service_name="analysis-simplified")
         
         # Track MCP initialization
         self.mcp_initialized = True  # Simplified - assume always available
@@ -36,42 +27,26 @@ class AnalysisService:
         # Enriched prompt state management
         self._enriched_prompt = None
         self._enriched_prompt_mode = False
-        
-        logger.info(f"🤖 Initialized Simplified Analysis service with {self.llm_service.provider_type}")
     
-    def _load_system_prompt_config(self):
-        """Load system prompt configuration for QnA analysis"""
-        prompt_filename = os.getenv("SYSTEM_PROMPT_FILE", "system-prompt-searchfirst.txt")
-        self.system_prompt_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), 
-            "..", 
-            "config", 
-            prompt_filename
-        )
-        
-        # Also load coding-only prompt for enriched prompts
+    def _create_default_llm(self) -> LLMService:
+        """Create default LLM service for analysis"""
+        return create_analysis_llm()
+    
+    def _get_system_prompt_filename(self) -> str:
+        """Use environment variable or default simplified analysis prompt"""
+        return os.getenv("SYSTEM_PROMPT_FILE", "system-prompt-searchfirst.txt")
+    
+    def _initialize_service_specific(self):
+        """Initialize analysis simplified specific components"""
+        # Load coding-only prompt for enriched prompts
         self.coding_prompt_path = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), 
             "..", 
             "config", 
             "system-prompt-coding-only.txt"
         )
-        
-        self.system_prompt = None  # Cache for system prompt
         self.coding_prompt = None  # Cache for coding prompt
     
-    async def get_system_prompt(self) -> str:
-        """Get system prompt content"""
-        if self.system_prompt is None:
-            try:
-                with open(self.system_prompt_path, 'r', encoding='utf-8') as f:
-                    self.system_prompt = f.read()
-                logger.info(f"📄 Loaded system prompt from {self.system_prompt_path}")
-            except Exception as e:
-                logger.error(f"❌ Failed to load system prompt: {e}")
-                self.system_prompt = "You are a financial analysis assistant."
-        
-        return self.system_prompt
     
     def _is_enriched_prompt(self, message: str) -> bool:
         """Detect if message contains enriched prompt from code prompt builder"""
@@ -92,9 +67,9 @@ class AnalysisService:
             try:
                 with open(self.coding_prompt_path, 'r', encoding='utf-8') as f:
                     self.coding_prompt = f.read()
-                logger.info(f"📄 Loaded coding prompt from {self.coding_prompt_path}")
+                self.logger.info(f"📄 Loaded coding prompt from {self.coding_prompt_path}")
             except Exception as e:
-                logger.error(f"❌ Failed to load coding prompt: {e}")
+                self.logger.error(f"❌ Failed to load coding prompt: {e}")
                 self.coding_prompt = "You are a financial script generator."
         
         return self.coding_prompt
@@ -105,7 +80,7 @@ class AnalysisService:
         self._enriched_prompt_mode = True
         # Update provider's raw system prompt so Claude CLI gets the enriched prompt
         self.llm_service.provider.set_system_prompt(enriched_prompt)
-        logger.info("🔧 Set enriched prompt mode and updated provider")
+        self.logger.info("🔧 Set enriched prompt mode and updated provider")
     
     async def clear_enriched_prompt(self):
         """Clear enriched prompt and return to normal system prompt mode"""
@@ -114,7 +89,7 @@ class AnalysisService:
         # Restore original system prompt on provider
         original_prompt = await self.get_system_prompt()
         self.llm_service.provider.set_system_prompt(original_prompt)
-        logger.info("🔄 Cleared enriched prompt mode and restored original system prompt on provider")
+        self.logger.info("🔄 Cleared enriched prompt mode and restored original system prompt on provider")
     
     def clear_tools(self):
         """Clear tools but preserve validation tools for enriched prompt mode"""
@@ -125,25 +100,25 @@ class AnalysisService:
         except:
             pass
             
-        logger.info("🧹 Cleared all tools from provider - Claude CLI will handle validation tools")
+        self.logger.info("🧹 Cleared all tools from provider - Claude CLI will handle validation tools")
     
     async def get_appropriate_system_prompt(self, message: str) -> str:
         """Get appropriate system prompt based on enriched prompt mode or message type"""
         if self._enriched_prompt_mode and self._enriched_prompt:
-            logger.info("🔧 Using enriched prompt from code prompt builder")
+            self.logger.info("🔧 Using enriched prompt from code prompt builder")
             return self._enriched_prompt
         elif self._is_enriched_prompt(message):
-            logger.info("🔧 Using coding-only system prompt for enriched prompt")
+            self.logger.info("🔧 Using coding-only system prompt for enriched prompt")
             return await self.get_coding_prompt()
         else:
-            logger.info("📄 Using standard system prompt")
+            self.logger.info("📄 Using standard system prompt")
             return await self.get_system_prompt()
     
     def get_mcp_tools(self) -> List[Dict[str, Any]]:
         """Get MCP tools - respects enriched prompt mode"""
         # Don't load tools when in enriched prompt mode
         if self._enriched_prompt_mode:
-            logger.info("🚫 Skipping tool loading - enriched prompt mode active")
+            self.logger.info("🚫 Skipping tool loading - enriched prompt mode active")
             return []
             
         # Return tools for MCP functionality (optional - env var controls CLI usage)
@@ -176,7 +151,7 @@ class AnalysisService:
             if not model:
                 model = self.llm_service.default_model
             
-            logger.info(f"🤔 Analyzing question (CLI controlled by USE_CLAUDE_CODE_CLI env var): {question[:100]}...")
+            self.logger.info(f"🤔 Analyzing question (CLI controlled by USE_CLAUDE_CODE_CLI env var): {question[:100]}...")
             
             # Get appropriate system prompt based on message type
             system_prompt = await self.get_appropriate_system_prompt(question)
@@ -186,11 +161,12 @@ class AnalysisService:
             self.llm_service.provider.set_system_prompt(system_prompt)
             self.llm_service.provider.set_tools(mcp_tools)
             
-            # Create simple message structure
+            # Create message structure with explicit instruction to build Python scripts
+            enhanced_question = f"Write a Python script to answer this question. Follow the instructions in the system prompt.\n\nQuestion: {question}"
             messages = [
                 {
                     "role": "user",
-                    "content": question
+                    "content": enhanced_question
                 }
             ]
             
@@ -219,14 +195,14 @@ class AnalysisService:
                 # Always use consistent key structure regardless of response type
                 response_data["analysis_result"] = result.get("data", {})
                 
-                logger.info(f"✅ Question analyzed successfully using {result['provider']} - Type: {result.get('response_type')}")
+                self.logger.info(f"✅ Question analyzed successfully using {result['provider']} - Type: {result.get('response_type')}")
                 
                 return {
                     "success": True,
                     "data": response_data
                 }
             else:
-                logger.error(f"❌ Question analysis failed: {result.get('error')}")
+                self.logger.error(f"❌ Question analysis failed: {result.get('error')}")
                 return {
                     "success": False,
                     "error": result.get("error", "Unknown error"),
@@ -235,7 +211,7 @@ class AnalysisService:
                 }
                 
         except Exception as e:
-            logger.error(f"❌ Analysis error: {e}")
+            self.logger.error(f"❌ Analysis error: {e}")
             return {
                 "success": False,
                 "error": str(e)
@@ -269,15 +245,15 @@ class AnalysisService:
             return script_info
             
         except Exception as e:
-            logger.error(f"Error extracting script info: {e}")
+            self.logger.error(f"Error extracting script info: {e}")
             return {"has_script": False}
     
     async def warm_cache(self, model: str) -> bool:
         """Warm cache - simplified version (no pre-warming needed for CLI)"""
-        logger.info("📄 Cache warming not needed for simplified analysis service")
+        self.logger.info("📄 Cache warming not needed for simplified analysis service")
         return True
     
     async def close_sessions(self):
         """Close sessions - simplified version (no sessions to manage)"""
-        logger.info("🔒 No sessions to close in simplified analysis service")
+        self.logger.info("🔒 No sessions to close in simplified analysis service")
         pass

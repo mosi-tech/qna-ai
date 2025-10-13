@@ -4,6 +4,7 @@ FastAPI Routes for Financial Analysis Server
 
 import json
 import logging
+import time
 from datetime import datetime
 from fastapi import HTTPException
 from typing import Dict, Any
@@ -39,15 +40,19 @@ class APIRoutes:
         """
         Analyze a financial question with conversation context support
         """
+        start_time = time.time()
         try:
             logger.info(f"📝 Received question: {request.question[:100]}...")
             
             # Step 1: Use conversation-aware search to handle contextual queries
+            step_start = time.time()
             context_result = await search_with_context(
                 query=request.question,
                 session_id=request.session_id,
                 auto_expand=request.auto_expand
             )
+            step_duration = time.time() - step_start
+            logger.info(f"⏱️ TIMING - Step 1 (Context Search): {step_duration:.3f}s")
             
             if not context_result["success"]:
                 return AnalysisResponse(
@@ -80,18 +85,24 @@ class APIRoutes:
                 )
             
             # Step 2: Get similar analyses for reuse evaluation
+            step_start = time.time()
             logger.info("🔍 Searching for similar analyses...")
             enhanced_message, similar_analyses = self.search_service.search_and_enhance_message(final_query)
+            step_duration = time.time() - step_start
+            logger.info(f"⏱️ TIMING - Step 2 (Similar Analysis Search): {step_duration:.3f}s")
             
             # Step 2.5: Evaluate if existing analyses can be reused
             reuse_result = None
             if similar_analyses:
+                step_start = time.time()
                 logger.info(f"🔄 Evaluating reuse potential for {len(similar_analyses)} similar analyses...")
                 reuse_result = await self.reuse_evaluator.evaluate_reuse(
                     user_query=final_query,
                     existing_analyses=similar_analyses,
                     context={"session_id": request.session_id} if request.session_id else None
                 )
+                step_duration = time.time() - step_start
+                logger.info(f"⏱️ TIMING - Step 2.5 (Reuse Evaluation): {step_duration:.3f}s")
                 
                 if reuse_result["status"] == "success" and reuse_result["reuse_decision"]["should_reuse"]:
                     logger.info(f"✅ Reuse decision: {reuse_result['reuse_decision']['reason']}")
@@ -109,6 +120,7 @@ class APIRoutes:
                     logger.info("➡️ No suitable analysis for reuse, proceeding with new analysis generation")
             
             # Step 3: Build enriched prompt with MCP function selection and schemas (only if not reusing)
+            step_start = time.time()
             logger.info("🔧 Building enriched prompt with code prompt builder...")
             code_prompt_result = await self.code_prompt_builder.build_enriched_prompt(
                 user_query=final_query,
@@ -117,6 +129,8 @@ class APIRoutes:
                     "existing_analyses": similar_analyses
                 } if request.session_id else {"existing_analyses": similar_analyses}
             )
+            step_duration = time.time() - step_start
+            logger.info(f"⏱️ TIMING - Step 3 (Code Prompt Building): {step_duration:.3f}s")
             
             if code_prompt_result["status"] != "success":
                 logger.error(f"❌ Code prompt building failed: {code_prompt_result.get('error')}")
@@ -136,18 +150,37 @@ class APIRoutes:
             logger.info(f"🤖 Using model: {model}")
             
             # Step 4: Set enriched prompt and clear tools (we know it's successful at this point)
+            step_start = time.time()
             enriched_prompt = code_prompt_result["enriched_prompt"]
             self.analysis_service.set_enriched_prompt(enriched_prompt)
-            await self.analysis_service.clear_tools()
+            step_duration = time.time() - step_start
+            logger.info(f"⏱️ TIMING - Step 4 (Set Enriched Prompt): {step_duration:.3f}s")
+            
+            # Defensive check for analysis service
+            if self.analysis_service is None:
+                logger.error("❌ Analysis service is None, cannot clear tools")
+                return AnalysisResponse(
+                    success=False,
+                    error="Analysis service not available",
+                    timestamp=datetime.now().isoformat()
+                )
+            
             
             # Step 5: Analyze with final enhanced message
+            step_start = time.time()
             result = await self.analysis_service.analyze_question(enhanced_message, model, request.enable_caching)
+            step_duration = time.time() - step_start
+            logger.info(f"⏱️ TIMING - Step 5 (Main Analysis): {step_duration:.3f}s")
             
             # Clear enriched prompt after analysis to not affect future requests
+            step_start = time.time()
             await self.analysis_service.clear_enriched_prompt()
+            step_duration = time.time() - step_start
+            logger.info(f"⏱️ TIMING - Step 5.1 (Clear Enriched Prompt): {step_duration:.3f}s")
             
             if result["success"]:
-                # Step 5: Save completed analysis and update conversation
+                # Step 6: Save completed analysis and update conversation
+                step_start = time.time()
                 try:
                     analysis_data = result["data"]
                     response_type = analysis_data.get("response_type")
@@ -183,24 +216,32 @@ class APIRoutes:
                         if response_type == "script_generation" and analysis_result.get("status") == "failed":
                             analysis_summary = f"Script generation failed: {analysis_result.get('final_error', 'Unknown error')}"
                     
-                    # Step 6: Update conversation with analysis results
-                    try:
-                        session_manager = get_session_manager()
-                        conversation = session_manager.get_session(session_id)
-                        if conversation:
-                            # Update the last turn with analysis results
-                            last_turn = conversation.get_last_turn()
-                            if last_turn and not last_turn.analysis_summary:
-                                last_turn.analysis_summary = analysis_summary or "Financial analysis completed"
-                                logger.info(f"📝 Updated conversation turn with analysis summary")
-                    except Exception as conv_error:
-                        logger.warning(f"Failed to update conversation: {conv_error}")
-                
                 except Exception as save_error:
                     logger.error(f"❌ Error saving analysis: {save_error}")
                     # Don't fail the main request, just log the error
                 
-                # Step 7: Build enhanced response with conversation context
+                step_duration = time.time() - step_start
+                logger.info(f"⏱️ TIMING - Step 6 (Save Analysis Results): {step_duration:.3f}s")
+                
+                # Step 7: Update conversation with analysis results
+                step_start = time.time()
+                try:
+                    session_manager = get_session_manager()
+                    conversation = session_manager.get_session(session_id)
+                    if conversation:
+                        # Update the last turn with analysis results
+                        last_turn = conversation.get_last_turn()
+                        if last_turn and not last_turn.analysis_summary:
+                            last_turn.analysis_summary = analysis_summary or "Financial analysis completed"
+                            logger.info(f"📝 Updated conversation turn with analysis summary")
+                except Exception as conv_error:
+                    logger.warning(f"Failed to update conversation: {conv_error}")
+                
+                step_duration = time.time() - step_start
+                logger.info(f"⏱️ TIMING - Step 7 (Update Conversation): {step_duration:.3f}s")
+                
+                # Step 8: Build enhanced response with conversation context
+                step_start = time.time()
                 response_data = result["data"]
                 
                 # Add conversation context info
@@ -229,6 +270,13 @@ class APIRoutes:
                 # Add context search results if available
                 if context_result.get("search_results"):
                     response_data["context_search_results"] = len(context_result["search_results"])
+                
+                step_duration = time.time() - step_start
+                logger.info(f"⏱️ TIMING - Step 8 (Build Enhanced Response): {step_duration:.3f}s")
+                
+                # Log total analysis time
+                total_duration = time.time() - start_time
+                logger.info(f"⏱️ TIMING - TOTAL ANALYSIS TIME: {total_duration:.3f}s")
                 
                 return AnalysisResponse(
                     success=True,

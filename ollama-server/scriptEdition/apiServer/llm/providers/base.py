@@ -45,6 +45,31 @@ class LLMProvider(ABC):
         pass
     
     @abstractmethod
+    def format_assistant_message_with_tool_calls(self, tool_calls: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Format complete assistant message with tool calls for this provider"""
+        pass
+    
+    @abstractmethod
+    def contains_tool_calls(self, content: Any) -> bool:
+        """Check if message content contains tool calls for this provider"""
+        pass
+    
+    @abstractmethod
+    def get_tool_result_role(self) -> str:
+        """Get the role used for tool result messages in this provider"""
+        pass
+    
+    @abstractmethod
+    def message_contains_function(self, message: Any, function_name: str) -> bool:
+        """Check if message contains a specific function call for this provider"""
+        pass
+    
+    @abstractmethod
+    def contains_tool_results(self, message: Any) -> bool:
+        """Check if message contains tool results for this provider"""
+        pass
+    
+    @abstractmethod
     def supports_caching(self) -> bool:
         """Whether this provider supports prompt caching"""
         pass

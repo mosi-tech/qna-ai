@@ -10,68 +10,30 @@ from datetime import datetime
 from typing import Dict, Any, Optional, List
 
 from llm import create_analysis_llm, LLMService
-from llm.cache import ProviderCacheManager
-from integrations.mcp import MCPIntegration
+from .base_service import BaseService
 
-logger = logging.getLogger("analysis-service")
-
-class AnalysisService:
+class AnalysisService(BaseService):
     """Financial question analysis service with MCP integration"""
     
     def __init__(self, llm_service: Optional[LLMService] = None):
-        # Use provided LLM service or create default analysis LLM
-        self.llm_service = llm_service or create_analysis_llm()
+        super().__init__(llm_service=llm_service, service_name="analysis")
         
-        # Initialize MCP integration for tool calling
-        self.mcp_integration = MCPIntegration()
-        
-        # Cache for processed tools and initialization state
-        self._processed_tools_cache = None
-        self._tools_cache_timestamp = None
-        self._provider_initialized = False
+        # Track enriched prompt mode
         self._enriched_prompt_mode = False
-        
-        # Load QnA-specific system prompt
-        self._load_system_prompt_config()
-        
-        # Initialize cache manager
-        self.cache_manager = ProviderCacheManager(self.llm_service.provider, enable_caching=True)
-        
-        logger.info(f"🤖 Initialized Analysis service with {self.llm_service.provider_type}")
     
-    def _load_system_prompt_config(self):
-        """Load system prompt configuration for QnA analysis"""
-        prompt_filename = os.getenv("SYSTEM_PROMPT_FILE", "system-prompt.txt")
-        self.system_prompt_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), 
-            "..", 
-            "config", 
-            prompt_filename
-        )
-        self.system_prompt = None  # Cache for system prompt
-        logger.info(f"📝 Using system prompt file: {prompt_filename}")
+    def _create_default_llm(self) -> LLMService:
+        """Create default LLM service for analysis"""
+        return create_analysis_llm()
+    
+    def _get_system_prompt_filename(self) -> str:
+        """Use environment variable or default analysis prompt"""
+        return os.getenv("SYSTEM_PROMPT_FILE", "system-prompt.txt")
+    
+    def _get_default_system_prompt(self) -> str:
+        """Default system prompt for analysis service"""
+        return "You are a helpful financial analysis assistant that generates tool calls for financial data analysis."
     
     # === SYSTEM PROMPT MANAGEMENT ===
-    
-    async def load_system_prompt(self) -> str:
-        """Load the base system prompt from file"""
-        try:
-            logger.debug(f"Loading system prompt from: {self.system_prompt_path}")
-            with open(self.system_prompt_path, 'r') as f:
-                content = f.read().strip()
-                logger.debug(f"System prompt loaded successfully ({len(content)} characters)")
-                return content
-        except Exception as e:
-            logger.error(f"Failed to load system prompt from {self.system_prompt_path}: {e}")
-            return "You are a helpful financial analysis assistant that generates tool calls for financial data analysis."
-    
-    async def get_system_prompt(self) -> str:
-        """Get system prompt (cached)"""
-        if self.system_prompt:
-            return self.system_prompt
-            
-        self.system_prompt = await self.load_system_prompt()
-        return self.system_prompt
     
     def set_enriched_prompt(self, enriched_prompt: str):
         """Set enriched prompt to override the default system prompt"""
@@ -79,7 +41,7 @@ class AnalysisService:
         self._enriched_prompt_mode = True
         # Update provider's raw system prompt so Claude CLI gets the enriched prompt
         self.llm_service.provider.set_system_prompt(enriched_prompt)
-        logger.info("✅ Set enriched prompt for analysis and updated provider")
+        self.logger.info("✅ Set enriched prompt for analysis and updated provider")
     
     async def clear_enriched_prompt(self):
         """Clear enriched prompt and revert to default system prompt"""
@@ -88,170 +50,42 @@ class AnalysisService:
         # Restore original system prompt on provider
         original_prompt = await self.load_system_prompt()
         self.llm_service.provider.set_system_prompt(original_prompt)
-        logger.info("🔄 Cleared enriched prompt and restored original system prompt on provider")
+        self.logger.info("🔄 Cleared enriched prompt and restored original system prompt")
     
-    async def clear_tools(self):
-        """Clear MCP tools but preserve validation tools for enriched prompt mode"""
-        # Ensure MCP is initialized first
-        await self.ensure_mcp_initialized()
-        
-        # Get all available MCP tools directly from integration (bypass enriched prompt mode check)
-        all_tools = self.mcp_integration.get_mcp_tools()
-        
-        # Keep only validation/file management tools that are allowed in enriched prompt mode
-        allowed_tools = []
-        for tool in all_tools:
-            tool_name = tool.get("function", {}).get("name", "")
-            if any(allowed in tool_name for allowed in [
-                "write_and_validate", "read_file", "list_files", "delete_file"
-            ]):
-                allowed_tools.append(tool)
-        
-        # Set the filtered tools on the provider
-        self.llm_service.provider.set_tools(allowed_tools)
-        
-        # Update our processed tools cache
-        self._processed_tools_cache = allowed_tools
-            
-        logger.info(f"🔄 Cleared MCP tools for enriched prompt mode, keeping {len(allowed_tools)} validation tools")
-    
-    # === MCP INTEGRATION ===
-    
-    @property
-    def mcp_client(self):
-        """Access to MCP client through integration"""
-        return self.mcp_integration.mcp_client
-    
-    @property
-    def mcp_initialized(self):
-        """Check if MCP is initialized"""
-        return self.mcp_integration.mcp_initialized
-    
-    async def ensure_mcp_initialized(self) -> bool:
-        """Ensure MCP client is initialized"""
-        return await self.mcp_integration.ensure_mcp_initialized()
-    
-    async def ensure_provider_initialized(self) -> bool:
-        """Ensure provider has system prompt and tools set (one-time setup)"""
-        if self._provider_initialized:
-            return True
-            
-        try:
-            # Ensure MCP is initialized first
-            await self.ensure_mcp_initialized()
-            
-            # Get system prompt and tools, set them on provider once
-            system_prompt = await self.get_system_prompt()
-            mcp_tools = self.get_mcp_tools()
-            
-            self.llm_service.provider.set_system_prompt(system_prompt)
-            self.llm_service.provider.set_tools(mcp_tools)
-            
-            self._provider_initialized = True
-            logger.info(f"🔧 Provider initialized with system prompt and {len(mcp_tools)} tools")
-            return True
-            
-        except Exception as e:
-            logger.error(f"❌ Failed to initialize provider: {e}")
-            return False
-    
-    async def refresh_provider_tools(self) -> bool:
-        """Refresh tools on provider if MCP tools have changed"""
-        # In enriched prompt mode, tools are already set by clear_tools() - no need to refresh
-        if self._enriched_prompt_mode:
-            logger.info("🚫 Skipping tool refresh - in enriched prompt mode (tools already set)")
-            return True
-            
-        if not self._provider_initialized:
-            return await self.ensure_provider_initialized()
-            
-        try:
-            # Check if tools have changed
-            current_timestamp = self._get_mcp_tools_timestamp()
-            
-            if self._tools_cache_timestamp != current_timestamp:
-                logger.info("🔄 MCP tools changed, refreshing provider...")
-                mcp_tools = self.get_mcp_tools()
-                self.llm_service.provider.set_tools(mcp_tools)
-                self._tools_cache_timestamp = current_timestamp
-                logger.info(f"✅ Provider tools refreshed ({len(mcp_tools)} tools)")
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"❌ Failed to refresh provider tools: {e}")
-            return False
-    
-    def get_mcp_tools(self) -> List[Dict[str, Any]]:
-        """Get processed MCP tools for the provider"""
-        # Return empty tools if in enriched prompt mode
-        if self._enriched_prompt_mode:
-            return []
-            
-        try:
-            # Use cached tools if available and timestamp matches
-            current_timestamp = self._get_mcp_tools_timestamp()
-            
-            if (self._processed_tools_cache is not None and 
-                self._tools_cache_timestamp == current_timestamp):
-                return self._processed_tools_cache
-            
-            # Get fresh tools from MCP
-            tools = self.mcp_integration.get_mcp_tools()
-            self._processed_tools_cache = tools
-            self._tools_cache_timestamp = current_timestamp
-            
-            return tools
-            
-        except Exception as e:
-            logger.error(f"❌ Failed to get MCP tools: {e}")
-            return []
-    
-    def _get_mcp_tools_timestamp(self) -> int:
-        """Get timestamp for MCP tools cache invalidation"""
-        try:
-            return hash(str(self.mcp_integration.get_mcp_tools()))
-        except:
-            return 0
     
     # === ANALYSIS WORKFLOW ===
     
     async def warm_cache(self, model: str, enable_caching: bool = True) -> bool:
         """Warm up cache for faster subsequent requests"""
         try:
-            logger.info(f"🔥 Warming cache for {model}")
+            self.logger.info(f"🔥 Warming cache for {model}")
             
-            if enable_caching and self.cache_manager:
-                success = await self.cache_manager.warm_cache(
-                    model, 
-                    await self.get_system_prompt(), 
-                    self.get_mcp_tools()
-                )
+            if enable_caching:
+                # Use LLM service's built-in cache warming
+                success = await self.llm_service.warm_cache(model)
                 if success:
-                    logger.info(f"✅ Cache warmed successfully for {model}")
+                    self.logger.info(f"✅ Cache warmed successfully for {model}")
                     return True
                 else:
-                    logger.warning(f"⚠️ Cache warm failed for {model}")
+                    self.logger.warning(f"⚠️ Cache warm failed for {model}")
                     return False
             else:
-                logger.info("Cache warming skipped (caching disabled)")
+                self.logger.info("🚫 Cache warming skipped (caching disabled)")
                 return True
                 
         except Exception as e:
-            logger.error(f"❌ Cache warm error for {model}: {e}")
+            self.logger.error(f"❌ Cache warm error for {model}: {e}")
             return False
     
     async def call_llm_with_tools(self, model: str, user_message: str, enable_caching: bool = False) -> Dict[str, Any]:
         """Call LLM with tool calling capability"""
         try:
-            # Ensure provider is initialized with tools
-            await self.ensure_provider_initialized()
+            # Ensure MCP tools are loaded
+            await self.llm_service.ensure_tools_loaded()
             
-            # Refresh tools if needed
-            await self.refresh_provider_tools()
-            
-            # Create messages
-            messages = [{"role": "user", "content": user_message}]
+            # Create messages with explicit instruction to build Python scripts
+            enhanced_message = f"Write a Python script to answer this question. Follow the instructions in the system prompt.\n\nQuestion: {user_message}"
+            messages = [{"role": "user", "content": enhanced_message}]
             
             result = await self.llm_service.make_request(
                 messages=messages,
@@ -266,7 +100,7 @@ class AnalysisService:
             tool_calls = result.get("tool_calls", [])
             
             if tool_calls:
-                logger.info(f"🔧 Processing {len(tool_calls)} tool calls")
+                self.logger.info(f"🔧 Processing {len(tool_calls)} tool calls")
                 
                 # Execute tools
                 tool_result = await self._handle_tool_calls(tool_calls)
@@ -274,13 +108,14 @@ class AnalysisService:
                 if tool_result.get("success"):
                     # Start conversation loop with initial tool results
                     all_tool_calls = tool_calls
+                    
                     all_tool_results = tool_result.get("tool_results", [])
                     
                     return await self._conversation_loop(
                         model, messages, all_tool_calls, all_tool_results, enable_caching
                     )
                 else:
-                    logger.error(f"❌ Tool execution failed: {tool_result.get('error')}")
+                    self.logger.error(f"❌ Tool execution failed: {tool_result.get('error')}")
                     return {
                         "success": False,
                         "content": result.get("content", ""),
@@ -290,7 +125,7 @@ class AnalysisService:
                     }
             else:
                 # No tool calls - parse response directly for structured content
-                logger.info("📝 No tool calls detected, parsing response directly")
+                self.logger.info("📝 No tool calls detected, parsing response directly")
                 final_content = result.get("content", "")
                 
                 parsed_response = self._parse_structured_response(final_content)
@@ -300,13 +135,13 @@ class AnalysisService:
                     return parsed_response
                 else:
                     # No structured response found - may need tool calls, start conversation loop
-                    logger.info("🔄 No structured response found, starting conversation loop")
+                    self.logger.info("🔄 No structured response found, starting conversation loop")
                     return await self._conversation_loop(
                         model, messages, [], [], enable_caching
                     )
                 
         except Exception as e:
-            logger.error(f"❌ LLM call error: {e}")
+            self.logger.error(f"❌ LLM call error: {e}")
             return {
                 "success": False,
                 "error": str(e),
@@ -316,55 +151,51 @@ class AnalysisService:
     async def _handle_tool_calls(self, tool_calls: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Execute tool calls using MCP integration"""
         try:
-            logger.info(f"🔧 Executing {len(tool_calls)} tool calls")
+            self.logger.info(f"🔧 Executing {len(tool_calls)} tool calls")
 
-            # Validate tool calls
-            validation = self.mcp_integration.validate_mcp_functions(tool_calls)
-            if not validation["all_valid"]:
+            # Use MCP integration for validation and execution
+            from integrations.mcp.mcp_integration import MCPIntegration
+            
+            if not hasattr(self, 'mcp_integration'):
+                self.mcp_integration = MCPIntegration()
+                await self.mcp_integration.ensure_mcp_initialized()
+            
+            # Validate MCP functions (tool filtering handled by SimplifiedMCPLoader)
+            validation = self.mcp_integration.validate_mcp_functions(tool_calls, [])
+            
+            if not validation.get("all_valid", False):
+                invalid_functions = [
+                    result["function"] for result in validation["validation_results"] 
+                    if result["status"] != "allowed"
+                ]
+                self.logger.warning(f"🚫 Invalid functions detected: {invalid_functions}")
                 return {
                     "success": False,
-                    "error": "Forbidden tool calls detected",
-                    "validation": validation,
+                    "error": f"Invalid functions not allowed: {', '.join(invalid_functions)}",
                     "provider": self.llm_service.provider_type
                 }
             
-            # Use MCP integration to execute all tools at once
+            # Execute the tool calls using MCP integration
             mcp_result = await self.mcp_integration.generate_tool_calls_only(tool_calls)
             
-            if not mcp_result.get("success"):
-                logger.error(f"❌ MCP tool execution failed: {mcp_result.get('error')}")
+            if mcp_result.get("success"):
+                self.logger.info(f"✅ All {len(tool_calls)} tool calls executed successfully")
+                return {
+                    "success": True,
+                    "tool_calls": tool_calls,
+                    "tool_results": mcp_result.get("tool_results", []),
+                    "provider": self.llm_service.provider_type
+                }
+            else:
+                self.logger.error(f"❌ MCP tool execution failed: {mcp_result.get('error')}")
                 return {
                     "success": False,
-                    "error": mcp_result.get("error", "MCP tool execution failed")
+                    "error": mcp_result.get("error", "MCP tool execution failed"),
+                    "provider": self.llm_service.provider_type
                 }
             
-            # Convert MCP results to expected format
-            tool_results = []
-            mcp_tool_results = mcp_result.get("tool_results", [])
-            all_tools_succeeded = True
-            
-            for i, (tool_call, mcp_tool_result) in enumerate(zip(tool_calls, mcp_tool_results)):
-                tool_success = mcp_tool_result.get("success", False)
-                if not tool_success:
-                    all_tools_succeeded = False
-                
-                tool_results.append(mcp_tool_result)
-            
-            if all_tools_succeeded:
-                logger.info(f"✅ All {len(tool_results)} tool calls succeeded")
-            else:
-                failed_tools = [tr for tr in tool_results if not tr["success"]]
-                logger.error(f"❌ {len(failed_tools)} out of {len(tool_results)} tool calls failed")
-            
-            return {
-                "success": all_tools_succeeded,
-                "tool_calls": tool_calls,
-                "tool_results": tool_results,
-                "provider": self.llm_service.provider_type
-            }
-            
         except Exception as e:
-            logger.error(f"❌ Tool execution error: {e}")
+            self.logger.error(f"❌ Tool execution error: {e}")
             return {
                 "success": False,
                 "error": str(e),
@@ -389,8 +220,8 @@ class AnalysisService:
                             # Extract text from CallToolResult
                             try:
                                 text_content = result_content.content[0].text
-                                logger.debug(f"Raw text content type: {type(text_content)}")
-                                logger.debug(f"Raw text content repr: {repr(text_content[:200])}")
+                                self.logger.debug(f"Raw text content type: {type(text_content)}")
+                                self.logger.debug(f"Raw text content repr: {repr(text_content[:200])}")
                                 
                                 # Clean the text and try parsing
                                 cleaned_text = text_content.strip()
@@ -399,17 +230,17 @@ class AnalysisService:
                                 if (parsed_result.get("success") and 
                                     parsed_result.get("absolute_path", "").endswith(".py") and
                                     parsed_result.get("size", 0) > 1000):
-                                    logger.info(f"✅ Script generation detected: {parsed_result.get('absolute_path')}")
+                                    self.logger.info(f"✅ Script generation detected: {parsed_result.get('absolute_path')}")
                                     return True
                             except json.JSONDecodeError as e:
-                                logger.error(f"JSON decode error: {e}")
-                                logger.error(f"Failed text: {repr(text_content)}")
+                                self.logger.error(f"JSON decode error: {e}")
+                                self.logger.error(f"Failed text: {repr(text_content)}")
                                 # Fallback pattern matching
                                 if (".py" in text_content and "success" in text_content and "size" in text_content):
-                                    logger.info("✅ Script generation detected (fallback)")
+                                    self.logger.info("✅ Script generation detected (fallback)")
                                     return True
                             except (AttributeError, IndexError) as e:
-                                logger.error(f"Structure error: {e}")
+                                self.logger.error(f"Structure error: {e}")
                                 pass
                         
                         elif isinstance(result_content, dict):
@@ -470,48 +301,48 @@ class AnalysisService:
                             # Extract text from CallToolResult
                             try:
                                 text_content = result_content.content[0].text
-                                logger.debug(f"Validation - Raw text content type: {type(text_content)}")
-                                logger.debug(f"Validation - Raw text content repr: {repr(text_content[:200])}")
+                                self.logger.debug(f"Validation - Raw text content type: {type(text_content)}")
+                                self.logger.debug(f"Validation - Raw text content repr: {repr(text_content[:200])}")
                                 
                                 # Clean the text and try parsing
                                 cleaned_text = text_content.strip()
                                 parsed_result = json.loads(cleaned_text)
                                 
                                 if parsed_result.get("valid") is not None:
-                                    logger.info(f"✅ Validation completed: {func_name} - Valid: {parsed_result.get('valid')}")
+                                    self.logger.info(f"✅ Validation completed: {func_name} - Valid: {parsed_result.get('valid')}")
                                     return True
                             except json.JSONDecodeError as e:
-                                logger.error(f"Validation JSON decode error: {e}")
-                                logger.error(f"Validation failed text: {repr(text_content)}")
+                                self.logger.error(f"Validation JSON decode error: {e}")
+                                self.logger.error(f"Validation failed text: {repr(text_content)}")
                                 # Fallback pattern matching
                                 if any(keyword in text_content.lower() for keyword in ["valid", "validation", "executed successfully"]):
-                                    logger.info(f"✅ Validation completed (fallback): {func_name}")
+                                    self.logger.info(f"✅ Validation completed (fallback): {func_name}")
                                     return True
                             except (AttributeError, IndexError) as e:
-                                logger.error(f"Validation structure error: {e}")
+                                self.logger.error(f"Validation structure error: {e}")
                                 pass
                         
                         elif isinstance(result_content, dict):
                             # Direct dictionary access
                             if result_content.get("valid") is not None:
-                                logger.info(f"✅ Validation completed: {func_name} - Valid: {result_content.get('valid')}")
+                                self.logger.info(f"✅ Validation completed: {func_name} - Valid: {result_content.get('valid')}")
                                 return True
                         elif isinstance(result_content, str):
                             # JSON string - parse it
                             try:
                                 parsed_result = json.loads(result_content)
                                 if parsed_result.get("valid") is not None:
-                                    logger.info(f"✅ Validation completed: {func_name} - Valid: {parsed_result.get('valid')}")
+                                    self.logger.info(f"✅ Validation completed: {func_name} - Valid: {parsed_result.get('valid')}")
                                     return True
                             except json.JSONDecodeError:
                                 # Fallback - if it contains validation keywords
                                 if any(keyword in result_content.lower() for keyword in ["valid", "validation", "executed successfully"]):
-                                    logger.info(f"✅ Validation completed (fallback): {func_name}")
+                                    self.logger.info(f"✅ Validation completed (fallback): {func_name}")
                                     return True
             
             return False
         except Exception as e:
-            logger.error(f"❌ Error checking validation completion: {e}")
+            self.logger.error(f"❌ Error checking validation completion: {e}")
             return False
     
     async def _conversation_loop(self, model: str, messages: List[Dict[str, Any]], 
@@ -582,7 +413,7 @@ class AnalysisService:
                     all_tool_calls.extend(new_tool_calls)
                     all_tool_results.extend(tool_execution_result["tool_results"])
                     
-                    logger.info(f"🔄 Continuing conversation loop (total tool calls: {len(all_tool_calls)})")
+                    self.logger.info(f"🔄 Continuing conversation loop (total tool calls: {len(all_tool_calls)})")
                     continue
                 else:
                     # No more tool calls - parse response for structured content
@@ -594,7 +425,7 @@ class AnalysisService:
                         return parsed_response
                     else:
                         # No structured response found
-                        logger.warning("❌ Task incomplete: No reuse decision or script generation response found")
+                        self.logger.warning("❌ Task incomplete: No reuse decision or script generation response found")
                         return {
                             "success": False,
                             "provider": self.llm_service.provider_type,
@@ -609,7 +440,7 @@ class AnalysisService:
                         }
                         
         except Exception as e:
-            logger.error(f"❌ Conversation loop error: {e}")
+            self.logger.error(f"❌ Conversation loop error: {e}")
             return {
                 "success": False,
                 "error": f"Conversation error: {str(e)}"
@@ -630,12 +461,13 @@ class AnalysisService:
             while i < len(messages):
                 msg = messages[i]
                 if (msg.get("role") == "assistant" and 
-                    self._contains_tool_calls(msg.get("content", ""))):
+                    self._contains_tool_calls(msg)):
                     
-                    # Look for the corresponding tool result message
+                    # Look for the corresponding tool result message using provider-specific role
+                    tool_result_role = self.llm_service.provider.get_tool_result_role()
                     if (i + 1 < len(messages) and 
-                        messages[i + 1].get("role") == "user" and
-                        self._contains_tool_results(messages[i + 1].get("content", ""))):
+                        messages[i + 1].get("role") == tool_result_role and
+                        self.llm_service.provider.contains_tool_results(messages[i + 1])):
                         tool_interaction_pairs.append((i, i + 1, msg))  # (assistant_idx, tool_idx, assistant_msg)
                         i += 2  # Skip both messages
                     else:
@@ -646,7 +478,7 @@ class AnalysisService:
             # Define functions that should be prioritized
             relevant_functions = {
                 "write_file", "validate_python_script", "get_function_docstring",
-                "read_file", "list_files", "delete_file"
+                "read_file", "list_files", "delete_file", "write_and_validate"
             }
             
             # Find the most recent write_file and validate_python_script interactions
@@ -657,16 +489,20 @@ class AnalysisService:
             docstring_pairs = []
             
             for assistant_idx, tool_idx, assistant_msg in tool_interaction_pairs:
-                content = assistant_msg.get("content", "")
+                # Check if this message contains any relevant functions
+                found_functions = []
+                for func_name in relevant_functions:
+                    if self.llm_service.provider.message_contains_function(assistant_msg, func_name):
+                        found_functions.append(func_name)
                 
-                # Check if this contains write_file or validate_python_script
-                if self._message_contains_function(content, "write_file"):
+                # Process based on the functions found
+                if "write_file" in found_functions or "write_and_validate" in found_functions:
                     last_write_pair = (assistant_idx, tool_idx)
                     last_write_idx = assistant_idx
-                elif self._message_contains_function(content, "validate_python_script"):
+                elif "validate_python_script" in found_functions:
                     last_validate_pair = (assistant_idx, tool_idx)
                     last_validate_idx = assistant_idx
-                elif self._message_contains_function(content, "get_function_docstring"):
+                elif "get_function_docstring" in found_functions:
                     # Keep all docstring calls as they provide important context
                     docstring_pairs.append((assistant_idx, tool_idx))
             
@@ -693,94 +529,30 @@ class AnalysisService:
                 if tool_idx < len(messages):
                     filtered_messages.append(messages[tool_idx])
             
-            logger.debug(f"Filtered {len(messages)} messages down to {len(filtered_messages)} for context")
+            self.logger.debug(f"Filtered {len(messages)} messages down to {len(filtered_messages)} for context")
             return filtered_messages
             
         except Exception as e:
-            logger.error(f"Error filtering messages for context: {e}")
+            self.logger.error(f"Error filtering messages for context: {e}")
             # Fallback: keep first message + last 6 messages (3 tool interactions)
             if len(messages) <= 7:
                 return messages
             return [messages[0]] + messages[-6:]
     
-    def _contains_tool_calls(self, content) -> bool:
-        """Check if message content contains tool calls"""
-        if not content:
-            return False
-        
-        # Handle different content formats
-        if isinstance(content, list):
-            # Content is a list of tool use objects
-            for item in content:
-                if isinstance(item, dict) and item.get("type") == "tool_use":
-                    return True
-        elif isinstance(content, str):
-            # Content is a string representation - check for tool indicators
-            tool_indicators = ["tool_use", "function_name", "mcp__", "write_file", "validate_python_script"]
-            return any(indicator in content for indicator in tool_indicators)
-        elif isinstance(content, dict):
-            # Content is a single tool use object
-            if content.get("type") == "tool_use":
-                return True
-        
-        return False
+    def _contains_tool_calls(self, message_content) -> bool:
+        """Check if message content contains tool calls using provider-specific logic"""
+        return self.llm_service.provider.contains_tool_calls(message_content)
     
-    def _contains_tool_results(self, content) -> bool:
-        """Check if message content contains tool results"""
-        if not content:
-            return False
-        
-        # Handle different content formats
-        if isinstance(content, list):
-            # Content is a list of objects, check for tool_result type
-            for item in content:
-                if isinstance(item, dict) and item.get("type") == "tool_result":
-                    return True
-        elif isinstance(content, str):
-            # Content is a string representation - check for tool result indicators
-            tool_result_indicators = ["tool_result", "tool_use_id"]
-            return any(indicator in content for indicator in tool_result_indicators)
-        elif isinstance(content, dict):
-            # Content is a single tool result object
-            if content.get("type") == "tool_result":
-                return True
-        
-        return False
     
-    def _message_contains_function(self, content, function_name: str) -> bool:
-        """Check if message content contains a specific function call"""
-        if not content:
-            return False
-        
-        # Handle different content formats
-        if isinstance(content, list):
-            # Content is a list of tool use objects
-            for item in content:
-                if isinstance(item, dict) and item.get("type") == "tool_use":
-                    tool_name = item.get("name", "")
-                    if function_name in tool_name:
-                        return True
-        elif isinstance(content, str):
-            # Content is a string representation
-            return function_name in content
-        elif isinstance(content, dict):
-            # Content is a single tool use object
-            if content.get("type") == "tool_use":
-                tool_name = content.get("name", "")
-                return function_name in tool_name
-        
-        return False
 
     async def _continue_conversation(self, model: str, messages: List[Dict[str, Any]], 
                                    current_tool_calls: List[Dict[str, Any]], current_tool_results: List[Dict[str, Any]],
                                    enable_caching: bool = False) -> Dict[str, Any]:
         """Continue conversation after tool execution with proper formatting"""
         try:
-            # Add assistant message with current tool calls
-            messages.append({
-                "role": "assistant",
-                "content": self.llm_service.provider.format_tool_calls(current_tool_calls)
-            })
+            # Add assistant message with current tool calls using provider-specific formatting
+            assistant_message = self.llm_service.provider.format_assistant_message_with_tool_calls(current_tool_calls)
+            messages.append(assistant_message)
 
             formatted_tool_results = self.llm_service.provider.format_tool_results(current_tool_calls, current_tool_results)
             
@@ -800,7 +572,7 @@ class AnalysisService:
                     
                     if base_function_name in cacheable_functions:
                         formatted_tool_results["content"][i]["cache_control"] = {"type": "ephemeral", "ttl": cacheable_functions[base_function_name]}
-                        logger.debug(f"Added caching for function: {function_name}")
+                        self.logger.debug(f"Added caching for function: {function_name}")
                 
             
             messages.append(formatted_tool_results)
@@ -818,7 +590,7 @@ class AnalysisService:
             return result
             
         except Exception as e:
-            logger.error(f"❌ Continue conversation error: {e}")
+            self.logger.error(f"❌ Continue conversation error: {e}")
             return {
                 "success": False,
                 "error": str(e)
@@ -857,7 +629,7 @@ class AnalysisService:
             # Check if this is a reuse decision
             reuse_decision = self._check_reuse_decision(content)
             if reuse_decision:
-                logger.info("✅ Reuse decision made - existing analysis can be reused")
+                self.logger.info("✅ Reuse decision made - existing analysis can be reused")
                 return {
                     "success": True,
                     "provider": self.llm_service.provider_type,
@@ -871,7 +643,7 @@ class AnalysisService:
             script_generation_response = self._check_script_generation_response(content)
             if script_generation_response:
                 if script_generation_response.get("status") == "success":
-                    logger.info("✅ Script generation completed successfully")
+                    self.logger.info("✅ Script generation completed successfully")
                     return {
                         "success": True,
                         "provider": self.llm_service.provider_type,
@@ -881,7 +653,7 @@ class AnalysisService:
                         "raw_content": content
                     }
                 else:  # status == "failed"
-                    logger.error("❌ Script generation failed")
+                    self.logger.error("❌ Script generation failed")
                     return {
                         "success": False,
                         "provider": self.llm_service.provider_type,
@@ -900,7 +672,7 @@ class AnalysisService:
             }
             
         except Exception as e:
-            logger.error(f"❌ Error parsing structured response: {e}")
+            self.logger.error(f"❌ Error parsing structured response: {e}")
             return {
                 "success": False,
                 "error": f"Error parsing response: {str(e)}"
@@ -923,14 +695,14 @@ class AnalysisService:
                     if "script_generation" in parsed_json:
                         script_data = parsed_json["script_generation"]
                         if script_data.get("status") == "success":
-                            logger.info(f"📝 Script generation response found: {script_data.get('script_name')}")
+                            self.logger.info(f"📝 Script generation response found: {script_data.get('script_name')}")
                             return script_data
                         elif script_data.get("status") == "failed":
-                            logger.info("❌ Script generation failed response found")
+                            self.logger.info("❌ Script generation failed response found")
                             return script_data
                             
                 except json.JSONDecodeError as e:
-                    logger.debug(f"Failed to parse JSON block: {e}")
+                    self.logger.debug(f"Failed to parse JSON block: {e}")
                     continue
             
             # If no JSON blocks found, try parsing the entire content as JSON
@@ -951,7 +723,7 @@ class AnalysisService:
                 # Found Python script - create script generation response
                 script_content = python_matches[0].strip()
                 if len(script_content) > 100:  # Ensure it's a substantial script
-                    logger.info("📝 Python script found in markdown content")
+                    self.logger.info("📝 Python script found in markdown content")
                     return {
                         "status": "success",
                         "script_content": script_content,
@@ -963,7 +735,7 @@ class AnalysisService:
             return None
             
         except Exception as e:
-            logger.debug(f"Error checking script generation response: {e}")
+            self.logger.debug(f"Error checking script generation response: {e}")
             return None
 
     def _check_reuse_decision(self, content: str) -> Optional[Dict[str, Any]]:
@@ -984,14 +756,14 @@ class AnalysisService:
                     if "reuse_decision" in parsed_json:
                         reuse_data = parsed_json["reuse_decision"]
                         if reuse_data.get("should_reuse") is True:
-                            logger.info(f"🔄 Reuse decision found: {reuse_data.get('existing_function_name')}")
+                            self.logger.info(f"🔄 Reuse decision found: {reuse_data.get('existing_function_name')}")
                             return reuse_data
                         elif reuse_data.get("should_reuse") is False:
-                            logger.info("🆕 New analysis required - no reusable analysis found")
+                            self.logger.info("🆕 New analysis required - no reusable analysis found")
                             return None
                             
                 except json.JSONDecodeError as e:
-                    logger.debug(f"Failed to parse JSON block: {e}")
+                    self.logger.debug(f"Failed to parse JSON block: {e}")
                     continue
             
             # If no JSON blocks found, try parsing the entire content as JSON
@@ -1007,7 +779,7 @@ class AnalysisService:
             return None
             
         except Exception as e:
-            logger.debug(f"Error checking reuse decision: {e}")
+            self.logger.debug(f"Error checking reuse decision: {e}")
             return None
 
     def _extract_script_info(self, tool_results: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
@@ -1021,7 +793,7 @@ class AnalysisService:
                     if hasattr(result_content, 'content') and result_content.content:
                         try:
                             text_content = result_content.content[0].text
-                            logger.debug(f"Extract script - Raw text: {repr(text_content[:200])}")
+                            self.logger.debug(f"Extract script - Raw text: {repr(text_content[:200])}")
                             
                             cleaned_text = text_content.strip()
                             parsed_result = json.loads(cleaned_text)
@@ -1039,7 +811,7 @@ class AnalysisService:
                                     "success": parsed_result.get("success", False)
                                 }
                         except (json.JSONDecodeError, AttributeError, IndexError) as e:
-                            logger.debug(f"Extract script JSON error: {e}")
+                            self.logger.debug(f"Extract script JSON error: {e}")
                             continue
                     
                     elif isinstance(result_content, dict):
@@ -1054,7 +826,7 @@ class AnalysisService:
                             }
             return None
         except Exception as e:
-            logger.error(f"Error extracting script info: {e}")
+            self.logger.error(f"Error extracting script info: {e}")
             return None
     
     # === MAIN ANALYSIS ENTRY POINT ===
@@ -1065,7 +837,7 @@ class AnalysisService:
             if not model:
                 model = self.llm_service.default_model
             
-            logger.info(f"🤔 Analyzing question with {self.llm_service.provider_type.upper()}: {question[:100]}...")
+            self.logger.info(f"🤔 Analyzing question with {self.llm_service.provider_type.upper()}: {question[:100]}...")
             
             # Call LLM with tools
             result = await self.call_llm_with_tools(model, question, enable_caching)
@@ -1088,14 +860,14 @@ class AnalysisService:
                 # Always use consistent key structure regardless of response type
                 response_data["analysis_result"] = result.get("data", {})
                 
-                logger.info(f"✅ Question analyzed successfully using {result['provider']} - Type: {result.get("response_type")}")
+                self.logger.info(f"✅ Question analyzed successfully using {result['provider']} - Type: {result.get("response_type")}")
                 
                 return {
                     "success": True,
                     "data": response_data
                 }
             else:
-                logger.error(f"❌ Question analysis failed: {result.get('error')}")
+                self.logger.error(f"❌ Question analysis failed: {result.get('error')}")
                 return {
                     "success": False,
                     "error": result.get("error", "Unknown error"),
@@ -1104,7 +876,7 @@ class AnalysisService:
                 }
                 
         except Exception as e:
-            logger.error(f"❌ Analysis error: {e}")
+            self.logger.error(f"❌ Analysis error: {e}")
             return {
                 "success": False,
                 "error": str(e)
@@ -1114,9 +886,9 @@ class AnalysisService:
     
     async def close_sessions(self):
         """Cleanup method for server shutdown"""
-        logger.info("Closing analysis service sessions...")
-        self.mcp_integration.mcp_initialized = False
-        logger.info("Cleaned up MCP client and caches")
+        self.logger.info("Closing analysis service sessions...")
+        # Note: MCP client cleanup is handled by the mcp_client module
+        self.logger.info("Cleaned up analysis service")
 
 # Factory function to create analysis service
 def create_analysis_service(llm_service: Optional[LLMService] = None) -> AnalysisService:
