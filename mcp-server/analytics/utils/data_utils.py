@@ -425,33 +425,70 @@ def align_series(*series_list: pd.Series) -> List[pd.Series]:
 
 def resample_data(data: pd.Series, frequency: str, method: str = "last") -> pd.Series:
     """
-    Resample time series data to different frequency.
+    Resample time series data to a different frequency for analysis at multiple timeframes.
     
-    From financial-analysis-function-library.json
-    Uses pandas resample instead of manual aggregation
+    Converts time series data from one frequency to another using specified aggregation methods.
+    This is essential for analyzing financial data across different timeframes (daily to weekly,
+    weekly to monthly, etc.) while preserving important statistical properties.
+    
+    Supports common pandas frequency strings for flexible resampling across any timeframe
+    combination and multiple aggregation methods for different analytical needs.
     
     Args:
-        data: Time series data
-        frequency: Target frequency ('D', 'W', 'M', etc.)
-        method: Aggregation method ('last', 'mean', 'sum')
+        data (pd.Series): Time series data with DatetimeIndex. If index is not datetime,
+            it will be converted automatically. Values can be prices, returns, volumes, or
+            any numeric time series.
+        frequency (str): Target resampling frequency. Common values:
+            - 'D': Daily
+            - 'W': Weekly (ends on Sunday)
+            - 'M': Monthly (last day of month)
+            - 'Q': Quarterly (last day of quarter)
+            - 'Y' or 'A': Annually
+            - 'H': Hourly
+            - '2D': Every 2 days
+            - '5D': Every 5 days
+        method (str, optional): Aggregation method for each period. Options:
+            - 'last': Use last value of period (default, best for prices)
+            - 'mean': Average of period (useful for returns or indicators)
+            - 'sum': Sum of period (useful for volume or cumulative metrics)
         
     Returns:
-        pd.Series: Resampled data
+        pd.Series: Resampled data with new frequency and datetime index. NaN values
+            from periods with no data are automatically dropped.
+    
+    Raises:
+        ValueError: If frequency string is invalid or aggregation fails
+        TypeError: If data is not a pandas Series or has incompatible index
         
     Example:
         >>> import pandas as pd
-        >>> # Create daily data
-        >>> dates = pd.date_range('2024-01-01', periods=14, freq='D')
-        >>> daily_data = pd.Series([100, 102, 98, 105, 110, 108, 112, 115, 118, 120, 119, 121, 123, 125], index=dates)
+        >>> # Create daily price data
+        >>> dates = pd.date_range('2024-01-01', periods=30, freq='D')
+        >>> daily_prices = pd.Series(range(100, 130), index=dates)
         >>> 
-        >>> # Resample to weekly data
-        >>> weekly = resample_data(daily_data, 'W', method='last')
-        >>> print(f"Daily points: {len(daily_data)}, Weekly points: {len(weekly)}")
+        >>> # Resample to weekly (using last value of each week)
+        >>> weekly_prices = resample_data(daily_prices, 'W', method='last')
+        >>> print(f"Original: {len(daily_prices)} daily prices")
+        >>> print(f"Resampled: {len(weekly_prices)} weekly prices")
         
-    OUTPUT examples:
-    Daily data (14 points) → Weekly data (2 points): [112, 125]
-    Frequency 'W' with method 'last': Takes last value of each week
-    Frequency 'M' with method 'mean': Takes average value of each month
+        >>> # Resample returns to monthly using average
+        >>> monthly_avg = resample_data(daily_prices.pct_change(), 'M', method='mean')
+        >>> print(f"Monthly average returns: {monthly_avg}")
+        
+        >>> # Aggregate volume to daily (if you have intraday data)
+        >>> intraday_volumes = pd.Series([1000, 1500, 1200], 
+        ...                              index=pd.date_range('2024-01-01', periods=3, freq='H'))
+        >>> daily_volume = resample_data(intraday_volumes, 'D', method='sum')
+    
+    Note:
+        - Frequency strings follow pandas convention (case-insensitive for most)
+        - The 'last' method is typically preferred for price data to avoid bias
+        - The 'mean' method works well for returns or indicator data
+        - The 'sum' method is appropriate for volume, turnover, or count data
+        - Automatically handles DatetimeIndex conversion
+        - NaN values are dropped after resampling for clean output
+        - For non-aligned periods (e.g., fewer than N days in a week), 
+          the aggregation still works with available data
     """
     try:
         if not isinstance(data.index, pd.DatetimeIndex):
@@ -565,40 +602,161 @@ def standardize_output(result: Dict[str, Any], function_name: str) -> Dict[str, 
 
 def calculate_log_returns(prices: Union[pd.Series, Dict[str, Any]]) -> pd.Series:
     """
-    Calculate logarithmic returns from prices.
+    Calculate logarithmic returns from price series for statistical analysis.
     
-    From financial-analysis-function-library.json time_series_processing category
-    Wrapper around prices_to_returns with method='log'
+    Computes continuously compounded (logarithmic) returns from price data.
+    Log returns have superior mathematical properties compared to simple returns:
+    they are additive across periods, reduce impact of extreme values, and are
+    more appropriate for volatility and risk calculations following normal distributions.
+    
+    Log returns are calculated as: ln(P_t / P_{t-1})
+    
+    This transformation is fundamental for time series analysis, particularly for
+    models that assume normally distributed returns (like Black-Scholes) and for
+    statistical tests that rely on additivity of returns across periods.
     
     Args:
-        prices: Price data
-        
+        prices (Union[pd.Series, Dict[str, Any]]): Price series as pandas Series with
+            datetime index or dictionary with price values. Values should be positive
+            prices (e.g., stock prices, asset values). Negative or zero prices will
+            result in invalid/infinite log returns.
+    
     Returns:
-        pd.Series: Log return series
+        pd.Series: Series of logarithmic returns (same length as input prices - 1).
+            First return value is NaN (no prior price for comparison). Returns are
+            in decimal format (e.g., 0.02 for 2% log return).
+    
+    Raises:
+        ValueError: If prices cannot be converted to valid price series
+        TypeError: If input data format is invalid
+        RuntimeError: If prices contain zero or negative values
         
-    OUTPUT examples:
-    Input prices: [100, 102, 98, 105, 110, 108, 112]
-    Log returns: [0.01980262729617973, -0.04000533461369913, 0.06899287148695142, 0.04652001563489291, -0.01834913866819654, 0.03636764417087479]
+    Example:
+        >>> import pandas as pd
+        >>> # Simple price series
+        >>> prices = pd.Series([100.0, 102.0, 98.0, 105.0, 110.0])
+        >>> log_returns = calculate_log_returns(prices)
+        >>> print(log_returns)
+        0         NaN
+        1    0.019803
+        2   -0.040005
+        3    0.068993
+        4    0.046520
+        dtype: float64
+        
+        >>> # Compare with simple returns
+        >>> simple_returns = prices.pct_change()
+        >>> print(f"Log return period 1: {log_returns.iloc[1]:.6f}")
+        >>> print(f"Simple return period 1: {simple_returns.iloc[1]:.6f}")
+        
+    Key Properties:
+        - Log returns are additive: ln(P_t/P_0) = sum(ln(P_i/P_{i-1})) for all intermediate periods
+        - Approximately equal to simple returns for small changes (< 5%)
+        - More appropriate for statistical modeling and hypothesis testing
+        - Reduce the impact of extreme values compared to simple returns
+        - Symmetric: -5% and +5% log returns are not equidistant (unlike simple returns)
+        
+    Relationship to Simple Returns:
+        - For small returns: log_return ≈ simple_return
+        - For 10% simple return: log_return ≈ 0.0953 (4.7% smaller)
+        - For -10% simple return: log_return ≈ -0.1054 (5.4% larger in magnitude)
+        
+    Note:
+        - Requires positive prices only (ln of negative/zero values is undefined)
+        - First return is NaN (no prior reference point)
+        - Log returns preserve temporal relationships better than simple returns
+        - Preferred for long time series analysis and volatility calculations
+        - Common in academic finance and quantitative models
+        - Useful for studies assuming normal return distributions
+        
+    See Also:
+        - prices_to_returns(): More flexible return calculation with multiple methods
+        - calculate_cumulative_returns(): For cumulative return calculations
+        - Returns as fundamental building blocks for all risk and performance metrics
     """
     return prices_to_returns(prices, method="log")
 
 
 def calculate_cumulative_returns(returns: Union[pd.Series, List, Dict[str, Any]]) -> pd.Series:
     """
-    Calculate cumulative returns from return series.
+    Calculate cumulative (compound) returns from a series of periodic returns.
     
-    From financial-analysis-function-library.json time_series_processing category
-    Uses pandas built-in methods for cumulative product
+    Computes the cumulative effect of periodic returns through compounding, showing
+    total wealth growth from an initial investment over time. This is essential for
+    understanding investment performance trajectories and comparing strategies across
+    different time periods.
+    
+    Cumulative returns show how an initial investment of 1.0 (representing $1 or 100%)
+    grows through each period. For example, a 2% return followed by a -1% return results
+    in cumulative return of approximately 0.01 (1% overall).
     
     Args:
-        returns: Return series
-        
+        returns (Union[pd.Series, List, Dict[str, Any]]): Periodic return series where
+            each value represents the return for one period. Can be:
+            - pandas Series with datetime index (returns in decimal format)
+            - List of floats (e.g., [0.02, -0.01, 0.03])
+            - Dictionary with return values (will extract values)
+            Values should be in decimal format (0.02 = 2%, -0.01 = -1%)
+    
     Returns:
-        pd.Series: Cumulative return series
+        pd.Series: Cumulative return series (same length as input). Starting value is
+            the first return value, then shows compounded growth. For example:
+            Input:  [0.02, -0.01, 0.03]
+            Output: [0.02, 0.00980, 0.03994]  # Shows wealth level at each point
+    
+    Raises:
+        ValueError: If returns cannot be converted to valid return series or calculation fails
+        TypeError: If input data format is invalid or incompatible
         
-    OUTPUT examples:
-    Input returns: [0.02, -0.04, 0.07, 0.05, -0.02, 0.04]
-    Cumulative returns: [0.020000000000000018, -0.02080000000000004, 0.04774400000000001, 0.10013120000000009, 0.07812857600000012, 0.12125371904000026]
+    Example:
+        >>> import pandas as pd
+        >>> # Daily returns for 5 days
+        >>> returns = pd.Series([0.02, -0.04, 0.07, 0.05, -0.02])
+        >>> cumulative = calculate_cumulative_returns(returns)
+        >>> print(cumulative)
+        0    0.020000
+        1   -0.020800
+        2    0.047744
+        3    0.100131
+        4    0.078129
+        dtype: float64
+        
+        >>> # Interpretation: $100 invested becomes:
+        >>> initial = 100
+        >>> print(f"Day 1: ${initial * (1 + cumulative.iloc[0]):.2f}")  # $102
+        >>> print(f"Day 2: ${initial * (1 + cumulative.iloc[1]):.2f}")  # $97.92
+        >>> print(f"Day 5: ${initial * (1 + cumulative.iloc[4]):.2f}")  # $107.81
+        
+    Key Uses:
+        1. Visualization: Plot cumulative returns to see investment growth trajectories
+        2. Comparison: Compare strategy performance on same chart using cumulative returns
+        3. Performance Attribution: Identify periods of strength/weakness
+        4. Risk Assessment: Observe drawdowns and recoveries through cumulative curve
+        5. Benchmark Comparison: Easy visual comparison of strategy vs benchmark
+        
+    Relationship to Prices:
+        - Cumulative returns represent: (P_t / P_0) - 1
+        - To get final price: P_0 * (1 + cumulative_return_final)
+        - Preserves all period-to-period changes without bias
+        
+    Advantages Over Price Series:
+        - Normalized to show percentage performance (independent of initial price)
+        - Same scale for assets of different price levels
+        - Easier interpretation (0% = break even, 50% = 50% gain)
+        - Better for multi-asset performance comparison
+        
+    Note:
+        - Uses geometric compounding: cumulative_return_t = (1 + r1)(1 + r2)...(1 + rt) - 1
+        - Starts with the first period's return value
+        - Values are in decimal format: 0.02 = 2% cumulative gain, -0.15 = 15% cumulative loss
+        - Preserves temporal structure and compound effects
+        - NaN values in input will propagate to output
+        - More accurate representation of wealth growth than simple returns summing
+        
+    See Also:
+        - prices_to_returns(): Reverse operation (prices to returns)
+        - calculate_log_returns(): For statistical analysis with log returns
+        - Cumulative returns are the foundation for performance measurement
     """
     try:
         returns_series = validate_return_data(returns)
@@ -614,22 +772,85 @@ def calculate_cumulative_returns(returns: Union[pd.Series, List, Dict[str, Any]]
 
 def calculate_monthly_returns(daily_returns: Union[pd.Series, List, Dict[str, Any]], trading_days_per_month: int = 21) -> List[float]:
     """
-    Convert daily returns to monthly returns using compounding.
+    Convert daily returns to monthly returns by compounding fixed-size periods.
     
-    From financial-analysis-function-library.json time_series_processing category
-    Groups daily returns into monthly periods and compounds them
+    Aggregates daily return series into monthly (or similar fixed-period) returns by
+    compounding consecutive periods together. This is useful for lower-frequency
+    analysis when working with daily data, portfolio rebalancing analysis, or
+    comparing strategies across monthly performance periods.
+    
+    The function groups consecutive returns and compounds them geometrically to
+    produce monthly return values. Partial months (fewer days than specified) are
+    still included in the calculation with available days.
     
     Args:
-        daily_returns: Daily return series
-        trading_days_per_month: Number of trading days to group per month (default: 21)
-        
+        daily_returns (Union[pd.Series, List, Dict[str, Any]]): Daily return series
+            where each value represents daily return in decimal format (0.02 = 2%).
+            Can be pandas Series, list of floats, or dictionary with return values.
+        trading_days_per_month (int, optional): Number of consecutive daily returns
+            to group into one monthly return period. Default is 21 (typical trading
+            days per month). Other common values:
+            - 21: Approximate trading days per month
+            - 5: Weekly periods
+            - 252: Annual periods
+            - Custom values for specific aggregation needs
+    
     Returns:
-        List[float]: Monthly return series
+        List[float]: List of monthly returns, each representing compounded return
+            over the specified period. Length = ceil(len(daily_returns) / trading_days_per_month).
+            Values are in decimal format (0.04 = 4% monthly return).
+    
+    Raises:
+        ValueError: If returns cannot be converted or contain invalid values
+        TypeError: If input data format is invalid
         
-    OUTPUT examples:
-    Input: 70 daily returns → 4 monthly periods
-    Monthly returns: [0.04403246057170329, 0.04403246057170329, 0.04403246057170329, 0.014467178286484694]
-    Each month aggregated from 21 trading days (except last partial month)
+    Example:
+        >>> import pandas as pd
+        >>> # Create 70 days of daily returns
+        >>> daily = pd.Series([0.01, -0.02, 0.015, -0.008, 0.012] * 14)
+        >>> 
+        >>> # Convert to monthly (21-day) returns
+        >>> monthly = calculate_monthly_returns(daily, trading_days_per_month=21)
+        >>> print(f"Daily periods: {len(daily)}, Monthly periods: {len(monthly)}")
+        >>> print(f"First month return: {monthly[0]:.4f}")
+        >>> print(f"All monthly returns: {[f'{r:.4f}' for r in monthly]}")
+        
+        >>> # Convert same data to weekly (5-day) returns
+        >>> weekly = calculate_monthly_returns(daily, trading_days_per_month=5)
+        >>> print(f"Weekly periods: {len(weekly)}")
+        
+        >>> # Last partial month
+        >>> short_returns = pd.Series([0.01, -0.02, 0.015])
+        >>> partial_monthly = calculate_monthly_returns(short_returns, trading_days_per_month=21)
+        >>> print(f"Partial month return: {partial_monthly[0]:.4f}")
+    
+    Compounding Formula:
+        Monthly Return = (1 + d1)(1 + d2)...(1 + dn) - 1
+        where d1, d2, ..., dn are daily returns in the month
+        
+    Example Calculation:
+        Daily returns: [0.02, -0.01, 0.03]
+        Monthly = (1.02)(0.99)(1.03) - 1 = 1.03876 - 1 = 0.03876 (3.876%)
+    
+    Use Cases:
+        - Convert daily strategy performance to monthly for reporting
+        - Analyze monthly volatility and return patterns
+        - Aggregate high-frequency data for lower-frequency analysis
+        - Portfolio rebalancing analysis on monthly schedule
+        - Performance comparison across monthly periods
+        
+    Notes:
+        - Uses geometric (compound) returns, not arithmetic returns
+        - Final period may contain fewer than trading_days_per_month returns
+        - Empty return series returns empty list
+        - NaN values in input will propagate to output monthly returns
+        - Common practice: 252 trading days per year, 21 per month
+        - Monthly returns are additive in log space but not in simple return space
+        
+    See Also:
+        - calculate_cumulative_returns(): For overall wealth growth calculation
+        - calculate_log_returns(): For log-space calculations
+        - resample_data(): For time-based resampling with DatetimeIndex
     """
     try:
         returns_series = validate_return_data(daily_returns)

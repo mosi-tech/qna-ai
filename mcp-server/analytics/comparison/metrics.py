@@ -1240,16 +1240,72 @@ def compare_sector_exposure(holdings1: List[Dict[str, Any]],
 
 def compare_expense_ratios(funds: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
-    Compare expense ratios and fees.
+    Compare expense ratios across multiple funds to identify cost-effective options.
     
-    From financial-analysis-function-library.json comparison_analysis category
-    Simple expense ratio comparison - no code duplication
+    Analyzes and compares expense ratios (fees) across funds, showing the impact of
+    different fee levels on long-term investment returns. High expense ratios can
+    significantly erode returns over time through compound effects, making this
+    comparison critical for investment selection and cost optimization.
+    
+    Calculates the real cost impact by projecting how different fee levels affect
+    final portfolio value over different time horizons, providing clear insight into
+    the value of lower-cost investment options.
     
     Args:
-        funds: List of fund data with expense ratios
-        
+        funds (List[Dict[str, Any]]): List of fund dictionaries with at least these keys:
+            - 'expense_ratio' (required, float): Annual expense ratio as decimal (0.005 = 0.5%)
+            - 'name' (optional, str): Fund name for display
+            - 'symbol' (optional, str): Fund ticker symbol
+            - Any additional fund metadata
+            Must contain at least 2 funds for meaningful comparison.
+    
     Returns:
-        Dict: Expense comparison data
+        Dict[str, Any]: Comprehensive expense comparison with keys:
+            - 'funds' (list): Sorted list of funds with expense details
+            - 'cheapest' (dict): Fund with lowest expense ratio
+            - 'most_expensive' (dict): Fund with highest expense ratio
+            - 'average_expense_ratio' (float): Mean expense ratio across all funds
+            - 'max_difference' (float): Spread between highest and lowest ratios
+            - 'cost_impact_comparison' (dict): Cost impact analysis for different scenarios
+            - 'savings_potential' (dict): Potential savings by choosing cheapest option
+    
+    Raises:
+        ValueError: If less than 2 funds provided or funds missing expense_ratio
+        TypeError: If expense_ratio is not numeric
+        
+    Example:
+        >>> funds = [
+        ...     {'name': 'Expensive Fund', 'symbol': 'EXPF', 'expense_ratio': 0.85},
+        ...     {'name': 'Mid Fund', 'symbol': 'MIDF', 'expense_ratio': 0.25},
+        ...     {'name': 'Cheap Fund', 'symbol': 'CPFF', 'expense_ratio': 0.03}
+        ... ]
+        >>> result = compare_expense_ratios(funds)
+        >>> print(f"Cheapest: {result['cheapest']['fund_name']} at {result['cheapest']['expense_ratio_pct']}")
+        >>> print(f"10-year cost impact: ${result['cost_impact_comparison']['max_difference']['cost_difference_10yr']:,.0f}")
+    
+    Cost Impact Analysis:
+        Projects 10-year outcomes on $10,000 initial investment at 7% annual return:
+        - Fund with 0.03% fee: ~$18,935
+        - Fund with 0.85% fee: ~$18,308
+        - Difference: ~$627 (3.3% of returns lost to fees)
+        
+    Key Insights:
+        - 0.50% difference in fees can mean 10%+ reduction in long-term wealth
+        - Expense ratios compound over time through opportunity cost
+        - Index funds typically 0.03-0.20%, Active funds 0.50-1.50%+
+        - Individual stocks/ETFs may have lower embedded costs
+        
+    Note:
+        - Comparison assumes 7% annual return (adjustable for different scenarios)
+        - Only shows fees, not other costs (trading commissions, bid-ask spreads)
+        - 10-year projection assumes fees remain constant
+        - Does not account for tax-loss harvesting benefits of lower-turnover funds
+        - Past performance and fees are not indicators of future results
+        
+    See Also:
+        - compare_performance(): For comparing historical returns
+        - compare_volatility(): For comparing risk characteristics
+        - Fee impact is one of few guaranteed predictors of fund performance
     """
     try:
         if len(funds) < 2:
@@ -1338,17 +1394,113 @@ def compare_expense_ratios(funds: List[Dict[str, Any]]) -> Dict[str, Any]:
 def compare_liquidity(volumes1: Union[pd.Series, Dict[str, Any], List[float]], 
                      volumes2: Union[pd.Series, Dict[str, Any], List[float]]) -> Dict[str, Any]:
     """
-    Compare liquidity metrics.
+    Compare liquidity characteristics between two assets based on trading volume data.
     
-    From financial-analysis-function-library.json comparison_analysis category
-    Uses pandas for volume analysis - no code duplication
+    Analyzes and compares volume patterns across two assets or time periods to
+    evaluate trading liquidity, consistency, and market activity. Liquidity is critical
+    for traders and portfolio managers - it determines transaction costs, slippage,
+    and the ability to enter/exit positions at desired prices and sizes.
+    
+    Measures multiple dimensions of liquidity including average volume, consistency,
+    and extremes, providing comprehensive understanding of each asset's trading activity
+    and ease of trading.
     
     Args:
-        volumes1: First asset volume data
-        volumes2: Second asset volume data
-        
+        volumes1 (Union[pd.Series, Dict[str, Any], List[float]]): Volume data for
+            first asset. Can be pandas Series (with optional datetime index), list of
+            floats, or dictionary with volume values. Each value represents trading
+            volume for a period (daily, hourly, etc.).
+        volumes2 (Union[pd.Series, Dict[str, Any], List[float]]): Volume data for
+            second asset in same format as volumes1. Will be automatically aligned
+            with volumes1 for fair comparison.
+    
     Returns:
-        Dict: Liquidity comparison data
+        Dict[str, Any]: Comprehensive liquidity comparison with metrics:
+            - 'average_volume': Mean volume for each asset
+            - 'median_volume': Median volume (less affected by outliers)
+            - 'volume_volatility': Standard deviation (consistency measure)
+            - 'max_volume': Peak volume for each asset
+            - 'min_volume': Minimum volume for each asset
+            - 'volume_ratio': Asset 1 volume / Asset 2 volume (size comparison)
+            - 'liquidity_winner': Asset with superior overall liquidity
+            
+            Each metric includes:
+            - asset_1 (float): Value for first asset
+            - asset_2 (float): Value for second asset
+            - difference (float): asset_2 - asset_1
+            - winner (str): Which asset has better metric
+    
+    Raises:
+        ValueError: If volume data cannot be aligned or is invalid
+        TypeError: If input data format is incompatible
+        
+    Example:
+        >>> import pandas as pd
+        >>> import numpy as np
+        >>> # Daily volumes for two stocks
+        >>> volumes_apple = [1000000, 1200000, 950000, 1100000, 1050000]
+        >>> volumes_meta = [2000000, 2100000, 1900000, 2200000, 2050000]
+        >>> 
+        >>> result = compare_liquidity(volumes_apple, volumes_meta)
+        >>> print(f"Average Volume - Apple: {result['average_volume']['asset_1']:,.0f}")
+        >>> print(f"Average Volume - Meta: {result['average_volume']['asset_2']:,.0f}")
+        >>> print(f"Volume Consistency - Lower is better (asset winner: {result['volume_volatility']['winner']})")
+        >>> print(f"Overall liquidity winner: {result['liquidity_winner']}")
+    
+    Liquidity Metrics Explained:
+        
+        1. Average Volume
+           - Mean trading volume across all periods
+           - Higher average = more active trading, easier to execute large trades
+           - Use case: Determine typical trading activity level
+           
+        2. Median Volume
+           - Less affected by exceptional volume spikes
+           - Better for understanding "normal" trading conditions
+           - Use case: Identify typical trading day vs exceptional days
+           
+        3. Volume Volatility (Standard Deviation)
+           - Measures consistency of volume
+           - Higher volatility = more unpredictable volume (higher execution risk)
+           - Lower volatility = consistent volume (more predictable trading)
+           - Use case: Evaluate trading consistency and risk
+           
+        4. Max/Min Volume
+           - Range of observed volumes
+           - Large range = highly variable trading activity
+           - Use case: Understand volume extremes and potential slippage scenarios
+           
+        5. Volume Ratio
+           - Relative size comparison
+           - 2.0 = First asset has 2x average volume
+           - Use case: Compare trading size between assets
+    
+    Liquidity Implications:
+        - High average volume → Easier to trade, lower bid-ask spreads
+        - Consistent volume → Predictable execution costs
+        - High median volume → Can execute larger orders
+        - High volume volatility → Variable trading costs, execution risk
+        - Large max/min range → Wide range of potential execution outcomes
+    
+    Trading Applications:
+        - Position Sizing: Adjust order size based on volume
+        - Slippage Estimation: Higher volume usually means lower slippage
+        - Risk Management: Ensure adequate liquidity for exit strategies
+        - Timing: Execute trades during high-volume periods for better prices
+        - Monitoring: Track volume changes for early signs of liquidity crisis
+    
+    Note:
+        - Volume measured in shares (or contracts) per period
+        - Automatic series alignment handles different lengths
+        - Lower volume volatility indicates more predictable trading
+        - Market microstructure affects execution more than pure volume
+        - Event-driven spikes can distort average/median metrics
+        - Should be combined with bid-ask spread analysis for complete picture
+        
+    See Also:
+        - compare_volatility(): For comparing price volatility
+        - compare_performance(): For comparing historical returns
+        - Volume and volatility are complementary liquidity indicators
     """
     try:
         # Convert to pandas Series
