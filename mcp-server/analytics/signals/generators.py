@@ -35,6 +35,8 @@ Note:
     indicators for comprehensive trading strategy development.
 """
 
+
+
 import pandas as pd
 import numpy as np
 from typing import Dict, List, Any, Union, Optional
@@ -42,8 +44,8 @@ import warnings
 warnings.filterwarnings('ignore')
 
 from ..utils.data_utils import validate_return_data, validate_price_data, standardize_output
-from ..indicators.momentum import calculate_rsi, calculate_macd, calculate_stochastic
-from ..indicators.volatility import calculate_bollinger_bands
+from ..indicators.momentum.indicators import calculate_rsi, calculate_macd, calculate_stochastic
+from ..indicators.volatility.indicators import calculate_bollinger_bands
 
 
 def generate_signals(indicator: Union[pd.Series, List[float], Dict[str, Any]], 

@@ -41,6 +41,7 @@ Note:
     error handling. Missing data is handled gracefully with appropriate error messages.
 """
 
+
 import pandas as pd
 import numpy as np
 from typing import Dict, List, Any, Union, Optional
@@ -1863,7 +1864,7 @@ def compute_outperformance(returns: Union[pd.DataFrame, Dict[str, pd.Series]],
             raise ValueError("Returns must be DataFrame or dict of Series")
             
         # Validate benchmark returns
-        from ..utils.data_utils import validate_return_data, align_series
+        from utils.data_utils import validate_return_data, align_series
         benchmark_series = validate_return_data(benchmark_returns)
         
         # Results storage
@@ -1990,7 +1991,7 @@ def compute_outperformance(returns: Union[pd.DataFrame, Dict[str, pd.Series]],
             }
         }
         
-        from ..utils.data_utils import standardize_output
+        from utils.data_utils import standardize_output
         return standardize_output(result, "compute_outperformance")
         
     except Exception as e:

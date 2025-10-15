@@ -32,6 +32,7 @@ import empyrical
 from scipy import stats
 import scipy.optimize as sco
 
+
 from ..utils.data_utils import validate_return_data, validate_price_data, standardize_output
 from ..performance.metrics import calculate_returns_metrics, calculate_risk_metrics
 
@@ -117,8 +118,8 @@ def calculate_portfolio_metrics(weights: Union[pd.Series, Dict[str, Any], List[f
         cvar_95 = empyrical.conditional_value_at_risk(portfolio_returns, cutoff=0.05)
         
         # Rolling metrics
-        rolling_sharpe = empyrical.rolling_sharpe(portfolio_returns, rolling_window=252)
-        rolling_volatility = empyrical.rolling_volatility(portfolio_returns, rolling_window=252)
+        rolling_sharpe = empyrical.roll_sharpe_ratio(portfolio_returns, window=252)
+        rolling_volatility = empyrical.roll_annual_volatility(portfolio_returns, window=252)
         
         # Portfolio composition analysis
         effective_n_assets = 1 / np.sum(weights ** 2)  # Effective number of assets
@@ -181,7 +182,7 @@ def calculate_portfolio_metrics(weights: Union[pd.Series, Dict[str, Any], List[f
             
             if len(aligned_portfolio) > 0:
                 # Calculate tracking metrics using empyrical
-                tracking_error = empyrical.down_stdev(aligned_portfolio - aligned_benchmark)
+                tracking_error = empyrical.downside_risk(aligned_portfolio - aligned_benchmark)
                 information_ratio = (aligned_portfolio.mean() - aligned_benchmark.mean()) / tracking_error if tracking_error > 0 else 0
                 
                 # Beta and alpha using empyrical

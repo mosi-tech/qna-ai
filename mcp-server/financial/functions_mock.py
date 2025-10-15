@@ -25,10 +25,9 @@ from .transformers import (
     handle_vendor_error, ensure_standard_response
 )
 
-
 # Vendor availability check
-ALPACA_AVAILABLE = bool(os.getenv('ALPACA_API_KEY') and os.getenv('ALPACA_SECRET_KEY'))
-EODHD_AVAILABLE = bool(os.getenv('EODHD_API_KEY'))
+ALPACA_AVAILABLE = True
+EODHD_AVAILABLE = True
 
 # Default vendor preferences for different data types
 DEFAULT_VENDORS = {

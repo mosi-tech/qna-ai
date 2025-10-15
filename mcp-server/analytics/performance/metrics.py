@@ -400,7 +400,7 @@ def calculate_benchmark_metrics(returns: Union[pd.Series, Dict[str, Any]],
             # Use empyrical library - leveraging requirements.txt
             alpha = empyrical.alpha(portfolio_aligned, benchmark_aligned, risk_free=risk_free_rate)
             beta = empyrical.beta(portfolio_aligned, benchmark_aligned)
-            tracking_error = empyrical.tracking_error(portfolio_aligned, benchmark_aligned)
+            tracking_error = (portfolio_aligned - benchmark_aligned).std() * np.sqrt(252)
             information_ratio = empyrical.excess_sharpe(portfolio_aligned, benchmark_aligned)
             up_capture = empyrical.up_capture(portfolio_aligned, benchmark_aligned)
             down_capture = empyrical.down_capture(portfolio_aligned, benchmark_aligned)
@@ -529,7 +529,7 @@ def calculate_drawdown_analysis(returns: Union[pd.Series, Dict[str, Any]]) -> Di
         return {"success": False, "error": f"Drawdown analysis failed: {str(e)}"}
 
 
-def calculate_annualized_return(prices: Union[pd.Series, Dict[str, Any]], periods: int) -> float:
+def calculate_annualized_return(prices: Union[pd.Series, Dict[str, Any]], periods: Union[int, str] = 'daily') -> float:
     """Calculate annualized return from price series using empyrical library.
     
     Converts price series to returns and calculates the annualized return rate,
@@ -544,18 +544,17 @@ def calculate_annualized_return(prices: Union[pd.Series, Dict[str, Any]], period
         prices (Union[pd.Series, Dict[str, Any]]): Price series as pandas Series with
             datetime index or dictionary with price values. Values should be absolute
             prices (e.g., 100.50, 99.75, 101.20).
-        periods (int): Number of periods per year for annualization. Common values:
-            - 252: Daily data (trading days per year)
-            - 12: Monthly data
-            - 4: Quarterly data
-            - 1: Annual data
+        periods (Union[int, str]): Period identifier for annualization. Can be:
+            - String: 'daily', 'weekly', 'monthly', 'quarterly', 'yearly'
+            - Integer: 252 (daily), 52 (weekly), 12 (monthly), 4 (quarterly), 1 (annual)
+            - Defaults to 'daily' (252 trading days per year)
         
     Returns:
         float: Annualized return as decimal (e.g., 0.08 for 8% annual return).
     
     Raises:
         ValueError: If prices cannot be converted to valid price series or periods is invalid.
-        TypeError: If input data format is invalid or periods is not integer.
+        TypeError: If input data format is invalid or periods is not integer/string.
         ZeroDivisionError: If insufficient data for calculation or periods is zero.
         
     Example:
@@ -565,27 +564,13 @@ def calculate_annualized_return(prices: Union[pd.Series, Dict[str, Any]], period
         >>> dates = pd.date_range('2023-01-01', periods=252, freq='D')
         >>> prices = pd.Series([100, 102, 104, 106, 108], index=dates[:5])
         >>> 
-        >>> # Calculate annualized return
-        >>> annual_return = calculate_annualized_return(prices, periods=252)
-        >>> print(annual_return)
-        15.85
-        >>> print(f"Annualized Return: {annual_return:.2f}")
-        Annualized Return: 15.85
-        >>> print(f"Annualized Return: {annual_return*100:.1f}%")
-        Annualized Return: 1585.0%
-        >>> 
-        >>> # Monthly data example
-        >>> monthly_prices = pd.Series([100, 102, 104, 106], 
-        ...                           index=pd.date_range('2023-01-01', periods=4, freq='M'))
-        >>> monthly_annual = calculate_annualized_return(monthly_prices, periods=12)
-        >>> print(f"Monthly to Annual: {monthly_annual:.3f}")
-        Monthly to Annual: 0.245
+        >>> # Calculate annualized return with string period
+        >>> annual_return = calculate_annualized_return(prices, periods='daily')
         >>> print(f"Annualized Return: {annual_return:.2%}")
         >>> 
-        >>> # For monthly data
-        >>> monthly_prices = prices.resample('M').last()
-        >>> annual_return_monthly = calculate_annualized_return(monthly_prices, periods=12)
-        >>> print(f"Annualized Return (from monthly): {annual_return_monthly:.2%}")
+        >>> # Or with integer period
+        >>> annual_return = calculate_annualized_return(prices, periods=252)
+        >>> print(f"Annualized Return: {annual_return:.2%}")
         
     Note:
         - Automatically converts prices to returns using percentage change
@@ -601,8 +586,14 @@ def calculate_annualized_return(prices: Union[pd.Series, Dict[str, Any]], period
         # Calculate returns from prices
         returns = price_series.pct_change().dropna()
         
+        # Convert integer periods to string format if needed
+        period_str = periods
+        if isinstance(periods, int):
+            period_map = {252: 'daily', 52: 'weekly', 12: 'monthly', 4: 'quarterly', 1: 'yearly'}
+            period_str = period_map.get(periods, 'daily')
+        
         # Use empyrical for annualized return
-        annual_return = empyrical.annual_return(returns, period=periods)
+        annual_return = empyrical.annual_return(returns, period=period_str)
         
         return float(annual_return)
         
@@ -610,7 +601,7 @@ def calculate_annualized_return(prices: Union[pd.Series, Dict[str, Any]], period
         raise ValueError(f"Annualized return calculation failed: {str(e)}")
 
 
-def calculate_annualized_volatility(returns: Union[pd.Series, Dict[str, Any]], periods_per_year: int) -> float:
+def calculate_annualized_volatility(returns: Union[pd.Series, Dict[str, Any]], periods_per_year: Union[int, str] = 'daily') -> float:
     """Calculate annualized volatility using empyrical library.
     
     Computes the annualized standard deviation of returns, representing the volatility
@@ -625,18 +616,17 @@ def calculate_annualized_volatility(returns: Union[pd.Series, Dict[str, Any]], p
         returns (Union[pd.Series, Dict[str, Any]]): Return series as pandas Series with
             datetime index or dictionary with return values. Values should be decimal
             returns (e.g., 0.02 for 2% return, -0.01 for -1% return).
-        periods_per_year (int): Number of periods per year for annualization. Common values:
-            - 252: Daily returns (trading days per year)
-            - 12: Monthly returns
-            - 4: Quarterly returns
-            - 1: Annual returns
+        periods_per_year (Union[int, str]): Period identifier for annualization. Can be:
+            - String: 'daily', 'weekly', 'monthly', 'quarterly', 'yearly'
+            - Integer: 252 (daily), 52 (weekly), 12 (monthly), 4 (quarterly), 1 (annual)
+            - Defaults to 'daily' (252 trading days per year)
         
     Returns:
         float: Annualized volatility as decimal (e.g., 0.15 for 15% annual volatility).
     
     Raises:
         ValueError: If returns cannot be converted to valid return series or periods_per_year is invalid.
-        TypeError: If input data format is invalid or periods_per_year is not integer.
+        TypeError: If input data format is invalid or periods_per_year is not integer/string.
         ZeroDivisionError: If insufficient data for calculation or periods_per_year is zero.
         
     Example:
@@ -647,22 +637,12 @@ def calculate_annualized_volatility(returns: Union[pd.Series, Dict[str, Any]], p
         >>> daily_returns = pd.Series([0.01, -0.02, 0.015, -0.008, 0.012], index=dates)
         >>> 
         >>> # Calculate annualized volatility from daily returns
-        >>> annual_vol = calculate_annualized_volatility(daily_returns, periods_per_year=252)
-        >>> print(annual_vol)
-        0.238
-        >>> print(f"Annual Volatility: {annual_vol:.3f}")
-        Annual Volatility: 0.238
+        >>> annual_vol = calculate_annualized_volatility(daily_returns, periods_per_year='daily')
         >>> print(f"Annual Volatility: {annual_vol:.1%}")
-        Annual Volatility: 23.8%
         >>> 
-        >>> # Monthly returns example
-        >>> monthly_vol = calculate_annualized_volatility(daily_returns, periods_per_year=12)
-        >>> print(f"Monthly to Annual Vol: {monthly_vol:.3f}")
-        Monthly to Annual Vol: 0.052 
-        >>> # For monthly returns
-        >>> monthly_returns = daily_returns.resample('M').apply(lambda x: (1+x).prod()-1)
-        >>> annual_vol_monthly = calculate_annualized_volatility(monthly_returns, periods_per_year=12)
-        >>> print(f"Annual Volatility (from monthly): {annual_vol_monthly:.2%}")
+        >>> # Or with integer period
+        >>> annual_vol = calculate_annualized_volatility(daily_returns, periods_per_year=252)
+        >>> print(f"Annual Volatility: {annual_vol:.1%}")
         
     Note:
         - Uses empyrical.annual_volatility() with specified period parameter
@@ -675,8 +655,14 @@ def calculate_annualized_volatility(returns: Union[pd.Series, Dict[str, Any]], p
     try:
         returns_series = validate_return_data(returns)
         
+        # Convert integer periods to string format if needed
+        period_str = periods_per_year
+        if isinstance(periods_per_year, int):
+            period_map = {252: 'daily', 52: 'weekly', 12: 'monthly', 4: 'quarterly', 1: 'yearly'}
+            period_str = period_map.get(periods_per_year, 'daily')
+        
         # Use empyrical for annualized volatility
-        annual_vol = empyrical.annual_volatility(returns_series, period=periods_per_year)
+        annual_vol = empyrical.annual_volatility(returns_series, period=period_str)
         
         return float(annual_vol)
         
