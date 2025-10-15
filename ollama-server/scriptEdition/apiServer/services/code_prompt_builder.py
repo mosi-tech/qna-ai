@@ -36,33 +36,33 @@ class CodePromptBuilderService(BaseService):
     
     
     def _load_code_prompt_template(self):
-        """Load code prompt template"""
+        """Load fixed system prompt template"""
         template_path = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), 
             "..", 
             "config", 
-            "code-prompt-template-optimized.txt"
+            "system-prompt-code-generation-fixed.txt"
         )
         
         try:
             with open(template_path, 'r', encoding='utf-8') as f:
-                self.code_prompt_template = f.read()
-            self.logger.info("✅ Loaded code prompt template")
+                self.fixed_system_prompt = f.read()
+            self.logger.info("✅ Loaded fixed system prompt for code generation")
         except FileNotFoundError:
-            self.logger.error(f"❌ Code prompt template not found: {template_path}")
-            self.code_prompt_template = "Generate Python script using the provided functions."
+            self.logger.error(f"❌ Fixed system prompt not found: {template_path}")
+            self.fixed_system_prompt = "You are a financial script generator. Generate Python scripts using the provided MCP functions."
     
     
-    async def build_enriched_prompt(self, user_query: str, context: Optional[Dict] = None) -> Dict[str, Any]:
+    async def create_code_prompt_messages(self, user_query: str, context: Optional[Dict] = None) -> Dict[str, Any]:
         """
-        Build enriched prompt by analyzing query and selecting relevant MCP functions
+        Build enriched prompt with separate system prompt and user messages
         
         Args:
             user_query: User's financial question
             context: Optional context information
             
         Returns:
-            Dict containing selected functions, schemas, and enriched prompt
+            Dict containing system prompt, user messages, and metadata
         """
         try:
             self.logger.info(f"🔍 Building enriched prompt for query: {user_query[:100]}...")
@@ -73,11 +73,57 @@ class CodePromptBuilderService(BaseService):
             # Step 1: Analyze query and select functions
             function_selection = await self._analyze_and_select_functions(user_query, context)
             
-            # Step 2: Fetch docstrings for selected functions (simplified)
+            # Step 2: Fetch docstrings for selected functions
             function_schemas = await self._get_function_schemas_from_llm(function_selection['selected_functions'])
             
-            # Step 3: Build enriched prompt
-            enriched_prompt = self._build_prompt(user_query, function_selection, function_schemas)
+            # Step 3: Build message structure with simulated tool calls using provider-agnostic methods
+            system_prompt = self.fixed_system_prompt
+            
+            # Build messages simulating tool calls for function documentation
+            user_messages = []
+            
+            # Initial user query
+            query_message = f"Write a Python script to answer this question: {user_query}"
+            user_messages.append({"role": "user", "content": query_message})
+            
+            # Get the provider for format-specific tool calls
+            provider = self.llm_service.provider
+            
+            # Create simulated tool calls using provider-specific format
+            tool_calls = []
+            call_ids = {}
+            for func_name in function_schemas.keys():
+                arguments = {"function_name": func_name}
+                call_id = f"call_{func_name}"
+                
+                tool_call = provider.create_simulated_tool_call("get_function_docstring", arguments, call_id)
+                tool_calls.append(tool_call)
+                call_ids[func_name] = call_id
+            
+            # Create assistant message with tool calls using provider-specific format
+            assistant_message = provider.create_simulated_assistant_message_with_tool_calls(
+                "I need to get documentation for the required functions first.",
+                tool_calls
+            )
+            user_messages.append(assistant_message)
+            
+            # Create tool result messages using provider-specific format
+            for func_name, schema in function_schemas.items():
+                # Format the schema as expected structured JSON output for get_function_docstring
+                structured_result = {
+                    "success": True,
+                    "function_name": func_name,
+                    "original_name": func_name, 
+                    "docstring": schema,
+                    "signature": f"{func_name}(**kwargs)",
+                    "module": "mcp_functions"
+                }
+                
+                tool_result = provider.create_simulated_tool_result(
+                    call_ids[func_name], 
+                    json.dumps(structured_result, indent=2)
+                )
+                user_messages.append(tool_result)
             
             result = {
                 "status": "success",
@@ -85,11 +131,15 @@ class CodePromptBuilderService(BaseService):
                 "selected_functions": function_selection['selected_functions'],
                 "function_schemas": function_schemas,
                 "suggested_parameters": function_selection.get('suggested_parameters', {}),
-                "enriched_prompt": enriched_prompt,
+                "system_prompt": system_prompt,
+                "user_messages": user_messages,
                 "timestamp": datetime.now().isoformat()
             }
             
-            self.logger.info(f"✅ Built enriched prompt with {len(function_selection['selected_functions'])} functions")
+            # Save messages for debugging
+            self._save_messages_for_debugging(result, user_query)
+            
+            self.logger.info(f"✅ Built enriched prompt with {len(function_selection['selected_functions'])} functions as simulated tool calls in {len(user_messages)} messages")
             return result
             
         except Exception as e:
@@ -259,30 +309,8 @@ class CodePromptBuilderService(BaseService):
             self.logger.debug(f"Error in docstring fetch for {base_function_name}: {e}")
             return None
     
-    def _build_prompt(self, user_query: str, function_selection: Dict, function_schemas: Dict[str, str]) -> str:
-        """Build the enriched prompt for code generator using template file"""
-        
-        # Build function documentation section
-        function_docs = "\n\n".join([
-            f"=== {func_name} ===\n{schema}"
-            for func_name, schema in function_schemas.items()
-        ])
-        
-        # Use template and format with variables
-        enriched_prompt = self.code_prompt_template.format(
-            user_query=user_query,
-            analysis_type=function_selection.get('analysis_type', 'general'),
-            function_docs=function_docs,
-            suggested_parameters=json.dumps(function_selection.get('suggested_parameters', {}), indent=2)
-        )
-        
-        # Save prompt to debug folder for troubleshooting
-        self._save_prompt_for_debugging(enriched_prompt, user_query)
-        
-        return enriched_prompt
-    
-    def _save_prompt_for_debugging(self, prompt: str, user_query: str):
-        """Save generated prompt to code_gen folder for debugging"""
+    def _save_messages_for_debugging(self, result: Dict[str, Any], user_query: str):
+        """Save generated messages to code_gen folder for debugging"""
         try:
             # Create timestamp for filename
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -298,25 +326,62 @@ class CodePromptBuilderService(BaseService):
             os.makedirs(code_gen_dir, exist_ok=True)
             
             # Create filename with timestamp
-            filename = f"code_gen_prompt-{timestamp}.txt"
+            filename = f"code_gen_messages-{timestamp}.txt"
             filepath = os.path.join(code_gen_dir, filename)
             
-            # Add header with metadata
-            header = f"""# Code Generation Prompt Debug File
+            # Build debug content with separated messages
+            debug_content = f"""# Code Generation Messages Debug File
 # Generated: {datetime.now().isoformat()}
 # User Query: {user_query[:100]}{'...' if len(user_query) > 100 else ''}
 # ==========================================
 
+=== SYSTEM PROMPT ===
+{result['system_prompt']}
+
 """
             
-            # Save prompt with header
-            with open(filepath, 'w', encoding='utf-8') as f:
-                f.write(header + prompt)
+            # Add each message separately with proper type detection
+            for i, message in enumerate(result['user_messages'], 1):
+                role = message.get('role', 'unknown')
+                
+                if role == 'user':
+                    msg_type = "(User Query)"
+                elif role == 'assistant':
+                    if message.get('tool_calls'):
+                        msg_type = f"(Assistant with {len(message['tool_calls'])} tool calls)"
+                    else:
+                        msg_type = "(Assistant)"
+                elif role == 'tool':
+                    tool_call_id = message.get('tool_call_id', 'unknown')
+                    msg_type = f"(Tool Result: {tool_call_id})"
+                else:
+                    msg_type = f"(Role: {role})"
+                
+                content = message.get('content', '')
+                if message.get('tool_calls'):
+                    content += f"\n\nTool Calls: {json.dumps(message['tool_calls'], indent=2)}"
+                
+                debug_content += f"""=== MESSAGE {i} {msg_type} ===
+{content}
+
+"""
             
-            self.logger.info(f"📝 Saved debug prompt to {filename}")
+            debug_content += f"""=== METADATA ===
+Analysis Type: {result['analysis_type']}
+Selected Functions: {len(result['selected_functions'])}
+Function List: {result['selected_functions']}
+Total Messages: {len(result['user_messages'])}
+Tool Calls Simulated: {len([m for m in result['user_messages'] if m.get('role') == 'tool'])}
+"""
+            
+            # Save messages with header
+            with open(filepath, 'w', encoding='utf-8') as f:
+                f.write(debug_content)
+            
+            self.logger.info(f"📝 Saved debug messages to {filename}")
             
         except Exception as e:
-            self.logger.warning(f"⚠️ Failed to save debug prompt: {e}")
+            self.logger.warning(f"⚠️ Failed to save debug messages: {e}")
             # Don't fail the main operation if debug saving fails
 
 # Factory function for easy initialization

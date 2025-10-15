@@ -299,3 +299,38 @@ class OpenAIProvider(LLMProvider):
     def get_processed_tools(self, enable_caching: bool = True) -> List[Dict[str, Any]]:
         """Get tools processed for OpenAI (returns tools as-is since already in OpenAI format)"""
         return self._raw_tools or []
+    
+    def create_simulated_tool_call(self, function_name: str, arguments: Dict[str, Any], call_id: str = None) -> Dict[str, Any]:
+        """Create a simulated tool call in OpenAI's format"""
+        import uuid
+        if call_id is None:
+            call_id = f"call_{str(uuid.uuid4())[:8]}"
+        
+        return {
+            "id": call_id,
+            "type": "function",
+            "function": {
+                "name": function_name,
+                "arguments": arguments  # Keep as dict for Ollama compatibility
+            }
+        }
+    
+    def create_simulated_assistant_message_with_tool_calls(self, content: str, tool_calls: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Create a simulated assistant message with tool calls in OpenAI's format"""
+        message = {
+            "role": "assistant",
+            "tool_calls": tool_calls
+        }
+        
+        if content:
+            message["content"] = content
+        
+        return message
+    
+    def create_simulated_tool_result(self, tool_call_id: str, content: str) -> Dict[str, Any]:
+        """Create a simulated tool result message in OpenAI's format"""
+        return {
+            "role": "tool",
+            "tool_call_id": tool_call_id,
+            "content": content
+        }

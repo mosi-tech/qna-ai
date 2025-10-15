@@ -1,6 +1,6 @@
 {
   "mcpServers": {
-    "financial-analysis": {
+    "financial-data": {
       "command": "python",
       "args": ["/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server/financial_server.py"],
       "env": {
@@ -26,17 +26,11 @@
   "serviceConfigs": {
     "analysis": {
       "enabled": true,
-      "servers": ["validation-server"],
-      "exclude_tools": [
-        "alpaca_market_screener_most_actives",
-        "alpaca_market_stocks_snapshots",
-        "alpaca_market_stocks_quotes_latest", 
-        "alpaca_market_stocks_trades_latest"
-      ]
+      "servers": ["analytics-engine", "financial-data", "validation-server"]
     },
     "context": {
       "enabled": false,
-      "servers": ["financial-analysis"],
+      "servers": ["financial-data"],
       "exclude_tools": [
         "alpaca_market_screener_most_actives",
         "alpaca_market_stocks_bars",
@@ -49,7 +43,7 @@
     },
     "code-prompt-builder": {
       "enabled": true, 
-      "servers": ["analytics-engine", "financial-analysis"],
+      "servers": ["analytics-engine", "financial-data"],
       "exclude_tools": []
     },
     "reuse-evaluator": {
@@ -71,7 +65,7 @@
   },
   "defaultConfig": {
     "enabled": true,
-    "servers": ["financial-analysis", "analytics-engine", "validation-server"],
+    "servers": ["financial-data", "analytics-engine", "validation-server"],
     "exclude_tools": [],
     "cache_enabled": false,
     "cache_ttl": "short"

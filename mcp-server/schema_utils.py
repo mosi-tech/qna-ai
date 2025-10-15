@@ -142,11 +142,12 @@ def extract_schema_from_docstring(func) -> Optional[Dict[str, Any]]:
         if required:
             schema["inputSchema"]["required"] = required
         
-        # Add outputSchema if Returns section is present
-        if sections['returns']:
-            output_schema = _parse_returns_section(sections['returns'], type_hints.get('return'))
-            if output_schema:
-                schema["outputSchema"] = output_schema
+        # Skip outputSchema generation to avoid MCP validation errors
+        # outputSchema validation is causing issues with complex return structures
+        # if sections['returns']:
+        #     output_schema = _parse_returns_section(sections['returns'], type_hints.get('return'))
+        #     if output_schema:
+        #         schema["outputSchema"] = output_schema
         
         # Add annotations if present
         annotations = _parse_annotations_section(sections['annotations'])
@@ -187,23 +188,60 @@ def _parse_returns_section(returns_lines: List[str], return_type_hint=None) -> O
         "description": description
     }
     
-    # If it's an object type, try to infer structure from description
-    if json_type == "object" and any(keyword in description.lower() for keyword in ['dict', 'dictionary', 'object', 'json']):
-        # Look for property descriptions in the returns section
-        properties = {}
-        
-        # Simple pattern matching for common return formats
-        # Example: "Dict with 'result': calculation result, 'metadata': additional info"
-        prop_matches = re.findall(r"['\"](\w+)['\"]:\s*([^,]+)", description)
-        
-        if prop_matches:
-            for prop_name, prop_desc in prop_matches:
-                properties[prop_name] = {
-                    "type": "string",  # Default to string, could be enhanced
-                    "description": prop_desc.strip()
-                }
+    # For MCP compatibility, only include outputSchema if we can properly define the structure
+    # Otherwise, validation will fail when actual output doesn't match the vague schema
+    
+    # Look for well-defined property descriptions in the returns section
+    properties = {}
+    
+    # Enhanced pattern matching for structured return descriptions
+    # Pattern 1: "Dict with 'key': description" format
+    prop_matches = re.findall(r"['\"](\w+)['\"]:\s*([^,\n\-]+)", description)
+    
+    # Pattern 2: "- key: description" format (bullet points)
+    bullet_matches = re.findall(r"[\-\*]\s*(\w+):\s*([^\n\-]+)", description)
+    
+    all_matches = prop_matches + bullet_matches
+    
+    if all_matches and len(all_matches) >= 2:  # Only create properties if we found multiple clear fields
+        for prop_name, prop_desc in all_matches:
+            # Enhanced type inference from description
+            prop_type = "string"  # default
             
-            output_schema["properties"] = properties
+            # Infer types from description keywords
+            desc_lower = prop_desc.lower().strip()
+            if any(word in desc_lower for word in ['array', 'list', 'containing']):
+                prop_type = "array"
+            elif any(word in desc_lower for word in ['dictionary', 'dict', 'object']):
+                prop_type = "object"
+            elif any(word in desc_lower for word in ['number', 'count', 'price', 'volume']):
+                prop_type = "number"
+            elif any(word in desc_lower for word in ['timestamp', 'date', 'time']):
+                prop_type = "string"
+                
+            properties[prop_name] = {
+                "type": prop_type,
+                "description": prop_desc.strip()
+            }
+        
+        output_schema["properties"] = properties
+        
+        # Add required fields if structure seems well-defined
+        if len(properties) > 0:
+            # Common patterns for required fields
+            likely_required = []
+            for prop_name in properties:
+                # Properties that sound essential
+                if prop_name.lower() in ['bars', 'data', 'result', 'symbols']:
+                    likely_required.append(prop_name)
+            
+            if likely_required:
+                output_schema["required"] = likely_required
+    else:
+        # If we can't reliably parse the structure, don't include outputSchema
+        # This prevents MCP validation errors for complex nested structures
+        logger.debug(f"Skipping outputSchema generation - insufficient structure info (found {len(all_matches)} properties)")
+        return None
     
     return output_schema
 
@@ -303,11 +341,50 @@ def python_type_to_json_type(python_type) -> str:
         return "string"
 
 
-def get_function_docstring(function_name: str, functions_dict: Dict[str, Any]) -> Dict[str, Any]:
-    """Get complete Google docstring for any MCP function.
+def _extract_example_section(docstring: str) -> Optional[str]:
+    """Extract only the Example/Examples section from a docstring.
     
-    Returns the full docstring with examples, parameter descriptions, return types,
-    and usage information. This provides comprehensive documentation for script generation.
+    Args:
+        docstring: Full function docstring
+        
+    Returns:
+        String containing only the example section, or None if not found
+    """
+    if not docstring:
+        return None
+    
+    lines = docstring.strip().split('\n')
+    example_lines = []
+    in_example_section = False
+    
+    for line in lines:
+        line_stripped = line.strip()
+        
+        # Check if we're entering an example section
+        if line_stripped.startswith(('Example:', 'Examples:')):
+            in_example_section = True
+            example_lines.append(line_stripped)
+            continue
+        
+        # Check if we're leaving the example section (next section starts)
+        if in_example_section and line_stripped.startswith(('Args:', 'Parameters:', 'Returns:', 'Note:', 'Notes:', 'Raises:', 'Annotations:', 'Hints:')):
+            break
+        
+        # If we're in the example section, collect lines
+        if in_example_section:
+            example_lines.append(line.rstrip())  # Keep original indentation but remove trailing spaces
+    
+    if example_lines:
+        return '\n'.join(example_lines)
+    
+    return None
+
+
+def get_function_docstring(function_name: str, functions_dict: Dict[str, Any]) -> Dict[str, Any]:
+    """Get example section only from MCP function docstring.
+    
+    Returns only the Example/Examples section from the docstring, providing
+    concise usage examples for script generation without verbose descriptions.
     
     Automatically strips MCP server name prefixes (e.g., mcp__mcp-financial-server__function_name)
     to find the actual function name.
@@ -353,10 +430,17 @@ def get_function_docstring(function_name: str, functions_dict: Dict[str, Any]) -
         
         func = functions_dict[function_name]
         
-        # Get complete docstring
-        docstring = inspect.getdoc(func)
-        if not docstring:
+        # Get only the example section from docstring
+        full_docstring = inspect.getdoc(func)
+        if not full_docstring:
             docstring = f"No docstring available for {function_name}"
+        else:
+            # Extract only the Example/Examples section
+            example_section = _extract_example_section(full_docstring)
+            if example_section:
+                docstring = example_section
+            else:
+                docstring = f"No example section found in {function_name} docstring"
         
         # Get function signature
         sig = inspect.signature(func)
@@ -372,7 +456,7 @@ def get_function_docstring(function_name: str, functions_dict: Dict[str, Any]) -
             "docstring": docstring,
             "signature": signature,
             "module": module,
-            "usage_note": "This docstring contains complete parameter descriptions, return types, and examples for reliable script generation."
+            "usage_note": "This docstring contains only the example section for concise, focused script generation guidance."
         }
         
     except Exception as e:

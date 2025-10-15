@@ -614,3 +614,47 @@ class AnthropicProvider(LLMProvider):
             self._processed_tools_cache[cache_key] = anthropic_tools
             
         return self._processed_tools_cache[cache_key]
+    
+    def create_simulated_tool_call(self, function_name: str, arguments: Dict[str, Any], call_id: str = None) -> Dict[str, Any]:
+        """Create a simulated tool call in Anthropic's format"""
+        if call_id is None:
+            call_id = f"toolu_{function_name}_{hash(function_name) % 10000:04d}"
+        
+        return {
+            "type": "tool_use",
+            "id": call_id,
+            "name": function_name,
+            "input": arguments
+        }
+    
+    def create_simulated_assistant_message_with_tool_calls(self, content: str, tool_calls: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Create a simulated assistant message with tool calls in Anthropic's format"""
+        # Anthropic format: content is a list with text and tool_use objects
+        content_list = []
+        
+        if content:
+            content_list.append({
+                "type": "text",
+                "text": content
+            })
+        
+        # Add tool calls to content list
+        content_list.extend(tool_calls)
+        
+        return {
+            "role": "assistant",
+            "content": content_list
+        }
+    
+    def create_simulated_tool_result(self, tool_call_id: str, content: str) -> Dict[str, Any]:
+        """Create a simulated tool result message in Anthropic's format"""
+        return {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "tool_use_id": tool_call_id,
+                    "content": content
+                }
+            ]
+        }

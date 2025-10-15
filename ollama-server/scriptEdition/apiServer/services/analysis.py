@@ -17,41 +17,15 @@ class AnalysisService(BaseService):
     
     def __init__(self, llm_service: Optional[LLMService] = None):
         super().__init__(llm_service=llm_service, service_name="analysis")
-        
-        # Track enriched prompt mode
-        self._enriched_prompt_mode = False
     
     def _create_default_llm(self) -> LLMService:
         """Create default LLM service for analysis"""
         return create_analysis_llm()
     
-    def _get_system_prompt_filename(self) -> str:
-        """Use environment variable or default analysis prompt"""
-        return os.getenv("SYSTEM_PROMPT_FILE", "system-prompt.txt")
     
     def _get_default_system_prompt(self) -> str:
         """Default system prompt for analysis service"""
         return "You are a helpful financial analysis assistant that generates tool calls for financial data analysis."
-    
-    # === SYSTEM PROMPT MANAGEMENT ===
-    
-    def set_enriched_prompt(self, enriched_prompt: str):
-        """Set enriched prompt to override the default system prompt"""
-        self.system_prompt = enriched_prompt
-        self._enriched_prompt_mode = True
-        # Update provider's raw system prompt so Claude CLI gets the enriched prompt
-        self.llm_service.provider.set_system_prompt(enriched_prompt)
-        self.logger.info("✅ Set enriched prompt for analysis and updated provider")
-    
-    async def clear_enriched_prompt(self):
-        """Clear enriched prompt and revert to default system prompt"""
-        self.system_prompt = None
-        self._enriched_prompt_mode = False
-        # Restore original system prompt on provider
-        original_prompt = await self.load_system_prompt()
-        self.llm_service.provider.set_system_prompt(original_prompt)
-        self.logger.info("🔄 Cleared enriched prompt and restored original system prompt")
-    
     
     # === ANALYSIS WORKFLOW ===
     
@@ -77,19 +51,19 @@ class AnalysisService(BaseService):
             self.logger.error(f"❌ Cache warm error for {model}: {e}")
             return False
     
-    async def call_llm_with_tools(self, model: str, user_message: str, enable_caching: bool = False) -> Dict[str, Any]:
-        """Call LLM with tool calling capability"""
+    async def call_llm_with_tools(self, model: str, messages: List[Dict[str, str]], enable_caching: bool = False) -> Dict[str, Any]:
+        """Call LLM with tool calling capability using provided messages"""
         try:
             # Ensure MCP tools are loaded
             await self.llm_service.ensure_tools_loaded()
             
-            # Create messages with explicit instruction to build Python scripts
-            enhanced_message = f"Write a Python script to answer this question. Follow the instructions in the system prompt.\n\nQuestion: {user_message}"
-            messages = [{"role": "user", "content": enhanced_message}]
+            # Get system prompt from service configuration
+            system_prompt = await self.get_system_prompt()
             
             result = await self.llm_service.make_request(
                 messages=messages,
                 model=model,
+                system_prompt=system_prompt,
                 enable_caching=enable_caching
             )
             
@@ -449,15 +423,21 @@ class AnalysisService(BaseService):
     def _filter_messages_for_context(self, messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Filter messages to keep only recent relevant tool interactions for conversation context"""
         try:
-            # Always keep the first user message (original question)
+            # Always keep all user messages (original question + function docs)
             if not messages:
                 return messages
             
-            filtered_messages = [messages[0]]  # Keep original user message
+            # Keep all user messages at the beginning of the conversation
+            filtered_messages = []
+            for msg in messages:
+                if msg.get("role") == "user":
+                    filtered_messages.append(msg)
+                else:
+                    break  # Stop at first non-user message
             
             # Find assistant messages with tool calls and corresponding tool results
             tool_interaction_pairs = []
-            i = 1
+            i = len(filtered_messages)  # Start after all user messages
             while i < len(messages):
                 msg = messages[i]
                 if (msg.get("role") == "assistant" and 
@@ -504,6 +484,8 @@ class AnalysisService(BaseService):
                     last_validate_idx = assistant_idx
                 elif "get_function_docstring" in found_functions:
                     # Keep all docstring calls as they provide important context
+                    docstring_pairs.append((assistant_idx, tool_idx))
+                else:
                     docstring_pairs.append((assistant_idx, tool_idx))
             
             # Collect pairs to keep
@@ -831,7 +813,7 @@ class AnalysisService(BaseService):
     
     # === MAIN ANALYSIS ENTRY POINT ===
     
-    async def analyze_question(self, question: str, model: str = None, enable_caching: bool = True) -> Dict[str, Any]:
+    async def analyze_question(self, question: str, messages: List[Dict[str, str]] = None, model: str = None, enable_caching: bool = True) -> Dict[str, Any]:
         """Main entry point for financial question analysis"""
         try:
             if not model:
@@ -839,8 +821,21 @@ class AnalysisService(BaseService):
             
             self.logger.info(f"🤔 Analyzing question with {self.llm_service.provider_type.upper()}: {question[:100]}...")
             
+            # System prompt should be automatically handled by LLMService
+            
+            # Use provided messages or create fallback message
+            if messages:
+                analysis_messages = messages
+                self.logger.info(f"📨 Using {len(messages)} provided messages")
+            else:
+                analysis_messages = [{
+                    "role": "user",
+                    "content": question
+                }]
+                self.logger.info("📨 Using fallback single message")
+            
             # Call LLM with tools
-            result = await self.call_llm_with_tools(model, question, enable_caching)
+            result = await self.call_llm_with_tools(model, analysis_messages, enable_caching)
             
             if result.get("success"):
                 # Format the successful response based on new standardized format

@@ -74,6 +74,21 @@ class LLMProvider(ABC):
         """Whether this provider supports prompt caching"""
         pass
     
+    @abstractmethod
+    def create_simulated_tool_call(self, function_name: str, arguments: Dict[str, Any], call_id: str = None) -> Dict[str, Any]:
+        """Create a simulated tool call in this provider's format"""
+        pass
+    
+    @abstractmethod
+    def create_simulated_assistant_message_with_tool_calls(self, content: str, tool_calls: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Create a simulated assistant message with tool calls in this provider's format"""
+        pass
+    
+    @abstractmethod
+    def create_simulated_tool_result(self, tool_call_id: str, content: str) -> Dict[str, Any]:
+        """Create a simulated tool result message in this provider's format"""
+        pass
+    
     def set_system_prompt(self, system_prompt: str):
         """Set and cache system prompt"""
         if self._raw_system_prompt != system_prompt:

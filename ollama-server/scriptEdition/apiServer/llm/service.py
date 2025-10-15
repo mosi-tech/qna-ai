@@ -28,6 +28,10 @@ class LLMService:
         self.default_tools = []
         self._tools_loaded = False
         
+        # System prompt management
+        self._system_prompt = None
+        self._system_prompt_loaded = False
+        
         logger.info(f"🤖 Initialized LLM service: {config.provider_type}/{config.default_model}")
     
     async def ensure_tools_loaded(self):
@@ -53,6 +57,36 @@ class LLMService:
             self.default_tools = []
         
         self._tools_loaded = True
+    
+    async def _load_system_prompt(self):
+        """Load service-specific system prompt"""
+        if self._system_prompt_loaded:
+            return
+            
+        try:
+            if self.config.service_name:
+                # Load system prompt for specific service
+                import os
+                prompt_filename = f"system-prompt-{self.config.service_name.replace('_', '-')}.txt"
+                prompt_path = os.path.join(
+                    os.path.dirname(os.path.abspath(__file__)), 
+                    "..", 
+                    "config", 
+                    prompt_filename
+                )
+                
+                if os.path.exists(prompt_path):
+                    with open(prompt_path, 'r', encoding='utf-8') as f:
+                        self._system_prompt = f.read().strip()
+                    logger.info(f"📝 Loaded system prompt for '{self.config.service_name}' ({len(self._system_prompt)} chars)")
+                else:
+                    logger.warning(f"⚠️ System prompt file not found: {prompt_filename}")
+                    
+            self._system_prompt_loaded = True
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to load system prompt: {e}")
+            self._system_prompt_loaded = True  # Mark as loaded to avoid retries
     
     def override_tools(self, tools: List[Dict[str, Any]]):
         """Override tools at runtime"""
@@ -145,6 +179,11 @@ class LLMService:
             # Ensure MCP tools are loaded
             await self.ensure_tools_loaded()
             
+            # Load service-specific system prompt if not provided
+            if not system_prompt:
+                await self._load_system_prompt()
+                system_prompt = self._system_prompt
+            
             # Use provided values or defaults from config
             model = model or self.default_model
             max_tokens = max_tokens or self.config.max_tokens
@@ -154,7 +193,7 @@ class LLMService:
             if tools:
                 self.provider.set_tools(tools)
             
-            # Set system prompt if provided
+            # Set system prompt (either provided or service-specific)
             if system_prompt:
                 self.provider.set_system_prompt(system_prompt)
             

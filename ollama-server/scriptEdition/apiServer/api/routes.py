@@ -4,6 +4,7 @@ FastAPI Routes for Financial Analysis Server
 
 import json
 import logging
+import os
 import time
 from datetime import datetime
 from fastapi import HTTPException
@@ -28,6 +29,16 @@ class APIRoutes:
         self.code_prompt_builder = code_prompt_builder or CodePromptBuilderService()
         self.reuse_evaluator = reuse_evaluator or ReuseEvaluatorService()
         
+        # Load message template
+        self.message_template = self._load_message_template()
+        
+        # Log workflow mode
+        skip_code_prompt_builder = os.getenv("SKIP_CODE_PROMPT_BUILDER", "false").lower() == "true"
+        if skip_code_prompt_builder:
+            logger.info("🚀 ANALYSIS MODE: Direct analysis (skipping code prompt builder)")
+        else:
+            logger.info("🔧 ANALYSIS MODE: Full workflow (with code prompt builder)")
+        
         # Initialize dialogue factory using search service's library
         try:
             analysis_library = search_service._get_library_client()
@@ -35,6 +46,26 @@ class APIRoutes:
             analysis_library = None
         
         initialize_dialogue_factory(analysis_library=analysis_library)
+    
+    def _load_message_template(self) -> str:
+        """Load the message template from config file"""
+        try:
+            template_path = os.path.join(os.path.dirname(__file__), "..", "config", "message-template-analysis.txt")
+            with open(template_path, 'r', encoding='utf-8') as f:
+                template = f.read()
+            logger.info("✅ Loaded message template successfully")
+            return template
+        except Exception as e:
+            logger.warning(f"⚠️ Could not load message template: {e}")
+            return "**QUESTION:** {user_question}\n\n**REQUIREMENTS:**\n1. Be completely parameterized - no hardcoded values\n2. Accept all inputs as parameters\n3. Use tool references instead of mock data\n4. Create comprehensive JSON output\n5. Be easily reproducible for different inputs"
+    
+    def _format_message_with_template(self, user_question: str) -> str:
+        """Format the user question with the loaded template"""
+        try:
+            return self.message_template.format(user_question=user_question)
+        except Exception as e:
+            logger.warning(f"⚠️ Error formatting message template: {e}")
+            return user_question
     
     async def analyze_question(self, request: QuestionRequest) -> AnalysisResponse:
         """
@@ -119,64 +150,64 @@ class APIRoutes:
                 else:
                     logger.info("➡️ No suitable analysis for reuse, proceeding with new analysis generation")
             
-            # Step 3: Build enriched prompt with MCP function selection and schemas (only if not reusing)
-            step_start = time.time()
-            logger.info("🔧 Building enriched prompt with code prompt builder...")
-            code_prompt_result = await self.code_prompt_builder.build_enriched_prompt(
-                user_query=final_query,
-                context={
-                    "session_id": request.session_id,
-                    "existing_analyses": similar_analyses
-                } if request.session_id else {"existing_analyses": similar_analyses}
-            )
-            step_duration = time.time() - step_start
-            logger.info(f"⏱️ TIMING - Step 3 (Code Prompt Building): {step_duration:.3f}s")
-            
-            if code_prompt_result["status"] != "success":
-                logger.error(f"❌ Code prompt building failed: {code_prompt_result.get('error')}")
-                return AnalysisResponse(
-                    success=False,
-                    error=f"Code prompt building failed: {code_prompt_result.get('error')}",
-                    timestamp=datetime.now().isoformat()
+            # Check if we should skip code prompt builder (direct analysis mode)
+            skip_code_prompt_builder = os.getenv("SKIP_CODE_PROMPT_BUILDER", "false").lower() == "true"
+            # skip_code_prompt_builder = False
+
+            if skip_code_prompt_builder:
+                logger.info("🚀 Skipping code prompt builder - using direct analysis mode")
+                # Use the specified model or default
+                model = request.model or self.analysis_service.llm_service.default_model
+                logger.info(f"🤖 Using model: {model}")
+                
+                # Format the query with message template
+                formatted_query = self._format_message_with_template(final_query)
+                
+                # Step 3: Direct analysis with formatted message (system prompt auto-loaded)
+                step_start = time.time()
+                result = await self.analysis_service.analyze_question(formatted_query, None, model, request.enable_caching)
+                step_duration = time.time() - step_start
+                logger.info(f"⏱️ TIMING - Step 3 (Direct Analysis): {step_duration:.3f}s")
+            else:
+                # Format the query with message template
+                formatted_query = self._format_message_with_template(final_query)
+                
+                # Step 3: Create code prompt messages with function schemas
+                step_start = time.time()
+                logger.info("🔧 Creating code prompt messages...")
+                code_prompt_result = await self.code_prompt_builder.create_code_prompt_messages(
+                    user_query=formatted_query,
+                    context={
+                        "session_id": request.session_id,
+                        "existing_analyses": similar_analyses
+                    } if request.session_id else {"existing_analyses": similar_analyses}
                 )
-            
-            logger.info(f"✅ Built enriched prompt with {len(code_prompt_result['selected_functions'])} MCP functions")
-            
-            if similar_analyses:
-                logger.info(f"🔍 Enhanced message with {len(similar_analyses)} similar analyses")
-            
-            # Use the specified model or default
-            model = request.model or self.analysis_service.llm_service.default_model
-            logger.info(f"🤖 Using model: {model}")
-            
-            # Step 4: Set enriched prompt and clear tools (we know it's successful at this point)
-            step_start = time.time()
-            enriched_prompt = code_prompt_result["enriched_prompt"]
-            self.analysis_service.set_enriched_prompt(enriched_prompt)
-            step_duration = time.time() - step_start
-            logger.info(f"⏱️ TIMING - Step 4 (Set Enriched Prompt): {step_duration:.3f}s")
-            
-            # Defensive check for analysis service
-            if self.analysis_service is None:
-                logger.error("❌ Analysis service is None, cannot clear tools")
-                return AnalysisResponse(
-                    success=False,
-                    error="Analysis service not available",
-                    timestamp=datetime.now().isoformat()
-                )
-            
-            
-            # Step 5: Analyze with final enhanced message
-            step_start = time.time()
-            result = await self.analysis_service.analyze_question(enhanced_message, model, request.enable_caching)
-            step_duration = time.time() - step_start
-            logger.info(f"⏱️ TIMING - Step 5 (Main Analysis): {step_duration:.3f}s")
-            
-            # Clear enriched prompt after analysis to not affect future requests
-            step_start = time.time()
-            await self.analysis_service.clear_enriched_prompt()
-            step_duration = time.time() - step_start
-            logger.info(f"⏱️ TIMING - Step 5.1 (Clear Enriched Prompt): {step_duration:.3f}s")
+                step_duration = time.time() - step_start
+                logger.info(f"⏱️ TIMING - Step 3 (Create Code Prompt Messages): {step_duration:.3f}s")
+                
+                if code_prompt_result["status"] != "success":
+                    logger.error(f"❌ Code prompt message creation failed: {code_prompt_result.get('error')}")
+                    return AnalysisResponse(
+                        success=False,
+                        error=f"Code prompt message creation failed: {code_prompt_result.get('error')}",
+                        timestamp=datetime.now().isoformat()
+                    )
+                
+                # Use the specified model or default
+                model = request.model or self.analysis_service.llm_service.default_model
+                logger.info(f"🤖 Using model: {model}")
+                
+                # Step 4: Analyze with structured messages (system prompt auto-loaded)
+                step_start = time.time()
+                messages = code_prompt_result.get("user_messages", [])
+                formatted_enhanced_message = self._format_message_with_template(enhanced_message)
+                
+                # APpend question
+                messages.append({"role": "user", "content": formatted_enhanced_message})
+                
+                result = await self.analysis_service.analyze_question(formatted_enhanced_message, messages, model, request.enable_caching)
+                step_duration = time.time() - step_start
+                logger.info(f"⏱️ TIMING - Step 4 (Main Analysis): {step_duration:.3f}s")
             
             if result["success"]:
                 # Step 6: Save completed analysis and update conversation
@@ -530,9 +561,12 @@ class APIRoutes:
         try:
             logger.info(f"🔧 Building code prompt for: {request.question[:100]}...")
             
+            # Format the question with message template
+            formatted_question = self._format_message_with_template(request.question)
+            
             # Build enriched prompt using the code prompt builder service
             result = await self.code_prompt_builder.build_enriched_prompt(
-                user_query=request.question,
+                user_query=formatted_question,
                 context={"session_id": request.session_id} if request.session_id else None
             )
             

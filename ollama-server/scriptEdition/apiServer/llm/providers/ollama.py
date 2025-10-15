@@ -74,7 +74,8 @@ class OllamaProvider(LLMProvider):
         # Prepare request options
         options = {
             "num_predict": max_tokens,
-            "temperature": 0.7,
+            "temperature": 0.3,
+            "num_ctx": 32000
         }
         
         request_data = {
@@ -115,13 +116,22 @@ class OllamaProvider(LLMProvider):
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
+
+         # Prepare request options
+        options = {
+            "num_predict": max_tokens,
+            "seed": 101,
+            "temperature": 0,
+            "num_ctx": 64000
+        }
         
         request_data = {
             "model": model,
             "messages": messages,
-            "stream": False
+            "options": options,
+            "stream": False,
+            "format": "json"  # Request JSON format for structured output
         }
-        
         # Add tools if available
         if tools:
             request_data["tools"] = tools
@@ -415,3 +425,38 @@ class OllamaProvider(LLMProvider):
         
         # Call parent implementation
         super().set_tools(tools)
+    
+    def create_simulated_tool_call(self, function_name: str, arguments: Dict[str, Any], call_id: str = None) -> Dict[str, Any]:
+        """Create a simulated tool call in Ollama's format (OpenAI-compatible)"""
+        import uuid
+        if call_id is None:
+            call_id = f"call_{str(uuid.uuid4())[:8]}"
+        
+        return {
+            "id": call_id,
+            "type": "function",
+            "function": {
+                "name": function_name,
+                "arguments": arguments  # Keep as dict - Ollama expects object, not JSON string
+            }
+        }
+    
+    def create_simulated_assistant_message_with_tool_calls(self, content: str, tool_calls: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Create a simulated assistant message with tool calls in Ollama's format (OpenAI-compatible)"""
+        message = {
+            "role": "assistant",
+            "tool_calls": tool_calls
+        }
+        
+        if content:
+            message["content"] = content
+        
+        return message
+    
+    def create_simulated_tool_result(self, tool_call_id: str, content: str) -> Dict[str, Any]:
+        """Create a simulated tool result message in Ollama's format (OpenAI-compatible)"""
+        return {
+            "role": "tool",
+            "tool_call_id": tool_call_id,
+            "content": content
+        }
