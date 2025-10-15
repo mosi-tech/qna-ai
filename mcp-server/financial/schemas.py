@@ -103,9 +103,9 @@ class StandardDividend:
     symbol: str
     ex_date: str       # ISO 8601 date: "2024-01-01"
     payment_date: str  # ISO 8601 date
+    amount: float
     record_date: Optional[str] = None
     declaration_date: Optional[str] = None
-    amount: float
     currency: str = "USD"
 
 
@@ -151,17 +151,17 @@ class StandardAccount:
 class StandardOrder:
     """Standardized order data format."""
     order_id: str
-    client_order_id: Optional[str]
     symbol: str
     side: str          # "buy" or "sell"
     order_type: str    # "market", "limit", "stop", etc.
     quantity: float
     filled_quantity: float
     status: str        # "new", "filled", "canceled", etc.
+    created_at: str    # ISO 8601 format
+    client_order_id: Optional[str] = None
     limit_price: Optional[float] = None
     stop_price: Optional[float] = None
     filled_avg_price: Optional[float] = None
-    created_at: str    # ISO 8601 format
     filled_at: Optional[str] = None
 
 
