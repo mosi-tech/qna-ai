@@ -41,7 +41,7 @@ class RoleType(str, Enum):
 class UserModel(BaseModel):
     """User account and profile"""
     
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    userId: str = Field(default_factory=lambda: str(uuid.uuid4()))
     email: str
     username: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -77,53 +77,46 @@ class AnalysisResultBody(BaseModel):
 
 class AnalysisModel(BaseModel):
     """
-    Standalone analysis that can be saved and reused.
-    When user runs a query and gets analysis output, it's stored here
-    and can be directly executed without LLM interaction.
+    Analysis generated from LLM at /analyze time.
+    Stores complete LLM response + execution details.
+    Results populated AFTER execution completes.
     """
     
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    user_id: str  # reference to user
+    analysisId: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    userId: str
     
-    # Analysis identification
-    title: str  # e.g., "AAPL Volatility Analysis"
-    description: str  # what this analysis represents
-    category: str  # e.g., "technical_analysis", "portfolio_optimization"
-    
-    # Core output (what gets displayed to user)
-    result: Dict[str, Any] = Field(default_factory=dict)
+    # LLM Response (COMPLETE structure from script_generation or reuse_decision)
+    llm_response: Dict[str, Any]
     # {
-    #   "description": "Overall explanation",
-    #   "body": [
-    #     {"key": "rank_1", "value": "NVDA", "description": "..."},
-    #     ...
-    #   ]
+    #   "status": "success|failed",
+    #   "script_name": "...",
+    #   "script_content": "...",  (if markdown extraction)
+    #   "analysis_description": "...",
+    #   "validation_attempts": int,
+    #   "execution": {
+    #     "script_name": "...",
+    #     "parameters": {...}
+    #   },
+    #   ... any other fields from LLM ...
     # }
     
-    # Metadata for reusability
-    parameters: Dict[str, Any] = Field(default_factory=dict)
-    # Original parameters used to generate this analysis
-    # e.g., {"lookback_days": 30, "limit": 5, "min_volume": 1000000}
+    # Question that generated this analysis
+    question: str
     
-    # Execution details
-    mcp_calls: List[str] = Field(default_factory=list)
-    # ["alpaca_market_screener_most_actives", "calculate_volatility"]
+    # Script storage reference (after /analyze saves to S3/file)
+    script_url: str  # S3 path or local file path
+    script_size_bytes: int = 0
     
-    generated_script: Optional[str] = None
-    # Full Python script that was executed (optional, for reference)
-    
-    execution_time_ms: int = 0
-    data_sources: List[str] = Field(default_factory=list)
-    # ["Alpaca Market Data", "Technical Analysis Engine"]
-    
-    # Versioning and reusability
-    version: int = 1
-    is_template: bool = False  # If true, can be used as template for similar queries
-    similar_queries: List[str] = Field(default_factory=list)
-    # List of questions that can use this analysis
+    # Execution status and results (populated AFTER execution)
+    status: ExecutionStatus = ExecutionStatus.PENDING  # pending → running → success/failed
+    result: Dict[str, Any] = Field(default_factory=dict)  # Populated after execution
+    execution_id: Optional[str] = None  # Links to execution log
+    execution_time_ms: Optional[int] = None
+    error: Optional[str] = None  # Error message if execution failed
     
     # Timestamps
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    executed_at: Optional[datetime] = None
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     last_used_at: Optional[datetime] = None
     
@@ -137,11 +130,10 @@ class AnalysisModel(BaseModel):
     class Config:
         collection = "analyses"
         indexes = [
-            {"fields": [("user_id", 1), ("created_at", -1)]},
-            {"fields": [("category", 1)]},
-            {"fields": [("is_template", 1)]},
+            {"fields": [("userId", 1), ("created_at", -1)]},
+            {"fields": [("status", 1)]},
+            {"fields": [("question", "text")]},
             {"fields": [("tags", 1)]},
-            {"fields": [("title", "text"), ("description", "text")]},
         ]
 
 
@@ -152,8 +144,8 @@ class AnalysisModel(BaseModel):
 class ChatSessionModel(BaseModel):
     """Conversation session grouping multiple messages"""
     
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    user_id: str
+    sessionId: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    userId: str
     
     # Session metadata
     title: str = "Untitled Conversation"
@@ -199,45 +191,39 @@ class ChatSessionModel(BaseModel):
 
 
 # ============================================================================
+# QUESTION CONTEXT MODEL
+# ============================================================================
+
+class QuestionContext(BaseModel):
+    """Context output for question processing (expansion and classification)"""
+    original_question: str  # User's original question
+    expanded_question: Optional[str] = None  # LLM-expanded version
+    expansion_confidence: float = 0.0  # Confidence in expansion
+    query_type: Optional[QueryType] = None  # Classification: complete, contextual, comparative, parameter
+
+
+# ============================================================================
 # CHAT MESSAGE COLLECTION
 # ============================================================================
 
 class ChatMessageModel(BaseModel):
-    """Individual message in conversation with full analysis storage"""
+    """Individual message in conversation"""
     
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    session_id: str
-    user_id: str
+    messageId: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    sessionId: str
+    userId: str
     
     # Message content
     role: RoleType  # user, assistant, system
     content: str  # Original text of the message
     
-    # Analysis Storage (KEY FEATURE)
-    # When LLM generates analysis, store complete output here
-    analysis: Optional[AnalysisModel] = None
-    # If this is an assistant message with generated analysis, store full object
-    # Allows direct replay/reuse without LLM
+    # Reference to associated analysis (if any)
+    # If this message has an analysis, access execution details via:
+    # analysisId → Analysis.executionId → Execution collection
+    analysisId: Optional[str] = None  # Links to AnalysisModel in analyses collection
     
-    analysis_id: Optional[str] = None
-    # Reference to AnalysisModel if analysis is saved separately
-    
-    # Query metadata (for user messages)
-    query_type: Optional[QueryType] = None
-    original_question: Optional[str] = None  # Before expansion
-    expanded_question: Optional[str] = None  # After LLM expansion
-    expansion_confidence: float = 0.0
-    
-    # Script metadata (for assistant messages with code)
-    generated_script: Optional[str] = None
-    script_explanation: Optional[str] = None
-    mcp_calls: List[str] = Field(default_factory=list)
-    
-    # Execution metadata (for assistant messages)
-    execution_id: Optional[str] = None
-    execution_status: Optional[ExecutionStatus] = None
-    execution_time_ms: Optional[int] = None
-    execution_error: Optional[str] = None
+    # Question context (for user messages) - output from context service
+    questionContext: Optional[QuestionContext] = None
     
     # Message metadata
     metadata: Dict[str, Any] = Field(default_factory=dict)
@@ -253,10 +239,10 @@ class ChatMessageModel(BaseModel):
     class Config:
         collection = "chat_messages"
         indexes = [
-            {"fields": [("session_id", 1), ("created_at", 1)]},
-            {"fields": [("user_id", 1), ("created_at", -1)]},
+            {"fields": [("sessionId", 1), ("created_at", 1)]},
+            {"fields": [("userId", 1), ("created_at", -1)]},
             {"fields": [("role", 1)]},
-            {"fields": [("analysis_id", 1)]},
+            {"fields": [("analysisId", 1)]},
         ]
 
 
@@ -267,10 +253,10 @@ class ChatMessageModel(BaseModel):
 class ExecutionModel(BaseModel):
     """Script execution record for audit and analysis"""
     
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    user_id: str
-    session_id: str
-    message_id: str
+    executionId: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    userId: str
+    sessionId: str
+    messageId: str
     
     # Input
     question: str
@@ -306,8 +292,8 @@ class ExecutionModel(BaseModel):
     class Config:
         collection = "executions"
         indexes = [
-            {"fields": [("user_id", 1), ("created_at", -1)]},
-            {"fields": [("session_id", 1)]},
+            {"fields": [("userId", 1), ("created_at", -1)]},
+            {"fields": [("sessionId", 1)]},
             {"fields": [("status", 1)]},
             {"fields": [("started_at", -1)]},
         ]
@@ -319,28 +305,32 @@ class ExecutionModel(BaseModel):
 
 class SavedAnalysisModel(BaseModel):
     """
-    Saved analysis available for direct execution.
-    Users can save analyses and run them again with different parameters
-    without LLM regeneration, improving performance.
+    Reusable analysis template saved for repeated use with variable parameters.
+    
+    WORKFLOW:
+    1. User runs an analysis (creates AnalysisModel)
+    2. User likes it and saves as template (creates SavedAnalysisModel)
+    3. Next time: load SavedAnalysisModel → reference AnalysisModel → reuse script
+    4. Can override template_variables (e.g., lookback_days: 30 → 60) for reruns
+    
+    NOT a duplicate - SavedAnalysisModel is a BOOKMARK with metadata for reuse.
     """
     
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    user_id: str
-    analysis_id: str  # Reference to original AnalysisModel
+    savedAnalysisId: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    userId: str
+    analysisId: str  # Reference to original AnalysisModel (the actual analysis)
     
     # Save metadata
-    saved_name: str  # User-friendly name
+    saved_name: str  # User-friendly name for this saved template
     description: Optional[str] = None
     
     # Reusability tracking
-    usage_count: int = 0
+    usage_count: int = 0  # How many times this template has been reused
     last_used_at: Optional[datetime] = None
     
-    # Template settings
-    is_template: bool = True
+    # Template settings - which parameters can be changed for reruns
     template_variables: Dict[str, Any] = Field(default_factory=dict)
-    # Which parameters can be changed for reruns
-    # e.g., {"lookback_days": "30", "limit": "5"}
+    # e.g., {"lookback_days": "30", "limit": "5", "symbols": ["AAPL", "MSFT"]}
     
     # Timestamps
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -353,9 +343,9 @@ class SavedAnalysisModel(BaseModel):
     class Config:
         collection = "saved_analyses"
         indexes = [
-            {"fields": [("user_id", 1), ("created_at", -1)]},
-            {"fields": [("user_id", 1), ("is_template", 1)]},
-            {"fields": [("tags", 1)]},
+            {"fields": [("userId", 1), ("created_at", -1)]},
+            {"fields": [("userId", 1), ("tags", 1)]},
+            {"fields": [("category", 1)]},
         ]
 
 
@@ -366,8 +356,8 @@ class SavedAnalysisModel(BaseModel):
 class AuditLogModel(BaseModel):
     """System audit trail for compliance and debugging"""
     
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    user_id: str
+    auditLogId: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    userId: str
     
     # Action tracking
     action: str
@@ -403,10 +393,9 @@ class AuditLogModel(BaseModel):
     class Config:
         collection = "audit_logs"
         indexes = [
-            {"fields": [("user_id", 1), ("created_at", -1)]},
+            {"fields": [("userId", 1), ("created_at", -1)]},
             {"fields": [("action", 1)]},
             {"fields": [("resource_type", 1), ("resource_id", 1)]},
-            {"fields": [("created_at", -1)]},
         ]
 
 
@@ -420,12 +409,12 @@ class CacheModel(BaseModel):
     Avoid re-running expensive analyses.
     """
     
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    cacheId: str = Field(default_factory=lambda: str(uuid.uuid4()))
     cache_key: str  # Hash of question + parameters
     
     # Cached data
     result: Dict[str, Any]
-    analysis_id: Optional[str] = None
+    analysisId: Optional[str] = None
     
     # Metadata
     hit_count: int = 0

@@ -15,6 +15,12 @@ from services.analysis import AnalysisService
 from services.search import SearchService
 from services.code_prompt_builder import CodePromptBuilderService
 from services.reuse_evaluator import ReuseEvaluatorService
+from services.chat_service import ChatHistoryService
+from services.cache_service import CacheService
+from services.analysis_persistence_service import AnalysisPersistenceService
+from services.audit_service import AuditService
+from services.execution_service import ExecutionService
+from db.schemas import AnalysisModel
 from dialogue import search_with_context, initialize_dialogue_factory, get_session_manager
 
 logger = logging.getLogger("api-routes")
@@ -23,9 +29,25 @@ logger = logging.getLogger("api-routes")
 class APIRoutes:
     """Handles all API route logic"""
     
-    def __init__(self, analysis_service: AnalysisService, search_service: SearchService, code_prompt_builder: CodePromptBuilderService = None, reuse_evaluator: ReuseEvaluatorService = None):
+    def __init__(
+        self,
+        analysis_service: AnalysisService,
+        search_service: SearchService,
+        chat_history_service: ChatHistoryService = None,
+        cache_service: CacheService = None,
+        analysis_persistence_service: AnalysisPersistenceService = None,
+        audit_service: AuditService = None,
+        execution_service: ExecutionService = None,
+        code_prompt_builder: CodePromptBuilderService = None,
+        reuse_evaluator: ReuseEvaluatorService = None
+    ):
         self.analysis_service = analysis_service
         self.search_service = search_service
+        self.chat_history_service = chat_history_service
+        self.cache_service = cache_service
+        self.analysis_persistence_service = analysis_persistence_service
+        self.audit_service = audit_service
+        self.execution_service = execution_service
         self.code_prompt_builder = code_prompt_builder or CodePromptBuilderService()
         self.reuse_evaluator = reuse_evaluator or ReuseEvaluatorService()
         
@@ -74,18 +96,63 @@ class APIRoutes:
         Analyze a financial question with conversation context support
         """
         start_time = time.time()
+        execution_id = None
+        user_id = request.user_id if hasattr(request, 'user_id') and request.user_id else "anonymous"
+        
         try:
             logger.info(f"📝 Received question: {request.question[:100]}...")
             
-            # Step 1: Use conversation-aware search to handle contextual queries
+            # Step 0: Initialize or retrieve session
+            session_id = request.session_id
+            if self.chat_history_service and not session_id:
+                try:
+                    session_id = await self.chat_history_service.start_session(user_id)
+                    logger.info(f"✓ Started new session: {session_id}")
+                except Exception as e:
+                    logger.warning(f"⚠️ Failed to start session: {e}")
+            
+            # Step 0.5: Add user message to chat history
+            if self.chat_history_service and session_id:
+                try:
+                    message_id = await self.chat_history_service.add_user_message(
+                        session_id=session_id,
+                        user_id=user_id,
+                        question=request.question
+                    )
+                    logger.info(f"✓ Added user message to chat history: {message_id}")
+                except Exception as e:
+                    logger.warning(f"⚠️ Failed to add user message: {e}")
+            
+            # Step 1: Check cache before processing
+            if self.cache_service:
+                try:
+                    cached_result = await self.cache_service.get_cached_result(
+                        question=request.question,
+                        parameters={"session_id": session_id} if session_id else {}
+                    )
+                    if cached_result:
+                        logger.info("✓ Returning cached analysis result")
+                        return AnalysisResponse(
+                            success=True,
+                            data={
+                                "response_type": "cache_hit",
+                                "cached_result": cached_result,
+                                "message": "Result retrieved from cache"
+                            },
+                            timestamp=datetime.now().isoformat()
+                        )
+                except Exception as e:
+                    logger.warning(f"⚠️ Cache check failed: {e}")
+            
+            # Step 2: Use conversation-aware search to handle contextual queries
             step_start = time.time()
             context_result = await search_with_context(
                 query=request.question,
-                session_id=request.session_id,
+                session_id=session_id,
                 auto_expand=request.auto_expand
             )
             step_duration = time.time() - step_start
-            logger.info(f"⏱️ TIMING - Step 1 (Context Search): {step_duration:.3f}s")
+            logger.info(f"⏱️ TIMING - Step 2 (Context Search): {step_duration:.3f}s")
             
             if not context_result["success"]:
                 return AnalysisResponse(
@@ -215,6 +282,9 @@ class APIRoutes:
             if result["success"]:
                 # Step 6: Save completed analysis and update conversation
                 step_start = time.time()
+                analysis_summary = None
+                analysis_id = None
+                
                 try:
                     analysis_data = result["data"]
                     response_type = analysis_data.get("response_type")
@@ -224,52 +294,114 @@ class APIRoutes:
                     script_name = analysis_result.get("script_name")
                     execution_info = analysis_result.get("execution", {})
                     analysis_description = analysis_result.get("analysis_description", "")
+                    mcp_calls = analysis_result.get("mcp_calls", [])
                     
-                    analysis_summary = None
+                    # Save to search service (existing behavior)
                     if script_name and (
                         (response_type == "reuse_decision" and analysis_result.get("should_reuse")) or
                         (response_type == "script_generation" and analysis_result.get("status") == "success")
                     ):
-                        # Save the analysis with execution metadata
                         save_result = self.search_service.save_completed_analysis(
-                            original_question=request.question,  # Use original question, not enhanced
-                            script_path=script_name, 
+                            original_question=request.question,
+                            script_path=script_name,
                             addn_meta={"execution": execution_info, "description": analysis_description}
                         )
                         
                         if save_result.get("success"):
-                            # Add save info to response data
                             analysis_data["analysis_id"] = save_result["analysis_id"]
-                            
-                            # Set analysis summary based on response type
                             analysis_summary = save_result.get("analysis_description", "")
+                            analysis_id = save_result["analysis_id"]
                         else:
                             logger.warning(f"Failed to save analysis: {save_result.get('error')}")
                     else:
-                        # Handle cases where script couldn't be saved (no script_name or failed conditions)
                         if response_type == "script_generation" and analysis_result.get("status") == "failed":
                             analysis_summary = f"Script generation failed: {analysis_result.get('final_error', 'Unknown error')}"
                     
+                    # Step 6b: Save to MongoDB persistence layer if available
+                    if self.analysis_persistence_service and analysis_id:
+                        try:
+                            persistence_id = await self.analysis_persistence_service.create_analysis(
+                                user_id=user_id,
+                                title=request.question[:100],
+                                description=analysis_description or "Financial analysis",
+                                result=analysis_result,
+                                parameters={"session_id": session_id} if session_id else {},
+                                mcp_calls=mcp_calls,
+                                category="financial_analysis",
+                                script=script_name,
+                                data_sources=["alpaca", "eodhd"]
+                            )
+                            logger.info(f"✓ Persisted analysis to MongoDB: {persistence_id}")
+                        except Exception as persist_error:
+                            logger.warning(f"⚠️ Failed to persist to MongoDB: {persist_error}")
+                    
                 except Exception as save_error:
                     logger.error(f"❌ Error saving analysis: {save_error}")
-                    # Don't fail the main request, just log the error
                 
                 step_duration = time.time() - step_start
                 logger.info(f"⏱️ TIMING - Step 6 (Save Analysis Results): {step_duration:.3f}s")
                 
-                # Step 7: Update conversation with analysis results
+                # Step 7: Add assistant message with analysis to chat history
                 step_start = time.time()
                 try:
-                    session_manager = get_session_manager()
-                    conversation = session_manager.get_session(session_id)
-                    if conversation:
-                        # Update the last turn with analysis results
-                        last_turn = conversation.get_last_turn()
-                        if last_turn and not last_turn.analysis_summary:
-                            last_turn.analysis_summary = analysis_summary or "Financial analysis completed"
-                            logger.info(f"📝 Updated conversation turn with analysis summary")
-                except Exception as conv_error:
-                    logger.warning(f"Failed to update conversation: {conv_error}")
+                    # Log execution start if audit service available
+                    if self.audit_service and session_id:
+                        try:
+                            execution_id = await self.audit_service.log_execution_start(
+                                user_id=user_id,
+                                session_id=session_id,
+                                message_id="pending",
+                                question=request.question,
+                                script=script_name or "",
+                                parameters={"session_id": session_id},
+                                mcp_calls=mcp_calls or []
+                            )
+                            logger.info(f"✓ Logged execution start: {execution_id}")
+                        except Exception as e:
+                            logger.warning(f"⚠️ Failed to log execution: {e}")
+                    
+                    # Add assistant message with analysis to chat history
+                    if self.chat_history_service and session_id:
+                        try:
+                            # Create AnalysisModel from result
+                            analysis_model = AnalysisModel(
+                                title=request.question[:100],
+                                description=analysis_description or "Financial analysis",
+                                result=analysis_result,
+                                parameters={"session_id": session_id},
+                                mcp_calls=mcp_calls or [],
+                                generated_script=script_name,
+                                is_template=True,
+                                tags=["auto_generated", "financial"]
+                            )
+                            
+                            msg_id = await self.chat_history_service.add_assistant_message_with_analysis(
+                                session_id=session_id,
+                                user_id=user_id,
+                                script=script_name or "",
+                                explanation=analysis_summary or "Analysis completed",
+                                analysis=analysis_model,
+                                mcp_calls=mcp_calls or [],
+                                execution_id=execution_id
+                            )
+                            logger.info(f"✓ Added assistant message with analysis to chat: {msg_id}")
+                        except Exception as e:
+                            logger.warning(f"⚠️ Failed to add assistant message: {e}")
+                    
+                    # Also update the legacy conversation system
+                    try:
+                        session_manager = get_session_manager()
+                        conversation = session_manager.get_session(session_id)
+                        if conversation:
+                            last_turn = conversation.get_last_turn()
+                            if last_turn and not last_turn.analysis_summary:
+                                last_turn.analysis_summary = analysis_summary or "Financial analysis completed"
+                                logger.info(f"📝 Updated conversation turn with analysis summary")
+                    except Exception as conv_error:
+                        logger.warning(f"⚠️ Failed to update legacy conversation: {conv_error}")
+                
+                except Exception as chat_error:
+                    logger.error(f"❌ Error updating chat history: {chat_error}")
                 
                 step_duration = time.time() - step_start
                 logger.info(f"⏱️ TIMING - Step 7 (Update Conversation): {step_duration:.3f}s")
@@ -307,6 +439,24 @@ class APIRoutes:
                 
                 step_duration = time.time() - step_start
                 logger.info(f"⏱️ TIMING - Step 8 (Build Enhanced Response): {step_duration:.3f}s")
+                
+                # Step 9: Cache the analysis result
+                step_start = time.time()
+                if self.cache_service and analysis_id:
+                    try:
+                        cache_id = await self.cache_service.cache_analysis_result(
+                            question=request.question,
+                            parameters={"session_id": session_id} if session_id else {},
+                            result=response_data,
+                            analysis_id=analysis_id,
+                            ttl_hours=24
+                        )
+                        logger.info(f"✓ Cached analysis result: {cache_id}")
+                    except Exception as e:
+                        logger.warning(f"⚠️ Failed to cache result: {e}")
+                
+                step_duration = time.time() - step_start
+                logger.info(f"⏱️ TIMING - Step 9 (Cache Result): {step_duration:.3f}s")
                 
                 # Log total analysis time
                 total_duration = time.time() - start_time
@@ -582,6 +732,228 @@ class APIRoutes:
             
         except Exception as e:
             logger.error(f"❌ Code prompt building error: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
+    
+    async def get_chat_history(self, session_id: str) -> Dict[str, Any]:
+        """Get chat history for a session"""
+        try:
+            if not self.chat_history_service:
+                return {
+                    "success": False,
+                    "error": "Chat history service not available",
+                    "timestamp": datetime.now().isoformat()
+                }
+            
+            history = await self.chat_history_service.get_conversation_history(session_id)
+            
+            return {
+                "success": True,
+                "session_id": session_id,
+                "messages": history,
+                "message_count": len(history),
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error getting chat history: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
+    
+    async def get_user_sessions(self, user_id: str, limit: int = 50) -> Dict[str, Any]:
+        """Get all sessions for a user"""
+        try:
+            if not self.chat_history_service:
+                return {
+                    "success": False,
+                    "error": "Chat history service not available",
+                    "timestamp": datetime.now().isoformat()
+                }
+            
+            sessions = await self.chat_history_service.list_sessions(user_id, limit=limit)
+            
+            return {
+                "success": True,
+                "user_id": user_id,
+                "sessions": [
+                    {
+                        "session_id": str(s.id) if hasattr(s, 'id') else s.get('_id'),
+                        "title": s.title if hasattr(s, 'title') else s.get('title'),
+                        "created_at": s.created_at.isoformat() if hasattr(s, 'created_at') else s.get('created_at'),
+                        "message_count": s.message_count if hasattr(s, 'message_count') else s.get('message_count', 0)
+                    }
+                    for s in sessions
+                ],
+                "session_count": len(sessions),
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error getting user sessions: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
+    
+    async def get_reusable_analyses(self, user_id: str) -> Dict[str, Any]:
+        """Get all reusable analyses for a user"""
+        try:
+            if not self.analysis_persistence_service:
+                return {
+                    "success": False,
+                    "error": "Analysis persistence service not available",
+                    "timestamp": datetime.now().isoformat()
+                }
+            
+            analyses = await self.analysis_persistence_service.get_reusable_analyses(user_id)
+            
+            return {
+                "success": True,
+                "user_id": user_id,
+                "analyses": [
+                    {
+                        "analysis_id": str(a.id) if hasattr(a, 'id') else a.get('_id'),
+                        "title": a.title if hasattr(a, 'title') else a.get('title'),
+                        "description": a.description if hasattr(a, 'description') else a.get('description'),
+                        "category": a.category if hasattr(a, 'category') else a.get('category'),
+                        "similar_queries_count": len(a.similar_queries) if hasattr(a, 'similar_queries') else len(a.get('similar_queries', [])),
+                        "tags": a.tags if hasattr(a, 'tags') else a.get('tags', [])
+                    }
+                    for a in analyses
+                ],
+                "analyses_count": len(analyses),
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error getting reusable analyses: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
+    
+    async def search_analyses(self, user_id: str, search_text: str, limit: int = 50) -> Dict[str, Any]:
+        """Search analyses by title/description"""
+        try:
+            if not self.analysis_persistence_service:
+                return {
+                    "success": False,
+                    "error": "Analysis persistence service not available",
+                    "timestamp": datetime.now().isoformat()
+                }
+            
+            analyses = await self.analysis_persistence_service.search_analyses(
+                user_id=user_id,
+                search_text=search_text,
+                limit=limit
+            )
+            
+            return {
+                "success": True,
+                "user_id": user_id,
+                "search_text": search_text,
+                "results": [
+                    {
+                        "analysis_id": str(a.id) if hasattr(a, 'id') else a.get('_id'),
+                        "title": a.title if hasattr(a, 'title') else a.get('title'),
+                        "description": a.description if hasattr(a, 'description') else a.get('description'),
+                        "category": a.category if hasattr(a, 'category') else a.get('category')
+                    }
+                    for a in analyses
+                ],
+                "result_count": len(analyses),
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error searching analyses: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
+    
+    async def get_execution_history(self, session_id: str, limit: int = 100) -> Dict[str, Any]:
+        """Get execution history for a session"""
+        try:
+            if not self.audit_service:
+                return {
+                    "success": False,
+                    "error": "Audit service not available",
+                    "timestamp": datetime.now().isoformat()
+                }
+            
+            executions = await self.audit_service.get_execution_history(session_id, limit=limit)
+            
+            return {
+                "success": True,
+                "session_id": session_id,
+                "executions": [
+                    {
+                        "execution_id": str(e.id) if hasattr(e, 'id') else e.get('_id'),
+                        "question": e.question if hasattr(e, 'question') else e.get('question'),
+                        "status": e.status if hasattr(e, 'status') else e.get('status'),
+                        "started_at": e.started_at.isoformat() if hasattr(e, 'started_at') else e.get('started_at'),
+                        "execution_time_ms": e.execution_time_ms if hasattr(e, 'execution_time_ms') else e.get('execution_time_ms')
+                    }
+                    for e in executions
+                ],
+                "execution_count": len(executions),
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Error getting execution history: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "timestamp": datetime.now().isoformat()
+            }
+    
+    async def execute_analysis(self, analysis_id: str, user_id: str, session_id: str = None) -> Dict[str, Any]:
+        """Execute a pending analysis script"""
+        try:
+            if not self.execution_service:
+                return {
+                    "success": False,
+                    "error": "Execution service not available",
+                    "timestamp": datetime.now().isoformat()
+                }
+            
+            logger.info(f"🚀 Starting execution of analysis: {analysis_id}")
+            
+            # Execute the analysis
+            exec_result = await self.execution_service.execute_analysis(
+                analysis_id=analysis_id,
+                user_id=user_id,
+                session_id=session_id
+            )
+            
+            if exec_result.get("success"):
+                logger.info(f"✅ Analysis executed successfully in {exec_result.get('execution_time_ms')}ms")
+                return {
+                    "success": True,
+                    "data": exec_result,
+                    "timestamp": datetime.now().isoformat()
+                }
+            else:
+                logger.error(f"❌ Execution failed: {exec_result.get('error')}")
+                return {
+                    "success": False,
+                    "error": exec_result.get("error"),
+                    "timestamp": datetime.now().isoformat()
+                }
+                
+        except Exception as e:
+            logger.error(f"❌ Execution error: {e}")
             return {
                 "success": False,
                 "error": str(e),

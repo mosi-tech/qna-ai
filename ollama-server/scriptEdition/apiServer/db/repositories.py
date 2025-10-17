@@ -31,7 +31,7 @@ class ChatRepository:
     async def start_session(self, user_id: str, title: Optional[str] = None) -> str:
         """Create new chat session"""
         session = ChatSessionModel(
-            user_id=user_id,
+            userId=user_id,
             title=title or "New Conversation",
         )
         return await self.db.create_session(session)
@@ -39,13 +39,23 @@ class ChatRepository:
     async def add_user_message(self, session_id: str, user_id: str, 
                                question: str, query_type: QueryType = QueryType.COMPLETE) -> str:
         """Add user message to conversation"""
+        from db.schemas import QuestionContext
+        
+        # Get message count to set message_index
+        message_count = await self.db.db.chat_messages.count_documents({"sessionId": session_id})
+        
+        question_context = QuestionContext(
+            original_question=question,
+            query_type=query_type,
+        )
+        
         message = ChatMessageModel(
-            session_id=session_id,
-            user_id=user_id,
+            sessionId=session_id,
+            userId=user_id,
             role=RoleType.USER,
             content=question,
-            query_type=query_type,
-            original_question=question,
+            questionContext=question_context,
+            message_index=message_count,
         )
         return await self.db.create_message(message)
     
@@ -64,25 +74,25 @@ class ChatRepository:
         # First save the analysis
         analysis_id = await self.db.create_analysis(analysis)
         
-        # Then create message with embedded analysis
+        # Get message count to set message_index
+        message_count = await self.db.db.chat_messages.count_documents({"sessionId": session_id})
+        
+        # Then create message with reference to analysis (no embedding)
+        # Note: Execution details accessible via analysisId → Analysis.executionId
         message = ChatMessageModel(
-            session_id=session_id,
-            user_id=user_id,
+            sessionId=session_id,
+            userId=user_id,
             role=RoleType.ASSISTANT,
             content=explanation,
-            analysis=analysis,  # Full analysis object embedded
-            analysis_id=analysis_id,  # Also reference for lookups
-            generated_script=script,
-            script_explanation=explanation,
-            mcp_calls=mcp_calls,
-            execution_id=execution_id,
+            analysisId=analysis_id,  # Reference to AnalysisModel in analyses collection
+            message_index=message_count,
         )
         
         message_id = await self.db.create_message(message)
         
         # Update session with analysis reference
         await self.db.db.chat_sessions.update_one(
-            {"_id": session_id},
+            {"sessionId": session_id},
             {"$push": {"analysis_ids": analysis_id}}
         )
         
@@ -97,13 +107,15 @@ class ChatRepository:
         mcp_calls: Optional[List[str]] = None,
     ) -> str:
         """Add regular assistant message (without analysis)"""
+        # Get message count to set message_index
+        message_count = await self.db.db.chat_messages.count_documents({"sessionId": session_id})
+        
         message = ChatMessageModel(
-            session_id=session_id,
-            user_id=user_id,
+            sessionId=session_id,
+            userId=user_id,
             role=RoleType.ASSISTANT,
             content=content,
-            generated_script=script,
-            mcp_calls=mcp_calls or [],
+            message_index=message_count,
         )
         return await self.db.create_message(message)
     
@@ -131,12 +143,12 @@ class ChatRepository:
         analyses = []
         
         for msg in messages:
-            if msg.analysis_id:
-                analysis = await self.db.get_analysis(msg.analysis_id)
+            if msg.analysisId:
+                analysis = await self.db.get_analysis(msg.analysisId)
                 if analysis:
                     analyses.append({
-                        "id": analysis.id,
-                        "title": analysis.title,
+                        "id": analysis.analysisId,
+                        "question": analysis.question,
                         "timestamp": msg.created_at.isoformat(),
                     })
         
@@ -170,19 +182,31 @@ class AnalysisRepository:
     ) -> str:
         """Create analysis and save it as reusable"""
         
+        # Build llm_response from provided parameters
+        llm_response = {
+            "status": "success",
+            "script_name": script or "analysis.py",
+            "analysis_description": description,
+            "execution": {
+                "script_name": script or "analysis.py",
+                "parameters": parameters
+            }
+        }
+        
         analysis = AnalysisModel(
-            user_id=user_id,
-            title=title,
-            description=description,
+            userId=user_id,
+            question=title,  # Use title as question for compatibility
+            llm_response=llm_response,
+            script_url=script or f"/tmp/{script or 'analysis.py'}",
+            script_size_bytes=0,
             result=result,
-            parameters=parameters,
-            mcp_calls=mcp_calls,
-            category=category,
-            generated_script=script,
             execution_time_ms=execution_time_ms,
-            data_sources=data_sources or [],
             tags=tags or [],
-            is_template=True,  # Save as template by default
+            metadata={
+                "category": category,
+                "data_sources": data_sources or [],
+                "mcp_calls": mcp_calls,
+            }
         )
         
         return await self.db.create_analysis(analysis)
@@ -194,8 +218,7 @@ class AnalysisRepository:
     async def get_reusable_analyses(self, user_id: str) -> List[AnalysisModel]:
         """Get all analyses that can be reused as templates"""
         docs = await self.db.db.analyses.find({
-            "user_id": user_id,
-            "is_template": True
+            "userId": user_id
         }).sort("last_used_at", -1).to_list(100)
         
         return [AnalysisModel(**doc) for doc in docs]
@@ -203,15 +226,16 @@ class AnalysisRepository:
     async def can_reuse_analysis(self, analysis_id: str, new_question: str) -> bool:
         """Check if analysis can be reused for new question"""
         analysis = await self.db.get_analysis(analysis_id)
-        if not analysis or not analysis.is_template:
+        if not analysis:
             return False
         
-        # Check if new question is in similar_queries list
-        if new_question in analysis.similar_queries:
-            await self.db.mark_analysis_used(analysis_id)
-            return True
+        # Check if analysis has been executed (has results)
+        if analysis.status != "success" or not analysis.result:
+            return False
         
-        return False
+        # For now, simple check: can reuse if already executed
+        await self.db.mark_analysis_used(analysis_id)
+        return True
 
 
 class ExecutionRepository:
@@ -235,9 +259,9 @@ class ExecutionRepository:
         from .schemas import ExecutionStatus
         
         execution = ExecutionModel(
-            user_id=user_id,
-            session_id=session_id,
-            message_id=message_id,
+            userId=user_id,
+            sessionId=session_id,
+            messageId=message_id,
             question=question,
             generated_script=script,
             parameters=parameters,
@@ -311,7 +335,7 @@ class CacheRepository:
     
     async def invalidate_analysis_cache(self, analysis_id: str) -> None:
         """Invalidate cache for specific analysis"""
-        await self.db.db.cache.delete_many({"analysis_id": analysis_id})
+        await self.db.db.cache.delete_many({"analysisId": analysis_id})
 
 
 class RepositoryManager:

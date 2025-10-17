@@ -3,6 +3,7 @@ Database layer - MongoDB-based persistence for chat history, analyses, and audit
 """
 
 from .mongodb_client import MongoDBClient
+from .repositories import RepositoryManager
 from .schemas import (
     UserModel,
     ChatSessionModel,
@@ -15,6 +16,7 @@ from .schemas import (
 
 __all__ = [
     'MongoDBClient',
+    'RepositoryManager',
     'UserModel',
     'ChatSessionModel',
     'ChatMessageModel',

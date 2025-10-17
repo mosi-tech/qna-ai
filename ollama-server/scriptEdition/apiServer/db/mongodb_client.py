@@ -6,8 +6,23 @@ import os
 import logging
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
-from motor.motor_asyncio import AsyncClient, AsyncDatabase
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 from pymongo import ASCENDING, DESCENDING, TEXT
+from bson import ObjectId
+
+AsyncClient = AsyncIOMotorClient
+AsyncDatabase = AsyncIOMotorDatabase
+
+def oid_to_str(oid: ObjectId) -> str:
+    """Convert ObjectId to string"""
+    return str(oid)
+
+def str_to_oid(s: str) -> ObjectId:
+    """Convert string to ObjectId"""
+    try:
+        return ObjectId(s)
+    except:
+        return None
 
 from .schemas import (
     UserModel,
@@ -63,46 +78,54 @@ class MongoDBClient:
         """Create all collection indexes"""
         collections_config = {
             "users": [
+                ([("userId", ASCENDING)], {"unique": True}),
                 ([("email", ASCENDING)], {"unique": True}),
                 ([("created_at", DESCENDING)], {}),
             ],
             "chat_sessions": [
-                ([("user_id", ASCENDING), ("created_at", DESCENDING)], {}),
-                ([("user_id", ASCENDING), ("is_archived", ASCENDING)], {}),
+                ([("sessionId", ASCENDING)], {"unique": True}),
+                ([("userId", ASCENDING), ("created_at", DESCENDING)], {}),
+                ([("userId", ASCENDING), ("is_archived", ASCENDING)], {}),
                 ([("last_message_at", DESCENDING)], {}),
                 ([("title", TEXT)], {}),
             ],
             "chat_messages": [
-                ([("session_id", ASCENDING), ("created_at", ASCENDING)], {}),
-                ([("user_id", ASCENDING), ("created_at", DESCENDING)], {}),
+                ([("messageId", ASCENDING)], {"unique": True}),
+                ([("sessionId", ASCENDING), ("created_at", ASCENDING)], {}),
+                ([("userId", ASCENDING), ("created_at", DESCENDING)], {}),
                 ([("role", ASCENDING)], {}),
-                ([("analysis_id", ASCENDING)], {}),
+                ([("analysisId", ASCENDING)], {}),
             ],
             "analyses": [
-                ([("user_id", ASCENDING), ("created_at", DESCENDING)], {}),
+                ([("analysisId", ASCENDING)], {"unique": True}),
+                ([("userId", ASCENDING), ("created_at", DESCENDING)], {}),
                 ([("category", ASCENDING)], {}),
                 ([("is_template", ASCENDING)], {}),
                 ([("tags", ASCENDING)], {}),
                 ([("title", TEXT), ("description", TEXT)], {}),
             ],
             "executions": [
-                ([("user_id", ASCENDING), ("created_at", DESCENDING)], {}),
-                ([("session_id", ASCENDING)], {}),
+                ([("executionId", ASCENDING)], {"unique": True}),
+                ([("userId", ASCENDING), ("created_at", DESCENDING)], {}),
+                ([("sessionId", ASCENDING)], {}),
                 ([("status", ASCENDING)], {}),
                 ([("started_at", DESCENDING)], {}),
             ],
             "saved_analyses": [
-                ([("user_id", ASCENDING), ("created_at", DESCENDING)], {}),
-                ([("user_id", ASCENDING), ("is_template", ASCENDING)], {}),
+                ([("savedAnalysisId", ASCENDING)], {"unique": True}),
+                ([("userId", ASCENDING), ("created_at", DESCENDING)], {}),
+                ([("userId", ASCENDING), ("is_template", ASCENDING)], {}),
                 ([("tags", ASCENDING)], {}),
             ],
             "audit_logs": [
-                ([("user_id", ASCENDING), ("created_at", DESCENDING)], {}),
+                ([("auditLogId", ASCENDING)], {"unique": True}),
+                ([("userId", ASCENDING), ("created_at", DESCENDING)], {}),
                 ([("action", ASCENDING)], {}),
                 ([("resource_type", ASCENDING), ("resource_id", ASCENDING)], {}),
                 ([("created_at", DESCENDING)], {}),
             ],
             "cache": [
+                ([("cacheId", ASCENDING)], {"unique": True}),
                 ([("cache_key", ASCENDING)], {}),
                 ([("expires_at", ASCENDING)], {"expireAfterSeconds": 0}),
             ],
@@ -128,14 +151,14 @@ class MongoDBClient:
     
     async def get_user(self, user_id: str) -> Optional[UserModel]:
         """Get user by ID"""
-        doc = await self.db.users.find_one({"_id": user_id})
+        doc = await self.db.users.find_one({"userId": user_id})
         return UserModel(**doc) if doc else None
     
     async def update_user(self, user_id: str, updates: Dict[str, Any]) -> bool:
         """Update user"""
         updates["updated_at"] = datetime.utcnow()
         result = await self.db.users.update_one(
-            {"_id": user_id},
+            {"userId": user_id},
             {"$set": updates}
         )
         await self._log_audit("user_updated", "user", user_id, after=updates)
@@ -147,20 +170,20 @@ class MongoDBClient:
     
     async def create_session(self, session: ChatSessionModel) -> str:
         """Create new chat session"""
-        result = await self.db.chat_sessions.insert_one(session.dict())
-        session_id = str(result.inserted_id)
-        await self._log_audit("session_created", "session", session_id, after=session.dict())
-        return session_id
+        doc = session.dict()
+        result = await self.db.chat_sessions.insert_one(doc)
+        await self._log_audit("session_created", "session", session.sessionId, after=doc)
+        return session.sessionId
     
     async def get_session(self, session_id: str) -> Optional[ChatSessionModel]:
         """Get chat session by ID"""
-        doc = await self.db.chat_sessions.find_one({"_id": session_id})
+        doc = await self.db.chat_sessions.find_one({"sessionId": session_id})
         return ChatSessionModel(**doc) if doc else None
     
     async def list_sessions(self, user_id: str, limit: int = 50) -> List[ChatSessionModel]:
         """List user's chat sessions"""
         docs = await self.db.chat_sessions.find(
-            {"user_id": user_id}
+            {"userId": user_id}
         ).sort("created_at", -1).limit(limit).to_list(limit)
         return [ChatSessionModel(**doc) for doc in docs]
     
@@ -168,7 +191,7 @@ class MongoDBClient:
         """Update chat session"""
         updates["updated_at"] = datetime.utcnow()
         result = await self.db.chat_sessions.update_one(
-            {"_id": session_id},
+            {"sessionId": session_id},
             {"$set": updates}
         )
         return result.modified_count > 0
@@ -183,12 +206,13 @@ class MongoDBClient:
     
     async def create_message(self, message: ChatMessageModel) -> str:
         """Create new chat message"""
-        result = await self.db.chat_messages.insert_one(message.dict())
-        message_id = str(result.inserted_id)
+        doc = message.dict()
+        result = await self.db.chat_messages.insert_one(doc)
+        message_id = message.messageId
         
         # Update session message count and last message time
         await self.db.chat_sessions.update_one(
-            {"_id": message.session_id},
+            {"sessionId": message.sessionId},
             {
                 "$inc": {"message_count": 1},
                 "$set": {"last_message_at": datetime.utcnow()},
@@ -200,20 +224,20 @@ class MongoDBClient:
     
     async def get_message(self, message_id: str) -> Optional[ChatMessageModel]:
         """Get message by ID"""
-        doc = await self.db.chat_messages.find_one({"_id": message_id})
+        doc = await self.db.chat_messages.find_one({"messageId": message_id})
         return ChatMessageModel(**doc) if doc else None
     
     async def get_session_messages(self, session_id: str, limit: int = 100) -> List[ChatMessageModel]:
         """Get all messages in session"""
         docs = await self.db.chat_messages.find(
-            {"session_id": session_id}
+            {"sessionId": session_id}
         ).sort("created_at", 1).limit(limit).to_list(limit)
         return [ChatMessageModel(**doc) for doc in docs]
     
     async def get_last_message(self, session_id: str) -> Optional[ChatMessageModel]:
         """Get last message in session"""
         doc = await self.db.chat_messages.find_one(
-            {"session_id": session_id},
+            {"sessionId": session_id},
             sort=[("created_at", -1)]
         )
         return ChatMessageModel(**doc) if doc else None
@@ -224,19 +248,19 @@ class MongoDBClient:
     
     async def create_analysis(self, analysis: AnalysisModel) -> str:
         """Create new analysis"""
-        result = await self.db.analyses.insert_one(analysis.dict())
-        analysis_id = str(result.inserted_id)
-        await self._log_audit("analysis_created", "analysis", analysis_id, after=analysis.dict())
-        return analysis_id
+        doc = analysis.dict()
+        result = await self.db.analyses.insert_one(doc)
+        await self._log_audit("analysis_created", "analysis", analysis.analysisId, after=doc)
+        return analysis.analysisId
     
     async def get_analysis(self, analysis_id: str) -> Optional[AnalysisModel]:
         """Get analysis by ID"""
-        doc = await self.db.analyses.find_one({"_id": analysis_id})
+        doc = await self.db.analyses.find_one({"analysisId": analysis_id})
         return AnalysisModel(**doc) if doc else None
     
     async def list_analyses(self, user_id: str, category: Optional[str] = None, limit: int = 100) -> List[AnalysisModel]:
         """List user's analyses"""
-        query = {"user_id": user_id}
+        query = {"userId": user_id}
         if category:
             query["category"] = category
         
@@ -247,7 +271,7 @@ class MongoDBClient:
         """Search analyses by title/description"""
         docs = await self.db.analyses.find(
             {
-                "user_id": user_id,
+                "userId": user_id,
                 "$text": {"$search": search_text}
             }
         ).limit(limit).to_list(limit)
@@ -257,7 +281,7 @@ class MongoDBClient:
         """Update analysis"""
         updates["updated_at"] = datetime.utcnow()
         result = await self.db.analyses.update_one(
-            {"_id": analysis_id},
+            {"analysisId": analysis_id},
             {"$set": updates}
         )
         return result.modified_count > 0
@@ -272,27 +296,27 @@ class MongoDBClient:
     
     async def create_execution(self, execution: ExecutionModel) -> str:
         """Create execution record"""
-        result = await self.db.executions.insert_one(execution.dict())
-        execution_id = str(result.inserted_id)
-        await self._log_audit("execution_created", "execution", execution_id, after=execution.dict())
-        return execution_id
+        doc = execution.dict()
+        result = await self.db.executions.insert_one(doc)
+        await self._log_audit("execution_created", "execution", execution.executionId, after=doc)
+        return execution.executionId
     
     async def get_execution(self, execution_id: str) -> Optional[ExecutionModel]:
         """Get execution by ID"""
-        doc = await self.db.executions.find_one({"_id": execution_id})
+        doc = await self.db.executions.find_one({"executionId": execution_id})
         return ExecutionModel(**doc) if doc else None
     
     async def list_executions(self, session_id: str, limit: int = 100) -> List[ExecutionModel]:
         """List executions in session"""
         docs = await self.db.executions.find(
-            {"session_id": session_id}
+            {"sessionId": session_id}
         ).sort("started_at", -1).limit(limit).to_list(limit)
         return [ExecutionModel(**doc) for doc in docs]
     
     async def update_execution(self, execution_id: str, updates: Dict[str, Any]) -> bool:
         """Update execution"""
         result = await self.db.executions.update_one(
-            {"_id": execution_id},
+            {"executionId": execution_id},
             {"$set": updates}
         )
         return result.modified_count > 0
@@ -310,20 +334,20 @@ class MongoDBClient:
     
     async def get_saved_analysis(self, saved_id: str) -> Optional[SavedAnalysisModel]:
         """Get saved analysis"""
-        doc = await self.db.saved_analyses.find_one({"_id": saved_id})
+        doc = await self.db.saved_analyses.find_one({"savedAnalysisId": saved_id})
         return SavedAnalysisModel(**doc) if doc else None
     
     async def list_saved_analyses(self, user_id: str, limit: int = 100) -> List[SavedAnalysisModel]:
         """List user's saved analyses"""
         docs = await self.db.saved_analyses.find(
-            {"user_id": user_id}
+            {"userId": user_id}
         ).sort("created_at", -1).limit(limit).to_list(limit)
         return [SavedAnalysisModel(**doc) for doc in docs]
     
     async def increment_saved_analysis_usage(self, saved_id: str) -> bool:
         """Increment usage counter"""
         result = await self.db.saved_analyses.update_one(
-            {"_id": saved_id},
+            {"savedAnalysisId": saved_id},
             {
                 "$inc": {"usage_count": 1},
                 "$set": {"last_used_at": datetime.utcnow()},
@@ -347,7 +371,7 @@ class MongoDBClient:
         if doc:
             # Increment hit count and update last used
             await self.db.cache.update_one(
-                {"_id": doc["_id"]},
+                {"cacheId": doc["cacheId"]},
                 {
                     "$inc": {"hit_count": 1},
                     "$set": {"last_used_at": datetime.utcnow()}
@@ -368,7 +392,7 @@ class MongoDBClient:
         )
         
         result = await self.db.cache.insert_one(cache.dict())
-        return str(result.inserted_id)
+        return cache.cacheId
     
     # ========================================================================
     # AUDIT LOGGING
@@ -380,7 +404,7 @@ class MongoDBClient:
                         error_message: Optional[str] = None) -> None:
         """Log audit event"""
         audit = AuditLogModel(
-            user_id=user_id or "system",
+            userId=user_id or "system",
             action=action,
             resource_type=resource_type,
             resource_id=resource_id,
@@ -395,7 +419,7 @@ class MongoDBClient:
     async def get_audit_logs(self, user_id: str, limit: int = 100) -> List[AuditLogModel]:
         """Get user's audit logs"""
         docs = await self.db.audit_logs.find(
-            {"user_id": user_id}
+            {"userId": user_id}
         ).sort("created_at", -1).limit(limit).to_list(limit)
         return [AuditLogModel(**doc) for doc in docs]
     
