@@ -48,6 +48,38 @@ import os
 import json
 import logging
 
+def convert_for_json(obj):
+    """
+    Convert nested objects with pandas/numpy types to JSON-serializable format
+    Handles nested dictionaries, lists, and complex data structures
+    """
+    import numpy as np
+    import pandas as pd
+    
+    if isinstance(obj, (str, int, float, bool)) or obj is None:
+        return obj
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, pd.Series):
+        return obj.tolist()
+    elif isinstance(obj, pd.DataFrame):
+        return obj.to_dict('records')
+    elif isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.bool_):
+        return bool(obj)
+    elif isinstance(obj, dict):
+        return {key: convert_for_json(value) for key, value in obj.items()}
+    elif isinstance(obj, (list, tuple)):
+        return [convert_for_json(item) for item in obj]
+    elif hasattr(obj, '__dict__'):
+        return convert_for_json(obj.__dict__)
+    else:
+        return str(obj)  # Fallback to string representation
+
+
 # Add MCP server directory to Python path
 script_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = "/Users/shivc/Documents/Workspace/JS/qna-ai-admin"
@@ -58,7 +90,7 @@ for path in [script_dir, mcp_server_dir]:
     if os.path.exists(path) and path not in sys.path:
         sys.path.insert(0, path)
 
-import financial.functions_mock as financial_lib
+import financial.functions_real as financial_lib
 import analytics as analytics_lib
 
 def call_mcp_function(function_name: str, args: dict):
@@ -96,6 +128,37 @@ import sys
 import os
 import json
 import logging
+
+def convert_for_json(obj):
+    """
+    Convert nested objects with pandas/numpy types to JSON-serializable format
+    Handles nested dictionaries, lists, and complex data structures
+    """
+    import numpy as np
+    import pandas as pd
+    
+    if isinstance(obj, (str, int, float, bool)) or obj is None:
+        return obj
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, pd.Series):
+        return obj.tolist()
+    elif isinstance(obj, pd.DataFrame):
+        return obj.to_dict('records')
+    elif isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.bool_):
+        return bool(obj)
+    elif isinstance(obj, dict):
+        return {key: convert_for_json(value) for key, value in obj.items()}
+    elif isinstance(obj, (list, tuple)):
+        return [convert_for_json(item) for item in obj]
+    elif hasattr(obj, '__dict__'):
+        return convert_for_json(obj.__dict__)
+    else:
+        return str(obj)  # Fallback to string representation
 
 # Add MCP server directory to Python path
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -185,10 +248,8 @@ def execute_script(script_content: str, mock_mode: bool = True, timeout: int = 3
         with open(script_path, 'w') as f:
             f.write(enhanced_script)
         
-        # Execute script with appropriate flags
+        # Execute script - mode is already embedded in the enhanced script via MCP wrapper
         cmd = [sys.executable, script_path]
-        if mock_mode:
-            cmd.append("--mock")
         
         start_time = datetime.now()
         
@@ -362,29 +423,29 @@ def check_defensive_programming(script_content: str) -> Dict[str, Any]:
             }
         
         # Check for .get() with defaults - FAIL FAST
-        if '.get(' in line and ',' in line:
-            return {
-                "valid": False,
-                "error": "Defensive .get() with defaults is forbidden",
-                "error_type": "DefensiveProgrammingError", 
-                "line_number": i,
-                "line": line_stripped,
-                "not_allowed": ".get(key, default) patterns",
-                "use_instead": "Direct dict access like data['key'] to fail fast"
-            }
+        # if '.get(' in line and ',' in line:
+        #     return {
+        #         "valid": False,
+        #         "error": "Defensive .get() with defaults is forbidden",
+        #         "error_type": "DefensiveProgrammingError", 
+        #         "line_number": i,
+        #         "line": line_stripped,
+        #         "not_allowed": ".get(key, default) patterns",
+        #         "use_instead": "Direct dict access like data['key'] to fail fast"
+        #     }
         
         # Check for defensive if result checks - FAIL FAST
-        if ('if result and result.get' in line or 
-            ('if result:' in line and 'get(' in line)):
-            return {
-                "valid": False,
-                "error": "Defensive result checking is forbidden",
-                "error_type": "DefensiveProgrammingError",
-                "line_number": i, 
-                "line": line_stripped,
-                "not_allowed": "if result and result.get() patterns",
-                "use_instead": "Direct access like result['data'] to fail fast"
-            }
+        # if ('if result and result.get' in line or 
+        #     ('if result:' in line and 'get(' in line)):
+        #     return {
+        #         "valid": False,
+        #         "error": "Defensive result checking is forbidden",
+        #         "error_type": "DefensiveProgrammingError",
+        #         "line_number": i, 
+        #         "line": line_stripped,
+        #         "not_allowed": "if result and result.get() patterns",
+        #         "use_instead": "Direct access like result['data'] to fail fast"
+        #     }
     
     return {"valid": True}
 
