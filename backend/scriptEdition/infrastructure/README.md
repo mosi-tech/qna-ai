@@ -12,7 +12,7 @@ This folder contains all deployment, configuration, and infrastructure files for
 
 ### Deployment Scripts
 - **`ecosystem.config.js`** - PM2 process manager configuration
-- **`run-ollama-server.sh`** - Shell script to start server with environment setup
+- **`run-backend.sh`** - Shell script to start server with environment setup
 - **`restart-servers.sh`** - Restart all PM2 processes
 - **`start-script-server.sh`** - Start script server
 - **`switch-llm.sh`** - Switch between LLM providers
@@ -51,7 +51,7 @@ pm2 logs
 ### 4. Development Mode
 ```bash
 # Run from the scriptEdition directory
-./infrastructure/run-ollama-server.sh
+./infrastructure/run-backend.sh
 ```
 
 ### 5. Direct Python
@@ -85,7 +85,7 @@ scriptEdition/
 │   ├── ecosystem.config.js # PM2 configuration
 │   ├── package.json        # Node.js dependencies
 │   ├── node_modules/       # Node.js dependencies (installed here)
-│   ├── run-ollama-server.sh # Development startup script
+│   ├── run-backend.sh # Development startup script
 │   └── ...                 # Other deployment scripts
 ├── apiServer/              # Application code
 │   ├── server.py           # Main entry point

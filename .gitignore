@@ -72,11 +72,11 @@ ehthumbs.db
 Thumbs.db
 mcp-server/temp/*
 mcp-server/scripts/
-ollama-server/scriptEdition/scripts/*
-ollama-server/scriptEdition/data/*
-ollama-server/scriptEdition/apiServer/search/data/*
-ollama-server/scriptEdition/apiServer/data/*
+backend/scriptEdition/scripts/*
+backend/scriptEdition/data/*
+backend/scriptEdition/apiServer/search/data/*
+backend/scriptEdition/apiServer/data/*
 /serena
-/ollama-server/scriptEdition/apiServer/code_gen
+/backend/scriptEdition/apiServer/code_gen
 .serena
 .vscode

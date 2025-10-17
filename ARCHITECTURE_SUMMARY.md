@@ -40,7 +40,7 @@ RESULT TO USER
 
 ## 1. Script Edition - API Server (Port 8010)
 
-**Location**: `ollama-server/scriptEdition/apiServer/`
+**Location**: `backend/scriptEdition/apiServer/`
 
 **Key Features**:
 - FastAPI-based request handler

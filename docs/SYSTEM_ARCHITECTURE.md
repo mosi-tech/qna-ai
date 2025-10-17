@@ -108,7 +108,7 @@ The system follows a **PAI (Prompt as Interface)** pattern where the LLM acts as
 ### 1. **Script Edition - API Server** (Port: 8010)
 **Purpose**: Central orchestrator for question analysis and script generation.
 
-**Location**: `ollama-server/scriptEdition/apiServer/`
+**Location**: `backend/scriptEdition/apiServer/`
 
 **Responsibilities**:
 - Accept incoming questions via HTTP POST
@@ -162,7 +162,7 @@ GET    /debug/system-prompt        - Debug system prompt (dev only)
 - OpenAI GPT-4
 - Ollama (local, can run via Docker)
 
-**Location**: `ollama-server/scriptEdition/apiServer/llm/providers/`
+**Location**: `backend/scriptEdition/apiServer/llm/providers/`
 
 **Responsibilities**:
 - Load available MCP tools metadata dynamically

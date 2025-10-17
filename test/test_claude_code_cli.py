@@ -8,7 +8,7 @@ import sys
 import os
 
 # Add the API server path
-sys.path.append('/Users/shivc/Documents/Workspace/JS/qna-ai-admin/ollama-server/scriptEdition/apiServer')
+sys.path.append('/Users/shivc/Documents/Workspace/JS/qna-ai-admin/backend/scriptEdition/apiServer')
 
 from llm.providers.anthropic import AnthropicProvider
 
