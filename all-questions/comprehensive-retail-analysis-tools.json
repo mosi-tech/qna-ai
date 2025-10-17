@@ -1,0 +1,678 @@
+{
+  "description": "Comprehensive Retail Analysis Tools - Production Ready",
+  "version": "2.0.0",
+  "last_updated": "2025-09-21",
+  "total_tools": 15,
+  "usage_note": "These tools accept flexible inputs and use only existing MCP functions for sophisticated retail analysis",
+
+  "tier_1_portfolio_tools": {
+    "description": "Advanced portfolio analysis and optimization tools",
+    "tools": [
+      {
+        "id": "portfolio-rebalancing-optimizer",
+        "name": "Portfolio Rebalancing Optimizer",
+        "description": "Optimize portfolio rebalancing frequency, thresholds, and target allocations with transaction cost analysis",
+        "complexity": "advanced",
+        "ui_integration": "multi-step wizard with sliders and charts",
+        "inputs": {
+          "portfolio_positions": {
+            "type": "array",
+            "description": "Current portfolio positions with symbols and quantities",
+            "example": "[{\"symbol\": \"AAPL\", \"quantity\": 100, \"current_price\": 185.64}, {\"symbol\": \"SPY\", \"quantity\": 50, \"current_price\": 450.0}]"
+          },
+          "target_allocation": {
+            "type": "object", 
+            "description": "Desired portfolio allocation percentages",
+            "example": "{\"AAPL\": 0.6, \"SPY\": 0.4}"
+          },
+          "rebalancing_frequencies": {
+            "type": "array",
+            "default": "[\"monthly\", \"quarterly\", \"semi_annual\", \"annual\"]",
+            "description": "Frequencies to test and optimize"
+          },
+          "transaction_cost_per_trade": {
+            "type": "number",
+            "default": 0,
+            "description": "Fixed cost per trade in dollars"
+          },
+          "drift_thresholds": {
+            "type": "array", 
+            "default": "[0.05, 0.10, 0.15, 0.20]",
+            "description": "Drift percentage thresholds to test"
+          },
+          "analysis_period": {
+            "type": "string",
+            "default": "2y",
+            "description": "Historical period for backtesting"
+          }
+        },
+        "mcp_functions_used": [
+          "alpaca_market_stocks_bars",
+          "calculate_portfolio_metrics", 
+          "analyze_portfolio_concentration",
+          "stress_test_portfolio",
+          "calculate_returns_metrics"
+        ],
+        "output_format": {
+          "optimal_frequency": "string",
+          "optimal_threshold": "number",
+          "rebalancing_calendar": "array",
+          "performance_comparison": "object",
+          "transaction_cost_analysis": "object",
+          "recommended_trades": "array",
+          "risk_reduction": "number",
+          "expected_alpha": "number"
+        }
+      },
+      {
+        "id": "asset-allocation-optimizer",
+        "name": "Asset Allocation Optimizer", 
+        "description": "Find optimal asset allocation using modern portfolio theory with constraints",
+        "complexity": "advanced",
+        "ui_integration": "interactive efficient frontier chart with constraint sliders",
+        "inputs": {
+          "asset_universe": {
+            "type": "array",
+            "description": "Assets to include in optimization",
+            "example": "[\"AAPL\", \"MSFT\", \"SPY\", \"BND\", \"GLD\"]"
+          },
+          "risk_tolerance": {
+            "type": "string",
+            "options": ["conservative", "moderate", "aggressive"],
+            "description": "Investor risk tolerance level"
+          },
+          "constraints": {
+            "type": "object",
+            "description": "Portfolio constraints",
+            "example": "{\"max_single_position\": 0.3, \"min_stocks\": 0.6, \"max_bonds\": 0.4}"
+          },
+          "optimization_objective": {
+            "type": "string",
+            "options": ["max_sharpe", "min_risk", "max_return"],
+            "default": "max_sharpe"
+          },
+          "rebalancing_frequency": {
+            "type": "string",
+            "default": "quarterly"
+          },
+          "analysis_period": {
+            "type": "string", 
+            "default": "3y"
+          }
+        },
+        "mcp_functions_used": [
+          "alpaca_market_stocks_bars",
+          "calculate_correlation_analysis",
+          "calculate_portfolio_metrics",
+          "stress_test_portfolio"
+        ],
+        "output_format": {
+          "optimal_weights": "object",
+          "efficient_frontier": "array",
+          "expected_return": "number",
+          "expected_risk": "number",
+          "sharpe_ratio": "number",
+          "diversification_ratio": "number",
+          "stress_test_results": "object",
+          "alternative_allocations": "array"
+        }
+      },
+      {
+        "id": "portfolio-risk-analyzer",
+        "name": "Portfolio Risk Analyzer",
+        "description": "Comprehensive portfolio risk analysis including VaR, stress testing, and concentration risk",
+        "complexity": "advanced",
+        "ui_integration": "risk dashboard with gauges and heatmaps",
+        "inputs": {
+          "portfolio_positions": {
+            "type": "array",
+            "description": "Portfolio positions with symbols and weights"
+          },
+          "benchmark": {
+            "type": "string",
+            "default": "SPY",
+            "description": "Benchmark for relative risk analysis"
+          },
+          "confidence_levels": {
+            "type": "array",
+            "default": "[0.01, 0.05, 0.10]",
+            "description": "VaR confidence levels"
+          },
+          "stress_scenarios": {
+            "type": "array",
+            "default": "[\"2008_crisis\", \"2020_covid\", \"custom\"]",
+            "description": "Stress test scenarios"
+          },
+          "analysis_period": {
+            "type": "string",
+            "default": "2y"
+          }
+        },
+        "mcp_functions_used": [
+          "alpaca_market_stocks_bars",
+          "calculate_portfolio_metrics",
+          "analyze_portfolio_concentration", 
+          "calculate_var",
+          "calculate_cvar",
+          "stress_test_portfolio",
+          "calculate_correlation_analysis"
+        ],
+        "output_format": {
+          "var_estimates": "object",
+          "cvar_estimates": "object", 
+          "concentration_metrics": "object",
+          "correlation_matrix": "object",
+          "stress_test_results": "object",
+          "risk_attribution": "array",
+          "tail_risk_score": "number",
+          "diversification_score": "number"
+        }
+      }
+    ]
+  },
+
+  "tier_2_strategy_tools": {
+    "description": "Technical and quantitative strategy building tools",
+    "tools": [
+      {
+        "id": "technical-strategy-builder",
+        "name": "Technical Strategy Builder",
+        "description": "Build and backtest custom technical trading strategies with multiple indicators and conditions",
+        "complexity": "advanced",
+        "ui_integration": "drag-drop strategy builder with visual backtesting",
+        "inputs": {
+          "symbols": {
+            "type": "array",
+            "description": "Symbols to test strategy on",
+            "example": "[\"AAPL\", \"MSFT\", \"TSLA\"]"
+          },
+          "entry_conditions": {
+            "type": "object",
+            "description": "Entry signal conditions",
+            "example": "{\"rsi\": {\"operator\": \"<\", \"value\": 30}, \"macd\": {\"operator\": \"crossover_above\", \"value\": \"signal_line\"}}"
+          },
+          "exit_conditions": {
+            "type": "object",
+            "description": "Exit signal conditions",
+            "example": "{\"profit_target\": 0.10, \"stop_loss\": 0.05, \"time_exit\": 30}"
+          },
+          "indicators": {
+            "type": "object",
+            "description": "Technical indicators configuration",
+            "example": "{\"rsi\": {\"period\": 14}, \"macd\": {\"fast\": 12, \"slow\": 26, \"signal\": 9}}"
+          },
+          "position_sizing": {
+            "type": "string",
+            "options": ["fixed", "percent_risk", "kelly"],
+            "default": "fixed"
+          },
+          "backtest_period": {
+            "type": "string",
+            "default": "2y"
+          }
+        },
+        "mcp_functions_used": [
+          "alpaca_market_stocks_bars",
+          "calculate_rsi",
+          "calculate_macd", 
+          "calculate_bollinger_bands",
+          "detect_sma_crossover",
+          "detect_ema_crossover",
+          "generate_signals",
+          "analyze_signal_quality",
+          "calculate_returns_metrics"
+        ],
+        "output_format": {
+          "backtest_results": "object",
+          "trade_list": "array",
+          "performance_metrics": "object",
+          "signal_quality": "object",
+          "optimization_suggestions": "array",
+          "parameter_sensitivity": "object",
+          "equity_curve": "array",
+          "drawdown_analysis": "object"
+        }
+      },
+      {
+        "id": "momentum-strategy-analyzer",
+        "name": "Momentum Strategy Analyzer",
+        "description": "Analyze and optimize momentum-based trading strategies with custom parameters",
+        "complexity": "intermediate",
+        "ui_integration": "parameter optimization interface with 3D surface plots",
+        "inputs": {
+          "symbols": {
+            "type": "array",
+            "description": "Assets to analyze for momentum"
+          },
+          "momentum_lookback": {
+            "type": "array",
+            "default": "[5, 10, 20, 60]",
+            "description": "Lookback periods for momentum calculation"
+          },
+          "momentum_thresholds": {
+            "type": "array", 
+            "default": "[0.02, 0.05, 0.10, 0.15]",
+            "description": "Momentum thresholds for signal generation"
+          },
+          "holding_periods": {
+            "type": "array",
+            "default": "[5, 10, 20, 40]",
+            "description": "Holding periods to test"
+          },
+          "rebalancing_frequency": {
+            "type": "string",
+            "default": "monthly"
+          }
+        },
+        "mcp_functions_used": [
+          "alpaca_market_stocks_bars",
+          "prices_to_returns",
+          "generate_signals",
+          "analyze_signal_quality",
+          "calculate_returns_metrics",
+          "calculate_correlation_analysis"
+        ],
+        "output_format": {
+          "optimal_parameters": "object",
+          "momentum_rankings": "array",
+          "strategy_performance": "object", 
+          "parameter_heatmap": "array",
+          "regime_analysis": "object",
+          "transaction_costs_impact": "object"
+        }
+      },
+      {
+        "id": "mean-reversion-strategy-builder",
+        "name": "Mean Reversion Strategy Builder",
+        "description": "Build and optimize mean reversion strategies using statistical measures",
+        "complexity": "advanced",
+        "ui_integration": "statistical parameter tuning with z-score visualizations",
+        "inputs": {
+          "symbols": {
+            "type": "array",
+            "description": "Assets for mean reversion analysis"
+          },
+          "lookback_windows": {
+            "type": "array",
+            "default": "[20, 40, 60, 120]",
+            "description": "Statistical lookback windows"
+          },
+          "entry_z_scores": {
+            "type": "array",
+            "default": "[1.5, 2.0, 2.5, 3.0]",
+            "description": "Z-score thresholds for entry signals"
+          },
+          "exit_conditions": {
+            "type": "object",
+            "description": "Mean reversion exit conditions",
+            "example": "{\"mean_touch\": true, \"opposite_extreme\": true, \"time_exit\": 20}"
+          },
+          "volatility_filter": {
+            "type": "boolean",
+            "default": true,
+            "description": "Filter signals by volatility regime"
+          }
+        },
+        "mcp_functions_used": [
+          "alpaca_market_stocks_bars",
+          "calculate_bollinger_bands",
+          "generate_signals",
+          "analyze_signal_quality",
+          "calculate_risk_metrics"
+        ],
+        "output_format": {
+          "optimal_parameters": "object",
+          "signal_performance": "object",
+          "regime_effectiveness": "object",
+          "volatility_analysis": "object",
+          "drawdown_periods": "array"
+        }
+      }
+    ]
+  },
+
+  "tier_3_analysis_tools": {
+    "description": "Advanced analysis and research tools",
+    "tools": [
+      {
+        "id": "correlation-regime-analyzer",
+        "name": "Correlation Regime Analyzer",
+        "description": "Analyze how asset correlations change across different market regimes and volatility periods",
+        "complexity": "advanced",
+        "ui_integration": "interactive correlation matrix with regime timeline",
+        "inputs": {
+          "asset_universe": {
+            "type": "array",
+            "description": "Assets for correlation analysis",
+            "example": "[\"AAPL\", \"MSFT\", \"SPY\", \"BND\", \"VIX\"]"
+          },
+          "rolling_windows": {
+            "type": "array",
+            "default": "[30, 60, 120, 252]",
+            "description": "Rolling correlation windows"
+          },
+          "regime_indicators": {
+            "type": "array",
+            "default": "[\"VIX\", \"SPY\"]",
+            "description": "Assets used for regime identification"
+          },
+          "volatility_thresholds": {
+            "type": "object",
+            "default": "{\"low\": 0.15, \"medium\": 0.25, \"high\": 0.35}",
+            "description": "Volatility regime thresholds"
+          },
+          "analysis_period": {
+            "type": "string",
+            "default": "3y"
+          }
+        },
+        "mcp_functions_used": [
+          "alpaca_market_stocks_bars",
+          "calculate_correlation_analysis",
+          "calculate_risk_metrics",
+          "prices_to_returns"
+        ],
+        "output_format": {
+          "regime_correlations": "object",
+          "correlation_stability": "object",
+          "regime_transitions": "array",
+          "diversification_breakdown": "object",
+          "correlation_forecasts": "object"
+        }
+      },
+      {
+        "id": "factor-exposure-analyzer",
+        "name": "Factor Exposure Analyzer",
+        "description": "Analyze portfolio exposure to market factors (size, value, momentum, quality, volatility)",
+        "complexity": "advanced",
+        "ui_integration": "factor loading spider chart with attribution analysis",
+        "inputs": {
+          "portfolio_positions": {
+            "type": "array",
+            "description": "Portfolio positions for factor analysis"
+          },
+          "factor_proxies": {
+            "type": "object",
+            "default": "{\"market\": \"SPY\", \"size\": \"IWM\", \"value\": \"VTV\", \"growth\": \"VUG\", \"momentum\": \"MTUM\"}",
+            "description": "ETF proxies for factor analysis"
+          },
+          "analysis_windows": {
+            "type": "array",
+            "default": "[60, 120, 252]",
+            "description": "Analysis windows for factor loadings"
+          },
+          "benchmark": {
+            "type": "string",
+            "default": "SPY"
+          }
+        },
+        "mcp_functions_used": [
+          "alpaca_market_stocks_bars",
+          "calculate_correlation_analysis",
+          "calculate_beta_analysis",
+          "calculate_returns_metrics"
+        ],
+        "output_format": {
+          "factor_loadings": "object",
+          "factor_attribution": "object",
+          "active_exposures": "object",
+          "factor_timing": "object",
+          "risk_attribution": "object"
+        }
+      },
+      {
+        "id": "volatility-surface-analyzer",
+        "name": "Volatility Surface Analyzer",
+        "description": "Analyze volatility patterns across time horizons and market conditions",
+        "complexity": "advanced",
+        "ui_integration": "3D volatility surface with term structure analysis",
+        "inputs": {
+          "symbols": {
+            "type": "array",
+            "description": "Assets for volatility analysis"
+          },
+          "time_horizons": {
+            "type": "array",
+            "default": "[7, 30, 60, 90, 180, 252]",
+            "description": "Time horizons for volatility calculation"
+          },
+          "volatility_models": {
+            "type": "array",
+            "default": "[\"historical\", \"garch\", \"rolling\"]",
+            "description": "Volatility estimation methods"
+          },
+          "regime_analysis": {
+            "type": "boolean",
+            "default": true,
+            "description": "Include volatility regime analysis"
+          }
+        },
+        "mcp_functions_used": [
+          "alpaca_market_stocks_bars",
+          "calculate_risk_metrics",
+          "prices_to_returns"
+        ],
+        "output_format": {
+          "volatility_surface": "array",
+          "term_structure": "object",
+          "volatility_regimes": "object",
+          "vol_forecasts": "object",
+          "relative_volatility": "object"
+        }
+      }
+    ]
+  },
+
+  "tier_4_optimization_tools": {
+    "description": "Optimization and scenario analysis tools",
+    "tools": [
+      {
+        "id": "dca-optimizer",
+        "name": "Dollar Cost Averaging Optimizer",
+        "description": "Optimize DCA frequency, amounts, and timing with scenario analysis",
+        "complexity": "intermediate",
+        "ui_integration": "DCA simulation with interactive charts and scenario planning",
+        "inputs": {
+          "symbols": {
+            "type": "array",
+            "description": "Assets for DCA optimization"
+          },
+          "investment_amounts": {
+            "type": "array", 
+            "default": "[100, 250, 500, 1000]",
+            "description": "Monthly investment amounts to test"
+          },
+          "frequencies": {
+            "type": "array",
+            "default": "[\"weekly\", \"bi_weekly\", \"monthly\", \"quarterly\"]",
+            "description": "Investment frequencies to optimize"
+          },
+          "investment_horizon": {
+            "type": "string",
+            "default": \"5y\",
+            "description": "Investment time horizon"
+          },
+          "market_conditions": {
+            "type": "array",
+            "default": "[\"all\", \"bull\", \"bear\", \"sideways\"]",
+            "description": "Market conditions to analyze"
+          }
+        },
+        "mcp_functions_used": [
+          "alpaca_market_stocks_bars",
+          "calculate_returns_metrics",
+          "stress_test_portfolio"
+        ],
+        "output_format": {
+          "optimal_frequency": "string",
+          "optimal_amount": "number",
+          "dca_vs_lump_sum": "object",
+          "scenario_analysis": "object",
+          "timing_sensitivity": "object",
+          "cost_basis_analysis": "object"
+        }
+      },
+      {
+        "id": "monte-carlo-simulator", 
+        "name": "Monte Carlo Portfolio Simulator",
+        "description": "Monte Carlo simulation for portfolio outcomes with configurable scenarios",
+        "complexity": "advanced",
+        "ui_integration": "probability cone charts with scenario sliders",
+        "inputs": {
+          "portfolio_weights": {
+            "type": "array",
+            "description": "Portfolio allocation weights"
+          },
+          "symbols": {
+            "type": "array",
+            "description": "Portfolio assets"
+          },
+          "simulation_periods": {
+            "type": "array",
+            "default": "[1, 3, 5, 10, 20]",
+            "description": "Simulation time horizons in years"
+          },
+          "num_simulations": {
+            "type": "number",
+            "default": 10000,
+            "description": "Number of Monte Carlo paths"
+          },
+          "confidence_intervals": {
+            "type": "array",
+            "default": "[0.05, 0.25, 0.50, 0.75, 0.95]",
+            "description": "Confidence intervals for outcomes"
+          },
+          "rebalancing": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "mcp_functions_used": [
+          "alpaca_market_stocks_bars",
+          "calculate_correlation_analysis", 
+          "stress_test_portfolio",
+          "calculate_risk_metrics"
+        ],
+        "output_format": {
+          "simulation_results": "object",
+          "probability_distributions": "array",
+          "confidence_intervals": "object",
+          "tail_risk_analysis": "object",
+          "path_dependency": "object"
+        }
+      }
+    ]
+  },
+
+  "tier_5_screening_tools": {
+    "description": "Advanced screening and filtering tools",
+    "tools": [
+      {
+        "id": "multi-factor-screener",
+        "name": "Multi-Factor Stock Screener",
+        "description": "Screen stocks using multiple technical and fundamental factors with custom scoring",
+        "complexity": "advanced", 
+        "ui_integration": "multi-tab screener with custom scoring weights",
+        "inputs": {
+          "screening_universe": {
+            "type": "string",
+            "options": ["sp500", "nasdaq100", "russell2000", "custom"],
+            "default": "sp500"
+          },
+          "technical_factors": {
+            "type": "object",
+            "description": "Technical screening criteria",
+            "example": "{\"rsi\": {\"min\": 30, \"max\": 70}, \"momentum\": {\"period\": 60, \"min_return\": 0.05}}"
+          },
+          "fundamental_factors": {
+            "type": "object", 
+            "description": "Fundamental screening criteria",
+            "example": "{\"pe_ratio\": {\"max\": 25}, \"market_cap\": {\"min\": 1000000000}}"
+          },
+          "factor_weights": {
+            "type": "object",
+            "description": "Relative importance of each factor",
+            "example": "{\"technical\": 0.6, \"fundamental\": 0.4}"
+          },
+          "max_results": {
+            "type": "number",
+            "default": 50
+          }
+        },
+        "mcp_functions_used": [
+          "alpaca_market_stocks_bars",
+          "eodhd_fundamentals",
+          "calculate_rsi",
+          "generate_signals",
+          "alpaca_market_screener_most_actives"
+        ],
+        "output_format": {
+          "screened_stocks": "array",
+          "factor_scores": "object",
+          "ranking_analysis": "object",
+          "sector_distribution": "object",
+          "screening_statistics": "object"
+        }
+      }
+    ]
+  },
+
+  "mcp_expansion_needed": {
+    "description": "Areas where MCP functions need expansion for advanced retail tools",
+    "gaps": [
+      {
+        "area": "Options Analysis",
+        "needed_functions": [
+          "calculate_implied_volatility",
+          "analyze_options_chain", 
+          "calculate_greeks",
+          "options_strategy_payoff"
+        ],
+        "current_limitation": "No options data or analysis capabilities"
+      },
+      {
+        "area": "Economic Data Integration",
+        "needed_functions": [
+          "get_economic_calendar",
+          "analyze_macro_correlations",
+          "fed_policy_impact_analysis"
+        ],
+        "current_limitation": "Limited macro economic data integration"
+      },
+      {
+        "area": "News Sentiment Analysis", 
+        "needed_functions": [
+          "analyze_news_sentiment",
+          "correlate_news_price_movements",
+          "event_impact_analysis"
+        ],
+        "current_limitation": "Basic news data without sentiment analysis"
+      },
+      {
+        "area": "Sector/Industry Analysis",
+        "needed_functions": [
+          "get_sector_constituents",
+          "analyze_sector_rotation", 
+          "industry_comparison_metrics"
+        ],
+        "current_limitation": "Limited sector-specific analysis tools"
+      },
+      {
+        "area": "Alternative Data",
+        "needed_functions": [
+          "social_sentiment_analysis",
+          "insider_trading_analysis",
+          "institutional_flow_analysis"
+        ],
+        "current_limitation": "No alternative data sources"
+      }
+    ]
+  },
+
+  "implementation_priority": {
+    "phase_1": ["portfolio-rebalancing-optimizer", "technical-strategy-builder", "portfolio-risk-analyzer"],
+    "phase_2": ["asset-allocation-optimizer", "momentum-strategy-analyzer", "correlation-regime-analyzer"],
+    "phase_3": ["dca-optimizer", "monte-carlo-simulator", "multi-factor-screener"],
+    "phase_4": ["mean-reversion-strategy-builder", "factor-exposure-analyzer", "volatility-surface-analyzer"]
+  }
+}

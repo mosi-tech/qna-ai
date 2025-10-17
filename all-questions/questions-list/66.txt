@@ -1,0 +1,1 @@
+Which sector ETFs exhibit the most mean-reversion over 10-day windows?

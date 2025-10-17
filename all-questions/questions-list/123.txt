@@ -1,0 +1,1 @@
+Which of my positions had the largest mean absolute gap size this year?

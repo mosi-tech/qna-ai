@@ -1,0 +1,39 @@
+{
+  "question": "Which ETFs outperformed both SPY and QQQ over the last 30 days?",
+  "plan": {
+    "python_fallback": {
+      "data_needed": [
+        {
+          "fn": "alpaca_market_stocks_bars",
+          "args": {
+            "symbols": "SPY,QQQ",
+            "timeframe": "1Day",
+            "start": "2025-08-26",
+            "end": "2025-09-26"
+          },
+          "output": "benchmark_bars"
+        },
+        {
+          "fn": "alpaca_market_screener_most_actives",
+          "args": {
+            "top": 100
+          },
+          "output": "active_symbols"
+        },
+        {
+          "fn": "alpaca_market_stocks_bars",
+          "args": {
+            "symbols": "AAPL,TSLA,MSFT,GOOGL,AMZN,META,NVDA,NFLX,AMD,CRM,ADBE,PYPL,INTC,CSCO,QCOM,AVGO,TXN,ORCL,IBM,MU",
+            "timeframe": "1Day",
+            "start": "2025-08-26", 
+            "end": "2025-09-26"
+          },
+          "output": "etf_bars"
+        }
+      ],
+      "script_reference": "mcp-server/temp/analyze_etf_outperformance_20250926.py",
+      "function_name": "analyze_etf_outperformance"
+    }
+  },
+  "description": "Analysis to identify ETFs that outperformed both SPY and QQQ over the last 30 days using 30-day return calculations and comparative performance metrics"
+}

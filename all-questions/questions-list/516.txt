@@ -1,0 +1,1 @@
+Which of my positions had the smallest intraday drawdown on trend days?

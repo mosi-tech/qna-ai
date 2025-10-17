@@ -1,0 +1,1 @@
+Which symbols had the narrowest rolling 20-day ATR relative to price?

@@ -1,0 +1,27 @@
+{
+  "question": "Which watchlist symbols have the strongest 6-month price momentum?",
+  "plan": {
+    "python_fallback": {
+      "data_needed": [
+        {
+          "fn": "alpaca_trading_positions",
+          "args": {},
+          "output": "positions_data"
+        },
+        {
+          "fn": "alpaca_market_stocks_bars",
+          "args": {
+            "symbols": "{{extracted_symbols}}",
+            "timeframe": "1Day",
+            "start": "{{six_months_ago}}",
+            "end": "{{current_date}}"
+          },
+          "output": "historical_data"
+        }
+      ],
+      "script_reference": "mcp-server/temp/analyze_momentum_rankings_20250926.py",
+      "function_name": "analyze_momentum_rankings"
+    }
+  },
+  "description": "Extract watchlist symbols from positions, fetch 6-month historical data, and calculate price momentum rankings"
+}

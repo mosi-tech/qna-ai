@@ -1,0 +1,1 @@
+Which symbols in my watchlist have the largest 6-month trend slope?

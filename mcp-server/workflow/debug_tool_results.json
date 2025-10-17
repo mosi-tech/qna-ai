@@ -1,0 +1,27 @@
+{
+  "question": "Debug tool result structures",
+  "plan": {
+    "python_fallback": {
+      "data_needed": [
+        {
+          "fn": "alpaca_trading_positions",
+          "args": {},
+          "output": "positions_data"
+        },
+        {
+          "fn": "alpaca_market_stocks_bars", 
+          "args": {
+            "symbols": "AAPL,TSLA,MSFT,SPY",
+            "timeframe": "1Day",
+            "start": "2023-01-01",
+            "end": "2024-12-20"
+          },
+          "output": "bars_data"
+        }
+      ],
+      "script_reference": "temp/debug_tool_results.py",
+      "function_name": "debug_tool_results"
+    }
+  },
+  "description": "Debug the raw tool result structures"
+}

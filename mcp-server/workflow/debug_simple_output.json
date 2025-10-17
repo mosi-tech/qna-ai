@@ -1,0 +1,27 @@
+{
+  "question": "Debug simple output variables",
+  "plan": {
+    "python_fallback": {
+      "data_needed": [
+        {
+          "fn": "alpaca_trading_positions",
+          "args": {},
+          "output": "positions_data"
+        },
+        {
+          "fn": "alpaca_market_stocks_bars", 
+          "args": {
+            "symbols": "AAPL,TSLA,MSFT,SPY",
+            "timeframe": "1Day",
+            "start": "2023-01-01",
+            "end": "2024-12-20"
+          },
+          "output": "bars_data"
+        }
+      ],
+      "script_reference": "temp/debug_simple_variables.py",
+      "function_name": "debug_simple_variables"
+    }
+  },
+  "description": "Debug what data is available with simple output variables"
+}

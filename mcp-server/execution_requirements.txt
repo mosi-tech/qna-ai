@@ -1,0 +1,25 @@
+# Execution Requirements for Financial Analysis Scripts
+# Only these packages are allowed in generated scripts to ensure validation success
+
+# Core Python packages (built-in)
+# json, logging, datetime, os, sys, argparse, typing, collections, itertools, functools
+
+# Data Analysis & Manipulation
+pandas>=1.5.0
+numpy>=1.21.0
+
+# Time Series & Dates  
+pytz>=2022.1              # Timezone handling  
+python-dateutil>=2.8.0    # Enhanced date parsing
+
+# NOT ALLOWED - These will cause import errors:
+# yfinance          # External data source - use MCP instead  
+# quandl            # External data source - use MCP instead
+# alpha_vantage     # External data source - use MCP instead
+# fredapi           # External data source - use MCP instead
+# bloomberg         # External data source - use MCP instead
+# matplotlib        # Visualization not needed for analysis scripts
+# plotly            # Visualization not needed for analysis scripts
+# seaborn           # Visualization not needed for analysis scripts
+# dash              # Web framework not needed
+# streamlit         # Web framework not needed

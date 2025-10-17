@@ -1,0 +1,1 @@
+Which of my holdings rose most on days with positive news sentiment?

@@ -1,0 +1,10 @@
+**QUESTION:** {user_question}
+
+**REQUIREMENTS:**
+1. Be completely parameterized - no hardcoded values
+2. Accept all inputs as parameters
+3. Use tool references instead of mock data
+4. Create comprehensive JSON output
+5. Be easily reproducible for different inputs
+6. Document tool references and parameters
+7. Handle the pattern generically

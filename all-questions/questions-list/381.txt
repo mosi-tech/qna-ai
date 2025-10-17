@@ -1,0 +1,1 @@
+Which of my holdings had the smallest open-to-close variance while trending up?

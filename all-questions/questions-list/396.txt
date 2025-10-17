@@ -1,0 +1,1 @@
+Which symbols had the largest expansion in closing range over 20 days?

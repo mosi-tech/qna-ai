@@ -1,0 +1,294 @@
+{
+  "root_question": "is investing in ARKK better than QQQ?",
+  "description": "Binary follow-up question tree with 5 levels of depth for ARKK vs QQQ ETF comparison",
+  "tree_structure": {
+    "level_1": {
+      "root": {
+        "question": "is investing in ARKK better than QQQ?",
+        "analysis_type": "etf_head_to_head_comparison",
+        "category": "ETF Comparison",
+        "used_functions": ["alpaca_market_stocks_bars", "calculate_returns_metrics", "calculate_risk_metrics", "calculate_benchmark_metrics"]
+      }
+    },
+    "level_2": {
+      "2a": {
+        "question": "Which ETF has better risk-adjusted returns?",
+        "parent": "root",
+        "analysis_type": "risk_adjusted_etf_comparison",
+        "category": "ETF Comparison",
+        "rationale": "User wants to compare performance accounting for risk differences",
+        "used_functions": ["alpaca_market_stocks_bars", "calculate_returns_metrics", "calculate_risk_metrics"]
+      },
+      "2b": {
+        "question": "Which investment theme has more long-term potential?",
+        "parent": "root", 
+        "analysis_type": "thematic_investment_potential_comparison",
+        "category": "Thematic Analysis",
+        "rationale": "User wants to evaluate underlying investment themes and sectors",
+        "missing_data": ["etf_holdings_breakdown", "sector_allocation_data", "thematic_exposure_metrics", "growth_projections_by_theme"]
+      }
+    },
+    "level_3": {
+      "3a": {
+        "question": "How do their Sharpe ratios compare over different time periods?",
+        "parent": "2a",
+        "analysis_type": "multi_period_sharpe_ratio_comparison",
+        "category": "Performance Metrics Analysis",
+        "rationale": "Risk-adjusted performance across various timeframes",
+        "used_functions": ["alpaca_market_stocks_bars", "calculate_risk_metrics"]
+      },
+      "3b": {
+        "question": "Which ETF has lower maximum drawdown risk?",
+        "parent": "2a",
+        "analysis_type": "drawdown_risk_comparison",
+        "category": "Risk Analysis",
+        "rationale": "Comparing worst-case scenario losses",
+        "used_functions": ["alpaca_market_stocks_bars", "calculate_drawdown_analysis"]
+      },
+      "3c": {
+        "question": "Is disruptive innovation a stronger theme than broad tech?",
+        "parent": "2b",
+        "analysis_type": "innovation_vs_broad_tech_theme_analysis",
+        "category": "Thematic Analysis",
+        "rationale": "Comparing focused innovation vs diversified tech exposure",
+        "missing_data": ["innovation_company_classifications", "technology_sector_breakdowns", "disruptive_innovation_metrics", "theme_performance_attribution"]
+      },
+      "3d": {
+        "question": "Which has better exposure to future growth sectors?",
+        "parent": "2b",
+        "analysis_type": "future_growth_sector_exposure_analysis",
+        "category": "Sector Growth Analysis",
+        "rationale": "Forward-looking sector allocation assessment",
+        "missing_data": ["sector_growth_forecasts", "future_technology_trends", "etf_sector_weightings", "growth_sector_definitions"]
+      }
+    },
+    "level_4": {
+      "4a": {
+        "question": "How do their performance metrics change during bear markets?",
+        "parent": "3a",
+        "analysis_type": "bear_market_performance_metrics_analysis",
+        "category": "Crisis Performance Analysis",
+        "rationale": "Performance stability during market stress",
+        "used_functions": ["alpaca_market_stocks_bars", "calculate_returns_metrics", "calculate_risk_metrics"]
+      },
+      "4b": {
+        "question": "Which ETF shows more consistent monthly returns?",
+        "parent": "3a", 
+        "analysis_type": "return_consistency_analysis",
+        "category": "Performance Metrics Analysis",
+        "rationale": "Volatility and predictability of returns",
+        "used_functions": ["alpaca_market_stocks_bars", "calculate_risk_metrics"]
+      },
+      "4c": {
+        "question": "How often does each ETF experience 10%+ monthly losses?",
+        "parent": "3b",
+        "analysis_type": "extreme_loss_frequency_analysis",
+        "category": "Extreme Movement Analysis",
+        "rationale": "Frequency of severe monthly declines",
+        "used_functions": ["alpaca_market_stocks_bars", "calculate_returns_metrics"]
+      },
+      "4d": {
+        "question": "Which recovers faster from major drawdowns?",
+        "parent": "3b",
+        "analysis_type": "drawdown_recovery_speed_comparison",
+        "category": "Drawdown Recovery Analysis",
+        "rationale": "Recovery time comparison after major losses",
+        "used_functions": ["alpaca_market_stocks_bars", "calculate_drawdown_analysis"]
+      },
+      "4e": {
+        "question": "How sustainable is the innovation premium over time?",
+        "parent": "3c",
+        "analysis_type": "innovation_premium_sustainability_analysis",
+        "category": "Innovation Valuation Analysis",
+        "rationale": "Long-term viability of innovation theme premiums",
+        "missing_data": ["innovation_company_valuations", "valuation_multiples_data", "innovation_premium_history", "market_cycle_analysis"]
+      },
+      "4f": {
+        "question": "Which theme shows stronger earnings growth potential?",
+        "parent": "3c",
+        "analysis_type": "thematic_earnings_growth_comparison",
+        "category": "Earnings Growth Analysis",
+        "rationale": "Fundamental growth prospects of underlying themes",
+        "missing_data": ["earnings_growth_forecasts", "company_fundamentals", "revenue_projections", "thematic_earnings_attribution"]
+      },
+      "4g": {
+        "question": "Which has better exposure to AI and automation trends?",
+        "parent": "3d",
+        "analysis_type": "ai_automation_exposure_comparison",
+        "category": "AI Investment Analysis",
+        "rationale": "Specific technology trend exposure assessment",
+        "missing_data": ["ai_company_classifications", "automation_exposure_metrics", "technology_revenue_breakdowns", "ai_investment_weights"]
+      },
+      "4h": {
+        "question": "How do their ESG and sustainability exposures compare?",
+        "parent": "3d",
+        "analysis_type": "esg_sustainability_exposure_comparison",
+        "category": "ESG Investment Analysis",
+        "rationale": "Environmental and social impact investment comparison",
+        "missing_data": ["esg_scores", "sustainability_ratings", "environmental_impact_data", "social_responsibility_metrics"]
+      }
+    },
+    "level_5": {
+      "5a": {
+        "question": "Which ETF maintains better downside protection ratios?",
+        "parent": "4a",
+        "analysis_type": "downside_protection_ratio_analysis",
+        "category": "Downside Protection Analysis",
+        "rationale": "Asymmetric risk measurement during stress periods",
+        "used_functions": ["alpaca_market_stocks_bars", "calculate_risk_metrics"]
+      },
+      "5b": {
+        "question": "How do their correlation patterns change during crises?",
+        "parent": "4a",
+        "analysis_type": "crisis_correlation_pattern_analysis",
+        "category": "Correlation Breakdown Analysis",
+        "rationale": "Diversification benefits during market stress",
+        "used_functions": ["alpaca_market_stocks_bars", "calculate_correlation_analysis"]
+      },
+      "5c": {
+        "question": "Which has lower return volatility on a rolling basis?",
+        "parent": "4b",
+        "analysis_type": "rolling_volatility_comparison",
+        "category": "Volatility Analysis",
+        "rationale": "Time-varying volatility patterns",
+        "used_functions": ["alpaca_market_stocks_bars", "calculate_risk_metrics"]
+      },
+      "5d": {
+        "question": "How do their tracking errors to benchmarks compare?",
+        "parent": "4b",
+        "analysis_type": "tracking_error_comparison",
+        "category": "Tracking Error Analysis",
+        "rationale": "How well each ETF follows its stated objective",
+        "used_functions": ["alpaca_market_stocks_bars", "calculate_benchmark_metrics"]
+      },
+      "5e": {
+        "question": "Which has higher probability of 20%+ monthly drops?",
+        "parent": "4c",
+        "analysis_type": "extreme_loss_probability_analysis",
+        "category": "Extreme Movement Analysis",
+        "rationale": "Tail risk probability assessment",
+        "used_functions": ["alpaca_market_stocks_bars", "calculate_returns_metrics"]
+      },
+      "5f": {
+        "question": "How do sector concentrations affect extreme loss risk?",
+        "parent": "4c",
+        "analysis_type": "sector_concentration_risk_analysis",
+        "category": "Concentration Risk Analysis",
+        "rationale": "How diversification affects extreme loss potential",
+        "missing_data": ["etf_holdings_data", "sector_concentration_metrics", "diversification_ratios", "sector_correlation_matrix"]
+      },
+      "5g": {
+        "question": "Which shows more V-shaped vs U-shaped recovery patterns?",
+        "parent": "4d",
+        "analysis_type": "recovery_pattern_shape_analysis",
+        "category": "Recovery Pattern Analysis",
+        "rationale": "Different types of recovery characteristics",
+        "used_functions": ["alpaca_market_stocks_bars", "calculate_drawdown_analysis"]
+      },
+      "5h": {
+        "question": "How does market regime affect their recovery speeds?",
+        "parent": "4d",
+        "analysis_type": "regime_dependent_recovery_analysis",
+        "category": "Market Regime Analysis",
+        "rationale": "Recovery performance in different market environments",
+        "used_functions": ["alpaca_market_stocks_bars", "calculate_drawdown_analysis"]
+      },
+      "5i": {
+        "question": "How do innovation valuations correlate with interest rates?",
+        "parent": "4e",
+        "analysis_type": "innovation_valuation_rate_correlation",
+        "category": "Interest Rate Sensitivity Analysis",
+        "rationale": "Monetary policy impact on innovation premiums",
+        "missing_data": ["interest_rate_data", "valuation_metrics", "innovation_company_pe_ratios", "rate_sensitivity_coefficients"]
+      },
+      "5j": {
+        "question": "Which innovation sectors show most pricing power?",
+        "parent": "4e",
+        "analysis_type": "innovation_sector_pricing_power_analysis",
+        "category": "Innovation Sector Analysis",
+        "rationale": "Competitive advantages within innovation theme",
+        "missing_data": ["pricing_power_metrics", "profit_margin_data", "competitive_moat_analysis", "innovation_sector_breakdowns"]
+      },
+      "5k": {
+        "question": "How do their revenue growth rates compare historically?",
+        "parent": "4f",
+        "analysis_type": "historical_revenue_growth_comparison",
+        "category": "Revenue Growth Analysis",
+        "rationale": "Top-line growth trajectory comparison",
+        "missing_data": ["historical_revenue_data", "company_financials", "growth_rate_calculations", "revenue_trend_analysis"]
+      },
+      "5l": {
+        "question": "Which has more sustainable competitive advantages?",
+        "parent": "4f",
+        "analysis_type": "sustainable_competitive_advantage_analysis",
+        "category": "Competitive Analysis",
+        "rationale": "Long-term business model durability",
+        "missing_data": ["competitive_moat_analysis", "business_model_sustainability", "market_share_data", "competitive_positioning_metrics"]
+      },
+      "5m": {
+        "question": "Which has higher exposure to AI chip manufacturers?",
+        "parent": "4g",
+        "analysis_type": "ai_chip_exposure_comparison",
+        "category": "AI Hardware Analysis",
+        "rationale": "Specific AI infrastructure investment exposure",
+        "missing_data": ["ai_chip_company_classifications", "semiconductor_exposure_data", "ai_hardware_revenue_breakdowns", "chip_manufacturer_weights"]
+      },
+      "5n": {
+        "question": "How do their autonomous vehicle exposures compare?",
+        "parent": "4g",
+        "analysis_type": "autonomous_vehicle_exposure_comparison",
+        "category": "Autonomous Vehicle Analysis",
+        "rationale": "Transportation technology investment comparison",
+        "missing_data": ["autonomous_vehicle_company_data", "transportation_tech_classifications", "av_revenue_exposure", "mobility_investment_weights"]
+      },
+      "5o": {
+        "question": "Which has better clean energy transition exposure?",
+        "parent": "4h",
+        "analysis_type": "clean_energy_transition_exposure_analysis",
+        "category": "Clean Energy Analysis",
+        "rationale": "Environmental transition investment assessment",
+        "missing_data": ["clean_energy_company_classifications", "renewable_energy_exposure", "green_transition_metrics", "environmental_investment_weights"]
+      },
+      "5p": {
+        "question": "How do their social impact investment scores compare?",
+        "parent": "4h",
+        "analysis_type": "social_impact_investment_comparison",
+        "category": "Social Impact Analysis",
+        "rationale": "Social responsibility and impact measurement",
+        "missing_data": ["social_impact_scores", "community_investment_data", "social_responsibility_ratings", "impact_measurement_metrics"]
+      }
+    }
+  },
+  "tree_statistics": {
+    "total_questions": 31,
+    "levels": 5,
+    "branching_factor": 2,
+    "leaf_questions": 16,
+    "analysis_types_needed": 30
+  },
+  "user_journey_paths": {
+    "risk_focused_path": ["root", "2a", "3b", "4c", "5e"],
+    "theme_analysis_path": ["root", "2b", "3c", "4e", "5i"],
+    "performance_path": ["root", "2a", "3a", "4b", "5c"],
+    "innovation_path": ["root", "2b", "3d", "4g", "5m"]
+  },
+  "new_categories_identified": [
+    "Performance Metrics Analysis",
+    "Sector Growth Analysis",
+    "Innovation Valuation Analysis", 
+    "Earnings Growth Analysis",
+    "AI Investment Analysis",
+    "ESG Investment Analysis",
+    "Downside Protection Analysis",
+    "Volatility Analysis",
+    "Tracking Error Analysis",
+    "Concentration Risk Analysis",
+    "Recovery Pattern Analysis",
+    "Innovation Sector Analysis",
+    "Revenue Growth Analysis",
+    "AI Hardware Analysis",
+    "Autonomous Vehicle Analysis",
+    "Clean Energy Analysis",
+    "Social Impact Analysis"
+  ]
+}

@@ -1,0 +1,1 @@
+Which of my holdings exhibit the tightest closing price clustering?

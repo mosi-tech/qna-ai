@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "financial-server": {
+      "command": "python",
+      "args": ["/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server/financial_server.py"],
+      "env": {
+        "USE_MOCK_FINANCIAL_DATA": "true"
+      }
+    },
+    "_analytics-server": {
+      "command": "python", 
+      "args": ["/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server/analytics_server.py"],
+      "_comment": "Temporarily disabled to reduce payload size and avoid rate limits"
+    },
+    "validation-server": {
+      "command": "python",
+      "args": ["/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server/mcp_script_validation_server.py"]
+    }
+  }
+}

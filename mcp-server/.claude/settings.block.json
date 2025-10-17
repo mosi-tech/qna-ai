@@ -1,0 +1,39 @@
+ {
+    "permissions": {
+      "allow": [
+        "Read(/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server/scripts/*.py)",
+        "Read(/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server/temp/*.py)",
+        "Write(/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server/temp/**)",
+        "Write(/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server/scripts/**)",
+        "Edit(/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server/temp/**)",
+        "Edit(/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server/scripts/**)",
+        "MultiEdit(/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server/temp/**)",
+        "MultiEdit(/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server/scripts/**)",
+        "Bash(cd /Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server)",
+        "Bash(python3 /Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server/temp/*.py)"
+      ],
+      "deny": [
+        "Bash(find:*)",
+        "Bash(ls:*)",
+        "Bash(grep:*)",
+        "Bash(locate:*)",
+        "Bash(which:*)",
+        "Bash(whereis:*)",
+        "Bash(*)",
+        "Read(*)",
+        "Write(*)",
+        "Edit(*)",
+        "MultiEdit(*)",
+        "LS(*)",
+        "Glob(*)",
+        "Grep(*)",
+        "Task(*)",
+        "NotebookRead(*)",
+        "NotebookEdit(*)",
+        "WebFetch(*)",
+        "WebSearch(*)",
+        "TodoWrite(*)",
+        "ExitPlanMode(*)"
+      ]
+    }
+  }

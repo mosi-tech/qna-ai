@@ -1,0 +1,1 @@
+Which of my holdings show the strongest monthly seasonality in returns?

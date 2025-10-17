@@ -1,0 +1,1 @@
+Which of my holdings had the most days closing in the top quartile of range?

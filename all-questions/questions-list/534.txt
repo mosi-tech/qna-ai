@@ -1,0 +1,1 @@
+Which of my holdings had the smoothest cumulative return path (lowest path variability)?

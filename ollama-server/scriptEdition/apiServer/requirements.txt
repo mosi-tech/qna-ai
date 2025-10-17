@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+httpx
+anthropic
+pydantic
+chromadb>=1.1.0
+ollama
+requests

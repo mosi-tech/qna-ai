@@ -1,0 +1,73 @@
+{
+  "mcpServers": {
+    "financial-data": {
+      "command": "python",
+      "args": ["/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server/financial_server.py"],
+      "env": {
+        "PYTHONPATH": "/Users/shivc/Documents/Workspace/JS/qna-ai-admin",
+        "USE_MOCK_FINANCIAL_DATA": "true"
+      }
+    },
+    "analytics-engine": {
+      "command": "python",
+      "args": ["/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server/analytics_server.py"],
+      "env": {
+        "PYTHONPATH": "/Users/shivc/Documents/Workspace/JS/qna-ai-admin"
+      }
+    },
+    "validation-server": {
+      "command": "python",
+      "args": ["/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server/mcp_script_validation_server.py"],
+      "env": {
+        "PYTHONPATH": "/Users/shivc/Documents/Workspace/JS/qna-ai-admin"
+      }
+    }
+  },
+  "serviceConfigs": {
+    "analysis": {
+      "enabled": true,
+      "servers": ["validation-server"]
+    },
+    "context": {
+      "enabled": false,
+      "servers": ["financial-data"],
+      "exclude_tools": [
+        "alpaca_market_screener_most_actives",
+        "alpaca_market_stocks_bars",
+        "alpaca_market_stocks_snapshots",
+        "alpaca_market_stocks_quotes_latest",
+        "alpaca_market_stocks_trades_latest",
+        "alpaca_market_screener_top_gainers",
+        "alpaca_market_screener_top_losers"
+      ]
+    },
+    "code-prompt-builder": {
+      "enabled": true, 
+      "servers": ["analytics-engine", "financial-data"],
+      "exclude_tools": []
+    },
+    "reuse-evaluator": {
+      "enabled": false,
+      "servers": ["analytics-engine"],
+      "exclude_tools": [
+        "optimize_portfolio",
+        "monte_carlo_simulation", 
+        "stress_test_portfolio",
+        "calculate_efficient_frontier",
+        "backtest_strategy"
+      ]
+    },
+    "none": {
+      "enabled": false,
+      "servers": [],
+      "exclude_tools": []
+    }
+  },
+  "defaultConfig": {
+    "enabled": true,
+    "servers": ["financial-data", "analytics-engine", "validation-server"],
+    "exclude_tools": [],
+    "cache_enabled": false,
+    "cache_ttl": "short"
+  }
+}

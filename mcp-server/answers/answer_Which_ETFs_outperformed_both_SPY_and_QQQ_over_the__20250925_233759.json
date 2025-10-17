@@ -1,0 +1,91 @@
+{
+  "description": "Analysis to identify ETFs that outperformed both SPY and QQQ over the last 30 days using named output variables and 30-day return calculations",
+  "body": [
+    {
+      "key": "question",
+      "value": "Which ETFs outperformed both SPY and QQQ over the last 30 days?",
+      "description": "Question analyzed"
+    },
+    {
+      "key": "analysis_method",
+      "value": "Direct Engine",
+      "description": "Direct function calls"
+    },
+    {
+      "key": "data_source_1",
+      "value": "alpaca_market_stocks_bars via direct",
+      "description": "Data from alpaca_market_stocks_bars"
+    },
+    {
+      "key": "data_source_2",
+      "value": "alpaca_market_screener_most_actives via direct",
+      "description": "Data from alpaca_market_screener_most_actives"
+    },
+    {
+      "key": "data_source_3",
+      "value": "alpaca_market_stocks_bars via direct",
+      "description": "Data from alpaca_market_stocks_bars"
+    },
+    {
+      "key": "analysis_results",
+      "value": {
+        "benchmark_returns": {
+          "SPY": -10.42,
+          "QQQ": 14.14
+        },
+        "outperforming_etfs": [
+          {
+            "symbol": "CSCO",
+            "return_30d": 26.91,
+            "outperformance_vs_spy": 37.33,
+            "outperformance_vs_qqq": 12.78,
+            "start_price": 101.74,
+            "end_price": 129.12
+          },
+          {
+            "symbol": "AMD",
+            "return_30d": 19.23,
+            "outperformance_vs_spy": 29.65,
+            "outperformance_vs_qqq": 5.09,
+            "start_price": 99.92,
+            "end_price": 119.13
+          },
+          {
+            "symbol": "ADBE",
+            "return_30d": 16.13,
+            "outperformance_vs_spy": 26.55,
+            "outperformance_vs_qqq": 1.99,
+            "start_price": 103.35,
+            "end_price": 120.02
+          },
+          {
+            "symbol": "PYPL",
+            "return_30d": 14.28,
+            "outperformance_vs_spy": 24.71,
+            "outperformance_vs_qqq": 0.15,
+            "start_price": 101.86,
+            "end_price": 116.41
+          }
+        ],
+        "total_analyzed": 25,
+        "outperformers_count": 4,
+        "debug_info": {
+          "benchmark_data_type": "<class 'dict'>",
+          "etf_data_type": "<class 'dict'>",
+          "context_keys": [
+            "tool_result_0",
+            "benchmark_bars",
+            "tool_result_1",
+            "etf_symbols",
+            "tool_result_2",
+            "etf_bars"
+          ]
+        }
+      },
+      "description": "Python script results"
+    }
+  ],
+  "metadata": {
+    "timestamp": "2025-09-25T23:37:59.963010"
+  }
+}

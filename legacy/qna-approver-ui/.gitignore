@@ -78,5 +78,3 @@ ollama-server/scriptEdition/apiServer/search/data/*
 ollama-server/scriptEdition/apiServer/data/*
 /serena
 /ollama-server/scriptEdition/apiServer/code_gen
-.serena
-.vscode

@@ -1,0 +1,1 @@
+Which ETFs had the highest fraction of days above their 21-EMA?

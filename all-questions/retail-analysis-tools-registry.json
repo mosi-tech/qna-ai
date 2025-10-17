@@ -1,0 +1,2706 @@
+{
+  "description": "Registry of retail investor analysis tools for natural language question mapping",
+  "version": "3.0.0",
+  "last_updated": "2025-09-22",
+  "total_tools": 89,
+  "usage_note": "Each tool maps to specific user questions and keywords for natural language processing - now includes Portfolio Visualizer-inspired tools",
+  
+  "tier_1_information_tools": {
+    "description": "Basic information lookup tools - first interaction point",
+    "tools": [
+      {
+        "id": "current-price-stats",
+        "name": "Current Price & Stats",
+        "description": "Real-time price, volume, and basic statistics for any stock or ETF",
+        "user_questions": [
+          "What is AAPL trading at?",
+          "Current price of Tesla",
+          "MSFT stock price",
+          "How much is SPY?"
+        ],
+        "keywords": ["price", "trading at", "current", "quote", "stock price", "how much"],
+        "inputs": {
+          "required": ["symbol"],
+          "optional": ["exchange"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Stock/ETF symbol (e.g., AAPL, SPY)",
+            "validation": "Valid ticker symbol"
+          }
+        },
+        "functions_used": ["getStockSnapshots", "getStockQuotes"],
+        "output_format": {
+          "current_price": "number",
+          "change_percent": "number", 
+          "volume": "number",
+          "market_cap": "number",
+          "52_week_range": "object"
+        },
+        "complexity": "simple"
+      },
+      {
+        "id": "company-profile",
+        "name": "Company Profile",
+        "description": "Basic company information, business description, and key facts",
+        "user_questions": [
+          "What does Apple do?",
+          "Tell me about Microsoft",
+          "What business is Tesla in?",
+          "Company information for NVDA"
+        ],
+        "keywords": ["what does", "tell me about", "company info", "business", "profile"],
+        "inputs": {
+          "required": ["symbol"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string", 
+            "description": "Stock symbol for company lookup"
+          }
+        },
+        "functions_used": ["getFundamentals"],
+        "output_format": {
+          "company_name": "string",
+          "business_description": "string",
+          "sector": "string",
+          "industry": "string",
+          "employees": "number",
+          "headquarters": "string"
+        },
+        "complexity": "simple"
+      },
+      {
+        "id": "etf-holdings",
+        "name": "ETF Holdings Breakdown",
+        "description": "Complete holdings, weights, and sector allocation for any ETF",
+        "user_questions": [
+          "What's in SPY?",
+          "SPY holdings",
+          "What does QQQ own?",
+          "VTI top holdings"
+        ],
+        "keywords": ["holdings", "what's in", "owns", "contains", "composition"],
+        "inputs": {
+          "required": ["symbol"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "ETF symbol (e.g., SPY, QQQ, VTI)"
+          },
+          "top_n": {
+            "type": "number",
+            "default": 10,
+            "description": "Number of top holdings to show"
+          }
+        },
+        "functions_used": ["getETFHoldings"],
+        "output_format": {
+          "top_holdings": "array",
+          "sector_allocation": "object",
+          "total_holdings": "number",
+          "concentration_metrics": "object"
+        },
+        "complexity": "simple"
+      },
+      {
+        "id": "valuation-metrics",
+        "name": "Valuation Metrics",
+        "description": "Key valuation ratios and fundamental metrics",
+        "user_questions": [
+          "What's Apple's PE ratio?",
+          "TSLA valuation metrics",
+          "Is MSFT expensive?",
+          "Fundamental ratios for NVDA"
+        ],
+        "keywords": ["PE ratio", "valuation", "expensive", "cheap", "ratios", "fundamentals"],
+        "inputs": {
+          "required": ["symbol"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Stock symbol for valuation analysis"
+          }
+        },
+        "functions_used": ["getFundamentals"],
+        "output_format": {
+          "pe_ratio": "number",
+          "pb_ratio": "number", 
+          "ps_ratio": "number",
+          "peg_ratio": "number",
+          "debt_to_equity": "number",
+          "roe": "number"
+        },
+        "complexity": "simple"
+      },
+      {
+        "id": "dividend-calendar",
+        "name": "Dividend Calendar",
+        "description": "Dividend history, yield, and payment schedule",
+        "user_questions": [
+          "When does AAPL pay dividends?",
+          "MSFT dividend history",
+          "What's the dividend yield?",
+          "Next dividend payment date"
+        ],
+        "keywords": ["dividend", "yield", "payment", "ex-date", "dividend history"],
+        "inputs": {
+          "required": ["symbol"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Stock symbol for dividend analysis"
+          },
+          "years": {
+            "type": "number",
+            "default": 5,
+            "description": "Years of dividend history"
+          }
+        },
+        "functions_used": ["getDividends", "calculateDividendYield"],
+        "output_format": {
+          "current_yield": "number",
+          "dividend_history": "array",
+          "payment_frequency": "string",
+          "next_payment_date": "string",
+          "growth_rate": "number"
+        },
+        "complexity": "simple"
+      }
+    ]
+  },
+
+  "tier_2_performance_analysis": {
+    "description": "Performance measurement and historical analysis tools",
+    "tools": [
+      {
+        "id": "ytd-performance",
+        "name": "Year-to-Date Performance",
+        "description": "Current year performance with context and comparisons",
+        "user_questions": [
+          "How has AAPL done this year?",
+          "TSLA YTD performance",
+          "SPY performance 2024",
+          "Year to date returns"
+        ],
+        "keywords": ["this year", "YTD", "2024", "year to date", "current year"],
+        "inputs": {
+          "required": ["symbol"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Asset symbol for YTD analysis"
+          },
+          "benchmark": {
+            "type": "string", 
+            "default": "SPY",
+            "description": "Benchmark for comparison"
+          }
+        },
+        "functions_used": ["getStockBars", "calculateTotalReturn", "comparePerformanceMetrics"],
+        "output_format": {
+          "ytd_return": "number",
+          "benchmark_return": "number",
+          "relative_performance": "number",
+          "best_day": "object",
+          "worst_day": "object"
+        },
+        "complexity": "simple"
+      },
+      {
+        "id": "long-term-performance", 
+        "name": "Long-term Performance Analysis",
+        "description": "Multi-year performance with annualized returns and risk metrics",
+        "user_questions": [
+          "AAPL 5 year return",
+          "How has Tesla performed over 3 years?",
+          "Long term MSFT performance",
+          "10 year SPY returns"
+        ],
+        "keywords": ["5 year", "3 year", "10 year", "long term", "historical performance"],
+        "inputs": {
+          "required": ["symbol", "years"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Asset symbol for analysis"
+          },
+          "years": {
+            "type": "number",
+            "options": [1, 3, 5, 10],
+            "description": "Analysis period in years"
+          }
+        },
+        "functions_used": ["getStockBars", "calculateCAGR", "calculateSharpeRatio", "calculateMaxDrawdown"],
+        "output_format": {
+          "total_return": "number",
+          "annualized_return": "number",
+          "volatility": "number",
+          "sharpe_ratio": "number",
+          "max_drawdown": "number"
+        },
+        "complexity": "simple"
+      },
+      {
+        "id": "historical-extremes",
+        "name": "Historical Extremes",
+        "description": "Best and worst performing periods in history",
+        "user_questions": [
+          "What was AAPL's best year?",
+          "TSLA worst performance",
+          "SPY biggest gain",
+          "Historical highs and lows"
+        ],
+        "keywords": ["best year", "worst", "biggest", "historical", "extremes", "highs", "lows"],
+        "inputs": {
+          "required": ["symbol"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Asset symbol for historical analysis"
+          },
+          "period_type": {
+            "type": "string",
+            "options": ["daily", "monthly", "yearly"],
+            "default": "yearly",
+            "description": "Period granularity for analysis"
+          }
+        },
+        "functions_used": ["getStockBars", "calculateBestWorstPeriods"],
+        "output_format": {
+          "best_period": "object",
+          "worst_period": "object", 
+          "average_performance": "number",
+          "volatility_range": "object"
+        },
+        "complexity": "simple"
+      },
+      {
+        "id": "volatility-analysis",
+        "name": "Volatility Analysis",
+        "description": "Price volatility patterns and risk assessment",
+        "user_questions": [
+          "How volatile is AAPL?",
+          "TSLA price swings", 
+          "Is MSFT risky?",
+          "Volatility comparison"
+        ],
+        "keywords": ["volatile", "volatility", "risky", "price swings", "stability"],
+        "inputs": {
+          "required": ["symbol"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Asset symbol for volatility analysis"
+          },
+          "period": {
+            "type": "string",
+            "options": ["30d", "90d", "1y"],
+            "default": "90d",
+            "description": "Analysis period"
+          }
+        },
+        "functions_used": ["getStockBars", "calculateRollingVolatility", "calculateAnnualizedVolatility"],
+        "output_format": {
+          "current_volatility": "number",
+          "historical_percentile": "number",
+          "volatility_trend": "string",
+          "risk_category": "string"
+        },
+        "complexity": "intermediate"
+      },
+      {
+        "id": "max-drawdown-tool",
+        "name": "Maximum Drawdown Analysis", 
+        "description": "Worst decline periods and recovery analysis",
+        "user_questions": [
+          "What's AAPL's biggest drop?",
+          "Worst decline for TSLA",
+          "Maximum drawdown SPY",
+          "Biggest loss period"
+        ],
+        "keywords": ["biggest drop", "worst decline", "maximum drawdown", "biggest loss"],
+        "inputs": {
+          "required": ["symbol"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string", 
+            "description": "Asset symbol for drawdown analysis"
+          },
+          "years": {
+            "type": "number",
+            "default": 10,
+            "description": "Years of history to analyze"
+          }
+        },
+        "functions_used": ["getStockBars", "calculateMaxDrawdown"],
+        "output_format": {
+          "max_drawdown": "number",
+          "drawdown_period": "object",
+          "recovery_time": "number",
+          "current_drawdown": "number"
+        },
+        "complexity": "intermediate"
+      }
+    ]
+  },
+
+  "tier_3_scenario_analysis": {
+    "description": "What-if scenario and simulation tools",
+    "tools": [
+      {
+        "id": "time-machine-calculator",
+        "name": "Time Machine Investment Calculator",
+        "description": "Calculate returns from any historical investment date",
+        "user_questions": [
+          "What if I bought AAPL in 2020?",
+          "If I invested in Tesla 3 years ago",
+          "What if I bought the March 2020 crash?",
+          "Investment from IPO date"
+        ],
+        "keywords": ["what if", "if I bought", "if I invested", "time machine", "historical investment"],
+        "inputs": {
+          "required": ["symbol", "investment_date", "amount"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Asset symbol to analyze"
+          },
+          "investment_date": {
+            "type": "date",
+            "description": "Date of hypothetical investment"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Investment amount in dollars"
+          },
+          "include_dividends": {
+            "type": "boolean",
+            "default": true,
+            "description": "Include dividend reinvestment"
+          }
+        },
+        "functions_used": ["getStockBars", "getDividends", "calculateTotalReturn", "calculateCAGR"],
+        "output_format": {
+          "initial_investment": "number",
+          "current_value": "number",
+          "total_return": "number",
+          "annualized_return": "number",
+          "shares_owned": "number"
+        },
+        "complexity": "simple"
+      },
+      {
+        "id": "dca-simulator",
+        "name": "Dollar-Cost Averaging Simulator",
+        "description": "Simulate regular periodic investments over time",
+        "user_questions": [
+          "What if I invested $500/month?",
+          "Dollar cost averaging into AAPL",
+          "Monthly investing simulation",
+          "DCA vs lump sum"
+        ],
+        "keywords": ["dollar cost", "DCA", "monthly", "periodic", "regular investing"],
+        "inputs": {
+          "required": ["symbol", "monthly_amount", "start_date"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Asset for DCA simulation"
+          },
+          "monthly_amount": {
+            "type": "number",
+            "description": "Monthly investment amount"
+          },
+          "start_date": {
+            "type": "date",
+            "description": "Start date for DCA"
+          },
+          "frequency": {
+            "type": "string",
+            "options": ["weekly", "monthly", "quarterly"],
+            "default": "monthly",
+            "description": "Investment frequency"
+          }
+        },
+        "functions_used": ["getStockBars", "simulateDCA"],
+        "output_format": {
+          "total_invested": "number",
+          "current_value": "number",
+          "average_cost_basis": "number",
+          "total_shares": "number",
+          "return_vs_lump_sum": "number"
+        },
+        "complexity": "intermediate"
+      },
+      {
+        "id": "crisis-investment-tool",
+        "name": "Crisis Investment Analyzer",
+        "description": "Analyze returns from investing during market crashes",
+        "user_questions": [
+          "What if I bought the 2020 crash?",
+          "Investing during 2008 crisis",
+          "Market crash opportunities",
+          "Crisis investing returns"
+        ],
+        "keywords": ["crash", "crisis", "market bottom", "pandemic", "2008", "2020"],
+        "inputs": {
+          "required": ["symbol", "crisis_period"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Asset to analyze"
+          },
+          "crisis_period": {
+            "type": "string",
+            "options": ["2008_financial_crisis", "2020_covid_crash", "2022_tech_selloff", "custom"],
+            "description": "Crisis period to analyze"
+          },
+          "investment_timing": {
+            "type": "string",
+            "options": ["bottom", "during_decline", "early_recovery"],
+            "default": "bottom",
+            "description": "When during crisis to simulate investment"
+          }
+        },
+        "functions_used": ["getStockBars", "detectCrisisPeriods", "calculateTotalReturn"],
+        "output_format": {
+          "crisis_bottom_date": "string",
+          "investment_price": "number",
+          "recovery_period": "number",
+          "total_return": "number",
+          "lessons_learned": "array"
+        },
+        "complexity": "intermediate"
+      },
+      {
+        "id": "perfect-timing-tool",
+        "name": "Perfect Timing Analyzer",
+        "description": "Calculate returns from perfect buy low/sell high timing",
+        "user_questions": [
+          "What if I timed the market perfectly?",
+          "Best possible returns",
+          "Perfect timing vs reality",
+          "Market timing returns"
+        ],
+        "keywords": ["perfect timing", "best possible", "market timing", "buy low sell high"],
+        "inputs": {
+          "required": ["symbol", "years"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Asset for timing analysis"
+          },
+          "years": {
+            "type": "number",
+            "description": "Years to analyze"
+          },
+          "timing_frequency": {
+            "type": "string",
+            "options": ["annual", "quarterly", "monthly"],
+            "default": "annual",
+            "description": "How often to time entries/exits"
+          }
+        },
+        "functions_used": ["getStockBars", "calculateBestWorstPeriods"],
+        "output_format": {
+          "perfect_timing_return": "number",
+          "buy_hold_return": "number",
+          "timing_premium": "number",
+          "required_accuracy": "number"
+        },
+        "complexity": "advanced"
+      }
+    ]
+  },
+
+  "tier_4_comparison_tools": {
+    "description": "Head-to-head comparison and battle tools",
+    "tools": [
+      {
+        "id": "stock-battle",
+        "name": "Stock Battle Tool",
+        "description": "Comprehensive head-to-head stock comparison",
+        "user_questions": [
+          "AAPL vs MSFT which is better?",
+          "Tesla vs Ford comparison",
+          "NVDA vs AMD battle",
+          "Compare Google and Microsoft"
+        ],
+        "keywords": ["vs", "versus", "compare", "which is better", "battle", "head to head"],
+        "inputs": {
+          "required": ["symbol1", "symbol2"]
+        },
+        "parameters": {
+          "symbol1": {
+            "type": "string",
+            "description": "First stock symbol"
+          },
+          "symbol2": {
+            "type": "string", 
+            "description": "Second stock symbol"
+          },
+          "timeframe": {
+            "type": "string",
+            "options": ["1y", "3y", "5y", "10y"],
+            "default": "3y",
+            "description": "Comparison timeframe"
+          }
+        },
+        "functions_used": ["getStockBars", "getFundamentals", "comparePerformanceMetrics", "compareRiskMetrics"],
+        "output_format": {
+          "performance_comparison": "object",
+          "risk_comparison": "object",
+          "valuation_comparison": "object",
+          "winner_by_category": "object"
+        },
+        "complexity": "intermediate"
+      },
+      {
+        "id": "etf-head-to-head",
+        "name": "ETF Head-to-Head Comparison",
+        "description": "Detailed ETF comparison including holdings and costs",
+        "user_questions": [
+          "SPY vs VTI difference",
+          "QQQ vs VGT comparison", 
+          "Which ETF is better?",
+          "ETF comparison tool"
+        ],
+        "keywords": ["ETF", "vs", "difference", "which ETF", "fund comparison"],
+        "inputs": {
+          "required": ["etf1", "etf2"]
+        },
+        "parameters": {
+          "etf1": {
+            "type": "string",
+            "description": "First ETF symbol"
+          },
+          "etf2": {
+            "type": "string",
+            "description": "Second ETF symbol"
+          }
+        },
+        "functions_used": ["getETFHoldings", "compareExpenseRatios", "compareSectorExposure", "comparePerformanceMetrics"],
+        "output_format": {
+          "expense_ratio_comparison": "object",
+          "holdings_overlap": "number",
+          "sector_differences": "object",
+          "performance_comparison": "object"
+        },
+        "complexity": "intermediate"
+      },
+      {
+        "id": "sector-showdown",
+        "name": "Sector Performance Showdown",
+        "description": "Compare performance across market sectors",
+        "user_questions": [
+          "Tech vs Healthcare performance",
+          "Best performing sector",
+          "Sector comparison this year",
+          "Which sector is winning?"
+        ],
+        "keywords": ["sector", "tech", "healthcare", "energy", "financial", "sector performance"],
+        "inputs": {
+          "required": ["sectors"]
+        },
+        "parameters": {
+          "sectors": {
+            "type": "array",
+            "description": "Sectors to compare (e.g., ['Technology', 'Healthcare'])"
+          },
+          "timeframe": {
+            "type": "string",
+            "options": ["ytd", "1y", "3y", "5y"],
+            "default": "ytd",
+            "description": "Comparison period"
+          }
+        },
+        "functions_used": ["getStockBars", "compareSectorExposure", "comparePerformanceMetrics"],
+        "output_format": {
+          "sector_returns": "object",
+          "relative_performance": "object",
+          "volatility_comparison": "object",
+          "sector_rankings": "array"
+        },
+        "complexity": "intermediate"
+      },
+      {
+        "id": "style-comparison",
+        "name": "Investment Style Comparison",
+        "description": "Compare growth vs value, large vs small cap performance",
+        "user_questions": [
+          "Growth vs Value this year",
+          "Large cap vs small cap",
+          "Style performance comparison",
+          "Which style is winning?"
+        ],
+        "keywords": ["growth", "value", "large cap", "small cap", "style", "factor"],
+        "inputs": {
+          "required": ["style1", "style2"]
+        },
+        "parameters": {
+          "style1": {
+            "type": "string",
+            "options": ["growth", "value", "large_cap", "small_cap", "momentum", "quality"],
+            "description": "First investment style"
+          },
+          "style2": {
+            "type": "string",
+            "options": ["growth", "value", "large_cap", "small_cap", "momentum", "quality"],
+            "description": "Second investment style"
+          },
+          "timeframe": {
+            "type": "string",
+            "options": ["ytd", "1y", "3y", "5y", "10y"],
+            "default": "3y"
+          }
+        },
+        "functions_used": ["getStockBars", "comparePerformanceMetrics", "analyzeMarketRegime"],
+        "output_format": {
+          "style_performance": "object",
+          "cyclical_patterns": "object",
+          "current_leadership": "string"
+        },
+        "complexity": "intermediate"
+      }
+    ]
+  },
+
+  "tier_5_technical_analysis": {
+    "description": "Technical indicator and signal analysis tools",
+    "tools": [
+      {
+        "id": "rsi-oversold-detector",
+        "name": "RSI Oversold Signal Detector",
+        "description": "Detect RSI oversold conditions and analyze signal quality",
+        "user_questions": [
+          "Is AAPL oversold?",
+          "RSI oversold signals",
+          "Oversold stocks today",
+          "RSI below 30"
+        ],
+        "keywords": ["RSI", "oversold", "RSI below", "oversold signals"],
+        "inputs": {
+          "required": ["symbol"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Stock symbol to analyze"
+          },
+          "rsi_period": {
+            "type": "number",
+            "default": 14,
+            "description": "RSI calculation period"
+          },
+          "oversold_threshold": {
+            "type": "number",
+            "default": 30,
+            "description": "Oversold threshold level"
+          }
+        },
+        "functions_used": ["getStockBars", "calculateRSI", "detectTechnicalEvents", "analyzeTechnicalSignalOutcomes"],
+        "output_format": {
+          "current_rsi": "number",
+          "is_oversold": "boolean",
+          "oversold_events_last_year": "number",
+          "success_rate": "number",
+          "avg_recovery_time": "number"
+        },
+        "complexity": "intermediate"
+      },
+      {
+        "id": "macd-signal-analyzer",
+        "name": "MACD Signal Analyzer",
+        "description": "MACD crossover signals and trend analysis",
+        "user_questions": [
+          "MACD crossover AAPL",
+          "MACD signals Tesla",
+          "Bullish MACD crossover",
+          "MACD analysis"
+        ],
+        "keywords": ["MACD", "crossover", "signal line", "bullish crossover", "MACD signals"],
+        "inputs": {
+          "required": ["symbol"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Stock symbol for MACD analysis"
+          },
+          "fast_period": {
+            "type": "number",
+            "default": 12
+          },
+          "slow_period": {
+            "type": "number", 
+            "default": 26
+          },
+          "signal_period": {
+            "type": "number",
+            "default": 9
+          }
+        },
+        "functions_used": ["getStockBars", "calculateMACD", "detectTechnicalEvents"],
+        "output_format": {
+          "current_macd": "object",
+          "signal_status": "string",
+          "recent_crossovers": "array",
+          "trend_direction": "string"
+        },
+        "complexity": "intermediate"
+      },
+      {
+        "id": "moving-average-cross",
+        "name": "Moving Average Crossover",
+        "description": "Golden cross and death cross detection and analysis",
+        "user_questions": [
+          "Golden cross AAPL",
+          "Death cross SPY", 
+          "50/200 day moving average",
+          "Moving average crossover"
+        ],
+        "keywords": ["golden cross", "death cross", "moving average", "50 day", "200 day", "MA cross"],
+        "inputs": {
+          "required": ["symbol"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Symbol for MA analysis"
+          },
+          "fast_period": {
+            "type": "number",
+            "default": 50,
+            "description": "Fast moving average period"
+          },
+          "slow_period": {
+            "type": "number",
+            "default": 200,
+            "description": "Slow moving average period"
+          }
+        },
+        "functions_used": ["getStockBars", "calculateSMA", "detectSMACrossover"],
+        "output_format": {
+          "current_ma_relationship": "string",
+          "days_since_cross": "number",
+          "cross_type": "string",
+          "success_rate": "number"
+        },
+        "complexity": "intermediate"
+      },
+      {
+        "id": "bollinger-bands-analyzer",
+        "name": "Bollinger Bands Analyzer",
+        "description": "Bollinger band squeeze, breakout, and mean reversion signals",
+        "user_questions": [
+          "Bollinger bands AAPL",
+          "Bollinger squeeze",
+          "Band breakout signals",
+          "Bollinger band analysis"
+        ],
+        "keywords": ["bollinger", "bands", "squeeze", "breakout", "band touch"],
+        "inputs": {
+          "required": ["symbol"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Symbol for Bollinger analysis"
+          },
+          "period": {
+            "type": "number",
+            "default": 20
+          },
+          "std_dev": {
+            "type": "number",
+            "default": 2
+          }
+        },
+        "functions_used": ["getStockBars", "calculateBollingerBands", "detectTechnicalEvents"],
+        "output_format": {
+          "current_position": "string",
+          "band_width": "number",
+          "squeeze_status": "boolean",
+          "recent_signals": "array"
+        },
+        "complexity": "intermediate"
+      },
+      {
+        "id": "support-resistance",
+        "name": "Support & Resistance Levels",
+        "description": "Key support and resistance level identification",
+        "user_questions": [
+          "Support levels AAPL",
+          "Resistance for Tesla",
+          "Key levels SPY",
+          "Support and resistance"
+        ],
+        "keywords": ["support", "resistance", "key levels", "price levels"],
+        "inputs": {
+          "required": ["symbol"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Symbol for S&R analysis"
+          },
+          "lookback_days": {
+            "type": "number",
+            "default": 252,
+            "description": "Days to look back for level identification"
+          }
+        },
+        "functions_used": ["getStockBars", "identifySupportResistance"],
+        "output_format": {
+          "support_levels": "array",
+          "resistance_levels": "array", 
+          "current_level": "string",
+          "nearest_support": "number",
+          "nearest_resistance": "number"
+        },
+        "complexity": "advanced"
+      }
+    ]
+  },
+
+  "tier_6_decision_support": {
+    "description": "Decision support and advisory tools",
+    "tools": [
+      {
+        "id": "buy-signal-analyzer",
+        "name": "Buy Signal Analyzer",
+        "description": "Analyze current buy signals and entry point quality",
+        "user_questions": [
+          "Should I buy AAPL now?",
+          "Is it a good time to buy Tesla?",
+          "Buy signals for MSFT",
+          "Entry point analysis"
+        ],
+        "keywords": ["should I buy", "good time to buy", "buy signals", "entry point"],
+        "inputs": {
+          "required": ["symbol"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Symbol to analyze for buy signals"
+          },
+          "risk_tolerance": {
+            "type": "string",
+            "options": ["conservative", "moderate", "aggressive"],
+            "default": "moderate"
+          }
+        },
+        "functions_used": ["getStockBars", "calculateRSI", "calculateMACD", "detectTechnicalEvents"],
+        "output_format": {
+          "overall_signal": "string",
+          "technical_score": "number",
+          "fundamental_score": "number",
+          "risk_factors": "array",
+          "signal_strength": "string"
+        },
+        "complexity": "advanced"
+      },
+      {
+        "id": "sell-signal-analyzer",
+        "name": "Sell Signal Analyzer", 
+        "description": "Analyze sell signals and exit point recommendations",
+        "user_questions": [
+          "Should I sell Tesla?",
+          "Time to sell AAPL?",
+          "Sell signals NVDA",
+          "Exit point analysis"
+        ],
+        "keywords": ["should I sell", "time to sell", "sell signals", "exit point"],
+        "inputs": {
+          "required": ["symbol"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Symbol to analyze for sell signals"
+          },
+          "holding_period": {
+            "type": "string",
+            "options": ["short_term", "medium_term", "long_term"],
+            "description": "Investment time horizon"
+          }
+        },
+        "functions_used": ["getStockBars", "calculateRSI", "calculateMACD", "detectTechnicalEvents"],
+        "output_format": {
+          "overall_signal": "string",
+          "technical_score": "number",
+          "momentum_score": "number",
+          "warning_signs": "array",
+          "exit_strategy": "string"
+        },
+        "complexity": "advanced"
+      },
+      {
+        "id": "dip-buying-analyzer",
+        "name": "Dip Buying Analyzer",
+        "description": "Analyze if current dip represents buying opportunity",
+        "user_questions": [
+          "Should I buy the dip?",
+          "Is this a good dip to buy?",
+          "Buy the dip analysis",
+          "Dip buying opportunity"
+        ],
+        "keywords": ["buy the dip", "dip buying", "buying opportunity", "market dip"],
+        "inputs": {
+          "required": ["symbol"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Symbol experiencing the dip"
+          },
+          "dip_threshold": {
+            "type": "number",
+            "default": -10,
+            "description": "Minimum decline percentage to consider a dip"
+          }
+        },
+        "functions_used": ["getStockBars", "calculateMaxDrawdown", "detectCrisisPeriods", "analyzeDipBuyingSuccess"],
+        "output_format": {
+          "current_dip_size": "number",
+          "dip_quality_score": "number",
+          "historical_dip_success": "number",
+          "recovery_probability": "number",
+          "recommendation": "string"
+        },
+        "complexity": "advanced"
+      },
+      {
+        "id": "rebalancing-advisor",
+        "name": "Portfolio Rebalancing Advisor",
+        "description": "Determine when and how to rebalance portfolio",
+        "user_questions": [
+          "Should I rebalance my portfolio?",
+          "Time to rebalance?",
+          "Rebalancing analysis",
+          "Portfolio drift check"
+        ],
+        "keywords": ["rebalance", "portfolio drift", "asset allocation", "rebalancing"],
+        "inputs": {
+          "required": ["portfolio_positions"]
+        },
+        "parameters": {
+          "portfolio_positions": {
+            "type": "array",
+            "description": "Current portfolio positions with symbols and weights"
+          },
+          "target_allocation": {
+            "type": "object",
+            "description": "Target allocation percentages"
+          },
+          "rebalance_threshold": {
+            "type": "number",
+            "default": 5,
+            "description": "Percentage drift threshold for rebalancing"
+          }
+        },
+        "functions_used": ["analyzePortfolioConcentration", "calculatePortfolioDrift", "simulateRebalancing"],
+        "output_format": {
+          "current_drift": "object",
+          "rebalance_needed": "boolean",
+          "suggested_trades": "array",
+          "cost_benefit_analysis": "object"
+        },
+        "complexity": "advanced"
+      }
+    ]
+  },
+
+  "tier_7_market_context": {
+    "description": "Market condition and regime analysis tools",
+    "tools": [
+      {
+        "id": "market-regime-identifier",
+        "name": "Market Regime Identifier",
+        "description": "Identify current market regime (bull/bear/sideways)",
+        "user_questions": [
+          "Is this a bull market?",
+          "Are we in a bear market?",
+          "What type of market is this?",
+          "Market regime analysis"
+        ],
+        "keywords": ["bull market", "bear market", "market regime", "market conditions"],
+        "inputs": {
+          "required": ["symbol"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "default": "SPY",
+            "description": "Market index to analyze"
+          },
+          "lookback_period": {
+            "type": "number",
+            "default": 252,
+            "description": "Days to analyze for regime detection"
+          }
+        },
+        "functions_used": ["getStockBars", "detectMarketRegime", "calculateTrendStrength"],
+        "output_format": {
+          "current_regime": "string",
+          "regime_confidence": "number",
+          "regime_duration": "number",
+          "trend_strength": "number",
+          "regime_characteristics": "object"
+        },
+        "complexity": "intermediate"
+      },
+      {
+        "id": "fear-greed-meter",
+        "name": "Market Fear & Greed Meter",
+        "description": "Assess market sentiment through fear and greed indicators",
+        "user_questions": [
+          "How scared is the market?",
+          "Market fear level",
+          "VIX fear index",
+          "Market sentiment analysis"
+        ],
+        "keywords": ["market fear", "scared", "VIX", "fear index", "market sentiment"],
+        "inputs": {
+          "optional": ["custom_indicators"]
+        },
+        "parameters": {
+          "vix_symbol": {
+            "type": "string",
+            "default": "VIX",
+            "description": "Volatility index symbol"
+          }
+        },
+        "functions_used": ["getVIXData", "calculateFearGreedIndex", "identifyVIXSpike"],
+        "output_format": {
+          "fear_greed_score": "number",
+          "sentiment_level": "string",
+          "vix_level": "number",
+          "historical_context": "object",
+          "contrarian_signal": "boolean"
+        },
+        "complexity": "intermediate"
+      },
+      {
+        "id": "earnings-calendar-tool",
+        "name": "Earnings Calendar Impact",
+        "description": "Track upcoming earnings and their potential impact",
+        "user_questions": [
+          "When do AAPL earnings come out?",
+          "Earnings calendar this week",
+          "TSLA earnings date",
+          "Upcoming earnings impact"
+        ],
+        "keywords": ["earnings", "earnings date", "earnings calendar", "when do earnings"],
+        "inputs": {
+          "required": ["symbol"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Symbol to check earnings for"
+          },
+          "weeks_ahead": {
+            "type": "number",
+            "default": 4,
+            "description": "Weeks to look ahead for earnings"
+          }
+        },
+        "functions_used": ["getEarningsCalendar", "analyzeEarningsReactions"],
+        "output_format": {
+          "next_earnings_date": "string",
+          "days_until_earnings": "number",
+          "historical_reactions": "object",
+          "volatility_expectation": "number"
+        },
+        "complexity": "simple"
+      },
+      {
+        "id": "economic-event-calendar",
+        "name": "Economic Event Calendar",
+        "description": "Track Fed meetings, economic data releases, and market impact",
+        "user_questions": [
+          "When is the next Fed meeting?",
+          "Economic calendar this week",
+          "Fed rate decision date",
+          "Economic events impact"
+        ],
+        "keywords": ["Fed meeting", "economic calendar", "rate decision", "economic events"],
+        "inputs": {
+          "optional": ["event_types"]
+        },
+        "parameters": {
+          "weeks_ahead": {
+            "type": "number",
+            "default": 8,
+            "description": "Weeks to look ahead"
+          },
+          "event_types": {
+            "type": "array",
+            "default": ["fed_meeting", "cpi", "jobs_report"],
+            "description": "Types of events to track"
+          }
+        },
+        "functions_used": ["getFedMeetingDates", "getEconomicCalendar"],
+        "output_format": {
+          "upcoming_events": "array",
+          "next_fed_meeting": "string",
+          "market_impact_forecast": "object"
+        },
+        "complexity": "intermediate"
+      }
+    ]
+  },
+
+  "tier_8_educational_tools": {
+    "description": "Educational and explanation tools",
+    "tools": [
+      {
+        "id": "price-movement-explainer",
+        "name": "Price Movement Explainer",
+        "description": "Explain why a stock moved up or down today",
+        "user_questions": [
+          "Why is AAPL down today?",
+          "What caused Tesla to jump?",
+          "Why did the market drop?",
+          "Stock movement explanation"
+        ],
+        "keywords": ["why is", "what caused", "why did", "movement explanation"],
+        "inputs": {
+          "required": ["symbol"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Symbol to explain price movement for"
+          },
+          "analysis_date": {
+            "type": "date",
+            "default": "today",
+            "description": "Date to analyze movement for"
+          }
+        },
+        "functions_used": ["getStockBars", "getMarketNews", "analyzeVolumeSpikes", "correlateMovementFactors"],
+        "output_format": {
+          "price_change": "number",
+          "volume_analysis": "object",
+          "news_impact": "array",
+          "sector_correlation": "object",
+          "likely_causes": "array"
+        },
+        "complexity": "intermediate"
+      },
+      {
+        "id": "rsi-explainer",
+        "name": "RSI Signal Explainer",
+        "description": "Educational tool explaining RSI and how to interpret signals",
+        "user_questions": [
+          "How do I read RSI?",
+          "What does RSI mean?",
+          "RSI interpretation",
+          "Understanding RSI signals"
+        ],
+        "keywords": ["how to read RSI", "what does RSI", "RSI interpretation", "understanding RSI"],
+        "inputs": {
+          "required": ["symbol"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Symbol to use for RSI education"
+          }
+        },
+        "functions_used": ["getStockBars", "calculateRSI", "generateRSIEducationalContent"],
+        "output_format": {
+          "current_rsi": "number",
+          "interpretation": "string",
+          "signal_explanation": "string",
+          "historical_examples": "array",
+          "key_concepts": "array"
+        },
+        "complexity": "simple"
+      },
+      {
+        "id": "market-timing-reality-check",
+        "name": "Market Timing Reality Check",
+        "description": "Educational analysis of market timing vs buy-and-hold",
+        "user_questions": [
+          "Can I time the market?",
+          "Is market timing possible?",
+          "Market timing vs buy and hold",
+          "Should I try to time the market?"
+        ],
+        "keywords": ["time the market", "market timing", "timing vs buy hold"],
+        "inputs": {
+          "required": ["symbol"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "default": "SPY",
+            "description": "Index to use for timing analysis"
+          },
+          "analysis_period": {
+            "type": "number",
+            "default": 20,
+            "description": "Years of data to analyze"
+          }
+        },
+        "functions_used": ["backtestTechnicalStrategy", "simulatePerfectTiming", "calculateTimingCosts"],
+        "output_format": {
+          "timing_success_rate": "number",
+          "buy_hold_return": "number",
+          "perfect_timing_return": "number",
+          "reality_gap": "number",
+          "educational_insights": "array"
+        },
+        "complexity": "advanced"
+      }
+    ]
+  },
+
+  "tier_9_screening_tools": {
+    "description": "Stock and ETF screening tools",
+    "tools": [
+      {
+        "id": "oversold-stock-screener",
+        "name": "Oversold Stock Screener",
+        "description": "Find stocks with RSI oversold conditions",
+        "user_questions": [
+          "Which stocks are oversold?",
+          "Oversold stocks today",
+          "RSI oversold screener",
+          "Find oversold opportunities"
+        ],
+        "keywords": ["which stocks oversold", "oversold stocks", "oversold screener", "find oversold"],
+        "inputs": {
+          "optional": ["universe", "rsi_threshold"]
+        },
+        "parameters": {
+          "universe": {
+            "type": "string",
+            "options": ["sp500", "nasdaq100", "all"],
+            "default": "sp500",
+            "description": "Stock universe to screen"
+          },
+          "rsi_threshold": {
+            "type": "number",
+            "default": 30,
+            "description": "RSI oversold threshold"
+          },
+          "min_volume": {
+            "type": "number",
+            "default": 1000000,
+            "description": "Minimum daily volume filter"
+          }
+        },
+        "functions_used": ["getMostActives", "calculateRSI", "screenOversoldStocks"],
+        "output_format": {
+          "oversold_stocks": "array",
+          "total_count": "number",
+          "average_rsi": "number",
+          "sector_breakdown": "object"
+        },
+        "complexity": "intermediate"
+      },
+      {
+        "id": "low-cost-etf-finder",
+        "name": "Low-Cost ETF Finder", 
+        "description": "Find ETFs with lowest expense ratios by category",
+        "user_questions": [
+          "Cheapest S&P 500 ETF",
+          "Lowest cost ETFs",
+          "ETF expense ratio comparison",
+          "Find cheap ETFs"
+        ],
+        "keywords": ["cheapest", "lowest cost", "cheap ETFs", "expense ratio"],
+        "inputs": {
+          "required": ["category"]
+        },
+        "parameters": {
+          "category": {
+            "type": "string",
+            "options": ["us_broad_market", "sp500", "international", "emerging_markets", "bonds"],
+            "description": "ETF category to search"
+          },
+          "max_expense_ratio": {
+            "type": "number",
+            "default": 0.5,
+            "description": "Maximum expense ratio filter"
+          }
+        },
+        "functions_used": ["getETFsByCategory", "compareExpenseRatios"],
+        "output_format": {
+          "lowest_cost_etfs": "array",
+          "average_expense_ratio": "number",
+          "cost_savings_analysis": "object"
+        },
+        "complexity": "simple"
+      },
+      {
+        "id": "dividend-quality-screener",
+        "name": "Dividend Quality Screener",
+        "description": "Find high-quality dividend stocks with sustainable payouts",
+        "user_questions": [
+          "Best dividend stocks", 
+          "Safe dividend stocks",
+          "High yield dividend screener",
+          "Quality dividend stocks"
+        ],
+        "keywords": ["dividend stocks", "safe dividend", "high yield", "quality dividend"],
+        "inputs": {
+          "optional": ["min_yield", "max_payout_ratio"]
+        },
+        "parameters": {
+          "min_yield": {
+            "type": "number",
+            "default": 2.0,
+            "description": "Minimum dividend yield percentage"
+          },
+          "max_payout_ratio": {
+            "type": "number",
+            "default": 60,
+            "description": "Maximum payout ratio for sustainability"
+          },
+          "min_div_growth": {
+            "type": "number",
+            "default": 5,
+            "description": "Minimum years of dividend growth"
+          }
+        },
+        "functions_used": ["getDividends", "getFundamentals", "analyzeDividendQuality"],
+        "output_format": {
+          "quality_dividend_stocks": "array",
+          "yield_distribution": "object",
+          "safety_scores": "object"
+        },
+        "complexity": "intermediate"
+      }
+    ]
+  },
+
+  "tier_10_advanced_portfolio_tools": {
+    "description": "Advanced portfolio analysis and optimization tools with flexible inputs",
+    "tools": [
+      {
+        "id": "portfolio-rebalancing-optimizer",
+        "name": "Portfolio Rebalancing Optimizer",
+        "description": "Optimize portfolio rebalancing frequency, thresholds, and target allocations with transaction cost analysis",
+        "user_questions": [
+          "How often should I rebalance my portfolio?",
+          "What's the optimal rebalancing threshold?",
+          "Portfolio rebalancing optimization",
+          "Minimize rebalancing costs"
+        ],
+        "keywords": ["rebalancing", "rebalancing frequency", "portfolio optimization", "rebalancing threshold", "transaction costs"],
+        "inputs": {
+          "required": ["portfolio_positions", "target_allocation"],
+          "optional": ["rebalancing_frequencies", "transaction_cost_per_trade", "drift_thresholds", "analysis_period"]
+        },
+        "parameters": {
+          "portfolio_positions": {
+            "type": "array",
+            "description": "Current portfolio positions with symbols and quantities"
+          },
+          "target_allocation": {
+            "type": "object",
+            "description": "Desired portfolio allocation percentages"
+          },
+          "rebalancing_frequencies": {
+            "type": "array",
+            "default": ["monthly", "quarterly", "semi_annual", "annual"],
+            "description": "Frequencies to test and optimize"
+          },
+          "transaction_cost_per_trade": {
+            "type": "number",
+            "default": 0,
+            "description": "Fixed cost per trade in dollars"
+          },
+          "drift_thresholds": {
+            "type": "array",
+            "default": [0.05, 0.10, 0.15, 0.20],
+            "description": "Drift percentage thresholds to test"
+          }
+        },
+        "functions_used": ["alpaca_market_stocks_bars", "calculate_portfolio_metrics", "analyze_portfolio_concentration", "stress_test_portfolio", "calculate_returns_metrics"],
+        "output_format": {
+          "optimal_frequency": "string",
+          "optimal_threshold": "number",
+          "rebalancing_calendar": "array",
+          "performance_comparison": "object",
+          "transaction_cost_analysis": "object",
+          "recommended_trades": "array"
+        },
+        "complexity": "advanced"
+      },
+      {
+        "id": "asset-allocation-optimizer",
+        "name": "Asset Allocation Optimizer",
+        "description": "Find optimal asset allocation using modern portfolio theory with constraints",
+        "user_questions": [
+          "What's the optimal portfolio allocation?",
+          "Modern portfolio theory optimization",
+          "Efficient frontier analysis",
+          "Portfolio diversification optimization"
+        ],
+        "keywords": ["asset allocation", "optimal allocation", "modern portfolio theory", "efficient frontier", "diversification"],
+        "inputs": {
+          "required": ["asset_universe"],
+          "optional": ["risk_tolerance", "constraints", "optimization_objective", "rebalancing_frequency"]
+        },
+        "parameters": {
+          "asset_universe": {
+            "type": "array",
+            "description": "Assets to include in optimization"
+          },
+          "risk_tolerance": {
+            "type": "string",
+            "options": ["conservative", "moderate", "aggressive"],
+            "description": "Investor risk tolerance level"
+          },
+          "constraints": {
+            "type": "object",
+            "description": "Portfolio constraints (max position sizes, sector limits)"
+          },
+          "optimization_objective": {
+            "type": "string",
+            "options": ["max_sharpe", "min_risk", "max_return"],
+            "default": "max_sharpe"
+          }
+        },
+        "functions_used": ["alpaca_market_stocks_bars", "calculate_correlation_analysis", "calculate_portfolio_metrics", "stress_test_portfolio"],
+        "output_format": {
+          "optimal_weights": "object",
+          "efficient_frontier": "array",
+          "expected_return": "number",
+          "expected_risk": "number",
+          "sharpe_ratio": "number",
+          "diversification_ratio": "number"
+        },
+        "complexity": "advanced"
+      },
+      {
+        "id": "portfolio-risk-analyzer",
+        "name": "Portfolio Risk Analyzer",
+        "description": "Comprehensive portfolio risk analysis including VaR, stress testing, and concentration risk",
+        "user_questions": [
+          "How risky is my portfolio?",
+          "Portfolio risk analysis",
+          "Value at Risk calculation",
+          "Portfolio stress testing"
+        ],
+        "keywords": ["portfolio risk", "VaR", "value at risk", "stress testing", "concentration risk", "tail risk"],
+        "inputs": {
+          "required": ["portfolio_positions"],
+          "optional": ["benchmark", "confidence_levels", "stress_scenarios", "analysis_period"]
+        },
+        "parameters": {
+          "portfolio_positions": {
+            "type": "array",
+            "description": "Portfolio positions with symbols and weights"
+          },
+          "benchmark": {
+            "type": "string",
+            "default": "SPY",
+            "description": "Benchmark for relative risk analysis"
+          },
+          "confidence_levels": {
+            "type": "array",
+            "default": [0.01, 0.05, 0.10],
+            "description": "VaR confidence levels"
+          }
+        },
+        "functions_used": ["alpaca_market_stocks_bars", "calculate_portfolio_metrics", "analyze_portfolio_concentration", "calculate_var", "calculate_cvar", "stress_test_portfolio"],
+        "output_format": {
+          "var_estimates": "object",
+          "cvar_estimates": "object",
+          "concentration_metrics": "object",
+          "correlation_matrix": "object",
+          "stress_test_results": "object",
+          "tail_risk_score": "number"
+        },
+        "complexity": "advanced"
+      }
+    ]
+  },
+
+  "tier_11_strategy_builders": {
+    "description": "Technical and quantitative strategy building tools with flexible parameters",
+    "tools": [
+      {
+        "id": "technical-strategy-builder",
+        "name": "Technical Strategy Builder",
+        "description": "Build and backtest custom technical trading strategies with multiple indicators and conditions",
+        "user_questions": [
+          "Build a custom trading strategy",
+          "Technical analysis strategy builder",
+          "Backtest my trading strategy",
+          "Custom indicator strategy"
+        ],
+        "keywords": ["strategy builder", "custom trading strategy", "technical analysis", "backtest", "trading signals"],
+        "inputs": {
+          "required": ["symbols", "entry_conditions", "exit_conditions"],
+          "optional": ["indicators", "position_sizing", "backtest_period"]
+        },
+        "parameters": {
+          "symbols": {
+            "type": "array",
+            "description": "Symbols to test strategy on"
+          },
+          "entry_conditions": {
+            "type": "object",
+            "description": "Entry signal conditions with operators and values"
+          },
+          "exit_conditions": {
+            "type": "object",
+            "description": "Exit signal conditions (profit target, stop loss, time)"
+          },
+          "indicators": {
+            "type": "object",
+            "description": "Technical indicators configuration"
+          }
+        },
+        "functions_used": ["alpaca_market_stocks_bars", "calculate_rsi", "calculate_macd", "calculate_bollinger_bands", "detect_sma_crossover", "generate_signals", "analyze_signal_quality"],
+        "output_format": {
+          "backtest_results": "object",
+          "trade_list": "array",
+          "performance_metrics": "object",
+          "signal_quality": "object",
+          "optimization_suggestions": "array"
+        },
+        "complexity": "advanced"
+      },
+      {
+        "id": "momentum-strategy-analyzer",
+        "name": "Momentum Strategy Analyzer",
+        "description": "Analyze and optimize momentum-based trading strategies with custom parameters",
+        "user_questions": [
+          "Momentum trading strategy analysis",
+          "Optimize momentum parameters",
+          "Best momentum lookback period",
+          "Momentum strategy performance"
+        ],
+        "keywords": ["momentum strategy", "momentum trading", "momentum parameters", "momentum analysis"],
+        "inputs": {
+          "required": ["symbols"],
+          "optional": ["momentum_lookback", "momentum_thresholds", "holding_periods", "rebalancing_frequency"]
+        },
+        "parameters": {
+          "symbols": {
+            "type": "array",
+            "description": "Assets to analyze for momentum"
+          },
+          "momentum_lookback": {
+            "type": "array",
+            "default": [5, 10, 20, 60],
+            "description": "Lookback periods for momentum calculation"
+          },
+          "momentum_thresholds": {
+            "type": "array",
+            "default": [0.02, 0.05, 0.10, 0.15],
+            "description": "Momentum thresholds for signal generation"
+          }
+        },
+        "functions_used": ["alpaca_market_stocks_bars", "prices_to_returns", "generate_signals", "analyze_signal_quality", "calculate_returns_metrics"],
+        "output_format": {
+          "optimal_parameters": "object",
+          "momentum_rankings": "array",
+          "strategy_performance": "object",
+          "parameter_heatmap": "array"
+        },
+        "complexity": "intermediate"
+      },
+      {
+        "id": "mean-reversion-strategy-builder",
+        "name": "Mean Reversion Strategy Builder",
+        "description": "Build and optimize mean reversion strategies using statistical measures",
+        "user_questions": [
+          "Mean reversion strategy builder",
+          "Statistical arbitrage strategy",
+          "Z-score trading strategy",
+          "Bollinger bands mean reversion"
+        ],
+        "keywords": ["mean reversion", "statistical arbitrage", "z-score", "bollinger bands", "oversold", "overbought"],
+        "inputs": {
+          "required": ["symbols"],
+          "optional": ["lookback_windows", "entry_z_scores", "exit_conditions", "volatility_filter"]
+        },
+        "parameters": {
+          "symbols": {
+            "type": "array",
+            "description": "Assets for mean reversion analysis"
+          },
+          "lookback_windows": {
+            "type": "array",
+            "default": [20, 40, 60, 120],
+            "description": "Statistical lookback windows"
+          },
+          "entry_z_scores": {
+            "type": "array",
+            "default": [1.5, 2.0, 2.5, 3.0],
+            "description": "Z-score thresholds for entry signals"
+          }
+        },
+        "functions_used": ["alpaca_market_stocks_bars", "calculate_bollinger_bands", "generate_signals", "analyze_signal_quality", "calculate_risk_metrics"],
+        "output_format": {
+          "optimal_parameters": "object",
+          "signal_performance": "object",
+          "regime_effectiveness": "object",
+          "volatility_analysis": "object"
+        },
+        "complexity": "advanced"
+      }
+    ]
+  },
+
+  "tier_12_advanced_analysis": {
+    "description": "Advanced analysis and research tools for sophisticated investors",
+    "tools": [
+      {
+        "id": "correlation-regime-analyzer",
+        "name": "Correlation Regime Analyzer",
+        "description": "Analyze how asset correlations change across different market regimes and volatility periods",
+        "user_questions": [
+          "How do correlations change in bear markets?",
+          "Asset correlation regime analysis",
+          "Correlation breakdown during crisis",
+          "Market regime correlation patterns"
+        ],
+        "keywords": ["correlation regime", "correlation breakdown", "market regimes", "crisis correlation", "volatility correlation"],
+        "inputs": {
+          "required": ["asset_universe"],
+          "optional": ["rolling_windows", "regime_indicators", "volatility_thresholds", "analysis_period"]
+        },
+        "parameters": {
+          "asset_universe": {
+            "type": "array",
+            "description": "Assets for correlation analysis"
+          },
+          "rolling_windows": {
+            "type": "array",
+            "default": [30, 60, 120, 252],
+            "description": "Rolling correlation windows"
+          },
+          "regime_indicators": {
+            "type": "array",
+            "default": ["VIX", "SPY"],
+            "description": "Assets used for regime identification"
+          }
+        },
+        "functions_used": ["alpaca_market_stocks_bars", "calculate_correlation_analysis", "calculate_risk_metrics", "prices_to_returns"],
+        "output_format": {
+          "regime_correlations": "object",
+          "correlation_stability": "object",
+          "regime_transitions": "array",
+          "diversification_breakdown": "object"
+        },
+        "complexity": "advanced"
+      },
+      {
+        "id": "factor-exposure-analyzer",
+        "name": "Factor Exposure Analyzer",
+        "description": "Analyze portfolio exposure to market factors (size, value, momentum, quality, volatility)",
+        "user_questions": [
+          "What factors drive my portfolio?",
+          "Factor exposure analysis",
+          "Style factor attribution",
+          "Portfolio factor loadings"
+        ],
+        "keywords": ["factor exposure", "factor analysis", "style factors", "factor attribution", "factor loadings"],
+        "inputs": {
+          "required": ["portfolio_positions"],
+          "optional": ["factor_proxies", "analysis_windows", "benchmark"]
+        },
+        "parameters": {
+          "portfolio_positions": {
+            "type": "array",
+            "description": "Portfolio positions for factor analysis"
+          },
+          "factor_proxies": {
+            "type": "object",
+            "default": {"market": "SPY", "size": "IWM", "value": "VTV", "growth": "VUG"},
+            "description": "ETF proxies for factor analysis"
+          }
+        },
+        "functions_used": ["alpaca_market_stocks_bars", "calculate_correlation_analysis", "calculate_beta_analysis", "calculate_returns_metrics"],
+        "output_format": {
+          "factor_loadings": "object",
+          "factor_attribution": "object",
+          "active_exposures": "object",
+          "risk_attribution": "object"
+        },
+        "complexity": "advanced"
+      },
+      {
+        "id": "volatility-surface-analyzer",
+        "name": "Volatility Surface Analyzer",
+        "description": "Analyze volatility patterns across time horizons and market conditions",
+        "user_questions": [
+          "Volatility term structure analysis",
+          "Volatility surface patterns",
+          "Cross-asset volatility analysis",
+          "Volatility regime identification"
+        ],
+        "keywords": ["volatility surface", "volatility term structure", "volatility patterns", "volatility regimes"],
+        "inputs": {
+          "required": ["symbols"],
+          "optional": ["time_horizons", "volatility_models", "regime_analysis"]
+        },
+        "parameters": {
+          "symbols": {
+            "type": "array",
+            "description": "Assets for volatility analysis"
+          },
+          "time_horizons": {
+            "type": "array",
+            "default": [7, 30, 60, 90, 180, 252],
+            "description": "Time horizons for volatility calculation"
+          }
+        },
+        "functions_used": ["alpaca_market_stocks_bars", "calculate_risk_metrics", "prices_to_returns"],
+        "output_format": {
+          "volatility_surface": "array",
+          "term_structure": "object",
+          "volatility_regimes": "object",
+          "relative_volatility": "object"
+        },
+        "complexity": "advanced"
+      }
+    ]
+  },
+
+  "tier_13_backtesting_tools": {
+    "description": "Advanced backtesting and portfolio testing tools",
+    "tools": [
+      {
+        "id": "asset-allocation-backtester",
+        "name": "Asset Allocation Backtester",
+        "description": "Backtest asset allocation strategies against historical data with rebalancing",
+        "user_questions": [
+          "Backtest my asset allocation",
+          "Historical portfolio performance",
+          "Asset allocation backtesting",
+          "Portfolio allocation testing"
+        ],
+        "keywords": ["backtest", "asset allocation", "portfolio backtesting", "allocation testing", "historical performance"],
+        "inputs": {
+          "required": ["asset_allocation", "symbols"],
+          "optional": ["rebalancing_frequency", "start_date", "end_date", "benchmark"]
+        },
+        "parameters": {
+          "asset_allocation": {
+            "type": "object",
+            "description": "Target allocation percentages for each asset"
+          },
+          "symbols": {
+            "type": "array",
+            "description": "Assets in the allocation"
+          },
+          "rebalancing_frequency": {
+            "type": "string",
+            "options": ["monthly", "quarterly", "semi_annual", "annual"],
+            "default": "quarterly",
+            "description": "Rebalancing frequency"
+          },
+          "benchmark": {
+            "type": "string",
+            "default": "SPY",
+            "description": "Benchmark for comparison"
+          }
+        },
+        "functions_used": ["alpaca_market_stocks_bars", "calculate_portfolio_metrics", "calculate_returns_metrics", "calculate_drawdown_analysis"],
+        "output_format": {
+          "backtest_results": "object",
+          "performance_metrics": "object",
+          "rebalancing_calendar": "array",
+          "benchmark_comparison": "object",
+          "risk_metrics": "object"
+        },
+        "complexity": "advanced"
+      },
+      {
+        "id": "dynamic-allocation-backtester",
+        "name": "Dynamic Allocation Backtester",
+        "description": "Backtest dynamic allocation strategies that change based on market conditions",
+        "user_questions": [
+          "Dynamic allocation backtesting",
+          "Tactical allocation testing",
+          "Market-based allocation strategy",
+          "Adaptive portfolio backtesting"
+        ],
+        "keywords": ["dynamic allocation", "tactical allocation", "adaptive portfolio", "market-based allocation"],
+        "inputs": {
+          "required": ["allocation_rules", "symbols"],
+          "optional": ["market_indicators", "rebalancing_triggers", "analysis_period"]
+        },
+        "parameters": {
+          "allocation_rules": {
+            "type": "object",
+            "description": "Rules for changing allocation based on market conditions"
+          },
+          "symbols": {
+            "type": "array",
+            "description": "Assets for dynamic allocation"
+          },
+          "market_indicators": {
+            "type": "array",
+            "default": ["VIX", "SPY_MA200"],
+            "description": "Market indicators for allocation decisions"
+          }
+        },
+        "functions_used": ["alpaca_market_stocks_bars", "calculate_portfolio_metrics", "calculate_risk_metrics", "detect_sma_crossover"],
+        "output_format": {
+          "backtest_results": "object",
+          "allocation_changes": "array",
+          "performance_attribution": "object",
+          "market_timing_analysis": "object"
+        },
+        "complexity": "advanced"
+      },
+      {
+        "id": "manager-performance-analyzer",
+        "name": "Manager Performance Analyzer",
+        "description": "Analyze and compare fund manager performance with style analysis",
+        "user_questions": [
+          "Fund manager performance analysis",
+          "Manager vs benchmark comparison",
+          "Fund performance attribution",
+          "Active manager analysis"
+        ],
+        "keywords": ["manager performance", "fund manager", "active management", "performance attribution"],
+        "inputs": {
+          "required": ["fund_symbols"],
+          "optional": ["benchmark", "analysis_period", "style_factors"]
+        },
+        "parameters": {
+          "fund_symbols": {
+            "type": "array",
+            "description": "Fund symbols to analyze"
+          },
+          "benchmark": {
+            "type": "string",
+            "default": "SPY",
+            "description": "Benchmark for comparison"
+          },
+          "style_factors": {
+            "type": "array",
+            "default": ["market", "size", "value", "momentum"],
+            "description": "Style factors for analysis"
+          }
+        },
+        "functions_used": ["alpaca_market_stocks_bars", "calculate_benchmark_metrics", "calculate_risk_metrics", "calculate_beta_analysis"],
+        "output_format": {
+          "performance_metrics": "object",
+          "style_analysis": "object",
+          "risk_adjusted_returns": "object",
+          "manager_ranking": "array"
+        },
+        "complexity": "advanced"
+      }
+    ]
+  },
+
+  "tier_14_factor_analysis": {
+    "description": "Factor analysis and attribution tools",
+    "tools": [
+      {
+        "id": "fama-french-regression",
+        "name": "Fama-French Factor Regression",
+        "description": "Perform Fama-French 3-factor and 5-factor model analysis",
+        "user_questions": [
+          "Fama-French factor analysis",
+          "3-factor model regression",
+          "5-factor model analysis",
+          "Factor regression analysis"
+        ],
+        "keywords": ["fama-french", "factor regression", "3-factor", "5-factor", "factor analysis"],
+        "inputs": {
+          "required": ["symbols"],
+          "optional": ["factor_model", "analysis_period", "rolling_analysis"]
+        },
+        "parameters": {
+          "symbols": {
+            "type": "array",
+            "description": "Assets for factor analysis"
+          },
+          "factor_model": {
+            "type": "string",
+            "options": ["3_factor", "5_factor", "carhart_4_factor"],
+            "default": "3_factor",
+            "description": "Factor model to use"
+          },
+          "rolling_analysis": {
+            "type": "boolean",
+            "default": false,
+            "description": "Perform rolling factor analysis"
+          }
+        },
+        "functions_used": ["alpaca_market_stocks_bars", "calculate_beta_analysis", "calculate_correlation_analysis"],
+        "output_format": {
+          "factor_loadings": "object",
+          "r_squared": "number",
+          "alpha": "number",
+          "factor_attribution": "object",
+          "rolling_factors": "array"
+        },
+        "complexity": "advanced"
+      },
+      {
+        "id": "risk-factor-allocator",
+        "name": "Risk Factor Allocator",
+        "description": "Allocate portfolio risk across different factors",
+        "user_questions": [
+          "Risk factor allocation",
+          "Factor risk budgeting",
+          "Risk attribution analysis",
+          "Factor-based risk management"
+        ],
+        "keywords": ["risk factor", "factor allocation", "risk budgeting", "risk attribution"],
+        "inputs": {
+          "required": ["portfolio_positions"],
+          "optional": ["factor_proxies", "risk_budget", "constraints"]
+        },
+        "parameters": {
+          "portfolio_positions": {
+            "type": "array",
+            "description": "Portfolio positions for risk allocation"
+          },
+          "factor_proxies": {
+            "type": "object",
+            "default": {"market": "SPY", "size": "IWM", "value": "VTV", "growth": "VUG"},
+            "description": "Factor proxy ETFs"
+          },
+          "risk_budget": {
+            "type": "object",
+            "description": "Target risk allocation across factors"
+          }
+        },
+        "functions_used": ["alpaca_market_stocks_bars", "calculate_portfolio_metrics", "analyze_portfolio_concentration"],
+        "output_format": {
+          "current_factor_exposure": "object",
+          "target_factor_exposure": "object",
+          "risk_attribution": "object",
+          "optimization_suggestions": "array"
+        },
+        "complexity": "advanced"
+      },
+      {
+        "id": "principal-component-analyzer",
+        "name": "Principal Component Analyzer",
+        "description": "Principal component analysis for portfolio dimensionality reduction",
+        "user_questions": [
+          "Principal component analysis",
+          "PCA portfolio analysis",
+          "Dimensionality reduction",
+          "Factor extraction analysis"
+        ],
+        "keywords": ["PCA", "principal component", "dimensionality reduction", "factor extraction"],
+        "inputs": {
+          "required": ["asset_universe"],
+          "optional": ["num_components", "analysis_period", "variance_threshold"]
+        },
+        "parameters": {
+          "asset_universe": {
+            "type": "array",
+            "description": "Assets for PCA analysis"
+          },
+          "num_components": {
+            "type": "number",
+            "default": 5,
+            "description": "Number of principal components"
+          },
+          "variance_threshold": {
+            "type": "number",
+            "default": 0.95,
+            "description": "Cumulative variance threshold"
+          }
+        },
+        "functions_used": ["alpaca_market_stocks_bars", "calculate_correlation_analysis", "prices_to_returns"],
+        "output_format": {
+          "principal_components": "array",
+          "explained_variance": "array",
+          "component_loadings": "object",
+          "factor_interpretation": "array"
+        },
+        "complexity": "advanced"
+      }
+    ]
+  },
+
+  "tier_15_monte_carlo_tools": {
+    "description": "Monte Carlo simulation and financial planning tools",
+    "tools": [
+      {
+        "id": "monte-carlo-simulator",
+        "name": "Monte Carlo Portfolio Simulator",
+        "description": "Monte Carlo simulation for portfolio outcomes with configurable scenarios",
+        "user_questions": [
+          "Monte Carlo portfolio simulation",
+          "Portfolio outcome probability",
+          "Retirement planning simulation",
+          "Investment scenario analysis"
+        ],
+        "keywords": ["monte carlo", "simulation", "probability", "scenario analysis", "retirement planning"],
+        "inputs": {
+          "required": ["portfolio_weights", "symbols"],
+          "optional": ["simulation_periods", "num_simulations", "confidence_intervals", "rebalancing"]
+        },
+        "parameters": {
+          "portfolio_weights": {
+            "type": "array",
+            "description": "Portfolio allocation weights"
+          },
+          "symbols": {
+            "type": "array",
+            "description": "Portfolio assets"
+          },
+          "simulation_periods": {
+            "type": "array",
+            "default": [1, 3, 5, 10, 20],
+            "description": "Simulation time horizons in years"
+          },
+          "num_simulations": {
+            "type": "number",
+            "default": 10000,
+            "description": "Number of Monte Carlo paths"
+          }
+        },
+        "functions_used": ["alpaca_market_stocks_bars", "calculate_correlation_analysis", "stress_test_portfolio", "calculate_risk_metrics"],
+        "output_format": {
+          "simulation_results": "object",
+          "probability_distributions": "array",
+          "confidence_intervals": "object",
+          "tail_risk_analysis": "object"
+        },
+        "complexity": "advanced"
+      },
+      {
+        "id": "financial-goals-planner",
+        "name": "Financial Goals Planner",
+        "description": "Plan and analyze achievement probability of financial goals",
+        "user_questions": [
+          "Financial goal planning",
+          "Retirement goal analysis",
+          "Investment goal probability",
+          "Savings goal planning"
+        ],
+        "keywords": ["financial goals", "retirement planning", "goal probability", "savings planning"],
+        "inputs": {
+          "required": ["goal_amount", "time_horizon", "initial_investment"],
+          "optional": ["monthly_contributions", "portfolio_allocation", "confidence_level"]
+        },
+        "parameters": {
+          "goal_amount": {
+            "type": "number",
+            "description": "Target financial goal amount"
+          },
+          "time_horizon": {
+            "type": "number",
+            "description": "Years to achieve goal"
+          },
+          "initial_investment": {
+            "type": "number",
+            "description": "Starting investment amount"
+          },
+          "monthly_contributions": {
+            "type": "number",
+            "default": 0,
+            "description": "Monthly contribution amount"
+          }
+        },
+        "functions_used": ["alpaca_market_stocks_bars", "calculate_returns_metrics", "stress_test_portfolio"],
+        "output_format": {
+          "success_probability": "number",
+          "required_return": "number",
+          "contribution_analysis": "object",
+          "scenario_outcomes": "array"
+        },
+        "complexity": "intermediate"
+      },
+      {
+        "id": "asset-liability-modeler",
+        "name": "Asset Liability Modeler",
+        "description": "Model assets against future liabilities and cash flow needs",
+        "user_questions": [
+          "Asset liability modeling",
+          "Cash flow matching",
+          "Liability-driven investing",
+          "Pension fund modeling"
+        ],
+        "keywords": ["asset liability", "cash flow matching", "liability driven", "pension modeling"],
+        "inputs": {
+          "required": ["future_liabilities", "asset_portfolio"],
+          "optional": ["liability_discount_rate", "asset_correlations", "stress_scenarios"]
+        },
+        "parameters": {
+          "future_liabilities": {
+            "type": "array",
+            "description": "Future liability schedule with amounts and dates"
+          },
+          "asset_portfolio": {
+            "type": "array",
+            "description": "Current asset portfolio"
+          },
+          "liability_discount_rate": {
+            "type": "number",
+            "default": 0.03,
+            "description": "Discount rate for liability valuation"
+          }
+        },
+        "functions_used": ["alpaca_market_stocks_bars", "calculate_portfolio_metrics", "stress_test_portfolio"],
+        "output_format": {
+          "funding_ratio": "number",
+          "asset_liability_mismatch": "object",
+          "cash_flow_projections": "array",
+          "optimization_recommendations": "array"
+        },
+        "complexity": "advanced"
+      }
+    ]
+  },
+
+  "tier_16_tactical_allocation": {
+    "description": "Tactical asset allocation and timing strategies",
+    "tools": [
+      {
+        "id": "market-valuation-timer",
+        "name": "Market Valuation Timer",
+        "description": "Tactical allocation based on market valuation metrics",
+        "user_questions": [
+          "Market valuation timing",
+          "Valuation-based allocation",
+          "Market timing strategy",
+          "PE ratio allocation"
+        ],
+        "keywords": ["market valuation", "timing strategy", "PE ratio", "valuation allocation"],
+        "inputs": {
+          "required": ["allocation_assets"],
+          "optional": ["valuation_metrics", "allocation_ranges", "rebalancing_triggers"]
+        },
+        "parameters": {
+          "allocation_assets": {
+            "type": "array",
+            "description": "Assets for tactical allocation"
+          },
+          "valuation_metrics": {
+            "type": "array",
+            "default": ["CAPE", "PE", "PB"],
+            "description": "Valuation metrics to use"
+          },
+          "allocation_ranges": {
+            "type": "object",
+            "description": "Allocation ranges based on valuation levels"
+          }
+        },
+        "functions_used": ["alpaca_market_stocks_bars", "eodhd_fundamentals", "calculate_portfolio_metrics"],
+        "output_format": {
+          "current_valuation": "object",
+          "recommended_allocation": "object",
+          "valuation_percentile": "number",
+          "historical_performance": "object"
+        },
+        "complexity": "advanced"
+      },
+      {
+        "id": "dual-momentum-strategy",
+        "name": "Dual Momentum Strategy",
+        "description": "Implement dual momentum (absolute and relative) allocation strategy",
+        "user_questions": [
+          "Dual momentum strategy",
+          "Absolute momentum allocation",
+          "Relative momentum strategy",
+          "Momentum-based allocation"
+        ],
+        "keywords": ["dual momentum", "absolute momentum", "relative momentum", "momentum allocation"],
+        "inputs": {
+          "required": ["asset_universe"],
+          "optional": ["momentum_lookback", "cash_alternative", "rebalancing_frequency"]
+        },
+        "parameters": {
+          "asset_universe": {
+            "type": "array",
+            "description": "Assets for momentum strategy"
+          },
+          "momentum_lookback": {
+            "type": "number",
+            "default": 252,
+            "description": "Momentum calculation period in days"
+          },
+          "cash_alternative": {
+            "type": "string",
+            "default": "SHY",
+            "description": "Cash alternative when momentum is negative"
+          }
+        },
+        "functions_used": ["alpaca_market_stocks_bars", "calculate_returns_metrics", "generate_signals"],
+        "output_format": {
+          "momentum_rankings": "array",
+          "allocation_recommendation": "object",
+          "absolute_momentum_signals": "object",
+          "strategy_performance": "object"
+        },
+        "complexity": "advanced"
+      },
+      {
+        "id": "adaptive-allocator",
+        "name": "Adaptive Allocator",
+        "description": "Adaptive allocation strategy based on market regime and volatility",
+        "user_questions": [
+          "Adaptive allocation strategy",
+          "Regime-based allocation",
+          "Volatility-adjusted allocation",
+          "Dynamic risk allocation"
+        ],
+        "keywords": ["adaptive allocation", "regime-based", "volatility allocation", "dynamic risk"],
+        "inputs": {
+          "required": ["asset_universe"],
+          "optional": ["regime_indicators", "volatility_targets", "adaptation_speed"]
+        },
+        "parameters": {
+          "asset_universe": {
+            "type": "array",
+            "description": "Assets for adaptive allocation"
+          },
+          "regime_indicators": {
+            "type": "array",
+            "default": ["VIX", "yield_curve", "credit_spreads"],
+            "description": "Indicators for regime detection"
+          },
+          "volatility_targets": {
+            "type": "object",
+            "description": "Target volatility for different regimes"
+          }
+        },
+        "functions_used": ["alpaca_market_stocks_bars", "calculate_risk_metrics", "calculate_portfolio_metrics"],
+        "output_format": {
+          "current_regime": "string",
+          "adaptive_allocation": "object",
+          "volatility_forecast": "number",
+          "regime_probability": "object"
+        },
+        "complexity": "advanced"
+      },
+      {
+        "id": "target-volatility-strategy",
+        "name": "Target Volatility Strategy",
+        "description": "Maintain target portfolio volatility through dynamic allocation",
+        "user_questions": [
+          "Target volatility strategy",
+          "Volatility targeting",
+          "Risk parity allocation",
+          "Volatility-controlled portfolio"
+        ],
+        "keywords": ["target volatility", "volatility targeting", "risk parity", "volatility control"],
+        "inputs": {
+          "required": ["asset_universe", "target_volatility"],
+          "optional": ["volatility_lookback", "rebalancing_frequency", "leverage_constraints"]
+        },
+        "parameters": {
+          "asset_universe": {
+            "type": "array",
+            "description": "Assets for volatility targeting"
+          },
+          "target_volatility": {
+            "type": "number",
+            "description": "Target annual volatility (e.g., 0.10 for 10%)"
+          },
+          "volatility_lookback": {
+            "type": "number",
+            "default": 60,
+            "description": "Days for volatility estimation"
+          }
+        },
+        "functions_used": ["alpaca_market_stocks_bars", "calculate_risk_metrics", "calculate_portfolio_metrics"],
+        "output_format": {
+          "current_volatility": "number",
+          "target_allocation": "object",
+          "volatility_forecast": "number",
+          "allocation_adjustments": "array"
+        },
+        "complexity": "advanced"
+      }
+    ]
+  },
+
+  "tier_17_advanced_screening": {
+    "description": "Advanced screening and fund analysis tools",
+    "tools": [
+      {
+        "id": "fund-screener",
+        "name": "Fund Screener",
+        "description": "Screen mutual funds and ETFs by multiple criteria",
+        "user_questions": [
+          "Fund screening tool",
+          "ETF screener",
+          "Mutual fund finder",
+          "Fund selection criteria"
+        ],
+        "keywords": ["fund screener", "ETF screener", "mutual fund", "fund selection"],
+        "inputs": {
+          "required": ["fund_type"],
+          "optional": ["expense_ratio_max", "aum_min", "performance_criteria", "sector_focus"]
+        },
+        "parameters": {
+          "fund_type": {
+            "type": "string",
+            "options": ["etf", "mutual_fund", "both"],
+            "description": "Type of funds to screen"
+          },
+          "expense_ratio_max": {
+            "type": "number",
+            "default": 1.0,
+            "description": "Maximum expense ratio"
+          },
+          "aum_min": {
+            "type": "number",
+            "default": 100000000,
+            "description": "Minimum assets under management"
+          }
+        },
+        "functions_used": ["eodhd_fundamentals", "alpaca_market_stocks_bars", "calculate_risk_metrics"],
+        "output_format": {
+          "screened_funds": "array",
+          "fund_rankings": "array",
+          "performance_comparison": "object",
+          "cost_analysis": "object"
+        },
+        "complexity": "intermediate"
+      },
+      {
+        "id": "fund-rankings",
+        "name": "Fund Rankings",
+        "description": "Rank funds by performance, risk-adjusted returns, and other metrics",
+        "user_questions": [
+          "Fund performance rankings",
+          "Best performing funds",
+          "Fund comparison rankings",
+          "Top rated funds"
+        ],
+        "keywords": ["fund rankings", "performance rankings", "best funds", "top funds"],
+        "inputs": {
+          "required": ["fund_universe"],
+          "optional": ["ranking_criteria", "time_periods", "risk_adjustment"]
+        },
+        "parameters": {
+          "fund_universe": {
+            "type": "array",
+            "description": "Funds to rank"
+          },
+          "ranking_criteria": {
+            "type": "array",
+            "default": ["total_return", "sharpe_ratio", "max_drawdown"],
+            "description": "Criteria for ranking"
+          },
+          "time_periods": {
+            "type": "array",
+            "default": ["1y", "3y", "5y"],
+            "description": "Time periods for analysis"
+          }
+        },
+        "functions_used": ["alpaca_market_stocks_bars", "calculate_returns_metrics", "calculate_risk_metrics"],
+        "output_format": {
+          "fund_rankings": "array",
+          "performance_scores": "object",
+          "risk_adjusted_rankings": "array",
+          "consistency_analysis": "object"
+        },
+        "complexity": "intermediate"
+      },
+      {
+        "id": "asset-autocorrelation",
+        "name": "Asset Autocorrelation Analyzer",
+        "description": "Analyze time-series autocorrelation patterns in asset returns",
+        "user_questions": [
+          "Asset autocorrelation analysis",
+          "Return predictability",
+          "Time series patterns",
+          "Momentum persistence"
+        ],
+        "keywords": ["autocorrelation", "return predictability", "time series", "momentum persistence"],
+        "inputs": {
+          "required": ["symbols"],
+          "optional": ["lag_periods", "statistical_tests", "rolling_analysis"]
+        },
+        "parameters": {
+          "symbols": {
+            "type": "array",
+            "description": "Assets for autocorrelation analysis"
+          },
+          "lag_periods": {
+            "type": "array",
+            "default": [1, 5, 10, 20, 60],
+            "description": "Lag periods for autocorrelation"
+          },
+          "rolling_analysis": {
+            "type": "boolean",
+            "default": false,
+            "description": "Perform rolling autocorrelation analysis"
+          }
+        },
+        "functions_used": ["alpaca_market_stocks_bars", "prices_to_returns", "calculate_correlation_analysis"],
+        "output_format": {
+          "autocorrelation_coefficients": "object",
+          "statistical_significance": "object",
+          "momentum_patterns": "array",
+          "mean_reversion_signals": "array"
+        },
+        "complexity": "advanced"
+      },
+      {
+        "id": "asset-cointegration",
+        "name": "Asset Cointegration Analyzer",
+        "description": "Analyze cointegration relationships between assets for pairs trading",
+        "user_questions": [
+          "Asset cointegration analysis",
+          "Pairs trading opportunities",
+          "Statistical arbitrage",
+          "Long-term relationships"
+        ],
+        "keywords": ["cointegration", "pairs trading", "statistical arbitrage", "long-term relationships"],
+        "inputs": {
+          "required": ["asset_pairs"],
+          "optional": ["test_method", "confidence_level", "rolling_analysis"]
+        },
+        "parameters": {
+          "asset_pairs": {
+            "type": "array",
+            "description": "Asset pairs for cointegration testing"
+          },
+          "test_method": {
+            "type": "string",
+            "options": ["engle_granger", "johansen"],
+            "default": "engle_granger",
+            "description": "Cointegration test method"
+          },
+          "confidence_level": {
+            "type": "number",
+            "default": 0.05,
+            "description": "Statistical confidence level"
+          }
+        },
+        "functions_used": ["alpaca_market_stocks_bars", "calculate_correlation_analysis", "prices_to_returns"],
+        "output_format": {
+          "cointegration_results": "object",
+          "hedge_ratios": "object",
+          "spread_analysis": "object",
+          "trading_signals": "array"
+        },
+        "complexity": "advanced"
+      }
+    ]
+  },
+
+  "tier_18_optimization_tools": {
+    "description": "Advanced optimization and DCA tools",
+    "tools": [
+      {
+        "id": "dca-optimizer",
+        "name": "Dollar Cost Averaging Optimizer",
+        "description": "Optimize DCA frequency, amounts, and timing with scenario analysis",
+        "user_questions": [
+          "Optimize dollar cost averaging",
+          "Best DCA frequency",
+          "DCA vs lump sum analysis",
+          "Dollar cost averaging strategy"
+        ],
+        "keywords": ["dollar cost averaging", "DCA", "DCA optimization", "investment frequency", "periodic investing"],
+        "inputs": {
+          "required": ["symbols"],
+          "optional": ["investment_amounts", "frequencies", "investment_horizon", "market_conditions"]
+        },
+        "parameters": {
+          "symbols": {
+            "type": "array",
+            "description": "Assets for DCA optimization"
+          },
+          "investment_amounts": {
+            "type": "array",
+            "default": [100, 250, 500, 1000],
+            "description": "Monthly investment amounts to test"
+          },
+          "frequencies": {
+            "type": "array",
+            "default": ["weekly", "bi_weekly", "monthly", "quarterly"],
+            "description": "Investment frequencies to optimize"
+          }
+        },
+        "functions_used": ["alpaca_market_stocks_bars", "calculate_returns_metrics", "stress_test_portfolio"],
+        "output_format": {
+          "optimal_frequency": "string",
+          "optimal_amount": "number",
+          "dca_vs_lump_sum": "object",
+          "scenario_analysis": "object"
+        },
+        "complexity": "intermediate"
+      },
+      {
+        "id": "black-litterman-optimizer",
+        "name": "Black-Litterman Optimizer",
+        "description": "Optimize portfolio using Black-Litterman model with investor views",
+        "user_questions": [
+          "Black-Litterman optimization",
+          "Portfolio optimization with views",
+          "Bayesian portfolio optimization",
+          "Market equilibrium portfolio"
+        ],
+        "keywords": ["black-litterman", "bayesian optimization", "investor views", "market equilibrium"],
+        "inputs": {
+          "required": ["asset_universe"],
+          "optional": ["investor_views", "view_confidence", "risk_aversion", "market_cap_weights"]
+        },
+        "parameters": {
+          "asset_universe": {
+            "type": "array",
+            "description": "Assets for optimization"
+          },
+          "investor_views": {
+            "type": "object",
+            "description": "Investor views on expected returns"
+          },
+          "view_confidence": {
+            "type": "object",
+            "description": "Confidence in investor views"
+          },
+          "risk_aversion": {
+            "type": "number",
+            "default": 3.0,
+            "description": "Risk aversion parameter"
+          }
+        },
+        "functions_used": ["alpaca_market_stocks_bars", "calculate_correlation_analysis", "calculate_portfolio_metrics"],
+        "output_format": {
+          "optimal_weights": "object",
+          "expected_returns": "object",
+          "risk_estimates": "object",
+          "view_impact": "object"
+        },
+        "complexity": "advanced"
+      },
+      {
+        "id": "rolling-optimizer",
+        "name": "Rolling Optimizer",
+        "description": "Perform rolling portfolio optimization over time",
+        "user_questions": [
+          "Rolling portfolio optimization",
+          "Dynamic optimization",
+          "Time-varying optimization",
+          "Adaptive portfolio weights"
+        ],
+        "keywords": ["rolling optimization", "dynamic optimization", "time-varying", "adaptive weights"],
+        "inputs": {
+          "required": ["asset_universe"],
+          "optional": ["optimization_window", "rebalancing_frequency", "constraints"]
+        },
+        "parameters": {
+          "asset_universe": {
+            "type": "array",
+            "description": "Assets for rolling optimization"
+          },
+          "optimization_window": {
+            "type": "number",
+            "default": 252,
+            "description": "Rolling window size in days"
+          },
+          "rebalancing_frequency": {
+            "type": "string",
+            "options": ["monthly", "quarterly", "semi_annual"],
+            "default": "quarterly"
+          }
+        },
+        "functions_used": ["alpaca_market_stocks_bars", "calculate_portfolio_metrics", "calculate_correlation_analysis"],
+        "output_format": {
+          "rolling_weights": "array",
+          "optimization_history": "array",
+          "performance_metrics": "object",
+          "weight_stability": "object"
+        },
+        "complexity": "advanced"
+      }
+    ]
+  },
+
+  "tier_14_screening_tools": {
+    "description": "Advanced screening and filtering tools for stock selection",
+    "tools": [
+      {
+        "id": "multi-factor-screener",
+        "name": "Multi-Factor Stock Screener",
+        "description": "Screen stocks using multiple technical and fundamental factors with custom scoring",
+        "user_questions": [
+          "Multi-factor stock screening",
+          "Custom stock screener",
+          "Factor-based stock selection",
+          "Quantitative stock screening"
+        ],
+        "keywords": ["stock screener", "multi-factor", "stock selection", "quantitative screening", "factor screening"],
+        "inputs": {
+          "required": ["screening_universe"],
+          "optional": ["technical_factors", "fundamental_factors", "factor_weights", "max_results"]
+        },
+        "parameters": {
+          "screening_universe": {
+            "type": "string",
+            "options": ["sp500", "nasdaq100", "russell2000", "custom"],
+            "default": "sp500"
+          },
+          "technical_factors": {
+            "type": "object",
+            "description": "Technical screening criteria with min/max values"
+          },
+          "fundamental_factors": {
+            "type": "object",
+            "description": "Fundamental screening criteria"
+          },
+          "factor_weights": {
+            "type": "object",
+            "description": "Relative importance of each factor"
+          }
+        },
+        "functions_used": ["alpaca_market_stocks_bars", "eodhd_fundamentals", "calculate_rsi", "generate_signals", "alpaca_market_screener_most_actives"],
+        "output_format": {
+          "screened_stocks": "array",
+          "factor_scores": "object",
+          "ranking_analysis": "object",
+          "sector_distribution": "object"
+        },
+        "complexity": "advanced"
+      }
+    ]
+  },
+
+  "mapping_configuration": {
+    "description": "Configuration for natural language question mapping",
+    "keyword_weighting": {
+      "exact_match": 10,
+      "partial_match": 5,
+      "context_match": 3,
+      "synonym_match": 2
+    },
+    "fallback_strategy": {
+      "no_match": "current-price-stats",
+      "multiple_matches": "present_options_to_user",
+      "ambiguous": "ask_clarifying_questions"
+    },
+    "common_synonyms": {
+      "stock": ["equity", "share", "security"],
+      "performance": ["returns", "gains", "growth"],
+      "volatility": ["risk", "swings", "fluctuation"],
+      "compare": ["vs", "versus", "against", "battle"]
+    }
+  }
+}

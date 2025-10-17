@@ -1,0 +1,45 @@
+{
+  "description": "Validated workflow to identify ETFs that outperformed both SPY and QQQ benchmarks over 30-day period using distributed MCP validation",
+  "body": [
+    {
+      "key": "question",
+      "value": "Which ETFs outperformed both SPY and QQQ over the last 30 days?",
+      "description": "Question analyzed"
+    },
+    {
+      "key": "analysis_method",
+      "value": "Flat Workflow Engine",
+      "description": "Pre-validated workflow execution"
+    },
+    {
+      "key": "validation_note",
+      "value": "Workflow validated during creation phase",
+      "description": "Validation approach"
+    },
+    {
+      "key": "step_1",
+      "value": "alpaca_market_screener_most_actives via flat",
+      "description": "Step get_active_etfs execution"
+    },
+    {
+      "key": "step_2",
+      "value": "python_function_extract_etf_symbols via flat",
+      "description": "Step extract_etf_symbols execution"
+    },
+    {
+      "key": "step_3",
+      "value": "alpaca_market_stocks_bars via flat",
+      "description": "Step get_historical_data execution"
+    },
+    {
+      "key": "step_4",
+      "value": "python_function_calculate_outperformers via flat",
+      "description": "Step calculate_outperformers execution"
+    }
+  ],
+  "validation_note": "Pre-validated during workflow creation",
+  "metadata": {
+    "timestamp": "2025-09-26T20:51:49.896767",
+    "engine": "flat"
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "question": "Which ETFs outperformed both SPY and QQQ over the last 30 days?",
+  "plan": {
+    "workflow": {
+      "steps": [
+        {
+          "id": "fetch_price_data",
+          "type": "mcp_call",
+          "fn": "alpaca_market_stocks_bars",
+          "args": {
+            "symbols": "VTI,VOO,QQQ,SPY,ARKK,GLD,VEA,VWO,IWM,EFA,XLK,XLF,XLE,XLV,XLI",
+            "timeframe": "1Day",
+            "start": "2024-08-27",
+            "end": "2024-09-26"
+          },
+          "output_variable": "price_data"
+        },
+        {
+          "id": "calculate_etf_performance",
+          "type": "python_function",
+          "function_file": "mcp-server/temp/extract_prices_and_calculate_returns_20250926_123456.py",
+          "function_name": "extract_prices_and_calculate_returns",
+          "input_variables": ["price_data"],
+          "output_variable": "etf_returns_comparison"
+        }
+      ]
+    }
+  },
+  "description": "Validated workflow to compare ETF performance vs SPY and QQQ benchmarks over 30-day period using distributed MCP validation",
+  "validation": {
+    "validated_by": "mcp-validation-server",
+    "validation_timestamp": "2025-09-26T12:34:56Z",
+    "all_steps_valid": true,
+    "data_flow_validated": true,
+    "template_variables_validated": true
+  },
+  "metadata": {
+    "created_by": "distributed-mcp-orchestrator",
+    "etfs_analyzed": ["VTI", "VOO", "ARKK", "GLD", "VEA", "VWO", "IWM", "EFA", "XLK", "XLF", "XLE", "XLV", "XLI"],
+    "benchmarks": ["SPY", "QQQ"],
+    "analysis_period": "30_days"
+  }
+}

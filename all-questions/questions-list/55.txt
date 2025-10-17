@@ -1,0 +1,1 @@
+Which tickers most often close in the top 10% of their daily range?

@@ -1,0 +1,1 @@
+Which ETFs most often finished the day with a closing range > 80%?
