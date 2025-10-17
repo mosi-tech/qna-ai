@@ -1,15 +1,16 @@
-"""Signal generation and manipulation functions for automated trading strategies.
+"""Condition detection primitives for trading strategies.
 
-This module provides comprehensive signal generation capabilities for technical analysis
-and algorithmic trading. It includes universal signal generators that can work with
-various technical indicators, frequency analysis tools, signal combination methods,
-and advanced filtering capabilities.
+This module provides generic, reusable comparison primitives for building trading strategies.
+Rather than generating buy/sell signals directly, it detects conditions (facts) that occur
+in time series data. Strategies compose these primitives to build their decision logic.
 
-The module supports multiple signal generation approaches:
-- Threshold-based signals (RSI overbought/oversold)
-- Crossover signals (moving average, MACD crossovers)
-- Momentum signals (price momentum breakouts)
-- Mean reversion signals (statistical overbought/oversold)
+Core Primitive:
+- compare(): Generic comparison function that detects conditions in time series
+
+Supported Operators:
+- Crossovers: "crossover_up", "crossover_down"
+- Comparisons: ">", "<", ">=", "<=", "=="
+- Ranges: "between", "outside"
 
 Additional functionality includes:
 - Signal frequency analysis and distribution statistics
@@ -20,19 +21,21 @@ All functions integrate with the financial-analysis-function-library.json specif
 and provide standardized outputs for the MCP analytics server.
 
 Example:
-    Basic signal generation workflow:
+    Building conditions for strategy composition:
     
-    >>> from mcp.analytics.signals.generators import generate_signals, combine_signals
+    >>> from mcp.analytics.signals.generators import compare, combine_signals
     >>> import pandas as pd
-    >>> # Generate RSI-based signals
+    >>> # Detect conditions (not signals!)
     >>> rsi_data = pd.Series([30, 25, 75, 80, 45])  # RSI values
-    >>> signals = generate_signals(rsi_data, method="threshold", 
-    ...                          parameters={"upper_threshold": 70, "lower_threshold": 30})
-    >>> print(f"Generated {signals['signal_statistics']['total_signals']} signals")
+    >>> oversold = compare(rsi_data, "<", 30)
+    >>> above_threshold = compare(rsi_data, ">", 70)
+    >>> 
+    >>> # Strategy layer decides what these conditions mean
+    >>> # (not the compare function)
     
 Note:
-    All signal generation functions return timestamps, signal types, and strength
-    indicators for comprehensive trading strategy development.
+    Conditions return facts: what happened in the data.
+    Strategies apply context and rules to convert conditions into trading decisions.
 """
 
 
@@ -48,299 +51,223 @@ from ..indicators.momentum.indicators import calculate_rsi, calculate_macd, calc
 from ..indicators.volatility.indicators import calculate_bollinger_bands
 
 
-def generate_signals(indicator: Union[pd.Series, List[float], Dict[str, Any]], 
-                    method: str = "threshold", 
-                    parameters: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """Generate trading signals from technical indicators using various methodologies.
+def generate_signals(series1: Union[pd.Series, List[float], Dict[str, Any]],
+                    series2: Union[pd.Series, float, tuple],
+                    operator: str) -> List[Dict]:
+    """Detect when series1 meets a condition relative to series2.
     
-    This universal signal generator can process different types of technical indicators
-    and price data to produce buy/sell signals. It supports multiple signal generation
-    methods commonly used in algorithmic trading and provides detailed signal metadata
-    including timestamps, strength, and generation method.
+    Scans the time series and returns all timestamps where the comparison is True.
+    Does NOT interpret what the condition means - just reports when it occurs.
     
     Args:
-        indicator: Technical indicator values or price data. Can be provided as:
+        series1: Time series to analyze. Can be:
             - pandas Series: Preferred format with datetime index
-            - List of floats: Numeric indicator values
-            - Dictionary: With 'data' key containing values or direct value mapping
-        method: Signal generation methodology. Available methods:
-            - "threshold": Fixed level signals (e.g., RSI >70 = sell, <30 = buy)
-            - "crossover": Moving average or reference line crossovers
-            - "momentum": Price momentum breakout signals
-            - "mean_reversion": Statistical overbought/oversold signals
-            Defaults to "threshold".
-        parameters: Method-specific configuration parameters. If None, uses defaults:
-            - Threshold: upper_threshold=70, lower_threshold=30
-            - Crossover: ma_period=20, or reference_line for fixed level crossovers
-            - Momentum: lookback=5, momentum_threshold=0.02
-            - Mean reversion: window=20, std_threshold=2.0
+            - List of floats: Automatically converted to Series
+            - Dictionary: With 'data' key or value mapping
+        series2: What to compare against. Can be:
+            - pandas Series: Element-wise comparison with series1
+            - float/int: Fixed threshold value (broadcast to all timestamps)
+            - tuple (lower, upper): Range bounds for "between"/"outside" operators
+        operator: Comparison operator. Supported:
+            - "crossover_up": series1 crosses ABOVE series2
+            - "crossover_down": series1 crosses BELOW series2
+            - ">": series1 > series2
+            - "<": series1 < series2
+            - ">=": series1 >= series2
+            - "<=": series1 <= series2
+            - "==": series1 == series2
+            - "between": lower <= series1 <= upper (series2 must be tuple)
+            - "outside": series1 < lower OR series1 > upper (series2 must be tuple)
             
     Returns:
-        Dict[str, Any]: Signal generation results including:
-            - method: Signal generation method used
-            - parameters: Parameters applied during generation
-            - signals: List of signal dictionaries with timestamp, signal type, strength
-            - signal_statistics: Summary statistics (total, buy/sell counts, percentages)
-            - data_points: Number of input data points processed
+        List[Dict]: All timestamps where the condition is True:
+            - timestamp: When condition occurred
+            - index: Position in series
+            - series1_value: Value at this time
+            - series2_value: Comparison value (if applicable)
+            - operator: The operator used
             
-        Each signal dictionary contains:
-            - timestamp: Signal generation time
-            - index: Position in original data series
-            - signal: 'buy', 'sell', or 'hold'
-            - strength: Confidence level (0.0 to 1.0)
-            - indicator_value: Original indicator value at signal time
-            - method: Specific sub-method used (e.g., 'threshold', 'ma_crossover_above')
+        For "between"/"outside":
+            - lower_value: Lower bound
+            - upper_value: Upper bound
             
-    Raises:
-        ValueError: If unknown method specified.
-        Exception: If signal generation fails due to invalid data or parameters.
-        
-    Example:
+    Examples:
         >>> import pandas as pd
-        >>> # Generate RSI threshold signals
-        >>> rsi_values = pd.Series([45, 30, 25, 35, 75, 80, 70, 65],
-        ...                       index=pd.date_range('2023-01-01', periods=8))
-        >>> rsi_signals = generate_signals(rsi_values, method="threshold",
-        ...                              parameters={"upper_threshold": 70, "lower_threshold": 30})
-        >>> print(f"RSI signals: {len(rsi_signals['signals'])}")
-        >>> 
-        >>> # Generate momentum signals
-        >>> prices = pd.Series([100, 102, 105, 103, 108, 112],
-        ...                   index=pd.date_range('2023-01-01', periods=6))
-        >>> momentum_signals = generate_signals(prices, method="momentum",
-        ...                                   parameters={"lookback": 3, "momentum_threshold": 0.03})
-        >>> 
-        >>> # Generate crossover signals
-        >>> price_ma = pd.Series([100, 101, 103, 102, 105],
-        ...                      index=pd.date_range('2023-01-01', periods=5))
-        >>> crossover_signals = generate_signals(price_ma, method="crossover",
-        ...                                     parameters={"reference_line": 102})
+        >>> returns = pd.Series([-0.02, -0.05, 0.03, -0.04])
+        >>> down_months = generate_signals(returns, -0.03, "<")
+        >>> # Returns timestamps where returns < -3%
         
-    Note:
-        - Signals only generated when conditions are met (no 'hold' signals by default)
-        - Strength calculation varies by method and measures signal conviction
-        - Timestamps preserve original index from input data series
-        - Multiple signals can be generated from the same data series
-        - Mean reversion method uses z-score calculation for signal strength
-        - Momentum method compares current vs lookback period percentage change
+        >>> rsi = pd.Series([25, 30, 70, 75])
+        >>> oversold = generate_signals(rsi, 30, "<")
+        >>> # Returns timestamps where RSI < 30
+        
+        >>> price = pd.Series([100, 105, 103, 108])
+        >>> ma = pd.Series([102, 104, 104, 106])
+        >>> crosses = generate_signals(price, ma, "crossover_up")
+        >>> # Returns timestamps where price crosses above MA
+        
+        >>> momentum = pd.Series([0.5, -0.4, 1.2, -0.8])
+        >>> normal = generate_signals(momentum, (-1, 1), "between")
+        >>> # Returns timestamps where momentum is between -1 and 1
     """
     try:
-        if parameters is None:
-            parameters = {}
-        
-        # Convert input to pandas Series
-        if isinstance(indicator, dict):
-            if 'data' in indicator:
-                indicator_series = pd.Series(indicator['data'])
+        # Normalize series1 to Series
+        if isinstance(series1, (list, dict)):
+            if isinstance(series1, dict) and 'data' in series1:
+                series1 = pd.Series(series1['data'])
+            elif isinstance(series1, dict):
+                series1 = pd.Series(list(series1.values()))
             else:
-                indicator_series = pd.Series(list(indicator.values()))
-        elif isinstance(indicator, list):
-            indicator_series = pd.Series(indicator)
+                series1 = pd.Series(series1)
         else:
-            indicator_series = indicator.copy()
+            series1 = series1.copy()
         
-        signals = []
+        # Normalize series2 based on operator
+        if operator in ["between", "outside"]:
+            if not isinstance(series2, tuple) or len(series2) != 2:
+                raise ValueError(f"Operator '{operator}' requires series2 as tuple (lower, upper)")
+            lower_val, upper_val = series2
+            lower_series = pd.Series([lower_val] * len(series1), index=series1.index) if isinstance(lower_val, (int, float)) else lower_val
+            upper_series = pd.Series([upper_val] * len(series1), index=series1.index) if isinstance(upper_val, (int, float)) else upper_val
+        else:
+            if isinstance(series2, (int, float)):
+                series2_values = pd.Series([series2] * len(series1), index=series1.index)
+            else:
+                series2_values = series2
         
-        if method == "threshold":
-            # Threshold-based signals (e.g., RSI overbought/oversold)
-            upper_threshold = parameters.get("upper_threshold", 70)
-            lower_threshold = parameters.get("lower_threshold", 30)
-            
-            for i, (timestamp, value) in enumerate(indicator_series.items()):
-                if pd.isna(value):
+        events = []
+        
+        if operator == "crossover_up":
+            for i in range(1, len(series1)):
+                if pd.isna(series1.iloc[i]) or pd.isna(series1.iloc[i-1]) or pd.isna(series2_values.iloc[i]) or pd.isna(series2_values.iloc[i-1]):
                     continue
-                    
-                signal_type = "hold"
-                strength = 0.0
-                
-                if value >= upper_threshold:
-                    signal_type = "sell"
-                    strength = min((value - upper_threshold) / (100 - upper_threshold), 1.0)
-                elif value <= lower_threshold:
-                    signal_type = "buy"
-                    strength = min((lower_threshold - value) / lower_threshold, 1.0)
-                
-                if signal_type != "hold":
-                    signals.append({
-                        "timestamp": timestamp,
+                if (series1.iloc[i-1] <= series2_values.iloc[i-1] and 
+                    series1.iloc[i] > series2_values.iloc[i]):
+                    events.append({
+                        "timestamp": series1.index[i],
                         "index": i,
-                        "signal": signal_type,
-                        "strength": float(strength),
-                        "indicator_value": float(value),
-                        "method": "threshold"
+                        "series1_value": float(series1.iloc[i]),
+                        "series2_value": float(series2_values.iloc[i]),
+                        "operator": operator
                     })
         
-        elif method == "crossover":
-            # Moving average or line crossovers
-            if 'reference_line' in parameters:
-                reference = parameters['reference_line']
-                if isinstance(reference, (int, float)):
-                    # Cross above/below fixed level
-                    for i in range(1, len(indicator_series)):
-                        if pd.isna(indicator_series.iloc[i]) or pd.isna(indicator_series.iloc[i-1]):
-                            continue
-                            
-                        current = indicator_series.iloc[i]
-                        previous = indicator_series.iloc[i-1]
-                        
-                        if previous <= reference and current > reference:
-                            signals.append({
-                                "timestamp": indicator_series.index[i],
-                                "index": i,
-                                "signal": "buy",
-                                "strength": min(abs(current - reference) / reference, 1.0) if reference != 0 else 1.0,
-                                "indicator_value": float(current),
-                                "method": "crossover_above"
-                            })
-                        elif previous >= reference and current < reference:
-                            signals.append({
-                                "timestamp": indicator_series.index[i],
-                                "index": i,
-                                "signal": "sell", 
-                                "strength": min(abs(reference - current) / reference, 1.0) if reference != 0 else 1.0,
-                                "indicator_value": float(current),
-                                "method": "crossover_below"
-                            })
-            else:
-                # Simple momentum crossover (price vs moving average)
-                ma_period = parameters.get("ma_period", 20)
-                ma = indicator_series.rolling(window=ma_period).mean()
-                
-                for i in range(ma_period, len(indicator_series)):
-                    if pd.isna(ma.iloc[i]) or pd.isna(ma.iloc[i-1]):
-                        continue
-                        
-                    current_price = indicator_series.iloc[i]
-                    previous_price = indicator_series.iloc[i-1]
-                    current_ma = ma.iloc[i]
-                    previous_ma = ma.iloc[i-1]
-                    
-                    if previous_price <= previous_ma and current_price > current_ma:
-                        signals.append({
-                            "timestamp": indicator_series.index[i],
-                            "index": i,
-                            "signal": "buy",
-                            "strength": min(abs(current_price - current_ma) / current_ma, 1.0) if current_ma != 0 else 1.0,
-                            "indicator_value": float(current_price),
-                            "method": "ma_crossover_above"
-                        })
-                    elif previous_price >= previous_ma and current_price < current_ma:
-                        signals.append({
-                            "timestamp": indicator_series.index[i],
-                            "index": i,
-                            "signal": "sell",
-                            "strength": min(abs(current_ma - current_price) / current_ma, 1.0) if current_ma != 0 else 1.0,
-                            "indicator_value": float(current_price),
-                            "method": "ma_crossover_below"
-                        })
-        
-        elif method == "momentum":
-            # Momentum-based signals
-            lookback = parameters.get("lookback", 5)
-            momentum_threshold = parameters.get("momentum_threshold", 0.02)
-            
-            for i in range(lookback, len(indicator_series)):
-                if pd.isna(indicator_series.iloc[i]) or pd.isna(indicator_series.iloc[i-lookback]):
+        elif operator == "crossover_down":
+            for i in range(1, len(series1)):
+                if pd.isna(series1.iloc[i]) or pd.isna(series1.iloc[i-1]) or pd.isna(series2_values.iloc[i]) or pd.isna(series2_values.iloc[i-1]):
                     continue
-                    
-                current = indicator_series.iloc[i]
-                past = indicator_series.iloc[i-lookback]
-                
-                if past != 0:
-                    momentum = (current - past) / past
-                    
-                    if momentum >= momentum_threshold:
-                        signals.append({
-                            "timestamp": indicator_series.index[i],
-                            "index": i,
-                            "signal": "buy",
-                            "strength": min(momentum / momentum_threshold, 2.0) / 2.0,
-                            "indicator_value": float(current),
-                            "momentum": float(momentum),
-                            "method": "momentum_up"
-                        })
-                    elif momentum <= -momentum_threshold:
-                        signals.append({
-                            "timestamp": indicator_series.index[i],
-                            "index": i,
-                            "signal": "sell",
-                            "strength": min(abs(momentum) / momentum_threshold, 2.0) / 2.0,
-                            "indicator_value": float(current),
-                            "momentum": float(momentum),
-                            "method": "momentum_down"
-                        })
+                if (series1.iloc[i-1] >= series2_values.iloc[i-1] and 
+                    series1.iloc[i] < series2_values.iloc[i]):
+                    events.append({
+                        "timestamp": series1.index[i],
+                        "index": i,
+                        "series1_value": float(series1.iloc[i]),
+                        "series2_value": float(series2_values.iloc[i]),
+                        "operator": operator
+                    })
         
-        elif method == "mean_reversion":
-            # Mean reversion signals
-            window = parameters.get("window", 20)
-            std_threshold = parameters.get("std_threshold", 2.0)
-            
-            rolling_mean = indicator_series.rolling(window=window).mean()
-            rolling_std = indicator_series.rolling(window=window).std()
-            
-            for i in range(window, len(indicator_series)):
-                if pd.isna(rolling_mean.iloc[i]) or pd.isna(rolling_std.iloc[i]):
+        elif operator == ">":
+            for i, (ts, value) in enumerate(series1.items()):
+                if pd.isna(value) or pd.isna(series2_values.iloc[i]):
                     continue
-                    
-                current = indicator_series.iloc[i]
-                mean = rolling_mean.iloc[i]
-                std = rolling_std.iloc[i]
-                
-                if std > 0:
-                    z_score = (current - mean) / std
-                    
-                    if z_score >= std_threshold:
-                        # Overbought - sell signal
-                        signals.append({
-                            "timestamp": indicator_series.index[i],
-                            "index": i,
-                            "signal": "sell",
-                            "strength": min(abs(z_score) / std_threshold, 2.0) / 2.0,
-                            "indicator_value": float(current),
-                            "z_score": float(z_score),
-                            "method": "mean_reversion_overbought"
-                        })
-                    elif z_score <= -std_threshold:
-                        # Oversold - buy signal
-                        signals.append({
-                            "timestamp": indicator_series.index[i],
-                            "index": i,
-                            "signal": "buy",
-                            "strength": min(abs(z_score) / std_threshold, 2.0) / 2.0,
-                            "indicator_value": float(current),
-                            "z_score": float(z_score),
-                            "method": "mean_reversion_oversold"
-                        })
+                if float(value) > float(series2_values.iloc[i]):
+                    events.append({
+                        "timestamp": ts,
+                        "index": i,
+                        "series1_value": float(value),
+                        "series2_value": float(series2_values.iloc[i]),
+                        "operator": operator
+                    })
+        
+        elif operator == "<":
+            for i, (ts, value) in enumerate(series1.items()):
+                if pd.isna(value) or pd.isna(series2_values.iloc[i]):
+                    continue
+                if float(value) < float(series2_values.iloc[i]):
+                    events.append({
+                        "timestamp": ts,
+                        "index": i,
+                        "series1_value": float(value),
+                        "series2_value": float(series2_values.iloc[i]),
+                        "operator": operator
+                    })
+        
+        elif operator == ">=":
+            for i, (ts, value) in enumerate(series1.items()):
+                if pd.isna(value) or pd.isna(series2_values.iloc[i]):
+                    continue
+                if float(value) >= float(series2_values.iloc[i]):
+                    events.append({
+                        "timestamp": ts,
+                        "index": i,
+                        "series1_value": float(value),
+                        "series2_value": float(series2_values.iloc[i]),
+                        "operator": operator
+                    })
+        
+        elif operator == "<=":
+            for i, (ts, value) in enumerate(series1.items()):
+                if pd.isna(value) or pd.isna(series2_values.iloc[i]):
+                    continue
+                if float(value) <= float(series2_values.iloc[i]):
+                    events.append({
+                        "timestamp": ts,
+                        "index": i,
+                        "series1_value": float(value),
+                        "series2_value": float(series2_values.iloc[i]),
+                        "operator": operator
+                    })
+        
+        elif operator == "==":
+            tolerance = 0.0
+            for i, (ts, value) in enumerate(series1.items()):
+                if pd.isna(value) or pd.isna(series2_values.iloc[i]):
+                    continue
+                if abs(float(value) - float(series2_values.iloc[i])) <= tolerance:
+                    events.append({
+                        "timestamp": ts,
+                        "index": i,
+                        "series1_value": float(value),
+                        "series2_value": float(series2_values.iloc[i]),
+                        "operator": operator
+                    })
+        
+        elif operator == "between":
+            for i, (ts, value) in enumerate(series1.items()):
+                if pd.isna(value) or pd.isna(lower_series.iloc[i]) or pd.isna(upper_series.iloc[i]):
+                    continue
+                v = float(value)
+                if float(lower_series.iloc[i]) <= v <= float(upper_series.iloc[i]):
+                    events.append({
+                        "timestamp": ts,
+                        "index": i,
+                        "series1_value": v,
+                        "lower_value": float(lower_series.iloc[i]),
+                        "upper_value": float(upper_series.iloc[i]),
+                        "operator": operator
+                    })
+        
+        elif operator == "outside":
+            for i, (ts, value) in enumerate(series1.items()):
+                if pd.isna(value) or pd.isna(lower_series.iloc[i]) or pd.isna(upper_series.iloc[i]):
+                    continue
+                v = float(value)
+                if v < float(lower_series.iloc[i]) or v > float(upper_series.iloc[i]):
+                    events.append({
+                        "timestamp": ts,
+                        "index": i,
+                        "series1_value": v,
+                        "lower_value": float(lower_series.iloc[i]),
+                        "upper_value": float(upper_series.iloc[i]),
+                        "operator": operator
+                    })
         
         else:
-            raise ValueError(f"Unknown signal generation method: {method}")
+            raise ValueError(f"Unknown operator: {operator}")
         
-        # Signal statistics
-        total_signals = len(signals)
-        buy_signals = len([s for s in signals if s['signal'] == 'buy'])
-        sell_signals = len([s for s in signals if s['signal'] == 'sell'])
-        
-        avg_strength = np.mean([s['strength'] for s in signals]) if signals else 0
-        
-        result = {
-            "method": method,
-            "parameters": parameters,
-            "signals": signals,
-            "signal_statistics": {
-                "total_signals": total_signals,
-                "buy_signals": buy_signals,
-                "sell_signals": sell_signals,
-                "buy_percentage": (buy_signals / total_signals * 100) if total_signals > 0 else 0,
-                "sell_percentage": (sell_signals / total_signals * 100) if total_signals > 0 else 0,
-                "average_strength": float(avg_strength)
-            },
-            "data_points": len(indicator_series)
-        }
-        
-        return standardize_output(result, "generate_signals")
+        return events
         
     except Exception as e:
-        return {"success": False, "error": f"Signal generation failed: {str(e)}"}
+        return {"success": False, "error": f"Condition detection failed: {str(e)}"}
 
 
 def calculate_signal_frequency(signals: List[Dict[str, Any]], 
@@ -968,7 +895,7 @@ def filter_signals(signals: List[Dict[str, Any]],
         return {"success": False, "error": f"Signal filtering failed: {str(e)}"}
 
 
-# Registry of signal generator functions - all using proven libraries
+# Registry of condition detection and signal functions
 SIGNAL_GENERATORS_FUNCTIONS = {
     'generate_signals': generate_signals,
     'calculate_signal_frequency': calculate_signal_frequency,

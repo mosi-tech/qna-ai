@@ -432,15 +432,17 @@ def get_function_docstring(function_name: str, functions_dict: Dict[str, Any]) -
         
         # Get only the example section from docstring
         full_docstring = inspect.getdoc(func)
+
         if not full_docstring:
             docstring = f"No docstring available for {function_name}"
         else:
+            docstring = full_docstring
             # Extract only the Example/Examples section
-            example_section = _extract_example_section(full_docstring)
-            if example_section:
-                docstring = example_section
-            else:
-                docstring = f"No example section found in {function_name} docstring"
+            # example_section = _extract_example_section(full_docstring)
+            # if example_section:
+            #     docstring = example_section
+            # else:
+            #     docstring = f"No example section found in {function_name} docstring"
         
         # Get function signature
         sig = inspect.signature(func)

@@ -20,16 +20,22 @@ class AlpacaTransformer:
     """Transform data between Alpaca format and standard format."""
     
     @staticmethod
-    def transform_bars(alpaca_data: Dict[str, Any], symbols: List[str]) -> List[StandardBar]:
-        """Transform Alpaca bars response to standard format."""
-        if "bars" not in alpaca_data:
-            return []
+    def transform_bars(alpaca_data: Dict[str, Any], symbols: List[str]) -> Dict[str, List[StandardBar]]:
+        """Transform Alpaca bars response to standard format, organized by symbol.
         
-        standard_bars = []
+        Returns:
+            Dict mapping symbol to list of StandardBar objects for that symbol
+        """
+        if "bars" not in alpaca_data:
+            return {}
+        
+        standard_bars_by_symbol = {}
         for symbol, bars in alpaca_data["bars"].items():
             std_symbol = SymbolFormatter.to_standard(symbol, "alpaca")
+            standard_bars_by_symbol[std_symbol] = []
+            
             for bar in bars:
-                standard_bars.append(StandardBar(
+                standard_bars_by_symbol[std_symbol].append(StandardBar(
                     timestamp=bar["t"],
                     symbol=std_symbol,
                     open=float(bar["o"]),
@@ -40,15 +46,19 @@ class AlpacaTransformer:
                     vwap=float(bar.get("vw", 0)) if bar.get("vw") else None,
                     trade_count=int(bar.get("n", 0)) if bar.get("n") else None
                 ))
-        return standard_bars
+        return standard_bars_by_symbol
     
     @staticmethod
-    def transform_snapshots(alpaca_data: Dict[str, Any]) -> List[StandardSnapshot]:
-        """Transform Alpaca snapshots to standard format."""
-        if "snapshots" not in alpaca_data:
-            return []
+    def transform_snapshots(alpaca_data: Dict[str, Any]) -> Dict[str, StandardSnapshot]:
+        """Transform Alpaca snapshots to standard format, organized by symbol.
         
-        snapshots = []
+        Returns:
+            Dict mapping symbol to StandardSnapshot object for that symbol
+        """
+        if "snapshots" not in alpaca_data:
+            return {}
+        
+        snapshots_by_symbol = {}
         for symbol, snapshot in alpaca_data["snapshots"].items():
             std_symbol = SymbolFormatter.to_standard(symbol, "alpaca")
             
@@ -95,53 +105,61 @@ class AlpacaTransformer:
             if "prevDailyBar" in snapshot:
                 previous_close = float(snapshot["prevDailyBar"]["c"])
             
-            snapshots.append(StandardSnapshot(
+            snapshots_by_symbol[std_symbol] = StandardSnapshot(
                 symbol=std_symbol,
                 timestamp=datetime.now().isoformat(),
                 latest_trade=latest_trade,
                 latest_quote=latest_quote,
                 daily_bar=daily_bar,
                 previous_close=previous_close
-            ))
+            )
         
-        return snapshots
+        return snapshots_by_symbol
     
     @staticmethod
-    def transform_quotes(alpaca_data: Dict[str, Any]) -> List[StandardQuote]:
-        """Transform Alpaca quotes to standard format."""
-        if "quotes" not in alpaca_data:
-            return []
+    def transform_quotes(alpaca_data: Dict[str, Any]) -> Dict[str, StandardQuote]:
+        """Transform Alpaca quotes to standard format, organized by symbol.
         
-        quotes = []
+        Returns:
+            Dict mapping symbol to StandardQuote object for that symbol
+        """
+        if "quotes" not in alpaca_data:
+            return {}
+        
+        quotes_by_symbol = {}
         for symbol, quote in alpaca_data["quotes"].items():
             std_symbol = SymbolFormatter.to_standard(symbol, "alpaca")
-            quotes.append(StandardQuote(
+            quotes_by_symbol[std_symbol] = StandardQuote(
                 timestamp=quote["t"],
                 symbol=std_symbol,
                 bid_price=float(quote["bp"]),
                 bid_size=int(quote["bs"]),
                 ask_price=float(quote["ap"]),
                 ask_size=int(quote["as"])
-            ))
-        return quotes
+            )
+        return quotes_by_symbol
     
     @staticmethod
-    def transform_trades(alpaca_data: Dict[str, Any]) -> List[StandardTrade]:
-        """Transform Alpaca trades to standard format."""
-        if "trades" not in alpaca_data:
-            return []
+    def transform_trades(alpaca_data: Dict[str, Any]) -> Dict[str, StandardTrade]:
+        """Transform Alpaca trades to standard format, organized by symbol.
         
-        trades = []
+        Returns:
+            Dict mapping symbol to StandardTrade object for that symbol
+        """
+        if "trades" not in alpaca_data:
+            return {}
+        
+        trades_by_symbol = {}
         for symbol, trade in alpaca_data["trades"].items():
             std_symbol = SymbolFormatter.to_standard(symbol, "alpaca")
-            trades.append(StandardTrade(
+            trades_by_symbol[std_symbol] = StandardTrade(
                 timestamp=trade["t"],
                 symbol=std_symbol,
                 price=float(trade["p"]),
                 size=int(trade["s"]),
                 exchange=trade.get("x")
-            ))
-        return trades
+            )
+        return trades_by_symbol
     
     @staticmethod
     def transform_screener(alpaca_data: Dict[str, Any], screener_type: str) -> List[StandardScreenerResult]:
@@ -229,10 +247,14 @@ class EODHDTransformer:
     """Transform data between EODHD format and standard format."""
     
     @staticmethod
-    def transform_eod_data(eodhd_data: List[Dict[str, Any]], symbol: str) -> List[StandardBar]:
-        """Transform EODHD EOD data to standard format."""
+    def transform_eod_data(eodhd_data: List[Dict[str, Any]], symbol: str) -> Dict[str, List[StandardBar]]:
+        """Transform EODHD EOD data to standard format, organized by symbol.
+        
+        Returns:
+            Dict mapping symbol to list of StandardBar objects for that symbol
+        """
         if not eodhd_data or isinstance(eodhd_data, dict):
-            return []
+            return {}
         
         std_symbol = SymbolFormatter.to_standard(symbol, "eodhd")
         bars = []
@@ -250,7 +272,7 @@ class EODHDTransformer:
                 close=float(bar["close"]),
                 volume=int(bar["volume"])
             ))
-        return bars
+        return {std_symbol: bars}
     
     @staticmethod
     def transform_real_time(eodhd_data: Dict[str, Any], symbol: str) -> StandardSnapshot:

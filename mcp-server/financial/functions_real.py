@@ -110,7 +110,8 @@ def get_historical_data(symbols: Union[str, List[str]], start_date: Optional[str
     Returns:
         Dict[str, Any]: Standardized response containing:
             - success (bool): True if request succeeded, False otherwise
-            - data (List[StandardBar]): List of OHLC bar objects, each containing:
+            - data (Dict[str, List[StandardBar]]): Historical bars organized by symbol, where each symbol 
+              maps to a list of OHLC bar objects, each containing:
                 - timestamp: ISO 8601 formatted datetime string
                 - symbol: Standard symbol format
                 - open: Opening price for the period
@@ -130,8 +131,9 @@ def get_historical_data(symbols: Union[str, List[str]], start_date: Optional[str
         >>> # Get daily Apple data for the last month
         >>> response = get_historical_data("AAPL", "2024-01-01", "2024-01-31")
         >>> if response["success"]:
-        ...     bars = response["data"]
-        ...     latest_bar = bars[-1]
+        ...     bars_by_symbol = response["data"]
+        ...     aapl_bars = bars_by_symbol["AAPL"]
+        ...     latest_bar = aapl_bars[-1]
         ...     print(f"Latest close: ${latest_bar.close}")
         ...     print(f"Volume: {latest_bar.volume:,}")
         
@@ -160,7 +162,7 @@ def get_historical_data(symbols: Union[str, List[str]], start_date: Optional[str
             period_map = {"1Day": "d", "1Week": "w", "1Month": "m"}
             period = period_map.get(timeframe, "d")
             
-            all_bars = []
+            bars_by_symbol = {}
             for symbol in symbol_list:
                 vendor_symbol = SymbolFormatter.from_standard(symbol, "eodhd")
                 response = eodhd.get_eod_data(vendor_symbol, start_date, end_date, period, "a")
@@ -169,9 +171,10 @@ def get_historical_data(symbols: Union[str, List[str]], start_date: Optional[str
                     return ensure_standard_response(None, False, response["error"])
                 
                 bars = EODHDTransformer.transform_eod_data(response, symbol)
-                all_bars.extend(bars)
+                # Merge symbol-organized bars into result dictionary
+                bars_by_symbol.update(bars)
             
-            return ensure_standard_response(all_bars)
+            return ensure_standard_response(bars_by_symbol)
             
         elif vendor == 'alpaca':
             vendor_symbols = [SymbolFormatter.from_standard(s, "alpaca") for s in symbol_list]
@@ -207,7 +210,8 @@ def get_real_time_data(symbols: Union[str, List[str]], data_source: Optional[str
     Returns:
         Dict[str, Any]: Standardized response containing:
             - success (bool): True if request succeeded, False otherwise
-            - data (List[StandardSnapshot]): List of market snapshot objects, each containing:
+            - data (Dict[str, StandardSnapshot]): Market snapshots organized by symbol, where each symbol 
+              maps to a StandardSnapshot object containing:
                 - symbol: Standard symbol format
                 - timestamp: ISO 8601 formatted current timestamp
                 - latest_trade: Most recent trade data (price, size, timestamp)
@@ -294,7 +298,8 @@ def get_latest_quotes(symbols: Union[str, List[str]], data_source: Optional[str]
     Returns:
         Dict[str, Any]: Standardized response containing:
             - success (bool): True if request succeeded, False otherwise
-            - data (List[StandardQuote]): List of quote objects, each containing:
+            - data (Dict[str, StandardQuote]): Current quotes organized by symbol, where each symbol 
+              maps to a StandardQuote object containing:
                 - timestamp: ISO 8601 formatted quote timestamp
                 - symbol: Standard symbol format
                 - bid_price: Best bid price (highest price buyers willing to pay)
@@ -374,7 +379,8 @@ def get_latest_trades(symbols: Union[str, List[str]], data_source: Optional[str]
     Returns:
         Dict[str, Any]: Standardized response containing:
             - success (bool): True if request succeeded, False otherwise
-            - data (List[StandardTrade]): List of trade objects, each containing:
+            - data (Dict[str, StandardTrade]): Latest trades organized by symbol, where each symbol 
+              maps to a StandardTrade object containing:
                 - timestamp: ISO 8601 formatted trade execution timestamp
                 - symbol: Standard symbol format
                 - price: Actual execution price per share
