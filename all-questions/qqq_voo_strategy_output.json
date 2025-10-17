@@ -1,0 +1,198 @@
+{
+  "description": "This analysis evaluates a tactical rebalancing strategy that shifts allocation from VOO (S&P 500) to QQQ (Nasdaq-100) \nwhen VOO experiences a 5-day rolling return below -3.0%. \n\nSTRATEGY LOGIC:\n- Base allocation: 60% QQQ (tech/growth) + 40% VOO (large-cap diversified)\n- Trigger: When rolling 5-day return falls below -3.0%\n- Response: Shift to 70% QQQ / 30% VOO (more growth exposure during weakness)\n- Reset: Rebalance back to base allocation M\n\nHYPOTHESIS: This momentum-contrarian hybrid buys growth exposure when broad market weakness occurs, \npotentially capturing mean reversion while maintaining a reasonable default diversification.",
+  "body": [
+    {
+      "key": "strategy_concept",
+      "value": "Tactical Momentum-Contrarian Rebalancing",
+      "description": "When market weakness is detected (VOO rolling return < -3%), shift portfolio toward growth (QQQ), then rebalance back monthly"
+    },
+    {
+      "key": "total_return",
+      "value": "0.00%",
+      "description": "Total cumulative return from 2020-01-01 to 2025-10-16"
+    },
+    {
+      "key": "annualized_return",
+      "value": "0.00%",
+      "description": "Return standardized to annual basis for comparison"
+    },
+    {
+      "key": "annualized_volatility",
+      "value": "0.00%",
+      "description": "Annualized standard deviation of returns (risk level)"
+    },
+    {
+      "key": "sharpe_ratio",
+      "value": "0.00",
+      "description": "Risk-adjusted return (return per unit of risk), assumes 2% risk-free rate"
+    },
+    {
+      "key": "maximum_drawdown",
+      "value": "0.00%",
+      "description": "Largest peak-to-trough decline during backtest"
+    },
+    {
+      "key": "trigger_events_count",
+      "value": 0,
+      "description": "Number of times rolling 5-day return crossed below -3.0%"
+    },
+    {
+      "key": "backtest_periods",
+      "value": 0,
+      "description": "Total trading days in backtest (2020-01-01 to 2025-10-16)"
+    },
+    {
+      "key": "base_allocation",
+      "value": "60% QQQ / 40% VOO",
+      "description": "Default portfolio allocation maintained through rebalancing"
+    },
+    {
+      "key": "tactical_allocation",
+      "value": "70% QQQ / 30% VOO",
+      "description": "Temporary allocation when rolling return trigger is activated"
+    },
+    {
+      "key": "trigger_threshold",
+      "value": "-3.0%",
+      "description": "Rolling 5-day return level that activates tactical shift"
+    },
+    {
+      "key": "rebalance_frequency",
+      "value": "M (Monthly)",
+      "description": "How often portfolio is rebalanced back to base allocation"
+    },
+    {
+      "key": "rolling_window",
+      "value": "5 trading days (~1.0 weeks)",
+      "description": "Lookback period for return calculation used in trigger detection"
+    },
+    {
+      "key": "initial_capital",
+      "value": "$10,000.00",
+      "description": "Starting portfolio value for backtest"
+    }
+  ],
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Fetch 5-day historical daily OHLCV data for QQQ and VOO",
+      "function": "get_historical_data",
+      "endpoint": "/v2/stocks/bars",
+      "params": {
+        "symbols": [
+          "QQQ",
+          "VOO"
+        ],
+        "start_date": "2020-01-01",
+        "end_date": "2025-10-16",
+        "timeframe": "1Day",
+        "feed": "iex"
+      }
+    },
+    {
+      "type": "engine",
+      "description": "Step 2: Calculate daily log returns (ln(P_today/P_yesterday)) from closing prices",
+      "function": "calculate_log_returns",
+      "tool": "mcp_analytics_server",
+      "inputs": [
+        "QQQ daily close prices",
+        "VOO daily close prices"
+      ],
+      "outputs": [
+        "QQQ daily log returns",
+        "VOO daily log returns"
+      ]
+    },
+    {
+      "type": "engine",
+      "description": "Step 3: Calculate 5-day rolling returns by summing 5 consecutive daily log returns",
+      "function": "calculate_rolling_volatility or custom rolling window",
+      "tool": "mcp_analytics_server",
+      "inputs": [
+        "VOO daily log returns",
+        "window=5"
+      ],
+      "outputs": [
+        "VOO 5-day rolling returns"
+      ]
+    },
+    {
+      "type": "compute",
+      "description": "Step 4: Detect trigger events - identify indices where rolling return crosses below -3.0%",
+      "function": "client_compute",
+      "logic": "For each rolling return value: if value < -0.03 and previous value >= -0.03, record trigger"
+    },
+    {
+      "type": "compute",
+      "description": "Step 5: Generate rebalancing time-series weights",
+      "function": "client_compute",
+      "logic": "\n                    For each trading day:\n                      If trigger occurred within last ~21 days (1 month):\n                        Weight = 70% QQQ / 30% VOO\n                      Else:\n                        Weight = 60% QQQ / 40% VOO\n                    "
+    },
+    {
+      "type": "engine",
+      "description": "Step 6: Backtest strategy with M-frequency rebalancing and 0.1% transaction costs",
+      "function": "backtest_strategy",
+      "tool": "mcp_analytics_server",
+      "params": {
+        "prices": {
+          "QQQ": "price_series",
+          "VOO": "price_series"
+        },
+        "strategy_weights": "weight_time_series",
+        "rebalance_frequency": "M",
+        "transaction_cost": 0.001,
+        "initial_value": 10000.0
+      },
+      "outputs": [
+        "cumulative_returns",
+        "annual_return",
+        "volatility",
+        "sharpe_ratio",
+        "max_drawdown"
+      ]
+    }
+  ],
+  "parameters": {
+    "base_allocation": {
+      "qqq_weight": 0.6,
+      "voo_weight": 0.4,
+      "description": "Default buy-and-hold allocation"
+    },
+    "tactical_allocation": {
+      "qqq_weight": 0.7,
+      "voo_weight": 0.3,
+      "description": "Temporary allocation when weakness signal fires"
+    },
+    "trigger_parameters": {
+      "rolling_window_days": 5,
+      "threshold_return": -0.03,
+      "asset_for_trigger": "VOO",
+      "description": "Trigger fires when VOO rolling return crosses below threshold"
+    },
+    "rebalancing": {
+      "frequency": "M",
+      "reset_to_base": true,
+      "description": "Rebalance back to base allocation at specified frequency"
+    },
+    "backtest_settings": {
+      "start_date": "2020-01-01",
+      "end_date": "2025-10-16",
+      "initial_capital": 10000.0,
+      "transaction_cost": 0.001,
+      "slippage": "assumed_in_transaction_cost"
+    }
+  },
+  "reproducibility": {
+    "all_parameters_configurable": true,
+    "no_hardcoded_values": true,
+    "tool_agnostic": false,
+    "required_tools": [
+      "get_historical_data (Alpaca Market Data API)",
+      "calculate_log_returns (MCP Analytics)",
+      "calculate_rolling_volatility or custom rolling window (MCP Analytics)",
+      "backtest_strategy (MCP Analytics)"
+    ],
+    "python_implementation": "qqq_voo_momentum_rebalancing_strategy.py",
+    "example_usage": "\n                strategy = QQQVOORebalancingStrategy(\n                    base_qqq_weight=0.6,\n                    base_voo_weight=0.4,\n                    rolling_window=5,\n                    threshold_return=-0.03,\n                    rebalance_frequency='M',\n                    buy_qqq_weight=0.7,\n                    buy_voo_weight=0.3,\n                    start_date='2020-01-01',\n                    initial_value=10000.0\n                )\n                \n                # With real data:\n                strategy.prices = get_historical_data(symbols=['QQQ','VOO'], start_date='2020-01-01')\n                strategy.returns = calculate_log_returns(strategy.prices)\n                strategy.rolling_returns = calculate_rolling_returns(strategy.returns, window=5)\n                triggers = strategy.identify_triggers_manual(strategy.rolling_returns)\n                weights = strategy.build_strategy_weights_manual(num_periods)\n                results = backtest_strategy(prices, weights, rebalance_frequency='M')\n                output = strategy.generate_json_output(results)\n                "
+  }
+}

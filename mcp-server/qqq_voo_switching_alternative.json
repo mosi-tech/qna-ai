@@ -1,0 +1,263 @@
+{
+  "description": "Analysis of a conditional switching strategy: Buy VOO into a core portfolio every weekly when QQQ's rolling 30-day return falls below -5.0%. This strategy aims to systematically buy weakness in growth-focused assets (QQQ) while maintaining a balanced core holding (VOO). The analysis backtests this approach from 2022-01-01 to 2024-10-16 with an initial investment of $25,000.00.",
+  "body": [
+    {
+      "key": "strategy_type",
+      "value": "Tactical Allocation / Switching Strategy",
+      "description": "This is a tactical (shorter-term) allocation strategy that systematically adjusts exposure based on momentum signals from a growth ETF"
+    },
+    {
+      "key": "signal_asset",
+      "value": "QQQ",
+      "description": "Asset used to generate trading signals (QQQ). When this asset's rolling return drops below the threshold, it triggers a buying opportunity in the core asset"
+    },
+    {
+      "key": "core_asset",
+      "value": "VOO",
+      "description": "Asset purchased when signal triggered (VOO). This is the holding asset for the strategy. Typically more conservative than the signal asset"
+    },
+    {
+      "key": "signal_threshold",
+      "value": "-5.0%",
+      "description": "Rolling return threshold that triggers buying. When QQQ's 30-day return falls below -5.0%, the strategy allocates capital to VOO. This captures momentum reversals or buy-the-dip opportunities"
+    },
+    {
+      "key": "rolling_period",
+      "value": "30 days (Monthly)",
+      "description": "Time window used to calculate rolling returns. A 30-day rolling return measures recent momentum and helps identify overbought/oversold conditions"
+    },
+    {
+      "key": "rebalance_frequency",
+      "value": "Weekly",
+      "description": "How often the strategy checks the signal and potentially executes trades. Weekly rebalancing means signal checks and adjustments occur on a monthly basis"
+    },
+    {
+      "key": "initial_capital",
+      "value": "$25,000.00",
+      "description": "Starting investment amount used to backtest the strategy. This capital is allocated according to the switching strategy signals"
+    },
+    {
+      "key": "analysis_period",
+      "value": "2022-01-01 to 2024-10-16",
+      "description": "Historical period over which the strategy is backtested. Longer periods show robustness across market cycles"
+    },
+    {
+      "key": "data_source",
+      "value": "ALPACA",
+      "description": "Financial data provider used for price data and calculations (ALPACA)"
+    },
+    {
+      "key": "trading_cost_assumption",
+      "value": "0.1% per trade",
+      "description": "Estimated transaction costs including commissions and spreads. Modern brokers often have lower costs; adjust this parameter based on your actual trading costs"
+    },
+    {
+      "key": "strategy_mechanics",
+      "value": "Monthly check: If QQQ rolling 30d return < -5.0%, buy VOO",
+      "description": "Each month, the strategy evaluates QQQ's 30-day return. When it drops below the threshold, indicating recent weakness/momentum reversal, the strategy buys VOO. This captures mean reversion or systematic weakness in growth assets"
+    },
+    {
+      "key": "rationale",
+      "value": "Buy weakness in growth assets while holding stability asset",
+      "description": "QQQ is more volatile (growth-focused). When it drops -5.0%+ in a 30-day window, it may represent an attractive entry point. VOO provides stability while systematically accumulating on dips in QQQ"
+    },
+    {
+      "key": "expected_patterns",
+      "value": "Outperformance in range-bound or mean-reverting markets; underperformance in strong trends",
+      "description": "This strategy performs well when markets oscillate (buy-the-dip works). It may underperform in strong sustained uptrends where the signal asset never hits the threshold, or sustained downtrends where the signal becomes frequent but prices keep falling"
+    },
+    {
+      "key": "risk_characteristics",
+      "value": "Lower downside capture (holds defensive asset); higher cost from frequent trading",
+      "description": "By allocating to the more defensive asset during weakness, the strategy reduces downside but may miss rallies. Frequent rebalancing creates trading costs that reduce net returns"
+    }
+  ],
+  "parameters": {
+    "signal_asset": "QQQ",
+    "core_asset": "VOO",
+    "signal_threshold": -0.05,
+    "signal_threshold_display": "-5.0%",
+    "rolling_window_days": 30,
+    "rolling_period_description": "Monthly",
+    "rebalance_frequency": "weekly",
+    "initial_investment": 25000,
+    "analysis_start_date": "2022-01-01",
+    "analysis_end_date": "2024-10-16",
+    "data_source": "alpaca"
+  },
+  "workflow": [
+    {
+      "type": "fetch",
+      "description": "Step 1: Fetch historical daily price data for QQQ",
+      "function": "alpaca_market_stocks_bars",
+      "parameters": {
+        "symbols": "QQQ",
+        "timeframe": "1Day",
+        "start": "2022-01-01",
+        "end": "2024-10-16",
+        "data_source": "alpaca"
+      }
+    },
+    {
+      "type": "fetch",
+      "description": "Step 2: Fetch historical daily price data for VOO",
+      "function": "alpaca_market_stocks_bars",
+      "parameters": {
+        "symbols": "VOO",
+        "timeframe": "1Day",
+        "start": "2022-01-01",
+        "end": "2024-10-16",
+        "data_source": "alpaca"
+      }
+    },
+    {
+      "type": "engine",
+      "description": "Step 3: Calculate log returns from price series",
+      "function": "calculate_log_returns",
+      "inputs": [
+        "signal_prices",
+        "core_prices"
+      ],
+      "outputs": [
+        "signal_returns",
+        "core_returns"
+      ]
+    },
+    {
+      "type": "engine",
+      "description": "Step 4: Calculate 30-day rolling returns",
+      "function": "calculate_rolling_volatility",
+      "inputs": [
+        "signal_returns"
+      ],
+      "parameters": {
+        "window": 30
+      },
+      "outputs": [
+        "rolling_returns"
+      ]
+    },
+    {
+      "type": "engine",
+      "description": "Step 5: Identify buy signals where rolling return < -5.0%",
+      "function": "client_compute",
+      "inputs": [
+        "rolling_returns"
+      ],
+      "outputs": [
+        "buy_signals"
+      ]
+    },
+    {
+      "type": "engine",
+      "description": "Step 6: Generate weekly rebalancing trades",
+      "function": "client_compute",
+      "inputs": [
+        "buy_signals",
+        "core_prices"
+      ],
+      "outputs": [
+        "trade_schedule"
+      ]
+    },
+    {
+      "type": "engine",
+      "description": "Step 7: Backtest portfolio with switching strategy",
+      "function": "backtest_strategy",
+      "parameters": {
+        "prices": [
+          "VOO"
+        ],
+        "strategy_weights": "dynamic_via_signals",
+        "initial_value": 25000,
+        "transaction_cost": 0.001
+      },
+      "outputs": [
+        "portfolio_performance"
+      ]
+    },
+    {
+      "type": "engine",
+      "description": "Step 8: Calculate comprehensive performance metrics",
+      "function": "calculate_portfolio_metrics",
+      "inputs": [
+        "portfolio_returns"
+      ],
+      "outputs": [
+        "performance_metrics"
+      ]
+    }
+  ],
+  "strategy_logic": {
+    "description": "Monthly rebalancing with conditional buying: Each month, check if QQQ's 30-day rolling return is below -5.0%. If true, allocate capital to buy VOO. If false, hold existing position.",
+    "rules": [
+      "Trigger Condition: QQQ rolling 30-day return < -5.0%",
+      "Action on Trigger: Buy VOO with available capital",
+      "Rebalance Frequency: weekly",
+      "Hold Asset: VOO",
+      "No stop losses or take profits defined"
+    ]
+  },
+  "data_requirements": {
+    "symbol_1": {
+      "symbol": "QQQ",
+      "purpose": "Signal generation (rolling return threshold)",
+      "data_frequency": "Daily OHLCV"
+    },
+    "symbol_2": {
+      "symbol": "VOO",
+      "purpose": "Core holding and buying asset",
+      "data_frequency": "Daily OHLCV"
+    }
+  },
+  "tool_references": {
+    "data_fetching": {
+      "tool": "alpaca_market_stocks_bars",
+      "description": "Retrieves historical daily OHLCV price data",
+      "parameters": {
+        "symbols": [
+          "QQQ",
+          "VOO"
+        ],
+        "timeframe": "1Day",
+        "start": "YYYY-MM-DD",
+        "end": "YYYY-MM-DD"
+      }
+    },
+    "return_calculations": {
+      "tool": "calculate_log_returns",
+      "description": "Converts price series to log returns for statistical analysis"
+    },
+    "rolling_analysis": {
+      "tool": "calculate_rolling_volatility",
+      "description": "Calculates rolling window statistics (window=7 for weekly)",
+      "note": "Use window parameter to match rolling period"
+    },
+    "signal_generation": {
+      "tool": "client_compute",
+      "description": "Identifies when rolling return threshold is breached"
+    },
+    "backtesting": {
+      "tool": "backtest_strategy",
+      "description": "Simulates portfolio performance with switching signals",
+      "parameters": {
+        "prices": "Daily OHLCV data",
+        "strategy_weights": "Generated from signals",
+        "transaction_cost": 0.001
+      }
+    },
+    "performance_metrics": {
+      "tool": "calculate_portfolio_metrics",
+      "description": "Comprehensive performance analysis (Sharpe, Sortino, drawdown, etc.)"
+    }
+  },
+  "adaptation_notes": {
+    "change_signal_asset": "Modify 'signal_asset' parameter (e.g., 'QQQ' \u2192 'ARKK')",
+    "change_core_asset": "Modify 'core_asset' parameter (e.g., 'VOO' \u2192 'BND')",
+    "change_threshold": "Modify 'signal_threshold' parameter (e.g., -0.03 \u2192 -0.05 for -5%)",
+    "change_rolling_period": "Modify 'rolling_window_days' parameter (e.g., 7 \u2192 30 for monthly)",
+    "change_rebalance_frequency": "Modify 'rebalance_frequency' parameter (e.g., 'monthly' \u2192 'weekly')",
+    "change_time_period": "Modify 'start_date' and 'end_date' parameters",
+    "change_capital": "Modify 'initial_investment' parameter for different portfolio sizes"
+  }
+}

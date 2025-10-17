@@ -74,13 +74,22 @@ class AnalysisService(BaseService):
         
         return self.coding_prompt
     
-    def set_enriched_prompt(self, enriched_prompt: str):
-        """Set enriched prompt to override system prompt temporarily"""
-        self._enriched_prompt = enriched_prompt
-        self._enriched_prompt_mode = True
-        # Update provider's raw system prompt so Claude CLI gets the enriched prompt
-        self.llm_service.provider.set_system_prompt(enriched_prompt)
-        self.logger.info("🔧 Set enriched prompt mode and updated provider")
+    def set_enriched_prompt(self, code_prompt_result: Dict[str, Any]):
+        """Set enriched prompt from code prompt builder result"""
+        if isinstance(code_prompt_result, str):
+            # Legacy support for old string-based prompts
+            self._enriched_prompt = code_prompt_result
+            self._enriched_prompt_mode = True
+            self.llm_service.provider.set_system_prompt(code_prompt_result)
+            self.logger.info("🔧 Set legacy enriched prompt mode")
+        else:
+            # New message-based approach
+            self._enriched_prompt = code_prompt_result
+            self._enriched_prompt_mode = True
+            # Set system prompt from the structured result
+            system_prompt = code_prompt_result.get("system_prompt", "Generate financial analysis scripts.")
+            self.llm_service.provider.set_system_prompt(system_prompt)
+            self.logger.info("🔧 Set structured enriched prompt mode with system prompt and user messages")
     
     async def clear_enriched_prompt(self):
         """Clear enriched prompt and return to normal system prompt mode"""
@@ -161,14 +170,21 @@ class AnalysisService(BaseService):
             self.llm_service.provider.set_system_prompt(system_prompt)
             self.llm_service.provider.set_tools(mcp_tools)
             
-            # Create message structure with explicit instruction to build Python scripts
-            enhanced_question = f"Write a Python script to answer this question. Follow the instructions in the system prompt.\n\nQuestion: {question}"
-            messages = [
-                {
-                    "role": "user",
-                    "content": enhanced_question
-                }
-            ]
+            # Check if we're using structured enriched prompt or legacy mode
+            if self._enriched_prompt_mode and isinstance(self._enriched_prompt, dict):
+                # Use structured messages from code prompt builder
+                messages = self._enriched_prompt.get("user_messages", [])
+                self.logger.info(f"📨 Using {len(messages)} structured messages from code prompt builder")
+            else:
+                # Legacy mode: create message structure with explicit instruction
+                enhanced_question = f"Write a Python script to answer this question. Follow the instructions in the system prompt.\n\nQuestion: {question}"
+                messages = [
+                    {
+                        "role": "user",
+                        "content": enhanced_question
+                    }
+                ]
+                self.logger.info("📨 Using legacy single message mode")
             
             # Make request - this will route to Claude Code CLI automatically
             result = await self.llm_service.make_request(
