@@ -1,0 +1,746 @@
+{
+  "description": "Additional retail investor analysis tools based on available MCP functions",
+  "version": "1.0.0",
+  "last_updated": "2025-09-21",
+  "total_new_tools": 25,
+  "usage_note": "These tools leverage existing MCP analytics functions for comprehensive retail analysis",
+
+  "volatility_analysis_tools": {
+    "description": "Advanced volatility analysis tools using MCP risk metrics",
+    "tools": [
+      {
+        "id": "volatility-timing-analyzer",
+        "name": "Volatility Timing Strategy Analyzer",
+        "description": "Analyze returns from buying stocks when volatility is below certain percentiles",
+        "user_questions": [
+          "What if I bought AAPL when volatility was low?",
+          "Volatility timing strategy analysis",
+          "Buy when volatility below 90th percentile",
+          "Historical volatility timing returns"
+        ],
+        "keywords": ["volatility timing", "buy when volatility", "volatility strategy", "volatility percentile"],
+        "inputs": {
+          "required": ["symbol"],
+          "optional": ["volatility_percentile", "years"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Stock symbol to analyze"
+          },
+          "volatility_percentile": {
+            "type": "number",
+            "default": 90,
+            "description": "Volatility percentile threshold for entry signals"
+          },
+          "years": {
+            "type": "number",
+            "default": 5,
+            "description": "Years of historical data to analyze"
+          }
+        },
+        "mcp_functions_used": [
+          "alpaca_market_stocks_bars",
+          "prices_to_returns", 
+          "calculate_risk_metrics",
+          "analyze_signal_quality",
+          "calculate_returns_metrics"
+        ],
+        "output_format": {
+          "strategy_return": "number",
+          "buy_hold_return": "number",
+          "signal_count": "number",
+          "win_rate": "number",
+          "average_holding_period": "number",
+          "sharpe_ratio_comparison": "object"
+        },
+        "complexity": "advanced"
+      },
+      {
+        "id": "rolling-volatility-analyzer",
+        "name": "Rolling Volatility Pattern Analyzer", 
+        "description": "Analyze rolling volatility patterns and regime changes",
+        "user_questions": [
+          "How does AAPL volatility change over time?",
+          "Rolling volatility analysis",
+          "Volatility regime changes",
+          "Volatility trends and patterns"
+        ],
+        "keywords": ["rolling volatility", "volatility trends", "volatility patterns", "volatility regimes"],
+        "inputs": {
+          "required": ["symbol"],
+          "optional": ["window_size", "analysis_period"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Stock symbol for volatility analysis"
+          },
+          "window_size": {
+            "type": "number", 
+            "default": 30,
+            "description": "Rolling window size in days"
+          },
+          "analysis_period": {
+            "type": "string",
+            "default": "2y",
+            "description": "Period for volatility analysis"
+          }
+        },
+        "mcp_functions_used": [
+          "alpaca_market_stocks_bars",
+          "prices_to_returns",
+          "calculate_risk_metrics"
+        ],
+        "output_format": {
+          "current_volatility": "number",
+          "volatility_percentile": "number",
+          "volatility_trend": "string",
+          "regime_changes": "array",
+          "volatility_forecast": "object"
+        },
+        "complexity": "intermediate"
+      },
+      {
+        "id": "vol-surface-analyzer",
+        "name": "Volatility Surface Analyzer",
+        "description": "Compare realized vs expected volatility using historical data",
+        "user_questions": [
+          "Is current volatility normal for AAPL?",
+          "Historical volatility context",
+          "Volatility expectations vs reality",
+          "Volatility surface analysis"
+        ],
+        "keywords": ["volatility surface", "historical volatility", "volatility context", "realized volatility"],
+        "inputs": {
+          "required": ["symbol"],
+          "optional": ["lookback_periods"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Symbol for volatility surface analysis"
+          },
+          "lookback_periods": {
+            "type": "array",
+            "default": [30, 60, 90, 252],
+            "description": "Different periods for volatility calculation"
+          }
+        },
+        "mcp_functions_used": [
+          "alpaca_market_stocks_bars",
+          "prices_to_returns",
+          "calculate_risk_metrics",
+          "calculate_correlation_analysis"
+        ],
+        "output_format": {
+          "volatility_by_period": "object",
+          "volatility_ranking": "object",
+          "term_structure": "array",
+          "volatility_persistence": "number"
+        },
+        "complexity": "advanced"
+      }
+    ]
+  },
+
+  "technical_signal_tools": {
+    "description": "Technical analysis and signal quality tools",
+    "tools": [
+      {
+        "id": "rsi-signal-backtester",
+        "name": "RSI Signal Backtester",
+        "description": "Backtest RSI oversold/overbought signals with success rates",
+        "user_questions": [
+          "How reliable are RSI signals for AAPL?",
+          "RSI oversold success rate",
+          "Backtest RSI signals",
+          "RSI signal quality analysis"
+        ],
+        "keywords": ["RSI signals", "RSI backtest", "RSI success rate", "RSI reliability"],
+        "inputs": {
+          "required": ["symbol"],
+          "optional": ["rsi_period", "oversold_threshold", "overbought_threshold"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Symbol for RSI signal analysis"
+          },
+          "rsi_period": {
+            "type": "number",
+            "default": 14,
+            "description": "RSI calculation period"
+          },
+          "oversold_threshold": {
+            "type": "number",
+            "default": 30,
+            "description": "RSI oversold threshold"
+          },
+          "overbought_threshold": {
+            "type": "number",
+            "default": 70,
+            "description": "RSI overbought threshold"
+          }
+        },
+        "mcp_functions_used": [
+          "alpaca_market_stocks_bars",
+          "calculate_rsi",
+          "generate_signals", 
+          "analyze_signal_quality"
+        ],
+        "output_format": {
+          "oversold_signals": "object",
+          "overbought_signals": "object",
+          "success_rates": "object",
+          "average_returns": "object",
+          "signal_reliability_score": "number"
+        },
+        "complexity": "intermediate"
+      },
+      {
+        "id": "ma-crossover-analyzer",
+        "name": "Moving Average Crossover Analyzer",
+        "description": "Analyze golden cross and death cross signals with historical performance",
+        "user_questions": [
+          "How good are golden cross signals?",
+          "Death cross vs golden cross performance",
+          "Moving average crossover success",
+          "MA crossover signal analysis"
+        ],
+        "keywords": ["golden cross", "death cross", "MA crossover", "moving average signals"],
+        "inputs": {
+          "required": ["symbol"],
+          "optional": ["fast_period", "slow_period"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Symbol for MA crossover analysis"
+          },
+          "fast_period": {
+            "type": "number",
+            "default": 50,
+            "description": "Fast moving average period"
+          },
+          "slow_period": {
+            "type": "number", 
+            "default": 200,
+            "description": "Slow moving average period"
+          }
+        },
+        "mcp_functions_used": [
+          "alpaca_market_stocks_bars",
+          "detect_sma_crossover",
+          "analyze_signal_quality",
+          "calculate_returns_metrics"
+        ],
+        "output_format": {
+          "golden_cross_performance": "object",
+          "death_cross_performance": "object",
+          "signal_frequency": "object",
+          "current_signal_status": "string",
+          "signal_strength_score": "number"
+        },
+        "complexity": "intermediate"
+      },
+      {
+        "id": "multi-indicator-confluence",
+        "name": "Multi-Indicator Confluence Analyzer",
+        "description": "Find confluence between multiple technical indicators for stronger signals",
+        "user_questions": [
+          "Multiple indicators agreeing on AAPL?",
+          "Technical indicator confluence",
+          "Combined signal analysis", 
+          "Multi-indicator agreement"
+        ],
+        "keywords": ["indicator confluence", "multiple indicators", "combined signals", "technical agreement"],
+        "inputs": {
+          "required": ["symbol"],
+          "optional": ["indicators"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Symbol for confluence analysis"
+          },
+          "indicators": {
+            "type": "array",
+            "default": ["rsi", "macd", "bollinger", "sma_crossover"],
+            "description": "Technical indicators to analyze for confluence"
+          }
+        },
+        "mcp_functions_used": [
+          "alpaca_market_stocks_bars",
+          "calculate_rsi",
+          "calculate_macd", 
+          "calculate_bollinger_bands",
+          "detect_sma_crossover",
+          "analyze_signal_quality"
+        ],
+        "output_format": {
+          "confluence_score": "number",
+          "agreeing_indicators": "array",
+          "signal_strength": "string",
+          "historical_confluence_performance": "object"
+        },
+        "complexity": "advanced"
+      }
+    ]
+  },
+
+  "portfolio_optimization_tools": {
+    "description": "Portfolio analysis and optimization tools",
+    "tools": [
+      {
+        "id": "portfolio-risk-analyzer",
+        "name": "Portfolio Risk Analyzer",
+        "description": "Comprehensive portfolio risk analysis including concentration and correlation",
+        "user_questions": [
+          "How risky is my portfolio?",
+          "Portfolio risk analysis",
+          "Portfolio concentration risk",
+          "Portfolio diversification check"
+        ],
+        "keywords": ["portfolio risk", "concentration risk", "diversification", "portfolio analysis"],
+        "inputs": {
+          "required": ["portfolio_weights", "symbols"]
+        },
+        "parameters": {
+          "portfolio_weights": {
+            "type": "array",
+            "description": "Portfolio allocation weights"
+          },
+          "symbols": {
+            "type": "array", 
+            "description": "Portfolio symbols"
+          },
+          "analysis_period": {
+            "type": "string",
+            "default": "1y",
+            "description": "Period for risk analysis"
+          }
+        },
+        "mcp_functions_used": [
+          "alpaca_market_stocks_bars",
+          "prices_to_returns",
+          "calculate_portfolio_metrics",
+          "analyze_portfolio_concentration",
+          "calculate_correlation_analysis"
+        ],
+        "output_format": {
+          "portfolio_volatility": "number",
+          "sharpe_ratio": "number",
+          "concentration_metrics": "object",
+          "correlation_matrix": "object",
+          "risk_contributors": "array",
+          "diversification_score": "number"
+        },
+        "complexity": "advanced"
+      },
+      {
+        "id": "rebalancing-optimizer",
+        "name": "Portfolio Rebalancing Optimizer",
+        "description": "Optimize portfolio rebalancing frequency and thresholds",
+        "user_questions": [
+          "How often should I rebalance?",
+          "Optimal rebalancing frequency",
+          "Rebalancing threshold optimization",
+          "Portfolio rebalancing analysis"
+        ],
+        "keywords": ["rebalancing", "rebalancing frequency", "portfolio optimization", "rebalancing threshold"],
+        "inputs": {
+          "required": ["portfolio_weights", "symbols"],
+          "optional": ["rebalancing_frequencies"]
+        },
+        "parameters": {
+          "portfolio_weights": {
+            "type": "array",
+            "description": "Target portfolio weights"
+          },
+          "symbols": {
+            "type": "array",
+            "description": "Portfolio symbols"
+          },
+          "rebalancing_frequencies": {
+            "type": "array",
+            "default": ["monthly", "quarterly", "semi_annual", "annual"],
+            "description": "Rebalancing frequencies to test"
+          }
+        },
+        "mcp_functions_used": [
+          "alpaca_market_stocks_bars",
+          "prices_to_returns",
+          "calculate_portfolio_metrics",
+          "stress_test_portfolio"
+        ],
+        "output_format": {
+          "optimal_frequency": "string",
+          "frequency_comparison": "object",
+          "transaction_cost_impact": "object",
+          "risk_adjusted_returns": "object"
+        },
+        "complexity": "advanced"
+      },
+      {
+        "id": "etf-overlap-analyzer",
+        "name": "ETF Overlap Analyzer",
+        "description": "Analyze overlap between ETF holdings for portfolio optimization",
+        "user_questions": [
+          "Do my ETFs overlap?",
+          "ETF holdings overlap analysis",
+          "Portfolio redundancy check",
+          "ETF diversification analysis"
+        ],
+        "keywords": ["ETF overlap", "holdings overlap", "redundancy", "ETF diversification"],
+        "inputs": {
+          "required": ["etf_symbols"]
+        },
+        "parameters": {
+          "etf_symbols": {
+            "type": "array",
+            "description": "ETF symbols to analyze for overlap"
+          },
+          "overlap_threshold": {
+            "type": "number",
+            "default": 5,
+            "description": "Minimum percentage for significant overlap"
+          }
+        },
+        "mcp_functions_used": [
+          "eodhd_fundamentals",
+          "calculate_active_share"
+        ],
+        "output_format": {
+          "overlap_matrix": "object",
+          "redundant_holdings": "array",
+          "diversification_score": "number",
+          "optimization_suggestions": "array"
+        },
+        "complexity": "intermediate"
+      }
+    ]
+  },
+
+  "regime_analysis_tools": {
+    "description": "Market regime and cycle analysis tools",
+    "tools": [
+      {
+        "id": "market-regime-detector",
+        "name": "Market Regime Detector", 
+        "description": "Detect bull/bear/sideways market regimes and their characteristics",
+        "user_questions": [
+          "What market regime are we in?",
+          "Bull or bear market analysis",
+          "Market cycle analysis",
+          "Current market regime"
+        ],
+        "keywords": ["market regime", "bull market", "bear market", "market cycle"],
+        "inputs": {
+          "required": ["symbol"],
+          "optional": ["lookback_period"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "default": "SPY",
+            "description": "Market index for regime analysis"
+          },
+          "lookback_period": {
+            "type": "number",
+            "default": 252,
+            "description": "Days to analyze for regime detection"
+          }
+        },
+        "mcp_functions_used": [
+          "alpaca_market_stocks_bars",
+          "prices_to_returns",
+          "calculate_risk_metrics",
+          "calculate_drawdown_analysis"
+        ],
+        "output_format": {
+          "current_regime": "string",
+          "regime_duration": "number",
+          "regime_characteristics": "object",
+          "regime_probability": "number",
+          "next_regime_indicators": "array"
+        },
+        "complexity": "advanced"
+      },
+      {
+        "id": "crisis-performance-analyzer",
+        "name": "Crisis Performance Analyzer",
+        "description": "Analyze how assets perform during market crises and stress periods",
+        "user_questions": [
+          "How did AAPL perform in 2020 crash?",
+          "Crisis performance analysis",
+          "Bear market performance",
+          "Stress test analysis"
+        ],
+        "keywords": ["crisis performance", "bear market", "market crash", "stress test"],
+        "inputs": {
+          "required": ["symbol"],
+          "optional": ["crisis_periods"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Symbol for crisis performance analysis"
+          },
+          "crisis_periods": {
+            "type": "array",
+            "default": ["2020-02-01:2020-04-01", "2008-09-01:2009-03-01"],
+            "description": "Crisis periods to analyze"
+          }
+        },
+        "mcp_functions_used": [
+          "alpaca_market_stocks_bars",
+          "prices_to_returns",
+          "calculate_risk_metrics",
+          "calculate_drawdown_analysis",
+          "stress_test_portfolio"
+        ],
+        "output_format": {
+          "crisis_returns": "object",
+          "recovery_analysis": "object",
+          "stress_test_results": "object",
+          "defensive_score": "number"
+        },
+        "complexity": "advanced"
+      }
+    ]
+  },
+
+  "correlation_analysis_tools": {
+    "description": "Correlation and relationship analysis tools", 
+    "tools": [
+      {
+        "id": "rolling-correlation-analyzer",
+        "name": "Rolling Correlation Analyzer",
+        "description": "Analyze how correlations between assets change over time",
+        "user_questions": [
+          "How correlated are AAPL and MSFT?",
+          "Rolling correlation analysis",
+          "Correlation changes over time",
+          "Asset correlation trends"
+        ],
+        "keywords": ["correlation", "rolling correlation", "asset correlation", "correlation trends"],
+        "inputs": {
+          "required": ["symbol1", "symbol2"],
+          "optional": ["window_size", "analysis_period"]
+        },
+        "parameters": {
+          "symbol1": {
+            "type": "string",
+            "description": "First symbol for correlation analysis"
+          },
+          "symbol2": {
+            "type": "string", 
+            "description": "Second symbol for correlation analysis"
+          },
+          "window_size": {
+            "type": "number",
+            "default": 60,
+            "description": "Rolling window size in days"
+          },
+          "analysis_period": {
+            "type": "string",
+            "default": "2y",
+            "description": "Period for correlation analysis"
+          }
+        },
+        "mcp_functions_used": [
+          "alpaca_market_stocks_bars",
+          "prices_to_returns",
+          "calculate_correlation_analysis"
+        ],
+        "output_format": {
+          "current_correlation": "number",
+          "correlation_trend": "string",
+          "correlation_stability": "number",
+          "correlation_percentile": "number",
+          "regime_correlations": "object"
+        },
+        "complexity": "intermediate"
+      },
+      {
+        "id": "sector-correlation-heatmap",
+        "name": "Sector Correlation Heatmap",
+        "description": "Visualize correlations across different market sectors",
+        "user_questions": [
+          "Which sectors move together?",
+          "Sector correlation analysis",
+          "Sector relationship heatmap",
+          "Inter-sector correlations"
+        ],
+        "keywords": ["sector correlation", "sector relationships", "sector heatmap", "inter-sector"],
+        "inputs": {
+          "required": ["sector_symbols"],
+          "optional": ["analysis_period"]
+        },
+        "parameters": {
+          "sector_symbols": {
+            "type": "object",
+            "description": "Mapping of sectors to representative ETF symbols"
+          },
+          "analysis_period": {
+            "type": "string",
+            "default": "1y", 
+            "description": "Period for correlation analysis"
+          }
+        },
+        "mcp_functions_used": [
+          "alpaca_market_stocks_bars",
+          "prices_to_returns",
+          "calculate_correlation_analysis"
+        ],
+        "output_format": {
+          "correlation_matrix": "object",
+          "strongest_correlations": "array",
+          "weakest_correlations": "array",
+          "sector_clusters": "array"
+        },
+        "complexity": "intermediate"
+      }
+    ]
+  },
+
+  "risk_assessment_tools": {
+    "description": "Advanced risk assessment and measurement tools",
+    "tools": [
+      {
+        "id": "tail-risk-analyzer",
+        "name": "Tail Risk Analyzer",
+        "description": "Analyze extreme downside risk using VaR and CVaR metrics",
+        "user_questions": [
+          "What's the worst case scenario for AAPL?",
+          "Tail risk analysis",
+          "Value at Risk calculation",
+          "Extreme downside risk"
+        ],
+        "keywords": ["tail risk", "VaR", "value at risk", "extreme risk", "worst case"],
+        "inputs": {
+          "required": ["symbol"],
+          "optional": ["confidence_levels"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Symbol for tail risk analysis"
+          },
+          "confidence_levels": {
+            "type": "array",
+            "default": [0.01, 0.05, 0.1],
+            "description": "Confidence levels for VaR calculation"
+          }
+        },
+        "mcp_functions_used": [
+          "alpaca_market_stocks_bars",
+          "prices_to_returns",
+          "calculate_var",
+          "calculate_cvar"
+        ],
+        "output_format": {
+          "var_estimates": "object",
+          "cvar_estimates": "object",
+          "tail_risk_score": "number",
+          "extreme_scenarios": "array"
+        },
+        "complexity": "advanced"
+      },
+      {
+        "id": "beta-stability-analyzer",
+        "name": "Beta Stability Analyzer",
+        "description": "Analyze how stock beta changes over different market conditions",
+        "user_questions": [
+          "How stable is AAPL's beta?",
+          "Beta analysis over time",
+          "Market sensitivity analysis",
+          "Beta stability assessment"
+        ],
+        "keywords": ["beta stability", "beta analysis", "market sensitivity", "systematic risk"],
+        "inputs": {
+          "required": ["symbol"],
+          "optional": ["benchmark", "analysis_windows"]
+        },
+        "parameters": {
+          "symbol": {
+            "type": "string",
+            "description": "Symbol for beta analysis"
+          },
+          "benchmark": {
+            "type": "string",
+            "default": "SPY",
+            "description": "Benchmark for beta calculation"
+          },
+          "analysis_windows": {
+            "type": "array",
+            "default": [60, 120, 252],
+            "description": "Different time windows for beta calculation"
+          }
+        },
+        "mcp_functions_used": [
+          "alpaca_market_stocks_bars", 
+          "prices_to_returns",
+          "calculate_beta_analysis"
+        ],
+        "output_format": {
+          "beta_by_window": "object",
+          "beta_stability_score": "number",
+          "regime_betas": "object",
+          "beta_forecast": "number"
+        },
+        "complexity": "intermediate"
+      }
+    ]
+  },
+
+  "implementation_notes": {
+    "mcp_function_mapping": {
+      "financial_data": [
+        "alpaca_market_stocks_bars",
+        "eodhd_eod_data", 
+        "eodhd_fundamentals"
+      ],
+      "analytics_engine": [
+        "calculate_risk_metrics",
+        "calculate_returns_metrics",
+        "calculate_portfolio_metrics",
+        "calculate_correlation_analysis",
+        "calculate_drawdown_analysis"
+      ],
+      "technical_indicators": [
+        "calculate_rsi",
+        "calculate_macd",
+        "calculate_bollinger_bands",
+        "detect_sma_crossover",
+        "detect_ema_crossover"
+      ],
+      "signal_analysis": [
+        "analyze_signal_quality",
+        "generate_signals"
+      ],
+      "portfolio_tools": [
+        "analyze_portfolio_concentration",
+        "stress_test_portfolio",
+        "calculate_active_share"
+      ],
+      "risk_tools": [
+        "calculate_var",
+        "calculate_cvar", 
+        "calculate_beta_analysis"
+      ],
+      "utility_functions": [
+        "prices_to_returns"
+      ]
+    },
+    "development_priority": [
+      "volatility_analysis_tools",
+      "technical_signal_tools", 
+      "portfolio_optimization_tools",
+      "risk_assessment_tools",
+      "regime_analysis_tools",
+      "correlation_analysis_tools"
+    ]
+  }
+}

@@ -1,0 +1,293 @@
+{
+  "root_question": "What if I historically bought AAPL when volatility was less than 90th percentile?",
+  "description": "Binary follow-up question tree with 5 levels of depth for volatility-based timing strategy",
+  "tree_structure": {
+    "level_1": {
+      "root": {
+        "question": "What if I historically bought AAPL when volatility was less than 90th percentile?",
+        "analysis_type": "volatility_timing_strategy_analysis",
+        "category": "Volatility-Based Timing Strategies",
+        "used_functions": ["alpaca_market_stocks_bars", "prices_to_returns", "calculate_risk_metrics", "analyze_signal_quality", "calculate_returns_metrics"]
+      }
+    },
+    "level_2": {
+      "2a": {
+        "question": "How would this strategy compare to buying and holding?",
+        "parent": "root",
+        "analysis_type": "timing_vs_buy_hold_comparison",
+        "category": "Investment Strategy Comparison",
+        "rationale": "User wants to validate if timing adds value over passive approach",
+        "used_functions": ["alpaca_market_stocks_bars", "prices_to_returns", "calculate_returns_metrics", "calculate_risk_metrics", "analyze_signal_quality"]
+      },
+      "2b": {
+        "question": "What would be the optimal volatility threshold for entry?",
+        "parent": "root", 
+        "analysis_type": "volatility_threshold_optimization",
+        "category": "Volatility-Based Timing Strategies",
+        "rationale": "User wants to optimize the volatility-based entry criteria",
+        "used_functions": ["alpaca_market_stocks_bars", "prices_to_returns", "calculate_risk_metrics", "analyze_signal_quality", "calculate_returns_metrics"]
+      }
+    },
+    "level_3": {
+      "3a": {
+        "question": "What would be the Sharpe ratio difference between strategies?",
+        "parent": "2a",
+        "analysis_type": "risk_adjusted_strategy_comparison",
+        "category": "Investment Strategy Comparison",
+        "rationale": "Risk-adjusted performance comparison",
+        "used_functions": ["alpaca_market_stocks_bars", "prices_to_returns", "calculate_risk_metrics", "calculate_returns_metrics"]
+      },
+      "3b": {
+        "question": "How often would this timing strategy trigger buy signals?",
+        "parent": "2a",
+        "analysis_type": "signal_frequency_analysis",
+        "category": "Signal Frequency Analysis",
+        "rationale": "Understanding practicality and transaction frequency",
+        "used_functions": ["alpaca_market_stocks_bars", "prices_to_returns", "calculate_risk_metrics", "analyze_signal_quality"]
+      },
+      "3c": {
+        "question": "Would 75th percentile or 95th percentile work better?",
+        "parent": "2b",
+        "analysis_type": "percentile_threshold_testing",
+        "category": "Volatility-Based Timing Strategies",
+        "rationale": "Testing alternative volatility thresholds",
+        "used_functions": ["alpaca_market_stocks_bars", "prices_to_returns", "calculate_risk_metrics", "analyze_signal_quality", "calculate_returns_metrics"]
+      },
+      "3d": {
+        "question": "Should I also have a volatility-based exit strategy?",
+        "parent": "2b",
+        "analysis_type": "volatility_exit_strategy_analysis",
+        "category": "Exit Strategy Optimization",
+        "rationale": "Completing the timing strategy with exit rules",
+        "used_functions": ["alpaca_market_stocks_bars", "prices_to_returns", "calculate_risk_metrics", "analyze_signal_quality", "calculate_returns_metrics"]
+      }
+    },
+    "level_4": {
+      "4a": {
+        "question": "How would transaction costs affect the risk-adjusted returns?",
+        "parent": "3a",
+        "analysis_type": "transaction_cost_impact_analysis",
+        "category": "Transaction Cost Analysis",
+        "rationale": "Real-world implementation considerations",
+        "missing_data": ["transaction_cost_data", "bid_ask_spreads", "brokerage_fees", "market_impact_models"]
+      },
+      "4b": {
+        "question": "During which market regimes did this strategy outperform most?",
+        "parent": "3a", 
+        "analysis_type": "regime_based_performance_analysis",
+        "category": "Market Regime Analysis",
+        "rationale": "Understanding when volatility timing works best",
+        "used_functions": ["alpaca_market_stocks_bars", "prices_to_returns", "calculate_risk_metrics", "calculate_returns_metrics", "analyze_signal_quality"]
+      },
+      "4c": {
+        "question": "What's the average time between buy signals?",
+        "parent": "3b",
+        "analysis_type": "signal_timing_distribution_analysis",
+        "category": "Signal Frequency Analysis",
+        "rationale": "Understanding investment opportunity frequency",
+        "used_functions": ["alpaca_market_stocks_bars", "prices_to_returns", "calculate_risk_metrics", "analyze_signal_quality"]
+      },
+      "4d": {
+        "question": "How many false signals would this strategy generate?",
+        "parent": "3b",
+        "analysis_type": "false_signal_analysis",
+        "category": "Signal Quality Analysis",
+        "rationale": "Signal reliability and quality assessment",
+        "used_functions": ["alpaca_market_stocks_bars", "prices_to_returns", "calculate_risk_metrics", "analyze_signal_quality"]
+      },
+      "4e": {
+        "question": "What's the optimal lookback period for volatility calculation?",
+        "parent": "3c",
+        "analysis_type": "volatility_calculation_optimization",
+        "category": "Technical Parameter Optimization",
+        "rationale": "Optimizing volatility measurement methodology",
+        "used_functions": ["alpaca_market_stocks_bars", "prices_to_returns", "calculate_risk_metrics", "analyze_signal_quality", "calculate_returns_metrics"]
+      },
+      "4f": {
+        "question": "Should implied volatility or historical volatility be used?",
+        "parent": "3c",
+        "analysis_type": "volatility_measure_comparison",
+        "category": "Volatility Measurement Analysis",
+        "rationale": "Choosing the right volatility metric",
+        "missing_data": ["implied_volatility_data", "options_data", "vix_data", "volatility_surface_data"]
+      },
+      "4g": {
+        "question": "At what volatility level should I exit positions?",
+        "parent": "3d",
+        "analysis_type": "volatility_exit_threshold_analysis",
+        "category": "Exit Strategy Optimization",
+        "rationale": "Determining optimal exit volatility levels",
+        "used_functions": ["alpaca_market_stocks_bars", "prices_to_returns", "calculate_risk_metrics", "analyze_signal_quality", "calculate_returns_metrics"]
+      },
+      "4h": {
+        "question": "Should exit signals use a different volatility percentile?",
+        "parent": "3d",
+        "analysis_type": "asymmetric_volatility_strategy_analysis",
+        "category": "Advanced Timing Strategies",
+        "rationale": "Different thresholds for entry vs exit",
+        "used_functions": ["alpaca_market_stocks_bars", "prices_to_returns", "calculate_risk_metrics", "analyze_signal_quality", "calculate_returns_metrics"]
+      }
+    },
+    "level_5": {
+      "5a": {
+        "question": "What transaction frequency makes this strategy unprofitable?",
+        "parent": "4a",
+        "analysis_type": "breakeven_transaction_cost_analysis",
+        "category": "Transaction Cost Analysis",
+        "rationale": "Determining cost-effectiveness thresholds",
+        "missing_data": ["transaction_cost_schedules", "frequency_based_fees", "market_impact_costs", "slippage_data"]
+      },
+      "5b": {
+        "question": "How do bid-ask spreads impact the strategy during volatile periods?",
+        "parent": "4a",
+        "analysis_type": "spread_impact_analysis",
+        "category": "Market Microstructure Analysis",
+        "rationale": "Implementation challenges during volatility",
+        "missing_data": ["bid_ask_spread_data", "level_2_market_data", "microstructure_data", "liquidity_metrics"]
+      },
+      "5c": {
+        "question": "Did this strategy work better during bull or bear markets?",
+        "parent": "4b",
+        "analysis_type": "bull_bear_regime_comparison",
+        "category": "Market Regime Analysis",
+        "rationale": "Regime-specific strategy effectiveness",
+        "used_functions": ["alpaca_market_stocks_bars", "prices_to_returns", "calculate_risk_metrics", "calculate_returns_metrics", "analyze_signal_quality"]
+      },
+      "5d": {
+        "question": "How did this strategy perform during crisis periods?",
+        "parent": "4b",
+        "analysis_type": "crisis_period_strategy_analysis",
+        "category": "Crisis Performance Analysis",
+        "rationale": "Strategy resilience during market stress",
+        "used_functions": ["alpaca_market_stocks_bars", "prices_to_returns", "calculate_risk_metrics", "calculate_returns_metrics", "analyze_signal_quality"]
+      },
+      "5e": {
+        "question": "What's the longest period without a buy signal?",
+        "parent": "4c",
+        "analysis_type": "signal_drought_analysis",
+        "category": "Signal Frequency Analysis",
+        "rationale": "Understanding potential investment gaps",
+        "used_functions": ["alpaca_market_stocks_bars", "prices_to_returns", "calculate_risk_metrics", "analyze_signal_quality"]
+      },
+      "5f": {
+        "question": "How seasonal are these volatility-based buy opportunities?",
+        "parent": "4c",
+        "analysis_type": "seasonal_volatility_pattern_analysis",
+        "category": "Seasonal Analysis",
+        "rationale": "Calendar-based volatility patterns",
+        "used_functions": ["alpaca_market_stocks_bars", "prices_to_returns", "calculate_risk_metrics", "analyze_signal_quality"]
+      },
+      "5g": {
+        "question": "What percentage of signals result in profitable trades?",
+        "parent": "4d",
+        "analysis_type": "signal_success_rate_analysis",
+        "category": "Signal Quality Analysis",
+        "rationale": "Win rate and signal effectiveness",
+        "used_functions": ["alpaca_market_stocks_bars", "prices_to_returns", "calculate_risk_metrics", "analyze_signal_quality", "calculate_returns_metrics"]
+      },
+      "5h": {
+        "question": "How do false signals correlate with market conditions?",
+        "parent": "4d",
+        "analysis_type": "false_signal_correlation_analysis",
+        "category": "Signal Quality Analysis",
+        "rationale": "Understanding when signals fail",
+        "used_functions": ["alpaca_market_stocks_bars", "prices_to_returns", "calculate_risk_metrics", "analyze_signal_quality", "calculate_correlation_analysis"]
+      },
+      "5i": {
+        "question": "Does 30-day or 60-day volatility give better signals?",
+        "parent": "4e",
+        "analysis_type": "volatility_window_comparison",
+        "category": "Technical Parameter Optimization",
+        "rationale": "Optimal volatility calculation period",
+        "used_functions": ["alpaca_market_stocks_bars", "prices_to_returns", "calculate_risk_metrics", "analyze_signal_quality", "calculate_returns_metrics"]
+      },
+      "5j": {
+        "question": "How does intraday vs daily volatility affect signals?",
+        "parent": "4e",
+        "analysis_type": "volatility_frequency_comparison",
+        "category": "Technical Parameter Optimization",
+        "rationale": "High-frequency vs daily volatility measures",
+        "missing_data": ["intraday_price_data", "minute_level_bars", "tick_data", "high_frequency_volatility_data"]
+      },
+      "5k": {
+        "question": "How well does implied volatility predict future realized volatility?",
+        "parent": "4f",
+        "analysis_type": "implied_vs_realized_volatility_analysis",
+        "category": "Volatility Forecasting Analysis",
+        "rationale": "Forward-looking vs backward-looking volatility",
+        "missing_data": ["implied_volatility_data", "options_data", "vix_data", "options_chain_historical_data"]
+      },
+      "5l": {
+        "question": "Which volatility measure has the strongest mean reversion?",
+        "parent": "4f",
+        "analysis_type": "volatility_mean_reversion_analysis",
+        "category": "Volatility Behavior Analysis",
+        "rationale": "Understanding volatility persistence characteristics",
+        "used_functions": ["alpaca_market_stocks_bars", "prices_to_returns", "calculate_risk_metrics", "calculate_correlation_analysis"]
+      },
+      "5m": {
+        "question": "Should exit volatility be higher or lower than entry volatility?",
+        "parent": "4g",
+        "analysis_type": "entry_exit_volatility_relationship",
+        "category": "Exit Strategy Optimization",
+        "rationale": "Asymmetric volatility threshold optimization",
+        "used_functions": ["alpaca_market_stocks_bars", "prices_to_returns", "calculate_risk_metrics", "analyze_signal_quality", "calculate_returns_metrics"]
+      },
+      "5n": {
+        "question": "How long should positions be held after volatility-based entries?",
+        "parent": "4g",
+        "analysis_type": "volatility_based_holding_period_analysis",
+        "category": "Holding Period Optimization",
+        "rationale": "Time-based vs signal-based exits",
+        "used_functions": ["alpaca_market_stocks_bars", "prices_to_returns", "calculate_risk_metrics", "analyze_signal_quality", "calculate_returns_metrics"]
+      },
+      "5o": {
+        "question": "What's the optimal entry-exit volatility spread?",
+        "parent": "4h",
+        "analysis_type": "volatility_spread_optimization",
+        "category": "Advanced Timing Strategies",
+        "rationale": "Optimizing the volatility band for trading",
+        "used_functions": ["alpaca_market_stocks_bars", "prices_to_returns", "calculate_risk_metrics", "analyze_signal_quality", "calculate_returns_metrics"]
+      },
+      "5p": {
+        "question": "How do volatility breakouts affect this asymmetric strategy?",
+        "parent": "4h",
+        "analysis_type": "volatility_breakout_impact_analysis",
+        "category": "Volatility Regime Analysis",
+        "rationale": "Strategy performance during volatility regime changes",
+        "used_functions": ["alpaca_market_stocks_bars", "prices_to_returns", "calculate_risk_metrics", "analyze_signal_quality", "calculate_returns_metrics"]
+      }
+    }
+  },
+  "tree_statistics": {
+    "total_questions": 31,
+    "levels": 5,
+    "branching_factor": 2,
+    "leaf_questions": 16,
+    "analysis_types_needed": 30
+  },
+  "user_journey_paths": {
+    "strategy_validation_path": ["root", "2a", "3a", "4a", "5a"],
+    "optimization_path": ["root", "2b", "3c", "4e", "5i"],
+    "implementation_path": ["root", "2a", "3b", "4c", "5e"],
+    "advanced_strategy_path": ["root", "2b", "3d", "4h", "5o"]
+  },
+  "new_categories_identified": [
+    "Volatility-Based Timing Strategies",
+    "Signal Frequency Analysis",
+    "Exit Strategy Optimization", 
+    "Transaction Cost Analysis",
+    "Market Regime Analysis",
+    "Signal Quality Analysis",
+    "Technical Parameter Optimization",
+    "Volatility Measurement Analysis",
+    "Advanced Timing Strategies",
+    "Market Microstructure Analysis",
+    "Crisis Performance Analysis",
+    "Seasonal Analysis",
+    "Volatility Forecasting Analysis",
+    "Volatility Behavior Analysis",
+    "Holding Period Optimization",
+    "Volatility Regime Analysis"
+  ]
+}
