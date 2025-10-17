@@ -1,0 +1,413 @@
+"""
+MongoDB Client - Connection management and operations
+"""
+
+import os
+import logging
+from typing import Optional, List, Dict, Any
+from datetime import datetime, timedelta
+from motor.motor_asyncio import AsyncClient, AsyncDatabase
+from pymongo import ASCENDING, DESCENDING, TEXT
+
+from .schemas import (
+    UserModel,
+    ChatSessionModel,
+    ChatMessageModel,
+    AnalysisModel,
+    ExecutionModel,
+    AuditLogModel,
+    SavedAnalysisModel,
+    CacheModel,
+)
+
+logger = logging.getLogger("mongodb-client")
+
+
+class MongoDBClient:
+    """Async MongoDB client for all database operations"""
+    
+    def __init__(self):
+        self.client: Optional[AsyncClient] = None
+        self.db: Optional[AsyncDatabase] = None
+        self.mongodb_uri = os.getenv(
+            "MONGODB_URI",
+            "mongodb://localhost:27017"
+        )
+        self.db_name = os.getenv("MONGODB_DB_NAME", "qna_ai_admin")
+    
+    async def connect(self) -> None:
+        """Connect to MongoDB and initialize indexes"""
+        try:
+            self.client = AsyncClient(self.mongodb_uri)
+            self.db = self.client[self.db_name]
+            
+            # Test connection
+            await self.client.admin.command('ping')
+            logger.info(f"✅ Connected to MongoDB: {self.db_name}")
+            
+            # Initialize indexes
+            await self._create_indexes()
+            logger.info("✅ Database indexes created")
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to connect to MongoDB: {e}")
+            raise
+    
+    async def disconnect(self) -> None:
+        """Close MongoDB connection"""
+        if self.client:
+            self.client.close()
+            logger.info("✅ Disconnected from MongoDB")
+    
+    async def _create_indexes(self) -> None:
+        """Create all collection indexes"""
+        collections_config = {
+            "users": [
+                ([("email", ASCENDING)], {"unique": True}),
+                ([("created_at", DESCENDING)], {}),
+            ],
+            "chat_sessions": [
+                ([("user_id", ASCENDING), ("created_at", DESCENDING)], {}),
+                ([("user_id", ASCENDING), ("is_archived", ASCENDING)], {}),
+                ([("last_message_at", DESCENDING)], {}),
+                ([("title", TEXT)], {}),
+            ],
+            "chat_messages": [
+                ([("session_id", ASCENDING), ("created_at", ASCENDING)], {}),
+                ([("user_id", ASCENDING), ("created_at", DESCENDING)], {}),
+                ([("role", ASCENDING)], {}),
+                ([("analysis_id", ASCENDING)], {}),
+            ],
+            "analyses": [
+                ([("user_id", ASCENDING), ("created_at", DESCENDING)], {}),
+                ([("category", ASCENDING)], {}),
+                ([("is_template", ASCENDING)], {}),
+                ([("tags", ASCENDING)], {}),
+                ([("title", TEXT), ("description", TEXT)], {}),
+            ],
+            "executions": [
+                ([("user_id", ASCENDING), ("created_at", DESCENDING)], {}),
+                ([("session_id", ASCENDING)], {}),
+                ([("status", ASCENDING)], {}),
+                ([("started_at", DESCENDING)], {}),
+            ],
+            "saved_analyses": [
+                ([("user_id", ASCENDING), ("created_at", DESCENDING)], {}),
+                ([("user_id", ASCENDING), ("is_template", ASCENDING)], {}),
+                ([("tags", ASCENDING)], {}),
+            ],
+            "audit_logs": [
+                ([("user_id", ASCENDING), ("created_at", DESCENDING)], {}),
+                ([("action", ASCENDING)], {}),
+                ([("resource_type", ASCENDING), ("resource_id", ASCENDING)], {}),
+                ([("created_at", DESCENDING)], {}),
+            ],
+            "cache": [
+                ([("cache_key", ASCENDING)], {}),
+                ([("expires_at", ASCENDING)], {"expireAfterSeconds": 0}),
+            ],
+        }
+        
+        for collection_name, indexes in collections_config.items():
+            collection = self.db[collection_name]
+            for index_fields, index_options in indexes:
+                try:
+                    await collection.create_index(index_fields, **index_options)
+                except Exception as e:
+                    logger.warning(f"Index creation warning for {collection_name}: {e}")
+    
+    # ========================================================================
+    # USER OPERATIONS
+    # ========================================================================
+    
+    async def create_user(self, user: UserModel) -> str:
+        """Create new user"""
+        result = await self.db.users.insert_one(user.dict())
+        await self._log_audit("user_created", "user", str(result.inserted_id), after=user.dict())
+        return str(result.inserted_id)
+    
+    async def get_user(self, user_id: str) -> Optional[UserModel]:
+        """Get user by ID"""
+        doc = await self.db.users.find_one({"_id": user_id})
+        return UserModel(**doc) if doc else None
+    
+    async def update_user(self, user_id: str, updates: Dict[str, Any]) -> bool:
+        """Update user"""
+        updates["updated_at"] = datetime.utcnow()
+        result = await self.db.users.update_one(
+            {"_id": user_id},
+            {"$set": updates}
+        )
+        await self._log_audit("user_updated", "user", user_id, after=updates)
+        return result.modified_count > 0
+    
+    # ========================================================================
+    # CHAT SESSION OPERATIONS
+    # ========================================================================
+    
+    async def create_session(self, session: ChatSessionModel) -> str:
+        """Create new chat session"""
+        result = await self.db.chat_sessions.insert_one(session.dict())
+        session_id = str(result.inserted_id)
+        await self._log_audit("session_created", "session", session_id, after=session.dict())
+        return session_id
+    
+    async def get_session(self, session_id: str) -> Optional[ChatSessionModel]:
+        """Get chat session by ID"""
+        doc = await self.db.chat_sessions.find_one({"_id": session_id})
+        return ChatSessionModel(**doc) if doc else None
+    
+    async def list_sessions(self, user_id: str, limit: int = 50) -> List[ChatSessionModel]:
+        """List user's chat sessions"""
+        docs = await self.db.chat_sessions.find(
+            {"user_id": user_id}
+        ).sort("created_at", -1).limit(limit).to_list(limit)
+        return [ChatSessionModel(**doc) for doc in docs]
+    
+    async def update_session(self, session_id: str, updates: Dict[str, Any]) -> bool:
+        """Update chat session"""
+        updates["updated_at"] = datetime.utcnow()
+        result = await self.db.chat_sessions.update_one(
+            {"_id": session_id},
+            {"$set": updates}
+        )
+        return result.modified_count > 0
+    
+    async def archive_session(self, session_id: str) -> bool:
+        """Archive chat session"""
+        return await self.update_session(session_id, {"is_archived": True})
+    
+    # ========================================================================
+    # CHAT MESSAGE OPERATIONS
+    # ========================================================================
+    
+    async def create_message(self, message: ChatMessageModel) -> str:
+        """Create new chat message"""
+        result = await self.db.chat_messages.insert_one(message.dict())
+        message_id = str(result.inserted_id)
+        
+        # Update session message count and last message time
+        await self.db.chat_sessions.update_one(
+            {"_id": message.session_id},
+            {
+                "$inc": {"message_count": 1},
+                "$set": {"last_message_at": datetime.utcnow()},
+            }
+        )
+        
+        await self._log_audit("message_created", "message", message_id, after=message.dict())
+        return message_id
+    
+    async def get_message(self, message_id: str) -> Optional[ChatMessageModel]:
+        """Get message by ID"""
+        doc = await self.db.chat_messages.find_one({"_id": message_id})
+        return ChatMessageModel(**doc) if doc else None
+    
+    async def get_session_messages(self, session_id: str, limit: int = 100) -> List[ChatMessageModel]:
+        """Get all messages in session"""
+        docs = await self.db.chat_messages.find(
+            {"session_id": session_id}
+        ).sort("created_at", 1).limit(limit).to_list(limit)
+        return [ChatMessageModel(**doc) for doc in docs]
+    
+    async def get_last_message(self, session_id: str) -> Optional[ChatMessageModel]:
+        """Get last message in session"""
+        doc = await self.db.chat_messages.find_one(
+            {"session_id": session_id},
+            sort=[("created_at", -1)]
+        )
+        return ChatMessageModel(**doc) if doc else None
+    
+    # ========================================================================
+    # ANALYSIS OPERATIONS
+    # ========================================================================
+    
+    async def create_analysis(self, analysis: AnalysisModel) -> str:
+        """Create new analysis"""
+        result = await self.db.analyses.insert_one(analysis.dict())
+        analysis_id = str(result.inserted_id)
+        await self._log_audit("analysis_created", "analysis", analysis_id, after=analysis.dict())
+        return analysis_id
+    
+    async def get_analysis(self, analysis_id: str) -> Optional[AnalysisModel]:
+        """Get analysis by ID"""
+        doc = await self.db.analyses.find_one({"_id": analysis_id})
+        return AnalysisModel(**doc) if doc else None
+    
+    async def list_analyses(self, user_id: str, category: Optional[str] = None, limit: int = 100) -> List[AnalysisModel]:
+        """List user's analyses"""
+        query = {"user_id": user_id}
+        if category:
+            query["category"] = category
+        
+        docs = await self.db.analyses.find(query).sort("created_at", -1).limit(limit).to_list(limit)
+        return [AnalysisModel(**doc) for doc in docs]
+    
+    async def search_analyses(self, user_id: str, search_text: str, limit: int = 50) -> List[AnalysisModel]:
+        """Search analyses by title/description"""
+        docs = await self.db.analyses.find(
+            {
+                "user_id": user_id,
+                "$text": {"$search": search_text}
+            }
+        ).limit(limit).to_list(limit)
+        return [AnalysisModel(**doc) for doc in docs]
+    
+    async def update_analysis(self, analysis_id: str, updates: Dict[str, Any]) -> bool:
+        """Update analysis"""
+        updates["updated_at"] = datetime.utcnow()
+        result = await self.db.analyses.update_one(
+            {"_id": analysis_id},
+            {"$set": updates}
+        )
+        return result.modified_count > 0
+    
+    async def mark_analysis_used(self, analysis_id: str) -> bool:
+        """Update last_used_at timestamp"""
+        return await self.update_analysis(analysis_id, {"last_used_at": datetime.utcnow()})
+    
+    # ========================================================================
+    # EXECUTION OPERATIONS
+    # ========================================================================
+    
+    async def create_execution(self, execution: ExecutionModel) -> str:
+        """Create execution record"""
+        result = await self.db.executions.insert_one(execution.dict())
+        execution_id = str(result.inserted_id)
+        await self._log_audit("execution_created", "execution", execution_id, after=execution.dict())
+        return execution_id
+    
+    async def get_execution(self, execution_id: str) -> Optional[ExecutionModel]:
+        """Get execution by ID"""
+        doc = await self.db.executions.find_one({"_id": execution_id})
+        return ExecutionModel(**doc) if doc else None
+    
+    async def list_executions(self, session_id: str, limit: int = 100) -> List[ExecutionModel]:
+        """List executions in session"""
+        docs = await self.db.executions.find(
+            {"session_id": session_id}
+        ).sort("started_at", -1).limit(limit).to_list(limit)
+        return [ExecutionModel(**doc) for doc in docs]
+    
+    async def update_execution(self, execution_id: str, updates: Dict[str, Any]) -> bool:
+        """Update execution"""
+        result = await self.db.executions.update_one(
+            {"_id": execution_id},
+            {"$set": updates}
+        )
+        return result.modified_count > 0
+    
+    # ========================================================================
+    # SAVED ANALYSIS OPERATIONS (Reusable Templates)
+    # ========================================================================
+    
+    async def save_analysis(self, saved: SavedAnalysisModel) -> str:
+        """Save analysis as reusable template"""
+        result = await self.db.saved_analyses.insert_one(saved.dict())
+        saved_id = str(result.inserted_id)
+        await self._log_audit("analysis_saved", "saved_analysis", saved_id, after=saved.dict())
+        return saved_id
+    
+    async def get_saved_analysis(self, saved_id: str) -> Optional[SavedAnalysisModel]:
+        """Get saved analysis"""
+        doc = await self.db.saved_analyses.find_one({"_id": saved_id})
+        return SavedAnalysisModel(**doc) if doc else None
+    
+    async def list_saved_analyses(self, user_id: str, limit: int = 100) -> List[SavedAnalysisModel]:
+        """List user's saved analyses"""
+        docs = await self.db.saved_analyses.find(
+            {"user_id": user_id}
+        ).sort("created_at", -1).limit(limit).to_list(limit)
+        return [SavedAnalysisModel(**doc) for doc in docs]
+    
+    async def increment_saved_analysis_usage(self, saved_id: str) -> bool:
+        """Increment usage counter"""
+        result = await self.db.saved_analyses.update_one(
+            {"_id": saved_id},
+            {
+                "$inc": {"usage_count": 1},
+                "$set": {"last_used_at": datetime.utcnow()},
+            }
+        )
+        return result.modified_count > 0
+    
+    # ========================================================================
+    # CACHE OPERATIONS
+    # ========================================================================
+    
+    async def get_cached_result(self, cache_key: str) -> Optional[Dict[str, Any]]:
+        """Get cached result if exists and not expired"""
+        doc = await self.db.cache.find_one(
+            {
+                "cache_key": cache_key,
+                "expires_at": {"$gt": datetime.utcnow()}
+            }
+        )
+        
+        if doc:
+            # Increment hit count and update last used
+            await self.db.cache.update_one(
+                {"_id": doc["_id"]},
+                {
+                    "$inc": {"hit_count": 1},
+                    "$set": {"last_used_at": datetime.utcnow()}
+                }
+            )
+            return doc["result"]
+        
+        return None
+    
+    async def cache_result(self, cache_key: str, result: Dict[str, Any], 
+                          analysis_id: Optional[str] = None, ttl_hours: int = 24) -> str:
+        """Cache query result"""
+        cache = CacheModel(
+            cache_key=cache_key,
+            result=result,
+            analysis_id=analysis_id,
+            expires_at=datetime.utcnow() + timedelta(hours=ttl_hours),
+        )
+        
+        result = await self.db.cache.insert_one(cache.dict())
+        return str(result.inserted_id)
+    
+    # ========================================================================
+    # AUDIT LOGGING
+    # ========================================================================
+    
+    async def _log_audit(self, action: str, resource_type: str, resource_id: str,
+                        before: Optional[Dict] = None, after: Optional[Dict] = None,
+                        user_id: Optional[str] = None, success: bool = True,
+                        error_message: Optional[str] = None) -> None:
+        """Log audit event"""
+        audit = AuditLogModel(
+            user_id=user_id or "system",
+            action=action,
+            resource_type=resource_type,
+            resource_id=resource_id,
+            before=before,
+            after=after,
+            success=success,
+            error_message=error_message,
+        )
+        
+        await self.db.audit_logs.insert_one(audit.dict())
+    
+    async def get_audit_logs(self, user_id: str, limit: int = 100) -> List[AuditLogModel]:
+        """Get user's audit logs"""
+        docs = await self.db.audit_logs.find(
+            {"user_id": user_id}
+        ).sort("created_at", -1).limit(limit).to_list(limit)
+        return [AuditLogModel(**doc) for doc in docs]
+    
+    # ========================================================================
+    # HEALTH CHECK
+    # ========================================================================
+    
+    async def health_check(self) -> bool:
+        """Check MongoDB connection"""
+        try:
+            await self.client.admin.command('ping')
+            return True
+        except Exception as e:
+            logger.error(f"Health check failed: {e}")
+            return False
