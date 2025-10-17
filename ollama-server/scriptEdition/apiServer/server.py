@@ -36,25 +36,6 @@ async def lifespan(app: FastAPI):
     api_routes = APIRoutes(analysis_service, search_service)
     app.state.api_routes = api_routes
     
-    # Warm cache only if using regular API (Claude CLI handles its own caching)
-    use_claude_cli = os.getenv("USE_CLAUDE_CODE_CLI", "false").lower() == "true"
-    
-    if use_claude_cli:
-        logger.info("🚀 Using Claude Code CLI - skipping cache warmup (CLI handles caching internally)")
-    elif analysis_service.cache_manager:
-        logger.info("🔥 Warming cache for regular API...")
-        try:
-            await analysis_service.ensure_mcp_initialized()
-            cache_success = await analysis_service.warm_cache(analysis_service.llm_service.default_model)
-            if cache_success:
-                logger.info("✅ Cache warming completed successfully")
-            else:
-                logger.warning("⚠️ Cache warming failed, continuing without cache")
-        except Exception as e:
-            logger.warning(f"⚠️ Cache warming error: {e}")
-    else:
-        logger.info("📄 No cache manager available - skipping cache warmup")
-    
     logger.info(f"✅ Server ready with {analysis_service.llm_service.provider_type.upper()} provider")
     
     yield

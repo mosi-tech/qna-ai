@@ -73,6 +73,49 @@ class SimplifiedMCPLoader:
         # Load tools with service-specific filtering
         return await self._load_tools_with_filtering(tools_config)
     
+    def get_filtered_mcp_config(self, service_name: str) -> Optional[Dict[str, Any]]:
+        """Get filtered MCP config for a specific service (for Claude Code CLI)"""
+        config_path = self._get_config_path("mcp-tools.json")
+        if not os.path.exists(config_path):
+            logger.error(f"❌ MCP config not found: {config_path}")
+            return None
+        
+        try:
+            with open(config_path, 'r') as f:
+                config_data = json.load(f)
+            
+            # Get service-specific config
+            service_configs = config_data.get("serviceConfigs", {})
+            service_config_data = service_configs.get(service_name)
+            
+            if not service_config_data:
+                logger.info(f"⚠️ No config for service '{service_name}', using default")
+                service_config_data = config_data.get("defaultConfig", {})
+            
+            tools_config = MCPToolsConfig.from_dict(service_config_data)
+            
+            # Create filtered config with only needed servers
+            all_mcp_servers = config_data.get("mcpServers", {})
+            allowed_servers = tools_config.servers or list(all_mcp_servers.keys())
+            
+            filtered_servers = {
+                server_name: all_mcp_servers[server_name]
+                for server_name in allowed_servers
+                if server_name in all_mcp_servers
+            }
+            
+            # Return filtered config for Claude Code CLI
+            filtered_config = {
+                "mcpServers": filtered_servers
+            }
+            
+            logger.debug(f"Created filtered MCP config for '{service_name}' with servers: {list(filtered_servers.keys())}")
+            return filtered_config
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to create filtered MCP config: {e}")
+            return None
+    
     async def load_tools_from_config(self, config_file: str) -> List[Dict[str, Any]]:
         """Legacy method - extract service name from config file"""
         if config_file == "mcp-tools.json":

@@ -24,6 +24,7 @@ class AnthropicProvider(LLMProvider):
         if base_url is None:
             base_url = "https://api.anthropic.com/v1"
         super().__init__(api_key, base_url, default_model)
+        self.use_cli = False
     
     def supports_caching(self) -> bool:
         return True
@@ -40,8 +41,8 @@ class AnthropicProvider(LLMProvider):
             logger.warning("⚠️ Claude CLI not available, falling back to API")
             return False
             
-        # Use environment variable to control CLI usage regardless of tool presence
-        return os.getenv("USE_CLAUDE_CODE_CLI", "false").lower() == "true"
+        # Use use_cli flag set by LLMService from config
+        return self.use_cli
     
     def _check_claude_cli_available(self) -> bool:
         """Check if Claude CLI is available and accessible"""
@@ -115,59 +116,78 @@ class AnthropicProvider(LLMProvider):
         }
     
     async def _call_claude_code_cli(self, model: str, messages: List[Dict[str, Any]], 
-                                   max_tokens: int = 4000, enable_caching: bool = False) -> Dict[str, Any]:
+                                   max_tokens: int = 10000, enable_caching: bool = False) -> Dict[str, Any]:
         """Use Claude Code CLI instead of API for tool-enabled requests"""
         try:
-            # Extract the user message (last message)
-            user_message = ""
-            for msg in reversed(messages):
-                if msg["role"] == "user":
-                    if isinstance(msg["content"], str):
-                        user_message = msg["content"]
-                    elif isinstance(msg["content"], list):
-                        # Extract text from content blocks
-                        text_parts = []
-                        for block in msg["content"]:
-                            if isinstance(block, dict) and block.get("type") == "text":
-                                text_parts.append(block.get("text", ""))
-                            elif isinstance(block, str):
-                                text_parts.append(block)
-                        user_message = "\n".join(text_parts)
-                    break
+            if not messages:
+                raise Exception("No messages provided for Claude Code CLI")
             
-            if not user_message:
+            # Build CLI command with full message history (not just last user message)
+            cli_command = [
+                "claude",
+                "--output-format", "json",
+                "--permission-mode", "bypassPermissions"
+            ]
+            
+            # Add system prompt if available (pre-loaded from provider)
+            system_prompt = self._raw_system_prompt or "You are a helpful assistant."
+            cli_command.extend(["--append-system-prompt", system_prompt])
+            
+            # Process messages for Claude Code CLI
+            for msg in messages:
+                role = msg.get("role", "user")
+                content = msg.get("content", "")
+                
+                # Handle different content formats
+                if isinstance(content, list):
+                    # Extract text from content blocks
+                    text_parts = []
+                    for block in content:
+                        if isinstance(block, dict) and block.get("type") == "text":
+                            text_parts.append(block.get("text", ""))
+                        elif isinstance(block, str):
+                            text_parts.append(block)
+                    content = "\n".join(text_parts)
+                
+                if content and role == "user":
+                    # Add user message as prompt
+                    cli_command.extend(["-p", content])
+                elif content and role == "assistant":
+                    # Add assistant message context
+                    cli_command.extend(["--append-system-prompt", f"Assistant: {content}"])
+            
+            # Verify we have at least one user message
+            user_messages = [m for m in messages if m.get("role") == "user"]
+            if not user_messages:
                 raise Exception("No user message found for Claude Code CLI")
             
-            # Create MCP config for Claude Code CLI
-            config_dir = os.path.dirname(os.path.abspath(__file__))
-            mcp_config_path = os.path.join(config_dir, "..", "..", "config", "claude_mcp_servers.json")
-            mcp_config_path = os.path.abspath(mcp_config_path)
+            # Add MCP config to CLI command if available (loaded by service via set_mcp_config)
+            mcp_config_path = None
+            if self._raw_mcp_config:
+                if isinstance(self._raw_mcp_config, dict):
+                    # Write filtered config to temp file for CLI
+                    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+                        json.dump(self._raw_mcp_config, f)
+                        mcp_config_path = f.name
+                    logger.debug(f"Created temp MCP config: {mcp_config_path}")
+                elif isinstance(self._raw_mcp_config, str) and os.path.exists(self._raw_mcp_config):
+                    # It's a file path
+                    mcp_config_path = self._raw_mcp_config
+                
+                if mcp_config_path:
+                    cli_command.extend(["--mcp-config", mcp_config_path])
+                    service_info = f" for service '{self._mcp_service_name}'" if self._mcp_service_name else ""
+                    logger.debug(f"Using MCP config{service_info}: {mcp_config_path}")
             
-            if not os.path.exists(mcp_config_path):
-                raise Exception(f"MCP config file not found: {mcp_config_path}")
+            if not mcp_config_path:
+                logger.warning("⚠️ No MCP config available - Claude CLI may not have tool access")
             
             # Set working directory for script generation
             working_dir = "/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server"
             os.makedirs(working_dir, exist_ok=True)
             
-            # Get system prompt if available
-            system_prompt = self._raw_system_prompt or "You are a helpful assistant."
-            
-            # Build CLI command - simple approach with just claude
-            cli_command = [
-                "claude",
-                "--append-system-prompt", system_prompt,
-                "-p", user_message,
-                "--output-format", "json",
-                "--mcp-config", mcp_config_path,
-                "--permission-mode", "bypassPermissions",
-                "--verbose"
-                # "--dangerously-skip-permissions"
-            ]
-            
-            # logger.info(f"🚀 Calling Claude Code CLI with MCP config: {mcp_config_path}")
-            # logger.info(f"📄 Using system prompt: {system_prompt[:100]}...")
-            # logger.debug(f"CLI command: {cli_command}")
+            logger.info("🚀 Calling Claude Code CLI with system prompt and MCP configuration")
+            logger.debug(f"System prompt length: {len(system_prompt)} chars")
             
             # Set up environment with API key for Claude CLI
             env = os.environ.copy()
@@ -181,7 +201,6 @@ class AnthropicProvider(LLMProvider):
             stream_output = os.getenv("CLAUDE_CLI_STREAM", "false").lower() == "true"
             
             if stream_output:
-                # Stream output in real-time AND capture it
                 logger.info("🔄 Streaming Claude CLI output in real-time...")
                 
                 process = subprocess.Popen(
@@ -189,14 +208,12 @@ class AnthropicProvider(LLMProvider):
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     text=True,
-                    bufsize=1,  # Line buffered
+                    bufsize=1,
                     cwd=working_dir
                 )
                 
-                # Use our streaming method
                 result_data = self._stream_subprocess_output(process, timeout=300)
                 
-                # Create result object compatible with the rest of the code
                 result = type('Result', (), {
                     'returncode': result_data['returncode'],
                     'stdout': result_data['stdout'],
@@ -204,7 +221,6 @@ class AnthropicProvider(LLMProvider):
                 })()
                 
             else:
-                # Standard execution - capture output normally
                 result = subprocess.run(
                     cli_command,
                     capture_output=True,
@@ -296,7 +312,7 @@ class AnthropicProvider(LLMProvider):
             }
     
     async def call_api(self, model: str, messages: List[Dict[str, Any]], 
-                      max_tokens: int = 4000, enable_caching: bool = False,
+                      max_tokens: int = 10000, enable_caching: bool = False,
                       override_system_prompt: Optional[str] = None,
                       override_tools: Optional[List[Dict[str, Any]]] = None,
                       force_api: bool = False) -> Dict[str, Any]:
@@ -454,6 +470,24 @@ class AnthropicProvider(LLMProvider):
                 return True
         
         return False
+    
+    def get_message_text_length(self, message: Dict[str, Any]) -> int:
+        """Get text length from Anthropic message, handling content array format"""
+        content = message.get("content", "")
+        
+        # Handle Anthropic format (content is array of blocks)
+        if isinstance(content, list):
+            text_length = 0
+            for block in content:
+                if isinstance(block, dict) and block.get("type") == "text":
+                    text_length += len(block.get("text", ""))
+            return text_length
+        
+        # Handle string format (fallback)
+        if isinstance(content, str):
+            return len(content)
+        
+        return 0
     
     def get_tool_result_role(self) -> str:
         """Anthropic uses 'user' role for tool result messages"""

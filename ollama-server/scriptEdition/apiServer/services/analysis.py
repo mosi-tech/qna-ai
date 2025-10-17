@@ -324,6 +324,21 @@ class AnalysisService(BaseService):
                                enable_caching: bool = False) -> Dict[str, Any]:
         """Main conversation loop that continues until LLM stops calling tools"""
         try:
+            # Extract original question from first user message
+            original_question = ""
+            for msg in messages:
+                if msg.get("role") == "user":
+                    content = msg.get("content", "")
+                    if isinstance(content, str):
+                        original_question = content
+                    elif isinstance(content, list):
+                        # Handle Anthropic content array format
+                        for block in content:
+                            if isinstance(block, dict) and block.get("type") == "text":
+                                original_question = block.get("text", "")
+                                break
+                    if original_question:
+                        break
             
             # Track how many tool calls we've processed to know what's "recent"
             processed_tool_calls = 0
@@ -341,7 +356,7 @@ class AnalysisService(BaseService):
                 processed_tool_calls = len(all_tool_calls)
                 
                 continuation_result = await self._continue_conversation(
-                    model, messages, recent_tool_calls, recent_tool_results, enable_caching
+                    model, messages, recent_tool_calls, recent_tool_results, enable_caching, original_question
                 )
                 
                 # Check if continuation failed
@@ -420,13 +435,31 @@ class AnalysisService(BaseService):
                 "error": f"Conversation error: {str(e)}"
             }
     
+    
     def _filter_messages_for_context(self, messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Filter messages to keep only recent relevant tool interactions for conversation context"""
+        """Filter messages to keep only recent relevant tool interactions and conversation flow for context"""
         try:
-            # Always keep all user messages (original question + function docs)
+            # Always keep all messages for conversation flow
             if not messages:
                 return messages
             
+            # For conversation mode, we want to keep the natural flow of user/assistant messages
+            # Check if this looks like conversation mode (alternating user/assistant without tool calls)
+            # This check is provider-aware and delegates to provider implementation
+            has_conversation_flow = False
+            for i, msg in enumerate(messages):
+                if (msg.get("role") == "assistant" and 
+                    not self._contains_tool_calls(msg) and 
+                    self.llm_service.provider.get_message_text_length(msg) > 50):  # Substantial assistant message without tools
+                    has_conversation_flow = True
+                    break
+            
+            if has_conversation_flow:
+                # In conversation mode, keep all messages to preserve the natural flow
+                self.logger.debug(f"Detected conversation mode - keeping all {len(messages)} messages for context")
+                return messages
+            
+            # Original logic for tool simulation mode
             # Keep all user messages at the beginning of the conversation
             filtered_messages = []
             for msg in messages:
@@ -435,22 +468,26 @@ class AnalysisService(BaseService):
                 else:
                     break  # Stop at first non-user message
             
-            # Find assistant messages with tool calls and corresponding tool results
+            # Find assistant messages (both with and without tool calls) and corresponding tool results
             tool_interaction_pairs = []
+            non_tool_assistant_messages = []
             i = len(filtered_messages)  # Start after all user messages
             while i < len(messages):
                 msg = messages[i]
-                if (msg.get("role") == "assistant" and 
-                    self._contains_tool_calls(msg)):
-                    
-                    # Look for the corresponding tool result message using provider-specific role
-                    tool_result_role = self.llm_service.provider.get_tool_result_role()
-                    if (i + 1 < len(messages) and 
-                        messages[i + 1].get("role") == tool_result_role and
-                        self.llm_service.provider.contains_tool_results(messages[i + 1])):
-                        tool_interaction_pairs.append((i, i + 1, msg))  # (assistant_idx, tool_idx, assistant_msg)
-                        i += 2  # Skip both messages
+                if msg.get("role") == "assistant":
+                    if self._contains_tool_calls(msg):
+                        # Look for the corresponding tool result message using provider-specific role
+                        tool_result_role = self.llm_service.provider.get_tool_result_role()
+                        if (i + 1 < len(messages) and 
+                            messages[i + 1].get("role") == tool_result_role and
+                            self.llm_service.provider.contains_tool_results(messages[i + 1])):
+                            tool_interaction_pairs.append((i, i + 1, msg))  # (assistant_idx, tool_idx, assistant_msg)
+                            i += 2  # Skip both messages
+                        else:
+                            i += 1
                     else:
+                        # Non-tool assistant message (like conversation flow messages)
+                        non_tool_assistant_messages.append((i, msg))
                         i += 1
                 else:
                     i += 1
@@ -504,14 +541,26 @@ class AnalysisService(BaseService):
             if last_validate_pair and (last_write_idx == -1 or last_validate_idx > last_write_idx):
                 pairs_to_keep.add(last_validate_pair)
             
-            # Add the filtered tool interactions to messages
-            for assistant_idx, tool_idx in sorted(pairs_to_keep):
-                if assistant_idx < len(messages):
-                    filtered_messages.append(messages[assistant_idx])
-                if tool_idx < len(messages):
-                    filtered_messages.append(messages[tool_idx])
+            # Collect all messages to add with their indices to maintain order
+            messages_to_add = []
             
-            self.logger.debug(f"Filtered {len(messages)} messages down to {len(filtered_messages)} for context")
+            # Add tool interaction pairs
+            for assistant_idx, tool_idx in pairs_to_keep:
+                messages_to_add.append((assistant_idx, messages[assistant_idx]))
+                messages_to_add.append((tool_idx, messages[tool_idx]))
+            
+            # Add non-tool assistant messages (conversation flow)
+            for assistant_idx, assistant_msg in non_tool_assistant_messages:
+                messages_to_add.append((assistant_idx, assistant_msg))
+            
+            # Sort by original index to maintain conversation order
+            messages_to_add.sort(key=lambda x: x[0])
+            
+            # Add the sorted messages
+            for _, msg in messages_to_add:
+                filtered_messages.append(msg)
+            
+            self.logger.debug(f"Filtered {len(messages)} messages down to {len(filtered_messages)} for context (including {len(non_tool_assistant_messages)} non-tool assistant messages)")
             return filtered_messages
             
         except Exception as e:
@@ -525,11 +574,23 @@ class AnalysisService(BaseService):
         """Check if message content contains tool calls using provider-specific logic"""
         return self.llm_service.provider.contains_tool_calls(message_content)
     
-    
+    def _is_write_and_validate_tool_result(self, tool_call: Dict[str, Any]) -> bool:
+        """Check if a tool call is a write_and_validate function"""
+        if not tool_call:
+            return False
+        
+        function_info = tool_call.get("function", {})
+        if isinstance(function_info, dict):
+            function_name = function_info.get("name", "")
+        else:
+            function_name = str(function_info)
+        
+        # Check if the function name ends with write_and_validate
+        return function_name.endswith("write_and_validate")
 
     async def _continue_conversation(self, model: str, messages: List[Dict[str, Any]], 
                                    current_tool_calls: List[Dict[str, Any]], current_tool_results: List[Dict[str, Any]],
-                                   enable_caching: bool = False) -> Dict[str, Any]:
+                                   enable_caching: bool = False, original_question: str = "") -> Dict[str, Any]:
         """Continue conversation after tool execution with proper formatting"""
         try:
             # Add assistant message with current tool calls using provider-specific formatting
@@ -558,6 +619,17 @@ class AnalysisService(BaseService):
                 
             
             messages.append(formatted_tool_results)
+            
+            # Check if last tool call is write_and_validate and append verification message
+            if current_tool_calls and original_question:
+                last_tool_call = current_tool_calls[-1]
+                if self._is_write_and_validate_tool_result(last_tool_call):
+                    self.logger.info("📋 Last tool call is write_and_validate, appending verification message")
+                    from llm import MessageFormatter
+                    formatter = MessageFormatter(self.llm_service.provider_type)
+                    verification_message = formatter.create_verification_message(original_question)
+                    messages.append(verification_message)
+                    self.logger.debug(f"Verification message appended: {verification_message.get('role')} role")
             
             # Filter messages to keep only recent relevant tool interactions
             filtered_messages = self._filter_messages_for_context(messages)

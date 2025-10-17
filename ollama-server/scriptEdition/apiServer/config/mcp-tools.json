@@ -26,7 +26,7 @@
   "serviceConfigs": {
     "analysis": {
       "enabled": true,
-      "servers": ["analytics-engine", "financial-data", "validation-server"]
+      "servers": ["validation-server"]
     },
     "context": {
       "enabled": false,

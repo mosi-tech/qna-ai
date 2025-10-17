@@ -40,7 +40,7 @@ class OllamaProvider(LLMProvider):
         return False  # Ollama doesn't support explicit caching like Anthropic
     
     async def call_api(self, model: str, messages: List[Dict[str, Any]], 
-                      max_tokens: int = 4000, enable_caching: bool = False,
+                      max_tokens: int = 10000, enable_caching: bool = False,
                       override_system_prompt: Optional[str] = None,
                       override_tools: Optional[List[Dict[str, Any]]] = None, 
                       force_api: bool = True) -> Dict[str, Any]:
@@ -257,6 +257,11 @@ class OllamaProvider(LLMProvider):
         
         return False
     
+    def get_message_text_length(self, message: Dict[str, Any]) -> int:
+        """Get text length from Ollama message (content is a string)"""
+        content = message.get("content", "")
+        return len(content) if isinstance(content, str) else 0
+    
     def get_tool_result_role(self) -> str:
         """Ollama uses 'tool' role for tool result messages"""
         return "tool"
@@ -373,6 +378,7 @@ class OllamaProvider(LLMProvider):
             "content": tool_content,
             "tool_call_id": tool_call_id
         }
+    
     
     def get_processed_system_data(self, enable_caching: bool = True) -> str:
         """Get system prompt processed for Ollama (just returns raw prompt)"""

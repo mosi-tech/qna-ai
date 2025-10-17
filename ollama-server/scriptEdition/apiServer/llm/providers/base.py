@@ -19,6 +19,8 @@ class LLMProvider(ABC):
         self._processed_tools_cache = {}
         self._raw_system_prompt = None
         self._raw_tools = None
+        self._raw_mcp_config = None
+        self._mcp_service_name = None
     
     @abstractmethod
     async def call_api(self, model: str, messages: List[Dict[str, Any]], 
@@ -52,6 +54,11 @@ class LLMProvider(ABC):
     @abstractmethod
     def contains_tool_calls(self, content: Any) -> bool:
         """Check if message content contains tool calls for this provider"""
+        pass
+    
+    @abstractmethod
+    def get_message_text_length(self, message: Dict[str, Any]) -> int:
+        """Get text length from message, handling provider-specific content formats"""
         pass
     
     @abstractmethod
@@ -107,6 +114,19 @@ class LLMProvider(ABC):
         if tools_changed:
             self._raw_tools = tools.copy() if tools else []
             self._processed_tools_cache.clear()  # Invalidate cache
+    
+    def set_mcp_config(self, mcp_config: Any, service_name: str = None):
+        """Set MCP configuration for CLI (can be dict or path string)"""
+        self._raw_mcp_config = mcp_config
+        self._mcp_service_name = service_name
+        if service_name:
+            from logging import getLogger
+            logger = getLogger("llm-provider")
+            if isinstance(mcp_config, dict):
+                server_count = len(mcp_config.get("mcpServers", {}))
+                logger.debug(f"🔧 Set MCP config for service '{service_name}' with {server_count} servers")
+            else:
+                logger.debug(f"🔧 Set MCP config for service '{service_name}'")
     
     @abstractmethod
     def get_processed_system_data(self, enable_caching: bool = True) -> Any:

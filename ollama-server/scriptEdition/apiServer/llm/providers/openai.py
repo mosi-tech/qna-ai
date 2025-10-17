@@ -292,6 +292,47 @@ class OpenAIProvider(LLMProvider):
         
         return messages
     
+    def contains_tool_calls(self, message: Any) -> bool:
+        """Check if OpenAI message contains tool calls"""
+        if not message:
+            return False
+        
+        content = message
+        if isinstance(message, dict) and "content" in message:
+            content = message["content"]
+        
+        if isinstance(content, str):
+            return "tool_calls" in str(content)
+        elif isinstance(content, dict):
+            return "tool_calls" in content or "type" in content and content.get("type") == "function"
+        
+        return False
+    
+    def get_message_text_length(self, message: Dict[str, Any]) -> int:
+        """Get text length from OpenAI message (content is always a string)"""
+        content = message.get("content", "")
+        return len(content) if isinstance(content, str) else 0
+    
+    def get_tool_result_role(self) -> str:
+        """OpenAI uses 'tool' role for tool result messages"""
+        return "tool"
+    
+    def message_contains_function(self, message: Any, function_name: str) -> bool:
+        """Check if OpenAI message contains a specific function call"""
+        if not message:
+            return False
+        return function_name in str(message)
+    
+    def contains_tool_results(self, message: Any) -> bool:
+        """Check if OpenAI message contains tool results"""
+        if not message:
+            return False
+        
+        if isinstance(message, dict) and message.get("role") == "tool":
+            return True
+        
+        return "tool_result" in str(message)
+    
     def get_processed_system_data(self, enable_caching: bool = True) -> str:
         """Get system prompt processed for OpenAI (just returns raw prompt)"""
         return self._raw_system_prompt or ""

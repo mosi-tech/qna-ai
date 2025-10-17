@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
-Core LLM Service - Pure LLM provider abstraction
+Core LLM Service - Pure LLM provider abstraction with cache management
 """
 
 import logging
 from typing import Dict, Any, Optional, List
 from .providers import create_provider, LLMProvider
 from .utils import LLMConfig, validate_llm_config
+from .cache import ProviderCacheManager
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +25,15 @@ class LLMService:
         # Create provider
         self.provider = self._create_provider()
         
+        # Set CLI mode flag on provider
+        self.provider.use_cli = config.use_cli
+        
+        # Initialize cache manager
+        self.cache_manager = ProviderCacheManager(
+            provider=self.provider,
+            enable_caching=True
+        )
+        
         # Store default tools for reset capability
         self.default_tools = []
         self._tools_loaded = False
@@ -40,18 +50,22 @@ class LLMService:
             return
         
         try:
-            if self.config.service_name:
-                # Use simplified MCP loader with service-specific configuration
-                from .mcp_tools import _mcp_loader
-                self.default_tools = await _mcp_loader.load_tools_for_service(self.config.service_name)
-                logger.info(f"🔧 Loaded {len(self.default_tools)} MCP tools for service '{self.config.service_name}'")
-            else:
-                # No service name - use default configuration
-                from .mcp_tools import _mcp_loader
-                self.default_tools = await _mcp_loader.load_tools_for_service("default")
-                logger.info(f"🔧 Loaded {len(self.default_tools)} MCP tools using default config")
-                
+            service_name = self.config.service_name or "default"
+            
+            # Use simplified MCP loader with service-specific configuration
+            from .mcp_tools import _mcp_loader
+            self.default_tools = await _mcp_loader.load_tools_for_service(service_name)
+            logger.info(f"🔧 Loaded {len(self.default_tools)} MCP tools for service '{service_name}'")
+            
+            # Set tools on provider
             self.provider.set_tools(self.default_tools)
+            
+            # Set filtered MCP config on provider for CLI access
+            from .mcp_tools import _mcp_loader
+            filtered_config = _mcp_loader.get_filtered_mcp_config(service_name)
+            if filtered_config:
+                self.provider.set_mcp_config(filtered_config, service_name)
+                
         except Exception as e:
             logger.error(f"❌ Failed to load MCP tools: {e}")
             self.default_tools = []
@@ -262,23 +276,32 @@ class LLMService:
         )
     
     async def warm_cache(self, model: Optional[str] = None) -> bool:
-        """Warm up the LLM cache with a simple request"""
+        """Warm up the LLM cache using cache manager"""
+        # Skip cache warming if using CLI mode
+        if self.config.use_cli:
+            logger.info("⏭️  Skipping cache warmup (CLI mode - Claude Code CLI handles caching)")
+            return True
+        
         try:
             model = model or self.default_model
-            logger.info(f"🔥 Warming cache for {self.provider_type}/{model}")
             
-            result = await self.simple_completion(
-                prompt="Hello, please respond with 'Ready'",
+            # Load system prompt if available
+            if not self._system_prompt_loaded:
+                await self._load_system_prompt()
+            
+            # Warm cache using provider cache manager
+            success = await self.cache_manager.warm_cache(
                 model=model,
-                max_tokens=10
+                system_prompt=self._system_prompt or "",
+                tools=self.default_tools
             )
             
-            if result.get("success"):
+            if success:
                 logger.info(f"✅ Cache warmed for {model}")
-                return True
             else:
-                logger.warning(f"⚠️ Cache warm failed: {result.get('error')}")
-                return False
+                logger.warning(f"⚠️ Cache warm failed for {model}")
+            
+            return success
                 
         except Exception as e:
             logger.error(f"❌ Cache warm error: {e}")

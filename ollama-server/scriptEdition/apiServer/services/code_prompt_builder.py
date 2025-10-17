@@ -12,7 +12,7 @@ import os
 from datetime import datetime
 from typing import Dict, Any, Optional, List
 
-from llm import create_code_prompt_builder_llm, LLMService
+from llm import create_code_prompt_builder_llm, LLMService, MessageFormatter
 from .base_service import BaseService
 
 class CodePromptBuilderService(BaseService):
@@ -53,19 +53,23 @@ class CodePromptBuilderService(BaseService):
             self.fixed_system_prompt = "You are a financial script generator. Generate Python scripts using the provided MCP functions."
     
     
-    async def create_code_prompt_messages(self, user_query: str, context: Optional[Dict] = None) -> Dict[str, Any]:
+    async def create_code_prompt_messages(self, user_query: str, context: Optional[Dict] = None, provider_type: Optional[str] = None) -> Dict[str, Any]:
         """
         Build enriched prompt with separate system prompt and user messages
         
         Args:
             user_query: User's financial question
             context: Optional context information
+            provider_type: Optional LLM provider type for formatting (anthropic, openai, ollama)
             
         Returns:
             Dict containing system prompt, user messages, and metadata
         """
         try:
             self.logger.info(f"🔍 Building enriched prompt for query: {user_query[:100]}...")
+            
+            # Use provided provider_type or default to llm service provider
+            provider_type = provider_type or self.llm_service.provider_type
             
             # Ensure MCP tools are loaded in LLM service
             await self.llm_service.ensure_tools_loaded()
@@ -76,70 +80,42 @@ class CodePromptBuilderService(BaseService):
             # Step 2: Fetch docstrings for selected functions
             function_schemas = await self._get_function_schemas_from_llm(function_selection['selected_functions'])
             
-            # Step 3: Build message structure with simulated tool calls using provider-agnostic methods
-            system_prompt = self.fixed_system_prompt
+            # Step 3: Get code prompt builder mode from environment
+            code_prompt_mode = os.getenv("CODE_PROMPT_MODE", "tool_simulation").lower()
+            self.logger.info(f"🔧 Using code prompt mode: {code_prompt_mode} with provider: {provider_type}")
             
-            # Build messages simulating tool calls for function documentation
-            user_messages = []
+            # Build response based on selected mode using MessageFormatter
+            formatter = MessageFormatter(provider_type)
             
-            # Initial user query
-            query_message = f"Write a Python script to answer this question: {user_query}"
-            user_messages.append({"role": "user", "content": query_message})
+            if code_prompt_mode == "tool_simulation":
+                formatter_result = formatter.build_tool_simulation(user_query, function_schemas)
+            elif code_prompt_mode == "system_prompt":
+                formatter_result = formatter.build_system_prompt(user_query, function_schemas)
+            else:  # Default: conversation
+                formatter_result = formatter.build_conversation(user_query, function_schemas)
             
-            # Get the provider for format-specific tool calls
-            provider = self.llm_service.provider
-            
-            # Create simulated tool calls using provider-specific format
-            tool_calls = []
-            call_ids = {}
-            for func_name in function_schemas.keys():
-                arguments = {"function_name": func_name}
-                call_id = f"call_{func_name}"
-                
-                tool_call = provider.create_simulated_tool_call("get_function_docstring", arguments, call_id)
-                tool_calls.append(tool_call)
-                call_ids[func_name] = call_id
-            
-            # Create assistant message with tool calls using provider-specific format
-            assistant_message = provider.create_simulated_assistant_message_with_tool_calls(
-                "I need to get documentation for the required functions first.",
-                tool_calls
-            )
-            user_messages.append(assistant_message)
-            
-            # Create tool result messages using provider-specific format
-            for func_name, schema in function_schemas.items():
-                # Format the schema as expected structured JSON output for get_function_docstring
-                structured_result = {
-                    "success": True,
-                    "function_name": func_name,
-                    "original_name": func_name, 
-                    "docstring": schema,
-                    "signature": f"{func_name}(**kwargs)",
-                    "module": "mcp_functions"
-                }
-                
-                tool_result = provider.create_simulated_tool_result(
-                    call_ids[func_name], 
-                    json.dumps(structured_result, indent=2)
-                )
-                user_messages.append(tool_result)
-            
+            # Enrich formatter result with analysis metadata
             result = {
                 "status": "success",
+                "mode": code_prompt_mode,
+                "provider": provider_type,
                 "analysis_type": function_selection.get('analysis_type', 'general'),
                 "selected_functions": function_selection['selected_functions'],
                 "function_schemas": function_schemas,
                 "suggested_parameters": function_selection.get('suggested_parameters', {}),
-                "system_prompt": system_prompt,
-                "user_messages": user_messages,
+                "system_prompt": self.fixed_system_prompt,
+                "user_messages": formatter_result.get("messages", []),
                 "timestamp": datetime.now().isoformat()
             }
+            
+            # Add system_prompt_extension if present (from system_prompt mode)
+            if "system_prompt_extension" in formatter_result:
+                result["system_prompt"] = result["system_prompt"] + "\n\n" + formatter_result["system_prompt_extension"]
             
             # Save messages for debugging
             self._save_messages_for_debugging(result, user_query)
             
-            self.logger.info(f"✅ Built enriched prompt with {len(function_selection['selected_functions'])} functions as simulated tool calls in {len(user_messages)} messages")
+            self.logger.info(f"✅ Built {code_prompt_mode} prompt for {provider_type.upper()} with {len(function_selection['selected_functions'])} functions in {len(result['user_messages'])} messages")
             return result
             
         except Exception as e:

@@ -37,7 +37,9 @@ class APIRoutes:
         if skip_code_prompt_builder:
             logger.info("🚀 ANALYSIS MODE: Direct analysis (skipping code prompt builder)")
         else:
-            logger.info("🔧 ANALYSIS MODE: Full workflow (with code prompt builder)")
+            code_prompt_mode = os.getenv("CODE_PROMPT_MODE", "tool_simulation").lower()
+            logger.info(f"🔧 ANALYSIS MODE: Full workflow (with code prompt builder)")
+            logger.info(f"📝 CODE PROMPT MODE: {code_prompt_mode}")
         
         # Initialize dialogue factory using search service's library
         try:
@@ -152,7 +154,7 @@ class APIRoutes:
             
             # Check if we should skip code prompt builder (direct analysis mode)
             skip_code_prompt_builder = os.getenv("SKIP_CODE_PROMPT_BUILDER", "false").lower() == "true"
-            # skip_code_prompt_builder = False
+            skip_code_prompt_builder = False
 
             if skip_code_prompt_builder:
                 logger.info("🚀 Skipping code prompt builder - using direct analysis mode")
@@ -180,7 +182,8 @@ class APIRoutes:
                     context={
                         "session_id": request.session_id,
                         "existing_analyses": similar_analyses
-                    } if request.session_id else {"existing_analyses": similar_analyses}
+                    } if request.session_id else {"existing_analyses": similar_analyses},
+                    provider_type=self.analysis_service.llm_service.provider_type
                 )
                 step_duration = time.time() - step_start
                 logger.info(f"⏱️ TIMING - Step 3 (Create Code Prompt Messages): {step_duration:.3f}s")
@@ -565,9 +568,10 @@ class APIRoutes:
             formatted_question = self._format_message_with_template(request.question)
             
             # Build enriched prompt using the code prompt builder service
-            result = await self.code_prompt_builder.build_enriched_prompt(
+            result = await self.code_prompt_builder.create_code_prompt_messages(
                 user_query=formatted_question,
-                context={"session_id": request.session_id} if request.session_id else None
+                context={"session_id": request.session_id} if request.session_id else None,
+                provider_type=self.analysis_service.llm_service.provider_type
             )
             
             return {
