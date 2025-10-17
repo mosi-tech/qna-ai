@@ -5,6 +5,7 @@ FastAPI Server Setup and Configuration
 import logging
 import uvicorn
 from contextlib import asynccontextmanager
+from typing import Optional
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -15,7 +16,13 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from api.models import QuestionRequest, AnalysisResponse
 from services.analysis import AnalysisService
 from services.search import SearchService
+from services.chat_service import ChatHistoryService
+from services.cache_service import CacheService
+from services.analysis_persistence_service import AnalysisPersistenceService
+from services.audit_service import AuditService
+from services.execution_service import ExecutionService
 from api.routes import APIRoutes
+from db import MongoDBClient, RepositoryManager
 
 logger = logging.getLogger("api-server")
 
@@ -26,14 +33,58 @@ async def lifespan(app: FastAPI):
     # Startup
     logger.info("🚀 Starting Financial Analysis Server...")
     
-    # Initialize services
+    try:
+        # Initialize MongoDB and repository layer
+        logger.info("📦 Initializing MongoDB connection...")
+        db_client = MongoDBClient()
+        repo_manager = RepositoryManager(db_client)
+        await repo_manager.initialize()
+        logger.info("✅ MongoDB initialized and indexes created")
+        
+        # Store in app state
+        app.state.repo_manager = repo_manager
+        
+    except Exception as e:
+        logger.error(f"⚠️ MongoDB initialization failed: {e}")
+        logger.warning("⚠️ Continuing without database (chat history will not be persisted)")
+        app.state.repo_manager = None
+    
+    # Initialize core services
     analysis_service = AnalysisService()
     search_service = SearchService()
     app.state.analysis_service = analysis_service
     app.state.search_service = search_service
     
+    # Initialize data persistence services (with repo if available)
+    if app.state.repo_manager:
+        chat_history_service = ChatHistoryService(app.state.repo_manager)
+        cache_service = CacheService(app.state.repo_manager)
+        analysis_persistence_service = AnalysisPersistenceService(app.state.repo_manager)
+        audit_service = AuditService(app.state.repo_manager)
+        execution_service = ExecutionService(app.state.repo_manager)
+    else:
+        chat_history_service = None
+        cache_service = None
+        analysis_persistence_service = None
+        audit_service = None
+        execution_service = None
+    
+    app.state.chat_history_service = chat_history_service
+    app.state.cache_service = cache_service
+    app.state.analysis_persistence_service = analysis_persistence_service
+    app.state.audit_service = audit_service
+    app.state.execution_service = execution_service
+    
     # Initialize API routes with dependency injection
-    api_routes = APIRoutes(analysis_service, search_service)
+    api_routes = APIRoutes(
+        analysis_service,
+        search_service,
+        chat_history_service,
+        cache_service,
+        analysis_persistence_service,
+        audit_service,
+        execution_service
+    )
     app.state.api_routes = api_routes
     
     logger.info(f"✅ Server ready with {analysis_service.llm_service.provider_type.upper()} provider")
@@ -43,6 +94,11 @@ async def lifespan(app: FastAPI):
     # Shutdown
     logger.info("🛑 Shutting down Financial Analysis Server...")
     await analysis_service.close_sessions()
+    
+    # Shutdown database
+    if app.state.repo_manager:
+        await app.state.repo_manager.shutdown()
+    
     logger.info("✅ Shutdown complete")
 
 
@@ -109,6 +165,36 @@ def create_app() -> FastAPI:
     async def list_sessions():
         """List active conversation sessions"""
         return await app.state.api_routes.list_sessions()
+    
+    @app.get("/chat/{session_id}/history")
+    async def get_chat_history(session_id: str):
+        """Get chat history for a session"""
+        return await app.state.api_routes.get_chat_history(session_id)
+    
+    @app.get("/user/{user_id}/sessions")
+    async def get_user_sessions(user_id: str, limit: int = 50):
+        """Get all sessions for a user"""
+        return await app.state.api_routes.get_user_sessions(user_id, limit=limit)
+    
+    @app.get("/user/{user_id}/analyses")
+    async def get_reusable_analyses(user_id: str):
+        """Get all reusable analyses for a user"""
+        return await app.state.api_routes.get_reusable_analyses(user_id)
+    
+    @app.get("/user/{user_id}/analyses/search")
+    async def search_analyses(user_id: str, q: str, limit: int = 50):
+        """Search analyses by title/description"""
+        return await app.state.api_routes.search_analyses(user_id, q, limit=limit)
+    
+    @app.get("/session/{session_id}/executions")
+    async def get_execution_history(session_id: str, limit: int = 100):
+        """Get execution history for a session"""
+        return await app.state.api_routes.get_execution_history(session_id, limit=limit)
+    
+    @app.post("/execute/{analysis_id}")
+    async def execute_analysis(analysis_id: str, user_id: str, session_id: Optional[str] = None):
+        """Execute an analysis script and populate results"""
+        return await app.state.api_routes.execute_analysis(analysis_id, user_id, session_id)
     
     return app
 
