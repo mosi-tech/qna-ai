@@ -83,7 +83,8 @@ async def lifespan(app: FastAPI):
         cache_service,
         analysis_persistence_service,
         audit_service,
-        execution_service
+        execution_service,
+        repo_manager=app.state.repo_manager
     )
     app.state.api_routes = api_routes
     

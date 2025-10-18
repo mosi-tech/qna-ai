@@ -39,7 +39,8 @@ class APIRoutes:
         audit_service: AuditService = None,
         execution_service: ExecutionService = None,
         code_prompt_builder: CodePromptBuilderService = None,
-        reuse_evaluator: ReuseEvaluatorService = None
+        reuse_evaluator: ReuseEvaluatorService = None,
+        repo_manager = None
     ):
         self.analysis_service = analysis_service
         self.search_service = search_service
@@ -50,6 +51,7 @@ class APIRoutes:
         self.execution_service = execution_service
         self.code_prompt_builder = code_prompt_builder or CodePromptBuilderService()
         self.reuse_evaluator = reuse_evaluator or ReuseEvaluatorService()
+        self.repo_manager = repo_manager
         
         # Load message template
         self.message_template = self._load_message_template()
@@ -63,13 +65,13 @@ class APIRoutes:
             logger.info(f"🔧 ANALYSIS MODE: Full workflow (with code prompt builder)")
             logger.info(f"📝 CODE PROMPT MODE: {code_prompt_mode}")
         
-        # Initialize dialogue factory using search service's library
+        # Initialize dialogue factory using search service's library and repo_manager
         try:
             analysis_library = search_service._get_library_client()
         except Exception:
             analysis_library = None
         
-        initialize_dialogue_factory(analysis_library=analysis_library)
+        initialize_dialogue_factory(analysis_library=analysis_library, repo_manager=repo_manager)
     
     def _load_message_template(self) -> str:
         """Load the message template from config file"""
@@ -388,17 +390,6 @@ class APIRoutes:
                         except Exception as e:
                             logger.warning(f"⚠️ Failed to add assistant message: {e}")
                     
-                    # Also update the legacy conversation system
-                    try:
-                        session_manager = get_session_manager()
-                        conversation = session_manager.get_session(session_id)
-                        if conversation:
-                            last_turn = conversation.get_last_turn()
-                            if last_turn and not last_turn.analysis_summary:
-                                last_turn.analysis_summary = analysis_summary or "Financial analysis completed"
-                                logger.info(f"📝 Updated conversation turn with analysis summary")
-                    except Exception as conv_error:
-                        logger.warning(f"⚠️ Failed to update legacy conversation: {conv_error}")
                 
                 except Exception as chat_error:
                     logger.error(f"❌ Error updating chat history: {chat_error}")
