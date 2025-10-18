@@ -42,18 +42,50 @@ class ConversationTurn:
         return cls(**data)
 
 class ConversationStore:
-    """Store conversation history for a session"""
+    """Interface to conversation data stored in MongoDB/Redis"""
     
-    def __init__(self, session_id: str):
+    def __init__(self, session_id: str, repo_manager = None):
         self.session_id = session_id
-        self.created_at = datetime.now()
-        self.last_activity = datetime.now()
+        self.repo_manager = repo_manager
         self.turns: List[ConversationTurn] = []
         self._context_window_size = 10  # Keep last 10 turns max
     
+    def _populate_from_messages(self, db_messages: List[Dict[str, Any]]) -> None:
+        """Populate turns from MongoDB messages
+        
+        Converts MongoDB messages to ConversationTurn objects
+        Pairs user messages with their assistant responses
+        """
+        if not db_messages:
+            return
+        
+        i = 0
+        while i < len(db_messages):
+            msg = db_messages[i]
+            role = msg.get("role", "user")
+            
+            if role == "user":
+                question = msg.get("content", "")
+                analysis_summary = None
+                
+                # Look ahead for assistant response
+                if i + 1 < len(db_messages):
+                    next_msg = db_messages[i + 1]
+                    if next_msg.get("role") == "assistant":
+                        analysis_summary = next_msg.get("content", "")[:100]
+                
+                self.add_turn(
+                    user_query=question,
+                    query_type=QueryType.COMPLETE,
+                    analysis_summary=analysis_summary,
+                    context_used=False
+                )
+            
+            i += 1
+    
     def add_turn(self, 
                  user_query: str,
-                 query_type: QueryType,
+                 query_type: QueryType = QueryType.COMPLETE,
                  expanded_query: Optional[str] = None,
                  analysis_summary: Optional[str] = None,
                  context_used: bool = False,
@@ -72,7 +104,6 @@ class ConversationStore:
         )
         
         self.turns.append(turn)
-        self.last_activity = datetime.now()
         
         # Trim to context window
         if len(self.turns) > self._context_window_size:
@@ -93,10 +124,6 @@ class ConversationStore:
                 return turn
         return None
     
-    def is_expired(self, timeout_minutes: int = 30) -> bool:
-        """Check if conversation is expired"""
-        return datetime.now() - self.last_activity > timedelta(minutes=timeout_minutes)
-    
     def get_context_summary(self) -> dict:
         """Get minimal context summary for LLM"""
         last_turn = self.get_last_turn()
@@ -114,8 +141,6 @@ class ConversationStore:
         """Serialize conversation for storage"""
         return {
             "session_id": self.session_id,
-            "created_at": self.created_at.isoformat(),
-            "last_activity": self.last_activity.isoformat(),
             "turns": [turn.to_dict() for turn in self.turns]
         }
     
@@ -123,7 +148,5 @@ class ConversationStore:
     def from_dict(cls, data: dict) -> 'ConversationStore':
         """Deserialize conversation from storage"""
         store = cls(data["session_id"])
-        store.created_at = datetime.fromisoformat(data["created_at"])
-        store.last_activity = datetime.fromisoformat(data["last_activity"])
         store.turns = [ConversationTurn.from_dict(turn_data) for turn_data in data["turns"]]
         return store

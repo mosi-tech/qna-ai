@@ -15,8 +15,18 @@ from .search.context_aware import create_context_aware_search
 class DialogueFactory:
     """Factory for creating dialogue system components with proper dependencies"""
     
-    def __init__(self, llm_service: LLMService = None, analysis_library: AnalysisLibrary = None):
+    def __init__(self, llm_service: LLMService = None, analysis_library: AnalysisLibrary = None, 
+                 repo_manager = None, chat_history_service = None):
         self.analysis_library = analysis_library or AnalysisLibrary()
+        self.repo_manager = repo_manager
+        self.chat_history_service = chat_history_service
+        
+        # Initialize session manager with both repo_manager and chat_history_service
+        # This allows SessionManager to:
+        # 1. Load/save through ChatHistoryService (primary)
+        # 2. Fall back to repo_manager if needed
+        session_manager.repo_manager = repo_manager
+        session_manager.chat_history_service = chat_history_service
         
         # Create context service - use passed LLM service or create context-optimized one
         if llm_service:
@@ -53,10 +63,18 @@ class DialogueFactory:
 # Global factory will be set by the main application
 _dialogue_factory = None
 
-def initialize_dialogue_factory(llm_service: LLMService = None, analysis_library: AnalysisLibrary = None):
-    """Initialize global dialogue factory with dependencies"""
+def initialize_dialogue_factory(llm_service: LLMService = None, analysis_library: AnalysisLibrary = None, 
+                               repo_manager = None, chat_history_service = None):
+    """Initialize global dialogue factory with dependencies
+    
+    Args:
+        llm_service: LLM service for context expansion
+        analysis_library: Semantic search library for analysis lookup
+        repo_manager: MongoDB repository manager
+        chat_history_service: ChatHistoryService for persistence
+    """
     global _dialogue_factory
-    _dialogue_factory = DialogueFactory(llm_service, analysis_library)
+    _dialogue_factory = DialogueFactory(llm_service, analysis_library, repo_manager, chat_history_service)
     return _dialogue_factory
 
 def get_dialogue_factory() -> DialogueFactory:

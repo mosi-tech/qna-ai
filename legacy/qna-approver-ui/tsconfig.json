@@ -22,7 +22,7 @@
     }
   },
   "include": [
-    "next-env.d.ts",
+    "legacy/qna-approver-ui/next-env.d.ts",
     "**/*.ts",
     "**/*.tsx"
   ],

@@ -25,12 +25,11 @@ Usage:
 """
 
 from .conversation.store import ConversationStore, ConversationTurn, QueryType
-from .conversation.session_manager import session_manager, get_session, create_session
+from .conversation.session_manager import session_manager, get_session_manager
 from .factory import (
     initialize_dialogue_factory, 
     get_dialogue_factory, 
-    search_with_context,
-    get_session_manager
+    search_with_context
 )
 
 __version__ = "1.0.0"
@@ -45,8 +44,6 @@ __all__ = [
     
     # Session management
     "session_manager",
-    "get_session",
-    "create_session",
     "get_session_manager",
     
     # Factory and initialization

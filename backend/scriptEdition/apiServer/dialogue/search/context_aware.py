@@ -40,8 +40,8 @@ class ContextAwareSearch:
         
         similarity_threshold = similarity_threshold or self.default_similarity_threshold
         
-        # Get or create session
-        session_id, conversation = self.session_manager.get_or_create_session(session_id)
+        # Get or create session (SessionManager handles MongoDB context loading)
+        session_id, conversation = await self.session_manager.get_or_create_session(session_id)
         
         # Step 1: Classify query type
         classification_result = await self._classify_query(query, conversation)
@@ -236,10 +236,10 @@ class ContextAwareSearch:
             "details": details or {}
         }
     
-    def confirm_expansion(self, session_id: str, confirmed: bool) -> Dict[str, Any]:
+    async def confirm_expansion(self, session_id: str, confirmed: bool) -> Dict[str, Any]:
         """Handle user confirmation response"""
         
-        conversation = self.session_manager.get_session(session_id)
+        conversation = await self.session_manager._get_session(session_id)
         if not conversation:
             return self._error_response("Session not found or expired")
         
@@ -257,10 +257,10 @@ class ContextAwareSearch:
                 "message": "Please rephrase your question with more specific details"
             }
     
-    def get_session_context(self, session_id: str) -> Dict[str, Any]:
+    async def get_session_context(self, session_id: str) -> Dict[str, Any]:
         """Get conversation context for debugging"""
         
-        conversation = self.session_manager.get_session(session_id)
+        conversation = await self.session_manager._get_session(session_id)
         if not conversation:
             return {"error": "Session not found"}
         
