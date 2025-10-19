@@ -19,6 +19,56 @@ class ContextService:
         # Prompts for context operations
         self._prompts = ContextPrompts()
     
+    async def classify_contextual(self, current_query: str, last_turn=None) -> Dict[str, Any]:
+        """Classify if query is CONTEXTUAL or STANDALONE (not about completeness)
+        
+        CONTEXTUAL: References prior context (pronouns, phrases)
+        STANDALONE: Can be understood in isolation
+        """
+        
+        last_query = last_turn.user_query if last_turn else None
+        
+        system_prompt, user_message = self._prompts.build_contextual_classification_messages(
+            current_query=current_query,
+            last_query=last_query
+        )
+        
+        try:
+            result = await self._make_cached_llm_call(
+                system_prompt=system_prompt,
+                user_message=user_message,
+                max_tokens=10,
+                task="contextual_classification"
+            )
+            
+            if not result["success"]:
+                return {"success": False, "error": result["error"]}
+            
+            response = result["content"].upper().strip()
+            
+            # Simple yes/no mapping
+            if response in ["CONTEXTUAL", "C"]:
+                query_type = "contextual"
+            elif response in ["STANDALONE", "COMPLETE", "S", "A"]:
+                query_type = "standalone"
+            else:
+                logger.error(f"❌ Invalid contextual classification response: '{response}'")
+                return {
+                    "success": False,
+                    "error": f"Invalid response: expected CONTEXTUAL/STANDALONE, got '{response}'"
+                }
+            
+            return {
+                "success": True,
+                "query_type": query_type,
+                "llm_response": result["content"],
+                "reason": f"Query is {query_type}"
+            }
+            
+        except Exception as e:
+            logger.error(f"Contextual classification error: {e}")
+            return {"success": False, "error": str(e)}
+    
     async def classify_query(self, current_query: str, last_query: Optional[str] = None) -> Dict[str, Any]:
         """Classify query type using LLM service"""
         
@@ -31,7 +81,7 @@ class ContextService:
             result = await self._make_cached_llm_call(
                 system_prompt=system_prompt,
                 user_message=user_message,
-                max_tokens=50,
+                max_tokens=1000,
                 task="query_classification"
             )
             
@@ -52,13 +102,23 @@ class ContextService:
                 "PARAMETER": "parameter"
             }
             
-            query_type = query_type_mapping.get(response, "complete")
+            # Require valid mapping - don't silently default
+            if response not in query_type_mapping:
+                logger.error(f"❌ LLM returned unmapped query type: '{response}'")
+                logger.error(f"   Expected one of: {list(query_type_mapping.keys())}")
+                logger.error(f"   Full LLM response: '{result['content']}'")
+                return {
+                    "success": False,
+                    "error": f"Invalid LLM response: '{response}'. Expected one of: {list(query_type_mapping.keys())}"
+                }
+            
+            query_type = query_type_mapping[response]
             
             return {
                 "success": True,
                 "query_type": query_type,
                 "llm_response": result["content"],
-                "confidence": 0.9 if response in query_type_mapping else 0.5
+                "confidence": 0.9
             }
             
         except Exception as e:
@@ -161,6 +221,43 @@ class ContextService:
 
 class ContextPrompts:
     """Optimized prompts for context understanding tasks with separate system/user messages for caching"""
+    
+    def build_contextual_classification_messages(self, current_query: str, last_query: Optional[str] = None) -> tuple[str, str]:
+        """Build messages to classify if query is CONTEXTUAL or STANDALONE
+        
+        CONTEXTUAL: References prior context (pronouns, phrases)
+        STANDALONE: Can be understood in isolation
+        
+        Does NOT validate completeness - only detects if query needs prior context
+        """
+        
+        system_prompt = """You are a financial query classifier. Determine if a query is CONTEXTUAL or STANDALONE.
+
+CONTEXTUAL - Query references prior context:
+- Uses pronouns: "it", "that", "them", "those"
+- Uses phrases: "what about", "how about", "instead", "switch to", "same strategy"
+- Cannot be answered without knowing the previous question
+- Examples: "What about QQQ?", "Same strategy with ETFs?", "How does that compare?"
+
+STANDALONE - Query is complete on its own:
+- Specifies all necessary information
+- Can be understood in isolation
+- No references to prior context
+- Examples: "Correlation between AAPL and SPY", "Backtest strategy buying TSLA on 5% drops"
+
+Return only: CONTEXTUAL or STANDALONE"""
+        
+        if last_query:
+            user_message = f"""Previous question: "{last_query}"
+Current question: "{current_query}"
+
+Is the current question CONTEXTUAL or STANDALONE?"""
+        else:
+            user_message = f"""Question: "{current_query}"
+
+This is the first question. Is it CONTEXTUAL or STANDALONE?"""
+        
+        return system_prompt, user_message
     
     def build_classification_messages(self, current_query: str, last_query: Optional[str] = None) -> tuple[str, str]:
         """Build classification system prompt and user message for optimal caching"""
