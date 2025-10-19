@@ -65,13 +65,9 @@ class APIRoutes:
             logger.info(f"🔧 ANALYSIS MODE: Full workflow (with code prompt builder)")
             logger.info(f"📝 CODE PROMPT MODE: {code_prompt_mode}")
         
-        # Initialize dialogue factory using search service's library and repo_manager
-        try:
-            analysis_library = search_service._get_library_client()
-        except Exception:
-            analysis_library = None
-        
-        initialize_dialogue_factory(analysis_library=analysis_library, repo_manager=repo_manager)
+        # Initialize dialogue factory (don't try to get library at startup - it's lazy loaded)
+        # The search service will lazily initialize ChromaDB when first needed
+        initialize_dialogue_factory(analysis_library=None, repo_manager=repo_manager)
     
     def _load_message_template(self) -> str:
         """Load the message template from config file"""
@@ -92,6 +88,16 @@ class APIRoutes:
         except Exception as e:
             logger.warning(f"⚠️ Error formatting message template: {e}")
             return user_question
+    
+    def _error_response(self, user_message: str, internal_error: str = None) -> AnalysisResponse:
+        """Create user-friendly error response (hide technical details)"""
+        if internal_error:
+            logger.error(f"Internal error: {internal_error}")
+        return AnalysisResponse(
+            success=False,
+            error=user_message,
+            timestamp=datetime.now().isoformat()
+        )
     
     async def analyze_question(self, request: QuestionRequest) -> AnalysisResponse:
         """
@@ -157,9 +163,20 @@ class APIRoutes:
             logger.info(f"⏱️ TIMING - Step 2 (Context Search): {step_duration:.3f}s")
             
             if not context_result["success"]:
+                return self._error_response(
+                    user_message="I couldn't understand your question. Please try rephrasing it.",
+                    internal_error=context_result.get('error')
+                )
+            
+            # Check if query is meaningless
+            if context_result.get("is_meaningless"):
                 return AnalysisResponse(
-                    success=False,
-                    error=f"Context analysis failed: {context_result.get('error')}",
+                    success=True,
+                    data={
+                        "is_meaningless": True,
+                        "session_id": context_result.get("session_id"),
+                        "message": context_result.get("message"),
+                    },
                     timestamp=datetime.now().isoformat()
                 )
             
@@ -258,11 +275,9 @@ class APIRoutes:
                 logger.info(f"⏱️ TIMING - Step 3 (Create Code Prompt Messages): {step_duration:.3f}s")
                 
                 if code_prompt_result["status"] != "success":
-                    logger.error(f"❌ Code prompt message creation failed: {code_prompt_result.get('error')}")
-                    return AnalysisResponse(
-                        success=False,
-                        error=f"Code prompt message creation failed: {code_prompt_result.get('error')}",
-                        timestamp=datetime.now().isoformat()
+                    return self._error_response(
+                        user_message="Unable to process your question at this time. Please try again.",
+                        internal_error=f"Code prompt creation failed: {code_prompt_result.get('error')}"
                     )
                 
                 # Use the specified model or default
@@ -459,18 +474,16 @@ class APIRoutes:
                     timestamp=datetime.now().isoformat()
                 )
             else:
-                return AnalysisResponse(
-                    success=False,
-                    error=result["error"],
-                    timestamp=datetime.now().isoformat()
+                return self._error_response(
+                    user_message="I couldn't analyze your question. Please try rephrasing it.",
+                    internal_error=result.get("error", "Unknown analysis error")
                 )
                 
         except Exception as e:
-            logger.error(f"❌ Analysis endpoint error: {e}")
-            return AnalysisResponse(
-                success=False,
-                error=f"Internal server error: {str(e)}",
-                timestamp=datetime.now().isoformat()
+            logger.error(f"❌ Analysis endpoint error: {e}", exc_info=True)
+            return self._error_response(
+                user_message="Something went wrong while processing your question. Please try again later.",
+                internal_error=str(e)
             )
     
     async def health_check(self) -> Dict[str, Any]:
@@ -654,6 +667,42 @@ class APIRoutes:
                 "error": str(e),
                 "timestamp": datetime.now().isoformat()
             }
+    
+    async def handle_clarification_response(self, 
+                                          session_id: str,
+                                          user_response: str,
+                                          original_query: str,
+                                          expanded_query: str) -> Dict[str, Any]:
+        """Handle user response to clarification prompt
+        
+        User can respond with:
+        1. Confirmation (yes/ok) → proceed to search and return results
+        2. Rejection (no/wrong) → ask for rephrase
+        3. Additional clarification → treat as new contextual query
+        """
+        try:
+            from dialogue import get_dialogue_factory
+            
+            factory = get_dialogue_factory()
+            result = await factory.get_context_aware_search().handle_clarification_response(
+                session_id=session_id,
+                user_response=user_response,
+                original_query=original_query,
+                expanded_query=expanded_query
+            )
+            
+            return {
+                "success": result.get("success", True),
+                "data": result,
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"❌ Clarification handling error: {e}")
+            return self._error_response(
+                user_message="I couldn't process your response. Please try again.",
+                internal_error=str(e)
+            )
     
     async def get_session_context(self, session_id: str) -> Dict[str, Any]:
         """Get conversation context for debugging"""

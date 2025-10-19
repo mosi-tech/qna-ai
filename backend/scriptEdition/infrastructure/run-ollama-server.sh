@@ -6,7 +6,9 @@ cd "$(dirname "$0")/.."
 # Load environment variables from infrastructure/.env file if it exists
 if [ -f "infrastructure/.env" ]; then
     echo "📁 Loading environment variables from infrastructure/.env file..."
-    export $(grep -v '^#' infrastructure/.env | xargs)
+    set -a
+    source infrastructure/.env
+    set +a
 else
     echo "⚠️  No infrastructure/.env file found. Please create one from infrastructure/.env.example"
     echo "💡 Run: cp infrastructure/.env.example infrastructure/.env"
@@ -32,6 +34,8 @@ elif [ "$LLM_PROVIDER" = "openai" ] && [ -z "$OPENAI_API_KEY" ]; then
     exit 1
 fi
 
+echo "🔧 Provider: $ANTHROPIC_API_KEY"
+
 echo "🚀 Starting Financial Analysis Server..."
 echo "🔧 Provider: $LLM_PROVIDER"
 if [ "$LLM_PROVIDER" = "anthropic" ]; then
@@ -44,4 +48,4 @@ fi
 echo "🔧 Port: $PORT"
 
 # Run the server using modular architecture
-cd apiServer && python3 server.py
+cd apiServer && python server.py

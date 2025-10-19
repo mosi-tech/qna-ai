@@ -11,10 +11,12 @@ from fastapi.middleware.cors import CORSMiddleware
 
 import sys
 import os
+import uuid
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from api.models import QuestionRequest, AnalysisResponse
 from services.analysis import AnalysisService
+from pydantic import BaseModel
 from services.search import SearchService
 from services.chat_service import ChatHistoryService
 from services.cache_service import CacheService
@@ -27,74 +29,89 @@ from db import MongoDBClient, RepositoryManager
 logger = logging.getLogger("api-server")
 
 
+class SessionResponse(BaseModel):
+    session_id: str
+    user_id: str
+
+
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager"""
-    # Startup
     logger.info("🚀 Starting Financial Analysis Server...")
     
     try:
-        # Initialize MongoDB and repository layer
+        # 1. MongoDB and repository layer (CRITICAL)
         logger.info("📦 Initializing MongoDB connection...")
         db_client = MongoDBClient()
         repo_manager = RepositoryManager(db_client)
         await repo_manager.initialize()
-        logger.info("✅ MongoDB initialized and indexes created")
-        
-        # Store in app state
+        logger.info("✅ MongoDB initialized")
         app.state.repo_manager = repo_manager
         
+        # 2. Data persistence services (CRITICAL)
+        logger.info("🔧 Initializing persistence services...")
+        chat_history_service = ChatHistoryService(repo_manager)
+        cache_service = CacheService(repo_manager)
+        analysis_persistence_service = AnalysisPersistenceService(repo_manager)
+        audit_service = AuditService(repo_manager)
+        execution_service = ExecutionService(repo_manager)
+        logger.info("✅ Persistence services initialized")
+        
+        # 3. Session manager (CRITICAL)
+        logger.info("🔧 Initializing session manager...")
+        from dialogue.conversation.session_manager import SessionManager
+        session_manager = SessionManager(repo_manager=repo_manager, chat_history_service=chat_history_service)
+        app.state.session_manager = session_manager
+        logger.info("✅ Session manager initialized")
+        
+        # 4. Core services (CRITICAL)
+        logger.info("🔧 Initializing core services...")
+        analysis_service = AnalysisService()
+        search_service = SearchService()
+        logger.info("✅ Core services initialized")
+        
+        # 5. API routes (CRITICAL)
+        logger.info("🔧 Initializing API routes...")
+        logger.info("  → Creating APIRoutes instance...")
+        api_routes = APIRoutes(
+            analysis_service,
+            search_service,
+            chat_history_service,
+            cache_service,
+            analysis_persistence_service,
+            audit_service,
+            execution_service,
+            repo_manager=repo_manager
+        )
+        logger.info("✅ API routes initialized successfully")
+        
+        # Store all in app state
+        app.state.repo_manager = repo_manager
+        app.state.chat_history_service = chat_history_service
+        app.state.cache_service = cache_service
+        app.state.analysis_persistence_service = analysis_persistence_service
+        app.state.audit_service = audit_service
+        app.state.execution_service = execution_service
+        app.state.session_manager = session_manager
+        app.state.analysis_service = analysis_service
+        app.state.search_service = search_service
+        app.state.api_routes = api_routes
+        
+        provider = analysis_service.llm_service.provider_type.upper()
+        logger.info(f"✅ Server ready with {provider} provider")
+        
     except Exception as e:
-        logger.error(f"⚠️ MongoDB initialization failed: {e}")
-        logger.warning("⚠️ Continuing without database (chat history will not be persisted)")
-        app.state.repo_manager = None
-    
-    # Initialize core services
-    analysis_service = AnalysisService()
-    search_service = SearchService()
-    app.state.analysis_service = analysis_service
-    app.state.search_service = search_service
-    
-    # Initialize data persistence services (with repo if available)
-    if app.state.repo_manager:
-        chat_history_service = ChatHistoryService(app.state.repo_manager)
-        cache_service = CacheService(app.state.repo_manager)
-        analysis_persistence_service = AnalysisPersistenceService(app.state.repo_manager)
-        audit_service = AuditService(app.state.repo_manager)
-        execution_service = ExecutionService(app.state.repo_manager)
-    else:
-        chat_history_service = None
-        cache_service = None
-        analysis_persistence_service = None
-        audit_service = None
-        execution_service = None
-    
-    app.state.chat_history_service = chat_history_service
-    app.state.cache_service = cache_service
-    app.state.analysis_persistence_service = analysis_persistence_service
-    app.state.audit_service = audit_service
-    app.state.execution_service = execution_service
-    
-    # Initialize API routes with dependency injection
-    api_routes = APIRoutes(
-        analysis_service,
-        search_service,
-        chat_history_service,
-        cache_service,
-        analysis_persistence_service,
-        audit_service,
-        execution_service,
-        repo_manager=app.state.repo_manager
-    )
-    app.state.api_routes = api_routes
-    
-    logger.info(f"✅ Server ready with {analysis_service.llm_service.provider_type.upper()} provider")
+        logger.error(f"❌ FATAL: Server initialization failed: {e}")
+        logger.error("❌ Cannot start server - check database, API keys, and dependencies")
+        raise RuntimeError(f"Server initialization failed: {e}")
     
     yield
     
     # Shutdown
     logger.info("🛑 Shutting down Financial Analysis Server...")
-    await analysis_service.close_sessions()
+    await app.state.analysis_service.close_sessions()
     
     # Shutdown database
     if app.state.repo_manager:
@@ -121,7 +138,45 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
     
-    # API Routes
+    # Session Management Routes (integrated with backend SessionManager)
+    @app.post("/session/start", response_model=SessionResponse)
+    async def start_session(user_id: Optional[str] = None):
+        """Start a new session using backend SessionManager"""
+        try:
+            session_id = await app.state.session_manager.create_session(user_id=user_id)
+            return SessionResponse(session_id=session_id, user_id=user_id or "anonymous")
+        except Exception as e:
+            logger.error(f"Failed to create session: {e}")
+            # Fallback to generating session_id locally
+            return SessionResponse(
+                session_id=str(uuid.uuid4()),
+                user_id=user_id or "anonymous"
+            )
+    
+    @app.get("/session/{session_id}")
+    async def get_session(session_id: str):
+        """Get session details from backend"""
+        try:
+            _, store = await app.state.session_manager.get_or_create_session(session_id)
+            
+            # Get context summary
+            context = store.get_context_summary() if hasattr(store, 'get_context_summary') else {}
+            
+            return {
+                "session_id": session_id,
+                "status": "active",
+                "messages": store.turns if hasattr(store, 'turns') else [],
+                "context_summary": context
+            }
+        except Exception as e:
+            logger.error(f"Failed to get session {session_id}: {e}")
+            return {
+                "session_id": session_id,
+                "status": "error",
+                "messages": [],
+                "context_summary": {}
+            }
+    
     @app.post("/analyze", response_model=AnalysisResponse)
     async def analyze_question(request: QuestionRequest):
         """Analyze a financial question and generate tool calls without execution"""
@@ -156,6 +211,19 @@ def create_app() -> FastAPI:
     async def confirm_expansion(session_id: str, confirmed: bool):
         """Handle user confirmation for query expansion"""
         return await app.state.api_routes.confirm_expansion(session_id, confirmed)
+    
+    @app.post("/clarification/{session_id}")
+    async def handle_clarification_response(session_id: str, 
+                                           user_response: str,
+                                           original_query: str,
+                                           expanded_query: str):
+        """Handle user response to clarification prompt"""
+        return await app.state.api_routes.handle_clarification_response(
+            session_id=session_id,
+            user_response=user_response,
+            original_query=original_query,
+            expanded_query=expanded_query
+        )
     
     @app.get("/conversation/{session_id}/context")
     async def get_session_context(session_id: str):
