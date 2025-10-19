@@ -82,8 +82,7 @@ class OllamaProvider(LLMProvider):
             "model": model,
             "messages": messages,
             "options": options,
-            "stream": False,
-            "format": "json"  # Request JSON format for structured output
+            "stream": False
         }
         
         # Add tools if available (Ollama has experimental tool support)
@@ -129,8 +128,7 @@ class OllamaProvider(LLMProvider):
             "model": model,
             "messages": messages,
             "options": options,
-            "stream": False,
-            "format": "json"  # Request JSON format for structured output
+            "stream": False
         }
         # Add tools if available
         if tools:

@@ -13,7 +13,7 @@ class CacheStore {
   /**
    * Set cache entry
    */
-  set<T = any>(key: string, data: T, ttlMs: number = 60000): void {
+  set<T = unknown>(key: string, data: T, ttlMs: number = 60000): void {
     this.store.set(key, {
       data,
       timestamp: Date.now(),
@@ -24,7 +24,7 @@ class CacheStore {
   /**
    * Get cache entry if not expired
    */
-  get<T = any>(key: string): T | null {
+  get<T = unknown>(key: string): T | null {
     const entry = this.store.get(key);
 
     if (!entry) {

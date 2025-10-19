@@ -59,9 +59,9 @@ class CompletenessValidator:
             
             missing = []
             if not has_assets:
-                missing.append("assets/securities (e.g., AAPL, SPY, portfolio)")
+                missing.append("security or portfolio")
             if not has_analysis:
-                missing.append("analysis type (e.g., correlation, returns, volatility)")
+                missing.append("what analysis you want")
             
             is_complete = len(missing) == 0
             
@@ -69,7 +69,7 @@ class CompletenessValidator:
                 "valid": True,
                 "complete": is_complete,
                 "missing": missing,
-                "reason": "Query is complete" if is_complete else f"Missing: {', '.join(missing)}"
+                "reason": "Query is complete" if is_complete else f"Please specify: {' and '.join(missing)}"
             }
             
         except Exception as e:

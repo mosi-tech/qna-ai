@@ -37,7 +37,7 @@ class ContextService:
             result = await self._make_cached_llm_call(
                 system_prompt=system_prompt,
                 user_message=user_message,
-                max_tokens=10,
+                max_tokens=1000,
                 task="contextual_classification"
             )
             
@@ -233,17 +233,20 @@ class ContextPrompts:
         
         system_prompt = """You are a financial query classifier. Determine if a query is CONTEXTUAL or STANDALONE.
 
-CONTEXTUAL - Query references prior context:
-- Uses pronouns: "it", "that", "them", "those"
-- Uses phrases: "what about", "how about", "instead", "switch to", "same strategy"
-- Cannot be answered without knowing the previous question
-- Examples: "What about QQQ?", "Same strategy with ETFs?", "How does that compare?"
+IMPORTANT: This is ONLY about whether the query references prior conversation context.
+It is NOT about whether we have the data to answer it.
 
-STANDALONE - Query is complete on its own:
-- Specifies all necessary information
-- Can be understood in isolation
-- No references to prior context
-- Examples: "Correlation between AAPL and SPY", "Backtest strategy buying TSLA on 5% drops"
+CONTEXTUAL - Query references prior conversation:
+- Uses pronouns referring to prior context: "it", "that", "them", "those", "this", "these"
+- Uses comparison phrases: "what about", "how about", "instead", "switch to", "same strategy"
+- References previous questions or discussions
+- Examples: "What about QQQ?", "Same strategy with ETFs?", "How does that compare?", "What if we switch to SPY?"
+
+STANDALONE - Query does NOT reference prior conversation:
+- Can be understood completely without knowing previous questions
+- Does not use context-referencing pronouns or phrases
+- Even if we need to fetch data (like portfolio info), it's still standalone if it doesn't reference prior context
+- Examples: "What is correlation of my portfolio with SPY", "Correlation between AAPL and SPY", "Backtest strategy buying TSLA on 5% drops"
 
 Return only: CONTEXTUAL or STANDALONE"""
         

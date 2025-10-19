@@ -28,7 +28,7 @@ export class AnalysisService {
       }
 
       const response = await this.client.post<AnalysisResponse['data']>(
-        '/analyze_question',
+        '/analyze',
         request
       );
 
@@ -202,6 +202,50 @@ export class AnalysisService {
       });
 
       return [];
+    }
+  }
+
+  /**
+   * Handle user response to clarification prompt
+   */
+  async handleClarificationResponse(
+    sessionId: string,
+    userResponse: string,
+    originalQuery: string,
+    expandedQuery: string
+  ): Promise<AnalysisResponse> {
+    try {
+      if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
+        console.log('[AnalysisService] Handling clarification response:', {
+          sessionId,
+          userResponse,
+          originalQuery,
+          expandedQuery,
+        });
+      }
+
+      const response = await this.client.post<AnalysisResponse['data']>(
+        `/clarification/${sessionId}`,
+        {
+          user_response: userResponse,
+          original_query: originalQuery,
+          expanded_query: expandedQuery,
+        }
+      );
+
+      return {
+        success: response.success,
+        data: response.data,
+        error: response.error,
+        timestamp: response.timestamp,
+      } as AnalysisResponse;
+    } catch (error) {
+      logError('[AnalysisService] handleClarificationResponse failed', error, {
+        sessionId,
+        userResponse: userResponse.substring(0, 50),
+      });
+
+      throw error;
     }
   }
 }

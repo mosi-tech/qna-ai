@@ -87,6 +87,36 @@ class ContextAwareSearch:
                     session_id=session_id,
                     reason="I'm not confident about my interpretation"
                 )
+            
+            # Step 2.5: Check if expansion is meaningless (e.g., "Why?" → "Why?")
+            if await self._is_meaningless_expansion(query, final_query):
+                logger.info(f"Expansion is meaningless ('{query}' → '{final_query}'), skipping clarification")
+                return {
+                    "success": True,
+                    "is_meaningless": True,
+                    "session_id": session_id,
+                    "original_query": query,
+                    "expanded_query": final_query,
+                    "message": "I don't understand your request. I need more details to help you. Please tell me what you'd like to analyze.",
+                    "type": "meaningless_query"
+                }
+        else:
+            # For standalone queries, also check if they're meaningless
+            logger.info(f"🔹 Query is STANDALONE, checking if meaningless...")
+            is_meaningless = await self._is_meaningless_query(query)
+            logger.info(f"🔹 Meaningless check result: {is_meaningless}")
+            if is_meaningless:
+                logger.info(f"✅ Standalone query is meaningless: '{query}'")
+                return {
+                    "success": True,
+                    "is_meaningless": True,
+                    "session_id": session_id,
+                    "original_query": query,
+                    "expanded_query": query,
+                    "message": "I don't understand your request. I need more details to help you. Please tell me what you'd like to analyze.",
+                    "type": "meaningless_query"
+                }
+            logger.info(f"🔹 Query is not meaningless, proceeding to validation")
         
         # Step 3: VALIDATE - Check if query is complete
         validation = self.validator.validate(final_query)
@@ -176,6 +206,150 @@ class ContextAwareSearch:
                 "error": "Unable to expand your query with context"
             }
     
+    async def _is_meaningless_expansion(self, original: str, expanded: str) -> bool:
+        """Check if expansion is meaningless using validator + LLM judgment"""
+        original_clean = original.lower().strip()
+        expanded_clean = expanded.lower().strip()
+        
+        # Quick check: if expansion is the same as original
+        if original_clean == expanded_clean:
+            logger.info(f"Expansion unchanged: '{original}' → '{expanded}'")
+            return True
+        
+        # Check if expanded query has meaningful content (assets or analysis type)
+        validation = self.validator.validate(expanded)
+        
+        # If missing both assets AND analysis type, likely meaningless
+        if not validation["complete"] and len(validation["missing"]) == 2:
+            logger.info(f"Expansion missing both assets and analysis: '{expanded}'")
+            # Use LLM to confirm it's actually meaningless
+            return await self._llm_check_meaningless(original, expanded)
+        
+        return False
+    
+    async def _is_meaningless_query(self, query: str) -> bool:
+        """Check if a standalone query is meaningless using LLM judgment"""
+        logger.info(f"🔍 Checking if standalone query is meaningless: '{query}'")
+        
+        # Quick check: very short generic questions that are obviously meaningless
+        query_lower = query.lower().strip()
+        quick_meaningless = ["why?", "what?", "how?", "when?", "where?", "who?", "huh?", "ok?", "sure?"]
+        if query_lower in quick_meaningless:
+            logger.info(f"⚡ Quick match: '{query}' is obviously meaningless")
+            return True
+        
+        try:
+            from dialogue.context.service import ContextService
+            context_service = ContextService()
+            
+            system_prompt = """You are a financial query analyzer. Determine if a standalone query is meaningless, absurd, or not a valid financial analysis query.
+Respond with only YES or NO.
+
+CRITERIA for meaningless/invalid:
+1. Too generic without financial context (e.g., "What?", "Why?", "Tell me", "How?")
+2. Single word or vague phrases without specific metrics/assets (e.g., "stocks", "volatility", "correlation")
+3. Not related to financial analysis (e.g., "What is the weather?", "How to cook?", "Tell me a story")
+4. Nonsensical or empty queries
+
+CRITERIA for valid/meaningful:
+- Has specific financial assets (e.g., "AAPL", "SPY", "portfolio") or clear metrics
+- Contains actionable financial terms (e.g., "analyze", "backtest", "compare", "calculate")
+- References specific analysis types (volatility, correlation, returns, strategy, etc.)
+- Requests actionable financial information
+
+Examples:
+- "Why?" → YES (meaningless, too generic)
+- "What?" → YES (meaningless, vague generic question)
+- "Stocks" → YES (meaningless, too vague without context)
+- "volatility" → YES (meaningless, generic term without assets)
+- "Check weather" → YES (not financial at all)
+- "What is AAPL?" → NO (valid, has specific asset)
+- "Correlation with SPY" → NO (valid, has asset + metric)
+- "Volatility of Bitcoin" → NO (valid, has asset + metric)
+- "Backtest buy strategy" → NO (valid, has strategy reference)
+- "My portfolio performance" → NO (valid, has portfolio reference)"""
+            
+            user_message = f"""Query: "{query}"
+
+Is this a meaningless or non-financial query that shouldn't be analyzed?"""
+            
+            logger.info(f"📞 Calling LLM for meaningless query check")
+            result = await context_service._make_cached_llm_call(
+                system_prompt=system_prompt,
+                user_message=user_message,
+                max_tokens=1000,
+                task="meaningless_query_check"
+            )
+            
+            if result["success"]:
+                response = result["content"].upper().strip()
+                is_meaningless = response.startswith("YES")
+                logger.info(f"✅ LLM meaningless query check: '{query}' → {response} (meaningless={is_meaningless})")
+                return is_meaningless
+            else:
+                logger.warning(f"❌ LLM call failed: {result}")
+                return False
+            
+        except Exception as e:
+            logger.warning(f"⚠️ LLM meaningless query check failed: {e}, trying quick fallback", exc_info=True)
+            # Fallback: check if it's a very short generic question
+            if len(query_lower) <= 6 and query_lower.endswith("?"):
+                logger.info(f"⚡ Fallback: '{query}' looks like generic question")
+                return True
+            return False
+    
+    async def _llm_check_meaningless(self, original: str, expanded: str) -> bool:
+        """Use LLM to determine if an expansion is meaningless/absurd"""
+        try:
+            from dialogue.context.service import ContextService
+            context_service = ContextService()
+            
+            system_prompt = """You are a financial query analyzer. Determine if an expanded query is meaningless, absurd, or not a valid financial analysis query.
+Respond with only YES or NO.
+
+CRITERIA for meaningless/invalid:
+1. Same as original (no expansion happened)
+2. Generic question without financial context (e.g., "What?", "Why?", "Tell me")
+3. Not related to financial analysis (e.g., "What is the weather?", "How to cook?")
+4. Vague without specific assets, strategies, or metrics (e.g., "Tell me about stocks")
+
+CRITERIA for valid/meaningful:
+- Has specific financial assets (stocks, ETFs, crypto, etc.) or portfolio context
+- References specific analysis (correlation, volatility, returns, strategy, backtest, etc.)
+- Requests actionable financial information
+
+Examples:
+- Original: "Why?" Expanded: "Why?" → YES (meaningless, same + generic)
+- Original: "What?" Expanded: "What?" → YES (meaningless, vague generic question)
+- Original: "Check weather" Expanded: "Check weather today" → YES (not financial)
+- Original: "Correlation" Expanded: "Correlation of AAPL with SPY" → NO (valid, has assets + metric)
+- Original: "volatility" Expanded: "What is the volatility of Bitcoin?" → NO (valid, has asset + metric)
+- Original: "Strategy" Expanded: "Backtest buy TSLA on 5% drop" → NO (valid, has asset + strategy)"""
+            
+            user_message = f"""Original: "{original}"
+Expanded: "{expanded}"
+
+Is this expansion meaningless or not a valid financial analysis query?"""
+            
+            result = await context_service._make_cached_llm_call(
+                system_prompt=system_prompt,
+                user_message=user_message,
+                max_tokens=10,
+                task="meaningless_check"
+            )
+            
+            if result["success"]:
+                response = result["content"].upper().strip()
+                is_meaningless = response.startswith("YES")
+                logger.info(f"LLM meaningless check: '{expanded}' → {response}")
+                return is_meaningless
+            
+            return False
+            
+        except Exception as e:
+            logger.warning(f"LLM meaningless check failed: {e}, using validator result")
+            return True  # Default to True if LLM check fails
+    
     def _format_conversation_context(self, conversation: ConversationStore) -> str:
         """Format conversation history as string context"""
         
@@ -200,6 +374,14 @@ class ContextAwareSearch:
         if reason is None:
             reason = "I'm not sure how to interpret your question"
         
+        # Check if query was expanded (original != expanded) or just needs more info
+        was_expanded = original_query.strip() != expanded_query.strip()
+        
+        if was_expanded:
+            message = f"{reason}. Did you mean: '{expanded_query}'?"
+        else:
+            message = reason
+        
         return {
             "success": True,
             "needs_clarification": True,
@@ -208,8 +390,8 @@ class ContextAwareSearch:
             "expanded_query": expanded_query,
             "confidence": confidence,
             "reason": reason,
-            "message": f"{reason}. Did you mean: '{expanded_query}'?",
-            "suggestion": "Please provide more specific details about the assets and analysis you want."
+            "message": message,
+            "suggestion": "Please provide more specific details about the analysis you want."
         }
     
     def _request_confirmation(self, 
