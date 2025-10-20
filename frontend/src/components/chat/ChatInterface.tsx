@@ -2,6 +2,7 @@
 
 import { useRef, useEffect } from 'react';
 import { ChatMessage } from '@/lib/hooks/useConversation';
+import { ProgressLog } from '@/lib/progress/ProgressManager';
 import MockOutput from '@/components/MockOutput';
 import ClarificationPrompt from './ClarificationPrompt';
 import ClarificationSummary from './ClarificationSummary';
@@ -14,6 +15,7 @@ interface ChatInterfaceProps {
   onSendMessage: (message: string) => void;
   onClarificationResponse?: (response: string, clarificationData: any) => void;
   pendingClarificationId?: string | null;
+  progressLogs?: ProgressLog[];
 }
 
 export default function ChatInterface({
@@ -24,6 +26,7 @@ export default function ChatInterface({
   onSendMessage,
   onClarificationResponse,
   pendingClarificationId,
+  progressLogs = [],
 }: ChatInterfaceProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -118,8 +121,34 @@ export default function ChatInterface({
             <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
               <div className="w-4 h-4 border-2 border-gray-400 border-t-gray-600 rounded-full animate-spin"></div>
             </div>
-            <div className="bg-gray-100 rounded-lg p-3 max-w-md">
-              <p className="text-sm text-gray-600">Analyzing...</p>
+            <div className="bg-gray-100 rounded-lg p-3 max-w-2xl flex-1">
+              {progressLogs.length === 0 && console.log('[ChatInterface] progressLogs is empty, count:', progressLogs.length)}
+              <div className="space-y-2">
+                {progressLogs.length > 0 ? (
+                  <>
+                    {progressLogs.map((log, idx) => (
+                      <div key={log.id || idx} className="text-sm text-gray-700 flex items-start gap-2">
+                        <span className="flex-shrink-0 mt-0.5">
+                          {log.level === 'success' && <span className="text-green-600">✓</span>}
+                          {log.level === 'error' && <span className="text-red-600">✕</span>}
+                          {log.level === 'warning' && <span className="text-yellow-600">⚠</span>}
+                          {log.level === 'info' && <span className="text-blue-600">•</span>}
+                        </span>
+                        <div className="flex-1">
+                          <span>{log.message}</span>
+                          {log.step && log.totalSteps && (
+                            <span className="text-xs text-gray-500 ml-2">
+                              (Step {log.step}/{log.totalSteps})
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                ) : (
+                  <p className="text-sm text-gray-600">Analyzing...</p>
+                )}
+              </div>
             </div>
           </div>
         )}

@@ -23,7 +23,9 @@ from services.cache_service import CacheService
 from services.analysis_persistence_service import AnalysisPersistenceService
 from services.audit_service import AuditService
 from services.execution_service import ExecutionService
+from services.progress_service import progress_manager
 from api.routes import APIRoutes
+from api.progress_routes import router as progress_router
 from db import MongoDBClient, RepositoryManager
 
 logger = logging.getLogger("api-server")
@@ -137,6 +139,9 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    
+    # Include progress streaming routes
+    app.include_router(progress_router)
     
     # Session Management Routes (integrated with backend SessionManager)
     @app.post("/session/start", response_model=SessionResponse)

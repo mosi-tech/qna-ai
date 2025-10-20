@@ -20,6 +20,13 @@ from services.cache_service import CacheService
 from services.analysis_persistence_service import AnalysisPersistenceService
 from services.audit_service import AuditService
 from services.execution_service import ExecutionService
+from services.progress_service import (
+    progress_manager,
+    progress_info,
+    progress_success,
+    progress_warning,
+    progress_error,
+)
 from db.schemas import AnalysisModel
 from dialogue import search_with_context, initialize_dialogue_factory, get_session_manager
 
@@ -106,9 +113,13 @@ class APIRoutes:
         start_time = time.time()
         execution_id = None
         user_id = request.user_id if hasattr(request, 'user_id') and request.user_id else "anonymous"
+        session_id = request.session_id or "unknown"
         
         try:
             logger.info(f"📝 Received question: {request.question[:100]}...")
+            logger.info(f"🔴 DEBUG: About to emit progress for session {session_id}")
+            event = await progress_info(session_id, f"Processing question: {request.question[:80]}")
+            logger.info(f"🟢 DEBUG: Progress event created: {event.to_dict()}")
             
             # Step 0: Initialize or retrieve session
             session_id = request.session_id
@@ -116,30 +127,37 @@ class APIRoutes:
                 try:
                     session_id = await self.chat_history_service.start_session(user_id)
                     logger.info(f"✓ Started new session: {session_id}")
+                    await progress_success(session_id, "Session created")
                 except Exception as e:
                     logger.warning(f"⚠️ Failed to start session: {e}")
+                    await progress_warning(session_id, f"Session creation failed: {str(e)}")
             
             # Step 0.5: Add user message to chat history
             if self.chat_history_service and session_id:
                 try:
+                    await progress_info(session_id, "Adding message to chat history")
                     message_id = await self.chat_history_service.add_user_message(
                         session_id=session_id,
                         user_id=user_id,
                         question=request.question
                     )
                     logger.info(f"✓ Added user message to chat history: {message_id}")
+                    await progress_success(session_id, "Message logged")
                 except Exception as e:
                     logger.warning(f"⚠️ Failed to add user message: {e}")
+                    await progress_warning(session_id, f"Failed to log message: {str(e)}")
             
             # Step 1: Check cache before processing
             if self.cache_service:
                 try:
+                    await progress_info(session_id, "Checking cache for similar analyses", step=1, total_steps=5)
                     cached_result = await self.cache_service.get_cached_result(
                         question=request.question,
                         parameters={"session_id": session_id} if session_id else {}
                     )
                     if cached_result:
                         logger.info("✓ Returning cached analysis result")
+                        await progress_success(session_id, "Found cached result - returning immediately")
                         return AnalysisResponse(
                             success=True,
                             data={
@@ -149,10 +167,13 @@ class APIRoutes:
                             },
                             timestamp=datetime.now().isoformat()
                         )
+                    await progress_info(session_id, "Cache miss - proceeding with analysis")
                 except Exception as e:
                     logger.warning(f"⚠️ Cache check failed: {e}")
+                    await progress_warning(session_id, f"Cache check failed: {str(e)}")
             
             # Step 2: Use conversation-aware search to handle contextual queries
+            await progress_info(session_id, "Searching for contextual information", step=2, total_steps=5)
             step_start = time.time()
             context_result = await search_with_context(
                 query=request.question,
@@ -161,15 +182,19 @@ class APIRoutes:
             )
             step_duration = time.time() - step_start
             logger.info(f"⏱️ TIMING - Step 2 (Context Search): {step_duration:.3f}s")
+            await progress_info(session_id, f"Context search completed in {step_duration:.2f}s")
             
             if not context_result["success"]:
+                error_msg = context_result.get('error', 'Unknown error')
+                await progress_error(session_id, f"Context search failed: {error_msg}")
                 return self._error_response(
                     user_message="I couldn't understand your question. Please try rephrasing it.",
-                    internal_error=context_result.get('error')
+                    internal_error=error_msg
                 )
             
             # Check if query is meaningless
             if context_result.get("is_meaningless"):
+                await progress_warning(session_id, "Query not specific enough - requesting clarification")
                 return AnalysisResponse(
                     success=True,
                     data={
@@ -187,9 +212,11 @@ class APIRoutes:
             logger.info(f"🔍 Query type: {context_result.get('query_type', 'unknown')}")
             if final_query != request.question:
                 logger.info(f"🔄 Expanded to: {final_query[:100]}...")
+                await progress_info(session_id, f"Query expanded: {final_query[:80]}...", details={"expansion_confidence": context_result.get("expansion_confidence")})
             
             # Step 2: Check if we need confirmation for low-confidence expansions
             if context_result.get("needs_confirmation") or context_result.get("needs_clarification"):
+                await progress_info(session_id, "Waiting for user confirmation")
                 return AnalysisResponse(
                     success=True,
                     data={
