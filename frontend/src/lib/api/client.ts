@@ -306,7 +306,7 @@ export class APIClient {
  */
 export function createAPIClient(overrides?: Partial<APIClientConfig>): APIClient {
   const baseURL =
-    overrides?.baseURL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    overrides?.baseURL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8010';
 
   const config: APIClientConfig = {
     baseURL,

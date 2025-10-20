@@ -5,10 +5,13 @@ import { useSession } from '@/lib/context/SessionContext';
 import { useConversation, ChatMessage } from '@/lib/context/ConversationContext';
 import { useUI } from '@/lib/context/UIContext';
 import { useAnalysis } from '@/lib/hooks/useAnalysis';
+import { useProgressStream } from '@/lib/hooks/useProgressStream';
 import ChatInterface from '@/components/chat/ChatInterface';
 import AnalysisPanel from '@/components/chat/AnalysisPanel';
+import ProgressPanel from '@/components/progress/ProgressPanel';
 import CustomizationForm from '@/components/chat/CustomizationForm';
 import { ParameterValues } from '@/types/modules';
+import { ProgressManager } from '@/lib/progress/ProgressManager';
 import { api } from '@/lib/api';
 
 export default function Home() {
@@ -16,6 +19,7 @@ export default function Home() {
   const { messages, addMessage, updateMessage } = useConversation();
   const { viewMode, setViewMode, isProcessing, setIsProcessing, error: uiError, setError: setUIError } = useUI();
   const { analyzeQuestion, isLoading: analysisLoading } = useAnalysis();
+  const { logs: progressLogs, isConnected, clearLogs } = useProgressStream(session_id);
 
   const [chatInput, setChatInput] = useState('');
   const [currentAnalysis, setCurrentAnalysis] = useState<{
@@ -35,6 +39,12 @@ export default function Home() {
       setIsProcessing(true);
       setChatInput('');
       setUIError(null);
+      clearLogs();
+
+      ProgressManager.addLog(session_id, {
+        level: 'info',
+        message: `Processing question: "${userMessage}"`,
+      });
 
       // If there's a pending clarification that wasn't answered, collapse it to summary
       if (lastClarificationMessageId) {
@@ -51,6 +61,11 @@ export default function Home() {
         content: userMessage,
       });
 
+      ProgressManager.addLog(session_id, {
+        level: 'info',
+        message: 'Sending analysis request to server...',
+      });
+
       const response = await analyzeQuestion({
         question: userMessage,
         session_id: session_id,
@@ -58,8 +73,18 @@ export default function Home() {
       });
 
       if (response.success && response.data) {
+        ProgressManager.addLog(session_id, {
+          level: 'success',
+          message: 'Analysis request completed successfully',
+        });
+
         // Check if query is meaningless
         if (response.data.is_meaningless) {
+          ProgressManager.addLog(session_id, {
+            level: 'warning',
+            message: 'Query was not specific enough. Requesting clarification.',
+          });
+
           addMessage({
             type: 'ai',
             content: response.data.message || 'I need more details to help you. Please tell me what you\'d like to analyze.',
@@ -71,6 +96,14 @@ export default function Home() {
           const clarificationData = response.data.context_result || response.data;
           
           if (needsClarification) {
+            ProgressManager.addLog(session_id, {
+              level: 'info',
+              message: 'Analysis requires user clarification',
+              details: {
+                confidence: clarificationData.expansion_confidence || clarificationData.confidence,
+              },
+            });
+
             const clarificationMsg = addMessage({
               type: 'clarification',
               content: clarificationData.message || 'Please confirm the interpretation',
@@ -91,6 +124,11 @@ export default function Home() {
             });
           } else if (response.data.needs_confirmation || 
                      (response.data.context_result && response.data.context_result.needs_confirmation)) {
+            ProgressManager.addLog(session_id, {
+              level: 'info',
+              message: 'Analysis requires user confirmation',
+            });
+
             const confirmMsg = addMessage({
               type: 'clarification',
               content: clarificationData.message || 'Please confirm',
@@ -102,6 +140,11 @@ export default function Home() {
               originalQuestion: userMessage,
             });
           } else {
+            ProgressManager.addLog(session_id, {
+              level: 'success',
+              message: 'Analysis results ready for display',
+            });
+
             const resultMsg = addMessage({
               type: 'results',
               content: response.data.analysis_summary || `Analysis complete for: ${userMessage}`,
@@ -121,6 +164,11 @@ export default function Home() {
           }
         }
       } else {
+        ProgressManager.addLog(session_id, {
+          level: 'error',
+          message: response.error || 'Analysis failed',
+        });
+
         addMessage({
           type: 'error',
           content: response.error || 'Analysis failed. Please try again.',
@@ -129,6 +177,11 @@ export default function Home() {
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'An error occurred';
+      ProgressManager.addLog(session_id, {
+        level: 'error',
+        message: `Exception: ${errorMsg}`,
+      });
+
       addMessage({
         type: 'error',
         content: errorMsg,
@@ -310,6 +363,7 @@ export default function Home() {
             onSendMessage={handleSendMessage}
             onClarificationResponse={handleClarificationResponse}
             pendingClarificationId={lastClarificationMessageId}
+            progressLogs={progressLogs}
           />
         </div>
 
@@ -334,7 +388,7 @@ export default function Home() {
 
   return (
     <div className="h-screen bg-gray-50 flex">
-      <div className="w-1/3 bg-white border-r border-gray-200 flex flex-col">
+      <div className="w-1/4 bg-white border-r border-gray-200 flex flex-col">
         <header className="border-b border-gray-200 px-4 py-3">
           <div className="flex items-center justify-between">
             <button
@@ -347,9 +401,8 @@ export default function Home() {
               </svg>
             </button>
 
-            <div>
-              <h1 className="text-lg font-bold text-gray-900">AI Financial Chat</h1>
-              <p className="text-gray-600 text-xs mt-1">Ask questions about trading & investing</p>
+            <div className="text-center flex-1">
+              <h1 className="text-sm font-bold text-gray-900">Chat</h1>
             </div>
           </div>
         </header>
@@ -362,10 +415,20 @@ export default function Home() {
           onSendMessage={handleSendMessage}
           onClarificationResponse={handleClarificationResponse}
           pendingClarificationId={lastClarificationMessageId}
+          progressLogs={progressLogs}
         />
       </div>
 
-      <div className="w-2/3 flex flex-col">
+      <div className="w-1/4 bg-gray-900 border-r border-gray-700 flex flex-col">
+        <ProgressPanel
+          logs={progressLogs}
+          isConnected={isConnected}
+          isProcessing={isProcessing || analysisLoading}
+          onClear={clearLogs}
+        />
+      </div>
+
+      <div className="w-1/2 flex flex-col">
         <AnalysisPanel currentAnalysis={currentAnalysis} />
       </div>
 
