@@ -177,3 +177,70 @@ class ChatHistoryService:
         except Exception as e:
             self.logger.error(f"✗ Failed to archive session: {e}")
             raise
+    
+    async def get_user_sessions(
+        self,
+        user_id: str,
+        skip: int = 0,
+        limit: int = 10,
+        search_text: Optional[str] = None,
+        archived: Optional[bool] = None,
+    ) -> List[Dict[str, Any]]:
+        """Get user sessions with metadata for list view"""
+        try:
+            sessions = await self.chat_repo.get_user_sessions(
+                user_id=user_id,
+                skip=skip,
+                limit=limit,
+                search_text=search_text,
+                archived=archived,
+            )
+            self.logger.info(f"✓ Retrieved {len(sessions)} sessions for user: {user_id}")
+            return sessions
+        except Exception as e:
+            self.logger.error(f"✗ Failed to get user sessions: {e}")
+            raise
+    
+    async def get_session_with_messages(self, session_id: str) -> Optional[Dict[str, Any]]:
+        """Get session with all messages for resume"""
+        try:
+            session = await self.chat_repo.get_session_with_messages(session_id)
+            if session:
+                self.logger.info(f"✓ Retrieved session with messages: {session_id}")
+            return session
+        except Exception as e:
+            self.logger.error(f"✗ Failed to get session with messages: {e}")
+            raise
+    
+    async def update_session(
+        self,
+        session_id: str,
+        title: Optional[str] = None,
+        is_archived: Optional[bool] = None,
+    ) -> bool:
+        """Update session metadata"""
+        try:
+            update_data = {}
+            if title is not None:
+                update_data['title'] = title
+            if is_archived is not None:
+                update_data['is_archived'] = is_archived
+            
+            result = await self.chat_repo.update_session(session_id, update_data)
+            if result:
+                self.logger.info(f"✓ Updated session: {session_id}")
+            return result
+        except Exception as e:
+            self.logger.error(f"✗ Failed to update session: {e}")
+            raise
+    
+    async def delete_session(self, session_id: str) -> bool:
+        """Delete a session and all its messages"""
+        try:
+            result = await self.chat_repo.delete_session(session_id)
+            if result:
+                self.logger.info(f"✓ Deleted session: {session_id}")
+            return result
+        except Exception as e:
+            self.logger.error(f"✗ Failed to delete session: {e}")
+            raise
