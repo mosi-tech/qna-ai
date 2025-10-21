@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useSession } from '@/lib/context/SessionContext';
-import { useConversation } from '@/lib/context/ConversationContext';
+import { useConversation, ChatMessage } from '@/lib/context/ConversationContext';
 import { useUI } from '@/lib/context/UIContext';
 import { useAnalysis } from '@/lib/hooks/useAnalysis';
 import { useProgressStream } from '@/lib/hooks/useProgressStream';
@@ -16,7 +16,7 @@ import { ParameterValues } from '@/types/modules';
 import { ProgressManager } from '@/lib/progress/ProgressManager';
 import { api } from '@/lib/api';
 
-export default function Home() {
+export default function ChatPage() {
   const { session_id, user_id, resumeSession, updateSessionMetadata } = useSession();
   const { messages, addMessage, updateMessage, setMessages, loadSessionMessages } = useConversation();
   const { viewMode, setViewMode, isProcessing, setIsProcessing, error: uiError, setError: setUIError } = useUI();
@@ -43,16 +43,6 @@ export default function Home() {
     hasOlder: false,
   });
 
-  // Load session messages on mount when session_id is available
-  useEffect(() => {
-    if (session_id) {
-      console.log(`[Home] Loading messages for session ${session_id}`);
-      loadSessionMessages(session_id).catch((err) => {
-        console.warn('[Home] Failed to load session messages (this is expected if session has no prior messages):', err);
-        // Don't show error to user - this is normal for new sessions
-      });
-    }
-  }, [session_id]);
 
   const handleSendMessage = async (userMessage: string) => {
     if (!session_id || !userMessage.trim()) return;
@@ -68,7 +58,6 @@ export default function Home() {
         message: `Processing question: "${userMessage}"`,
       });
 
-      // If there's a pending clarification that wasn't answered, collapse it to summary
       if (lastClarificationMessageId) {
         updateMessage(lastClarificationMessageId, {
           type: 'clarification',
@@ -100,7 +89,6 @@ export default function Home() {
           message: 'Analysis request completed successfully',
         });
 
-        // Check if query is meaningless
         if (response.data.is_meaningless) {
           ProgressManager.addLog(session_id, {
             level: 'warning',
@@ -113,7 +101,6 @@ export default function Home() {
             content: errorMsg,
           });
         } else {
-          // Check if needs_clarification is in context_result or directly in data
           const needsClarification = response.data.needs_clarification || 
             (response.data.context_result && response.data.context_result.needs_clarification);
           const clarificationData = response.data.context_result || response.data;
@@ -345,7 +332,6 @@ export default function Home() {
 
   const handleSelectSession = useCallback(async (selectedSessionId: string) => {
     try {
-      setShowSessionHistory(false);
       setIsProcessing(true);
 
       if (selectedSessionId === 'new') {
@@ -359,13 +345,18 @@ export default function Home() {
         return;
       }
 
+      // Navigate to new session if different
+      if (selectedSessionId !== session_id) {
+        await resumeSession(selectedSessionId);
+        return; // Navigation will reload the page, let it handle loading messages
+      }
+
+      // If same session, just load fresh messages without navigation
       const sessionDetail = await getSessionDetail(selectedSessionId, 0, 5);
       if (!sessionDetail) {
         setUIError('Failed to load session');
         return;
       }
-
-      await resumeSession(selectedSessionId);
       updateSessionMetadata({
         title: sessionDetail.title,
         created_at: sessionDetail.created_at,
@@ -388,7 +379,7 @@ export default function Home() {
         hasOlder: sessionDetail.has_older || false,
       });
       
-      console.log(`[Home] Resumed session ${selectedSessionId} with ${loadedMessages.length} messages`);
+      console.log(`[ChatPage] Resumed session ${selectedSessionId} with ${loadedMessages.length} messages`);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to resume session';
       setUIError(errorMsg);
@@ -396,7 +387,7 @@ export default function Home() {
     } finally {
       setIsProcessing(false);
     }
-  }, [getSessionDetail, resumeSession, updateSessionMetadata, setMessages, setUIError]);
+  }, [session_id, getSessionDetail, resumeSession, updateSessionMetadata, setMessages, setUIError]);
 
   const handleLoadOlderMessages = useCallback(async () => {
     if (!session_id || isLoadingOlderMessages || !currentSessionMessages.hasOlder) return;
@@ -426,7 +417,7 @@ export default function Home() {
         hasOlder: sessionDetail.has_older || false,
       });
 
-      console.log(`[Home] Loaded ${olderMessages.length} older messages`);
+      console.log(`[ChatPage] Loaded ${olderMessages.length} older messages`);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to load older messages';
       setUIError(errorMsg);
@@ -449,10 +440,30 @@ export default function Home() {
 
   if (viewMode === 'single') {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <header className="bg-white border-b border-gray-200 px-4 py-3">
-          <div className="flex items-center justify-between max-w-6xl mx-auto">
-            <div className="flex gap-2">
+      <div className="h-screen bg-gray-50 flex overflow-hidden">
+        {showSessionHistory && user_id && (
+          <div className="w-96 border-r border-gray-200 flex flex-col">
+            <SessionList
+              userId={user_id}
+              currentSessionId={session_id || undefined}
+              onSelectSession={handleSelectSession}
+              isOpen={showSessionHistory}
+              onClose={() => setShowSessionHistory(false)}
+            />
+          </div>
+        )}
+        <div className="flex-1 flex flex-col">
+          {!showSessionHistory && (
+            <div className="border-b border-gray-200 px-4 py-3 flex items-center gap-2">
+              <button
+                onClick={() => setShowSessionHistory(!showSessionHistory)}
+                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                title={showSessionHistory ? "Close chat history" : "Open chat history"}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={showSessionHistory ? "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" : "M4 6h16M4 12h16M4 18h16"} />
+                </svg>
+              </button>
               <button
                 onClick={() => setViewMode('split')}
                 className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
@@ -462,25 +473,8 @@ export default function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
                 </svg>
               </button>
-              <button
-                onClick={() => setShowSessionHistory(true)}
-                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                title="View chat history"
-              >
-                ☰
-              </button>
             </div>
-
-            <div className="text-center">
-              <h1 className="text-lg font-bold text-gray-900">AI Financial Chat</h1>
-              <p className="text-gray-600 text-xs mt-1">Ask questions about trading & investing</p>
-            </div>
-
-            <div className="w-9"></div>
-          </div>
-        </header>
-
-        <div className="max-w-4xl mx-auto h-[calc(100vh-80px)]">
+          )}
           <ChatInterface
             messages={messages}
             chatInput={chatInput}
@@ -508,50 +502,36 @@ export default function Home() {
             {uiError}
           </div>
         )}
-
-        {showSessionHistory && user_id && (
-          <SessionList
-            userId={user_id}
-            currentSessionId={session_id || undefined}
-            onSelectSession={handleSelectSession}
-            isOpen={showSessionHistory}
-            onClose={() => setShowSessionHistory(false)}
-          />
-        )}
       </div>
     );
   }
 
   return (
     <div className="h-screen bg-gray-50 flex">
-      <div className="w-1/4 bg-white border-r border-gray-200 flex flex-col">
-        <header className="border-b border-gray-200 px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex gap-1">
-              <button
-                onClick={() => setViewMode('single')}
-                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                title="Switch to single view"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
-                </svg>
-              </button>
-              <button
-                onClick={() => setShowSessionHistory(true)}
-                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors text-lg"
-                title="View chat history"
-              >
-                ☰
-              </button>
-            </div>
+      <div className="w-1/4 bg-white border-r border-gray-200 flex flex-col relative">
+        <div className="border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+          <h1 className="text-sm font-bold text-gray-900">Chat History</h1>
+          <button
+            onClick={() => setViewMode('single')}
+            className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            title="Switch to single view"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+            </svg>
+          </button>
+        </div>
+        <SessionList
+          userId={user_id || ''}
+          currentSessionId={session_id || undefined}
+          onSelectSession={handleSelectSession}
+          isOpen={true}
+          onClose={() => {}}
+          hideHeader={true}
+        />
+      </div>
 
-            <div className="text-center flex-1">
-              <h1 className="text-sm font-bold text-gray-900">Chat</h1>
-            </div>
-          </div>
-        </header>
-
+      <div className="flex-1 flex flex-col">
         <ChatInterface
           messages={messages}
           chatInput={chatInput}
