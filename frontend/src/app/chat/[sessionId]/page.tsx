@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useSession } from '@/lib/context/SessionContext';
 import { useConversation, ChatMessage } from '@/lib/context/ConversationContext';
 import { useUI } from '@/lib/context/UIContext';
@@ -42,7 +42,41 @@ export default function ChatPage() {
     total: 0,
     hasOlder: false,
   });
+  const loadedSessionIdRef = useRef<string | null>(null);
 
+  useEffect(() => {
+    if (!session_id || loadedSessionIdRef.current === session_id) return;
+
+    loadedSessionIdRef.current = session_id;
+
+    const loadInitialMessages = async () => {
+      try {
+        const sessionDetail = await getSessionDetail(session_id, 0, 5);
+        if (!sessionDetail) return;
+
+        const loadedMessages = (sessionDetail.messages || []).map((msg: any, idx: number) => ({
+          id: msg.id || `${session_id}-${idx}`,
+          type: msg.role === 'user' ? 'user' : msg.role === 'assistant' ? 'ai' : 'results',
+          content: msg.content,
+          data: msg.metadata,
+        }));
+
+        if (loadedMessages.length > 0) {
+          setMessages(loadedMessages);
+          setCurrentSessionMessages({
+            offset: sessionDetail.offset || 0,
+            limit: sessionDetail.limit || 5,
+            total: sessionDetail.total_messages || 0,
+            hasOlder: sessionDetail.has_older || false,
+          });
+        }
+      } catch (err) {
+        console.warn('Failed to load initial session messages:', err);
+      }
+    };
+
+    loadInitialMessages();
+  }, [session_id, getSessionDetail, setMessages]);
 
   const handleSendMessage = async (userMessage: string) => {
     if (!session_id || !userMessage.trim()) return;
