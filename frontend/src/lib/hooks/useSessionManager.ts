@@ -39,10 +39,16 @@ export const useSessionManager = () => {
       setIsLoadingSessions(true);
       setError(null);
       try {
-        const response = await fetch(
-          `/api/sessions/user/${userId}?skip=0&limit=50${search ? `&search=${encodeURIComponent(search)}` : ''}${archived !== undefined ? `&archived=${archived}` : ''}`,
-          { method: 'GET' }
-        );
+        const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const url = new URL(`/api/sessions/user/${userId}`, backendUrl);
+        url.searchParams.append('skip', '0');
+        url.searchParams.append('limit', '50');
+        if (search) url.searchParams.append('search', search);
+        if (archived !== undefined) url.searchParams.append('archived', String(archived));
+
+        console.log(`[useSessionManager] Fetching from: ${url.toString()}`);
+        
+        const response = await fetch(url.toString(), { method: 'GET' });
 
         if (!response.ok) {
           throw new Error(`Failed to load sessions: ${response.statusText}`);
@@ -65,9 +71,16 @@ export const useSessionManager = () => {
   );
 
   const getSessionDetail = useCallback(
-    async (sessionId: string): Promise<SessionDetail | null> => {
+    async (sessionId: string, offset: number = 0, limit: number = 5): Promise<SessionDetail | null> => {
       try {
-        const response = await fetch(`/api/sessions/${sessionId}`);
+        const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const url = new URL(`${backendUrl}/api/sessions/${sessionId}`);
+        url.searchParams.append('offset', String(offset));
+        url.searchParams.append('limit', String(limit));
+        
+        console.log(`[useSessionManager] Fetching session from: ${url.toString()}`);
+        
+        const response = await fetch(url.toString());
 
         if (!response.ok) {
           if (response.status === 404) {
@@ -78,7 +91,7 @@ export const useSessionManager = () => {
 
         const data = await response.json();
         console.log(
-          `[useSessionManager] Loaded session ${sessionId} with ${data.messages?.length || 0} messages`
+          `[useSessionManager] Loaded session ${sessionId} with ${data.messages?.length || 0} messages (has_older: ${data.has_older})`
         );
         return data;
       } catch (err) {
@@ -92,7 +105,10 @@ export const useSessionManager = () => {
   const updateSession = useCallback(
     async (sessionId: string, title?: string, isArchived?: boolean) => {
       try {
-        const response = await fetch(`/api/sessions/${sessionId}`, {
+        const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        const url = `${backendUrl}/api/sessions/${sessionId}`;
+        
+        const response = await fetch(url, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ title, is_archived: isArchived }),
@@ -122,7 +138,10 @@ export const useSessionManager = () => {
 
   const deleteSession = useCallback(async (sessionId: string) => {
     try {
-      const response = await fetch(`/api/sessions/${sessionId}`, {
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const url = `${backendUrl}/api/sessions/${sessionId}`;
+      
+      const response = await fetch(url, {
         method: 'DELETE',
       });
 

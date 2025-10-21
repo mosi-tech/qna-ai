@@ -158,6 +158,128 @@ class ChatRepository:
             "recent_analyses": analyses[-3:],
             "message_count": session.message_count,
         }
+    
+    async def get_user_sessions(
+        self,
+        user_id: str,
+        skip: int = 0,
+        limit: int = 10,
+        search_text: Optional[str] = None,
+        archived: Optional[bool] = None,
+    ) -> List[Dict[str, Any]]:
+        """Get user sessions with metadata for list view"""
+        query = {"userId": user_id}
+        
+        if archived is not None:
+            query["is_archived"] = archived
+        
+        if search_text:
+            query["title"] = {"$regex": search_text, "$options": "i"}
+        
+        sessions = await self.db.db.chat_sessions.find(query)\
+            .sort("updated_at", -1)\
+            .skip(skip)\
+            .limit(limit)\
+            .to_list(limit)
+        
+        result = []
+        for session in sessions:
+            # Get last message
+            last_msg = await self.db.db.chat_messages.find_one(
+                {"sessionId": session.get("sessionId")},
+                sort=[("created_at", -1)]
+            )
+            
+            result.append({
+                "session_id": session.get("sessionId"),
+                "title": session.get("title"),
+                "created_at": session.get("created_at", datetime.now()).isoformat(),
+                "updated_at": session.get("updated_at", datetime.now()).isoformat(),
+                "message_count": await self.db.db.chat_messages.count_documents(
+                    {"sessionId": session.get("sessionId")}
+                ),
+                "last_message": last_msg.get("content", "")[:100] if last_msg else None,
+                "is_archived": session.get("is_archived", False),
+            })
+        
+        return result
+    
+    async def get_session_with_messages(self, session_id: str, limit: int = 5, offset: int = 0) -> Optional[Dict[str, Any]]:
+        """Get session with paginated messages for resume"""
+        # Get session document
+        session = await self.db.db.chat_sessions.find_one({"sessionId": session_id})
+        
+        # If session doesn't exist but messages do, create it
+        if not session:
+            # Check if messages exist for this session
+            message_count = await self.db.db.chat_messages.count_documents({"sessionId": session_id})
+            if message_count == 0:
+                return None
+            
+            # Create implicit session document
+            session_doc = {
+                "sessionId": session_id,
+                "userId": "anonymous",
+                "title": f"Conversation {session_id[:8]}",
+                "created_at": datetime.now(),
+                "updated_at": datetime.now(),
+                "is_archived": False,
+                "message_count": message_count,
+            }
+            await self.db.db.chat_sessions.insert_one(session_doc)
+            session = session_doc
+        
+        # Get total message count
+        total_messages = await self.db.db.chat_messages.count_documents({"sessionId": session_id})
+        
+        # Get messages (newest first, then reverse for correct order)
+        messages = await self.db.db.chat_messages.find({"sessionId": session_id})\
+            .sort("created_at", -1)\
+            .skip(offset)\
+            .limit(limit)\
+            .to_list(limit)
+        
+        # Reverse to get chronological order
+        messages.reverse()
+        
+        return {
+            "session_id": session.get("sessionId"),
+            "user_id": session.get("userId"),
+            "title": session.get("title"),
+            "created_at": session.get("created_at", datetime.now()).isoformat() if hasattr(session.get("created_at"), 'isoformat') else str(session.get("created_at")),
+            "updated_at": session.get("updated_at", datetime.now()).isoformat() if hasattr(session.get("updated_at"), 'isoformat') else str(session.get("updated_at")),
+            "is_archived": session.get("is_archived", False),
+            "total_messages": total_messages,
+            "offset": offset,
+            "limit": limit,
+            "has_older": (offset + limit) < total_messages,
+            "messages": [
+                {
+                    "id": msg.get("messageId"),
+                    "role": msg.get("role"),
+                    "content": msg.get("content"),
+                    "timestamp": msg.get("created_at", "").isoformat() if hasattr(msg.get("created_at"), 'isoformat') else str(msg.get("created_at")),
+                    "metadata": msg.get("questionContext") or msg.get("analysisId"),
+                }
+                for msg in messages
+            ]
+        }
+    
+    async def update_session(self, session_id: str, update_data: Dict[str, Any]) -> bool:
+        """Update session metadata"""
+        result = await self.db.db.chat_sessions.update_one(
+            {"sessionId": session_id},
+            {"$set": {**update_data, "updated_at": datetime.now()}}
+        )
+        return result.modified_count > 0
+    
+    async def delete_session(self, session_id: str) -> bool:
+        """Delete session and all its messages"""
+        # Delete messages
+        await self.db.db.chat_messages.delete_many({"sessionId": session_id})
+        # Delete session
+        result = await self.db.db.chat_sessions.delete_one({"sessionId": session_id})
+        return result.deleted_count > 0
 
 
 class AnalysisRepository:

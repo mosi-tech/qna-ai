@@ -201,12 +201,12 @@ class ChatHistoryService:
             self.logger.error(f"✗ Failed to get user sessions: {e}")
             raise
     
-    async def get_session_with_messages(self, session_id: str) -> Optional[Dict[str, Any]]:
-        """Get session with all messages for resume"""
+    async def get_session_with_messages(self, session_id: str, limit: int = 5, offset: int = 0) -> Optional[Dict[str, Any]]:
+        """Get session with paginated messages for resume"""
         try:
-            session = await self.chat_repo.get_session_with_messages(session_id)
+            session = await self.chat_repo.get_session_with_messages(session_id, limit=limit, offset=offset)
             if session:
-                self.logger.info(f"✓ Retrieved session with messages: {session_id}")
+                self.logger.info(f"✓ Retrieved session with messages: {session_id} (offset={offset}, limit={limit})")
             return session
         except Exception as e:
             self.logger.error(f"✗ Failed to get session with messages: {e}")

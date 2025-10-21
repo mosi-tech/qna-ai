@@ -16,7 +16,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from api.models import QuestionRequest, AnalysisResponse
 from services.analysis import AnalysisService
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from services.search import SearchService
 from services.chat_service import ChatHistoryService
 from services.cache_service import CacheService
@@ -26,10 +26,15 @@ from services.execution_service import ExecutionService
 from services.progress_service import progress_manager
 from api.routes import APIRoutes
 from api.progress_routes import router as progress_router
-from api.session_routes import router as session_router, register_session_routes
+from api.session_routes import router as session_router
 from db import MongoDBClient, RepositoryManager
 
 logger = logging.getLogger("api-server")
+
+
+class SessionRequest(BaseModel):
+    user_id: str
+    title: Optional[str] = None
 
 
 class SessionResponse(BaseModel):
@@ -144,24 +149,22 @@ def create_app() -> FastAPI:
     # Include progress streaming routes
     app.include_router(progress_router)
     
-    # Register session routes with chat history service
-    app.add_event_handler("startup", lambda: register_session_routes(app.state.api_routes))
+    # Include session routes
     app.include_router(session_router)
     
     # Session Management Routes (integrated with backend SessionManager)
     @app.post("/session/start", response_model=SessionResponse)
-    async def start_session(user_id: Optional[str] = None):
+    async def start_session(request: SessionRequest):
         """Start a new session using backend SessionManager"""
         try:
-            session_id = await app.state.session_manager.create_session(user_id=user_id)
-            return SessionResponse(session_id=session_id, user_id=user_id or "anonymous")
+            session_id = await app.state.session_manager.create_session(
+                user_id=request.user_id,
+                title=request.title
+            )
+            return SessionResponse(session_id=session_id, user_id=request.user_id)
         except Exception as e:
             logger.error(f"Failed to create session: {e}")
-            # Fallback to generating session_id locally
-            return SessionResponse(
-                session_id=str(uuid.uuid4()),
-                user_id=user_id or "anonymous"
-            )
+            raise HTTPException(status_code=500, detail="Failed to create session")
     
     @app.get("/session/{session_id}")
     async def get_session(session_id: str):

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { ChatMessage } from '@/lib/hooks/useConversation';
 import { ProgressLog } from '@/lib/progress/ProgressManager';
 import MockOutput from '@/components/MockOutput';
@@ -16,6 +16,9 @@ interface ChatInterfaceProps {
   onClarificationResponse?: (response: string, clarificationData: any) => void;
   pendingClarificationId?: string | null;
   progressLogs?: ProgressLog[];
+  onLoadOlder?: () => void;
+  isLoadingOlder?: boolean;
+  canLoadOlder?: boolean;
 }
 
 export default function ChatInterface({
@@ -27,12 +30,40 @@ export default function ChatInterface({
   onClarificationResponse,
   pendingClarificationId,
   progressLogs = [],
+  onLoadOlder,
+  isLoadingOlder = false,
+  canLoadOlder = false,
 }: ChatInterfaceProps) {
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isUserScrolling, setIsUserScrolling] = useState(false);
+
+  const handleScroll = () => {
+    if (!messagesContainerRef.current) return;
+    
+    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+    
+    // Check if user has scrolled away from bottom
+    const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
+    setIsUserScrolling(!isAtBottom);
+    
+    // If scrolled near top (within 200px) and can load older, load them
+    if (scrollTop < 200 && canLoadOlder && !isLoadingOlder && onLoadOlder) {
+      onLoadOlder();
+    }
+  };
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    // Always scroll to bottom if user hasn't scrolled away or on initial load
+    if (messages.length > 0 && (!isUserScrolling || isInitialLoad)) {
+      setTimeout(() => {
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
+        setIsInitialLoad(false);
+      }, 0);
+    }
+  }, [messages, isInitialLoad, isUserScrolling]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,10 +72,28 @@ export default function ChatInterface({
     }
   };
 
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [canLoadOlder, isLoadingOlder, onLoadOlder]);
+
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((message) => (
+      <div 
+        ref={messagesContainerRef}
+        className="flex-1 overflow-y-auto p-4 space-y-4 flex flex-col items-center"
+        onScroll={handleScroll}
+      >
+        <div className="w-full max-w-[70%] flex flex-col space-y-4">
+          {isLoadingOlder && (
+            <div className="flex justify-center py-2">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600" />
+            </div>
+          )}
+          {messages.map((message) => (
           <div key={message.id} className="flex gap-3">
             {message.type === 'user' ? (
               <div className="flex gap-3 justify-end w-full">
@@ -114,50 +163,49 @@ export default function ChatInterface({
               </div>
             )}
           </div>
-        ))}
+          ))}
 
-        {isProcessing && (
-          <div className="flex gap-3">
-            <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
-              <div className="w-4 h-4 border-2 border-gray-400 border-t-gray-600 rounded-full animate-spin"></div>
-            </div>
-            <div className="bg-gray-100 rounded-lg p-3 max-w-2xl flex-1">
-              {progressLogs.length === 0 && console.log('[ChatInterface] progressLogs is empty, count:', progressLogs.length)}
-              <div className="space-y-2">
-                {progressLogs.length > 0 ? (
-                  <>
-                    {progressLogs.map((log, idx) => (
-                      <div key={log.id || idx} className="text-sm text-gray-700 flex items-start gap-2">
-                        <span className="flex-shrink-0 mt-0.5">
-                          {log.level === 'success' && <span className="text-green-600">✓</span>}
-                          {log.level === 'error' && <span className="text-red-600">✕</span>}
-                          {log.level === 'warning' && <span className="text-yellow-600">⚠</span>}
-                          {log.level === 'info' && <span className="text-blue-600">•</span>}
-                        </span>
-                        <div className="flex-1">
-                          <span>{log.message}</span>
-                          {log.step && log.totalSteps && (
-                            <span className="text-xs text-gray-500 ml-2">
-                              (Step {log.step}/{log.totalSteps})
-                            </span>
-                          )}
+          {isProcessing && (
+            <div className="flex gap-3">
+              <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+                <div className="w-4 h-4 border-2 border-gray-400 border-t-gray-600 rounded-full animate-spin"></div>
+              </div>
+              <div className="bg-gray-100 rounded-lg p-3 max-w-2xl flex-1">
+                {progressLogs.length === 0 && console.log('[ChatInterface] progressLogs is empty, count:', progressLogs.length)}
+                <div className="space-y-2">
+                  {progressLogs.length > 0 ? (
+                    <>
+                      {progressLogs.map((log, idx) => (
+                        <div key={log.id || idx} className="text-sm text-gray-700 flex items-start gap-2">
+                          <span className="flex-shrink-0 mt-0.5">
+                            {log.level === 'success' && <span className="text-green-600">✓</span>}
+                            {log.level === 'error' && <span className="text-red-600">✕</span>}
+                            {log.level === 'warning' && <span className="text-yellow-600">⚠</span>}
+                            {log.level === 'info' && <span className="text-blue-600">•</span>}
+                          </span>
+                          <div className="flex-1">
+                            <span>{log.message}</span>
+                            {log.step && log.totalSteps && (
+                              <span className="text-xs text-gray-500 ml-2">
+                                (Step {log.step}/{log.totalSteps})
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </>
-                ) : (
-                  <p className="text-sm text-gray-600">Analyzing...</p>
-                )}
+                      ))}
+                    </>
+                  ) : (
+                    <p className="text-sm text-gray-600">Analyzing...</p>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        )}
-
-        <div ref={messagesEndRef} />
+          )}
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="border-t border-gray-200 p-4 bg-white">
-        <div className="flex gap-2">
+      <form onSubmit={handleSubmit} className="border-t border-gray-200 p-4 bg-white flex justify-center">
+        <div className="w-full max-w-[70%] flex gap-2">
           <input
             type="text"
             value={chatInput}

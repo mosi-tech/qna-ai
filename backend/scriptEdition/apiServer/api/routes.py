@@ -96,10 +96,22 @@ class APIRoutes:
             logger.warning(f"⚠️ Error formatting message template: {e}")
             return user_question
     
-    def _error_response(self, user_message: str, internal_error: str = None) -> AnalysisResponse:
+    async def _error_response(self, user_message: str, internal_error: str = None, session_id: str = None, user_id: str = None) -> AnalysisResponse:
         """Create user-friendly error response (hide technical details)"""
         if internal_error:
             logger.error(f"Internal error: {internal_error}")
+        
+        if self.chat_history_service and session_id and user_id:
+            try:
+                await self.chat_history_service.add_assistant_message(
+                    session_id=session_id,
+                    user_id=user_id,
+                    content=user_message,
+                )
+                logger.info(f"✓ Saved error message to session: {session_id}")
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to save error message to session: {e}")
+        
         return AnalysisResponse(
             success=False,
             error=user_message,
@@ -187,20 +199,35 @@ class APIRoutes:
             if not context_result["success"]:
                 error_msg = context_result.get('error', 'Unknown error')
                 await progress_error(session_id, f"Context search failed: {error_msg}")
-                return self._error_response(
+                return await self._error_response(
                     user_message="I couldn't understand your question. Please try rephrasing it.",
-                    internal_error=error_msg
+                    internal_error=error_msg,
+                    session_id=session_id,
+                    user_id=user_id
                 )
             
             # Check if query is meaningless
             if context_result.get("is_meaningless"):
                 await progress_warning(session_id, "Query not specific enough - requesting clarification")
+                error_message = context_result.get("message") or "I need more details to help you. Please tell me what you'd like to analyze."
+                
+                if self.chat_history_service and session_id:
+                    try:
+                        await self.chat_history_service.add_assistant_message(
+                            session_id=session_id,
+                            user_id=user_id,
+                            content=error_message,
+                        )
+                        logger.info(f"✓ Saved meaningless query response to session: {session_id}")
+                    except Exception as e:
+                        logger.warning(f"⚠️ Failed to save meaningless query response: {e}")
+                
                 return AnalysisResponse(
                     success=True,
                     data={
                         "is_meaningless": True,
                         "session_id": context_result.get("session_id"),
-                        "message": context_result.get("message"),
+                        "message": error_message,
                     },
                     timestamp=datetime.now().isoformat()
                 )
@@ -302,9 +329,11 @@ class APIRoutes:
                 logger.info(f"⏱️ TIMING - Step 3 (Create Code Prompt Messages): {step_duration:.3f}s")
                 
                 if code_prompt_result["status"] != "success":
-                    return self._error_response(
+                    return await self._error_response(
                         user_message="Unable to process your question at this time. Please try again.",
-                        internal_error=f"Code prompt creation failed: {code_prompt_result.get('error')}"
+                        internal_error=f"Code prompt creation failed: {code_prompt_result.get('error')}",
+                        session_id=session_id,
+                        user_id=user_id
                     )
                 
                 # Use the specified model or default
@@ -501,16 +530,20 @@ class APIRoutes:
                     timestamp=datetime.now().isoformat()
                 )
             else:
-                return self._error_response(
+                return await self._error_response(
                     user_message="I couldn't analyze your question. Please try rephrasing it.",
-                    internal_error=result.get("error", "Unknown analysis error")
+                    internal_error=result.get("error", "Unknown analysis error"),
+                    session_id=session_id,
+                    user_id=user_id
                 )
                 
         except Exception as e:
             logger.error(f"❌ Analysis endpoint error: {e}", exc_info=True)
-            return self._error_response(
+            return await self._error_response(
                 user_message="Something went wrong while processing your question. Please try again later.",
-                internal_error=str(e)
+                internal_error=str(e),
+                session_id=session_id,
+                user_id=user_id
             )
     
     async def health_check(self) -> Dict[str, Any]:
@@ -726,9 +759,11 @@ class APIRoutes:
             
         except Exception as e:
             logger.error(f"❌ Clarification handling error: {e}")
-            return self._error_response(
+            return await self._error_response(
                 user_message="I couldn't process your response. Please try again.",
-                internal_error=str(e)
+                internal_error=str(e),
+                session_id=session_id,
+                user_id="anonymous"
             )
     
     async def get_session_context(self, session_id: str) -> Dict[str, Any]:
