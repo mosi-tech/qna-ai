@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useMemo } from 'react';
 import { ChatMessage } from '@/lib/hooks/useConversation';
 import { ProgressLog } from '@/lib/progress/ProgressManager';
 import MockOutput from '@/components/MockOutput';
@@ -37,6 +37,39 @@ export default function ChatInterface({
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [isUserScrolling, setIsUserScrolling] = useState(false);
+  const [, setUpdateTrigger] = useState(0);
+
+  // Update component every second to refresh elapsed times
+  useEffect(() => {
+    if (!isProcessing || progressLogs.length === 0) return;
+    
+    const timer = setInterval(() => {
+      setUpdateTrigger(prev => prev + 1);
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, [isProcessing, progressLogs.length]);
+
+  const getElapsedTime = (log: ProgressLog, index: number) => {
+    const currentTime = Date.now();
+    const timeDiff = currentTime - log.timestamp;
+    
+    // If this is the last log and still processing, show elapsed time from log creation
+    if (index === progressLogs.length - 1 && isProcessing) {
+      const seconds = Math.floor(timeDiff / 1000);
+      return seconds > 0 ? `${seconds}s` : '0s';
+    }
+    
+    // If there's a next log, calculate time between this log and the next one
+    if (index < progressLogs.length - 1) {
+      const nextLog = progressLogs[index + 1];
+      const durationMs = nextLog.timestamp - log.timestamp;
+      const durationSeconds = Math.floor(durationMs / 1000);
+      return durationSeconds > 0 ? `${durationSeconds}s` : '0s';
+    }
+    
+    return null;
+  };
 
   const handleScroll = () => {
     if (!messagesContainerRef.current) return;
@@ -175,24 +208,30 @@ export default function ChatInterface({
                 <div className="space-y-2">
                   {progressLogs.length > 0 ? (
                     <>
-                      {progressLogs.map((log, idx) => (
-                        <div key={log.id || idx} className="text-sm text-gray-700 flex items-start gap-2">
-                          <span className="flex-shrink-0 mt-0.5">
-                            {log.level === 'success' && <span className="text-green-600">✓</span>}
-                            {log.level === 'error' && <span className="text-red-600">✕</span>}
-                            {log.level === 'warning' && <span className="text-yellow-600">⚠</span>}
-                            {log.level === 'info' && <span className="text-blue-600">•</span>}
-                          </span>
-                          <div className="flex-1">
-                            <span>{log.message}</span>
-                            {log.step && log.totalSteps && (
-                              <span className="text-xs text-gray-500 ml-2">
-                                (Step {log.step}/{log.totalSteps})
-                              </span>
-                            )}
+                      {progressLogs.map((log, idx) => {
+                        const elapsedTime = getElapsedTime(log, idx);
+                        return (
+                          <div key={log.id || idx} className="text-sm text-gray-700 flex items-start gap-2">
+                            <span className="flex-shrink-0 mt-0.5">
+                              {log.level === 'success' && <span className="text-green-600">✓</span>}
+                              {log.level === 'error' && <span className="text-red-600">✕</span>}
+                              {log.level === 'warning' && <span className="text-yellow-600">⚠</span>}
+                              {log.level === 'info' && <span className="text-blue-600">•</span>}
+                            </span>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-1">
+                                <span>{log.message}</span>
+                                {elapsedTime && <span className="font-semibold text-blue-600">{elapsedTime}</span>}
+                              </div>
+                              {log.step && log.totalSteps && (
+                                <span className="text-xs text-gray-500 ml-2">
+                                  (Step {log.step}/{log.totalSteps})
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </>
                   ) : (
                     <p className="text-sm text-gray-600">Analyzing...</p>

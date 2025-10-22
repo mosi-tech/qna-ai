@@ -78,9 +78,20 @@ export const useProgressStream = (sessionId: string | null) => {
             return;
           }
 
+          let timestamp = Date.now();
+          if (data.timestamp) {
+            if (typeof data.timestamp === 'number') {
+              timestamp = data.timestamp;
+            } else {
+              const parsed = new Date(data.timestamp).getTime();
+              timestamp = isNaN(parsed) ? Date.now() : parsed;
+              console.log(`[useProgressStream] Parsed timestamp: "${data.timestamp}" -> ${timestamp}`);
+            }
+          }
+
           const progressLog: ProgressLog = {
             id: data.id || `${Date.now()}-${Math.random()}`,
-            timestamp: data.timestamp ? new Date(data.timestamp).getTime() : Date.now(),
+            timestamp: timestamp,
             level: data.level || 'info',
             message: data.message,
             step: data.step,
