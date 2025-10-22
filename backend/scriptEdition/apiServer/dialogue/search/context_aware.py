@@ -16,6 +16,12 @@ from ..conversation.session_manager import SessionManager
 from ..context.classifier import QueryClassifier
 from ..context.expander import ContextExpander
 from ..context.validator import CompletenessValidator
+from services.progress_service import (
+    progress_manager,
+    progress_info,
+    progress_success,
+    progress_warning,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -40,19 +46,33 @@ class ContextAwareSearch:
                                  query: str, 
                                  session_id: Optional[str] = None,
                                  auto_expand: bool = True,
-                                 similarity_threshold: float = None) -> Dict[str, Any]:
+                                 similarity_threshold: float = None):
         """Main entry point for context-aware search
         
         Flow:
         1. CLASSIFY: Detect if CONTEXTUAL or STANDALONE
         2. If CONTEXTUAL: EXPAND → VALIDATE → SEARCH
         3. If STANDALONE: VALIDATE → SEARCH
+        
+        Args:
+            query: User's question/query
+            session_id: Optional session ID
+            auto_expand: Whether to auto-expand contextual queries
+            similarity_threshold: Custom similarity threshold for search
         """
         
         similarity_threshold = similarity_threshold or self.default_similarity_threshold
         
-        # Get or create session (SessionManager handles MongoDB context loading)
-        session_id, conversation = await self.session_manager.get_or_create_session(session_id)
+        # Get conversation from session or create new one
+        if self.session_manager and session_id:
+            conversation = await self.session_manager.get_session(session_id)
+            if not conversation:
+                conversation = ConversationStore(session_id)
+        else:
+            # Create a temporary session_id for this conversation
+            import uuid
+            temp_session_id = str(uuid.uuid4())
+            conversation = ConversationStore(temp_session_id)
         
         # Step 1: CLASSIFY - Is this query CONTEXTUAL or STANDALONE?
         classification = await self._classify_contextual(query, conversation)
@@ -119,6 +139,7 @@ class ContextAwareSearch:
             logger.info(f"🔹 Query is not meaningless, proceeding to validation")
         
         # Step 3: VALIDATE - Check if query is complete
+        await progress_info(session_id, "Checking question for completeness...")
         validation = self.validator.validate(final_query)
         
         if not validation["complete"]:
@@ -134,14 +155,6 @@ class ContextAwareSearch:
         
         # Step 4: SEARCH - Query is ready
         logger.info(f"Query validated, proceeding with search: {final_query[:100]}...")
-        
-        # Add to conversation history
-        turn = conversation.add_turn(
-            user_query=query,
-            query_type="contextual" if is_contextual else "standalone",
-            expanded_query=final_query if is_contextual else None,
-            context_used=is_contextual
-        )
         
         # Search for similar analyses
         search_result = self.analysis_library.search_similar(
@@ -438,7 +451,7 @@ Is this expansion meaningless or not a valid financial analysis query?"""
         similarity_threshold = similarity_threshold or self.default_similarity_threshold
         
         # Get session
-        session_id_result, conversation = await self.session_manager.get_or_create_session(session_id)
+        conversation = await self.session_manager.get_session(session_id)
         if not conversation:
             return self._error_response("Session not found")
         
@@ -468,7 +481,7 @@ Is this expansion meaningless or not a valid financial analysis query?"""
             
             return {
                 "success": True,
-                "session_id": session_id_result,
+                "session_id": session_id,
                 "query_type": "contextual",
                 "original_query": original_query,
                 "final_query": expanded_query,
@@ -485,7 +498,7 @@ Is this expansion meaningless or not a valid financial analysis query?"""
                 "success": True,
                 "stage": "needs_input",
                 "input_type": "rephrase",
-                "session_id": session_id_result,
+                "session_id": session_id,
                 "message": "Please rephrase your question with more specific details about the assets and analysis you want.",
                 "hint": "Include what you want to analyze and what metrics/analysis you're interested in"
             }
@@ -498,7 +511,7 @@ Is this expansion meaningless or not a valid financial analysis query?"""
             # Re-run the full flow with the user's clarification
             return await self.search_with_context(
                 query=user_response,
-                session_id=session_id_result,
+                session_id=session_id,
                 similarity_threshold=similarity_threshold
             )
     

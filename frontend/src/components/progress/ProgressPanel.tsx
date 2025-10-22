@@ -17,10 +17,29 @@ export default function ProgressPanel({
   onClear,
 }: ProgressPanelProps) {
   const logsEndRef = useRef<HTMLDivElement>(null);
+  const [, setUpdateTrigger] = React.useState(0);
+  
+  // Consider it processing if: isProcessing prop is true OR we have logs (ongoing analysis)
+  const isActuallyProcessing = isProcessing || logs.length > 0;
 
   useEffect(() => {
     logsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [logs]);
+
+  useEffect(() => {
+    if (!isActuallyProcessing) {
+      return;
+    }
+    
+    // Update elapsed time every second
+    const timer = setInterval(() => {
+      setUpdateTrigger(prev => prev + 1);
+    }, 1000);
+    
+    return () => {
+      clearInterval(timer);
+    };
+  }, [isActuallyProcessing, logs.length]);
 
   const getLogColor = (level: ProgressLog['level']) => {
     switch (level) {
@@ -58,6 +77,27 @@ export default function ProgressPanel({
     });
   };
 
+  const getElapsedTime = (log: ProgressLog, logs: ProgressLog[], index: number) => {
+    const currentTime = Date.now();
+    const timeDiff = currentTime - log.timestamp;
+    
+    // If this is the last log and still processing, show elapsed time from log creation
+    if (index === logs.length - 1 && isActuallyProcessing) {
+      const seconds = Math.floor(timeDiff / 1000);
+      return seconds > 0 ? `${seconds}s` : '0s';
+    }
+    
+    // If there's a next log, calculate time between this log and the next one
+    if (index < logs.length - 1) {
+      const nextLog = logs[index + 1];
+      const durationMs = nextLog.timestamp - log.timestamp;
+      const durationSeconds = Math.floor(durationMs / 1000);
+      return durationSeconds > 0 ? `${durationSeconds}s` : '0s';
+    }
+    
+    return null;
+  };
+
   return (
     <div className="flex flex-col h-full bg-gray-900 text-gray-100 font-mono text-sm">
       <div className="flex items-center justify-between p-3 bg-gray-800 border-b border-gray-700">
@@ -90,31 +130,42 @@ export default function ProgressPanel({
             </div>
           </div>
         ) : (
-          logs.map((log) => (
-            <div key={log.id} className={`px-2 py-1 rounded ${getLogColor(log.level)}`}>
-              <div className="flex items-start gap-2">
-                <span className="flex-shrink-0 w-4 text-center">{getLogIcon(log.level)}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="break-words text-xs leading-relaxed">{log.message}</span>
-                    <span className="text-xs opacity-60 flex-shrink-0">{formatTime(log.timestamp)}</span>
+          logs.map((log, index) => {
+            const isLastInfoLog = log.level === 'info' && index === logs.length - 1 && isProcessing;
+            const elapsedTime = getElapsedTime(log, logs, index);
+            
+            return (
+              <div key={log.id} className={`px-2 py-1 rounded ${getLogColor(log.level)}`}>
+                <div className="flex items-start gap-2">
+                  <span className="flex-shrink-0 w-4 text-center">{getLogIcon(log.level)}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-1">
+                        <span className="break-words text-xs leading-relaxed">{log.message}</span>
+                        {elapsedTime && <span className="ml-1 font-semibold text-blue-400">{elapsedTime}</span>}
+                        {isLastInfoLog && <span className="animate-pulse ml-1">⟳</span>}
+                      </div>
+                      <div className="text-xs opacity-60 flex-shrink-0 whitespace-nowrap">
+                        <span>{formatTime(log.timestamp)}</span>
+                      </div>
+                    </div>
+                    {log.step && log.totalSteps && (
+                      <div className="mt-1 text-xs opacity-75">
+                        Step {log.step} of {log.totalSteps}
+                      </div>
+                    )}
+                    {log.details && Object.keys(log.details).length > 0 && (
+                      <div className="mt-1 text-xs opacity-60 pl-2 border-l border-current">
+                        {Object.entries(log.details)
+                          .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
+                          .join(' | ')}
+                      </div>
+                    )}
                   </div>
-                  {log.step && log.totalSteps && (
-                    <div className="mt-1 text-xs opacity-75">
-                      Step {log.step} of {log.totalSteps}
-                    </div>
-                  )}
-                  {log.details && Object.keys(log.details).length > 0 && (
-                    <div className="mt-1 text-xs opacity-60 pl-2 border-l border-current">
-                      {Object.entries(log.details)
-                        .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
-                        .join(' | ')}
-                    </div>
-                  )}
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
         <div ref={logsEndRef} />
       </div>
