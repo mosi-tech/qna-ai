@@ -244,9 +244,16 @@ export default function SessionList({
                       onClick={() => onSelectSession(session.session_id)}
                       className="flex-1 text-left min-w-0"
                     >
-                      <p className="font-semibold text-sm text-gray-900 truncate">
-                        {session.title || `Chat ${session.session_id.slice(0, 8)}`}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-sm text-gray-900 truncate">
+                          {session.title || `Chat ${session.session_id.slice(0, 8)}`}
+                        </p>
+                        {session.is_archived && (
+                          <span className="flex-shrink-0 px-2 py-1 text-xs font-medium rounded-full bg-gray-200 text-gray-700">
+                            Archived
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-gray-500 mt-1 truncate">
                         {session.last_message || 'No messages'}
                       </p>
