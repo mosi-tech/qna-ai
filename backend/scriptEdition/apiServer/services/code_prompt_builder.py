@@ -53,7 +53,7 @@ class CodePromptBuilderService(BaseService):
             self.fixed_system_prompt = "You are a financial script generator. Generate Python scripts using the provided MCP functions."
     
     
-    async def create_code_prompt_messages(self, user_query: str, context: Optional[Dict] = None, provider_type: Optional[str] = None) -> Dict[str, Any]:
+    async def create_code_prompt_messages(self, user_query: str, context: Optional[Dict] = None, provider_type: Optional[str] = None, enable_caching: bool = True) -> Dict[str, Any]:
         """
         Build enriched prompt with separate system prompt and user messages
         
@@ -88,11 +88,11 @@ class CodePromptBuilderService(BaseService):
             formatter = MessageFormatter(provider_type)
             
             if code_prompt_mode == "tool_simulation":
-                formatter_result = formatter.build_tool_simulation(user_query, function_schemas)
+                formatter_result = formatter.build_tool_simulation(user_query, function_schemas, enable_caching)
             elif code_prompt_mode == "system_prompt":
-                formatter_result = formatter.build_system_prompt(user_query, function_schemas)
+                formatter_result = formatter.build_system_prompt(user_query, function_schemas, enable_caching)
             else:  # Default: conversation
-                formatter_result = formatter.build_conversation(user_query, function_schemas)
+                formatter_result = formatter.build_conversation(user_query, function_schemas, enable_caching)
             
             # Enrich formatter result with analysis metadata
             result = {

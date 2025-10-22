@@ -42,8 +42,6 @@ class SessionResponse(BaseModel):
     user_id: str
 
 
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager"""
@@ -170,10 +168,10 @@ def create_app() -> FastAPI:
     async def get_session(session_id: str):
         """Get session details from backend"""
         try:
-            _, store = await app.state.session_manager.get_or_create_session(session_id)
+            store = await app.state.session_manager.get_session(session_id)
             
             # Get context summary
-            context = store.get_context_summary() if hasattr(store, 'get_context_summary') else {}
+            context = store.get_context_summary() if store and hasattr(store, 'get_context_summary') else {}
             
             return {
                 "session_id": session_id,

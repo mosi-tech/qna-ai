@@ -35,7 +35,7 @@ class MessageFormatter:
     
     def build_conversation(self, 
                           user_query: str, 
-                          function_schemas: Dict[str, str]) -> Dict[str, Any]:
+                          function_schemas: Dict[str, str], enable_caching: bool) -> Dict[str, Any]:
         """
         Build a conversation mode for script generation
         
@@ -46,7 +46,7 @@ class MessageFormatter:
         Returns:
             Dict with 'messages', 'system_prompt', etc. formatted for provider
         """
-        return self.formatter.build_conversation(user_query, function_schemas)
+        return self.formatter.build_conversation(user_query, function_schemas, enable_caching)
     
     def build_system_prompt(self,
                            user_query: str,
@@ -115,17 +115,17 @@ class BaseMessageFormatter:
     
     def build_conversation(self, 
                           user_query: str, 
-                          function_schemas: Dict[str, str]) -> Dict[str, Any]:
+                          function_schemas: Dict[str, str], enable_caching: bool) -> Dict[str, Any]:
         raise NotImplementedError
     
     def build_system_prompt(self,
                            user_query: str,
-                           function_schemas: Dict[str, str]) -> Dict[str, Any]:
+                           function_schemas: Dict[str, str], enable_caching: bool) -> Dict[str, Any]:
         raise NotImplementedError
     
     def build_tool_simulation(self,
                             user_query: str,
-                            function_schemas: Dict[str, str]) -> Dict[str, Any]:
+                            function_schemas: Dict[str, str], enable_caching: bool) -> Dict[str, Any]:
         raise NotImplementedError
     
     def format_assistant_response_with_tool_use(self,
@@ -145,19 +145,20 @@ class AnthropicMessageFormatter(BaseMessageFormatter):
     
     def build_conversation(self, 
                           user_query: str, 
-                          function_schemas: Dict[str, str]) -> Dict[str, Any]:
+                          function_schemas: Dict[str, str], 
+                          enable_caching: bool = False) -> Dict[str, Any]:
         """Build conversation in Anthropic format"""
-        return self._build_conversation_mode(user_query, function_schemas)
+        return self._build_conversation_mode(user_query, function_schemas, enable_caching)
     
-    def _build_conversation_mode(self, user_query: str, function_schemas: Dict[str, str]) -> Dict[str, Any]:
+    def _build_conversation_mode(self, user_query: str, function_schemas: Dict[str, str], enable_caching: bool) -> Dict[str, Any]:
         """Build multi-turn conversation with function documentation"""
         messages = []
         
-        query_message = f"Write a Python script to answer this question: {user_query}"
-        messages.append({
-            "role": "user", 
-            "content": [{"type": "text", "text": query_message}]
-        })
+        # query_message = f"Write a Python script to answer this question: {user_query}"
+        # messages.append({
+        #     "role": "user", 
+        #     "content": [{"type": "text", "text": query_message}]
+        # })
         
         assistant_response = f"""I'll analyze this question and identify the required functions. For this analysis, I need to use the following MCP functions:
 
@@ -192,6 +193,12 @@ Let me get the documentation for these functions one by one."""
             "role": "assistant", 
             "content": [{"type": "text", "text": final_assistant_message}]
         })
+
+        if enable_caching:
+            messages[-1]["content"][0]["cache_control"] = {
+                "type": "ephemeral",
+                "ttl": "5m"
+            }
         
         return {
             "mode": "conversation",
@@ -362,7 +369,7 @@ class OpenAIMessageFormatter(BaseMessageFormatter):
     
     def build_conversation(self, 
                           user_query: str, 
-                          function_schemas: Dict[str, str]) -> Dict[str, Any]:
+                          function_schemas: Dict[str, str], enable_caching: bool) -> Dict[str, Any]:
         """Build conversation in OpenAI format"""
         
         messages = []
@@ -377,7 +384,7 @@ class OpenAIMessageFormatter(BaseMessageFormatter):
     
     def build_system_prompt(self,
                            user_query: str,
-                           function_schemas: Dict[str, str]) -> Dict[str, Any]:
+                           function_schemas: Dict[str, str], enable_caching: bool) -> Dict[str, Any]:
         """Build system prompt mode for OpenAI"""
         messages = []
         query_message = f"Write a Python script to answer this question: {user_query}"
@@ -391,7 +398,7 @@ class OpenAIMessageFormatter(BaseMessageFormatter):
     
     def build_tool_simulation(self,
                             user_query: str,
-                            function_schemas: Dict[str, str]) -> Dict[str, Any]:
+                            function_schemas: Dict[str, str], enable_caching: bool) -> Dict[str, Any]:
         """Build tool simulation messages for OpenAI"""
         messages = []
         query_message = f"Write a Python script to answer this question: {user_query}"
@@ -457,7 +464,8 @@ class OllamaMessageFormatter(BaseMessageFormatter):
     
     def build_conversation(self, 
                           user_query: str, 
-                          function_schemas: Dict[str, str]) -> Dict[str, Any]:
+                          function_schemas: Dict[str, str], 
+                          enable_caching: bool) -> Dict[str, Any]:
         """Build conversation in Ollama format (similar to OpenAI)"""
         
         messages = []
@@ -472,7 +480,8 @@ class OllamaMessageFormatter(BaseMessageFormatter):
     
     def build_system_prompt(self,
                            user_query: str,
-                           function_schemas: Dict[str, str]) -> Dict[str, Any]:
+                           function_schemas: Dict[str, str], 
+                           enable_caching: bool) -> Dict[str, Any]:
         """Build system prompt mode for Ollama"""
         messages = []
         query_message = f"Write a Python script to answer this question: {user_query}"
@@ -486,7 +495,8 @@ class OllamaMessageFormatter(BaseMessageFormatter):
     
     def build_tool_simulation(self,
                             user_query: str,
-                            function_schemas: Dict[str, str]) -> Dict[str, Any]:
+                            function_schemas: Dict[str, str], 
+                            enable_caching: bool) -> Dict[str, Any]:
         """Build tool simulation messages for Ollama"""
         messages = []
         query_message = f"Write a Python script to answer this question: {user_query}"

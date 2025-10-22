@@ -165,8 +165,8 @@ class AnalysisLibrary:
             if filename is None:
                 filename = f"{function_name}.py"
             
-            if parameters is None:
-                parameters = {}
+            if metadata is None:
+                metadata = {}
             
             analysis_data = AnalysisData(
                 id=analysis_id,
@@ -174,7 +174,7 @@ class AnalysisLibrary:
                 function_name=function_name,
                 docstring=docstring,
                 filename=filename,
-                metadata=addn_meta,
+                metadata=metadata,
                 created_date=now,
                 usage_count=0
             )

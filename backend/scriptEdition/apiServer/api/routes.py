@@ -20,15 +20,14 @@ from services.cache_service import CacheService
 from services.analysis_persistence_service import AnalysisPersistenceService
 from services.audit_service import AuditService
 from services.execution_service import ExecutionService
+from db.schemas import AnalysisModel
+from dialogue import search_with_context, initialize_dialogue_factory, get_session_manager
 from services.progress_service import (
     progress_manager,
     progress_info,
     progress_success,
     progress_warning,
-    progress_error,
 )
-from db.schemas import AnalysisModel
-from dialogue import search_with_context, initialize_dialogue_factory, get_session_manager
 
 logger = logging.getLogger("api-routes")
 
@@ -129,9 +128,6 @@ class APIRoutes:
         
         try:
             logger.info(f"📝 Received question: {request.question[:100]}...")
-            logger.info(f"🔴 DEBUG: About to emit progress for session {session_id}")
-            event = await progress_info(session_id, f"Processing question: {request.question[:80]}")
-            logger.info(f"🟢 DEBUG: Progress event created: {event.to_dict()}")
             
             # Step 0: Initialize or retrieve session
             session_id = request.session_id
@@ -139,37 +135,32 @@ class APIRoutes:
                 try:
                     session_id = await self.chat_history_service.start_session(user_id)
                     logger.info(f"✓ Started new session: {session_id}")
-                    await progress_success(session_id, "Session created")
                 except Exception as e:
                     logger.warning(f"⚠️ Failed to start session: {e}")
-                    await progress_warning(session_id, f"Session creation failed: {str(e)}")
             
+            await progress_info(session_id, "Understanding your question...") 
+
             # Step 0.5: Add user message to chat history
             if self.chat_history_service and session_id:
                 try:
-                    await progress_info(session_id, "Adding message to chat history")
                     message_id = await self.chat_history_service.add_user_message(
                         session_id=session_id,
                         user_id=user_id,
                         question=request.question
                     )
                     logger.info(f"✓ Added user message to chat history: {message_id}")
-                    await progress_success(session_id, "Message logged")
                 except Exception as e:
                     logger.warning(f"⚠️ Failed to add user message: {e}")
-                    await progress_warning(session_id, f"Failed to log message: {str(e)}")
             
             # Step 1: Check cache before processing
             if self.cache_service:
                 try:
-                    await progress_info(session_id, "Checking cache for similar analyses", step=1, total_steps=5)
                     cached_result = await self.cache_service.get_cached_result(
                         question=request.question,
                         parameters={"session_id": session_id} if session_id else {}
                     )
                     if cached_result:
                         logger.info("✓ Returning cached analysis result")
-                        await progress_success(session_id, "Found cached result - returning immediately")
                         return AnalysisResponse(
                             success=True,
                             data={
@@ -179,13 +170,10 @@ class APIRoutes:
                             },
                             timestamp=datetime.now().isoformat()
                         )
-                    await progress_info(session_id, "Cache miss - proceeding with analysis")
                 except Exception as e:
                     logger.warning(f"⚠️ Cache check failed: {e}")
-                    await progress_warning(session_id, f"Cache check failed: {str(e)}")
             
-            # Step 2: Use conversation-aware search to handle contextual queries
-            await progress_info(session_id, "Searching for contextual information", step=2, total_steps=5)
+            # Step 1-2: Context-aware search (context_aware.py handles progress logging)
             step_start = time.time()
             context_result = await search_with_context(
                 query=request.question,
@@ -194,11 +182,9 @@ class APIRoutes:
             )
             step_duration = time.time() - step_start
             logger.info(f"⏱️ TIMING - Step 2 (Context Search): {step_duration:.3f}s")
-            await progress_info(session_id, f"Context search completed in {step_duration:.2f}s")
             
             if not context_result["success"]:
                 error_msg = context_result.get('error', 'Unknown error')
-                await progress_error(session_id, f"Context search failed: {error_msg}")
                 return await self._error_response(
                     user_message="I couldn't understand your question. Please try rephrasing it.",
                     internal_error=error_msg,
@@ -208,7 +194,6 @@ class APIRoutes:
             
             # Check if query is meaningless
             if context_result.get("is_meaningless"):
-                await progress_warning(session_id, "Query not specific enough - requesting clarification")
                 error_message = context_result.get("message") or "I need more details to help you. Please tell me what you'd like to analyze."
                 
                 if self.chat_history_service and session_id:
@@ -236,14 +221,8 @@ class APIRoutes:
             final_query = context_result.get("expanded_query", request.question)
             session_id = context_result["session_id"]
             
-            logger.info(f"🔍 Query type: {context_result.get('query_type', 'unknown')}")
-            if final_query != request.question:
-                logger.info(f"🔄 Expanded to: {final_query[:100]}...")
-                await progress_info(session_id, f"Query expanded: {final_query[:80]}...", details={"expansion_confidence": context_result.get("expansion_confidence")})
-            
             # Step 2: Check if we need confirmation for low-confidence expansions
             if context_result.get("needs_confirmation") or context_result.get("needs_clarification"):
-                await progress_info(session_id, "Waiting for user confirmation")
                 return AnalysisResponse(
                     success=True,
                     data={
@@ -257,18 +236,17 @@ class APIRoutes:
                     timestamp=datetime.now().isoformat()
                 )
             
-            # Step 2: Get similar analyses for reuse evaluation
-            step_start = time.time()
-            logger.info("🔍 Searching for similar analyses...")
-            enhanced_message, similar_analyses = self.search_service.search_and_enhance_message(final_query)
-            step_duration = time.time() - step_start
-            logger.info(f"⏱️ TIMING - Step 2 (Similar Analysis Search): {step_duration:.3f}s")
+            # Step 3: Use similar analyses from context_aware search
+            similar_analyses = context_result.get("search_results", [])
+            enhanced_message = final_query  # Use final_query as enhanced message
+            logger.info(f"🔍 Found {len(similar_analyses)} similar analyses from context search")
             
-            # Step 2.5: Evaluate if existing analyses can be reused
+            # Step 3.5: Evaluate if existing analyses can be reused
             reuse_result = None
             if similar_analyses:
                 step_start = time.time()
                 logger.info(f"🔄 Evaluating reuse potential for {len(similar_analyses)} similar analyses...")
+                await progress_info(session_id, "Evaluating similar analyses....")
                 reuse_result = await self.reuse_evaluator.evaluate_reuse(
                     user_query=final_query,
                     existing_analyses=similar_analyses,
@@ -296,6 +274,7 @@ class APIRoutes:
             skip_code_prompt_builder = os.getenv("SKIP_CODE_PROMPT_BUILDER", "false").lower() == "true"
             skip_code_prompt_builder = False
 
+            await progress_info(session_id, "Buidling new analyses....")
             if skip_code_prompt_builder:
                 logger.info("🚀 Skipping code prompt builder - using direct analysis mode")
                 # Use the specified model or default
@@ -323,7 +302,8 @@ class APIRoutes:
                         "session_id": request.session_id,
                         "existing_analyses": similar_analyses
                     } if request.session_id else {"existing_analyses": similar_analyses},
-                    provider_type=self.analysis_service.llm_service.provider_type
+                    provider_type=self.analysis_service.llm_service.provider_type,
+                    enable_caching= True
                 )
                 step_duration = time.time() - step_start
                 logger.info(f"⏱️ TIMING - Step 3 (Create Code Prompt Messages): {step_duration:.3f}s")
@@ -342,18 +322,21 @@ class APIRoutes:
                 
                 # Step 4: Analyze with structured messages (system prompt auto-loaded)
                 step_start = time.time()
-                messages = code_prompt_result.get("user_messages", [])
+                simulated_convo = code_prompt_result.get("user_messages", [])
                 formatted_enhanced_message = self._format_message_with_template(enhanced_message)
+
+                #Prepend the enhanced question 
+                messages = [{"role": "user", "content": formatted_enhanced_message}]
+                messages = messages + simulated_convo
                 
-                # APpend question
-                messages.append({"role": "user", "content": formatted_enhanced_message})
-                
-                result = await self.analysis_service.analyze_question(formatted_enhanced_message, messages, model, request.enable_caching)
+                result = await self.analysis_service.analyze_question(formatted_enhanced_message, messages, model, True)
                 step_duration = time.time() - step_start
                 logger.info(f"⏱️ TIMING - Step 4 (Main Analysis): {step_duration:.3f}s")
             
             if result["success"]:
-                # Step 6: Save completed analysis and update conversation
+                await progress_info(session_id, "Running analyses....")
+                # Step 4: Execution service will handle running and progress logging
+                # Step 5: Save completed analysis and update conversation
                 step_start = time.time()
                 analysis_summary = None
                 analysis_id = None

@@ -54,37 +54,32 @@ class SessionManager:
             logger.warning(f"⚠️ Failed to create session via ChatHistoryService: {e}")
             return str(uuid.uuid4())
     
-    async def get_or_create_session(self, session_id: Optional[str] = None) -> Tuple[str, ConversationStore]:
-        """Get or create session with in-memory caching
+    async def get_session(self, session_id: str) -> Optional[ConversationStore]:
+        """Get session with in-memory caching
         
         Flow:
-        1. If session_id provided, check in-memory cache
+        1. Check in-memory cache
         2. If not cached, load from MongoDB via ChatHistoryService
-        3. If session_id is None, create new session
-        4. Cache the ConversationStore in-memory
-        5. Return session_id and ConversationStore
+        3. Cache the ConversationStore in-memory
+        4. Return ConversationStore or None if not found
         """
-        # If session_id provided, try to get from cache or load
-        if session_id:
-            cached_store = self._get_cached_session(session_id)
-            if cached_store:
-                logger.debug(f"✓ Session {session_id[:8]}... loaded from cache")
-                return session_id, cached_store
-            
-            # Load from MongoDB
-            store = await self._load_session_from_db(session_id)
-            if store:
-                self._cache_session(session_id, store)
-                logger.info(f"✓ Session {session_id[:8]}... loaded from MongoDB")
-                return session_id, store
+        if not session_id:
+            return None
         
-        # Create new session
-        new_session_id = await self.create_session()
-        store = ConversationStore(new_session_id, self.repo_manager)
-        self._cache_session(new_session_id, store)
-        logger.info(f"✓ New session created: {new_session_id[:8]}...")
+        # Check cache first
+        cached_store = self._get_cached_session(session_id)
+        if cached_store:
+            logger.debug(f"✓ Session {session_id[:8]}... loaded from cache")
+            return cached_store
         
-        return new_session_id, store
+        # Load from MongoDB
+        store = await self._load_session_from_db(session_id)
+        if store:
+            self._cache_session(session_id, store)
+            logger.info(f"✓ Session {session_id[:8]}... loaded from MongoDB")
+            return store
+        
+        return None
     
     async def add_turn(self, session_id: str, user_query: str, query_type: str,
                       expanded_query: Optional[str] = None,
@@ -98,7 +93,11 @@ class SessionManager:
         2. MongoDB via ChatHistoryService
         """
         # Get or load session
-        _, store = await self.get_or_create_session(session_id)
+        store = await self.get_session(session_id)
+        if not store:
+            # Create new store if session doesn't exist
+            store = ConversationStore(session_id, self.repo_manager)
+            self._cache_session(session_id, store)
         
         # Add to in-memory store
         turn = store.add_turn(
@@ -219,11 +218,6 @@ class SessionManager:
 
 # Global session manager instance
 session_manager = SessionManager()
-
-# Convenience functions
-async def get_or_create_session(session_id: Optional[str] = None) -> Tuple[str, ConversationStore]:
-    """Get or create session - convenience function"""
-    return await session_manager.get_or_create_session(session_id)
 
 def get_session_manager() -> SessionManager:
     """Get global session manager instance"""
