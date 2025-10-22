@@ -29,7 +29,11 @@ export class AnalysisService {
 
       const response = await this.client.post<AnalysisResponse['data']>(
         '/analyze',
-        request
+        request,
+        {
+          timeout: 300000,
+          retries: 1,
+        }
       );
 
       return {
@@ -230,6 +234,10 @@ export class AnalysisService {
           user_response: userResponse,
           original_query: originalQuery,
           expanded_query: expandedQuery,
+        },
+        {
+          timeout: 300000,
+          retries: 1,
         }
       );
 
