@@ -62,6 +62,16 @@ def analyze_question(
         # 1. Call MCP functions using call_mcp_function()
         # 2. Process results
         # 3. Format results for the specific question
+
+        #Sample call_mcp_function() usage
+        #output = call_mcp_function(
+        #    "function_name",
+        #    {
+        #        "arg1": value1,
+        #        "arg2": value2,
+        #        "arg3": value3
+        #    }
+        #)
         
         results = {
             "question": "Your question here",

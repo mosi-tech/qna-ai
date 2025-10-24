@@ -68,7 +68,7 @@ async def lifespan(app: FastAPI):
         # 3. Session manager (CRITICAL)
         logger.info("🔧 Initializing session manager...")
         from dialogue.conversation.session_manager import SessionManager
-        session_manager = SessionManager(repo_manager=repo_manager, chat_history_service=chat_history_service)
+        session_manager = SessionManager(chat_history_service=chat_history_service)
         app.state.session_manager = session_manager
         logger.info("✅ Session manager initialized")
         
@@ -89,7 +89,7 @@ async def lifespan(app: FastAPI):
             analysis_persistence_service,
             audit_service,
             execution_service,
-            repo_manager=repo_manager
+            session_manager=session_manager
         )
         logger.info("✅ API routes initialized successfully")
         

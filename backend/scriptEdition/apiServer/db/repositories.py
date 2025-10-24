@@ -103,8 +103,7 @@ class ChatRepository:
         session_id: str,
         user_id: str,
         content: str,
-        script: Optional[str] = None,
-        mcp_calls: Optional[List[str]] = None,
+        analysis_id: str = None,
     ) -> str:
         """Add regular assistant message (without analysis)"""
         # Get message count to set message_index
@@ -115,6 +114,7 @@ class ChatRepository:
             userId=user_id,
             role=RoleType.ASSISTANT,
             content=content,
+            analysisId=analysis_id,
             message_index=message_count,
         )
         return await self.db.create_message(message)
@@ -285,50 +285,25 @@ class ChatRepository:
 class AnalysisRepository:
     """Repository for analysis operations"""
     
-    def __init__(self, db: MongoDBClient):
+    def __init__(self, db: MongoDBClient):  
         self.db = db
     
     async def create_and_save_analysis(
         self,
         user_id: str,
-        title: str,
-        description: str,
-        result: Dict[str, Any],
-        parameters: Dict[str, Any],
-        mcp_calls: List[str],
-        category: str,
-        script: Optional[str] = None,
-        execution_time_ms: int = 0,
-        data_sources: Optional[List[str]] = None,
-        tags: Optional[List[str]] = None,
+        question: str,
+        llm_response: Dict,
+        script: str,
+        result:Optional[Dict[str,Any]]
     ) -> str:
         """Create analysis and save it as reusable"""
-        
-        # Build llm_response from provided parameters
-        llm_response = {
-            "status": "success",
-            "script_name": script or "analysis.py",
-            "analysis_description": description,
-            "execution": {
-                "script_name": script or "analysis.py",
-                "parameters": parameters
-            }
-        }
-        
+
         analysis = AnalysisModel(
             userId=user_id,
-            question=title,  # Use title as question for compatibility
+            question=question,  
             llm_response=llm_response,
-            script_url=script or f"/tmp/{script or 'analysis.py'}",
-            script_size_bytes=0,
-            result=result,
-            execution_time_ms=execution_time_ms,
-            tags=tags or [],
-            metadata={
-                "category": category,
-                "data_sources": data_sources or [],
-                "mcp_calls": mcp_calls,
-            }
+            script_url=script, 
+            result=result or {}
         )
         
         return await self.db.create_analysis(analysis)

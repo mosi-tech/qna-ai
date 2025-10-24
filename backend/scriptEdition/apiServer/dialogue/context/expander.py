@@ -38,43 +38,66 @@ class ContextExpander:
         # Use LLM to expand the query with conversation context
         expansion_result = await self._expand_with_llm(contextual_query, conversation_context)
         
-        if not expansion_result["success"]:
-            # Fallback to pattern-based expansion using conversation history
-            expansion_result = self._expand_with_patterns(contextual_query, conversation_turns)
-        
-        # Score confidence of expansion
+        # Set confidence for successful expansion
         if expansion_result["success"]:
-            confidence_result = self._score_expansion_confidence(
-                contextual_query, 
-                expansion_result["expanded_query"], 
-                conversation_context
-            )
-            expansion_result["confidence"] = confidence_result.get("confidence", 0.5)
-            expansion_result["confidence_details"] = confidence_result
+            expansion_result["confidence"] = 0.9  # High confidence when expansion succeeds
         
         return expansion_result
     
     def _build_conversation_context(self, conversation_turns: List[ConversationTurn]) -> str:
-        """Build formatted conversation context from turns"""
-        
+        """Build formatted conversation context from turns
+
+        IMPORTANT: Skips turns where assistant returned an error message.
+        Error messages don't provide useful context for expanding queries.
+        """
+
         context_lines = []
-        
-        # Include up to last 3 turns for context (avoid too much noise)
-        recent_turns = conversation_turns[-3:] if len(conversation_turns) > 3 else conversation_turns
-        
+
+        # Include up to last 3 SUCCESSFUL turns for context (avoid too much noise)
+        # Filter out error responses first
+        successful_turns = [
+            turn for turn in conversation_turns
+            if not self._is_error_response(turn)
+        ]
+
+        recent_turns = successful_turns[-3:] if len(successful_turns) > 3 else successful_turns
+
         for i, turn in enumerate(recent_turns):
             if turn.user_query:
                 context_lines.append(f"User: {turn.user_query}")
-            
+
             # Add analysis summary if available
             if turn.analysis_summary:
                 context_lines.append(f"Analysis: {turn.analysis_summary}")
-            
+
             # Add separator between turns
             if i < len(recent_turns) - 1:
                 context_lines.append("---")
-        
+
         return "\n".join(context_lines)
+
+    def _is_error_response(self, turn: ConversationTurn) -> bool:
+        """Check if a conversation turn represents an error response
+
+        Returns True if the assistant message was an error (no successful analysis).
+        This helps skip failed queries when building context.
+        """
+        # Check if analysis summary indicates an error
+        if turn.analysis_summary:
+            summary_lower = turn.analysis_summary.lower()
+            error_indicators = [
+                "something went wrong",
+                "could not answer",
+                "error",
+                "failed to",
+                "unable to",
+                "couldn't process",
+                "I don't understand your request"
+            ]
+            return any(indicator in summary_lower for indicator in error_indicators)
+
+        # If no analysis summary at all, likely an error
+        return not turn.analysis_summary
     
     async def _expand_with_llm(self, contextual_query: str, conversation_context: str) -> Dict[str, Any]:
         """Use LLM to expand contextual query with conversation context"""
@@ -87,37 +110,6 @@ class ContextExpander:
             logger.warning(f"LLM expansion failed: {result.get('error')}")
         
         return result
-    
-    def _expand_with_patterns(self, contextual_query: str, conversation_turns: List[ConversationTurn]) -> Dict[str, Any]:
-        """Fallback pattern-based expansion using conversation history"""
-        
-        # Get the last user query for context
-        last_turn = conversation_turns[-1] if conversation_turns else None
-        if not last_turn or not last_turn.user_query:
-            return {
-                "success": False,
-                "error": "No previous query available for pattern expansion",
-                "expanded_query": contextual_query
-            }
-        
-        last_query = last_turn.user_query
-        
-        # Simple pattern-based substitutions
-        expanded_query = self._apply_substitution_patterns(contextual_query, last_query)
-        
-        if expanded_query != contextual_query:
-            return {
-                "success": True,
-                "expanded_query": expanded_query,
-                "method": "pattern_expansion",
-                "original_context": last_query
-            }
-        
-        return {
-            "success": False,
-            "error": "No suitable pattern expansion found",
-            "expanded_query": contextual_query
-        }
     
     def _apply_substitution_patterns(self, contextual_query: str, last_query: str) -> str:
         """Apply simple substitution patterns"""
@@ -174,55 +166,6 @@ class ContextExpander:
         
         return contextual_query  # No pattern matched
     
-    def _score_expansion_confidence(self, original_query: str, expanded_query: str, conversation_context: str) -> Dict[str, Any]:
-        """Score confidence of expansion using heuristics"""
-        
-        # Simple heuristic scoring based on expansion quality
-        confidence = self._heuristic_confidence_score(original_query, expanded_query, conversation_context)
-        
-        return {
-            "success": True,
-            "confidence": confidence,
-            "method": "heuristic_scoring"
-        }
-    
-    def _heuristic_confidence_score(self, original_query: str, expanded_query: str, conversation_context: str) -> float:
-        """Calculate confidence using heuristics"""
-        
-        score = 0.5  # Base score
-        
-        # Expansion quality (0.4 weight)
-        if expanded_query.endswith("?"):
-            score += 0.1  # Proper question format
-        
-        if len(expanded_query.split()) > len(original_query.split()) * 1.5:
-            score += 0.2  # Properly expanded with more detail
-        
-        if expanded_query != original_query:
-            score += 0.1  # Actually expanded
-        
-        # Asset clarity (0.3 weight)
-        assets_in_original = self.classifier.extract_assets_from_contextual_query(original_query)
-        assets_in_expanded = self.classifier.extract_assets_from_contextual_query(expanded_query)
-        
-        if assets_in_expanded["asset_count"] >= assets_in_original["asset_count"]:
-            score += 0.15  # Maintained or added asset clarity
-        
-        if assets_in_expanded["asset_count"] >= 2:
-            score += 0.15  # Has sufficient asset context
-        
-        # Context utilization (0.3 weight)
-        if conversation_context and len(conversation_context) > 20:
-            score += 0.1  # Has meaningful context
-        
-        # Check if expanded query contains elements from context
-        context_words = set(conversation_context.lower().split()) if conversation_context else set()
-        expanded_words = set(expanded_query.lower().split())
-        
-        if context_words & expanded_words:  # Intersection
-            score += 0.2  # Used context elements
-        
-        return min(1.0, max(0.0, score))
     
 # Factory function to create context expander
 def create_context_expander(context_service: ContextService, classifier: QueryClassifier) -> ContextExpander:

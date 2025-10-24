@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useState, useMemo } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { ChatMessage } from '@/lib/hooks/useConversation';
 import { ProgressLog } from '@/lib/progress/ProgressManager';
 import MockOutput from '@/components/MockOutput';
@@ -73,13 +73,13 @@ export default function ChatInterface({
 
   const handleScroll = () => {
     if (!messagesContainerRef.current) return;
-    
+
     const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
-    
+
     // Check if user has scrolled away from bottom
     const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
     setIsUserScrolling(!isAtBottom);
-    
+
     // If scrolled near top (within 200px) and can load older, load them
     if (scrollTop < 200 && canLoadOlder && !isLoadingOlder && onLoadOlder) {
       onLoadOlder();
@@ -92,6 +92,8 @@ export default function ChatInterface({
       setTimeout(() => {
         if (messagesContainerRef.current) {
           messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+          // Scroll a bit more to ensure bottom message is fully visible
+          messagesContainerRef.current.scrollTop += 50;
         }
         setIsInitialLoad(false);
       }, 0);
@@ -115,9 +117,10 @@ export default function ChatInterface({
 
   return (
     <div className="flex flex-col h-full">
-      <div 
+      <div
         ref={messagesContainerRef}
         className="flex-1 overflow-y-auto p-4 space-y-4 flex flex-col items-center"
+        style={{ paddingBottom: '200px' }}
         onScroll={handleScroll}
       >
         <div className="w-full max-w-[70%] flex flex-col space-y-4">
@@ -204,7 +207,6 @@ export default function ChatInterface({
                 <div className="w-4 h-4 border-2 border-gray-400 border-t-gray-600 rounded-full animate-spin"></div>
               </div>
               <div className="bg-gray-100 rounded-lg p-3 max-w-2xl flex-1">
-                {progressLogs.length === 0 && console.log('[ChatInterface] progressLogs is empty, count:', progressLogs.length)}
                 <div className="space-y-2">
                   {progressLogs.length > 0 ? (
                     <>
@@ -243,7 +245,7 @@ export default function ChatInterface({
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="border-t border-gray-200 p-4 bg-white flex justify-center">
+      <form onSubmit={handleSubmit} className="fixed bottom-0 left-0 right-0 border-t border-gray-200 p-4 bg-white flex justify-center z-10">
         <div className="w-full max-w-[70%] flex gap-2">
           <input
             type="text"

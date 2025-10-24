@@ -2,6 +2,7 @@
 FastAPI Routes for Financial Analysis Server
 """
 
+import asyncio
 import json
 import logging
 import os
@@ -21,7 +22,7 @@ from services.analysis_persistence_service import AnalysisPersistenceService
 from services.audit_service import AuditService
 from services.execution_service import ExecutionService
 from db.schemas import AnalysisModel
-from dialogue import search_with_context, initialize_dialogue_factory, get_session_manager
+from dialogue import search_with_context, initialize_dialogue_factory
 from services.progress_service import (
     progress_manager,
     progress_info,
@@ -46,7 +47,7 @@ class APIRoutes:
         execution_service: ExecutionService = None,
         code_prompt_builder: CodePromptBuilderService = None,
         reuse_evaluator: ReuseEvaluatorService = None,
-        repo_manager = None
+        session_manager = None
     ):
         self.analysis_service = analysis_service
         self.search_service = search_service
@@ -57,7 +58,7 @@ class APIRoutes:
         self.execution_service = execution_service
         self.code_prompt_builder = code_prompt_builder or CodePromptBuilderService()
         self.reuse_evaluator = reuse_evaluator or ReuseEvaluatorService()
-        self.repo_manager = repo_manager
+        self.session_manager = session_manager
         
         # Load message template
         self.message_template = self._load_message_template()
@@ -71,9 +72,13 @@ class APIRoutes:
             logger.info(f"🔧 ANALYSIS MODE: Full workflow (with code prompt builder)")
             logger.info(f"📝 CODE PROMPT MODE: {code_prompt_mode}")
         
-        # Initialize dialogue factory (don't try to get library at startup - it's lazy loaded)
+        # Initialize dialogue factory with server's session manager
         # The search service will lazily initialize ChromaDB when first needed
-        initialize_dialogue_factory(analysis_library=None, repo_manager=repo_manager)
+        initialize_dialogue_factory(
+            analysis_library=None, 
+            chat_history_service=chat_history_service,
+            session_manager=session_manager
+        )
     
     def _load_message_template(self) -> str:
         """Load the message template from config file"""
@@ -95,25 +100,43 @@ class APIRoutes:
             logger.warning(f"⚠️ Error formatting message template: {e}")
             return user_question
     
-    async def _error_response(self, user_message: str, internal_error: str = None, session_id: str = None, user_id: str = None) -> AnalysisResponse:
-        """Create user-friendly error response (hide technical details)"""
-        if internal_error:
-            logger.error(f"Internal error: {internal_error}")
-        
-        if self.chat_history_service and session_id and user_id:
+    async def _ensure_error_saved(self, user_message: str, session_id: str = None, user_id: str = None) -> bool:
+        """ALWAYS try to save error message to chat history - critical for debugging"""
+        if not self.chat_history_service or not session_id or not user_id:
+            logger.warning("⚠️ Cannot save error: missing chat_history_service, session_id, or user_id")
+            return False
+
+        max_retries = 3
+        for attempt in range(max_retries):
             try:
                 await self.chat_history_service.add_assistant_message(
                     session_id=session_id,
                     user_id=user_id,
                     content=user_message,
                 )
-                logger.info(f"✓ Saved error message to session: {session_id}")
+                logger.info(f"✅ Saved error message to session: {session_id}")
+                return True
             except Exception as e:
-                logger.warning(f"⚠️ Failed to save error message to session: {e}")
-        
+                if attempt < max_retries - 1:
+                    logger.warning(f"⚠️ Failed to save error (attempt {attempt + 1}/{max_retries}): {e}")
+                    await asyncio.sleep(0.1 * (attempt + 1))  # Exponential backoff
+                else:
+                    logger.error(f"❌ CRITICAL: Failed to save error message after {max_retries} attempts: {e}")
+                    return False
+        return False
+
+    async def _error_response(self, user_message: str, internal_error: str = None, session_id: str = None, user_id: str = None) -> AnalysisResponse:
+        """Create user-friendly error response (hide technical details)"""
+        if internal_error:
+            logger.error(f"Internal error: {internal_error}")
+
+        # ALWAYS try to save error message - this is critical for debugging
+        saved = await self._ensure_error_saved(user_message, session_id, user_id)
+
         return AnalysisResponse(
             success=False,
             error=user_message,
+            metadata={"error_saved_to_db": saved} if not saved else None,
             timestamp=datetime.now().isoformat()
         )
     
@@ -124,23 +147,24 @@ class APIRoutes:
         start_time = time.time()
         execution_id = None
         user_id = request.user_id if hasattr(request, 'user_id') and request.user_id else "anonymous"
-        session_id = request.session_id or "unknown"
-        
+        session_id = request.session_id
+        warnings = []  # Track non-critical failures
+
         try:
             logger.info(f"📝 Received question: {request.question[:100]}...")
             
-            # Step 0: Initialize or retrieve session
-            session_id = request.session_id
-            if self.chat_history_service and not session_id:
-                try:
-                    session_id = await self.chat_history_service.start_session(user_id)
-                    logger.info(f"✓ Started new session: {session_id}")
-                except Exception as e:
-                    logger.warning(f"⚠️ Failed to start session: {e}")
-            
-            await progress_info(session_id, "Understanding your question...") 
+            # Step 0: Verify session exists (CRITICAL - fail if missing)
+            if not session_id:
+                logger.error(f"❌ CRITICAL: No session_id provided in request")
+                return AnalysisResponse(
+                    success=False,
+                    error="Session ID is required. Please start a new conversation.",
+                    timestamp=datetime.now().isoformat()
+                )
 
-            # Step 0.5: Add user message to chat history
+            await progress_info(session_id, "Evaluating your question...")
+
+            # Step 0.5: Add user message to chat history (CRITICAL - fail if this doesn't work)
             if self.chat_history_service and session_id:
                 try:
                     message_id = await self.chat_history_service.add_user_message(
@@ -150,9 +174,16 @@ class APIRoutes:
                     )
                     logger.info(f"✓ Added user message to chat history: {message_id}")
                 except Exception as e:
-                    logger.warning(f"⚠️ Failed to add user message: {e}")
+                    logger.error(f"❌ CRITICAL: Failed to add user message: {e}")
+                    # This is critical - the user's question must be recorded
+                    return await self._error_response(
+                        user_message="We ran into an issue and couldn't answer your question. Please try again.",
+                        internal_error=f"Failed to save user message: {e}",
+                        session_id=session_id,
+                        user_id=user_id
+                    )
             
-            # Step 1: Check cache before processing
+            # Step 1: Check cache before processing (NON-CRITICAL)
             if self.cache_service:
                 try:
                     cached_result = await self.cache_service.get_cached_result(
@@ -171,7 +202,9 @@ class APIRoutes:
                             timestamp=datetime.now().isoformat()
                         )
                 except Exception as e:
-                    logger.warning(f"⚠️ Cache check failed: {e}")
+                    warning_msg = f"Cache check failed: {e}"
+                    logger.warning(f"⚠️ {warning_msg}")
+                    warnings.append({"step": "cache_check", "message": warning_msg})
             
             # Step 1-2: Context-aware search (context_aware.py handles progress logging)
             step_start = time.time()
@@ -186,7 +219,7 @@ class APIRoutes:
             if not context_result["success"]:
                 error_msg = context_result.get('error', 'Unknown error')
                 return await self._error_response(
-                    user_message="I couldn't understand your question. Please try rephrasing it.",
+                    user_message="We ran into an issue and couldn't answer your question. Please try again.",
                     internal_error=error_msg,
                     session_id=session_id,
                     user_id=user_id
@@ -257,14 +290,36 @@ class APIRoutes:
                 
                 if reuse_result["status"] == "success" and reuse_result["reuse_decision"]["should_reuse"]:
                     logger.info(f"✅ Reuse decision: {reuse_result['reuse_decision']['reason']}")
+
+                    reuse_decision = reuse_result["reuse_decision"]
+                    script_name = reuse_decision.get("script_name", "unknown_analysis")
+                    analysis_id = reuse_decision.get("analysis_id")  # Get analysis_id from reuse decision
+
+                    # Save assistant message with analysis (similar to regular flow) (NON-CRITICAL)
+                    if self.chat_history_service and session_id:
+                        try:
+                            msg_id = await self.chat_history_service.add_assistant_message(
+                                session_id=session_id,
+                                user_id=user_id,
+                                content=f"Reused existing analysis: {reuse_decision.get('reason')}",
+                                analysis_id = analysis_id
+                            )
+                            logger.info(f"✓ Saved reuse decision with analysis to chat history: {msg_id}")
+                        except Exception as e:
+                            warning_msg = f"Failed to save reuse message to chat history: {e}"
+                            logger.warning(f"⚠️ {warning_msg}")
+                            warnings.append({"step": "chat_history_reuse", "message": warning_msg})
+
                     # Return reuse result immediately - skip code generation
                     return AnalysisResponse(
                         success=True,
                         data={
                             "response_type": "reuse_decision",
                             "analysis_result": reuse_result["reuse_decision"],
-                            "message": f"Reusing existing analysis: {reuse_result['reuse_decision']['script_name']}"
+                            "analysis_id": analysis_id,
+                            "message": f"Reusing existing analysis: {script_name}"
                         },
+                        metadata={"warnings": warnings} if warnings else None,
                         timestamp=datetime.now().isoformat()
                     )
                 else:
@@ -310,7 +365,7 @@ class APIRoutes:
                 
                 if code_prompt_result["status"] != "success":
                     return await self._error_response(
-                        user_message="Unable to process your question at this time. Please try again.",
+                        user_message="We ran into an issue and couldn't answer your question. Please try again.",
                         internal_error=f"Code prompt creation failed: {code_prompt_result.get('error')}",
                         session_id=session_id,
                         user_id=user_id
@@ -352,44 +407,60 @@ class APIRoutes:
                     analysis_description = analysis_result.get("analysis_description", "")
                     mcp_calls = analysis_result.get("mcp_calls", [])
                     
-                    # Save to search service (existing behavior)
-                    if script_name and (
+                    # Step 6a: Save to MongoDB FIRST to get proper analysisId (CRITICAL)
+                    if self.analysis_persistence_service and script_name and (
                         (response_type == "reuse_decision" and analysis_result.get("should_reuse")) or
                         (response_type == "script_generation" and analysis_result.get("status") == "success")
                     ):
-                        save_result = self.search_service.save_completed_analysis(
-                            original_question=request.question,
-                            script_path=script_name,
-                            addn_meta={"execution": execution_info, "description": analysis_description}
-                        )
-                        
-                        if save_result.get("success"):
-                            analysis_data["analysis_id"] = save_result["analysis_id"]
-                            analysis_summary = save_result.get("analysis_description", "")
-                            analysis_id = save_result["analysis_id"]
-                        else:
-                            logger.warning(f"Failed to save analysis: {save_result.get('error')}")
+                        try:
+                            # Save to MongoDB first to get database-generated analysisId
+                            analysis_id = await self.analysis_persistence_service.create_analysis(
+                                user_id=user_id,
+                                question=request.question,
+                                llm_response=analysis_result,
+                                script=script_name
+                            )
+                            analysis_data["analysis_id"] = analysis_id
+                            logger.info(f"✓ Saved analysis to MongoDB (analysisId: {analysis_id})")
+                        except Exception as persist_error:
+                            logger.error(f"Failed to save to MongoDB: {persist_error}")
+                            return await self._error_response(
+                                user_message="We ran into an issue and couldn't answer your question. Please try again.",
+                                internal_error=f"Failed to save to MongoDB: {persist_error}",
+                                session_id=session_id,
+                                user_id=user_id
+                            )
                     else:
                         if response_type == "script_generation" and analysis_result.get("status") == "failed":
                             analysis_summary = f"Script generation failed: {analysis_result.get('final_error', 'Unknown error')}"
-                    
-                    # Step 6b: Save to MongoDB persistence layer if available
-                    if self.analysis_persistence_service and analysis_id:
+
+                    # Step 6b: Save to ChromaDB using the MongoDB analysisId (NON-CRITICAL)
+                    if analysis_id and script_name and (
+                        (response_type == "reuse_decision" and analysis_result.get("should_reuse")) or
+                        (response_type == "script_generation" and analysis_result.get("status") == "success")
+                    ):
                         try:
-                            persistence_id = await self.analysis_persistence_service.create_analysis(
-                                user_id=user_id,
-                                title=request.question[:100],
-                                description=analysis_description or "Financial analysis",
-                                result=analysis_result,
-                                parameters={"session_id": session_id} if session_id else {},
-                                mcp_calls=mcp_calls,
-                                category="financial_analysis",
-                                script=script_name,
-                                data_sources=["alpaca", "eodhd"]
+                            save_result = self.search_service.save_completed_analysis(
+                                original_question=request.question,
+                                script_path=script_name,
+                                addn_meta={
+                                    "analysisId": analysis_id, 
+                                    "execution": execution_info,
+                                    "description": analysis_description
+                                }
                             )
-                            logger.info(f"✓ Persisted analysis to MongoDB: {persistence_id}")
-                        except Exception as persist_error:
-                            logger.warning(f"⚠️ Failed to persist to MongoDB: {persist_error}")
+
+                            if save_result.get("success"):
+                                analysis_summary = save_result.get("analysis_description", "")
+                                logger.info(f"✓ Saved analysis to ChromaDB (analysisId: {analysis_id})")
+                            else:
+                                warning_msg = f"Failed to save to ChromaDB: {save_result.get('error')}"
+                                logger.warning(f"⚠️ {warning_msg}")
+                                warnings.append({"step": "chromadb_save", "message": warning_msg})
+                        except Exception as chroma_error:
+                            warning_msg = f"Failed to save to ChromaDB: {chroma_error}"
+                            logger.warning(f"⚠️ {warning_msg}")
+                            warnings.append({"step": "chromadb_save", "message": warning_msg})
                     
                 except Exception as save_error:
                     logger.error(f"❌ Error saving analysis: {save_error}")
@@ -400,7 +471,7 @@ class APIRoutes:
                 # Step 7: Add assistant message with analysis to chat history
                 step_start = time.time()
                 try:
-                    # Log execution start if audit service available
+                    # Log execution start if audit service available (NON-CRITICAL)
                     if self.audit_service and session_id:
                         try:
                             execution_id = await self.audit_service.log_execution_start(
@@ -414,36 +485,29 @@ class APIRoutes:
                             )
                             logger.info(f"✓ Logged execution start: {execution_id}")
                         except Exception as e:
-                            logger.warning(f"⚠️ Failed to log execution: {e}")
+                            warning_msg = f"Failed to log execution to audit service: {e}"
+                            logger.warning(f"⚠️ {warning_msg}")
+                            warnings.append({"step": "audit_logging", "message": warning_msg})
                     
-                    # Add assistant message with analysis to chat history
+                    # Add assistant message with analysis to chat history (CRITICAL)
                     if self.chat_history_service and session_id:
                         try:
-                            # Create AnalysisModel from result
-                            analysis_model = AnalysisModel(
-                                title=request.question[:100],
-                                description=analysis_description or "Financial analysis",
-                                result=analysis_result,
-                                parameters={"session_id": session_id},
-                                mcp_calls=mcp_calls or [],
-                                generated_script=script_name,
-                                is_template=True,
-                                tags=["auto_generated", "financial"]
-                            )
-                            
-                            msg_id = await self.chat_history_service.add_assistant_message_with_analysis(
+                            msg_id = await self.chat_history_service.add_assistant_message(
                                 session_id=session_id,
                                 user_id=user_id,
-                                script=script_name or "",
-                                explanation=analysis_summary or "Analysis completed",
-                                analysis=analysis_model,
-                                mcp_calls=mcp_calls or [],
+                                content=analysis_summary or "Analysis completed",
+                                analysis_id=analysis_id,
                                 execution_id=execution_id
                             )
                             logger.info(f"✓ Added assistant message with analysis to chat: {msg_id}")
                         except Exception as e:
-                            logger.warning(f"⚠️ Failed to add assistant message: {e}")
-                    
+                            logger.error(f"Failed to add assistant message to chat history: {e}")
+                            return await self._error_response(
+                                user_message="We ran into an issue and couldn't answer your question. Please try again.",
+                                internal_error=f"Failed to add assistant message to chat history: {e}",
+                                session_id=session_id,
+                                user_id=user_id
+                            )
                 
                 except Exception as chat_error:
                     logger.error(f"❌ Error updating chat history: {chat_error}")
@@ -485,7 +549,7 @@ class APIRoutes:
                 step_duration = time.time() - step_start
                 logger.info(f"⏱️ TIMING - Step 8 (Build Enhanced Response): {step_duration:.3f}s")
                 
-                # Step 9: Cache the analysis result
+                # Step 9: Cache the analysis result (NON-CRITICAL)
                 step_start = time.time()
                 if self.cache_service and analysis_id:
                     try:
@@ -498,7 +562,9 @@ class APIRoutes:
                         )
                         logger.info(f"✓ Cached analysis result: {cache_id}")
                     except Exception as e:
-                        logger.warning(f"⚠️ Failed to cache result: {e}")
+                        warning_msg = f"Failed to cache analysis result: {e}"
+                        logger.warning(f"⚠️ {warning_msg}")
+                        warnings.append({"step": "cache_save", "message": warning_msg})
                 
                 step_duration = time.time() - step_start
                 logger.info(f"⏱️ TIMING - Step 9 (Cache Result): {step_duration:.3f}s")
@@ -506,15 +572,22 @@ class APIRoutes:
                 # Log total analysis time
                 total_duration = time.time() - start_time
                 logger.info(f"⏱️ TIMING - TOTAL ANALYSIS TIME: {total_duration:.3f}s")
-                
+
+                # Include warnings in metadata if any non-critical failures occurred
+                metadata = None
+                if warnings:
+                    logger.info(f"⚠️ Analysis completed with {len(warnings)} warning(s)")
+                    metadata = {"warnings": warnings, "warning_count": len(warnings)}
+
                 return AnalysisResponse(
                     success=True,
                     data=response_data,
+                    metadata=metadata,
                     timestamp=datetime.now().isoformat()
                 )
             else:
                 return await self._error_response(
-                    user_message="I couldn't analyze your question. Please try rephrasing it.",
+                    user_message="We ran into an issue and couldn't answer your question. Please try again.",
                     internal_error=result.get("error", "Unknown analysis error"),
                     session_id=session_id,
                     user_id=user_id
@@ -523,7 +596,7 @@ class APIRoutes:
         except Exception as e:
             logger.error(f"❌ Analysis endpoint error: {e}", exc_info=True)
             return await self._error_response(
-                user_message="Something went wrong while processing your question. Please try again later.",
+                user_message="We ran into an issue and couldn't answer your question. Please try again.",
                 internal_error=str(e),
                 session_id=session_id,
                 user_id=user_id
@@ -775,8 +848,14 @@ class APIRoutes:
     async def list_sessions(self) -> Dict[str, Any]:
         """List active conversation sessions"""
         try:
-            session_manager = get_session_manager()
-            stats = session_manager.get_stats()
+            if not self.session_manager:
+                return {
+                    "success": False,
+                    "error": "Session manager not available",
+                    "timestamp": datetime.now().isoformat()
+                }
+            
+            stats = self.session_manager.get_cache_stats()
             
             return {
                 "success": True,

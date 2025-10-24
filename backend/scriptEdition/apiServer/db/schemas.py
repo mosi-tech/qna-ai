@@ -81,7 +81,7 @@ class AnalysisModel(BaseModel):
     Stores complete LLM response + execution details.
     Results populated AFTER execution completes.
     """
-    
+
     analysisId: str = Field(default_factory=lambda: str(uuid.uuid4()))
     userId: str
     

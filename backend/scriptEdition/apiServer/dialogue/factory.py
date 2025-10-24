@@ -6,7 +6,7 @@ Dialogue Factory - Creates dialogue system components with proper dependency inj
 from llm.service import LLMService
 from search.library import AnalysisLibrary
 from .context.service import create_context_service
-from .conversation.session_manager import session_manager
+from .conversation.session_manager import SessionManager
 from .context.classifier import create_query_classifier
 from .context.expander import create_context_expander
 from .search.context_aware import create_context_aware_search
@@ -16,17 +16,17 @@ class DialogueFactory:
     """Factory for creating dialogue system components with proper dependencies"""
     
     def __init__(self, llm_service: LLMService = None, analysis_library: AnalysisLibrary = None, 
-                 repo_manager = None, chat_history_service = None):
+                 chat_history_service = None, session_manager: SessionManager = None):
         self.analysis_library = analysis_library or AnalysisLibrary()
-        self.repo_manager = repo_manager
         self.chat_history_service = chat_history_service
         
-        # Initialize session manager with both repo_manager and chat_history_service
-        # This allows SessionManager to:
-        # 1. Load/save through ChatHistoryService (primary)
-        # 2. Fall back to repo_manager if needed
-        session_manager.repo_manager = repo_manager
-        session_manager.chat_history_service = chat_history_service
+        # Use provided session manager or create new one
+        # Session manager should be created in server.py and passed here
+        if session_manager:
+            self.session_manager = session_manager
+        else:
+            # Fallback: create local instance if not provided
+            self.session_manager = SessionManager(chat_history_service=chat_history_service)
         
         # Create context service - use passed LLM service or create context-optimized one
         if llm_service:
@@ -42,7 +42,7 @@ class DialogueFactory:
         self.expander = create_context_expander(self.context_service, self.classifier)
         self.context_aware_search = create_context_aware_search(
             analysis_library=self.analysis_library,
-            session_manager=session_manager,
+            session_manager=self.session_manager,
             classifier=self.classifier,
             expander=self.expander
         )
@@ -64,17 +64,17 @@ class DialogueFactory:
 _dialogue_factory = None
 
 def initialize_dialogue_factory(llm_service: LLMService = None, analysis_library: AnalysisLibrary = None, 
-                               repo_manager = None, chat_history_service = None):
+                               chat_history_service = None, session_manager: SessionManager = None):
     """Initialize global dialogue factory with dependencies
     
     Args:
         llm_service: LLM service for context expansion
         analysis_library: Semantic search library for analysis lookup
-        repo_manager: MongoDB repository manager
         chat_history_service: ChatHistoryService for persistence
+        session_manager: SessionManager instance (should be created in server.py)
     """
     global _dialogue_factory
-    _dialogue_factory = DialogueFactory(llm_service, analysis_library, repo_manager, chat_history_service)
+    _dialogue_factory = DialogueFactory(llm_service, analysis_library, chat_history_service, session_manager)
     return _dialogue_factory
 
 def get_dialogue_factory() -> DialogueFactory:

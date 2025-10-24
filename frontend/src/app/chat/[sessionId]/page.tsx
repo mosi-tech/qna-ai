@@ -38,7 +38,7 @@ export default function ChatPage() {
   const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
   const [currentSessionMessages, setCurrentSessionMessages] = useState({
     offset: 0,
-    limit: 5,
+    limit: 10,
     total: 0,
     hasOlder: false,
   });
@@ -51,7 +51,7 @@ export default function ChatPage() {
 
     const loadInitialMessages = async () => {
       try {
-        const sessionDetail = await getSessionDetail(session_id, 0, 5);
+        const sessionDetail = await getSessionDetail(session_id, 0, 10);  // Load 10 messages initially
         if (!sessionDetail) return;
 
         const loadedMessages = (sessionDetail.messages || []).map((msg: any, idx: number) => ({
@@ -65,7 +65,7 @@ export default function ChatPage() {
           setMessages(loadedMessages);
           setCurrentSessionMessages({
             offset: sessionDetail.offset || 0,
-            limit: sessionDetail.limit || 5,
+            limit: sessionDetail.limit || 10,
             total: sessionDetail.total_messages || 0,
             hasOlder: sessionDetail.has_older || false,
           });
@@ -518,6 +518,9 @@ export default function ChatPage() {
             onClarificationResponse={handleClarificationResponse}
             pendingClarificationId={lastClarificationMessageId}
             progressLogs={progressLogs}
+            onLoadOlder={handleLoadOlderMessages}
+            isLoadingOlder={isLoadingOlderMessages}
+            canLoadOlder={currentSessionMessages.hasOlder}
           />
         </div>
 

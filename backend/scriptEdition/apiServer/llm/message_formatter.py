@@ -5,6 +5,7 @@ Handles conversion of generic messages to provider-specific formats
 """
 
 import logging
+import os
 from typing import Dict, List, Any, Optional
 from enum import Enum
 
@@ -97,21 +98,26 @@ class MessageFormatter:
         """
         return self.formatter.format_assistant_response_with_tool_use(text, tool_name, tool_input, tool_id)
     
-    def create_verification_message(self, original_question: str) -> Dict[str, Any]:
+    def create_verification_message(self, original_question: str, verification_prompt_template: str = "") -> Dict[str, Any]:
         """
         Create a verification message asking if the generated script answers the question
         
         Args:
             original_question: The original question that the script should answer
+            verification_prompt_template: The verification prompt template from AnalysisService
             
         Returns:
             Formatted user message dict for verification
         """
-        return self.formatter.create_verification_message(original_question)
+        return self.formatter.create_verification_message(original_question, verification_prompt_template)
 
 
 class BaseMessageFormatter:
     """Base message formatter interface"""
+    
+    def __init__(self):
+        """Initialize base formatter"""
+        pass
     
     def build_conversation(self, 
                           user_query: str, 
@@ -135,7 +141,7 @@ class BaseMessageFormatter:
                                                 tool_id: Optional[str] = None) -> Dict[str, Any]:
         raise NotImplementedError
     
-    def create_verification_message(self, original_question: str) -> Dict[str, Any]:
+    def create_verification_message(self, original_question: str, verification_prompt_template: str = "") -> Dict[str, Any]:
         """Create a user message asking for verification that script answers the question"""
         raise NotImplementedError
 
@@ -343,20 +349,12 @@ When writing the Python script:
             "content": content
         }
     
-    def create_verification_message(self, original_question: str) -> Dict[str, Any]:
+    def create_verification_message(self, original_question: str, verification_prompt_template: str = "") -> Dict[str, Any]:
         """Create a verification message for Anthropic format"""
-        verification_text = f"""Before we proceed, I need to verify something important:
-
-**Question**: {original_question}
-
-**Verification**: Please check the generated script carefully:
-1. Does the script logic directly answer the specific question asked?
-2. Are all conditions/signals mentioned in the question actually used to drive the analysis/decisions?
-3. Is the question answered completely, not just partially?
-
-If the script does NOT fully answer the question or ignores important conditions/signals, please STOP and redesign the script to fully address the question.
-
-If YES to all above, continue. If NO to any, redesign the script now."""
+        if not verification_prompt_template:
+            verification_prompt_template = "Before we proceed, I need to verify something important:\n\n**Question**: {question}\n\nPlease check if the script correctly answers the question."
+        
+        verification_text = verification_prompt_template.format(question=original_question)
         
         return {
             "role": "user",
@@ -438,20 +436,12 @@ class OpenAIMessageFormatter(BaseMessageFormatter):
             ]
         }
     
-    def create_verification_message(self, original_question: str) -> Dict[str, Any]:
+    def create_verification_message(self, original_question: str, verification_prompt_template: str = "") -> Dict[str, Any]:
         """Create a verification message for OpenAI format"""
-        verification_text = f"""Before we proceed, I need to verify something important:
-
-**Question**: {original_question}
-
-**Verification**: Please check the generated script carefully:
-1. Does the script logic directly answer the specific question asked?
-2. Are all conditions/signals mentioned in the question actually used to drive the analysis/decisions?
-3. Is the question answered completely, not just partially?
-
-If the script does NOT fully answer the question or ignores important conditions/signals, please STOP and redesign the script to fully address the question.
-
-If YES to all above, continue. If NO to any, redesign the script now."""
+        if not verification_prompt_template:
+            verification_prompt_template = "Before we proceed, I need to verify something important:\n\n**Question**: {question}\n\nPlease check if the script correctly answers the question."
+        
+        verification_text = verification_prompt_template.format(question=original_question)
         
         return {
             "role": "user",
@@ -524,20 +514,12 @@ class OllamaMessageFormatter(BaseMessageFormatter):
             "content": text
         }
     
-    def create_verification_message(self, original_question: str) -> Dict[str, Any]:
+    def create_verification_message(self, original_question: str, verification_prompt_template: str = "") -> Dict[str, Any]:
         """Create a verification message for Ollama format"""
-        verification_text = f"""Before we proceed, I need to verify something important:
-
-**Question**: {original_question}
-
-**Verification**: Please check the generated script carefully:
-1. Does the script logic directly answer the specific question asked?
-2. Are all conditions/signals mentioned in the question actually used to drive the analysis/decisions?
-3. Is the question answered completely, not just partially?
-
-If the script does NOT fully answer the question or ignores important conditions/signals, please STOP and redesign the script to fully address the question.
-
-If YES to all above, continue. If NO to any, redesign the script now."""
+        if not verification_prompt_template:
+            verification_prompt_template = "Before we proceed, I need to verify something important:\n\n**Question**: {question}\n\nPlease check if the script correctly answers the question."
+        
+        verification_text = verification_prompt_template.format(question=original_question)
         
         return {
             "role": "user",

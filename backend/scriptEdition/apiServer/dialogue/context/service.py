@@ -137,7 +137,7 @@ class ContextService:
             result = await self._make_cached_llm_call(
                 system_prompt=system_prompt,
                 user_message=user_message,
-                max_tokens=200,
+                max_tokens=2000,
                 task="context_expansion"
             )
             

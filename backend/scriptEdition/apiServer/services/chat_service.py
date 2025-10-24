@@ -110,8 +110,8 @@ class ChatHistoryService:
         session_id: str,
         user_id: str,
         content: str,
-        script: Optional[str] = None,
-        mcp_calls: Optional[List[str]] = None,
+        analysis_id: str = None,
+        execution_id: str = None
     ) -> str:
         """Add regular assistant message (without analysis)"""
         try:
@@ -119,8 +119,7 @@ class ChatHistoryService:
                 session_id=session_id,
                 user_id=user_id,
                 content=content,
-                script=script,
-                mcp_calls=mcp_calls,
+                analysis_id=analysis_id
             )
             
             self.logger.info(f"✓ Added assistant message: {msg_id}")

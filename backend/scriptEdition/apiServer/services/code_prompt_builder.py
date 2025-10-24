@@ -6,6 +6,7 @@ Analyzes financial questions, selects relevant MCP functions, fetches their docs
 and builds enriched prompts for the code generator service.
 """
 
+import asyncio
 import json
 import logging
 import os
@@ -179,10 +180,10 @@ class CodePromptBuilderService(BaseService):
             }
     
     async def _get_function_schemas_from_llm(self, function_names: List[str]) -> Dict[str, str]:
-        """Get detailed function schemas with docstrings via LLM service tool calls"""
+        """Get detailed function schemas with docstrings via LLM service tool calls (parallel fetching)"""
         schemas = {}
         
-        self.logger.info(f"🔍 Getting detailed schemas for {len(function_names)} functions")
+        self.logger.info(f"🔍 Getting detailed schemas for {len(function_names)} functions (parallel fetch)")
         
         # Get available tools from LLM service to verify functions exist
         available_tools = self.llm_service.default_tools
@@ -190,36 +191,49 @@ class CodePromptBuilderService(BaseService):
         
         self.logger.info(f"📋 Available tools in LLM service: {len(tool_map)}")
         
+        # Separate functions that exist from those that don't
+        existing_functions = []
         for function_name in function_names:
-            try:
-                # First check if function exists in available tools
-                if function_name not in tool_map:
-                    schemas[function_name] = f"Function: {function_name} (not found in available tools)"
-                    self.logger.warning(f"⚠️ Function {function_name} not found in available tools")
-                    continue
-                
-                # Try to get detailed docstring via MCP docstring tools
-                docstring = await self._fetch_function_docstring(function_name)
-                
-                if docstring:
-                    schemas[function_name] = docstring
-                    self.logger.info(f"📖 Got detailed docstring for {function_name}")
-                else:
-                    # Fallback to basic tool schema if docstring fetch fails
-                    tool_func = tool_map[function_name].get("function", {})
-                    schema = f"Function: {function_name}\n"
-                    schema += f"Description: {tool_func.get('description', 'No description available')}\n"
+            if function_name not in tool_map:
+                schemas[function_name] = f"Function: {function_name} (not found in available tools)"
+                self.logger.warning(f"⚠️ Function {function_name} not found in available tools")
+            else:
+                existing_functions.append(function_name)
+        
+        # Fetch docstrings in parallel for all existing functions
+        if existing_functions:
+            docstring_tasks = [self._fetch_function_docstring(fn) for fn in existing_functions]
+            docstring_results = await asyncio.gather(*docstring_tasks, return_exceptions=True)
+            
+            # Process results
+            for function_name, docstring_result in zip(existing_functions, docstring_results):
+                try:
+                    # Check if the result is an exception
+                    if isinstance(docstring_result, Exception):
+                        self.logger.error(f"❌ Error getting docstring for {function_name}: {docstring_result}")
+                        docstring = None
+                    else:
+                        docstring = docstring_result
                     
-                    parameters = tool_func.get('parameters', {})
-                    if parameters:
-                        schema += f"Parameters: {json.dumps(parameters, indent=2)}"
-                    
-                    schemas[function_name] = schema
-                    self.logger.info(f"📖 Used basic schema for {function_name} (docstring unavailable)")
-                    
-            except Exception as e:
-                self.logger.error(f"❌ Error getting schema for {function_name}: {e}")
-                schemas[function_name] = f"Function: {function_name} (error fetching schema)"
+                    if docstring:
+                        schemas[function_name] = docstring
+                        self.logger.info(f"📖 Got detailed docstring for {function_name}")
+                    else:
+                        # Fallback to basic tool schema if docstring fetch fails
+                        tool_func = tool_map[function_name].get("function", {})
+                        schema = f"Function: {function_name}\n"
+                        schema += f"Description: {tool_func.get('description', 'No description available')}\n"
+                        
+                        parameters = tool_func.get('parameters', {})
+                        if parameters:
+                            schema += f"Parameters: {json.dumps(parameters, indent=2)}"
+                        
+                        schemas[function_name] = schema
+                        self.logger.info(f"📖 Used basic schema for {function_name} (docstring unavailable)")
+                        
+                except Exception as e:
+                    self.logger.error(f"❌ Error processing schema for {function_name}: {e}")
+                    schemas[function_name] = f"Function: {function_name} (error fetching schema)"
         
         return schemas
     

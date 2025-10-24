@@ -32,8 +32,7 @@ class SessionManager:
     - Delegate persistence to ChatHistoryService
     """
     
-    def __init__(self, repo_manager=None, chat_history_service=None):
-        self.repo_manager = repo_manager
+    def __init__(self, chat_history_service=None):
         self.chat_history_service = chat_history_service
         
         # In-memory cache: session_id -> (ConversationStore, last_access_time)
@@ -96,7 +95,7 @@ class SessionManager:
         store = await self.get_session(session_id)
         if not store:
             # Create new store if session doesn't exist
-            store = ConversationStore(session_id, self.repo_manager)
+            store = ConversationStore(session_id)
             self._cache_session(session_id, store)
         
         # Add to in-memory store
@@ -193,7 +192,7 @@ class SessionManager:
             if not db_messages:
                 return None
             
-            store = ConversationStore(session_id, self.repo_manager)
+            store = ConversationStore(session_id)
             store._populate_from_messages(db_messages)
             
             return store
@@ -216,9 +215,3 @@ class SessionManager:
             ]
         }
 
-# Global session manager instance
-session_manager = SessionManager()
-
-def get_session_manager() -> SessionManager:
-    """Get global session manager instance"""
-    return session_manager
