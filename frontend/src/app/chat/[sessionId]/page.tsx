@@ -17,7 +17,7 @@ import { ProgressManager } from '@/lib/progress/ProgressManager';
 import { api } from '@/lib/api';
 
 export default function ChatPage() {
-  const { session_id, user_id, resumeSession, updateSessionMetadata } = useSession();
+  const { session_id, user_id, resumeSession, updateSessionMetadata, startNewSession } = useSession();
   const { messages, addMessage, updateMessage, setMessages, loadSessionMessages } = useConversation();
   const { viewMode, setViewMode, isProcessing, setIsProcessing, error: uiError, setError: setUIError } = useUI();
   const { analyzeQuestion, isLoading: analysisLoading } = useAnalysis();
@@ -469,7 +469,9 @@ export default function ChatPage() {
   const handleStartNewChat = useCallback(async () => {
     try {
       setIsProcessing(true);
-      await resumeSession('');
+      // Call startNewSession to create a new session server-side
+      // This will create the session and navigate to the new session URL
+      await startNewSession(user_id || undefined);
       setSessionNotFound(false);
       setMessages([]);
     } catch (err) {
@@ -478,7 +480,7 @@ export default function ChatPage() {
     } finally {
       setIsProcessing(false);
     }
-  }, [resumeSession, setMessages, setUIError, setIsProcessing, setSessionNotFound]);
+  }, [startNewSession, user_id, setMessages, setUIError, setIsProcessing, setSessionNotFound]);
 
   if (!session_id) {
     return (

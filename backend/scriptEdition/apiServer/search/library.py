@@ -226,13 +226,10 @@ class AnalysisLibrary:
 
         return nested_dict
     
-    def save_analysis(self, question: str, metadata: dict = None) -> dict:
+    def save_analysis(self,  analysis_id: str, question: str, metadata: dict = None) -> dict:
         """Save analysis to the library"""
         try:
-            # Generate analysis data
-            analysis_id = self._generate_analysis_id(question)
             now = datetime.now().isoformat()
-
             if metadata is None:
                 metadata = {}
 
@@ -380,10 +377,10 @@ def get_analysis_library(chroma_host: str = None, chroma_port: int = None) -> An
     return _analysis_library
 
 # Convenience functions for direct import
-def save_analysis(question: str, function_name: str, docstring: str, filename: str = None) -> dict:
+def save_analysis(question: str, analysis_id: str, metadata: Dict) -> dict:
     """Save analysis - convenience function"""
     library = get_analysis_library()
-    return library.save_analysis(question, function_name, docstring, filename)
+    return library.save_analysis(question, analysis_id, metadata)
 
 def search_similar_analyses(query: str, top_k: int = 5, similarity_threshold: float = 0.3) -> dict:
     """Search similar analyses - convenience function"""

@@ -183,26 +183,18 @@ class APIRoutes:
                         user_id=user_id
                     )
             
-            # Step 1: Check cache before processing (NON-CRITICAL)
+            # Step 1: Check message-level cache before processing (NON-CRITICAL)
+            cached_message_data = None
             if self.cache_service:
                 try:
-                    cached_result = await self.cache_service.get_cached_result(
+                    cached_message_data = await self.cache_service.get_cached_message(
                         question=request.question,
-                        parameters={"session_id": session_id} if session_id else {}
+                        user_id=user_id
                     )
-                    if cached_result:
-                        logger.info("✓ Returning cached analysis result")
-                        return AnalysisResponse(
-                            success=True,
-                            data={
-                                "response_type": "cache_hit",
-                                "cached_result": cached_result,
-                                "message": "Result retrieved from cache"
-                            },
-                            timestamp=datetime.now().isoformat()
-                        )
+                    if cached_message_data:
+                        logger.info("✓ Found cached message - will copy to new session")
                 except Exception as e:
-                    warning_msg = f"Cache check failed: {e}"
+                    warning_msg = f"Message cache check failed: {e}"
                     logger.warning(f"⚠️ {warning_msg}")
                     warnings.append({"step": "cache_check", "message": warning_msg})
             
@@ -253,6 +245,42 @@ class APIRoutes:
             # Get the final query to analyze (expanded if contextual)
             final_query = context_result.get("expanded_query", request.question)
             session_id = context_result["session_id"]
+            
+            # Step 2: Handle cache hit - copy cached message instead of regenerating
+            if cached_message_data:
+                logger.info("⚡ Cache hit! Copying cached message to new session")
+                try:
+                    # Add professional indicator that this is a cached response
+                    original_content = cached_message_data.get("content", "Analysis completed")
+                    cached_content = f"[Previously analyzed] This question has been analyzed before. Here are the insights:\n\n{original_content}"
+                    
+                    # Copy message with new session context
+                    msg_id = await self.chat_history_service.add_assistant_message(
+                        session_id=session_id,
+                        user_id=user_id,
+                        content=cached_content,
+                        analysis_id=cached_message_data.get("analysis_id"),
+                        execution_id=cached_message_data.get("execution_id"),
+                    )
+                    logger.info(f"✓ Copied cached message to session: {msg_id}")
+                    
+                    # Build response using cached data
+                    response_data = cached_message_data.get("response_data", {})
+                    response_data["cache_hit"] = True
+                    response_data["message"] = "Result retrieved from cache"
+                    
+                    return AnalysisResponse(
+                        success=True,
+                        data=response_data,
+                        metadata={"cache_hit": True},
+                        timestamp=datetime.now().isoformat()
+                    )
+                except Exception as e:
+                    logger.error(f"Failed to copy cached message: {e}")
+                    warning_msg = f"Cache copy failed, proceeding with fresh analysis: {e}"
+                    logger.warning(f"⚠️ {warning_msg}")
+                    warnings.append({"step": "cache_copy", "message": warning_msg})
+                    # Continue with fresh analysis if cache copy fails
             
             # Step 2: Check if we need confirmation for low-confidence expansions
             if context_result.get("needs_confirmation") or context_result.get("needs_clarification"):
@@ -538,6 +566,26 @@ class APIRoutes:
                                 execution_id=execution_id
                             )
                             logger.info(f"✓ Added assistant message with analysis to chat: {msg_id}")
+                            
+                            # Cache the assistant message for future reuse (NON-CRITICAL)
+                            if self.cache_service and analysis_id and execution_id:
+                                try:
+                                    message_cache_data = {
+                                        "content": analysis_summary or "Analysis completed",
+                                        "analysis_id": analysis_id,
+                                        "execution_id": execution_id,
+                                        "response_data": result.get("data", {}),
+                                    }
+                                    await self.cache_service.cache_assistant_message(
+                                        question=request.question,
+                                        user_id=user_id,
+                                        message_data=message_cache_data,
+                                        ttl_hours=24
+                                    )
+                                except Exception as e:
+                                    warning_msg = f"Failed to cache assistant message: {e}"
+                                    logger.warning(f"⚠️ {warning_msg}")
+                                    warnings.append({"step": "message_cache", "message": warning_msg})
                             
                             # Link execution to the message it created (NON-CRITICAL - bidirectional link for convenience)
                             # The critical link is message→execution (embedded in message), this is just execution→message
