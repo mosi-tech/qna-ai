@@ -128,21 +128,27 @@ export default function ChatPage() {
           message: 'Analysis request completed successfully',
         });
 
-        if (response.data.is_meaningless) {
+        const responseType = response.data.metadata?.response_type;
+        const isMeaningless = responseType === 'meaningless_query' || response.data.metadata?.is_meaningless;
+
+        if (isMeaningless) {
           ProgressManager.addLog(session_id, {
             level: 'warning',
             message: 'Query was not specific enough. Requesting clarification.',
           });
 
-          const errorMsg = response.data.message || 'I need more details to help you. Please tell me what you\'d like to analyze.';
+          const errorMsg = response.data.content || 'I need more details to help you. Please tell me what you\'d like to analyze.';
           addMessage({
             type: 'ai',
             content: errorMsg,
           });
         } else {
-          const needsClarification = response.data.needs_clarification || 
-            (response.data.context_result && response.data.context_result.needs_clarification);
-          const clarificationData = response.data.context_result || response.data;
+          const needsClarification = responseType === 'needs_clarification' || response.data.metadata?.needs_user_input;
+          const clarificationData = {
+            message_id: response.data.message_id,
+            content: response.data.content,
+            ...response.data.metadata,
+          };
           
           if (needsClarification) {
             ProgressManager.addLog(session_id, {
@@ -155,24 +161,16 @@ export default function ChatPage() {
 
             const clarificationMsg = addMessage({
               type: 'clarification',
-              content: clarificationData.message || 'Please confirm the interpretation',
-              data: {
-                original_query: clarificationData.original_query,
-                expanded_query: clarificationData.expanded_query,
-                message: clarificationData.message,
-                suggestion: clarificationData.suggestion,
-                confidence: clarificationData.expansion_confidence || clarificationData.confidence,
-                session_id: clarificationData.session_id,
-              },
+              content: clarificationData.content || 'Please confirm the interpretation',
+              data: clarificationData,
             });
             setLastClarificationMessageId(clarificationMsg.id);
             setCurrentAnalysis({
               messageId: clarificationMsg.id,
-              data: response.data,
+              data: clarificationData,
               originalQuestion: userMessage,
             });
-          } else if (response.data.needs_confirmation || 
-                     (response.data.context_result && response.data.context_result.needs_confirmation)) {
+          } else if (responseType === 'needs_confirmation') {
             ProgressManager.addLog(session_id, {
               level: 'info',
               message: 'Analysis requires user confirmation',
@@ -180,12 +178,12 @@ export default function ChatPage() {
 
             const confirmMsg = addMessage({
               type: 'clarification',
-              content: clarificationData.message || 'Please confirm',
+              content: clarificationData.content || 'Please confirm',
               data: clarificationData,
             });
             setCurrentAnalysis({
               messageId: confirmMsg.id,
-              data: response.data,
+              data: clarificationData,
               originalQuestion: userMessage,
             });
           } else {
@@ -194,15 +192,22 @@ export default function ChatPage() {
               message: 'Analysis results ready for display',
             });
 
+            const resultData = {
+              message_id: response.data.message_id,
+              analysis_id: response.data.analysis_id,
+              execution_id: response.data.execution_id,
+              ...response.data.metadata,
+            };
+
             const resultMsg = addMessage({
               type: 'results',
-              content: response.data.analysis_summary || `Analysis complete for: ${userMessage}`,
-              data: response.data,
+              content: response.data.content || response.data.metadata?.analysis_summary || `Analysis complete for: ${userMessage}`,
+              data: resultData,
             });
 
             setCurrentAnalysis({
               messageId: resultMsg.id,
-              data: response.data,
+              data: resultData,
               originalQuestion: userMessage,
             });
 

@@ -57,7 +57,6 @@ FIELD_ALIAS_MAP = {
     "message_index": "messageIndex",
     "analysis_id": "analysisId",
     "execution_id": "executionId",
-    "question_context": "questionContext",
     # Analysis fields
     "script_url": "scriptUrl",
     "llm_response": "llmResponse",

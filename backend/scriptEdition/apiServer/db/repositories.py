@@ -39,22 +39,19 @@ class ChatRepository:
     async def add_user_message(self, session_id: str, user_id: str, 
                                question: str, query_type: QueryType = QueryType.COMPLETE) -> str:
         """Add user message to conversation"""
-        from db.schemas import QuestionContext
-        
         # Get message count to set message_index
         message_count = await self.db.db.chat_messages.count_documents({"sessionId": session_id})
-        
-        question_context = QuestionContext(
-            original_question=question,
-            query_type=query_type,
-        )
         
         message = ChatMessageModel(
             session_id=session_id,
             user_id=user_id,
             role=RoleType.USER,
             content=question,
-            question_context=question_context,
+            metadata={
+                "response_type": "user_message",
+                "original_question": question,
+                "query_type": query_type.value if query_type else None,
+            },
             message_index=message_count,
         )
         return await self.db.create_message(message)
@@ -105,8 +102,9 @@ class ChatRepository:
         content: str,
         analysis_id: str = None,
         execution_id: str = None,
+        metadata: Dict[str, Any] = None,
     ) -> str:
-        """Add regular assistant message (with optional analysis and execution references)"""
+        """Add regular assistant message (with optional analysis, execution references, and metadata)"""
         # Get message count to set message_index
         message_count = await self.db.db.chat_messages.count_documents({"sessionId": session_id})
         
@@ -118,6 +116,7 @@ class ChatRepository:
             analysis_id=analysis_id,
             execution_id=execution_id,
             message_index=message_count,
+            metadata=metadata or {},
         )
         return await self.db.create_message(message)
     
@@ -261,7 +260,7 @@ class ChatRepository:
                     "role": msg.get("role"),
                     "content": msg.get("content"),
                     "timestamp": msg.get("created_at", "").isoformat() if hasattr(msg.get("created_at"), 'isoformat') else str(msg.get("created_at")),
-                    "metadata": msg.get("questionContext") or msg.get("analysisId"),
+                    "metadata": msg.get("metadata"),
                 }
                 for msg in messages
             ]

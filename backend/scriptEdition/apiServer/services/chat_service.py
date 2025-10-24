@@ -13,7 +13,6 @@ from db.schemas import (
     AnalysisModel,
     RoleType,
     QueryType,
-    QuestionContext,
 )
 
 logger = logging.getLogger("chat-service")
@@ -57,17 +56,17 @@ class ChatHistoryService:
             
             # Update with expansion if provided
             if expanded_question:
-                question_context = QuestionContext(
-                    original_question=question,
-                    expanded_question=expanded_question,
-                    expansion_confidence=expansion_confidence,
-                    query_type=query_type,
-                )
                 await self.repo.db.db.chat_messages.update_one(
                     {"messageId": msg_id},
                     {
                         "$set": {
-                            "questionContext": question_context.dict(by_alias=True)
+                            "metadata": {
+                                "response_type": "user_message",
+                                "original_question": question,
+                                "expanded_question": expanded_question,
+                                "expansion_confidence": expansion_confidence,
+                                "query_type": query_type.value if query_type else None,
+                            }
                         }
                     }
                 )

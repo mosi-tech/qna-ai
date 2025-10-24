@@ -9,7 +9,7 @@ import os
 import time
 from datetime import datetime
 from fastapi import HTTPException
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 from api.models import QuestionRequest, AnalysisResponse
 from services.analysis import AnalysisService
@@ -125,6 +125,72 @@ class APIRoutes:
                     return False
         return False
 
+    async def _create_response_with_message(
+        self,
+        session_id: str,
+        user_id: str,
+        response_type: str,
+        message_content: str,
+        analysis_id: Optional[str] = None,
+        execution_id: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> AnalysisResponse:
+        """
+        Create a chat message record AND return it as the response.
+        Message IS the response - single source of truth.
+        Ensures all interaction types (reuse, clarification, analysis, etc.) are persisted.
+        
+        Args:
+            session_id: Chat session ID
+            user_id: User ID
+            response_type: Type of response (reuse_decision, clarification, analysis, meaningless, etc.)
+            message_content: Content for the chat message
+            analysis_id: Optional reference to analysis
+            execution_id: Optional reference to execution
+            metadata: Essential metadata for rendering (response_type will be added automatically)
+                     Should contain minimal data needed to reconstruct UI state
+        
+        Returns:
+            AnalysisResponse where data contains the message itself
+        """
+        msg_id = None
+        try:
+            # Create message with response_type and essential metadata only
+            msg_metadata = {"response_type": response_type}
+            if metadata:
+                msg_metadata.update(metadata)
+            
+            msg_id = await self.chat_history_service.add_assistant_message(
+                session_id=session_id,
+                user_id=user_id,
+                content=message_content,
+                analysis_id=analysis_id,
+                execution_id=execution_id,
+                metadata=msg_metadata,
+            )
+            logger.info(f"✓ Created {response_type} message in chat history: {msg_id}")
+            
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to create {response_type} message: {e}")
+            # Continue anyway - don't fail response if message creation fails
+        
+        # Return message as the response data
+        # This ensures consistency: fresh load and refresh both use same data structure
+        response_data = {
+            "message_id": msg_id,
+            "session_id": session_id,
+            "content": message_content,
+            "analysis_id": analysis_id,
+            "execution_id": execution_id,
+            "metadata": msg_metadata,
+        }
+        
+        return AnalysisResponse(
+            success=True,
+            data=response_data,
+            timestamp=datetime.now().isoformat()
+        )
+    
     async def _error_response(self, user_message: str, internal_error: str = None, session_id: str = None, user_id: str = None) -> AnalysisResponse:
         """Create user-friendly error response (hide technical details)"""
         if internal_error:
@@ -221,25 +287,14 @@ class APIRoutes:
             if context_result.get("is_meaningless"):
                 error_message = context_result.get("message") or "I need more details to help you. Please tell me what you'd like to analyze."
                 
-                if self.chat_history_service and session_id:
-                    try:
-                        await self.chat_history_service.add_assistant_message(
-                            session_id=session_id,
-                            user_id=user_id,
-                            content=error_message,
-                        )
-                        logger.info(f"✓ Saved meaningless query response to session: {session_id}")
-                    except Exception as e:
-                        logger.warning(f"⚠️ Failed to save meaningless query response: {e}")
-                
-                return AnalysisResponse(
-                    success=True,
-                    data={
+                return await self._create_response_with_message(
+                    session_id=session_id,
+                    user_id=user_id,
+                    response_type="meaningless_query",
+                    message_content=error_message,
+                    metadata={
                         "is_meaningless": True,
-                        "session_id": context_result.get("session_id"),
-                        "message": error_message,
                     },
-                    timestamp=datetime.now().isoformat()
                 )
             
             # Get the final query to analyze (expanded if contextual)
@@ -249,52 +304,39 @@ class APIRoutes:
             # Step 2: Handle cache hit - copy cached message instead of regenerating
             if cached_message_data:
                 logger.info("⚡ Cache hit! Copying cached message to new session")
-                try:
-                    # Add professional indicator that this is a cached response
-                    original_content = cached_message_data.get("content", "Analysis completed")
-                    cached_content = f"[Previously analyzed] This question has been analyzed before. Here are the insights:\n\n{original_content}"
-                    
-                    # Copy message with new session context
-                    msg_id = await self.chat_history_service.add_assistant_message(
-                        session_id=session_id,
-                        user_id=user_id,
-                        content=cached_content,
-                        analysis_id=cached_message_data.get("analysis_id"),
-                        execution_id=cached_message_data.get("execution_id"),
-                    )
-                    logger.info(f"✓ Copied cached message to session: {msg_id}")
-                    
-                    # Build response using cached data
-                    response_data = cached_message_data.get("response_data", {})
-                    response_data["cache_hit"] = True
-                    response_data["message"] = "Result retrieved from cache"
-                    
-                    return AnalysisResponse(
-                        success=True,
-                        data=response_data,
-                        metadata={"cache_hit": True},
-                        timestamp=datetime.now().isoformat()
-                    )
-                except Exception as e:
-                    logger.error(f"Failed to copy cached message: {e}")
-                    warning_msg = f"Cache copy failed, proceeding with fresh analysis: {e}"
-                    logger.warning(f"⚠️ {warning_msg}")
-                    warnings.append({"step": "cache_copy", "message": warning_msg})
-                    # Continue with fresh analysis if cache copy fails
+                
+                # Add professional indicator that this is a cached response
+                original_content = cached_message_data.get("content", "Analysis completed")
+                cached_content = f"[Previously analyzed] This question has been analyzed before. Here are the insights:\n\n{original_content}"
+                
+                return await self._create_response_with_message(
+                    session_id=session_id,
+                    user_id=user_id,
+                    response_type="cache_hit",
+                    message_content=cached_content,
+                    analysis_id=cached_message_data.get("analysis_id"),
+                    execution_id=cached_message_data.get("execution_id"),
+                    metadata={
+                        "cache_hit": True,
+                    },
+                )
             
             # Step 2: Check if we need confirmation for low-confidence expansions
             if context_result.get("needs_confirmation") or context_result.get("needs_clarification"):
-                return AnalysisResponse(
-                    success=True,
-                    data={
+                response_type = "needs_clarification" if context_result.get("needs_clarification") else "needs_confirmation"
+                return await self._create_response_with_message(
+                    session_id=session_id,
+                    user_id=user_id,
+                    response_type=response_type,
+                    message_content=context_result.get("message", "Please clarify your question"),
+                    metadata={
                         "needs_user_input": True,
-                        "session_id": session_id,
-                        "context_result": context_result,
-                        "message": context_result.get("message"),
+                        "original_query": context_result.get("original_query"),
+                        "expanded_query": context_result.get("expanded_query"),
+                        "expansion_confidence": context_result.get("expansion_confidence", 0.0),
                         "options": context_result.get("options"),
-                        "suggestion": context_result.get("suggestion")
+                        "suggestion": context_result.get("suggestion"),
                     },
-                    timestamp=datetime.now().isoformat()
                 )
             
             # Step 3: Use similar analyses from context_aware search
@@ -323,32 +365,22 @@ class APIRoutes:
                     script_name = reuse_decision.get("script_name", "unknown_analysis")
                     analysis_id = reuse_decision.get("analysis_id")  # Get analysis_id from reuse decision
 
-                    # Save assistant message with analysis (similar to regular flow) (NON-CRITICAL)
-                    if self.chat_history_service and session_id:
-                        try:
-                            msg_id = await self.chat_history_service.add_assistant_message(
-                                session_id=session_id,
-                                user_id=user_id,
-                                content=f"Reused existing analysis: {reuse_decision.get('reason')}",
-                                analysis_id = analysis_id
-                            )
-                            logger.info(f"✓ Saved reuse decision with analysis to chat history: {msg_id}")
-                        except Exception as e:
-                            warning_msg = f"Failed to save reuse message to chat history: {e}"
-                            logger.warning(f"⚠️ {warning_msg}")
-                            warnings.append({"step": "chat_history_reuse", "message": warning_msg})
-
-                    # Return reuse result immediately - skip code generation
-                    return AnalysisResponse(
-                        success=True,
-                        data={
-                            "response_type": "reuse_decision",
-                            "analysis_result": reuse_result["reuse_decision"],
-                            "analysis_id": analysis_id,
-                            "message": f"Reusing existing analysis: {script_name}"
-                        },
-                        metadata={"warnings": warnings} if warnings else None,
-                        timestamp=datetime.now().isoformat()
+                    # Return reuse result - message is created in helper function
+                    # Build metadata with only essential data for UI reconstruction
+                    msg_metadata = {
+                        "should_reuse": reuse_decision.get("should_reuse"),
+                        "reason": reuse_decision.get("reason"),
+                    }
+                    if warnings:
+                        msg_metadata["warnings"] = warnings
+                    
+                    return await self._create_response_with_message(
+                        session_id=session_id,
+                        user_id=user_id,
+                        response_type="reuse_decision",
+                        message_content=f"Reused existing analysis: {reuse_decision.get('reason')}",
+                        analysis_id=analysis_id,
+                        metadata=msg_metadata,
                     )
                 else:
                     logger.info("➡️ No suitable analysis for reuse, proceeding with new analysis generation")

@@ -180,18 +180,6 @@ class ChatSessionModel(BaseMongoModel):
 
 
 # ============================================================================
-# QUESTION CONTEXT MODEL
-# ============================================================================
-
-class QuestionContext(BaseMongoModel):
-    """Context output for question processing (expansion and classification)"""
-    original_question: str  # User's original question
-    expanded_question: Optional[str] = None  # LLM-expanded version
-    expansion_confidence: float = 0.0  # Confidence in expansion
-    query_type: Optional[QueryType] = None  # Classification: complete, contextual, comparative, parameter
-
-
-# ============================================================================
 # CHAT MESSAGE COLLECTION
 # ============================================================================
 
@@ -212,10 +200,10 @@ class ChatMessageModel(BaseMongoModel):
     analysis_id: Optional[str] = Field(None, alias='analysisId')
     execution_id: Optional[str] = Field(None, alias='executionId')
     
-    # Question context (for user messages) - output from context service
-    question_context: Optional[QuestionContext] = Field(None, alias='questionContext')
-    
     # Message metadata
+    # Contains response-type specific data:
+    # - For user messages: response_type, original_question, query_type
+    # - For assistant messages: response_type and response-specific fields
     metadata: Dict[str, Any] = Field(default_factory=dict)
     
     # Timestamps
