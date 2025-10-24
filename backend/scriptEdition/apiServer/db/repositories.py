@@ -31,7 +31,7 @@ class ChatRepository:
     async def start_session(self, user_id: str, title: Optional[str] = None) -> str:
         """Create new chat session"""
         session = ChatSessionModel(
-            userId=user_id,
+            user_id=user_id,
             title=title or "New Conversation",
         )
         return await self.db.create_session(session)
@@ -50,11 +50,11 @@ class ChatRepository:
         )
         
         message = ChatMessageModel(
-            sessionId=session_id,
-            userId=user_id,
+            session_id=session_id,
+            user_id=user_id,
             role=RoleType.USER,
             content=question,
-            questionContext=question_context,
+            question_context=question_context,
             message_index=message_count,
         )
         return await self.db.create_message(message)
@@ -80,11 +80,11 @@ class ChatRepository:
         # Then create message with reference to analysis (no embedding)
         # Note: Execution details accessible via analysisId → Analysis.executionId
         message = ChatMessageModel(
-            sessionId=session_id,
-            userId=user_id,
+            session_id=session_id,
+            user_id=user_id,
             role=RoleType.ASSISTANT,
             content=explanation,
-            analysisId=analysis_id,  # Reference to AnalysisModel in analyses collection
+            analysis_id=analysis_id,
             message_index=message_count,
         )
         
@@ -104,17 +104,19 @@ class ChatRepository:
         user_id: str,
         content: str,
         analysis_id: str = None,
+        execution_id: str = None,
     ) -> str:
-        """Add regular assistant message (without analysis)"""
+        """Add regular assistant message (with optional analysis and execution references)"""
         # Get message count to set message_index
         message_count = await self.db.db.chat_messages.count_documents({"sessionId": session_id})
         
         message = ChatMessageModel(
-            sessionId=session_id,
-            userId=user_id,
+            session_id=session_id,
+            user_id=user_id,
             role=RoleType.ASSISTANT,
             content=content,
-            analysisId=analysis_id,
+            analysis_id=analysis_id,
+            execution_id=execution_id,
             message_index=message_count,
         )
         return await self.db.create_message(message)
@@ -143,18 +145,18 @@ class ChatRepository:
         analyses = []
         
         for msg in messages:
-            if msg.analysisId:
-                analysis = await self.db.get_analysis(msg.analysisId)
+            if msg.analysis_id:
+                analysis = await self.db.get_analysis(msg.analysis_id)
                 if analysis:
                     analyses.append({
-                        "id": analysis.analysisId,
+                        "id": analysis.analysis_id,
                         "question": analysis.question,
                         "timestamp": msg.created_at.isoformat(),
                     })
         
         return {
-            "session": session.dict(),
-            "recent_messages": [m.dict() for m in messages[-5:]],
+            "session": session.dict(by_alias=True),
+            "recent_messages": [m.dict(by_alias=True) for m in messages[-5:]],
             "recent_analyses": analyses[-3:],
             "message_count": session.message_count,
         }
@@ -267,11 +269,7 @@ class ChatRepository:
     
     async def update_session(self, session_id: str, update_data: Dict[str, Any]) -> bool:
         """Update session metadata"""
-        result = await self.db.db.chat_sessions.update_one(
-            {"sessionId": session_id},
-            {"$set": {**update_data, "updated_at": datetime.now()}}
-        )
-        return result.modified_count > 0
+        return await self.db.update_session(session_id, update_data)
     
     async def delete_session(self, session_id: str) -> bool:
         """Delete session and all its messages"""
@@ -294,16 +292,17 @@ class AnalysisRepository:
         question: str,
         llm_response: Dict,
         script: str,
-        result:Optional[Dict[str,Any]]
     ) -> str:
-        """Create analysis and save it as reusable"""
+        """Create analysis template (reusable script)\n
+        Analysis is a template that can be executed multiple times.
+        Execution results are tracked separately in ExecutionModel.
+        """
 
         analysis = AnalysisModel(
-            userId=user_id,
+            user_id=user_id,
             question=question,  
             llm_response=llm_response,
-            script_url=script, 
-            result=result or {}
+            script_url=script,
         )
         
         return await self.db.create_analysis(analysis)
@@ -326,11 +325,8 @@ class AnalysisRepository:
         if not analysis:
             return False
         
-        # Check if analysis has been executed (has results)
-        if analysis.status != "success" or not analysis.result:
-            return False
-        
-        # For now, simple check: can reuse if already executed
+        # Analysis is a reusable template, so we can always attempt reuse
+        # Execution state is tracked separately in ExecutionModel
         await self.db.mark_analysis_used(analysis_id)
         return True
 
@@ -344,29 +340,53 @@ class ExecutionRepository:
     async def log_execution(
         self,
         user_id: str,
-        session_id: str,
-        message_id: str,
+        analysis_id: str,
         question: str,
-        script: str,
+        generated_script: str,
         parameters: Dict[str, Any],
-        mcp_calls: List[str],
+        mcp_calls: List[str] = None,
+        session_id: Optional[str] = None,
+        created_message_id: Optional[str] = None,
     ) -> str:
-        """Log script execution"""
+        """Log script execution (Execution is independent record linked to Analysis)
+        
+        Args:
+            user_id: User performing execution
+            analysis_id: Which analysis is being executed
+            question: Original question
+            generated_script: Full script content
+            parameters: Execution parameters from LLM config
+            mcp_calls: List of MCP tool calls from execution config
+            session_id: Optional chat session context
+            created_message_id: Will be set later after message creation
+        """
         
         from .schemas import ExecutionStatus
         
         execution = ExecutionModel(
-            userId=user_id,
-            sessionId=session_id,
-            messageId=message_id,
+            user_id=user_id,
+            analysis_id=analysis_id,
+            session_id=session_id,
+            created_message_id=created_message_id,
             question=question,
-            generated_script=script,
+            generated_script=generated_script,
             parameters=parameters,
-            status=ExecutionStatus.RUNNING,
-            mcp_calls=mcp_calls,
+            status=ExecutionStatus.PENDING,
+            mcp_calls=mcp_calls or [],
         )
         
         return await self.db.create_execution(execution)
+    
+    async def link_execution_to_message(
+        self,
+        execution_id: str,
+        message_id: str,
+    ) -> bool:
+        """Link execution to the chat message that was created from it"""
+        return await self.db.update_execution(
+            execution_id,
+            {"created_message_id": message_id}
+        )
     
     async def complete_execution(
         self,

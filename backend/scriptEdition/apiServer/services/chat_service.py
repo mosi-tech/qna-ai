@@ -67,7 +67,7 @@ class ChatHistoryService:
                     {"messageId": msg_id},
                     {
                         "$set": {
-                            "questionContext": question_context.dict()
+                            "questionContext": question_context.dict(by_alias=True)
                         }
                     }
                 )
@@ -113,13 +113,14 @@ class ChatHistoryService:
         analysis_id: str = None,
         execution_id: str = None
     ) -> str:
-        """Add regular assistant message (without analysis)"""
+        """Add regular assistant message (with optional analysis and execution references)"""
         try:
             msg_id = await self.chat_repo.add_assistant_message(
                 session_id=session_id,
                 user_id=user_id,
                 content=content,
-                analysis_id=analysis_id
+                analysis_id=analysis_id,
+                execution_id=execution_id
             )
             
             self.logger.info(f"✓ Added assistant message: {msg_id}")

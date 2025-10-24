@@ -38,6 +38,70 @@ from .schemas import (
 logger = logging.getLogger("mongodb-client")
 
 
+# Field name mapping from snake_case (Python) to camelCase (MongoDB)
+FIELD_ALIAS_MAP = {
+    # User fields
+    "user_id": "userId",
+    "last_login": "lastLogin",
+    "user_agent": "userAgent",
+    # Session fields
+    "session_id": "sessionId",
+    "message_count": "messageCount",
+    "is_archived": "isArchived",
+    "created_at": "createdAt",
+    "updated_at": "updatedAt",
+    "last_message_at": "lastMessageAt",
+    "analysis_ids": "analysisIds",
+    # Message fields
+    "message_id": "messageId",
+    "message_index": "messageIndex",
+    "analysis_id": "analysisId",
+    "execution_id": "executionId",
+    "question_context": "questionContext",
+    # Analysis fields
+    "script_url": "scriptUrl",
+    "llm_response": "llmResponse",
+    "last_used_at": "lastUsedAt",
+    "usage_count": "usageCount",
+    # Execution fields
+    "created_message_id": "createdMessageId",
+    "generated_script": "generatedScript",
+    "started_at": "startedAt",
+    "completed_at": "completedAt",
+    "execution_time_ms": "executionTimeMs",
+    "mcp_calls": "mcpCalls",
+    "mcp_errors": "mcpErrors",
+    "memory_used_mb": "memoryUsedMb",
+    "cpu_percent": "cpuPercent",
+    "cache_hit": "cacheHit",
+    "cache_key": "cacheKey",
+    # Cache fields
+    "cache_id": "cacheId",
+    "hit_count": "hitCount",
+    "expires_at": "expiresAt",
+    # SavedAnalysis fields
+    "saved_analysis_id": "savedAnalysisId",
+    "is_favorited": "isFavorited",
+    # AuditLog fields
+    "audit_log_id": "auditLogId",
+    "operation": "operation",
+    "resource_type": "resourceType",
+    "resource_id": "resourceId",
+    "user_id": "userId",
+    "ip_address": "ipAddress",
+    "error_message": "errorMessage",
+}
+
+
+def convert_to_camel_case(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Convert snake_case keys to camelCase using alias mapping"""
+    converted = {}
+    for key, value in data.items():
+        mapped_key = FIELD_ALIAS_MAP.get(key, key)
+        converted[mapped_key] = value
+    return converted
+
+
 class MongoDBClient:
     """Async MongoDB client for all database operations"""
     
@@ -145,8 +209,8 @@ class MongoDBClient:
     
     async def create_user(self, user: UserModel) -> str:
         """Create new user"""
-        result = await self.db.users.insert_one(user.dict())
-        await self._log_audit("user_created", "user", str(result.inserted_id), after=user.dict())
+        result = await self.db.users.insert_one(user.dict(by_alias=True))
+        await self._log_audit("user_created", "user", str(result.inserted_id), after=user.dict(by_alias=True))
         return str(result.inserted_id)
     
     async def get_user(self, user_id: str) -> Optional[UserModel]:
@@ -156,12 +220,13 @@ class MongoDBClient:
     
     async def update_user(self, user_id: str, updates: Dict[str, Any]) -> bool:
         """Update user"""
-        updates["updated_at"] = datetime.utcnow()
+        camel_case_updates = convert_to_camel_case(updates)
+        camel_case_updates["updatedAt"] = datetime.utcnow()
         result = await self.db.users.update_one(
             {"userId": user_id},
-            {"$set": updates}
+            {"$set": camel_case_updates}
         )
-        await self._log_audit("user_updated", "user", user_id, after=updates)
+        await self._log_audit("user_updated", "user", user_id, after=camel_case_updates)
         return result.modified_count > 0
     
     # ========================================================================
@@ -170,10 +235,10 @@ class MongoDBClient:
     
     async def create_session(self, session: ChatSessionModel) -> str:
         """Create new chat session"""
-        doc = session.dict()
+        doc = session.dict(by_alias=True)
         result = await self.db.chat_sessions.insert_one(doc)
-        await self._log_audit("session_created", "session", session.sessionId, after=doc)
-        return session.sessionId
+        await self._log_audit("session_created", "session", session.session_id, after=doc)
+        return session.session_id
     
     async def get_session(self, session_id: str) -> Optional[ChatSessionModel]:
         """Get chat session by ID"""
@@ -184,15 +249,16 @@ class MongoDBClient:
         """List user's chat sessions"""
         docs = await self.db.chat_sessions.find(
             {"userId": user_id}
-        ).sort("created_at", -1).limit(limit).to_list(limit)
+        ).sort("createdAt", -1).limit(limit).to_list(limit)
         return [ChatSessionModel(**doc) for doc in docs]
     
     async def update_session(self, session_id: str, updates: Dict[str, Any]) -> bool:
         """Update chat session"""
-        updates["updated_at"] = datetime.utcnow()
+        camel_case_updates = convert_to_camel_case(updates)
+        camel_case_updates["updatedAt"] = datetime.utcnow()
         result = await self.db.chat_sessions.update_one(
             {"sessionId": session_id},
-            {"$set": updates}
+            {"$set": camel_case_updates}
         )
         return result.modified_count > 0
     
@@ -206,20 +272,20 @@ class MongoDBClient:
     
     async def create_message(self, message: ChatMessageModel) -> str:
         """Create new chat message"""
-        doc = message.dict()
+        doc = message.dict(by_alias=True)
         result = await self.db.chat_messages.insert_one(doc)
-        message_id = message.messageId
+        message_id = message.message_id
         
         # Update session message count and last message time
         await self.db.chat_sessions.update_one(
-            {"sessionId": message.sessionId},
+            {"sessionId": message.session_id},
             {
-                "$inc": {"message_count": 1},
-                "$set": {"last_message_at": datetime.utcnow()},
+                "$inc": {"messageCount": 1},
+                "$set": {"lastMessageAt": datetime.utcnow()},
             }
         )
         
-        await self._log_audit("message_created", "message", message_id, after=message.dict())
+        await self._log_audit("message_created", "message", message_id, after=doc)
         return message_id
     
     async def get_message(self, message_id: str) -> Optional[ChatMessageModel]:
@@ -248,10 +314,10 @@ class MongoDBClient:
     
     async def create_analysis(self, analysis: AnalysisModel) -> str:
         """Create new analysis"""
-        doc = analysis.dict()
+        doc = analysis.dict(by_alias=True)
         result = await self.db.analyses.insert_one(doc)
-        await self._log_audit("analysis_created", "analysis", analysis.analysisId, after=doc)
-        return analysis.analysisId
+        await self._log_audit("analysis_created", "analysis", analysis.analysis_id, after=doc)
+        return analysis.analysis_id
     
     async def get_analysis(self, analysis_id: str) -> Optional[AnalysisModel]:
         """Get analysis by ID"""
@@ -264,7 +330,7 @@ class MongoDBClient:
         if category:
             query["category"] = category
         
-        docs = await self.db.analyses.find(query).sort("created_at", -1).limit(limit).to_list(limit)
+        docs = await self.db.analyses.find(query).sort("createdAt", -1).limit(limit).to_list(limit)
         return [AnalysisModel(**doc) for doc in docs]
     
     async def search_analyses(self, user_id: str, search_text: str, limit: int = 50) -> List[AnalysisModel]:
@@ -279,7 +345,7 @@ class MongoDBClient:
     
     async def update_analysis(self, analysis_id: str, updates: Dict[str, Any]) -> bool:
         """Update analysis"""
-        updates["updated_at"] = datetime.utcnow()
+        updates["updatedAt"] = datetime.utcnow()
         result = await self.db.analyses.update_one(
             {"analysisId": analysis_id},
             {"$set": updates}
@@ -288,7 +354,7 @@ class MongoDBClient:
     
     async def mark_analysis_used(self, analysis_id: str) -> bool:
         """Update last_used_at timestamp"""
-        return await self.update_analysis(analysis_id, {"last_used_at": datetime.utcnow()})
+        return await self.update_analysis(analysis_id, {"lastUsedAt": datetime.utcnow()})
     
     # ========================================================================
     # EXECUTION OPERATIONS
@@ -296,10 +362,10 @@ class MongoDBClient:
     
     async def create_execution(self, execution: ExecutionModel) -> str:
         """Create execution record"""
-        doc = execution.dict()
+        doc = execution.dict(by_alias=True)
         result = await self.db.executions.insert_one(doc)
-        await self._log_audit("execution_created", "execution", execution.executionId, after=doc)
-        return execution.executionId
+        await self._log_audit("execution_created", "execution", execution.execution_id, after=doc)
+        return execution.execution_id
     
     async def get_execution(self, execution_id: str) -> Optional[ExecutionModel]:
         """Get execution by ID"""
@@ -310,14 +376,15 @@ class MongoDBClient:
         """List executions in session"""
         docs = await self.db.executions.find(
             {"sessionId": session_id}
-        ).sort("started_at", -1).limit(limit).to_list(limit)
+        ).sort("startedAt", -1).limit(limit).to_list(limit)
         return [ExecutionModel(**doc) for doc in docs]
     
     async def update_execution(self, execution_id: str, updates: Dict[str, Any]) -> bool:
         """Update execution"""
+        camel_case_updates = convert_to_camel_case(updates)
         result = await self.db.executions.update_one(
             {"executionId": execution_id},
-            {"$set": updates}
+            {"$set": camel_case_updates}
         )
         return result.modified_count > 0
     
@@ -327,9 +394,9 @@ class MongoDBClient:
     
     async def save_analysis(self, saved: SavedAnalysisModel) -> str:
         """Save analysis as reusable template"""
-        result = await self.db.saved_analyses.insert_one(saved.dict())
+        result = await self.db.saved_analyses.insert_one(saved.dict(by_alias=True))
         saved_id = str(result.inserted_id)
-        await self._log_audit("analysis_saved", "saved_analysis", saved_id, after=saved.dict())
+        await self._log_audit("analysis_saved", "saved_analysis", saved_id, after=saved.dict(by_alias=True))
         return saved_id
     
     async def get_saved_analysis(self, saved_id: str) -> Optional[SavedAnalysisModel]:
@@ -341,7 +408,7 @@ class MongoDBClient:
         """List user's saved analyses"""
         docs = await self.db.saved_analyses.find(
             {"userId": user_id}
-        ).sort("created_at", -1).limit(limit).to_list(limit)
+        ).sort("createdAt", -1).limit(limit).to_list(limit)
         return [SavedAnalysisModel(**doc) for doc in docs]
     
     async def increment_saved_analysis_usage(self, saved_id: str) -> bool:
@@ -349,8 +416,8 @@ class MongoDBClient:
         result = await self.db.saved_analyses.update_one(
             {"savedAnalysisId": saved_id},
             {
-                "$inc": {"usage_count": 1},
-                "$set": {"last_used_at": datetime.utcnow()},
+                "$inc": {"usageCount": 1},
+                "$set": {"lastUsedAt": datetime.utcnow()},
             }
         )
         return result.modified_count > 0
@@ -363,8 +430,8 @@ class MongoDBClient:
         """Get cached result if exists and not expired"""
         doc = await self.db.cache.find_one(
             {
-                "cache_key": cache_key,
-                "expires_at": {"$gt": datetime.utcnow()}
+                "cacheKey": cache_key,
+                "expiresAt": {"$gt": datetime.utcnow()}
             }
         )
         
@@ -373,8 +440,8 @@ class MongoDBClient:
             await self.db.cache.update_one(
                 {"cacheId": doc["cacheId"]},
                 {
-                    "$inc": {"hit_count": 1},
-                    "$set": {"last_used_at": datetime.utcnow()}
+                    "$inc": {"hitCount": 1},
+                    "$set": {"lastUsedAt": datetime.utcnow()}
                 }
             )
             return doc["result"]
@@ -391,8 +458,8 @@ class MongoDBClient:
             expires_at=datetime.utcnow() + timedelta(hours=ttl_hours),
         )
         
-        result = await self.db.cache.insert_one(cache.dict())
-        return cache.cacheId
+        result = await self.db.cache.insert_one(cache.dict(by_alias=True))
+        return cache.cache_id  # Return the cache_id in snake_case for Python code
     
     # ========================================================================
     # AUDIT LOGGING
@@ -404,7 +471,7 @@ class MongoDBClient:
                         error_message: Optional[str] = None) -> None:
         """Log audit event"""
         audit = AuditLogModel(
-            userId=user_id or "system",
+            user_id=user_id or "system",
             action=action,
             resource_type=resource_type,
             resource_id=resource_id,
@@ -414,7 +481,7 @@ class MongoDBClient:
             error_message=error_message,
         )
         
-        await self.db.audit_logs.insert_one(audit.dict())
+        await self.db.audit_logs.insert_one(audit.dict(by_alias=True))
     
     async def get_audit_logs(self, user_id: str, limit: int = 100) -> List[AuditLogModel]:
         """Get user's audit logs"""

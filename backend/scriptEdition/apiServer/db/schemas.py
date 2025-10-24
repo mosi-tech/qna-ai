@@ -5,9 +5,16 @@ All collections support both immediate storage and reuse of analyses
 
 from typing import Dict, Any, Optional, List
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from enum import Enum
 import uuid
+
+
+class BaseMongoModel(BaseModel):
+    """Base model with automatic snake_case ↔ camelCase conversion for MongoDB"""
+    model_config = ConfigDict(
+        populate_by_name=True  # Accept both snake_case and camelCase in deserialization
+    )
 
 
 class QueryType(str, Enum):
@@ -38,15 +45,15 @@ class RoleType(str, Enum):
 # USER COLLECTION
 # ============================================================================
 
-class UserModel(BaseModel):
+class UserModel(BaseMongoModel):
     """User account and profile"""
     
-    userId: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str = Field(default_factory=lambda: str(uuid.uuid4()), alias='userId')
     email: str
     username: Optional[str] = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
-    last_login: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow, alias='createdAt')
+    updated_at: datetime = Field(default_factory=datetime.utcnow, alias='updatedAt')
+    last_login: Optional[datetime] = Field(None, alias='lastLogin')
     
     # User preferences
     preferences: Dict[str, Any] = Field(default_factory=dict)
@@ -60,7 +67,7 @@ class UserModel(BaseModel):
         collection = "users"
         indexes = [
             {"fields": [("email", 1)], "unique": True},
-            {"fields": [("created_at", -1)]},
+            {"fields": [("createdAt", -1)]},
         ]
 
 
@@ -68,61 +75,43 @@ class UserModel(BaseModel):
 # ANALYSIS COLLECTION
 # ============================================================================
 
-class AnalysisResultBody(BaseModel):
+class AnalysisResultBody(BaseMongoModel):
     """Individual data point in analysis result"""
     key: str  # unique identifier within analysis
     value: Any  # actual value (string, number, object, array)
     description: str  # explanation for retail investors
 
 
-class AnalysisModel(BaseModel):
+class AnalysisModel(BaseMongoModel):
     """
     Analysis generated from LLM at /analyze time.
-    Stores complete LLM response + execution details.
-    Results populated AFTER execution completes.
+    Stores complete LLM response template (not execution results).
+    Can be executed multiple times with different parameters.
     """
 
-    analysisId: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    userId: str
+    analysis_id: str = Field(default_factory=lambda: str(uuid.uuid4()), alias='analysisId')
+    user_id: str = Field(..., alias='userId')
     
     # LLM Response (COMPLETE structure from script_generation or reuse_decision)
-    llm_response: Dict[str, Any]
-    # {
-    #   "status": "success|failed",
-    #   "script_name": "...",
-    #   "script_content": "...",  (if markdown extraction)
-    #   "analysis_description": "...",
-    #   "validation_attempts": int,
-    #   "execution": {
-    #     "script_name": "...",
-    #     "parameters": {...}
-    #   },
-    #   ... any other fields from LLM ...
-    # }
+    llm_response: Dict[str, Any] = Field(..., alias='llmResponse')
     
     # Question that generated this analysis
     question: str
     
     # Script storage reference (after /analyze saves to S3/file)
-    script_url: str  # S3 path or local file path
-    script_size_bytes: int = 0
+    script_url: str = Field(..., alias='scriptUrl')  # S3 path or local file path
+    script_size_bytes: int = Field(0, alias='scriptSizeBytes')
     
-    # Execution status and results (populated AFTER execution)
-    status: ExecutionStatus = ExecutionStatus.PENDING  # pending → running → success/failed
-    result: Dict[str, Any] = Field(default_factory=dict)  # Populated after execution
-    execution_id: Optional[str] = None  # Links to execution log
-    execution_time_ms: Optional[int] = None
-    error: Optional[str] = None  # Error message if execution failed
+    # Link back to the chat message that created this analysis
+    created_message_id: Optional[str] = Field(None, alias='createdMessageId')
     
     # Timestamps
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    executed_at: Optional[datetime] = None
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
-    last_used_at: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow, alias='createdAt')
+    updated_at: datetime = Field(default_factory=datetime.utcnow, alias='updatedAt')
+    last_used_at: Optional[datetime] = Field(None, alias='lastUsedAt')
     
     # Tags for organization
     tags: List[str] = Field(default_factory=list)
-    # ["volatility", "stock-screening", "top-5"]
     
     # Metadata
     metadata: Dict[str, Any] = Field(default_factory=dict)
@@ -130,10 +119,10 @@ class AnalysisModel(BaseModel):
     class Config:
         collection = "analyses"
         indexes = [
-            {"fields": [("userId", 1), ("created_at", -1)]},
-            {"fields": [("status", 1)]},
+            {"fields": [("userId", 1), ("createdAt", -1)]},
             {"fields": [("question", "text")]},
             {"fields": [("tags", 1)]},
+            {"fields": [("createdMessageId", 1)]},
         ]
 
 
@@ -141,25 +130,25 @@ class AnalysisModel(BaseModel):
 # CHAT SESSION COLLECTION
 # ============================================================================
 
-class ChatSessionModel(BaseModel):
+class ChatSessionModel(BaseMongoModel):
     """Conversation session grouping multiple messages"""
     
-    sessionId: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    userId: str
+    session_id: str = Field(default_factory=lambda: str(uuid.uuid4()), alias='sessionId')
+    user_id: str = Field(..., alias='userId')
     
     # Session metadata
     title: str = "Untitled Conversation"
     description: Optional[str] = None
     
     # Message tracking
-    message_count: int = 0
+    message_count: int = Field(0, alias='messageCount')
     
     # Analysis references (quick access to analyses in this session)
-    analysis_ids: List[str] = Field(default_factory=list)
+    analysis_ids: List[str] = Field(default_factory=list, alias='analysisIds')
     # References to analyses created in this session
     
     # Context tracking
-    context_summary: Dict[str, Any] = Field(default_factory=dict)
+    context_summary: Dict[str, Any] = Field(default_factory=dict, alias='contextSummary')
     # {
     #   "last_query": "What is AAPL current price?",
     #   "last_query_type": "complete",
@@ -168,13 +157,13 @@ class ChatSessionModel(BaseModel):
     # }
     
     # Timestamps
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
-    last_message_at: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow, alias='createdAt')
+    updated_at: datetime = Field(default_factory=datetime.utcnow, alias='updatedAt')
+    last_message_at: Optional[datetime] = Field(None, alias='lastMessageAt')
     
     # Status
-    is_archived: bool = False
-    is_favorited: bool = False
+    is_archived: bool = Field(False, alias='isArchived')
+    is_favorited: bool = Field(False, alias='isFavorited')
     
     # Metadata
     tags: List[str] = Field(default_factory=list)
@@ -183,9 +172,9 @@ class ChatSessionModel(BaseModel):
     class Config:
         collection = "chat_sessions"
         indexes = [
-            {"fields": [("user_id", 1), ("created_at", -1)]},
-            {"fields": [("user_id", 1), ("is_archived", 1)]},
-            {"fields": [("last_message_at", -1)]},
+            {"fields": [("userId", 1), ("createdAt", -1)]},
+            {"fields": [("userId", 1), ("isArchived", 1)]},
+            {"fields": [("lastMessageAt", -1)]},
             {"fields": [("title", "text")]},
         ]
 
@@ -194,7 +183,7 @@ class ChatSessionModel(BaseModel):
 # QUESTION CONTEXT MODEL
 # ============================================================================
 
-class QuestionContext(BaseModel):
+class QuestionContext(BaseMongoModel):
     """Context output for question processing (expansion and classification)"""
     original_question: str  # User's original question
     expanded_question: Optional[str] = None  # LLM-expanded version
@@ -206,43 +195,44 @@ class QuestionContext(BaseModel):
 # CHAT MESSAGE COLLECTION
 # ============================================================================
 
-class ChatMessageModel(BaseModel):
+class ChatMessageModel(BaseMongoModel):
     """Individual message in conversation"""
     
-    messageId: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    sessionId: str
-    userId: str
+    message_id: str = Field(default_factory=lambda: str(uuid.uuid4()), alias='messageId')
+    session_id: str = Field(..., alias='sessionId')
+    user_id: str = Field(..., alias='userId')
     
     # Message content
     role: RoleType  # user, assistant, system
     content: str  # Original text of the message
     
-    # Reference to associated analysis (if any)
-    # If this message has an analysis, access execution details via:
-    # analysisId → Analysis.executionId → Execution collection
-    analysisId: Optional[str] = None  # Links to AnalysisModel in analyses collection
+    # Reference to associated analysis and execution (if any)
+    # - analysis_id: which analysis/script was used
+    # - execution_id: which specific execution produced this message
+    analysis_id: Optional[str] = Field(None, alias='analysisId')
+    execution_id: Optional[str] = Field(None, alias='executionId')
     
     # Question context (for user messages) - output from context service
-    questionContext: Optional[QuestionContext] = None
+    question_context: Optional[QuestionContext] = Field(None, alias='questionContext')
     
     # Message metadata
     metadata: Dict[str, Any] = Field(default_factory=dict)
-    # e.g., {"client_version": "1.0", "user_agent": "..."}
     
     # Timestamps
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=datetime.utcnow, alias='createdAt')
+    updated_at: datetime = Field(default_factory=datetime.utcnow, alias='updatedAt')
     
     # Context from session
-    message_index: int = 0  # Position in conversation
+    message_index: int = Field(0, alias='messageIndex')  # Position in conversation
     
     class Config:
         collection = "chat_messages"
         indexes = [
-            {"fields": [("sessionId", 1), ("created_at", 1)]},
-            {"fields": [("userId", 1), ("created_at", -1)]},
+            {"fields": [("sessionId", 1), ("createdAt", 1)]},
+            {"fields": [("userId", 1), ("createdAt", -1)]},
             {"fields": [("role", 1)]},
             {"fields": [("analysisId", 1)]},
+            {"fields": [("executionId", 1)]},
         ]
 
 
@@ -250,24 +240,29 @@ class ChatMessageModel(BaseModel):
 # EXECUTION COLLECTION (Audit Trail)
 # ============================================================================
 
-class ExecutionModel(BaseModel):
+class ExecutionModel(BaseMongoModel):
     """Script execution record for audit and analysis"""
     
-    executionId: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    userId: str
-    sessionId: str
-    messageId: str
+    execution_id: str = Field(default_factory=lambda: str(uuid.uuid4()), alias='executionId')
+    user_id: str = Field(..., alias='userId')
+    
+    # Session and message context (optional - null if executed from UI, not from chat)
+    session_id: Optional[str] = Field(None, alias='sessionId')
+    created_message_id: Optional[str] = Field(None, alias='createdMessageId')
+    
+    # Analysis being executed
+    analysis_id: str = Field(..., alias='analysisId')
     
     # Input
     question: str
-    generated_script: str
+    generated_script: str = Field(..., alias='generatedScript')
     parameters: Dict[str, Any] = Field(default_factory=dict)
     
     # Execution details
     status: ExecutionStatus
-    started_at: datetime = Field(default_factory=datetime.utcnow)
-    completed_at: Optional[datetime] = None
-    execution_time_ms: int = 0
+    started_at: datetime = Field(default_factory=datetime.utcnow, alias='startedAt')
+    completed_at: Optional[datetime] = Field(None, alias='completedAt')
+    execution_time_ms: int = Field(0, alias='executionTimeMs')
     
     # Output
     result: Optional[Dict[str, Any]] = None
@@ -275,16 +270,16 @@ class ExecutionModel(BaseModel):
     warnings: List[str] = Field(default_factory=list)
     
     # MCP tracking
-    mcp_calls: List[str] = Field(default_factory=list)
-    mcp_errors: Dict[str, str] = Field(default_factory=dict)  # {call_name: error}
+    mcp_calls: List[str] = Field(default_factory=list, alias='mcpCalls')
+    mcp_errors: Dict[str, str] = Field(default_factory=dict, alias='mcpErrors')
     
     # Resource usage
-    memory_used_mb: Optional[float] = None
-    cpu_percent: Optional[float] = None
+    memory_used_mb: Optional[float] = Field(None, alias='memoryUsedMb')
+    cpu_percent: Optional[float] = Field(None, alias='cpuPercent')
     
     # Caching
-    cache_hit: bool = False
-    cache_key: Optional[str] = None
+    cache_hit: bool = Field(False, alias='cacheHit')
+    cache_key: Optional[str] = Field(None, alias='cacheKey')
     
     # Metadata
     metadata: Dict[str, Any] = Field(default_factory=dict)
@@ -292,10 +287,12 @@ class ExecutionModel(BaseModel):
     class Config:
         collection = "executions"
         indexes = [
-            {"fields": [("userId", 1), ("created_at", -1)]},
+            {"fields": [("userId", 1), ("startedAt", -1)]},
+            {"fields": [("analysisId", 1)]},
             {"fields": [("sessionId", 1)]},
+            {"fields": [("createdMessageId", 1)]},
             {"fields": [("status", 1)]},
-            {"fields": [("started_at", -1)]},
+            {"fields": [("startedAt", -1)]},
         ]
 
 
@@ -303,7 +300,7 @@ class ExecutionModel(BaseModel):
 # SAVED ANALYSIS COLLECTION (Reusable Templates)
 # ============================================================================
 
-class SavedAnalysisModel(BaseModel):
+class SavedAnalysisModel(BaseMongoModel):
     """
     Reusable analysis template saved for repeated use with variable parameters.
     
@@ -316,25 +313,25 @@ class SavedAnalysisModel(BaseModel):
     NOT a duplicate - SavedAnalysisModel is a BOOKMARK with metadata for reuse.
     """
     
-    savedAnalysisId: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    userId: str
-    analysisId: str  # Reference to original AnalysisModel (the actual analysis)
+    saved_analysis_id: str = Field(default_factory=lambda: str(uuid.uuid4()), alias='savedAnalysisId')
+    user_id: str = Field(..., alias='userId')
+    analysis_id: str = Field(..., alias='analysisId')  # Reference to original AnalysisModel (the actual analysis)
     
     # Save metadata
     saved_name: str  # User-friendly name for this saved template
     description: Optional[str] = None
     
     # Reusability tracking
-    usage_count: int = 0  # How many times this template has been reused
-    last_used_at: Optional[datetime] = None
+    usage_count: int = Field(0, alias='usageCount')  # How many times this template has been reused
+    last_used_at: Optional[datetime] = Field(None, alias='lastUsedAt')
     
     # Template settings - which parameters can be changed for reruns
-    template_variables: Dict[str, Any] = Field(default_factory=dict)
+    template_variables: Dict[str, Any] = Field(default_factory=dict, alias='templateVariables')
     # e.g., {"lookback_days": "30", "limit": "5", "symbols": ["AAPL", "MSFT"]}
     
     # Timestamps
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=datetime.utcnow, alias='createdAt')
+    updated_at: datetime = Field(default_factory=datetime.utcnow, alias='updatedAt')
     
     # Organization
     tags: List[str] = Field(default_factory=list)
@@ -343,7 +340,7 @@ class SavedAnalysisModel(BaseModel):
     class Config:
         collection = "saved_analyses"
         indexes = [
-            {"fields": [("userId", 1), ("created_at", -1)]},
+            {"fields": [("userId", 1), ("createdAt", -1)]},
             {"fields": [("userId", 1), ("tags", 1)]},
             {"fields": [("category", 1)]},
         ]
@@ -353,11 +350,11 @@ class SavedAnalysisModel(BaseModel):
 # AUDIT LOG COLLECTION
 # ============================================================================
 
-class AuditLogModel(BaseModel):
+class AuditLogModel(BaseMongoModel):
     """System audit trail for compliance and debugging"""
     
-    auditLogId: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    userId: str
+    audit_log_id: str = Field(default_factory=lambda: str(uuid.uuid4()), alias='auditLogId')
+    user_id: str = Field(..., alias='userId')
     
     # Action tracking
     action: str
@@ -377,15 +374,15 @@ class AuditLogModel(BaseModel):
     # What changed
     
     # Request context
-    ip_address: Optional[str] = None
-    user_agent: Optional[str] = None
+    ip_address: Optional[str] = Field(None, alias='ipAddress')
+    user_agent: Optional[str] = Field(None, alias='userAgent')
     
     # Status
     success: bool = True
-    error_message: Optional[str] = None
+    error_message: Optional[str] = Field(None, alias='errorMessage')
     
     # Timestamp
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=datetime.utcnow, alias='createdAt')
     
     # Metadata
     metadata: Dict[str, Any] = Field(default_factory=dict)
@@ -393,9 +390,9 @@ class AuditLogModel(BaseModel):
     class Config:
         collection = "audit_logs"
         indexes = [
-            {"fields": [("userId", 1), ("created_at", -1)]},
+            {"fields": [("userId", 1), ("createdAt", -1)]},
             {"fields": [("action", 1)]},
-            {"fields": [("resource_type", 1), ("resource_id", 1)]},
+            {"fields": [("resourceType", 1), ("resourceId", 1)]},
         ]
 
 
@@ -403,29 +400,29 @@ class AuditLogModel(BaseModel):
 # CACHE COLLECTION
 # ============================================================================
 
-class CacheModel(BaseModel):
+class CacheModel(BaseMongoModel):
     """
     Query result caching for performance optimization.
     Avoid re-running expensive analyses.
     """
     
-    cacheId: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    cache_key: str  # Hash of question + parameters
+    cache_id: str = Field(default_factory=lambda: str(uuid.uuid4()), alias='cacheId')
+    cache_key: str = Field(..., alias='cacheKey')  # Hash of question + parameters
     
     # Cached data
     result: Dict[str, Any]
-    analysisId: Optional[str] = None
+    analysis_id: Optional[str] = Field(None, alias='analysisId')
     
     # Metadata
-    hit_count: int = 0
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    expires_at: datetime  # TTL for cache (24 hours default)
-    last_used_at: datetime = Field(default_factory=datetime.utcnow)
+    hit_count: int = Field(0, alias='hitCount')
+    created_at: datetime = Field(default_factory=datetime.utcnow, alias='createdAt')
+    expires_at: datetime = Field(..., alias='expiresAt')  # TTL for cache (24 hours default)
+    last_used_at: datetime = Field(default_factory=datetime.utcnow, alias='lastUsedAt')
     
     class Config:
         collection = "cache"
         indexes = [
-            {"fields": [("cache_key", 1)]},
-            {"fields": [("expires_at", 1)], "expireAfterSeconds": 0},
+            {"fields": [("cacheKey", 1)]},
+            {"fields": [("expiresAt", 1)], "expireAfterSeconds": 0},
             # MongoDB TTL index - auto-delete expired docs
         ]

@@ -65,15 +65,6 @@ class ExecutionService:
                     "error": f"Analysis not found: {analysis_id}"
                 }
             
-            if analysis.status != ExecutionStatus.PENDING:
-                self.logger.warning(f"⚠️ Analysis already executed: {analysis_id}")
-                if session_id:
-                    await progress_error(session_id, f"Execution failed")
-                return {
-                    "success": False,
-                    "error": f"Analysis already executed (status: {analysis.status})"
-                }
-            
             # Step 2: Get execution parameters
             self.logger.info("📋 Extracting execution parameters")
             llm_response = analysis.llm_response
@@ -123,37 +114,16 @@ class ExecutionService:
                 if session_id:
                     await progress_error(session_id, f"Execution failed")
                 
-                # Update analysis with failure
-                await self.repo.db.update_analysis(
-                    analysis_id,
-                    {
-                        "status": ExecutionStatus.FAILED,
-                        "error": execution_result.get("error"),
-                        "execution_time_ms": execution_time_ms,
-                        "executed_at": datetime.utcnow()
-                    }
-                )
-                
                 return {
                     "success": False,
                     "error": execution_result.get("error"),
                     "execution_time_ms": execution_time_ms
                 }
             
-            # Step 5: Update analysis with results and complete
-            self.logger.info("💾 Updating analysis with execution results")
+            # Step 5: Execution completed successfully
+            self.logger.info("💾 Execution complete")
             
             result_data = execution_result.get("result", {})
-            
-            await self.repo.db.update_analysis(
-                analysis_id,
-                {
-                    "status": ExecutionStatus.SUCCESS,
-                    "result": result_data,
-                    "execution_time_ms": execution_time_ms,
-                    "executed_at": datetime.utcnow()
-                }
-            )
             
             if session_id:
                 await progress_success(session_id, "Analysis complete")

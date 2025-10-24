@@ -42,18 +42,22 @@ export default function ChatPage() {
     total: 0,
     hasOlder: false,
   });
+  const [sessionNotFound, setSessionNotFound] = useState(false);
   const loadedSessionIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!session_id || loadedSessionIdRef.current === session_id) return;
 
     loadedSessionIdRef.current = session_id;
+    setSessionNotFound(false);  // Reset 404 state when session changes
 
     const loadInitialMessages = async () => {
       try {
         const sessionDetail = await getSessionDetail(session_id, 0, 10);  // Load 10 messages initially
-        if (!sessionDetail) return;
-
+        if (!sessionDetail) {
+          setSessionNotFound(true);
+          return;
+        }
         const loadedMessages = (sessionDetail.messages || []).map((msg: any, idx: number) => ({
           id: msg.id || `${session_id}-${idx}`,
           type: msg.role === 'user' ? 'user' : msg.role === 'assistant' ? 'ai' : 'results',
@@ -72,6 +76,7 @@ export default function ChatPage() {
         }
       } catch (err) {
         console.warn('Failed to load initial session messages:', err);
+        setSessionNotFound(true);
       }
     };
 
@@ -461,12 +466,47 @@ export default function ChatPage() {
     }
   }, [session_id, currentSessionMessages, getSessionDetail, setMessages, setUIError, isLoadingOlderMessages]);
 
+  const handleStartNewChat = useCallback(async () => {
+    try {
+      setIsProcessing(true);
+      await resumeSession('');
+      setSessionNotFound(false);
+      setMessages([]);
+    } catch (err) {
+      console.error('Failed to create new session:', err);
+      setUIError('Failed to create new session');
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [resumeSession, setMessages, setUIError, setIsProcessing, setSessionNotFound]);
+
   if (!session_id) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Initializing session...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (sessionNotFound) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <div className="text-6xl font-bold text-gray-300 mb-4">404</div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Session Not Found</h1>
+          <p className="text-gray-600 mb-6">
+            The session <code className="bg-gray-100 px-2 py-1 rounded text-sm">{session_id}</code> does not exist.
+          </p>
+          <button
+            onClick={handleStartNewChat}
+            disabled={isProcessing}
+            className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed"
+          >
+            {isProcessing ? 'Creating...' : 'Start a New Chat'}
+          </button>
         </div>
       </div>
     );

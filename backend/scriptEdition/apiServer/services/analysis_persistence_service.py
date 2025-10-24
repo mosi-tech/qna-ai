@@ -24,8 +24,7 @@ class AnalysisPersistenceService:
         user_id: str,
         question: str,
         llm_response: Dict,
-        script: str,
-        result: Optional[Dict[str, Any]] = None
+        script: str
     ) -> str:
         """Create and save a new analysis as reusable template"""
         try:
@@ -33,8 +32,7 @@ class AnalysisPersistenceService:
                 user_id=user_id,
                 question=question,
                 llm_response=llm_response,
-                script=script,
-                result=result
+                script=script
             )
             
             self.logger.info(f"✓ Created analysis: {analysis_id}")

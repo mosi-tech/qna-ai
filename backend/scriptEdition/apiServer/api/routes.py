@@ -405,34 +405,64 @@ class APIRoutes:
                     script_name = analysis_result.get("script_name")
                     execution_info = analysis_result.get("execution", {})
                     analysis_description = analysis_result.get("analysis_description", "")
-                    mcp_calls = analysis_result.get("mcp_calls", [])
+                    
+                    # Initialize analysis_summary for use in chat message (will be overridden in error cases)
+                    analysis_summary = analysis_description
                     
                     # Step 6a: Save to MongoDB FIRST to get proper analysisId (CRITICAL)
-                    if self.analysis_persistence_service and script_name and (
+                    if not self.analysis_persistence_service:
+                        return await self._error_response(
+                            user_message="System is not properly configured. Please try again later.",
+                            internal_error="Analysis persistence service not available",
+                            session_id=session_id,
+                            user_id=user_id
+                        )
+                    
+                    if not script_name:
+                        return await self._error_response(
+                            user_message="Failed to generate analysis script. Please try again.",
+                            internal_error="No script generated",
+                            session_id=session_id,
+                            user_id=user_id
+                        )
+                    
+                    should_save = (
                         (response_type == "reuse_decision" and analysis_result.get("should_reuse")) or
                         (response_type == "script_generation" and analysis_result.get("status") == "success")
-                    ):
-                        try:
-                            # Save to MongoDB first to get database-generated analysisId
-                            analysis_id = await self.analysis_persistence_service.create_analysis(
-                                user_id=user_id,
-                                question=request.question,
-                                llm_response=analysis_result,
-                                script=script_name
-                            )
-                            analysis_data["analysis_id"] = analysis_id
-                            logger.info(f"✓ Saved analysis to MongoDB (analysisId: {analysis_id})")
-                        except Exception as persist_error:
-                            logger.error(f"Failed to save to MongoDB: {persist_error}")
-                            return await self._error_response(
-                                user_message="We ran into an issue and couldn't answer your question. Please try again.",
-                                internal_error=f"Failed to save to MongoDB: {persist_error}",
-                                session_id=session_id,
-                                user_id=user_id
-                            )
-                    else:
+                    )
+                    
+                    if not should_save:
+                        error_detail = ""
                         if response_type == "script_generation" and analysis_result.get("status") == "failed":
-                            analysis_summary = f"Script generation failed: {analysis_result.get('final_error', 'Unknown error')}"
+                            error_detail = analysis_result.get('final_error', 'Unknown error')
+                        else:
+                            error_detail = f"Unexpected response: type={response_type}, should_reuse={analysis_result.get('should_reuse')}, status={analysis_result.get('status')}"
+                        
+                        return await self._error_response(
+                            user_message="We ran into an issue and couldn't answer your question. Please try again.",
+                            internal_error=f"Failed to generate valid analysis: {error_detail}",
+                            session_id=session_id,
+                            user_id=user_id
+                        )
+                    
+                    try:
+                        # Save to MongoDB first to get database-generated analysisId
+                        analysis_id = await self.analysis_persistence_service.create_analysis(
+                            user_id=user_id,
+                            question=request.question,
+                            llm_response=analysis_result,
+                            script=script_name
+                        )
+                        analysis_data["analysis_id"] = analysis_id
+                        logger.info(f"✓ Saved analysis to MongoDB (analysisId: {analysis_id})")
+                    except Exception as persist_error:
+                        logger.error(f"Failed to save to MongoDB: {persist_error}")
+                        return await self._error_response(
+                            user_message="We ran into an issue and couldn't answer your question. Please try again.",
+                            internal_error=f"Failed to save to MongoDB: {persist_error}",
+                            session_id=session_id,
+                            user_id=user_id
+                        )
 
                     # Step 6b: Save to ChromaDB using the MongoDB analysisId (NON-CRITICAL)
                     if analysis_id and script_name and (
@@ -451,7 +481,6 @@ class APIRoutes:
                             )
 
                             if save_result.get("success"):
-                                analysis_summary = save_result.get("analysis_description", "")
                                 logger.info(f"✓ Saved analysis to ChromaDB (analysisId: {analysis_id})")
                             else:
                                 warning_msg = f"Failed to save to ChromaDB: {save_result.get('error')}"
@@ -471,23 +500,32 @@ class APIRoutes:
                 # Step 7: Add assistant message with analysis to chat history
                 step_start = time.time()
                 try:
-                    # Log execution start if audit service available (NON-CRITICAL)
-                    if self.audit_service and session_id:
-                        try:
-                            execution_id = await self.audit_service.log_execution_start(
-                                user_id=user_id,
-                                session_id=session_id,
-                                message_id="pending",
-                                question=request.question,
-                                script=script_name or "",
-                                parameters={"session_id": session_id},
-                                mcp_calls=mcp_calls or []
-                            )
-                            logger.info(f"✓ Logged execution start: {execution_id}")
-                        except Exception as e:
-                            warning_msg = f"Failed to log execution to audit service: {e}"
-                            logger.warning(f"⚠️ {warning_msg}")
-                            warnings.append({"step": "audit_logging", "message": warning_msg})
+                    # Log execution start (CRITICAL - needed to track execution and link results to messages)
+                    if not self.audit_service:
+                        return await self._error_response(
+                            user_message="System is not properly configured. Please try again later.",
+                            internal_error="Audit service not available",
+                            session_id=session_id,
+                            user_id=user_id
+                        )
+                    
+                    try:
+                        execution_id = await self.audit_service.log_execution_start(
+                            user_id=user_id,
+                            analysis_id=analysis_id,
+                            session_id=session_id,
+                            question=request.question,
+                            generated_script=script_name or "",
+                            execution_info=execution_info
+                        )
+                        logger.info(f"✓ Logged execution start: {execution_id}")
+                    except Exception as e:
+                        return await self._error_response(
+                            user_message="Failed to initialize execution. Please try again.",
+                            internal_error=f"Failed to log execution: {e}",
+                            session_id=session_id,
+                            user_id=user_id
+                        )
                     
                     # Add assistant message with analysis to chat history (CRITICAL)
                     if self.chat_history_service and session_id:
@@ -500,6 +538,16 @@ class APIRoutes:
                                 execution_id=execution_id
                             )
                             logger.info(f"✓ Added assistant message with analysis to chat: {msg_id}")
+                            
+                            # Link execution to the message it created (NON-CRITICAL - bidirectional link for convenience)
+                            # The critical link is message→execution (embedded in message), this is just execution→message
+                            if execution_id and self.audit_service:
+                                try:
+                                    await self.audit_service.link_execution_to_message(execution_id, msg_id)
+                                except Exception as e:
+                                    warning_msg = f"Failed to link execution to message: {e}"
+                                    logger.warning(f"⚠️ {warning_msg}")
+                                    warnings.append({"step": "execution_linking", "message": warning_msg})
                         except Exception as e:
                             logger.error(f"Failed to add assistant message to chat history: {e}")
                             return await self._error_response(
@@ -518,6 +566,10 @@ class APIRoutes:
                 # Step 8: Build enhanced response with conversation context
                 step_start = time.time()
                 response_data = result["data"]
+                
+                # Add analysis summary for frontend display
+                if analysis_summary:
+                    response_data["analysis_summary"] = analysis_summary
                 
                 # Add conversation context info
                 response_data["conversation"] = {
@@ -1062,11 +1114,11 @@ class APIRoutes:
                 "session_id": session_id,
                 "executions": [
                     {
-                        "execution_id": str(e.id) if hasattr(e, 'id') else e.get('_id'),
+                        "execution_id": e.execution_id if hasattr(e, 'execution_id') else e.get('executionId'),
                         "question": e.question if hasattr(e, 'question') else e.get('question'),
                         "status": e.status if hasattr(e, 'status') else e.get('status'),
-                        "started_at": e.started_at.isoformat() if hasattr(e, 'started_at') else e.get('started_at'),
-                        "execution_time_ms": e.execution_time_ms if hasattr(e, 'execution_time_ms') else e.get('execution_time_ms')
+                        "started_at": e.started_at.isoformat() if hasattr(e, 'started_at') and hasattr(e.started_at, 'isoformat') else str(e.get('startedAt')),
+                        "execution_time_ms": e.execution_time_ms if hasattr(e, 'execution_time_ms') else e.get('executionTimeMs')
                     }
                     for e in executions
                 ],
