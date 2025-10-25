@@ -260,7 +260,6 @@ class AnalysisLibrary:
 
             return {
                 "success": True,
-                "analysis_id": analysis_id,
                 "message": f"Analysis saved successfully with ID: {analysis_id}"
             }
             

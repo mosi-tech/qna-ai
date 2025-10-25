@@ -249,8 +249,7 @@ class APIRoutes:
                         user_id=user_id
                     )
             
-            # Step 1: Check message-level cache before processing (NON-CRITICAL)
-            cached_message_data = None
+            # Step 1: Check message-level cache FIRST (early return if hit)
             if self.cache_service:
                 try:
                     cached_message_data = await self.cache_service.get_cached_message(
@@ -258,13 +257,30 @@ class APIRoutes:
                         user_id=user_id
                     )
                     if cached_message_data:
-                        logger.info("✓ Found cached message - will copy to new session")
+                        logger.info("⚡ Cache hit! Returning cached message immediately (skipping search)")
+                        await progress_info(session_id, "Found cached analysis!")
+                        
+                        # Add professional indicator that this is a cached response
+                        original_content = cached_message_data.get("content", "Analysis completed")
+                        cached_content = f"[Previously analyzed] This question has been analyzed before. Here are the insights:\n\n{original_content}"
+                        
+                        return await self._create_response_with_message(
+                            session_id=session_id,
+                            user_id=user_id,
+                            response_type="cache_hit",
+                            message_content=cached_content,
+                            analysis_id=cached_message_data.get("analysis_id"),
+                            execution_id=cached_message_data.get("execution_id"),
+                            metadata={
+                                "cache_hit": True,
+                            },
+                        )
                 except Exception as e:
                     warning_msg = f"Message cache check failed: {e}"
                     logger.warning(f"⚠️ {warning_msg}")
                     warnings.append({"step": "cache_check", "message": warning_msg})
             
-            # Step 1-2: Context-aware search (context_aware.py handles progress logging)
+            # Step 2: Context-aware search (only if no cache hit)
             step_start = time.time()
             context_result = await search_with_context(
                 query=request.question,
@@ -298,28 +314,8 @@ class APIRoutes:
                 )
             
             # Get the final query to analyze (expanded if contextual)
-            final_query = context_result.get("expanded_query", request.question)
+            expanded_query = context_result.get("expanded_query", request.question)
             session_id = context_result["session_id"]
-            
-            # Step 2: Handle cache hit - copy cached message instead of regenerating
-            if cached_message_data:
-                logger.info("⚡ Cache hit! Copying cached message to new session")
-                
-                # Add professional indicator that this is a cached response
-                original_content = cached_message_data.get("content", "Analysis completed")
-                cached_content = f"[Previously analyzed] This question has been analyzed before. Here are the insights:\n\n{original_content}"
-                
-                return await self._create_response_with_message(
-                    session_id=session_id,
-                    user_id=user_id,
-                    response_type="cache_hit",
-                    message_content=cached_content,
-                    analysis_id=cached_message_data.get("analysis_id"),
-                    execution_id=cached_message_data.get("execution_id"),
-                    metadata={
-                        "cache_hit": True,
-                    },
-                )
             
             # Step 2: Check if we need confirmation for low-confidence expansions
             if context_result.get("needs_confirmation") or context_result.get("needs_clarification"):
@@ -330,7 +326,6 @@ class APIRoutes:
                     response_type=response_type,
                     message_content=context_result.get("message", "Please clarify your question"),
                     metadata={
-                        "needs_user_input": True,
                         "original_query": context_result.get("original_query"),
                         "expanded_query": context_result.get("expanded_query"),
                         "expansion_confidence": context_result.get("expansion_confidence", 0.0),
@@ -341,7 +336,7 @@ class APIRoutes:
             
             # Step 3: Use similar analyses from context_aware search
             similar_analyses = context_result.get("search_results", [])
-            enhanced_message = final_query  # Use final_query as enhanced message
+            enhanced_message = expanded_query  # Use expanded_query as enhanced message
             logger.info(f"🔍 Found {len(similar_analyses)} similar analyses from context search")
             
             # Step 3.5: Evaluate if existing analyses can be reused
@@ -351,7 +346,7 @@ class APIRoutes:
                 logger.info(f"🔄 Evaluating reuse potential for {len(similar_analyses)} similar analyses...")
                 await progress_info(session_id, "Evaluating similar analyses....")
                 reuse_result = await self.reuse_evaluator.evaluate_reuse(
-                    user_query=final_query,
+                    user_query=expanded_query,
                     existing_analyses=similar_analyses,
                     context={"session_id": request.session_id} if request.session_id else None
                 )
@@ -397,7 +392,7 @@ class APIRoutes:
                 logger.info(f"🤖 Using model: {model}")
                 
                 # Format the query with message template
-                formatted_query = self._format_message_with_template(final_query)
+                formatted_query = self._format_message_with_template(expanded_query)
                 
                 # Step 3: Direct analysis with formatted message (system prompt auto-loaded)
                 step_start = time.time()
@@ -406,7 +401,7 @@ class APIRoutes:
                 logger.info(f"⏱️ TIMING - Step 3 (Direct Analysis): {step_duration:.3f}s")
             else:
                 # Format the query with message template
-                formatted_query = self._format_message_with_template(final_query)
+                formatted_query = self._format_message_with_template(expanded_query)
                 
                 # Step 3: Create code prompt messages with function schemas
                 step_start = time.time()
@@ -506,7 +501,7 @@ class APIRoutes:
                         )
                     
                     try:
-                        # Save to MongoDB first to get database-generated analysisId
+                        # Save to MongoDB first to get database-generated analysis_id
                         analysis_id = await self.analysis_persistence_service.create_analysis(
                             user_id=user_id,
                             question=request.question,
@@ -514,7 +509,7 @@ class APIRoutes:
                             script=script_name
                         )
                         analysis_data["analysis_id"] = analysis_id
-                        logger.info(f"✓ Saved analysis to MongoDB (analysisId: {analysis_id})")
+                        logger.info(f"✓ Saved analysis to MongoDB (analysis_id: {analysis_id})")
                     except Exception as persist_error:
                         logger.error(f"Failed to save to MongoDB: {persist_error}")
                         return await self._error_response(
@@ -531,10 +526,9 @@ class APIRoutes:
                     ):
                         try:
                             save_result = self.search_service.save_completed_analysis(
+                                analysis_id=analysis_id,
                                 original_question=request.question,
-                                script_path=script_name,
                                 addn_meta={
-                                    "analysisId": analysis_id, 
                                     "execution": execution_info,
                                     "description": analysis_description
                                 }
@@ -656,7 +650,7 @@ class APIRoutes:
                     "session_id": session_id,
                     "query_type": context_result.get("query_type"),
                     "original_query": request.question,
-                    "final_query": final_query,
+                    "expanded_query": expanded_query,
                     "context_used": context_result.get("context_used", False),
                     "expansion_confidence": context_result.get("expansion_confidence", 0.0)
                 }

@@ -110,7 +110,8 @@ class ChatHistoryService:
         user_id: str,
         content: str,
         analysis_id: str = None,
-        execution_id: str = None
+        execution_id: str = None,
+        metadata: Dict[str, Any] = None
     ) -> str:
         """Add regular assistant message (with optional analysis and execution references)"""
         try:
@@ -119,7 +120,8 @@ class ChatHistoryService:
                 user_id=user_id,
                 content=content,
                 analysis_id=analysis_id,
-                execution_id=execution_id
+                execution_id=execution_id,
+                metadata=metadata
             )
             
             self.logger.info(f"✓ Added assistant message: {msg_id}")
