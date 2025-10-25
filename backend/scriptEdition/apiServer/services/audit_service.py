@@ -26,7 +26,7 @@ class AuditService:
         analysis_id: str,
         question: str,
         generated_script: str,
-        execution_info: Dict[str, Any],
+        execution_params: Dict[str, Any],
         session_id: Optional[str] = None,
         created_message_id: Optional[str] = None,
     ) -> str:
@@ -37,7 +37,7 @@ class AuditService:
             analysis_id: Analysis being executed
             question: Original question
             generated_script: The full script content from analysis
-            execution_info: Execution config from LLM (parameters, etc.)
+            execution_params: Execution config from LLM (parameters, etc.)
             session_id: Optional session context
             created_message_id: Will be set later after message is created
         """
@@ -49,8 +49,8 @@ class AuditService:
                 created_message_id=created_message_id,
                 question=question,
                 generated_script=generated_script,
-                parameters=execution_info.get("parameters", {}),
-                mcp_calls=execution_info.get("mcp_functions_used", []),
+                parameters=execution_params.get("parameters", {}),
+                mcp_calls=execution_params.get("mcp_functions_used", []),
             )
             
             self.logger.info(f"✓ Logged execution start: {execution_id}")

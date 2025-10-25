@@ -206,6 +206,41 @@ class APIRoutes:
             timestamp=datetime.now().isoformat()
         )
     
+    async def _submit_execution(self, user_id: str, session_id: str, analysis_id: str, question: str, execution_params: Dict[str, Any]) -> Optional[str]:
+        """
+        Submit execution for analysis and log it.
+        
+        Args:
+            user_id: User ID
+            session_id: Session ID
+            analysis_id: Analysis ID
+            question: User's original question
+            execution_params: Execution metadata
+            
+        Returns:
+            execution_id if successful, None if failed
+        """
+        try:
+            if not self.audit_service:
+                logger.error("❌ Audit service not available for execution logging")
+                return None
+            
+            # Log execution start
+            execution_id = await self.audit_service.log_execution_start(
+                user_id=user_id,
+                analysis_id=analysis_id,
+                session_id=session_id,
+                question=question,
+                generated_script=execution_params.get("script_name", ""),
+                execution_params=execution_params
+            )
+            logger.info(f"✓ Logged execution start: {execution_id}")
+            return execution_id
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to log execution: {e}")
+            return None
+    
     async def analyze_question(self, request: QuestionRequest) -> AnalysisResponse:
         """
         Analyze a financial question with conversation context support
@@ -357,26 +392,41 @@ class APIRoutes:
                     logger.info(f"✅ Reuse decision: {reuse_result['reuse_decision']['reason']}")
 
                     reuse_decision = reuse_result["reuse_decision"]
-                    script_name = reuse_decision.get("script_name", "unknown_analysis")
                     analysis_id = reuse_decision.get("analysis_id")  # Get analysis_id from reuse decision
 
-                    # Return reuse result - message is created in helper function
-                    # Build metadata with only essential data for UI reconstruction
-                    msg_metadata = {
-                        "should_reuse": reuse_decision.get("should_reuse"),
-                        "reason": reuse_decision.get("reason"),
-                    }
-                    if warnings:
-                        msg_metadata["warnings"] = warnings
-                    
-                    return await self._create_response_with_message(
-                        session_id=session_id,
+                    # Submit execution for reused analysis
+                    execution_id = await self._submit_execution(
                         user_id=user_id,
-                        response_type="reuse_decision",
-                        message_content=f"Reused existing analysis: {reuse_decision.get('reason')}",
+                        session_id=session_id,
                         analysis_id=analysis_id,
-                        metadata=msg_metadata,
+                        question=request.question,
+                        execution_params=reuse_decision.get("execution", {})
                     )
+
+                    if execution_id:
+                        # Return reuse result - message is created in helper function
+                        # Build metadata with only essential data for UI reconstruction
+                        msg_metadata = {
+                            "should_reuse": reuse_decision.get("should_reuse"),
+                            "reason": reuse_decision.get("reason", ""),
+                            "similarity": reuse_decision.get("similariy", 0),
+                            "original_execution": reuse_decision.get("original_execution", {})
+                        }
+                        if warnings:
+                            msg_metadata["warnings"] = warnings
+                        
+                        return await self._create_response_with_message(
+                            session_id=session_id,
+                            user_id=user_id,
+                            response_type="reuse_decision",
+                            message_content=f"Reused existing analysis: {reuse_decision.get('reason')}",
+                            analysis_id=analysis_id,
+                            execution_id=execution_id,
+                            metadata=msg_metadata,
+                        )
+                    else:
+                        warning_msg = f"Failed to run execution on reuse"
+                        logger.warning(f"⚠️ {warning_msg}")
                 else:
                     logger.info("➡️ No suitable analysis for reuse, proceeding with new analysis generation")
             
@@ -458,7 +508,7 @@ class APIRoutes:
                     
                     # Extract consistent fields from both reuse and script generation responses
                     script_name = analysis_result.get("script_name")
-                    execution_info = analysis_result.get("execution", {})
+                    execution_params = analysis_result.get("execution", {})
                     analysis_description = analysis_result.get("analysis_description", "")
                     
                     # Initialize analysis_summary for use in chat message (will be overridden in error cases)
@@ -529,7 +579,7 @@ class APIRoutes:
                                 analysis_id=analysis_id,
                                 original_question=request.question,
                                 addn_meta={
-                                    "execution": execution_info,
+                                    "execution": execution_params,
                                     "description": analysis_description
                                 }
                             )
@@ -554,29 +604,19 @@ class APIRoutes:
                 # Step 7: Add assistant message with analysis to chat history
                 step_start = time.time()
                 try:
-                    # Log execution start (CRITICAL - needed to track execution and link results to messages)
-                    if not self.audit_service:
-                        return await self._error_response(
-                            user_message="System is not properly configured. Please try again later.",
-                            internal_error="Audit service not available",
-                            session_id=session_id,
-                            user_id=user_id
-                        )
+                    # Step 7: Log execution start (CRITICAL - needed to track execution and link results to messages)
+                    execution_id = await self._submit_execution(
+                        user_id=user_id,
+                        session_id=session_id,
+                        analysis_id=analysis_id,
+                        question=request.question,
+                        execution_params=execution_params
+                    )
                     
-                    try:
-                        execution_id = await self.audit_service.log_execution_start(
-                            user_id=user_id,
-                            analysis_id=analysis_id,
-                            session_id=session_id,
-                            question=request.question,
-                            generated_script=script_name or "",
-                            execution_info=execution_info
-                        )
-                        logger.info(f"✓ Logged execution start: {execution_id}")
-                    except Exception as e:
+                    if not execution_id:
                         return await self._error_response(
                             user_message="Failed to initialize execution. Please try again.",
-                            internal_error=f"Failed to log execution: {e}",
+                            internal_error="Failed to log execution",
                             session_id=session_id,
                             user_id=user_id
                         )

@@ -19,6 +19,7 @@ from typing import Dict, Any, Optional, List
 
 from llm import create_reuse_evaluator_llm, LLMService
 from .base_service import BaseService
+from ..utils.json_utils import safe_json_loads
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -225,7 +226,7 @@ Return ONLY valid JSON:
                 }
             
             try:
-                result = json.loads(conversion_response["content"])
+                result = safe_json_loads(conversion_response["content"])
                 logger.info(f"✅ Parameter conversion successful (confidence: {result.get('confidence', 0)})")
                 return result
             except json.JSONDecodeError:
@@ -288,9 +289,9 @@ Return ONLY valid JSON:
                     "timestamp": datetime.now().isoformat()
                 }
             
-            # Parse JSON response
+            # Parse JSON response with comment cleaning
             try:
-                reuse_decision = json.loads(response["content"])
+                reuse_decision = safe_json_loads(response["content"])
                 logger.info(f"📋 Reuse decision: {reuse_decision['reuse_decision']['should_reuse']}")
 
                 decision = reuse_decision["reuse_decision"]
@@ -355,8 +356,8 @@ Return ONLY valid JSON:
                                     )
                                     
                                     # Add conversion results to decision
-                                    decision["parameter_conversion"] = conversion_result
-                                    decision["converted_parameters"] = conversion_result.get("converted_parameters", params_to_convert)
+                                    decision["original_execution"] = decision["execution"]
+                                    decision["execution"] = {"script_name": script_name, "parameters": conversion_result.get("converted_parameters", params_to_convert)}
                                     decision["conversion_confidence"] = conversion_result.get("confidence", 0.5)
                                     
                                     logger.info(f"✅ Parameters converted with confidence: {decision['conversion_confidence']}")
@@ -365,7 +366,6 @@ Return ONLY valid JSON:
                                     decision["converted_parameters"] = params_to_convert
                             else:
                                 logger.warning(f"No script path found for parameter conversion")
-                                decision["converted_parameters"] = params_to_convert
                         else:
                             logger.info(f"No parameters to convert")
                             decision["converted_parameters"] = {}
