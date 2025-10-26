@@ -134,6 +134,7 @@ class APIRoutes:
         analysis_id: Optional[str] = None,
         execution_id: Optional[str] = None,
         metadata: Optional[Dict[str, Any]] = None,
+        cache_output: bool = False,
     ) -> AnalysisResponse:
         """
         Create a chat message record AND return it as the response.
@@ -149,6 +150,7 @@ class APIRoutes:
             execution_id: Optional reference to execution
             metadata: Essential metadata for rendering (response_type will be added automatically)
                      Should contain minimal data needed to reconstruct UI state
+            cache_output: Whether to cache this message for future reuse
         
         Returns:
             AnalysisResponse where data contains the message itself
@@ -171,7 +173,7 @@ class APIRoutes:
             logger.info(f"✓ Created {response_type} message in chat history: {msg_id}")
             
             # Cache the assistant message for future reuse (NON-CRITICAL)
-            if self.cache_service and analysis_id and execution_id and response_type == "analysis":
+            if self.cache_service and analysis_id and execution_id and cache_output:
                 try:
                     message_cache_data = {
                         "content": message_content,
@@ -483,7 +485,8 @@ class APIRoutes:
                     "should_reuse": reuse_decision.get("should_reuse"),
                     "reason": reuse_decision.get("reason", ""),
                     "similarity": reuse_decision.get("similariy", 0),
-                    "original_execution": reuse_decision.get("original_execution", {})
+                    "original_execution": reuse_decision.get("original_execution", {}),
+                    "original_query": request.question,
                 }
                 if warnings:
                     msg_metadata["warnings"] = warnings
@@ -496,6 +499,7 @@ class APIRoutes:
                     analysis_id=analysis_id,
                     execution_id=execution_id,
                     metadata=msg_metadata,
+                    cache_output=True,
                 )
                 return response, warnings
             else:
@@ -716,7 +720,8 @@ class APIRoutes:
             message_content=analysis_summary or "Analysis completed",
             analysis_id=analysis_id,
             execution_id=execution_id,
-            metadata=response_metadata
+            metadata=response_metadata,
+            cache_output=True,
         )
 
     async def analyze_question(self, request: QuestionRequest) -> AnalysisResponse:
