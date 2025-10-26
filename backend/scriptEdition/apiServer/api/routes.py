@@ -18,6 +18,7 @@ from services.code_prompt_builder import CodePromptBuilderService
 from services.reuse_evaluator import ReuseEvaluatorService
 from services.chat_service import ChatHistoryService
 from services.cache_service import CacheService
+from services.execution_queue_service import execution_queue_service
 from services.analysis_persistence_service import AnalysisPersistenceService
 from services.audit_service import AuditService
 from services.execution_service import ExecutionService
@@ -255,7 +256,7 @@ class APIRoutes:
                 logger.error("❌ Audit service not available for execution logging")
                 return None
             
-            # Log execution start
+            # Log execution start in audit service
             execution_id = await self.audit_service.log_execution_start(
                 user_id=user_id,
                 analysis_id=analysis_id,
@@ -265,6 +266,37 @@ class APIRoutes:
                 execution_params=execution_params
             )
             logger.info(f"✓ Logged execution start: {execution_id}")
+            
+            # Also enqueue execution in queue system for processing
+            try:
+                script_name = execution_params.get("script_name", "")
+                script_content = execution_params.get("script_content", "")
+                parameters = execution_params.get("parameters", {})
+                
+                if script_content and script_name:
+                    queue_success = await execution_queue_service.enqueue_execution(
+                        execution_id=execution_id,
+                        analysis_id=analysis_id,
+                        session_id=session_id,
+                        user_id=user_id,
+                        script_content=script_content,
+                        script_name=script_name,
+                        parameters=parameters,
+                        priority=1,  # High priority for user-initiated executions
+                        timeout_seconds=300
+                    )
+                    
+                    if queue_success:
+                        logger.info(f"✓ Enqueued execution for processing: {execution_id}")
+                    else:
+                        logger.warning(f"⚠️ Failed to enqueue execution: {execution_id}")
+                else:
+                    logger.warning(f"⚠️ No script content available for execution: {execution_id}")
+                    
+            except Exception as queue_error:
+                # Don't fail the whole process if queue enqueue fails
+                logger.warning(f"⚠️ Failed to enqueue execution {execution_id}: {queue_error}")
+            
             return execution_id
             
         except Exception as e:
@@ -1326,3 +1358,4 @@ class APIRoutes:
                 "error": str(e),
                 "timestamp": datetime.now().isoformat()
             }
+    
