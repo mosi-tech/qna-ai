@@ -269,409 +269,524 @@ class APIRoutes:
             logger.error(f"❌ Failed to log execution: {e}")
             return None
     
+    async def _validate_session_and_log_user_message(self, request: QuestionRequest) -> Optional[AnalysisResponse]:
+        """
+        Step 0: Validate session and log user message
+        Returns error response if validation fails, None if successful
+        """
+        user_id = request.user_id if hasattr(request, 'user_id') and request.user_id else "anonymous"
+        session_id = request.session_id
+        
+        # Verify session exists (CRITICAL - fail if missing)
+        if not session_id:
+            logger.error(f"❌ CRITICAL: No session_id provided in request")
+            return AnalysisResponse(
+                success=False,
+                error="Session ID is required. Please start a new conversation.",
+                timestamp=datetime.now().isoformat()
+            )
+
+        await progress_info(session_id, "Evaluating your question...")
+
+        # Add user message to chat history (CRITICAL - fail if this doesn't work)
+        if not self.chat_history_service:
+            logger.error(f"❌ CRITICAL: Chat history service not available")
+            return await self._error_response(
+                user_message="System error: Chat service unavailable. Please try again.",
+                internal_error="Chat history service not initialized",
+                session_id=session_id,
+                user_id=user_id
+            )
+            
+        try:
+            message_id = await self.chat_history_service.add_user_message(
+                session_id=session_id,
+                user_id=user_id,
+                question=request.question
+            )
+            logger.info(f"✓ Added user message to chat history: {message_id}")
+        except Exception as e:
+            logger.error(f"❌ CRITICAL: Failed to add user message: {e}")
+            # This is critical - the user's question must be recorded
+            return await self._error_response(
+                user_message="We ran into an issue and couldn't answer your question. Please try again.",
+                internal_error=f"Failed to save user message: {e}",
+                session_id=session_id,
+                user_id=user_id
+            )
+        
+        return None  # Success - continue with analysis
+
+    async def _check_message_cache(self, request: QuestionRequest) -> tuple[Optional[AnalysisResponse], list]:
+        """
+        Step 1: Check message-level cache for early return
+        Returns (response if cache hit, warnings list)
+        """
+        user_id = request.user_id if hasattr(request, 'user_id') and request.user_id else "anonymous"
+        session_id = request.session_id
+        warnings = []
+        
+        if not self.cache_service:
+            warning_msg = "Cache service not available - skipping cache check"
+            logger.warning(f"⚠️ {warning_msg}")
+            warnings.append({"step": "cache_check", "message": warning_msg})
+            return None, warnings
+        
+        try:
+            cached_message_data = await self.cache_service.get_cached_message(
+                question=request.question,
+                user_id=user_id
+            )
+            if cached_message_data:
+                logger.info("⚡ Cache hit! Returning cached message immediately (skipping search)")
+                await progress_info(session_id, "Found cached analysis!")
+                
+                # Add professional indicator that this is a cached response
+                original_content = cached_message_data.get("content", "Analysis completed")
+                cached_content = f"[Previously analyzed] This question has been analyzed before. Here are the insights:\n\n{original_content}"
+                
+                response = await self._create_response_with_message(
+                    session_id=session_id,
+                    user_id=user_id,
+                    response_type="cache_hit",
+                    message_content=cached_content,
+                    analysis_id=cached_message_data.get("analysis_id"),
+                    execution_id=cached_message_data.get("execution_id"),
+                    metadata={
+                        "cache_hit": True,
+                    },
+                )
+                return response, warnings
+        except Exception as e:
+            warning_msg = f"Message cache check failed: {e}"
+            logger.warning(f"⚠️ {warning_msg}")
+            warnings.append({"step": "cache_check", "message": warning_msg})
+        
+        return None, warnings  # No cache hit - continue
+
+    async def _perform_context_search(self, request: QuestionRequest) -> tuple[Optional[AnalysisResponse], dict]:
+        """
+        Step 2: Context-aware search and meaningless query detection
+        Returns (error response if failed/meaningless, context_result dict)
+        """
+        user_id = request.user_id if hasattr(request, 'user_id') and request.user_id else "anonymous"
+        session_id = request.session_id
+        
+        step_start = time.time()
+        context_result = await search_with_context(
+            query=request.question,
+            session_id=session_id,
+            auto_expand=request.auto_expand
+        )
+        step_duration = time.time() - step_start
+        logger.info(f"⏱️ TIMING - Step 2 (Context Search): {step_duration:.3f}s")
+        
+        if not context_result["success"]:
+            error_msg = context_result.get('error', 'Unknown error')
+            error_response = await self._error_response(
+                user_message="We ran into an issue and couldn't answer your question. Please try again.",
+                internal_error=error_msg,
+                session_id=session_id,
+                user_id=user_id
+            )
+            return error_response, context_result
+        
+        # Check if query is meaningless
+        if context_result.get("is_meaningless"):
+            error_message = context_result.get("message") or "I need more details to help you. Please tell me what you'd like to analyze."
+            
+            response = await self._create_response_with_message(
+                session_id=session_id,
+                user_id=user_id,
+                response_type="meaningless",
+                message_content=error_message,
+                metadata={"is_meaningless": True}
+            )
+            return response, context_result
+        
+        return None, context_result  # Success - continue
+
+    async def _handle_confirmation_requests(self, request: QuestionRequest, context_result: dict) -> Optional[AnalysisResponse]:
+        """
+        Step 3: Handle confirmation requests for low-confidence expansions
+        Returns response if confirmation needed, None if can proceed
+        """
+        user_id = request.user_id if hasattr(request, 'user_id') and request.user_id else "anonymous"
+        session_id = request.session_id
+        
+        if context_result.get("needs_confirmation") or context_result.get("needs_clarification"):
+            response_type = "needs_clarification" if context_result.get("needs_clarification") else "needs_confirmation"
+            return await self._create_response_with_message(
+                session_id=session_id,
+                user_id=user_id,
+                response_type=response_type,
+                message_content=context_result.get("message", "Please confirm if this interpretation is correct."),
+                metadata={
+                    "original_query": request.question,
+                    "expanded_query": context_result.get("expanded_query"),
+                    "confidence": context_result.get("expansion_confidence", 0.0),
+                    "needs_confirmation": context_result.get("needs_confirmation", False),
+                    "needs_clarification": context_result.get("needs_clarification", False),
+                }
+            )
+        
+        return None  # No confirmation needed - continue
+
+    async def _evaluate_reuse_potential(self, request: QuestionRequest, context_result: dict, expanded_query: str) -> tuple[Optional[AnalysisResponse], list]:
+        """
+        Step 4: Evaluate similar analyses for reuse potential
+        Returns (response if reuse successful, warnings list)
+        """
+        user_id = request.user_id if hasattr(request, 'user_id') and request.user_id else "anonymous"
+        session_id = request.session_id
+        warnings = []
+        
+        # Get similar analyses from context search
+        similar_analyses = context_result.get("search_results", [])
+        logger.info(f"🔍 Found {len(similar_analyses)} similar analyses from context search")
+        
+        if not similar_analyses:
+            return None, warnings  # No similar analyses - proceed with new analysis
+        
+        # Evaluate reuse potential
+        step_start = time.time()
+        logger.info(f"🔄 Evaluating reuse potential for {len(similar_analyses)} similar analyses...")
+        await progress_info(session_id, "Evaluating similar analyses....")
+        
+        reuse_result = await self.reuse_evaluator.evaluate_reuse(
+            user_query=expanded_query,
+            existing_analyses=similar_analyses,
+            context={"session_id": request.session_id} if request.session_id else None
+        )
+        step_duration = time.time() - step_start
+        logger.info(f"⏱️ TIMING - Step 4 (Reuse Evaluation): {step_duration:.3f}s")
+        
+        # Check if reuse is recommended
+        if reuse_result["status"] == "success" and reuse_result["reuse_decision"]["should_reuse"]:
+            logger.info(f"✅ Reuse decision: {reuse_result['reuse_decision']['reason']}")
+            
+            reuse_decision = reuse_result["reuse_decision"]
+            analysis_id = reuse_decision.get("analysis_id")
+            
+            # Submit execution for reused analysis
+            execution_id = await self._submit_execution(
+                user_id=user_id,
+                session_id=session_id,
+                analysis_id=analysis_id,
+                question=request.question,
+                execution_params=reuse_decision.get("execution", {})
+            )
+            
+            if execution_id:
+                # Build metadata with essential data for UI reconstruction
+                msg_metadata = {
+                    "should_reuse": reuse_decision.get("should_reuse"),
+                    "reason": reuse_decision.get("reason", ""),
+                    "similarity": reuse_decision.get("similariy", 0),
+                    "original_execution": reuse_decision.get("original_execution", {})
+                }
+                if warnings:
+                    msg_metadata["warnings"] = warnings
+                
+                response = await self._create_response_with_message(
+                    session_id=session_id,
+                    user_id=user_id,
+                    response_type="reuse_decision",
+                    message_content=f"Reused existing analysis: {reuse_decision.get('reason')}",
+                    analysis_id=analysis_id,
+                    execution_id=execution_id,
+                    metadata=msg_metadata,
+                )
+                return response, warnings
+            else:
+                warning_msg = f"Failed to run execution on reuse"
+                logger.warning(f"⚠️ {warning_msg}")
+                warnings.append({"step": "reuse_execution", "message": warning_msg})
+        else:
+            logger.info("➡️ No suitable analysis for reuse, proceeding with new analysis generation")
+        
+        return None, warnings  # No reuse - continue with new analysis
+
+    async def _build_analysis(self, request: QuestionRequest, expanded_query: str, context_result: dict) -> Optional[dict]:
+        """
+        Step 5: Execute analysis using either direct mode or code prompt builder
+        Returns result dict or None if failed
+        """
+        user_id = request.user_id if hasattr(request, 'user_id') and request.user_id else "anonymous"
+        session_id = request.session_id
+        similar_analyses = context_result.get("search_results", [])
+        enhanced_message = expanded_query  # Use expanded_query as enhanced message
+        
+        # Check if we should skip code prompt builder (direct analysis mode)
+        skip_code_prompt_builder = os.getenv("SKIP_CODE_PROMPT_BUILDER", "false").lower() == "true"
+        skip_code_prompt_builder = False
+
+        await progress_info(session_id, "Building new analyses....")
+        
+        if skip_code_prompt_builder:
+            logger.info("🚀 Skipping code prompt builder - using direct analysis mode")
+            # Use the specified model or default
+            model = request.model or self.analysis_service.llm_service.default_model
+            logger.info(f"🤖 Using model: {model}")
+            
+            # Format the query with message template
+            formatted_query = self._format_message_with_template(expanded_query)
+            
+            # Direct analysis with formatted message (system prompt auto-loaded)
+            step_start = time.time()
+            result = await self.analysis_service.analyze_question(formatted_query, None, model, request.enable_caching)
+            step_duration = time.time() - step_start
+            logger.info(f"⏱️ TIMING - Step 5 (Direct Analysis): {step_duration:.3f}s")
+        else:
+            # Format the query with message template
+            formatted_query = self._format_message_with_template(expanded_query)
+            
+            # Create code prompt messages with function schemas
+            step_start = time.time()
+            logger.info("🔧 Creating code prompt messages...")
+            code_prompt_result = await self.code_prompt_builder.create_code_prompt_messages(
+                user_query=formatted_query,
+                context={
+                    "session_id": request.session_id,
+                    "existing_analyses": similar_analyses
+                } if request.session_id else {"existing_analyses": similar_analyses},
+                provider_type=self.analysis_service.llm_service.provider_type,
+                enable_caching=True
+            )
+            step_duration = time.time() - step_start
+            logger.info(f"⏱️ TIMING - Step 5 (Create Code Prompt Messages): {step_duration:.3f}s")
+            
+            if code_prompt_result["status"] != "success":
+                logger.error(f"❌ Code prompt creation failed: {code_prompt_result.get('error')}")
+                return None, None
+            
+            # Use the specified model or default
+            model = request.model or self.analysis_service.llm_service.default_model
+            logger.info(f"🤖 Using model: {model}")
+            
+            # Analyze with structured messages (system prompt auto-loaded)
+            step_start = time.time()
+            simulated_convo = code_prompt_result.get("user_messages", [])
+            formatted_enhanced_message = self._format_message_with_template(enhanced_message)
+
+            # Prepend the enhanced question 
+            messages = [{"role": "user", "content": formatted_enhanced_message}]
+            messages = messages + simulated_convo
+            
+            result = await self.analysis_service.analyze_question(formatted_enhanced_message, messages, model, True)
+            step_duration = time.time() - step_start
+            logger.info(f"⏱️ TIMING - Step 5 (Main Analysis): {step_duration:.3f}s")
+        
+        if result["success"]:
+            return result
+        else:
+            logger.error(f"❌ Analysis failed: {result.get('error')}")
+            return None
+
+    async def _process_and_save_analysis(self, request: QuestionRequest, analysis_data: dict) -> tuple[Optional[str], list]:
+        """
+        Step 6: Process and save analysis results to MongoDB and ChromaDB
+        Returns (analysis_id, warnings) or (None, []) if failed
+        """
+        user_id = request.user_id if hasattr(request, 'user_id') and request.user_id else "anonymous"
+        session_id = request.session_id
+        warnings = []
+        
+        try:
+            await progress_info(session_id, "Running analyses....")
+            
+            response_type = analysis_data.get("response_type")
+            analysis_result = analysis_data.get("analysis_result", {})
+            
+            # Extract consistent fields from both reuse and script generation responses
+            script_name = analysis_result.get("script_name")
+            execution_params = analysis_result.get("execution", {})
+            analysis_description = analysis_result.get("analysis_description", "")
+            
+            # Initialize analysis_summary for use in chat message
+            analysis_summary = analysis_description
+            
+            # Check if analysis persistence service is available
+            if not self.analysis_persistence_service:
+                logger.error("❌ Analysis persistence service not available")
+                return None, warnings
+            
+            if not script_name:
+                logger.error("❌ No script generated")
+                return None, warnings
+            
+            # Validate if we should save this analysis
+            should_save = (
+                (response_type == "reuse_decision" and analysis_result.get("should_reuse")) or
+                (response_type == "script_generation" and analysis_result.get("status") == "success")
+            )
+            
+            if not should_save:
+                error_detail = ""
+                if response_type == "script_generation" and analysis_result.get("status") == "failed":
+                    error_detail = analysis_result.get('final_error', 'Unknown error')
+                else:
+                    error_detail = f"Unexpected response: type={response_type}, should_reuse={analysis_result.get('should_reuse')}, status={analysis_result.get('status')}"
+                logger.error(f"❌ Analysis not suitable for saving: {error_detail}")
+                return None, warnings
+            
+            # Save to MongoDB first to get database-generated analysis_id
+            analysis_id = await self.analysis_persistence_service.create_analysis(
+                user_id=user_id,
+                question=request.question,
+                llm_response=analysis_result,
+                script=script_name
+            )
+            analysis_data["analysis_id"] = analysis_id
+            logger.info(f"✓ Saved analysis to MongoDB (analysis_id: {analysis_id})")
+            
+            # Save to ChromaDB using the MongoDB analysisId (NON-CRITICAL)
+            if analysis_id and script_name and should_save:
+                try:
+                    save_result = self.search_service.save_completed_analysis(
+                        analysis_id=analysis_id,
+                        original_question=request.question,
+                        addn_meta={
+                            "execution": execution_params,
+                            "description": analysis_description
+                        }
+                    )
+
+                    if save_result.get("success"):
+                        logger.info(f"✓ Saved analysis to ChromaDB (analysisId: {analysis_id})")
+                    else:
+                        warning_msg = f"Failed to save to ChromaDB: {save_result.get('error')}"
+                        logger.warning(f"⚠️ {warning_msg}")
+                        warnings.append({"step": "chromadb_save", "message": warning_msg})
+                except Exception as chroma_error:
+                    warning_msg = f"Failed to save to ChromaDB: {chroma_error}"
+                    logger.warning(f"⚠️ {warning_msg}")
+                    warnings.append({"step": "chromadb_save", "message": warning_msg})
+            
+            return analysis_id, warnings
+            
+        except Exception as save_error:
+            logger.error(f"❌ Error processing analysis results: {save_error}")
+            return None, warnings
+
+    async def _create_final_response(self, request: QuestionRequest, analysis_data: dict, analysis_id: str, warnings: list, start_time: float) -> AnalysisResponse:
+        """
+        Step 7: Create execution and final response
+        """
+        user_id = request.user_id if hasattr(request, 'user_id') and request.user_id else "anonymous"
+        session_id = request.session_id
+        
+        # Extract data from result
+        analysis_result = analysis_data.get("analysis_result", {})
+        execution_params = analysis_result.get("execution", {})
+        analysis_summary = analysis_result.get("analysis_description", "")
+        
+        # Log execution start (CRITICAL - needed to track execution and link results to messages)
+        execution_id = await self._submit_execution(
+            user_id=user_id,
+            session_id=session_id,
+            analysis_id=analysis_id,
+            question=request.question,
+            execution_params=execution_params
+        )
+        
+        if not execution_id:
+            return await self._error_response(
+                user_message="Failed to initialize execution. Please try again.",
+                internal_error="Failed to log execution",
+                session_id=session_id,
+                user_id=user_id
+            )
+        
+        # Prepare response metadata
+        response_metadata = {
+            "response_data": analysis_data,
+            "warnings": warnings,
+            "original_query": request.question
+        }
+        
+        # Log total analysis time
+        total_duration = time.time() - start_time
+        logger.info(f"⏱️ TIMING - TOTAL ANALYSIS TIME: {total_duration:.3f}s")
+
+        return await self._create_response_with_message(
+            session_id=session_id,
+            user_id=user_id,
+            response_type="analysis",
+            message_content=analysis_summary or "Analysis completed",
+            analysis_id=analysis_id,
+            execution_id=execution_id,
+            metadata=response_metadata
+        )
+
     async def analyze_question(self, request: QuestionRequest) -> AnalysisResponse:
         """
         Analyze a financial question with conversation context support
         """
         start_time = time.time()
-        execution_id = None
         user_id = request.user_id if hasattr(request, 'user_id') and request.user_id else "anonymous"
         session_id = request.session_id
-        warnings = []  # Track non-critical failures
 
         try:
             logger.info(f"📝 Received question: {request.question[:100]}...")
             
-            # Step 0: Verify session exists (CRITICAL - fail if missing)
-            if not session_id:
-                logger.error(f"❌ CRITICAL: No session_id provided in request")
-                return AnalysisResponse(
-                    success=False,
-                    error="Session ID is required. Please start a new conversation.",
-                    timestamp=datetime.now().isoformat()
-                )
-
-            await progress_info(session_id, "Evaluating your question...")
-
-            # Step 0.5: Add user message to chat history (CRITICAL - fail if this doesn't work)
-            if self.chat_history_service and session_id:
-                try:
-                    message_id = await self.chat_history_service.add_user_message(
-                        session_id=session_id,
-                        user_id=user_id,
-                        question=request.question
-                    )
-                    logger.info(f"✓ Added user message to chat history: {message_id}")
-                except Exception as e:
-                    logger.error(f"❌ CRITICAL: Failed to add user message: {e}")
-                    # This is critical - the user's question must be recorded
-                    return await self._error_response(
-                        user_message="We ran into an issue and couldn't answer your question. Please try again.",
-                        internal_error=f"Failed to save user message: {e}",
-                        session_id=session_id,
-                        user_id=user_id
-                    )
+            # Step 0: Validate session and log user message
+            validation_error = await self._validate_session_and_log_user_message(request)
+            if validation_error:
+                return validation_error
             
-            # Step 1: Check message-level cache FIRST (early return if hit)
-            if self.cache_service:
-                try:
-                    cached_message_data = await self.cache_service.get_cached_message(
-                        question=request.question,
-                        user_id=user_id
-                    )
-                    if cached_message_data:
-                        logger.info("⚡ Cache hit! Returning cached message immediately (skipping search)")
-                        await progress_info(session_id, "Found cached analysis!")
-                        
-                        # Add professional indicator that this is a cached response
-                        original_content = cached_message_data.get("content", "Analysis completed")
-                        cached_content = f"[Previously analyzed] This question has been analyzed before. Here are the insights:\n\n{original_content}"
-                        
-                        return await self._create_response_with_message(
-                            session_id=session_id,
-                            user_id=user_id,
-                            response_type="cache_hit",
-                            message_content=cached_content,
-                            analysis_id=cached_message_data.get("analysis_id"),
-                            execution_id=cached_message_data.get("execution_id"),
-                            metadata={
-                                "cache_hit": True,
-                            },
-                        )
-                except Exception as e:
-                    warning_msg = f"Message cache check failed: {e}"
-                    logger.warning(f"⚠️ {warning_msg}")
-                    warnings.append({"step": "cache_check", "message": warning_msg})
+            # Step 1: Check message-level cache for early return
+            cache_response, warnings = await self._check_message_cache(request)
+            if cache_response:
+                return cache_response
             
-            # Step 2: Context-aware search (only if no cache hit)
-            step_start = time.time()
-            context_result = await search_with_context(
-                query=request.question,
-                session_id=session_id,
-                auto_expand=request.auto_expand
-            )
-            step_duration = time.time() - step_start
-            logger.info(f"⏱️ TIMING - Step 2 (Context Search): {step_duration:.3f}s")
+            # Step 2: Context-aware search and meaningless query detection  
+            search_response, context_result = await self._perform_context_search(request)
+            if search_response:
+                return search_response
             
-            if not context_result["success"]:
-                error_msg = context_result.get('error', 'Unknown error')
+            # Step 3: Handle confirmation requests for low-confidence expansions
+            confirmation_response = await self._handle_confirmation_requests(request, context_result)
+            if confirmation_response:
+                return confirmation_response
+            
+            # Get the final query to analyze (expanded if contextual)
+            expanded_query = context_result.get("expanded_query", request.question)
+            
+            # Step 4: Evaluate reuse potential with similar analyses
+            reuse_response, reuse_warnings = await self._evaluate_reuse_potential(request, context_result, expanded_query)
+            warnings.extend(reuse_warnings)
+            if reuse_response:
+                return reuse_response
+            
+            # Step 5: Execute analysis using either direct mode or code prompt builder
+            analysis_response = await self._build_analysis(request, expanded_query, context_result)
+            if not analysis_response:
                 return await self._error_response(
                     user_message="We ran into an issue and couldn't answer your question. Please try again.",
-                    internal_error=error_msg,
+                    internal_error="Analysis builder failed",
                     session_id=session_id,
                     user_id=user_id
                 )
             
-            # Check if query is meaningless
-            if context_result.get("is_meaningless"):
-                error_message = context_result.get("message") or "I need more details to help you. Please tell me what you'd like to analyze."
-                
-                return await self._create_response_with_message(
-                    session_id=session_id,
-                    user_id=user_id,
-                    response_type="meaningless_query",
-                    message_content=error_message,
-                    metadata={
-                        "is_meaningless": True,
-                    },
-                )
-            
-            # Get the final query to analyze (expanded if contextual)
-            expanded_query = context_result.get("expanded_query", request.question)
-            session_id = context_result["session_id"]
-            
-            # Step 2: Check if we need confirmation for low-confidence expansions
-            if context_result.get("needs_confirmation") or context_result.get("needs_clarification"):
-                response_type = "needs_clarification" if context_result.get("needs_clarification") else "needs_confirmation"
-                return await self._create_response_with_message(
-                    session_id=session_id,
-                    user_id=user_id,
-                    response_type=response_type,
-                    message_content=context_result.get("message", "Please clarify your question"),
-                    metadata={
-                        "original_query": context_result.get("original_query"),
-                        "expanded_query": context_result.get("expanded_query"),
-                        "expansion_confidence": context_result.get("expansion_confidence", 0.0),
-                        "options": context_result.get("options"),
-                        "suggestion": context_result.get("suggestion"),
-                    },
-                )
-            
-            # Step 3: Use similar analyses from context_aware search
-            similar_analyses = context_result.get("search_results", [])
-            enhanced_message = expanded_query  # Use expanded_query as enhanced message
-            logger.info(f"🔍 Found {len(similar_analyses)} similar analyses from context search")
-            
-            # Step 3.5: Evaluate if existing analyses can be reused
-            reuse_result = None
-            if similar_analyses:
-                step_start = time.time()
-                logger.info(f"🔄 Evaluating reuse potential for {len(similar_analyses)} similar analyses...")
-                await progress_info(session_id, "Evaluating similar analyses....")
-                reuse_result = await self.reuse_evaluator.evaluate_reuse(
-                    user_query=expanded_query,
-                    existing_analyses=similar_analyses,
-                    context={"session_id": request.session_id} if request.session_id else None
-                )
-                step_duration = time.time() - step_start
-                logger.info(f"⏱️ TIMING - Step 2.5 (Reuse Evaluation): {step_duration:.3f}s")
-                
-                if reuse_result["status"] == "success" and reuse_result["reuse_decision"]["should_reuse"]:
-                    logger.info(f"✅ Reuse decision: {reuse_result['reuse_decision']['reason']}")
-
-                    reuse_decision = reuse_result["reuse_decision"]
-                    analysis_id = reuse_decision.get("analysis_id")  # Get analysis_id from reuse decision
-
-                    # Submit execution for reused analysis
-                    execution_id = await self._submit_execution(
-                        user_id=user_id,
-                        session_id=session_id,
-                        analysis_id=analysis_id,
-                        question=request.question,
-                        execution_params=reuse_decision.get("execution", {})
-                    )
-
-                    if execution_id:
-                        # Return reuse result - message is created in helper function
-                        # Build metadata with only essential data for UI reconstruction
-                        msg_metadata = {
-                            "should_reuse": reuse_decision.get("should_reuse"),
-                            "reason": reuse_decision.get("reason", ""),
-                            "similarity": reuse_decision.get("similariy", 0),
-                            "original_execution": reuse_decision.get("original_execution", {})
-                        }
-                        if warnings:
-                            msg_metadata["warnings"] = warnings
-                        
-                        return await self._create_response_with_message(
-                            session_id=session_id,
-                            user_id=user_id,
-                            response_type="reuse_decision",
-                            message_content=f"Reused existing analysis: {reuse_decision.get('reason')}",
-                            analysis_id=analysis_id,
-                            execution_id=execution_id,
-                            metadata=msg_metadata,
-                        )
-                    else:
-                        warning_msg = f"Failed to run execution on reuse"
-                        logger.warning(f"⚠️ {warning_msg}")
-                else:
-                    logger.info("➡️ No suitable analysis for reuse, proceeding with new analysis generation")
-            
-            # Check if we should skip code prompt builder (direct analysis mode)
-            skip_code_prompt_builder = os.getenv("SKIP_CODE_PROMPT_BUILDER", "false").lower() == "true"
-            skip_code_prompt_builder = False
-
-            await progress_info(session_id, "Buidling new analyses....")
-            if skip_code_prompt_builder:
-                logger.info("🚀 Skipping code prompt builder - using direct analysis mode")
-                # Use the specified model or default
-                model = request.model or self.analysis_service.llm_service.default_model
-                logger.info(f"🤖 Using model: {model}")
-                
-                # Format the query with message template
-                formatted_query = self._format_message_with_template(expanded_query)
-                
-                # Step 3: Direct analysis with formatted message (system prompt auto-loaded)
-                step_start = time.time()
-                result = await self.analysis_service.analyze_question(formatted_query, None, model, request.enable_caching)
-                step_duration = time.time() - step_start
-                logger.info(f"⏱️ TIMING - Step 3 (Direct Analysis): {step_duration:.3f}s")
-            else:
-                # Format the query with message template
-                formatted_query = self._format_message_with_template(expanded_query)
-                
-                # Step 3: Create code prompt messages with function schemas
-                step_start = time.time()
-                logger.info("🔧 Creating code prompt messages...")
-                code_prompt_result = await self.code_prompt_builder.create_code_prompt_messages(
-                    user_query=formatted_query,
-                    context={
-                        "session_id": request.session_id,
-                        "existing_analyses": similar_analyses
-                    } if request.session_id else {"existing_analyses": similar_analyses},
-                    provider_type=self.analysis_service.llm_service.provider_type,
-                    enable_caching= True
-                )
-                step_duration = time.time() - step_start
-                logger.info(f"⏱️ TIMING - Step 3 (Create Code Prompt Messages): {step_duration:.3f}s")
-                
-                if code_prompt_result["status"] != "success":
+            # Step 6: Process and save analysis results
+            if analysis_response["success"]:
+                analysis_id, processing_warnings = await self._process_and_save_analysis(request, analysis_response["data"])
+                warnings.extend(processing_warnings)
+                if not analysis_id:
                     return await self._error_response(
-                        user_message="We ran into an issue and couldn't answer your question. Please try again.",
-                        internal_error=f"Code prompt creation failed: {code_prompt_result.get('error')}",
+                        user_message="We ran into an issue processing your analysis. Please try again.",
+                        internal_error="Failed to process and save analysis",
                         session_id=session_id,
                         user_id=user_id
                     )
                 
-                # Use the specified model or default
-                model = request.model or self.analysis_service.llm_service.default_model
-                logger.info(f"🤖 Using model: {model}")
-                
-                # Step 4: Analyze with structured messages (system prompt auto-loaded)
-                step_start = time.time()
-                simulated_convo = code_prompt_result.get("user_messages", [])
-                formatted_enhanced_message = self._format_message_with_template(enhanced_message)
-
-                #Prepend the enhanced question 
-                messages = [{"role": "user", "content": formatted_enhanced_message}]
-                messages = messages + simulated_convo
-                
-                result = await self.analysis_service.analyze_question(formatted_enhanced_message, messages, model, True)
-                step_duration = time.time() - step_start
-                logger.info(f"⏱️ TIMING - Step 4 (Main Analysis): {step_duration:.3f}s")
-            
-            if result["success"]:
-                await progress_info(session_id, "Running analyses....")
-                # Step 4: Execution service will handle running and progress logging
-                # Step 5: Save completed analysis and update conversation
-                step_start = time.time()
-                analysis_summary = None
-                analysis_id = None
-                
-                try:
-                    analysis_data = result["data"]
-                    response_type = analysis_data.get("response_type")
-                    analysis_result = analysis_data.get("analysis_result", {})
-                    
-                    # Extract consistent fields from both reuse and script generation responses
-                    script_name = analysis_result.get("script_name")
-                    execution_params = analysis_result.get("execution", {})
-                    analysis_description = analysis_result.get("analysis_description", "")
-                    
-                    # Initialize analysis_summary for use in chat message (will be overridden in error cases)
-                    analysis_summary = analysis_description
-                    
-                    # Step 6a: Save to MongoDB FIRST to get proper analysisId (CRITICAL)
-                    if not self.analysis_persistence_service:
-                        return await self._error_response(
-                            user_message="System is not properly configured. Please try again later.",
-                            internal_error="Analysis persistence service not available",
-                            session_id=session_id,
-                            user_id=user_id
-                        )
-                    
-                    if not script_name:
-                        return await self._error_response(
-                            user_message="Failed to generate analysis script. Please try again.",
-                            internal_error="No script generated",
-                            session_id=session_id,
-                            user_id=user_id
-                        )
-                    
-                    should_save = (
-                        (response_type == "reuse_decision" and analysis_result.get("should_reuse")) or
-                        (response_type == "script_generation" and analysis_result.get("status") == "success")
-                    )
-                    
-                    if not should_save:
-                        error_detail = ""
-                        if response_type == "script_generation" and analysis_result.get("status") == "failed":
-                            error_detail = analysis_result.get('final_error', 'Unknown error')
-                        else:
-                            error_detail = f"Unexpected response: type={response_type}, should_reuse={analysis_result.get('should_reuse')}, status={analysis_result.get('status')}"
-                        
-                        return await self._error_response(
-                            user_message="We ran into an issue and couldn't answer your question. Please try again.",
-                            internal_error=f"Failed to generate valid analysis: {error_detail}",
-                            session_id=session_id,
-                            user_id=user_id
-                        )
-                    
-                    try:
-                        # Save to MongoDB first to get database-generated analysis_id
-                        analysis_id = await self.analysis_persistence_service.create_analysis(
-                            user_id=user_id,
-                            question=request.question,
-                            llm_response=analysis_result,
-                            script=script_name
-                        )
-                        analysis_data["analysis_id"] = analysis_id
-                        logger.info(f"✓ Saved analysis to MongoDB (analysis_id: {analysis_id})")
-                    except Exception as persist_error:
-                        logger.error(f"Failed to save to MongoDB: {persist_error}")
-                        return await self._error_response(
-                            user_message="We ran into an issue and couldn't answer your question. Please try again.",
-                            internal_error=f"Failed to save to MongoDB: {persist_error}",
-                            session_id=session_id,
-                            user_id=user_id
-                        )
-
-                    # Step 6b: Save to ChromaDB using the MongoDB analysisId (NON-CRITICAL)
-                    if analysis_id and script_name and (
-                        (response_type == "reuse_decision" and analysis_result.get("should_reuse")) or
-                        (response_type == "script_generation" and analysis_result.get("status") == "success")
-                    ):
-                        try:
-                            save_result = self.search_service.save_completed_analysis(
-                                analysis_id=analysis_id,
-                                original_question=request.question,
-                                addn_meta={
-                                    "execution": execution_params,
-                                    "description": analysis_description
-                                }
-                            )
-
-                            if save_result.get("success"):
-                                logger.info(f"✓ Saved analysis to ChromaDB (analysisId: {analysis_id})")
-                            else:
-                                warning_msg = f"Failed to save to ChromaDB: {save_result.get('error')}"
-                                logger.warning(f"⚠️ {warning_msg}")
-                                warnings.append({"step": "chromadb_save", "message": warning_msg})
-                        except Exception as chroma_error:
-                            warning_msg = f"Failed to save to ChromaDB: {chroma_error}"
-                            logger.warning(f"⚠️ {warning_msg}")
-                            warnings.append({"step": "chromadb_save", "message": warning_msg})
-                    
-                except Exception as save_error:
-                    logger.error(f"❌ Error saving analysis: {save_error}")
-                
-                step_duration = time.time() - step_start
-                logger.info(f"⏱️ TIMING - Step 6 (Save Analysis Results): {step_duration:.3f}s")
-                
-                # Step 7: Add assistant message with analysis to chat history
-                step_start = time.time()
-                # Step 7: Log execution start (CRITICAL - needed to track execution and link results to messages)
-                execution_id = await self._submit_execution(
-                    user_id=user_id,
-                    session_id=session_id,
-                    analysis_id=analysis_id,
-                    question=request.question,
-                    execution_params=execution_params
-                )
-                
-                if not execution_id:
-                    return await self._error_response(
-                        user_message="Failed to initialize execution. Please try again.",
-                        internal_error="Failed to log execution",
-                        session_id=session_id,
-                        user_id=user_id
-                    )
-                
-                # Prepare response metadata
-                response_metadata = {
-                    "response_data": result.get("data", {}),
-                    "warnings": warnings,
-                    "original_query": request.question
-                }
-                
-                # Log total analysis time
-                total_duration = time.time() - start_time
-                logger.info(f"⏱️ TIMING - TOTAL ANALYSIS TIME: {total_duration:.3f}s")
-
-                return await self._create_response_with_message(
-                    session_id=session_id,
-                    user_id=user_id,
-                    response_type="analysis",
-                    message_content=analysis_summary or "Analysis completed",
-                    analysis_id=analysis_id,
-                    execution_id=execution_id,
-                    metadata=response_metadata
-                )
+                # Step 7: Create execution and final response
+                return await self._create_final_response(request, analysis_response["data"], analysis_id, warnings, start_time)
             else:
                 return await self._error_response(
                     user_message="We ran into an issue and couldn't answer your question. Please try again.",
-                    internal_error=result.get("error", "Unknown analysis error"),
+                    internal_error=analysis_response.get("error", "Unknown analysis error"),
                     session_id=session_id,
                     user_id=user_id
                 )
