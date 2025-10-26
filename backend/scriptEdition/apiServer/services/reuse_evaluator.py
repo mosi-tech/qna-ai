@@ -19,7 +19,7 @@ from typing import Dict, Any, Optional, List
 
 from llm import create_reuse_evaluator_llm, LLMService
 from .base_service import BaseService
-from ..utils.json_utils import safe_json_loads
+from utils.json_utils import safe_json_loads
 
 # Configure logging
 logger = logging.getLogger(__name__)
