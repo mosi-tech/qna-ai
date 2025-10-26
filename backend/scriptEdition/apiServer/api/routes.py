@@ -170,6 +170,34 @@ class APIRoutes:
             )
             logger.info(f"✓ Created {response_type} message in chat history: {msg_id}")
             
+            # Cache the assistant message for future reuse (NON-CRITICAL)
+            if self.cache_service and analysis_id and execution_id and response_type == "analysis":
+                try:
+                    message_cache_data = {
+                        "content": message_content,
+                        "analysis_id": analysis_id,
+                        "execution_id": execution_id,
+                        "response_data": metadata.get("response_data", {}) if metadata else {},
+                    }
+                    await self.cache_service.cache_assistant_message(
+                        question=metadata.get("original_query", "") if metadata else "",
+                        user_id=user_id,
+                        message_data=message_cache_data,
+                        ttl_hours=24
+                    )
+                    logger.info(f"✓ Cached {response_type} message")
+                except Exception as cache_error:
+                    logger.warning(f"⚠️ Failed to cache {response_type} message: {cache_error}")
+            
+            # Link execution to the message it created (NON-CRITICAL - bidirectional link for convenience)
+            # The critical link is message→execution (embedded in message), this is just execution→message
+            if execution_id and self.audit_service and msg_id:
+                try:
+                    await self.audit_service.link_execution_to_message(execution_id, msg_id)
+                    logger.info(f"✓ Linked execution {execution_id} to message {msg_id}")
+                except Exception as link_error:
+                    logger.warning(f"⚠️ Failed to link execution to message: {link_error}")
+            
         except Exception as e:
             logger.warning(f"⚠️ Failed to create {response_type} message: {e}")
             # Continue anyway - don't fail response if message creation fails
@@ -603,153 +631,42 @@ class APIRoutes:
                 
                 # Step 7: Add assistant message with analysis to chat history
                 step_start = time.time()
-                try:
-                    # Step 7: Log execution start (CRITICAL - needed to track execution and link results to messages)
-                    execution_id = await self._submit_execution(
-                        user_id=user_id,
+                # Step 7: Log execution start (CRITICAL - needed to track execution and link results to messages)
+                execution_id = await self._submit_execution(
+                    user_id=user_id,
+                    session_id=session_id,
+                    analysis_id=analysis_id,
+                    question=request.question,
+                    execution_params=execution_params
+                )
+                
+                if not execution_id:
+                    return await self._error_response(
+                        user_message="Failed to initialize execution. Please try again.",
+                        internal_error="Failed to log execution",
                         session_id=session_id,
-                        analysis_id=analysis_id,
-                        question=request.question,
-                        execution_params=execution_params
+                        user_id=user_id
                     )
-                    
-                    if not execution_id:
-                        return await self._error_response(
-                            user_message="Failed to initialize execution. Please try again.",
-                            internal_error="Failed to log execution",
-                            session_id=session_id,
-                            user_id=user_id
-                        )
-                    
-                    # Add assistant message with analysis to chat history (CRITICAL)
-                    if self.chat_history_service and session_id:
-                        try:
-                            msg_id = await self.chat_history_service.add_assistant_message(
-                                session_id=session_id,
-                                user_id=user_id,
-                                content=analysis_summary or "Analysis completed",
-                                analysis_id=analysis_id,
-                                execution_id=execution_id
-                            )
-                            logger.info(f"✓ Added assistant message with analysis to chat: {msg_id}")
-                            
-                            # Cache the assistant message for future reuse (NON-CRITICAL)
-                            if self.cache_service and analysis_id and execution_id:
-                                try:
-                                    message_cache_data = {
-                                        "content": analysis_summary or "Analysis completed",
-                                        "analysis_id": analysis_id,
-                                        "execution_id": execution_id,
-                                        "response_data": result.get("data", {}),
-                                    }
-                                    await self.cache_service.cache_assistant_message(
-                                        question=request.question,
-                                        user_id=user_id,
-                                        message_data=message_cache_data,
-                                        ttl_hours=24
-                                    )
-                                except Exception as e:
-                                    warning_msg = f"Failed to cache assistant message: {e}"
-                                    logger.warning(f"⚠️ {warning_msg}")
-                                    warnings.append({"step": "message_cache", "message": warning_msg})
-                            
-                            # Link execution to the message it created (NON-CRITICAL - bidirectional link for convenience)
-                            # The critical link is message→execution (embedded in message), this is just execution→message
-                            if execution_id and self.audit_service:
-                                try:
-                                    await self.audit_service.link_execution_to_message(execution_id, msg_id)
-                                except Exception as e:
-                                    warning_msg = f"Failed to link execution to message: {e}"
-                                    logger.warning(f"⚠️ {warning_msg}")
-                                    warnings.append({"step": "execution_linking", "message": warning_msg})
-                        except Exception as e:
-                            logger.error(f"Failed to add assistant message to chat history: {e}")
-                            return await self._error_response(
-                                user_message="We ran into an issue and couldn't answer your question. Please try again.",
-                                internal_error=f"Failed to add assistant message to chat history: {e}",
-                                session_id=session_id,
-                                user_id=user_id
-                            )
                 
-                except Exception as chat_error:
-                    logger.error(f"❌ Error updating chat history: {chat_error}")
-                
-                step_duration = time.time() - step_start
-                logger.info(f"⏱️ TIMING - Step 7 (Update Conversation): {step_duration:.3f}s")
-                
-                # Step 8: Build enhanced response with conversation context
-                step_start = time.time()
-                response_data = result["data"]
-                
-                # Add analysis summary for frontend display
-                if analysis_summary:
-                    response_data["analysis_summary"] = analysis_summary
-                
-                # Add conversation context info
-                response_data["conversation"] = {
-                    "session_id": session_id,
-                    "query_type": context_result.get("query_type"),
-                    "original_query": request.question,
-                    "expanded_query": expanded_query,
-                    "context_used": context_result.get("context_used", False),
-                    "expansion_confidence": context_result.get("expansion_confidence", 0.0)
+                # Prepare response metadata
+                response_metadata = {
+                    "response_data": result.get("data", {}),
+                    "warnings": warnings,
+                    "original_query": request.question
                 }
-                
-                # Add similar analyses info
-                if similar_analyses:
-                    response_data["similar_analyses_found"] = len(similar_analyses)
-                    response_data["similar_analyses"] = [
-                        {
-                            "function_name": a["function_name"],
-                            "filename": a.get("filename", f"{a['function_name']}.py"),
-                            "similarity": a["similarity"],
-                            "question": a["question"][:100] + "..." if len(a["question"]) > 100 else a["question"]
-                        }
-                        for a in similar_analyses
-                    ]
-                
-                # Add context search results if available
-                if context_result.get("search_results"):
-                    response_data["context_search_results"] = len(context_result["search_results"])
-                
-                step_duration = time.time() - step_start
-                logger.info(f"⏱️ TIMING - Step 8 (Build Enhanced Response): {step_duration:.3f}s")
-                
-                # Step 9: Cache the analysis result (NON-CRITICAL)
-                step_start = time.time()
-                if self.cache_service and analysis_id:
-                    try:
-                        cache_id = await self.cache_service.cache_analysis_result(
-                            question=request.question,
-                            parameters={"session_id": session_id} if session_id else {},
-                            result=response_data,
-                            analysis_id=analysis_id,
-                            ttl_hours=24
-                        )
-                        logger.info(f"✓ Cached analysis result: {cache_id}")
-                    except Exception as e:
-                        warning_msg = f"Failed to cache analysis result: {e}"
-                        logger.warning(f"⚠️ {warning_msg}")
-                        warnings.append({"step": "cache_save", "message": warning_msg})
-                
-                step_duration = time.time() - step_start
-                logger.info(f"⏱️ TIMING - Step 9 (Cache Result): {step_duration:.3f}s")
                 
                 # Log total analysis time
                 total_duration = time.time() - start_time
                 logger.info(f"⏱️ TIMING - TOTAL ANALYSIS TIME: {total_duration:.3f}s")
 
-                # Include warnings in metadata if any non-critical failures occurred
-                metadata = None
-                if warnings:
-                    logger.info(f"⚠️ Analysis completed with {len(warnings)} warning(s)")
-                    metadata = {"warnings": warnings, "warning_count": len(warnings)}
-
-                return AnalysisResponse(
-                    success=True,
-                    data=response_data,
-                    metadata=metadata,
-                    timestamp=datetime.now().isoformat()
+                return await self._create_response_with_message(
+                    session_id=session_id,
+                    user_id=user_id,
+                    response_type="analysis",
+                    message_content=analysis_summary or "Analysis completed",
+                    analysis_id=analysis_id,
+                    execution_id=execution_id,
+                    metadata=response_metadata
                 )
             else:
                 return await self._error_response(
