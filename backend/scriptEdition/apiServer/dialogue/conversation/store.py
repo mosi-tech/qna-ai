@@ -44,9 +44,8 @@ class ConversationTurn:
 class ConversationStore:
     """Interface to conversation data stored in MongoDB/Redis"""
     
-    def __init__(self, session_id: str, repo_manager = None):
+    def __init__(self, session_id: str):
         self.session_id = session_id
-        self.repo_manager = repo_manager
         self.turns: List[ConversationTurn] = []
         self._context_window_size = 10  # Keep last 10 turns max
     

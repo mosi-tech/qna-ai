@@ -71,3 +71,51 @@ class CacheService:
             self.logger.info(f"✓ Invalidated cache for analysis: {analysis_id}")
         except Exception as e:
             self.logger.error(f"✗ Failed to invalidate cache: {e}")
+    
+    async def get_cached_message(
+        self,
+        question: str,
+        user_id: str,
+    ) -> Optional[Dict[str, Any]]:
+        """Get cached assistant message for a question (user_id for cross-session reuse)"""
+        try:
+            # Cache key includes user_id not session_id so it can be reused across sessions
+            parameters = {"user_id": user_id}
+            result = await self.cache_repo.get_cached_analysis(question, parameters)
+            
+            if result and "message_data" in result:
+                self.logger.info("✓ Cache hit - returning cached message")
+                return result["message_data"]
+            else:
+                self.logger.info("✗ Cache miss - will generate new analysis and message")
+                return None
+                
+        except Exception as e:
+            self.logger.warning(f"⚠ Message cache retrieval failed: {e}")
+            return None
+    
+    async def cache_assistant_message(
+        self,
+        question: str,
+        user_id: str,
+        message_data: Dict[str, Any],
+        ttl_hours: int = 24,
+    ) -> Optional[str]:
+        """Cache an assistant message for future reuse"""
+        try:
+            # Cache the message with user_id so it can be reused across sessions
+            parameters = {"user_id": user_id}
+            cache_id = await self.cache_repo.cache_analysis(
+                question=question,
+                parameters=parameters,
+                result={"message_data": message_data},
+                analysis_id=message_data.get("analysis_id"),
+                ttl_hours=ttl_hours,
+            )
+            
+            self.logger.info(f"✓ Cached assistant message: {cache_id}")
+            return cache_id
+            
+        except Exception as e:
+            self.logger.error(f"✗ Failed to cache message: {e}")
+            return None

@@ -22,31 +22,17 @@ class AnalysisPersistenceService:
     async def create_analysis(
         self,
         user_id: str,
-        title: str,
-        description: str,
-        result: Dict[str, Any],
-        parameters: Dict[str, Any],
-        mcp_calls: List[str],
-        category: str,
-        script: Optional[str] = None,
-        execution_time_ms: int = 0,
-        data_sources: Optional[List[str]] = None,
-        tags: Optional[List[str]] = None,
+        question: str,
+        llm_response: Dict,
+        script: str
     ) -> str:
         """Create and save a new analysis as reusable template"""
         try:
             analysis_id = await self.analysis_repo.create_and_save_analysis(
                 user_id=user_id,
-                title=title,
-                description=description,
-                result=result,
-                parameters=parameters,
-                mcp_calls=mcp_calls,
-                category=category,
-                script=script,
-                execution_time_ms=execution_time_ms,
-                data_sources=data_sources,
-                tags=tags,
+                question=question,
+                llm_response=llm_response,
+                script=script
             )
             
             self.logger.info(f"✓ Created analysis: {analysis_id}")

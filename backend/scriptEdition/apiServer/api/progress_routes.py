@@ -5,7 +5,7 @@ Progress streaming routes for real-time execution updates
 import asyncio
 import json
 import logging
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from services.progress_service import progress_manager, ProgressEvent
 
@@ -15,13 +15,29 @@ router = APIRouter(prefix="/api/progress", tags=["progress"])
 
 
 @router.get("/{session_id}")
-async def stream_progress(session_id: str):
+async def stream_progress(session_id: str, request: Request):
     """
     Stream progress events for a session via SSE
     Client connects here to receive real-time progress updates
     Sends heartbeat every 5 seconds to detect connection drops
+    
+    Validates that session exists before opening connection.
     """
-
+    # Validate session exists before opening SSE connection
+    try:
+        chat_history_service = request.app.state.chat_history_service
+        if not chat_history_service:
+            raise HTTPException(status_code=500, detail="Chat service not available")
+        
+        session = await chat_history_service.get_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"✗ Failed to validate session: {e}")
+        raise HTTPException(status_code=500, detail="Failed to validate session")
+    
     async def event_generator():
         """Generate SSE events for client"""
         # Send initial connection message

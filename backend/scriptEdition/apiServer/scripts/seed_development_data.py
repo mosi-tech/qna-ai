@@ -17,7 +17,7 @@ from db import MongoDBClient, RepositoryManager
 from db.schemas import (
     UserModel, ChatSessionModel, ChatMessageModel, 
     AnalysisModel, ExecutionModel, ExecutionStatus, 
-    QueryType, RoleType, QuestionContext
+    QueryType, RoleType
 )
 from services.chat_service import ChatHistoryService
 from services.analysis_persistence_service import AnalysisPersistenceService

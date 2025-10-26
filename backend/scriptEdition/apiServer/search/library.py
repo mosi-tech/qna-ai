@@ -10,7 +10,6 @@ import logging
 import os
 from datetime import datetime
 from typing import Dict, Any, List
-from dataclasses import dataclass, asdict
 
 import chromadb
 from chromadb.config import Settings
@@ -22,16 +21,6 @@ from chromadb.utils.embedding_functions.ollama_embedding_function import (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("analysis-library")
 
-@dataclass
-class AnalysisData:
-    id: str
-    question: str
-    function_name: str
-    docstring: str
-    filename: str
-    metadata: dict
-    created_date: str
-    usage_count: int
 
 class AnalysisLibrary:
     """Pure Python Analysis Library using ChromaDB for vector search"""
@@ -50,11 +39,16 @@ class AnalysisLibrary:
                 port=chroma_port,
                 settings=Settings(anonymized_telemetry=False)
             )
-            logger.info(f"✅ Connected to ChromaDB at {chroma_host}:{chroma_port}")
+            # Test the connection with a heartbeat
+            heartbeat = self.client.heartbeat()
+            logger.info(f"✅ Connected to ChromaDB at {chroma_host}:{chroma_port} (heartbeat: {heartbeat})")
         except Exception as e:
-            logger.error(f"❌ Failed to connect to ChromaDB at {chroma_host}:{chroma_port}: {e}")
-            logger.info("💡 Make sure ChromaDB server is running: docker run -p 8050:8050 chromadb/chroma")
-            raise
+            logger.error(f"❌ Failed to connect to ChromaDB at {chroma_host}:{chroma_port}")
+            logger.error(f"   Error: {type(e).__name__}: {e}")
+            logger.info(f"💡 Make sure ChromaDB server is running:")
+            logger.info(f"   docker run -d -p 8050:8050 chromadb/chroma")
+            logger.info(f"   Or check if port {chroma_port} is already in use")
+            raise ConnectionError(f"Cannot connect to ChromaDB at {chroma_host}:{chroma_port}") from e
         
         # Setup Ollama embedding function for better similarity
         self.embedding_function = None
@@ -153,49 +147,119 @@ class AnalysisLibrary:
         """Generate unique ID for analysis"""
         combined = f"{question}_{datetime.now().isoformat()}"
         return hashlib.md5(combined.encode()).hexdigest()[:12]
+
+    def _flatten_metadata(self, metadata: dict, parent_key: str = '', sep: str = '__') -> dict:
+        """
+        Flatten nested metadata dict for ChromaDB compatibility.
+        ChromaDB only supports simple types (str, int, float, bool) in metadata.
+
+        Example:
+            {"workflow": {"step1": "fetch", "step2": "compute"}}
+        Becomes:
+            {"workflow__step1": "fetch", "workflow__step2": "compute"}
+        """
+        flat_dict = {}
+
+        for key, value in metadata.items():
+            new_key = f"{parent_key}{sep}{key}" if parent_key else key
+
+            if isinstance(value, dict):
+                # Recursively flatten nested dicts
+                flat_dict.update(self._flatten_metadata(value, new_key, sep=sep))
+            elif isinstance(value, (list, tuple)):
+                # Convert lists to JSON string
+                flat_dict[new_key] = json.dumps(value)
+            elif isinstance(value, (str, int, float, bool)):
+                # Keep simple types as-is
+                flat_dict[new_key] = value
+            elif value is None:
+                # Convert None to string
+                flat_dict[new_key] = "null"
+            else:
+                # Convert other types to JSON string
+                flat_dict[new_key] = json.dumps(value)
+
+        return flat_dict
+
+    def _unflatten_metadata(self, flat_dict: dict, sep: str = '__') -> dict:
+        """
+        Unflatten a flat dictionary back to nested structure.
+        Reverses the flattening done by _flatten_metadata.
+
+        Example:
+            {"workflow__step1": "fetch", "workflow__step2": "compute"}
+        Becomes:
+            {"workflow": {"step1": "fetch", "step2": "compute"}}
+        """
+        nested_dict = {}
+
+        for flat_key, value in flat_dict.items():
+            # Split the key by separator
+            keys = flat_key.split(sep)
+
+            # Navigate/create nested structure
+            current = nested_dict
+            for key in keys[:-1]:
+                if key not in current:
+                    current[key] = {}
+                current = current[key]
+
+            # Set the final value
+            final_key = keys[-1]
+
+            # Try to parse JSON strings back to lists/objects
+            if isinstance(value, str):
+                # Check if it looks like JSON
+                if (value.startswith('[') and value.endswith(']')) or \
+                   (value.startswith('{') and value.endswith('}')):
+                    try:
+                        current[final_key] = json.loads(value)
+                    except json.JSONDecodeError:
+                        # Not valid JSON, keep as string
+                        current[final_key] = value
+                elif value == "null":
+                    current[final_key] = None
+                else:
+                    current[final_key] = value
+            else:
+                current[final_key] = value
+
+        return nested_dict
     
-    def save_analysis(self, question: str, function_name: str, docstring: str, filename: str = None, metadata: dict = None) -> dict:
+    def save_analysis(self,  analysis_id: str, question: str, metadata: dict = None) -> dict:
         """Save analysis to the library"""
         try:
-            # Generate analysis data
-            analysis_id = self._generate_analysis_id(question)
             now = datetime.now().isoformat()
+            if metadata is None:
+                metadata = {}
+
+            # Build analysis dict directly (no need for AnalysisData class)
+            analysis_dict = {
+                "id": analysis_id,
+                "question": question,
+                "created_date": now,
+                "usage_count": 0
+            }
+
+            # Flatten the nested metadata dict for ChromaDB compatibility
+            # ChromaDB only supports simple types (str, int, float, bool) in metadata
+            if metadata:
+                flattened_metadata = self._flatten_metadata(metadata)    
+                # Add flattened metadata with 'meta_' prefix to avoid conflicts
+                for key, value in flattened_metadata.items():
+                    analysis_dict[key] = value
             
-            # Generate filename if not provided
-            if filename is None:
-                filename = f"{function_name}.py"
-            
-            if parameters is None:
-                parameters = {}
-            
-            analysis_data = AnalysisData(
-                id=analysis_id,
-                question=question,
-                function_name=function_name,
-                docstring=docstring,
-                filename=filename,
-                metadata=addn_meta,
-                created_date=now,
-                usage_count=0
-            )
-            
-            analysis_dict = asdict(analysis_data)
-            
-            # Focus on question similarity for now - simple and effective
-            combined_text = f"Question: {question}\nDescription: {docstring}\nFunction: {function_name}"
-            
+            document = f"Question: {question}\nDescription: {analysis_dict["description"]}"
             self.collection.add(
-                documents=[combined_text],
+                documents=[document],
                 metadatas=[analysis_dict],
                 ids=[analysis_id]
             )
-            
+
             logger.info(f"✅ Saved analysis {analysis_id} for question: {question[:50]}...")
-            
+
             return {
                 "success": True,
-                "analysis_id": analysis_id,
-                "function_name": function_name,
                 "message": f"Analysis saved successfully with ID: {analysis_id}"
             }
             
@@ -215,32 +279,28 @@ class AnalysisLibrary:
                 n_results=top_k * 2,  # Get more to filter by threshold
                 include=["documents", "metadatas", "distances"]
             )
-            
+
             similar_analyses = []
             for i in range(len(results['ids'][0])):
                 similarity = 1 - results['distances'][0][i]  # Convert distance to similarity
-                
+
                 if similarity >= similarity_threshold:
-                    analysis_meta = results['metadatas'][0][i]
-                    
-                    similar_analyses.append({
-                        'analysis_id': analysis_meta['id'],
-                        'question': analysis_meta['question'],
-                        'similarity': round(similarity, 3),
-                        'function_name': analysis_meta['function_name'],
-                        'docstring': analysis_meta['docstring'],
-                        'filename': analysis_meta.get('filename', f"{analysis_meta['function_name']}.py"),
-                        'created_date': analysis_meta['created_date'],
-                        'usage_count': analysis_meta['usage_count'],
-                        'matched_text': results['documents'][0][i]
-                    })
-            
+                    analysis_meta = results['metadatas'][0][i].copy()
+
+                    # Unflatten the metadata to restore nested structure
+                    unflattened = self._unflatten_metadata(analysis_meta)
+
+                    # Add similarity score
+                    unflattened["similarity"] = similarity
+
+                    similar_analyses.append(unflattened)
+
             # Sort by similarity and limit to top_k
             similar_analyses.sort(key=lambda x: x['similarity'], reverse=True)
             similar_analyses = similar_analyses[:top_k]
-            
+
             logger.info(f"🔍 Found {len(similar_analyses)} similar analyses for: {query[:50]}...")
-            
+
             return {
                 "success": True,
                 "found_similar": len(similar_analyses) > 0,
@@ -248,7 +308,7 @@ class AnalysisLibrary:
                 "query": query,
                 "threshold": similarity_threshold
             }
-            
+
         except Exception as e:
             logger.error(f"❌ Failed to search analyses: {e}")
             return {
@@ -308,7 +368,6 @@ class AnalysisLibrary:
 
 # Module-level library instance (created lazily)
 _analysis_library = None
-
 def get_analysis_library(chroma_host: str = None, chroma_port: int = None) -> AnalysisLibrary:
     """Get or create analysis library instance"""
     global _analysis_library
@@ -317,10 +376,10 @@ def get_analysis_library(chroma_host: str = None, chroma_port: int = None) -> An
     return _analysis_library
 
 # Convenience functions for direct import
-def save_analysis(question: str, function_name: str, docstring: str, filename: str = None) -> dict:
+def save_analysis(question: str, analysis_id: str, metadata: Dict) -> dict:
     """Save analysis - convenience function"""
     library = get_analysis_library()
-    return library.save_analysis(question, function_name, docstring, filename)
+    return library.save_analysis(question, analysis_id, metadata)
 
 def search_similar_analyses(query: str, top_k: int = 5, similarity_threshold: float = 0.3) -> dict:
     """Search similar analyses - convenience function"""

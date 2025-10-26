@@ -11,6 +11,12 @@ from datetime import datetime
 
 from db.repositories import RepositoryManager
 from db.schemas import AnalysisModel, ExecutionStatus
+from services.progress_service import (
+    progress_info,
+    progress_success,
+    progress_error,
+    ProgressLevel,
+)
 
 logger = logging.getLogger("execution-service")
 
@@ -48,19 +54,15 @@ class ExecutionService:
         try:
             # Step 1: Fetch analysis
             self.logger.info(f"📦 Fetching analysis: {analysis_id}")
+            
             analysis = await self.repo.db.get_analysis(analysis_id)
             
             if not analysis:
+                if session_id:
+                    await progress_error(session_id, f"Execution failed")
                 return {
                     "success": False,
                     "error": f"Analysis not found: {analysis_id}"
-                }
-            
-            if analysis.status != ExecutionStatus.PENDING:
-                self.logger.warning(f"⚠️ Analysis already executed: {analysis_id}")
-                return {
-                    "success": False,
-                    "error": f"Analysis already executed (status: {analysis.status})"
                 }
             
             # Step 2: Get execution parameters
@@ -68,6 +70,8 @@ class ExecutionService:
             llm_response = analysis.llm_response
             
             if llm_response.get("status") != "success":
+                if session_id:
+                    await progress_error(session_id, f"Execution failed")
                 return {
                     "success": False,
                     "error": f"Cannot execute failed analysis: {llm_response.get('error')}"
@@ -84,13 +88,18 @@ class ExecutionService:
             script_content = await self._load_script(analysis.script_url)
             
             if not script_content:
+                if session_id:
+                    await progress_error(session_id, f"Execution failed")
                 return {
                     "success": False,
                     "error": f"Failed to load script from {analysis.script_url}"
                 }
             
-            # Step 4: Execute script
+            # Step 4: Running script
             self.logger.info("⚙️ Executing script...")
+            if session_id:
+                await progress_info(session_id, "Running script")
+            
             execution_result = await self._execute_script(
                 script_content=script_content,
                 parameters=parameters,
@@ -102,17 +111,8 @@ class ExecutionService:
             if not execution_result["success"]:
                 # Execution failed
                 self.logger.error(f"❌ Execution failed: {execution_result.get('error')}")
-                
-                # Update analysis with failure
-                await self.repo.db.update_analysis(
-                    analysis_id,
-                    {
-                        "status": ExecutionStatus.FAILED,
-                        "error": execution_result.get("error"),
-                        "execution_time_ms": execution_time_ms,
-                        "executed_at": datetime.utcnow()
-                    }
-                )
+                if session_id:
+                    await progress_error(session_id, f"Execution failed")
                 
                 return {
                     "success": False,
@@ -120,19 +120,13 @@ class ExecutionService:
                     "execution_time_ms": execution_time_ms
                 }
             
-            # Step 5: Update analysis with results
-            self.logger.info("💾 Updating analysis with execution results")
+            # Step 5: Execution completed successfully
+            self.logger.info("💾 Execution complete")
+            
             result_data = execution_result.get("result", {})
             
-            await self.repo.db.update_analysis(
-                analysis_id,
-                {
-                    "status": ExecutionStatus.SUCCESS,
-                    "result": result_data,
-                    "execution_time_ms": execution_time_ms,
-                    "executed_at": datetime.utcnow()
-                }
-            )
+            if session_id:
+                await progress_success(session_id, "Analysis complete")
             
             self.logger.info(f"✅ Execution completed successfully in {execution_time_ms}ms")
             
@@ -146,6 +140,8 @@ class ExecutionService:
             
         except Exception as e:
             self.logger.error(f"❌ Execution service error: {e}")
+            if session_id:
+                await progress_error(session_id, f"Execution error: {str(e)}")
             import traceback
             traceback.print_exc()
             return {

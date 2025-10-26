@@ -23,23 +23,34 @@ class AuditService:
     async def log_execution_start(
         self,
         user_id: str,
-        session_id: str,
-        message_id: str,
+        analysis_id: str,
         question: str,
-        script: str,
-        parameters: Dict[str, Any],
-        mcp_calls: List[str],
+        generated_script: str,
+        execution_params: Dict[str, Any],
+        session_id: Optional[str] = None,
+        created_message_id: Optional[str] = None,
     ) -> str:
-        """Log start of script execution"""
+        """Log start of script execution
+        
+        Args:
+            user_id: User performing the execution
+            analysis_id: Analysis being executed
+            question: Original question
+            generated_script: The full script content from analysis
+            execution_params: Execution config from LLM (parameters, etc.)
+            session_id: Optional session context
+            created_message_id: Will be set later after message is created
+        """
         try:
             execution_id = await self.execution_repo.log_execution(
                 user_id=user_id,
+                analysis_id=analysis_id,
                 session_id=session_id,
-                message_id=message_id,
+                created_message_id=created_message_id,
                 question=question,
-                script=script,
-                parameters=parameters,
-                mcp_calls=mcp_calls,
+                generated_script=generated_script,
+                parameters=execution_params.get("parameters", {}),
+                mcp_calls=execution_params.get("mcp_functions_used", []),
             )
             
             self.logger.info(f"✓ Logged execution start: {execution_id}")
@@ -47,6 +58,23 @@ class AuditService:
         except Exception as e:
             self.logger.error(f"✗ Failed to log execution: {e}")
             raise
+    
+    async def link_execution_to_message(
+        self,
+        execution_id: str,
+        message_id: str,
+    ) -> bool:
+        """Link execution to the chat message that was created from it"""
+        try:
+            result = await self.execution_repo.link_execution_to_message(
+                execution_id=execution_id,
+                message_id=message_id,
+            )
+            self.logger.info(f"✓ Linked execution to message: {execution_id} → {message_id}")
+            return result
+        except Exception as e:
+            self.logger.error(f"✗ Failed to link execution to message: {e}")
+            return False
     
     async def log_execution_complete(
         self,
@@ -97,8 +125,8 @@ class AuditService:
         """Get execution history for user"""
         try:
             executions = await self.repo.db.db.executions.find(
-                {"user_id": user_id}
-            ).sort("started_at", -1).limit(limit).to_list(limit)
+                {"userId": user_id}
+            ).sort("startedAt", -1).limit(limit).to_list(limit)
             
             result = [ExecutionModel(**doc) for doc in executions]
             self.logger.info(f"✓ Retrieved {len(result)} executions for user")

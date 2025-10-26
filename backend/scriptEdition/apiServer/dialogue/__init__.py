@@ -25,7 +25,6 @@ Usage:
 """
 
 from .conversation.store import ConversationStore, ConversationTurn, QueryType
-from .conversation.session_manager import session_manager, get_session_manager
 from .factory import (
     initialize_dialogue_factory, 
     get_dialogue_factory, 
@@ -41,10 +40,6 @@ __all__ = [
     "ConversationStore",
     "ConversationTurn", 
     "QueryType",
-    
-    # Session management
-    "session_manager",
-    "get_session_manager",
     
     # Factory and initialization
     "initialize_dialogue_factory",

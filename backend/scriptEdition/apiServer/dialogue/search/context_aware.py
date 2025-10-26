@@ -42,83 +42,114 @@ class ContextAwareSearch:
         
         self.default_similarity_threshold = 0.3
     
-    async def search_with_context(self, 
-                                 query: str, 
+    async def search_with_context(self,
+                                 query: str,
                                  session_id: Optional[str] = None,
                                  auto_expand: bool = True,
                                  similarity_threshold: float = None):
         """Main entry point for context-aware search
-        
+
         Flow:
         1. CLASSIFY: Detect if CONTEXTUAL or STANDALONE
         2. If CONTEXTUAL: EXPAND → VALIDATE → SEARCH
         3. If STANDALONE: VALIDATE → SEARCH
-        
+
         Args:
             query: User's question/query
             session_id: Optional session ID
             auto_expand: Whether to auto-expand contextual queries
             similarity_threshold: Custom similarity threshold for search
+
+        Returns:
+            Standardized response dict with:
+            - success: bool
+            - type: str ("error", "clarification_needed", "meaningless_query", "search_result")
+            - session_id: str (always present)
+            - query_type: str ("contextual" or "standalone", if applicable)
+            - original_query: str (always present except errors)
+            - expanded_query: str (always present for non-errors)
+            - Additional fields based on type
         """
-        
+
         similarity_threshold = similarity_threshold or self.default_similarity_threshold
-        
-        # Get conversation from session or create new one
-        if self.session_manager and session_id:
+
+        # Verify session_id is provided (REQUIRED)
+        if not session_id:
+            return self._error_response(
+                message="Session ID is required for context-aware search",
+                original_query=query
+            )
+
+        # Get conversation from session
+        if self.session_manager:
             conversation = await self.session_manager.get_session(session_id)
             if not conversation:
-                conversation = ConversationStore(session_id)
+                return self._error_response(
+                    message="Session not found",
+                    session_id=session_id,
+                    original_query=query
+                )
         else:
-            # Create a temporary session_id for this conversation
-            import uuid
-            temp_session_id = str(uuid.uuid4())
-            conversation = ConversationStore(temp_session_id)
-        
+            # No session manager available, create minimal conversation store
+            conversation = ConversationStore(session_id)
+
         # Step 1: CLASSIFY - Is this query CONTEXTUAL or STANDALONE?
         classification = await self._classify_contextual(query, conversation)
-        
+
         if not classification["success"]:
-            return self._error_response("Unable to understand your query", classification)
-        
+            return self._error_response(
+                message="Unable to understand your query",
+                details=classification,
+                session_id=session_id,
+                original_query=query
+            )
+
         is_contextual = classification["is_contextual"]
-        final_query = query
-        
+        expanded_query = query
+
         # Step 2: EXPAND (if contextual) - Make query explicit using context
         expansion_confidence = 0.9  # Default high confidence for standalone
-        
+
         if is_contextual:
             logger.info(f"Query is contextual, expanding with context...")
             expansion = await self._expand_query(query, conversation)
-            
+
             if not expansion["success"]:
-                return self._error_response("Unable to understand your question in context", expansion)
-            
-            final_query = expansion.get("expanded_query", query)
+                return self._error_response(
+                    message="Unable to understand your question in context",
+                    details=expansion,
+                    session_id=session_id,
+                    original_query=query
+                )
+
+            expanded_query = expansion.get("expanded_query", query)
             expansion_confidence = expansion.get("confidence", 0.9)
-            logger.info(f"Expanded query: {final_query[:100]}... (confidence: {expansion_confidence})")
-            
+            logger.info(f"Expanded query: {expanded_query[:100]}... (confidence: {expansion_confidence})")
+
             # If low confidence on expansion, ask for clarification
             if expansion_confidence < 0.7:
                 logger.info(f"Low expansion confidence ({expansion_confidence}), requesting clarification")
                 return self._request_clarification(
                     original_query=query,
-                    expanded_query=final_query,
+                    expanded_query=expanded_query,
                     confidence=expansion_confidence,
                     session_id=session_id,
+                    query_type="contextual",
                     reason="I'm not confident about my interpretation"
                 )
-            
+
             # Step 2.5: Check if expansion is meaningless (e.g., "Why?" → "Why?")
-            if await self._is_meaningless_expansion(query, final_query):
-                logger.info(f"Expansion is meaningless ('{query}' → '{final_query}'), skipping clarification")
+            if await self._is_meaningless_query(expanded_query):
+                logger.info(f"Expansion is meaningless ('{query}' → '{expanded_query}'), skipping clarification")
                 return {
                     "success": True,
-                    "is_meaningless": True,
+                    "type": "meaningless_query",
                     "session_id": session_id,
+                    "query_type": "contextual",
                     "original_query": query,
-                    "expanded_query": final_query,
-                    "message": "I don't understand your request. I need more details to help you. Please tell me what you'd like to analyze.",
-                    "type": "meaningless_query"
+                    "expanded_query": expanded_query,
+                    "is_meaningless": True,
+                    "message": "I don't understand your request. I need more details to help you. Please tell me what you'd like to analyze."
                 }
         else:
             # For standalone queries, also check if they're meaningless
@@ -129,49 +160,57 @@ class ContextAwareSearch:
                 logger.info(f"✅ Standalone query is meaningless: '{query}'")
                 return {
                     "success": True,
-                    "is_meaningless": True,
+                    "type": "meaningless_query",
                     "session_id": session_id,
+                    "query_type": "standalone",
                     "original_query": query,
                     "expanded_query": query,
-                    "message": "I don't understand your request. I need more details to help you. Please tell me what you'd like to analyze.",
-                    "type": "meaningless_query"
+                    "is_meaningless": True,
+                    "message": "I don't understand your request. I need more details to help you. Please tell me what you'd like to analyze."
                 }
             logger.info(f"🔹 Query is not meaningless, proceeding to validation")
-        
+
         # Step 3: VALIDATE - Check if query is complete
-        await progress_info(session_id, "Checking question for completeness...")
-        validation = self.validator.validate(final_query)
-        
-        if not validation["complete"]:
-            missing = ", ".join(validation["missing"])
-            logger.info(f"Validation failed, missing: {missing}")
-            return self._request_clarification(
-                original_query=query,
-                expanded_query=final_query,
-                confidence=expansion_confidence,
-                session_id=session_id,
-                reason=f"Missing information: {missing}"
-            )
-        
+        # await progress_info(session_id, "Checking question for completeness...")
+        # validation = self.validator.validate(expanded_query)
+
+        # if not validation["complete"]:
+        #     missing = ", ".join(validation["missing"])
+        #     logger.info(f"Validation failed, missing: {missing}")
+        #     return self._request_clarification(
+        #         original_query=query,
+        #         expanded_query=expanded_query,
+        #         confidence=expansion_confidence,
+        #         session_id=session_id,
+        #         query_type="contextual" if is_contextual else "standalone",
+        #         reason=f"Missing information: {missing}"
+        #     )
+
         # Step 4: SEARCH - Query is ready
-        logger.info(f"Query validated, proceeding with search: {final_query[:100]}...")
-        
+        # logger.info(f"Query validated, proceeding with search: {expanded_query[:100]}...")
+
         # Search for similar analyses
         search_result = self.analysis_library.search_similar(
-            query=final_query,
+            query=expanded_query,
             top_k=5,
             similarity_threshold=similarity_threshold
         )
-        
+
         if not search_result["success"]:
-            return self._error_response("Search failed", search_result)
-        
+            return self._error_response(
+                message="Search failed",
+                details=search_result,
+                session_id=session_id,
+                original_query=query
+            )
+
         return {
             "success": True,
+            "type": "search_result",
             "session_id": session_id,
             "query_type": "contextual" if is_contextual else "standalone",
             "original_query": query,
-            "final_query": final_query,
+            "expanded_query": expanded_query,
             "search_results": search_result.get("analyses", []),
             "found_similar": search_result.get("found_similar", False)
         }
@@ -201,10 +240,10 @@ class ContextAwareSearch:
         """Expand contextual query using conversation history"""
         
         try:
-            # Get conversation context as string
-            context_str = self._format_conversation_context(conversation)
+            # Get conversation turns (expander expects ConversationTurn objects, not string)
+            turns = conversation.turns
             
-            result = await self.expander.expand_query(query, context_str)
+            result = await self.expander.expand_query(query, turns)
             
             if result["success"]:
                 logger.info(f"Query expanded to: {result['expanded_query'][:100]}...")
@@ -218,27 +257,6 @@ class ContextAwareSearch:
                 "success": False,
                 "error": "Unable to expand your query with context"
             }
-    
-    async def _is_meaningless_expansion(self, original: str, expanded: str) -> bool:
-        """Check if expansion is meaningless using validator + LLM judgment"""
-        original_clean = original.lower().strip()
-        expanded_clean = expanded.lower().strip()
-        
-        # Quick check: if expansion is the same as original
-        if original_clean == expanded_clean:
-            logger.info(f"Expansion unchanged: '{original}' → '{expanded}'")
-            return True
-        
-        # Check if expanded query has meaningful content (assets or analysis type)
-        validation = self.validator.validate(expanded)
-        
-        # If missing both assets AND analysis type, likely meaningless
-        if not validation["complete"] and len(validation["missing"]) == 2:
-            logger.info(f"Expansion missing both assets and analysis: '{expanded}'")
-            # Use LLM to confirm it's actually meaningless
-            return await self._llm_check_meaningless(original, expanded)
-        
-        return False
     
     async def _is_meaningless_query(self, query: str) -> bool:
         """Check if a standalone query is meaningless using LLM judgment"""
@@ -311,58 +329,6 @@ Is this a meaningless or non-financial query that shouldn't be analyzed?"""
                 return True
             return False
     
-    async def _llm_check_meaningless(self, original: str, expanded: str) -> bool:
-        """Use LLM to determine if an expansion is meaningless/absurd"""
-        try:
-            from dialogue.context.service import ContextService
-            context_service = ContextService()
-            
-            system_prompt = """You are a financial query analyzer. Determine if an expanded query is meaningless, absurd, or not a valid financial analysis query.
-Respond with only YES or NO.
-
-CRITERIA for meaningless/invalid:
-1. Same as original (no expansion happened)
-2. Generic question without financial context (e.g., "What?", "Why?", "Tell me")
-3. Not related to financial analysis (e.g., "What is the weather?", "How to cook?")
-4. Vague without specific assets, strategies, or metrics (e.g., "Tell me about stocks")
-
-CRITERIA for valid/meaningful:
-- Has specific financial assets (stocks, ETFs, crypto, etc.) or portfolio context
-- References specific analysis (correlation, volatility, returns, strategy, backtest, etc.)
-- Requests actionable financial information
-
-Examples:
-- Original: "Why?" Expanded: "Why?" → YES (meaningless, same + generic)
-- Original: "What?" Expanded: "What?" → YES (meaningless, vague generic question)
-- Original: "Check weather" Expanded: "Check weather today" → YES (not financial)
-- Original: "Correlation" Expanded: "Correlation of AAPL with SPY" → NO (valid, has assets + metric)
-- Original: "volatility" Expanded: "What is the volatility of Bitcoin?" → NO (valid, has asset + metric)
-- Original: "Strategy" Expanded: "Backtest buy TSLA on 5% drop" → NO (valid, has asset + strategy)"""
-            
-            user_message = f"""Original: "{original}"
-Expanded: "{expanded}"
-
-Is this expansion meaningless or not a valid financial analysis query?"""
-            
-            result = await context_service._make_cached_llm_call(
-                system_prompt=system_prompt,
-                user_message=user_message,
-                max_tokens=10,
-                task="meaningless_check"
-            )
-            
-            if result["success"]:
-                response = result["content"].upper().strip()
-                is_meaningless = response.startswith("YES")
-                logger.info(f"LLM meaningless check: '{expanded}' → {response}")
-                return is_meaningless
-            
-            return False
-            
-        except Exception as e:
-            logger.warning(f"LLM meaningless check failed: {e}, using validator result")
-            return True  # Default to True if LLM check fails
-    
     def _format_conversation_context(self, conversation: ConversationStore) -> str:
         """Format conversation history as string context"""
         
@@ -376,31 +342,37 @@ Is this expansion meaningless or not a valid financial analysis query?"""
         
         return "\n".join(context_lines)
     
-    def _request_clarification(self, 
-                             original_query: str, 
-                             expanded_query: str, 
-                             confidence: float, 
+    def _request_clarification(self,
+                             original_query: str,
+                             expanded_query: str,
+                             confidence: float,
                              session_id: str,
+                             query_type: str,
                              reason: str = None) -> Dict[str, Any]:
-        """Request clarification for low-confidence expansion or incomplete query"""
-        
+        """Request clarification for low-confidence expansion or incomplete query
+
+        Returns standardized clarification response with type='clarification_needed'
+        """
+
         if reason is None:
             reason = "I'm not sure how to interpret your question"
-        
-        # Check if query was expanded (original != expanded) or just needs more info
+
+        # Check if query was expanded (original != final) or just needs more info
         was_expanded = original_query.strip() != expanded_query.strip()
-        
+
         if was_expanded:
             message = f"{reason}. Did you mean: '{expanded_query}'?"
         else:
             message = reason
-        
+
         return {
             "success": True,
-            "needs_clarification": True,
+            "type": "clarification_needed",
             "session_id": session_id,
+            "query_type": query_type,
             "original_query": original_query,
             "expanded_query": expanded_query,
+            "needs_clarification": True,
             "confidence": confidence,
             "reason": reason,
             "message": message,
@@ -425,14 +397,30 @@ Is this expansion meaningless or not a valid financial analysis query?"""
             "options": ["yes", "no", "rephrase"]
         }
     
-    def _error_response(self, message: str, details: Dict[str, Any] = None) -> Dict[str, Any]:
-        """Generate error response"""
-        
-        return {
+    def _error_response(self,
+                       message: str,
+                       details: Dict[str, Any] = None,
+                       session_id: str = None,
+                       original_query: str = None) -> Dict[str, Any]:
+        """Generate standardized error response
+
+        Returns error response with type='error' and standard fields
+        """
+
+        response = {
             "success": False,
+            "type": "error",
             "error": message,
             "details": details or {}
         }
+
+        # Add optional fields if provided
+        if session_id is not None:
+            response["session_id"] = session_id
+        if original_query is not None:
+            response["original_query"] = original_query
+
+        return response
     
     async def handle_clarification_response(self, 
                                             session_id: str, 
@@ -453,24 +441,33 @@ Is this expansion meaningless or not a valid financial analysis query?"""
         # Get session
         conversation = await self.session_manager.get_session(session_id)
         if not conversation:
-            return self._error_response("Session not found")
-        
+            return self._error_response(
+                message="Session not found",
+                session_id=session_id
+            )
+
+
         response_lower = user_response.lower().strip()
-        
+
         # Check if user confirmed
         if response_lower in ["yes", "ok", "correct", "that's right", "yep", "yeah", "sure", "confirm"]:
             logger.info(f"User confirmed expansion, proceeding to search with: {expanded_query[:100]}...")
-            
+
             # Proceed directly to SEARCH (VALIDATE already passed before asking)
             search_result = self.analysis_library.search_similar(
                 query=expanded_query,
                 top_k=5,
                 similarity_threshold=similarity_threshold
             )
-            
+
             if not search_result["success"]:
-                return self._error_response("Search failed", search_result)
-            
+                return self._error_response(
+                    message="Search failed",
+                    details=search_result,
+                    session_id=session_id,
+                    original_query=original_query
+                )
+
             # Add to conversation history
             turn = conversation.add_turn(
                 user_query=original_query,
@@ -478,27 +475,31 @@ Is this expansion meaningless or not a valid financial analysis query?"""
                 expanded_query=expanded_query,
                 context_used=True
             )
-            
+
             return {
                 "success": True,
+                "type": "search_result",
                 "session_id": session_id,
                 "query_type": "contextual",
                 "original_query": original_query,
-                "final_query": expanded_query,
+                "expanded_query": expanded_query,
                 "search_results": search_result.get("analyses", []),
                 "found_similar": search_result.get("found_similar", False),
                 "stage": "ready"
             }
-        
+
         # Check if user rejected
         elif response_lower in ["no", "wrong", "incorrect", "nope", "nah"]:
             logger.info(f"User rejected expansion, asking for rephrase")
-            
+
             return {
                 "success": True,
+                "type": "rephrase_needed",
+                "session_id": session_id,
+                "original_query": original_query,
+                "expanded_query": expanded_query,
                 "stage": "needs_input",
                 "input_type": "rephrase",
-                "session_id": session_id,
                 "message": "Please rephrase your question with more specific details about the assets and analysis you want.",
                 "hint": "Include what you want to analyze and what metrics/analysis you're interested in"
             }

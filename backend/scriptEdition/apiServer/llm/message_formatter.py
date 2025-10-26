@@ -5,6 +5,7 @@ Handles conversion of generic messages to provider-specific formats
 """
 
 import logging
+import os
 from typing import Dict, List, Any, Optional
 from enum import Enum
 
@@ -35,7 +36,7 @@ class MessageFormatter:
     
     def build_conversation(self, 
                           user_query: str, 
-                          function_schemas: Dict[str, str]) -> Dict[str, Any]:
+                          function_schemas: Dict[str, str], enable_caching: bool) -> Dict[str, Any]:
         """
         Build a conversation mode for script generation
         
@@ -46,7 +47,7 @@ class MessageFormatter:
         Returns:
             Dict with 'messages', 'system_prompt', etc. formatted for provider
         """
-        return self.formatter.build_conversation(user_query, function_schemas)
+        return self.formatter.build_conversation(user_query, function_schemas, enable_caching)
     
     def build_system_prompt(self,
                            user_query: str,
@@ -97,35 +98,40 @@ class MessageFormatter:
         """
         return self.formatter.format_assistant_response_with_tool_use(text, tool_name, tool_input, tool_id)
     
-    def create_verification_message(self, original_question: str) -> Dict[str, Any]:
+    def create_verification_message(self, original_question: str, verification_prompt_template: str = "") -> Dict[str, Any]:
         """
         Create a verification message asking if the generated script answers the question
         
         Args:
             original_question: The original question that the script should answer
+            verification_prompt_template: The verification prompt template from AnalysisService
             
         Returns:
             Formatted user message dict for verification
         """
-        return self.formatter.create_verification_message(original_question)
+        return self.formatter.create_verification_message(original_question, verification_prompt_template)
 
 
 class BaseMessageFormatter:
     """Base message formatter interface"""
     
+    def __init__(self):
+        """Initialize base formatter"""
+        pass
+    
     def build_conversation(self, 
                           user_query: str, 
-                          function_schemas: Dict[str, str]) -> Dict[str, Any]:
+                          function_schemas: Dict[str, str], enable_caching: bool) -> Dict[str, Any]:
         raise NotImplementedError
     
     def build_system_prompt(self,
                            user_query: str,
-                           function_schemas: Dict[str, str]) -> Dict[str, Any]:
+                           function_schemas: Dict[str, str], enable_caching: bool) -> Dict[str, Any]:
         raise NotImplementedError
     
     def build_tool_simulation(self,
                             user_query: str,
-                            function_schemas: Dict[str, str]) -> Dict[str, Any]:
+                            function_schemas: Dict[str, str], enable_caching: bool) -> Dict[str, Any]:
         raise NotImplementedError
     
     def format_assistant_response_with_tool_use(self,
@@ -135,7 +141,7 @@ class BaseMessageFormatter:
                                                 tool_id: Optional[str] = None) -> Dict[str, Any]:
         raise NotImplementedError
     
-    def create_verification_message(self, original_question: str) -> Dict[str, Any]:
+    def create_verification_message(self, original_question: str, verification_prompt_template: str = "") -> Dict[str, Any]:
         """Create a user message asking for verification that script answers the question"""
         raise NotImplementedError
 
@@ -145,19 +151,20 @@ class AnthropicMessageFormatter(BaseMessageFormatter):
     
     def build_conversation(self, 
                           user_query: str, 
-                          function_schemas: Dict[str, str]) -> Dict[str, Any]:
+                          function_schemas: Dict[str, str], 
+                          enable_caching: bool = False) -> Dict[str, Any]:
         """Build conversation in Anthropic format"""
-        return self._build_conversation_mode(user_query, function_schemas)
+        return self._build_conversation_mode(user_query, function_schemas, enable_caching)
     
-    def _build_conversation_mode(self, user_query: str, function_schemas: Dict[str, str]) -> Dict[str, Any]:
+    def _build_conversation_mode(self, user_query: str, function_schemas: Dict[str, str], enable_caching: bool) -> Dict[str, Any]:
         """Build multi-turn conversation with function documentation"""
         messages = []
         
-        query_message = f"Write a Python script to answer this question: {user_query}"
-        messages.append({
-            "role": "user", 
-            "content": [{"type": "text", "text": query_message}]
-        })
+        # query_message = f"Write a Python script to answer this question: {user_query}"
+        # messages.append({
+        #     "role": "user", 
+        #     "content": [{"type": "text", "text": query_message}]
+        # })
         
         assistant_response = f"""I'll analyze this question and identify the required functions. For this analysis, I need to use the following MCP functions:
 
@@ -192,6 +199,12 @@ Let me get the documentation for these functions one by one."""
             "role": "assistant", 
             "content": [{"type": "text", "text": final_assistant_message}]
         })
+
+        if enable_caching:
+            messages[-1]["content"][0]["cache_control"] = {
+                "type": "ephemeral",
+                "ttl": "5m"
+            }
         
         return {
             "mode": "conversation",
@@ -336,20 +349,12 @@ When writing the Python script:
             "content": content
         }
     
-    def create_verification_message(self, original_question: str) -> Dict[str, Any]:
+    def create_verification_message(self, original_question: str, verification_prompt_template: str = "") -> Dict[str, Any]:
         """Create a verification message for Anthropic format"""
-        verification_text = f"""Before we proceed, I need to verify something important:
-
-**Question**: {original_question}
-
-**Verification**: Please check the generated script carefully:
-1. Does the script logic directly answer the specific question asked?
-2. Are all conditions/signals mentioned in the question actually used to drive the analysis/decisions?
-3. Is the question answered completely, not just partially?
-
-If the script does NOT fully answer the question or ignores important conditions/signals, please STOP and redesign the script to fully address the question.
-
-If YES to all above, continue. If NO to any, redesign the script now."""
+        if not verification_prompt_template:
+            verification_prompt_template = "Before we proceed, I need to verify something important:\n\n**Question**: {question}\n\nPlease check if the script correctly answers the question."
+        
+        verification_text = verification_prompt_template.format(question=original_question)
         
         return {
             "role": "user",
@@ -362,7 +367,7 @@ class OpenAIMessageFormatter(BaseMessageFormatter):
     
     def build_conversation(self, 
                           user_query: str, 
-                          function_schemas: Dict[str, str]) -> Dict[str, Any]:
+                          function_schemas: Dict[str, str], enable_caching: bool) -> Dict[str, Any]:
         """Build conversation in OpenAI format"""
         
         messages = []
@@ -377,7 +382,7 @@ class OpenAIMessageFormatter(BaseMessageFormatter):
     
     def build_system_prompt(self,
                            user_query: str,
-                           function_schemas: Dict[str, str]) -> Dict[str, Any]:
+                           function_schemas: Dict[str, str], enable_caching: bool) -> Dict[str, Any]:
         """Build system prompt mode for OpenAI"""
         messages = []
         query_message = f"Write a Python script to answer this question: {user_query}"
@@ -391,7 +396,7 @@ class OpenAIMessageFormatter(BaseMessageFormatter):
     
     def build_tool_simulation(self,
                             user_query: str,
-                            function_schemas: Dict[str, str]) -> Dict[str, Any]:
+                            function_schemas: Dict[str, str], enable_caching: bool) -> Dict[str, Any]:
         """Build tool simulation messages for OpenAI"""
         messages = []
         query_message = f"Write a Python script to answer this question: {user_query}"
@@ -431,20 +436,12 @@ class OpenAIMessageFormatter(BaseMessageFormatter):
             ]
         }
     
-    def create_verification_message(self, original_question: str) -> Dict[str, Any]:
+    def create_verification_message(self, original_question: str, verification_prompt_template: str = "") -> Dict[str, Any]:
         """Create a verification message for OpenAI format"""
-        verification_text = f"""Before we proceed, I need to verify something important:
-
-**Question**: {original_question}
-
-**Verification**: Please check the generated script carefully:
-1. Does the script logic directly answer the specific question asked?
-2. Are all conditions/signals mentioned in the question actually used to drive the analysis/decisions?
-3. Is the question answered completely, not just partially?
-
-If the script does NOT fully answer the question or ignores important conditions/signals, please STOP and redesign the script to fully address the question.
-
-If YES to all above, continue. If NO to any, redesign the script now."""
+        if not verification_prompt_template:
+            verification_prompt_template = "Before we proceed, I need to verify something important:\n\n**Question**: {question}\n\nPlease check if the script correctly answers the question."
+        
+        verification_text = verification_prompt_template.format(question=original_question)
         
         return {
             "role": "user",
@@ -457,7 +454,8 @@ class OllamaMessageFormatter(BaseMessageFormatter):
     
     def build_conversation(self, 
                           user_query: str, 
-                          function_schemas: Dict[str, str]) -> Dict[str, Any]:
+                          function_schemas: Dict[str, str], 
+                          enable_caching: bool) -> Dict[str, Any]:
         """Build conversation in Ollama format (similar to OpenAI)"""
         
         messages = []
@@ -472,7 +470,8 @@ class OllamaMessageFormatter(BaseMessageFormatter):
     
     def build_system_prompt(self,
                            user_query: str,
-                           function_schemas: Dict[str, str]) -> Dict[str, Any]:
+                           function_schemas: Dict[str, str], 
+                           enable_caching: bool) -> Dict[str, Any]:
         """Build system prompt mode for Ollama"""
         messages = []
         query_message = f"Write a Python script to answer this question: {user_query}"
@@ -486,7 +485,8 @@ class OllamaMessageFormatter(BaseMessageFormatter):
     
     def build_tool_simulation(self,
                             user_query: str,
-                            function_schemas: Dict[str, str]) -> Dict[str, Any]:
+                            function_schemas: Dict[str, str], 
+                            enable_caching: bool) -> Dict[str, Any]:
         """Build tool simulation messages for Ollama"""
         messages = []
         query_message = f"Write a Python script to answer this question: {user_query}"
@@ -514,20 +514,12 @@ class OllamaMessageFormatter(BaseMessageFormatter):
             "content": text
         }
     
-    def create_verification_message(self, original_question: str) -> Dict[str, Any]:
+    def create_verification_message(self, original_question: str, verification_prompt_template: str = "") -> Dict[str, Any]:
         """Create a verification message for Ollama format"""
-        verification_text = f"""Before we proceed, I need to verify something important:
-
-**Question**: {original_question}
-
-**Verification**: Please check the generated script carefully:
-1. Does the script logic directly answer the specific question asked?
-2. Are all conditions/signals mentioned in the question actually used to drive the analysis/decisions?
-3. Is the question answered completely, not just partially?
-
-If the script does NOT fully answer the question or ignores important conditions/signals, please STOP and redesign the script to fully address the question.
-
-If YES to all above, continue. If NO to any, redesign the script now."""
+        if not verification_prompt_template:
+            verification_prompt_template = "Before we proceed, I need to verify something important:\n\n**Question**: {question}\n\nPlease check if the script correctly answers the question."
+        
+        verification_text = verification_prompt_template.format(question=original_question)
         
         return {
             "role": "user",

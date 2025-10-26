@@ -17,7 +17,7 @@ import { ProgressManager } from '@/lib/progress/ProgressManager';
 import { api } from '@/lib/api';
 
 export default function ChatPage() {
-  const { session_id, user_id, resumeSession, updateSessionMetadata } = useSession();
+  const { session_id, user_id, resumeSession, updateSessionMetadata, startNewSession } = useSession();
   const { messages, addMessage, updateMessage, setMessages, loadSessionMessages } = useConversation();
   const { viewMode, setViewMode, isProcessing, setIsProcessing, error: uiError, setError: setUIError } = useUI();
   const { analyzeQuestion, isLoading: analysisLoading } = useAnalysis();
@@ -38,22 +38,26 @@ export default function ChatPage() {
   const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
   const [currentSessionMessages, setCurrentSessionMessages] = useState({
     offset: 0,
-    limit: 5,
+    limit: 10,
     total: 0,
     hasOlder: false,
   });
+  const [sessionNotFound, setSessionNotFound] = useState(false);
   const loadedSessionIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!session_id || loadedSessionIdRef.current === session_id) return;
 
     loadedSessionIdRef.current = session_id;
+    setSessionNotFound(false);  // Reset 404 state when session changes
 
     const loadInitialMessages = async () => {
       try {
-        const sessionDetail = await getSessionDetail(session_id, 0, 5);
-        if (!sessionDetail) return;
-
+        const sessionDetail = await getSessionDetail(session_id, 0, 10);  // Load 10 messages initially
+        if (!sessionDetail) {
+          setSessionNotFound(true);
+          return;
+        }
         const loadedMessages = (sessionDetail.messages || []).map((msg: any, idx: number) => ({
           id: msg.id || `${session_id}-${idx}`,
           type: msg.role === 'user' ? 'user' : msg.role === 'assistant' ? 'ai' : 'results',
@@ -65,13 +69,14 @@ export default function ChatPage() {
           setMessages(loadedMessages);
           setCurrentSessionMessages({
             offset: sessionDetail.offset || 0,
-            limit: sessionDetail.limit || 5,
+            limit: sessionDetail.limit || 10,
             total: sessionDetail.total_messages || 0,
             hasOlder: sessionDetail.has_older || false,
           });
         }
       } catch (err) {
         console.warn('Failed to load initial session messages:', err);
+        setSessionNotFound(true);
       }
     };
 
@@ -123,21 +128,27 @@ export default function ChatPage() {
           message: 'Analysis request completed successfully',
         });
 
-        if (response.data.is_meaningless) {
+        const responseType = response.data.metadata?.response_type;
+        const isMeaningless = responseType === 'meaningless_query' || response.data.metadata?.is_meaningless;
+
+        if (isMeaningless) {
           ProgressManager.addLog(session_id, {
             level: 'warning',
             message: 'Query was not specific enough. Requesting clarification.',
           });
 
-          const errorMsg = response.data.message || 'I need more details to help you. Please tell me what you\'d like to analyze.';
+          const errorMsg = response.data.content || 'I need more details to help you. Please tell me what you\'d like to analyze.';
           addMessage({
             type: 'ai',
             content: errorMsg,
           });
         } else {
-          const needsClarification = response.data.needs_clarification || 
-            (response.data.context_result && response.data.context_result.needs_clarification);
-          const clarificationData = response.data.context_result || response.data;
+          const needsClarification = responseType === 'needs_clarification' || response.data.metadata?.needs_user_input;
+          const clarificationData = {
+            message_id: response.data.message_id,
+            content: response.data.content,
+            ...response.data.metadata,
+          };
           
           if (needsClarification) {
             ProgressManager.addLog(session_id, {
@@ -150,24 +161,16 @@ export default function ChatPage() {
 
             const clarificationMsg = addMessage({
               type: 'clarification',
-              content: clarificationData.message || 'Please confirm the interpretation',
-              data: {
-                original_query: clarificationData.original_query,
-                expanded_query: clarificationData.expanded_query,
-                message: clarificationData.message,
-                suggestion: clarificationData.suggestion,
-                confidence: clarificationData.expansion_confidence || clarificationData.confidence,
-                session_id: clarificationData.session_id,
-              },
+              content: clarificationData.content || 'Please confirm the interpretation',
+              data: clarificationData,
             });
             setLastClarificationMessageId(clarificationMsg.id);
             setCurrentAnalysis({
               messageId: clarificationMsg.id,
-              data: response.data,
+              data: clarificationData,
               originalQuestion: userMessage,
             });
-          } else if (response.data.needs_confirmation || 
-                     (response.data.context_result && response.data.context_result.needs_confirmation)) {
+          } else if (responseType === 'needs_confirmation') {
             ProgressManager.addLog(session_id, {
               level: 'info',
               message: 'Analysis requires user confirmation',
@@ -175,12 +178,12 @@ export default function ChatPage() {
 
             const confirmMsg = addMessage({
               type: 'clarification',
-              content: clarificationData.message || 'Please confirm',
+              content: clarificationData.content || 'Please confirm',
               data: clarificationData,
             });
             setCurrentAnalysis({
               messageId: confirmMsg.id,
-              data: response.data,
+              data: clarificationData,
               originalQuestion: userMessage,
             });
           } else {
@@ -189,15 +192,22 @@ export default function ChatPage() {
               message: 'Analysis results ready for display',
             });
 
+            const resultData = {
+              message_id: response.data.message_id,
+              analysis_id: response.data.analysis_id,
+              execution_id: response.data.execution_id,
+              ...response.data.metadata,
+            };
+
             const resultMsg = addMessage({
               type: 'results',
-              content: response.data.analysis_summary || `Analysis complete for: ${userMessage}`,
-              data: response.data,
+              content: response.data.content || response.data.metadata?.analysis_summary || `Analysis complete for: ${userMessage}`,
+              data: resultData,
             });
 
             setCurrentAnalysis({
               messageId: resultMsg.id,
-              data: response.data,
+              data: resultData,
               originalQuestion: userMessage,
             });
 
@@ -461,12 +471,49 @@ export default function ChatPage() {
     }
   }, [session_id, currentSessionMessages, getSessionDetail, setMessages, setUIError, isLoadingOlderMessages]);
 
+  const handleStartNewChat = useCallback(async () => {
+    try {
+      setIsProcessing(true);
+      // Call startNewSession to create a new session server-side
+      // This will create the session and navigate to the new session URL
+      await startNewSession(user_id || undefined);
+      setSessionNotFound(false);
+      setMessages([]);
+    } catch (err) {
+      console.error('Failed to create new session:', err);
+      setUIError('Failed to create new session');
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [startNewSession, user_id, setMessages, setUIError, setIsProcessing, setSessionNotFound]);
+
   if (!session_id) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Initializing session...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (sessionNotFound) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <div className="text-6xl font-bold text-gray-300 mb-4">404</div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Session Not Found</h1>
+          <p className="text-gray-600 mb-6">
+            The session <code className="bg-gray-100 px-2 py-1 rounded text-sm">{session_id}</code> does not exist.
+          </p>
+          <button
+            onClick={handleStartNewChat}
+            disabled={isProcessing}
+            className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed"
+          >
+            {isProcessing ? 'Creating...' : 'Start a New Chat'}
+          </button>
         </div>
       </div>
     );
@@ -518,6 +565,9 @@ export default function ChatPage() {
             onClarificationResponse={handleClarificationResponse}
             pendingClarificationId={lastClarificationMessageId}
             progressLogs={progressLogs}
+            onLoadOlder={handleLoadOlderMessages}
+            isLoadingOlder={isLoadingOlderMessages}
+            canLoadOlder={currentSessionMessages.hasOlder}
           />
         </div>
 

@@ -13,7 +13,6 @@ from db.schemas import (
     AnalysisModel,
     RoleType,
     QueryType,
-    QuestionContext,
 )
 
 logger = logging.getLogger("chat-service")
@@ -57,17 +56,17 @@ class ChatHistoryService:
             
             # Update with expansion if provided
             if expanded_question:
-                question_context = QuestionContext(
-                    original_question=question,
-                    expanded_question=expanded_question,
-                    expansion_confidence=expansion_confidence,
-                    query_type=query_type,
-                )
                 await self.repo.db.db.chat_messages.update_one(
                     {"messageId": msg_id},
                     {
                         "$set": {
-                            "questionContext": question_context.dict()
+                            "metadata": {
+                                "response_type": "user_message",
+                                "original_question": question,
+                                "expanded_question": expanded_question,
+                                "expansion_confidence": expansion_confidence,
+                                "query_type": query_type.value if query_type else None,
+                            }
                         }
                     }
                 )
@@ -110,17 +109,19 @@ class ChatHistoryService:
         session_id: str,
         user_id: str,
         content: str,
-        script: Optional[str] = None,
-        mcp_calls: Optional[List[str]] = None,
+        analysis_id: str = None,
+        execution_id: str = None,
+        metadata: Dict[str, Any] = None
     ) -> str:
-        """Add regular assistant message (without analysis)"""
+        """Add regular assistant message (with optional analysis and execution references)"""
         try:
             msg_id = await self.chat_repo.add_assistant_message(
                 session_id=session_id,
                 user_id=user_id,
                 content=content,
-                script=script,
-                mcp_calls=mcp_calls,
+                analysis_id=analysis_id,
+                execution_id=execution_id,
+                metadata=metadata
             )
             
             self.logger.info(f"✓ Added assistant message: {msg_id}")

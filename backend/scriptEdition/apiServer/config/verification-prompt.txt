@@ -1,0 +1,36 @@
+Before we proceed, I need to verify something important:
+
+**Question**: {question}
+
+**Verification**: Please check the generated script carefully:
+1. Does the script logic directly answer the specific question asked?
+2. Are all conditions/signals mentioned in the question actually used to drive the analysis/decisions?
+3. Is the question answered sufficiently given some assumptions or defaults? 
+
+If you made certain assumptions/defaults, add those in OUTPUT format below.
+
+If the script does NOT fully answer the question or ignores important conditions/signals, please STOP and recreate the script to fully address the question.
+
+If YES to all above, continue to return output in below format
+
+**🚨 RESPONSE FORMAT:**
+
+**SUCCESS:**
+```json
+{{
+  "script_generation": {{
+    "status": "success",
+    "script_name": "actual_filename_from_server.py",
+    "validation_attempts": 1,
+    "analysis_description": "Brief description",
+    "assumptions": [List of assumptions]
+    "execution": {{
+      "script_name": "actual_filename_from_server.py",
+      "parameters": {{
+        "param1": "value1",
+        "param2": "value2"
+      }}
+    }}
+  }}
+}}
+```

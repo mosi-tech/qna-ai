@@ -15,8 +15,11 @@ from .base_service import BaseService
 class AnalysisService(BaseService):
     """Financial question analysis service with MCP integration"""
     
+    _verification_prompt_template = None
+    
     def __init__(self, llm_service: Optional[LLMService] = None):
         super().__init__(llm_service=llm_service, service_name="analysis")
+        self._load_verification_prompt()
     
     def _create_default_llm(self) -> LLMService:
         """Create default LLM service for analysis"""
@@ -26,6 +29,24 @@ class AnalysisService(BaseService):
     def _get_default_system_prompt(self) -> str:
         """Default system prompt for analysis service"""
         return "You are a helpful financial analysis assistant that generates tool calls for financial data analysis."
+    
+    @classmethod
+    def _load_verification_prompt(cls):
+        """Load verification prompt from config file (lazy load)"""
+        if cls._verification_prompt_template is None:
+            prompt_path = os.path.join(
+                os.path.dirname(os.path.abspath(__file__)),
+                "..",
+                "config",
+                "verification-prompt.txt"
+            )
+            try:
+                with open(prompt_path, 'r', encoding='utf-8') as f:
+                    cls._verification_prompt_template = f.read()
+                logging.getLogger(__name__).debug("✅ Loaded verification prompt from config")
+            except FileNotFoundError:
+                logging.getLogger(__name__).warning(f"⚠️ Verification prompt config not found: {prompt_path}")
+                cls._verification_prompt_template = "Before we proceed, I need to verify something important:\n\n**Question**: {question}\n\nPlease check if the script correctly answers the question."
     
     # === ANALYSIS WORKFLOW ===
     
@@ -241,84 +262,6 @@ class AnalysisService(BaseService):
         except:
             return False
     
-    def _check_validation_completion(self, tool_results: List[Dict[str, Any]]) -> bool:
-        """Check if validation process was completed"""
-        try:
-            # Look for validation tool calls (including MCP server prefixes)
-            validation_tools = [
-                "validate_python_script",
-                "validate_workflow_step", 
-                "validate_template_variables",
-                "validate_complete_workflow",
-                # Add MCP server prefix variations
-                "validation-server__validate_python_script",
-                "validation-server__validate_workflow_step",
-                "validation-server__validate_template_variables", 
-                "validation-server__validate_complete_workflow",
-                "mcp__mcp-validation-server__validate_python_script",
-                "mcp__mcp-validation-server__validate_workflow_step",
-                "mcp__mcp-validation-server__validate_template_variables",
-                "mcp__mcp-validation-server__validate_complete_workflow"
-            ]
-            
-            for result in tool_results:
-                if result.get("success") and result.get("function"):
-                    func_name = result["function"]
-                    
-                    # Check if this was a validation tool
-                    if any(val_tool in func_name for val_tool in validation_tools):
-                        # Parse the result to check validation status
-                        result_content = result.get("result")
-                        
-                        # Handle CallToolResult structure
-                        if hasattr(result_content, 'content') and result_content.content:
-                            # Extract text from CallToolResult
-                            try:
-                                text_content = result_content.content[0].text
-                                self.logger.debug(f"Validation - Raw text content type: {type(text_content)}")
-                                self.logger.debug(f"Validation - Raw text content repr: {repr(text_content[:200])}")
-                                
-                                # Clean the text and try parsing
-                                cleaned_text = text_content.strip()
-                                parsed_result = json.loads(cleaned_text)
-                                
-                                if parsed_result.get("valid") is not None:
-                                    self.logger.info(f"✅ Validation completed: {func_name} - Valid: {parsed_result.get('valid')}")
-                                    return True
-                            except json.JSONDecodeError as e:
-                                self.logger.error(f"Validation JSON decode error: {e}")
-                                self.logger.error(f"Validation failed text: {repr(text_content)}")
-                                # Fallback pattern matching
-                                if any(keyword in text_content.lower() for keyword in ["valid", "validation", "executed successfully"]):
-                                    self.logger.info(f"✅ Validation completed (fallback): {func_name}")
-                                    return True
-                            except (AttributeError, IndexError) as e:
-                                self.logger.error(f"Validation structure error: {e}")
-                                pass
-                        
-                        elif isinstance(result_content, dict):
-                            # Direct dictionary access
-                            if result_content.get("valid") is not None:
-                                self.logger.info(f"✅ Validation completed: {func_name} - Valid: {result_content.get('valid')}")
-                                return True
-                        elif isinstance(result_content, str):
-                            # JSON string - parse it
-                            try:
-                                parsed_result = json.loads(result_content)
-                                if parsed_result.get("valid") is not None:
-                                    self.logger.info(f"✅ Validation completed: {func_name} - Valid: {parsed_result.get('valid')}")
-                                    return True
-                            except json.JSONDecodeError:
-                                # Fallback - if it contains validation keywords
-                                if any(keyword in result_content.lower() for keyword in ["valid", "validation", "executed successfully"]):
-                                    self.logger.info(f"✅ Validation completed (fallback): {func_name}")
-                                    return True
-            
-            return False
-        except Exception as e:
-            self.logger.error(f"❌ Error checking validation completion: {e}")
-            return False
-    
     async def _conversation_loop(self, model: str, messages: List[Dict[str, Any]], 
                                all_tool_calls: List[Dict[str, Any]], all_tool_results: List[Dict[str, Any]], 
                                enable_caching: bool = False) -> Dict[str, Any]:
@@ -437,130 +380,104 @@ class AnalysisService(BaseService):
     
     
     def _filter_messages_for_context(self, messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Filter messages to keep only recent relevant tool interactions and conversation flow for context"""
+        """
+        Filter messages by scanning in REVERSE order (simpler and cleaner).
+        Keep:
+        - Most recent write_and_validate pair (stop after finding first)
+        - All get_function_docstring pairs
+        - Most recent verification message (only if AFTER write_and_validate)
+        - Initial conversation messages before first tool call
+        Then reconstruct in ORIGINAL order
+        """
         try:
-            # Always keep all messages for conversation flow
             if not messages:
                 return messages
-            
-            # For conversation mode, we want to keep the natural flow of user/assistant messages
-            # Check if this looks like conversation mode (alternating user/assistant without tool calls)
-            # This check is provider-aware and delegates to provider implementation
-            has_conversation_flow = False
-            for i, msg in enumerate(messages):
-                if (msg.get("role") == "assistant" and 
-                    not self._contains_tool_calls(msg) and 
-                    self.llm_service.provider.get_message_text_length(msg) > 50):  # Substantial assistant message without tools
-                    has_conversation_flow = True
-                    break
-            
-            if has_conversation_flow:
-                # In conversation mode, keep all messages to preserve the natural flow
-                self.logger.debug(f"Detected conversation mode - keeping all {len(messages)} messages for context")
-                return messages
-            
-            # Original logic for tool simulation mode
-            # Keep all user messages at the beginning of the conversation
-            filtered_messages = []
-            for msg in messages:
-                if msg.get("role") == "user":
-                    filtered_messages.append(msg)
-                else:
-                    break  # Stop at first non-user message
-            
-            # Find assistant messages (both with and without tool calls) and corresponding tool results
-            tool_interaction_pairs = []
-            non_tool_assistant_messages = []
-            i = len(filtered_messages)  # Start after all user messages
-            while i < len(messages):
+
+            self.logger.debug(f"Starting REVERSE filter with {len(messages)} messages")
+
+            indices_to_keep = set()
+            write_and_validate_index = None
+            verification_index = None
+
+            # Scan in REVERSE order to find most recent items first
+            i = len(messages) - 1
+            while i >= 0:
                 msg = messages[i]
-                if msg.get("role") == "assistant":
+                role = msg.get("role")
+
+                # Track verification message (don't add to indices yet - validate placement later)
+                if verification_index is None and role == "user":
+                    content = msg.get("content", [])
+                    if isinstance(content, list):
+                        for block in content:
+                            if isinstance(block, dict) and block.get("type") == "text":
+                                text = block.get("text", "").lower()
+                                if "verification" in text or "before we proceed" in text:
+                                    verification_index = i
+                                    self.logger.debug(f"Found verification message at index {i}")
+                                    break
+
+                # Check for assistant messages with tool calls
+                if role == "assistant":
                     if self._contains_tool_calls(msg):
-                        # Look for the corresponding tool result message using provider-specific role
-                        tool_result_role = self.llm_service.provider.get_tool_result_role()
-                        if (i + 1 < len(messages) and 
-                            messages[i + 1].get("role") == tool_result_role and
-                            self.llm_service.provider.contains_tool_results(messages[i + 1])):
-                            tool_interaction_pairs.append((i, i + 1, msg))  # (assistant_idx, tool_idx, assistant_msg)
-                            i += 2  # Skip both messages
-                        else:
-                            i += 1
+                        # Check if this is write_and_validate or docstring
+                        has_write_validate = self.llm_service.provider.message_contains_function(msg, "write_and_validate")
+                        has_docstring = self.llm_service.provider.message_contains_function(msg, "get_function_docstring")
+
+                        if has_write_validate and write_and_validate_index is None:
+                            # Keep this write_and_validate pair (assistant + next tool result)
+                            write_and_validate_index = i
+                            indices_to_keep.add(i)
+                            # Add tool result (next message)
+                            tool_result_role = self.llm_service.provider.get_tool_result_role()
+                            if i + 1 < len(messages) and messages[i + 1].get("role") == tool_result_role:
+                                indices_to_keep.add(i + 1)
+                            self.logger.debug(f"Most recent write_and_validate at index {i}")
+
+                        elif has_docstring:
+                            # Keep all docstring pairs
+                            indices_to_keep.add(i)
+                            tool_result_role = self.llm_service.provider.get_tool_result_role()
+                            if i + 1 < len(messages) and messages[i + 1].get("role") == tool_result_role:
+                                indices_to_keep.add(i + 1)
+                            self.logger.debug(f"Docstring call at index {i}")
+
+                i -= 1
+
+            # Validate verification message placement
+            # Verification should only be kept if it comes AFTER write_and_validate
+            if verification_index is not None:
+                if write_and_validate_index is not None:
+                    if verification_index > write_and_validate_index:
+                        indices_to_keep.add(verification_index)
+                        self.logger.debug(f"Keeping verification at {verification_index} (after write_and_validate at {write_and_validate_index})")
                     else:
-                        # Non-tool assistant message (like conversation flow messages)
-                        non_tool_assistant_messages.append((i, msg))
-                        i += 1
+                        self.logger.debug(f"Removing verification at {verification_index} (before write_and_validate at {write_and_validate_index})")
                 else:
-                    i += 1
-            
-            # Define functions that should be prioritized
-            relevant_functions = {
-                "write_file", "validate_python_script", "get_function_docstring",
-                "read_file", "list_files", "delete_file", "write_and_validate"
-            }
-            
-            # Find the most recent write_file and validate_python_script interactions
-            last_write_pair = None
-            last_write_idx = -1
-            last_validate_pair = None
-            last_validate_idx = -1
-            docstring_pairs = []
-            
-            for assistant_idx, tool_idx, assistant_msg in tool_interaction_pairs:
-                # Check if this message contains any relevant functions
-                found_functions = []
-                for func_name in relevant_functions:
-                    if self.llm_service.provider.message_contains_function(assistant_msg, func_name):
-                        found_functions.append(func_name)
-                
-                # Process based on the functions found
-                if "write_file" in found_functions or "write_and_validate" in found_functions:
-                    last_write_pair = (assistant_idx, tool_idx)
-                    last_write_idx = assistant_idx
-                elif "validate_python_script" in found_functions:
-                    last_validate_pair = (assistant_idx, tool_idx)
-                    last_validate_idx = assistant_idx
-                elif "get_function_docstring" in found_functions:
-                    # Keep all docstring calls as they provide important context
-                    docstring_pairs.append((assistant_idx, tool_idx))
-                else:
-                    docstring_pairs.append((assistant_idx, tool_idx))
-            
-            # Collect pairs to keep
-            pairs_to_keep = set()
-            
-            # Include all docstring interactions (they provide important context)
-            for pair in docstring_pairs:
-                pairs_to_keep.add(pair)
-            
-            # Include the most recent write_file
-            if last_write_pair:
-                pairs_to_keep.add(last_write_pair)
-            
-            # Only include validation if it comes AFTER the last write_file
-            # (if write_file comes after validation, the validation is for an old script version)
-            if last_validate_pair and (last_write_idx == -1 or last_validate_idx > last_write_idx):
-                pairs_to_keep.add(last_validate_pair)
-            
-            # Collect all messages to add with their indices to maintain order
-            messages_to_add = []
-            
-            # Add tool interaction pairs
-            for assistant_idx, tool_idx in pairs_to_keep:
-                messages_to_add.append((assistant_idx, messages[assistant_idx]))
-                messages_to_add.append((tool_idx, messages[tool_idx]))
-            
-            # Add non-tool assistant messages (conversation flow)
-            for assistant_idx, assistant_msg in non_tool_assistant_messages:
-                messages_to_add.append((assistant_idx, assistant_msg))
-            
-            # Sort by original index to maintain conversation order
-            messages_to_add.sort(key=lambda x: x[0])
-            
-            # Add the sorted messages
-            for _, msg in messages_to_add:
-                filtered_messages.append(msg)
-            
-            self.logger.debug(f"Filtered {len(messages)} messages down to {len(filtered_messages)} for context (including {len(non_tool_assistant_messages)} non-tool assistant messages)")
+                    # No write_and_validate found, keep verification anyway
+                    indices_to_keep.add(verification_index)
+                    self.logger.debug(f"Keeping verification at {verification_index} (no write_and_validate found)")
+
+            # Add all INITIAL messages (user and assistant) until we hit the first tool call
+            # This preserves the conversational context at the beginning
+            for i, msg in enumerate(messages):
+                role = msg.get("role")
+                if role == "user":
+                    indices_to_keep.add(i)
+                elif role == "assistant":
+                    if self._contains_tool_calls(msg):
+                        # Stop here - we've hit the tool interaction phase
+                        break
+                    else:
+                        # Non-tool assistant message at start - keep it
+                        indices_to_keep.add(i)
+
+            # Build filtered list in ORIGINAL order
+            filtered_messages = [messages[i] for i in range(len(messages)) if i in indices_to_keep]
+
+            self.logger.debug(f"Filtered {len(messages)} → {len(filtered_messages)} messages")
+            self.logger.debug(f"Kept indices: {sorted(indices_to_keep)}")
+
             return filtered_messages
             
         except Exception as e:
@@ -603,8 +520,8 @@ class AnalysisService(BaseService):
             if enable_caching and self.llm_service.provider_type == "anthropic":
                 # Define functions that are allowed for caching
                 cacheable_functions = {
-                    "get_function_docstring": "1h",
-                    # "write_file": "5m"
+                    # "get_function_docstring": "1h",
+                    "write_and_validate": "5m"
                 }
                 
                 # Add caching metadata to tool results for cacheable functions
@@ -620,16 +537,21 @@ class AnalysisService(BaseService):
             
             messages.append(formatted_tool_results)
             
-            # Check if last tool call is write_and_validate and append verification message
-            if current_tool_calls and original_question:
+            # Check if last tool call is write_and_validate AND its result success is true
+            if current_tool_calls and current_tool_results and original_question:
                 last_tool_call = current_tool_calls[-1]
                 if self._is_write_and_validate_tool_result(last_tool_call):
-                    self.logger.info("📋 Last tool call is write_and_validate, appending verification message")
-                    from llm import MessageFormatter
-                    formatter = MessageFormatter(self.llm_service.provider_type)
-                    verification_message = formatter.create_verification_message(original_question)
-                    messages.append(verification_message)
-                    self.logger.debug(f"Verification message appended: {verification_message.get('role')} role")
+                    # Check if the last tool result indicates success
+                    last_tool_result = current_tool_results[-1] if current_tool_results else None
+                    if last_tool_result and self._is_validation_successful(last_tool_result):
+                        self.logger.info("📋 write_and_validate succeeded, appending verification message")
+                        from llm import MessageFormatter
+                        formatter = MessageFormatter(self.llm_service.provider_type)
+                        verification_message = formatter.create_verification_message(original_question, self._verification_prompt_template)
+                        messages.append(verification_message)
+                        self.logger.debug(f"Verification message appended: {verification_message.get('role')} role")
+                    else:
+                        self.logger.info("⚠️ write_and_validate failed or result unavailable, skipping verification message")
             
             # Filter messages to keep only recent relevant tool interactions
             filtered_messages = self._filter_messages_for_context(messages)
@@ -657,24 +579,43 @@ class AnalysisService(BaseService):
             if not result_data:
                 return False
             
+            # Handle CallToolResult structure (has .content attribute)
+            if hasattr(result_data, 'content') and result_data.content:
+                try:
+                    text_content = result_data.content[0].text
+                    parsed = json.loads(text_content.strip())
+                    # Check if validation_result.valid is true OR write_result.success is true
+                    if parsed.get("validation_result", {}).get("valid"):
+                        return True
+                    if parsed.get("write_result", {}).get("success") and parsed.get("validation_result", {}).get("valid"):
+                        return True
+                    return False
+                except (json.JSONDecodeError, AttributeError, IndexError):
+                    return False
+            
             # Handle different result formats
             if isinstance(result_data, dict):
+                # Check for nested validation_result.valid
+                if result_data.get("validation_result", {}).get("valid"):
+                    return True
+                # Check for top-level valid or success
                 return result_data.get("valid", False) or result_data.get("success", False)
             elif isinstance(result_data, str):
                 # Try to parse as JSON
                 try:
                     parsed = json.loads(result_data)
+                    # Check for nested validation_result.valid
+                    if parsed.get("validation_result", {}).get("valid"):
+                        return True
+                    # Check for top-level valid or success
                     return parsed.get("valid", False) or parsed.get("success", False)
-                except:
+                except json.JSONDecodeError:
                     # Check for success indicators in string
                     return "valid" in result_data.lower() or "success" in result_data.lower()
-            else:
-                # Convert to string and check
-                json_str = str(result_data)
             
-            parsed_result = json.loads(json_str)
-            return parsed_result.get("valid", False)
-        except:
+            return False
+        except Exception as e:
+            self.logger.debug(f"Error checking validation success: {e}")
             return False
     
     def _parse_structured_response(self, content: str) -> Dict[str, Any]:

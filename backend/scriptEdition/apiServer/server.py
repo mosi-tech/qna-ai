@@ -42,8 +42,6 @@ class SessionResponse(BaseModel):
     user_id: str
 
 
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan manager"""
@@ -70,7 +68,7 @@ async def lifespan(app: FastAPI):
         # 3. Session manager (CRITICAL)
         logger.info("🔧 Initializing session manager...")
         from dialogue.conversation.session_manager import SessionManager
-        session_manager = SessionManager(repo_manager=repo_manager, chat_history_service=chat_history_service)
+        session_manager = SessionManager(chat_history_service=chat_history_service)
         app.state.session_manager = session_manager
         logger.info("✅ Session manager initialized")
         
@@ -91,7 +89,7 @@ async def lifespan(app: FastAPI):
             analysis_persistence_service,
             audit_service,
             execution_service,
-            repo_manager=repo_manager
+            session_manager=session_manager
         )
         logger.info("✅ API routes initialized successfully")
         
@@ -170,10 +168,10 @@ def create_app() -> FastAPI:
     async def get_session(session_id: str):
         """Get session details from backend"""
         try:
-            _, store = await app.state.session_manager.get_or_create_session(session_id)
+            store = await app.state.session_manager.get_session(session_id)
             
             # Get context summary
-            context = store.get_context_summary() if hasattr(store, 'get_context_summary') else {}
+            context = store.get_context_summary() if store and hasattr(store, 'get_context_summary') else {}
             
             return {
                 "session_id": session_id,
