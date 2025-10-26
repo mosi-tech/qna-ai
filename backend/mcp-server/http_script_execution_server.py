@@ -17,7 +17,10 @@ from pydantic import BaseModel
 import uvicorn
 
 # Import shared execution logic
-from shared_script_executor import execute_script
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+from shared.execution import execute_script
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

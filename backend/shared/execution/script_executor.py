@@ -16,124 +16,9 @@ import shutil
 from datetime import datetime
 from typing import Dict, Any, Optional
 
-# Add paths for direct MCP imports
-current_dir = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, current_dir)
-
-# Direct imports from MCP modules
-try:
-    import financial.functions_mock as financial_functions
-    print("✅ Imported financial functions directly")
-except ImportError as e:
-    print(f"❌ Failed to import financial functions: {e}")
-    financial_functions = None
-
-try:
-    import analytics as analytics_functions  
-    print("✅ Imported analytics functions directly")
-except ImportError as e:
-    print(f"❌ Failed to import analytics functions: {e}")
-    analytics_functions = None
+from .mcp_injection import create_mcp_injection_wrapper
 
 logger = logging.getLogger("shared-script-executor")
-
-def create_mcp_injection_wrapper(production_mode: bool = False):
-    """Create MCP function injection wrapper for script execution"""
-    
-    if production_mode:
-        # Production mode: Real MCP function calls
-        return '''
-import sys
-import os
-import json
-import logging
-
-# Add MCP server directory to Python path
-script_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = "/Users/shivc/Documents/Workspace/JS/qna-ai-admin"
-mcp_server_dir = os.path.join(project_root, 'mcp-server')
-
-# Add both possible locations to path
-for path in [script_dir, mcp_server_dir]:
-    if os.path.exists(path) and path not in sys.path:
-        sys.path.insert(0, path)
-
-import financial.functions_mock as financial_lib
-import analytics as analytics_lib
-
-def call_mcp_function(function_name: str, args: dict):
-    """Call real MCP functions in production mode"""
-    try:
-        # Direct imports for production
-        if hasattr(financial_lib, function_name):
-                func = getattr(financial_lib, function_name)
-                result = func(**args)
-                logging.info(f"✅ MCP call successful: {function_name}")
-                return result
-        elif hasattr(analytics_lib, function_name):
-                func = getattr(analytics_lib, function_name)
-                result = func(**args)
-                logging.info(f"✅ MCP call successful: {function_name}")
-                return result
-        
-        logging.error(f"❌ Unknown MCP function: {function_name}")
-        return None
-        
-    except Exception as e:
-        logging.error(f"❌ MCP call failed {function_name}: {e}")
-        return None
-
-# Production logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-'''
-    else:
-        # Validation mode: Use actual modules but with mock data
-        return '''
-import sys
-import os
-import json
-import logging
-
-# Add MCP server directory to Python path
-script_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = "/Users/shivc/Documents/Workspace/JS/qna-ai-admin"
-mcp_server_dir = os.path.join(project_root, 'mcp-server')
-
-# Add both possible locations to path
-for path in [script_dir, mcp_server_dir]:
-    if os.path.exists(path) and path not in sys.path:
-        sys.path.insert(0, path)
-
-import financial.functions_mock as financial_lib
-import analytics as analytics_lib
-
-def call_mcp_function(function_name: str, args: dict):
-    """Call actual MCP functions in validation mode"""
-    try:
-        # Check financial functions first
-        if hasattr(financial_lib, function_name):
-            func = getattr(financial_lib, function_name)
-            result = func(**args)
-            logging.info(f"✅ MCP call successful: {function_name}")
-            return result
-        elif hasattr(analytics_lib, function_name):
-            func = getattr(analytics_lib, function_name)
-            result = func(**args)
-            logging.info(f"✅ MCP call successful: {function_name}")
-            return result
-        
-        logging.error(f"❌ Unknown MCP function: {function_name}")
-        return None
-        
-    except Exception as e:
-        import traceback
-        logging.error(f"❌ MCP call failed {function_name}: {e}")
-        logging.error(f"Full traceback: {traceback.format_exc()}")
-        return None
-
-# Validation logging  
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-'''
 
 def execute_script(script_content: str, mock_mode: bool = True, timeout: int = 30, parameters: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """
@@ -152,8 +37,8 @@ def execute_script(script_content: str, mock_mode: bool = True, timeout: int = 3
     logger.info(f"🚀 Executing script (mock={mock_mode}, timeout={timeout}s)")
     
     try:
-        # Get project root directory - hardcoded for MCP testing
-        project_root = "/Users/shivc/Documents/Workspace/JS/qna-ai-admin/ollama-server/scriptEdition"
+        # Get project root directory - updated path for new structure
+        project_root = "/Users/shivc/Documents/Workspace/JS/qna-ai-admin/backend/mcp-server"
         
         # Create MCP injection wrapper
         mcp_wrapper = create_mcp_injection_wrapper(production_mode=not mock_mode)
@@ -165,11 +50,13 @@ def execute_script(script_content: str, mock_mode: bool = True, timeout: int = 3
         
         enhanced_script = mcp_wrapper + parameter_injection + script_content
         
-        # logger.info(enhanced_script)
-        
         # Create temporary file in project directory with predictable name for debugging
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         script_path = os.path.join(project_root, "temp", f"temp_validation_script_{timestamp}.py")
+        
+        # Ensure temp directory exists
+        os.makedirs(os.path.dirname(script_path), exist_ok=True)
+        
         with open(script_path, 'w') as f:
             f.write(enhanced_script)
         
