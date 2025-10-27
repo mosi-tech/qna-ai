@@ -8,15 +8,16 @@ Polls the queue for pending executions and processes them using the shared execu
 import asyncio
 import logging
 import uuid
-import sys
-import os
 from datetime import datetime
 from typing import Dict, Any, Optional
 
 from .base_queue import ExecutionQueueInterface
 from ..execution import execute_script
+from ..storage import get_storage
 
 # Import AuditService for updating execution documents
+import sys
+import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'scriptEdition', 'apiServer'))
 from services.audit_service import AuditService
 from db import RepositoryManager, MongoDBClient
@@ -264,16 +265,21 @@ class ExecutionQueueWorker:
             # Execute script in production mode (mock_mode=False)
             start_time = datetime.now()
             
-            # Load script content from file
-            script_path = f"/Users/shivc/Documents/Workspace/JS/qna-ai-admin/backend/mcp-server/scripts/{script_name}"
+            # Load script content from storage
+            storage = get_storage()
             
             try:
-                with open(script_path, 'r') as f:
-                    script_content = f.read()
+                script_content = await storage.read_script(script_name)
             except FileNotFoundError:
                 return {
                     "success": False,
                     "error": f"Script file not found: {script_name}",
+                    "execution_time": 0
+                }
+            except Exception as e:
+                return {
+                    "success": False,
+                    "error": f"Failed to read script from storage: {str(e)}",
                     "execution_time": 0
                 }
             # TODO: Change it to False when ready

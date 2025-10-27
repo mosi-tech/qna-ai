@@ -101,11 +101,6 @@ def get_historical_data(symbols: Union[str, List[str]], start_date: Optional[str
             - "1Week": Weekly bars
             - "1Month": Monthly bars
             Note: Higher frequency data may be limited to recent periods.
-        data_source: Explicitly specify which vendor to use. Options:
-            - None: Auto-select based on preferences (EODHD preferred for historical)
-            - "alpaca": Force use of Alpaca Market Data API
-            - "eodhd": Force use of EODHD API
-            If specified vendor is not configured, function will raise ValueError.
             
     Returns:
         Dict[str, Any]: Standardized response containing:
@@ -137,13 +132,12 @@ def get_historical_data(symbols: Union[str, List[str]], start_date: Optional[str
         ...     print(f"Latest close: ${latest_bar.close}")
         ...     print(f"Volume: {latest_bar.volume:,}")
         
-        >>> # Get hourly data for multiple stocks using specific vendor
+        >>> # Get hourly data for multiple stocks
         >>> response = get_historical_data(
         ...     ["AAPL", "TSLA"], 
         ...     "2024-01-15", 
         ...     "2024-01-15", 
-        ...     "1Hour",
-        ...     data_source="alpaca"
+        ...     "1Hour"
         ... )
         
     Note:

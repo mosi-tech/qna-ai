@@ -12,7 +12,8 @@ import os
 import sys
 import subprocess
 import tempfile
-import shutil
+import uuid
+    
 from datetime import datetime
 from typing import Dict, Any, Optional
 
@@ -37,24 +38,14 @@ def execute_script(script_content: str, mock_mode: bool = True, timeout: int = 3
     logger.info(f"🚀 Executing script (mock={mock_mode}, timeout={timeout}s)")
     
     try:
-        # Get project root directory - updated path for new structure
-        project_root = "/Users/shivc/Documents/Workspace/JS/qna-ai-admin/backend/mcp-server"
-        
         # Create MCP injection wrapper
         mcp_wrapper = create_mcp_injection_wrapper(production_mode=not mock_mode)
         
-        # No parameter injection needed - pass as command line arguments
+        # Create enhanced script
         enhanced_script = mcp_wrapper + script_content
         
-        # Create temporary file in project directory with predictable name for debugging
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        script_path = os.path.join(project_root, "temp", f"temp_validation_script_{timestamp}.py")
-        
-        # Ensure temp directory exists
-        os.makedirs(os.path.dirname(script_path), exist_ok=True)
-        
-        with open(script_path, 'w') as f:
-            f.write(enhanced_script)
+        # Write temporary script for subprocess execution
+        script_path = _write_temp_script_local(enhanced_script)
         
         # Execute script with parameters as command line arguments
         cmd = [sys.executable, script_path]
@@ -72,76 +63,12 @@ def execute_script(script_content: str, mock_mode: bool = True, timeout: int = 3
             capture_output=True,
             text=True,
             timeout=timeout,
-            cwd=project_root
+            cwd=os.path.dirname(script_path) if os.path.isabs(script_path) else None
         )
 
         execution_time = (datetime.now() - start_time).total_seconds()
         
-        if result.returncode == 0:
-
-            # Subprocess executed without crashing
-            try:
-                # Try to parse as JSON
-                output_data = json.loads(result.stdout)
-                
-                # Check if the script itself reports analysis success/failure
-                script_success = output_data.get("analysis_completed", True)
-                script_error = output_data.get("error", None)
-                
-                if script_success:
-                    logger.info("✅ Script executed successfully")
-                else:
-                    logger.warning(f"❌ Script analysis failed: {script_error}")
-                
-                # In mock mode, validate schema but check script success
-                if mock_mode:
-                    # Validation mode: return script success and include error if present
-                    result_data = {
-                        "success": script_success,
-                        "execution_time": execution_time,
-                        "mock_mode": mock_mode,
-                        "output": output_data
-                    }
-                    if not script_success and script_error:
-                        result_data["success"] = False
-                        result_data["error"] = script_error
-                        result_data["output"] = output_data
-                        # Include error_traceback if present
-                        if "error_traceback" in output_data:
-                            result_data["error_traceback"] = output_data["error_traceback"]
-                    return result_data
-                else:
-                    # Production mode: return script success and full output
-                    return {
-                        "success": script_success,
-                        "output": output_data,
-                        "execution_time": execution_time,
-                        "mock_mode": mock_mode
-                    }
-            except json.JSONDecodeError:
-                # Non-JSON output - treat as failure in validation
-                logger.warning("❌ Script produced non-JSON output")
-                return {
-                    "success": False,
-                    "output": {"raw_output": result.stdout},
-                    "execution_time": execution_time,
-                    "mock_mode": mock_mode,
-                    "error": "Script produced non-JSON output"
-                }
-        else:
-            # Execution failed
-            error_output = result.stderr.strip() or result.stdout.strip()
-            logger.warning(f"❌ Script execution failed: {error_output}")
-            
-            return {
-                "success": False,
-                "error": error_output,
-                "error_type": classify_error(error_output),
-                "execution_time": execution_time,
-                "mock_mode": mock_mode,
-                "full_stderr": result.stderr,
-                "full_stdout": result.stdout
-            }
+        return _process_execution_result(result, execution_time, mock_mode)
                 
     except subprocess.TimeoutExpired:
         logger.error(f"❌ Script execution timed out after {timeout}s")
@@ -158,6 +85,74 @@ def execute_script(script_content: str, mock_mode: bool = True, timeout: int = 3
             "error": str(e),
             "error_type": "ExecutionError",
             "mock_mode": mock_mode
+        }
+
+
+def _process_execution_result(result, execution_time: float, mock_mode: bool) -> Dict[str, Any]:
+    """Process subprocess execution result"""
+    if result.returncode == 0:
+        # Subprocess executed without crashing
+        try:
+            # Try to parse as JSON
+            output_data = json.loads(result.stdout)
+            
+            # Check if the script itself reports analysis success/failure
+            script_success = output_data.get("analysis_completed", True)
+            script_error = output_data.get("error", None)
+            
+            if script_success:
+                logger.info("✅ Script executed successfully")
+            else:
+                logger.warning(f"❌ Script analysis failed: {script_error}")
+            
+            # In mock mode, validate schema but check script success
+            if mock_mode:
+                # Validation mode: return script success and include error if present
+                result_data = {
+                    "success": script_success,
+                    "execution_time": execution_time,
+                    "mock_mode": mock_mode,
+                    "output": output_data
+                }
+                if not script_success and script_error:
+                    result_data["success"] = False
+                    result_data["error"] = script_error
+                    result_data["output"] = output_data
+                    # Include error_traceback if present
+                    if "error_traceback" in output_data:
+                        result_data["error_traceback"] = output_data["error_traceback"]
+                return result_data
+            else:
+                # Production mode: return script success and full output
+                return {
+                    "success": script_success,
+                    "output": output_data,
+                    "execution_time": execution_time,
+                    "mock_mode": mock_mode
+                }
+        except json.JSONDecodeError:
+            # Non-JSON output - treat as failure in validation
+            logger.warning("❌ Script produced non-JSON output")
+            return {
+                "success": False,
+                "output": {"raw_output": result.stdout},
+                "execution_time": execution_time,
+                "mock_mode": mock_mode,
+                "error": "Script produced non-JSON output"
+            }
+    else:
+        # Execution failed
+        error_output = result.stderr.strip() or result.stdout.strip()
+        logger.warning(f"❌ Script execution failed: {error_output}")
+        
+        return {
+            "success": False,
+            "error": error_output,
+            "error_type": classify_error(error_output),
+            "execution_time": execution_time,
+            "mock_mode": mock_mode,
+            "full_stderr": result.stderr,
+            "full_stdout": result.stdout
         }
 
 def classify_error(error_output: str) -> str:
@@ -230,3 +225,82 @@ def get_package_suggestion(forbidden_package: str) -> str:
         'requests': 'Use MCP functions instead of external HTTP requests'
     }
     return suggestions.get(forbidden_package, 'Use approved packages from execution_requirements.txt')
+
+def check_defensive_programming(script_content: str) -> Dict[str, Any]:
+    """Check for forbidden defensive programming patterns - fail fast on first violation"""
+    
+    lines = script_content.split('\n')
+    for i, line in enumerate(lines, 1):
+        line_stripped = line.strip()
+        
+        # Check for assert statements - FAIL FAST
+        if line_stripped.startswith('assert '):
+            return {
+                "valid": False,
+                "error": "Assert statements are forbidden",
+                "error_type": "DefensiveProgrammingError",
+                "line_number": i,
+                "line": line_stripped,
+                "not_allowed": "assert statements",
+                "use_instead": "Direct access that fails with clear KeyError/AttributeError"
+            }
+        
+        # Check for .get() with defaults - FAIL FAST (commented out)
+        # if '.get(' in line and ',' in line:
+        #     return {
+        #         "valid": False,
+        #         "error": "Defensive .get() with defaults is forbidden",
+        #         "error_type": "DefensiveProgrammingError", 
+        #         "line_number": i,
+        #         "line": line_stripped,
+        #         "not_allowed": ".get(key, default) patterns",
+        #         "use_instead": "Direct dict access like data['key'] to fail fast"
+        #     }
+        
+        # Check for defensive if result checks - FAIL FAST (commented out)
+        # if ('if result and result.get' in line or 
+        #     ('if result:' in line and 'get(' in line)):
+        #     return {
+        #         "valid": False,
+        #         "error": "Defensive result checking is forbidden",
+        #         "error_type": "DefensiveProgrammingError",
+        #         "line_number": i, 
+        #         "line": line_stripped,
+        #         "not_allowed": "if result and result.get() patterns",
+        #         "use_instead": "Direct access like result['data'] to fail fast"
+        #     }
+    
+    return {"valid": True}
+
+
+def _write_temp_script_local(enhanced_script: str) -> str:
+    """
+    Write temporary script to local filesystem for subprocess execution
+    This is always local regardless of storage provider since subprocess needs local files
+    """
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    random_suffix = uuid.uuid4().hex[:4]
+    
+    # Create temp file with proper extension
+    fd, script_path = tempfile.mkstemp(
+        suffix=".py",
+        prefix=f"temp_validation_script_{timestamp}_{random_suffix}_"
+    )
+    
+    try:
+        # Write script content
+        with os.fdopen(fd, 'w') as f:
+            f.write(enhanced_script)
+        
+        # Make executable
+        os.chmod(script_path, 0o755)
+        
+        return script_path
+    except Exception:
+        # Clean up on error
+        try:
+            os.unlink(script_path)
+        except OSError:
+            pass
+        raise

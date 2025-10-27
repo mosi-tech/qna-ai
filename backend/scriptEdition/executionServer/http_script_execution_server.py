@@ -21,6 +21,7 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 from shared.execution import execute_script
+from shared.storage import get_storage
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -58,18 +59,18 @@ async def execute_script_endpoint(request: ScriptExecutionRequest) -> ExecutionR
     
     logger.info(f"🚀 Executing script: {request.script_name}")
     
-    # Get scripts directory
-    scripts_dir = os.path.join(os.path.dirname(__file__), "scripts")
-    script_path = os.path.join(scripts_dir, request.script_name)
-    
-    if not os.path.exists(script_path):
+    try:
+        # Read script from storage
+        storage = get_storage()
+        script_content = await storage.read_script(request.script_name)
+    except FileNotFoundError:
         logger.error(f"❌ Script not found: {request.script_name}")
         raise HTTPException(status_code=404, detail=f"Script not found: {request.script_name}")
+    except Exception as e:
+        logger.error(f"❌ Failed to read script from storage: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to read script: {str(e)}")
     
     try:
-        # Read the validated script
-        with open(script_path, 'r') as f:
-            script_content = f.read()
         
         # Execute script in production mode using shared logic
         execution_result = execute_script(
@@ -150,13 +151,6 @@ def display_results_server_side(response: dict, script_name: str):
 async def save_script(request: ScriptContentRequest):
     """Save validated script for execution"""
     
-    # Create scripts directory if it doesn't exist
-    scripts_dir = os.path.join(os.path.dirname(__file__), "scripts")
-    os.makedirs(scripts_dir, exist_ok=True)
-    
-    # Save script
-    script_path = os.path.join(scripts_dir, request.script_name)
-    
     # Add metadata header
     script_header = f'''#!/usr/bin/env python3
 """
@@ -168,18 +162,35 @@ Status: Ready for production execution
 
 '''
     
-    with open(script_path, 'w') as f:
-        f.write(script_header + request.script_content)
+    full_script_content = script_header + request.script_content
     
-    # Make executable
-    os.chmod(script_path, 0o755)
+    # Save script to storage
+    storage = get_storage()
+    metadata = {
+        "script_name": request.script_name,
+        "saved_at": datetime.now().isoformat(),
+        "status": "ready_for_execution",
+        "validated": True
+    }
     
-    logger.info(f"💾 Saved script: {request.script_name}")
+    try:
+        success = await storage.write_script(
+            request.script_name, 
+            full_script_content, 
+            metadata=metadata
+        )
+        
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to save script to storage")
+            
+        logger.info(f"💾 Saved script to storage: {request.script_name}")
+    except Exception as e:
+        logger.error(f"❌ Failed to save script: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to save script: {str(e)}")
     
     return {
         "saved": True,
         "script_name": request.script_name,
-        "script_path": script_path,
         "execute_command": f"curl -X POST http://localhost:8013/execute-script -H 'Content-Type: application/json' -d '{{\"script_name\": \"{request.script_name}\"}}'"
     }
 
@@ -187,25 +198,37 @@ Status: Ready for production execution
 async def list_scripts():
     """List available scripts for execution"""
     
-    scripts_dir = os.path.join(os.path.dirname(__file__), "scripts")
-    
-    if not os.path.exists(scripts_dir):
-        return {"scripts": []}
-    
-    scripts = []
-    for filename in os.listdir(scripts_dir):
-        if filename.endswith('.py'):
-            filepath = os.path.join(scripts_dir, filename)
-            stat = os.stat(filepath)
-            
-            scripts.append({
-                "name": filename,
-                "size": stat.st_size,
-                "modified": datetime.fromtimestamp(stat.st_mtime).isoformat(),
-                "execute_command": f"curl -X POST http://localhost:8013/execute-script -H 'Content-Type: application/json' -d '{{\"script_name\": \"{filename}\"}}'"
-            })
-    
-    return {"scripts": scripts}
+    try:
+        storage = get_storage()
+        script_names = await storage.list_scripts()
+        
+        scripts = []
+        for script_name in script_names:
+            try:
+                metadata = await storage.get_script_metadata(script_name)
+                if metadata:
+                    scripts.append({
+                        "name": script_name,
+                        "size": metadata.get("size", 0),
+                        "modified": metadata.get("modified", "unknown"),
+                        "status": metadata.get("status", "unknown"),
+                        "execute_command": f"curl -X POST http://localhost:8013/execute-script -H 'Content-Type: application/json' -d '{{\"script_name\": \"{script_name}\"}}'"
+                    })
+            except Exception as e:
+                logger.warning(f"Failed to get metadata for {script_name}: {e}")
+                scripts.append({
+                    "name": script_name,
+                    "size": 0,
+                    "modified": "unknown",
+                    "status": "unknown",
+                    "execute_command": f"curl -X POST http://localhost:8013/execute-script -H 'Content-Type: application/json' -d '{{\"script_name\": \"{script_name}\"}}'"
+                })
+        
+        return {"scripts": scripts}
+        
+    except Exception as e:
+        logger.error(f"❌ Failed to list scripts: {e}")
+        return {"scripts": [], "error": str(e)}
 
 @app.get("/health")
 async def health_check():
