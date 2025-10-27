@@ -10,7 +10,7 @@ import numpy as np
 from datetime import datetime, timedelta
 
 # Import functions to test
-try:
+
     from ..indicators import (
         calculate_ad,
         calculate_adosc,
@@ -56,7 +56,7 @@ class TestBasicVolumeIndicators(unittest.TestCase):
 
     def test_calculate_obv(self):
         """Test On-Balance Volume calculation"""
-        try:
+        
             result = calculate_obv(
                 close=self.ohlcv_df['close'],
                 volume=self.ohlcv_df['volume']
@@ -65,12 +65,12 @@ class TestBasicVolumeIndicators(unittest.TestCase):
             self.assertIsInstance(result, (pd.Series, dict))
             print("✅ OBV calculation passed")
             
-        except Exception as e:
+        :
             print(f"⚠️ OBV: {e}")
 
     def test_calculate_ad(self):
         """Test Accumulation/Distribution indicator"""
-        try:
+        
             result = calculate_ad(
                 high=self.ohlcv_df['high'],
                 low=self.ohlcv_df['low'],
@@ -81,12 +81,12 @@ class TestBasicVolumeIndicators(unittest.TestCase):
             self.assertIsInstance(result, (pd.Series, dict))
             print("✅ A/D indicator passed")
             
-        except Exception as e:
+        :
             print(f"⚠️ A/D: {e}")
 
     def test_calculate_vpt(self):
         """Test Volume Price Trend calculation"""
-        try:
+        
             result = calculate_vpt(
                 close=self.ohlcv_df['close'],
                 volume=self.ohlcv_df['volume']
@@ -95,12 +95,12 @@ class TestBasicVolumeIndicators(unittest.TestCase):
             self.assertIsInstance(result, (pd.Series, dict))
             print("✅ VPT calculation passed")
             
-        except Exception as e:
+        :
             print(f"⚠️ VPT: {e}")
 
     def test_calculate_volume_sma(self):
         """Test Volume SMA calculation"""
-        try:
+        
             result = calculate_volume_sma(
                 volume=self.ohlcv_df['volume'],
                 period=20
@@ -109,7 +109,7 @@ class TestBasicVolumeIndicators(unittest.TestCase):
             self.assertIsInstance(result, (pd.Series, dict))
             print("✅ Volume SMA calculation passed")
             
-        except Exception as e:
+        :
             print(f"⚠️ Volume SMA: {e}")
 
 
@@ -135,7 +135,7 @@ class TestMoneyFlowIndicators(unittest.TestCase):
 
     def test_calculate_mfi(self):
         """Test Money Flow Index calculation"""
-        try:
+        
             result = calculate_mfi(
                 high=self.ohlcv_df['high'],
                 low=self.ohlcv_df['low'],
@@ -147,12 +147,12 @@ class TestMoneyFlowIndicators(unittest.TestCase):
             self.assertIsInstance(result, (pd.Series, dict))
             print("✅ MFI calculation passed")
             
-        except Exception as e:
+        :
             print(f"⚠️ MFI: {e}")
 
     def test_calculate_cmf(self):
         """Test Chaikin Money Flow calculation"""
-        try:
+        
             result = calculate_cmf(
                 high=self.ohlcv_df['high'],
                 low=self.ohlcv_df['low'],
@@ -164,12 +164,12 @@ class TestMoneyFlowIndicators(unittest.TestCase):
             self.assertIsInstance(result, (pd.Series, dict))
             print("✅ CMF calculation passed")
             
-        except Exception as e:
+        :
             print(f"⚠️ CMF: {e}")
 
     def test_calculate_adosc(self):
         """Test Chaikin A/D Oscillator calculation"""
-        try:
+        
             result = calculate_adosc(
                 high=self.ohlcv_df['high'],
                 low=self.ohlcv_df['low'],
@@ -182,7 +182,7 @@ class TestMoneyFlowIndicators(unittest.TestCase):
             self.assertIsInstance(result, (pd.Series, dict))
             print("✅ A/D Oscillator calculation passed")
             
-        except Exception as e:
+        :
             print(f"⚠️ A/D Oscillator: {e}")
 
 
@@ -196,7 +196,7 @@ class TestVolumeIndicatorsEdgeCases(unittest.TestCase):
 
     def test_zero_volume(self):
         """Test with zero volume"""
-        try:
+        
             close = pd.Series([100, 101, 102, 101, 100], index=self.dates[:5])
             volume = pd.Series([0, 0, 0, 0, 0], index=self.dates[:5])
             
@@ -205,12 +205,12 @@ class TestVolumeIndicatorsEdgeCases(unittest.TestCase):
             self.assertIsInstance(result, (pd.Series, dict))
             print("✅ Zero volume handled")
             
-        except Exception as e:
+        :
             print(f"⚠️ Zero volume: {e}")
 
     def test_constant_volume(self):
         """Test with constant volume"""
-        try:
+        
             close = pd.Series(
                 100 * (1 + np.cumsum(np.random.normal(0.0005, 0.02, 50))),
                 index=self.dates
@@ -222,12 +222,12 @@ class TestVolumeIndicatorsEdgeCases(unittest.TestCase):
             self.assertIsInstance(result, (pd.Series, dict))
             print("✅ Constant volume handled")
             
-        except Exception as e:
+        :
             print(f"⚠️ Constant volume: {e}")
 
     def test_high_volume_spike(self):
         """Test with volume spikes"""
-        try:
+        
             close = pd.Series(
                 100 * (1 + np.cumsum(np.random.normal(0.0005, 0.02, 50))),
                 index=self.dates
@@ -241,12 +241,12 @@ class TestVolumeIndicatorsEdgeCases(unittest.TestCase):
             self.assertIsInstance(result, (pd.Series, dict))
             print("✅ Volume spikes handled")
             
-        except Exception as e:
+        :
             print(f"⚠️ Volume spikes: {e}")
 
     def test_mfi_edge_case(self):
         """Test MFI with extreme price movements"""
-        try:
+        
             high = pd.Series([102, 105, 110, 108, 106], index=self.dates[:5])
             low = pd.Series([98, 101, 105, 103, 101], index=self.dates[:5])
             close = pd.Series([100, 103, 108, 105, 103], index=self.dates[:5])
@@ -257,12 +257,12 @@ class TestVolumeIndicatorsEdgeCases(unittest.TestCase):
             self.assertIsInstance(result, (pd.Series, dict))
             print("✅ MFI with extreme movements handled")
             
-        except Exception as e:
+        :
             print(f"⚠️ MFI extreme movements: {e}")
 
     def test_cmf_continuous_up(self):
         """Test CMF with continuous uptrend"""
-        try:
+        
             high = pd.Series([101, 102, 103, 104, 105], index=self.dates[:5])
             low = pd.Series([99, 100, 101, 102, 103], index=self.dates[:5])
             close = pd.Series([100, 101, 102, 103, 104], index=self.dates[:5])
@@ -273,12 +273,12 @@ class TestVolumeIndicatorsEdgeCases(unittest.TestCase):
             self.assertIsInstance(result, (pd.Series, dict))
             print("✅ CMF uptrend handled")
             
-        except Exception as e:
+        :
             print(f"⚠️ CMF uptrend: {e}")
 
     def test_adosc_different_periods(self):
         """Test A/D Oscillator with different fast/slow periods"""
-        try:
+        
             high = pd.Series(
                 100 * (1 + np.cumsum(np.abs(np.random.normal(0, 0.005, 50)))),
                 index=self.dates
@@ -299,7 +299,7 @@ class TestVolumeIndicatorsEdgeCases(unittest.TestCase):
             self.assertIsInstance(result, (pd.Series, dict))
             print("✅ A/D Oscillator different periods handled")
             
-        except Exception as e:
+        :
             print(f"⚠️ A/D Oscillator periods: {e}")
 
 

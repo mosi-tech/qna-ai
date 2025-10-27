@@ -11,7 +11,7 @@ import numpy as np
 from datetime import datetime, timedelta
 
 # Import functions to test
-try:
+
     from ..metrics import (
         calculate_trend_strength,
         calculate_market_stress,
@@ -56,20 +56,20 @@ class TestTrendAnalysis(unittest.TestCase):
 
     def test_calculate_trend_strength(self):
         """Test trend strength calculation"""
-        try:
+        
             result = calculate_trend_strength(self.prices)
             self.assertIsInstance(result, (dict, float, int))
             print("✅ Trend strength passed")
-        except Exception as e:
+        :
             print(f"⚠️ Trend strength: {e}")
 
     def test_detect_market_regime(self):
         """Test market regime detection"""
-        try:
+        
             result = detect_market_regime(self.returns)
             self.assertIsInstance(result, (dict, str))
             print("✅ Market regime detection passed")
-        except Exception as e:
+        :
             print(f"⚠️ Market regime: {e}")
 
 
@@ -92,20 +92,20 @@ class TestMarketStress(unittest.TestCase):
 
     def test_calculate_market_stress(self):
         """Test market stress calculation"""
-        try:
+        
             result = calculate_market_stress(self.returns_df)
             self.assertIsInstance(result, (dict, float, int))
             print("✅ Market stress passed")
-        except Exception as e:
+        :
             print(f"⚠️ Market stress: {e}")
 
     def test_calculate_market_breadth(self):
         """Test market breadth calculation"""
-        try:
+        
             result = calculate_market_breadth(self.returns_df)
             self.assertIsInstance(result, (dict, float, int, list))
             print("✅ Market breadth passed")
-        except Exception as e:
+        :
             print(f"⚠️ Market breadth: {e}")
 
 
@@ -124,20 +124,20 @@ class TestMarketCrisis(unittest.TestCase):
 
     def test_detect_crisis_periods(self):
         """Test crisis period detection"""
-        try:
+        
             result = detect_crisis_periods(self.returns)
             self.assertIsInstance(result, (dict, list, pd.DataFrame))
             print("✅ Crisis detection passed")
-        except Exception as e:
+        :
             print(f"⚠️ Crisis detection: {e}")
 
     def test_detect_structural_breaks(self):
         """Test structural break detection"""
-        try:
+        
             result = detect_structural_breaks(self.returns)
             self.assertIsInstance(result, (dict, list, pd.DataFrame))
             print("✅ Structural breaks passed")
-        except Exception as e:
+        :
             print(f"⚠️ Structural breaks: {e}")
 
 
@@ -154,11 +154,11 @@ class TestVolatilityAnalysis(unittest.TestCase):
 
     def test_analyze_volatility_clustering(self):
         """Test volatility clustering analysis"""
-        try:
+        
             result = analyze_volatility_clustering(self.returns)
             self.assertIsInstance(result, (dict, float, int))
             print("✅ Volatility clustering passed")
-        except Exception as e:
+        :
             print(f"⚠️ Volatility clustering: {e}")
 
 
@@ -175,29 +175,29 @@ class TestSeasonality(unittest.TestCase):
 
     def test_analyze_seasonality(self):
         """Test seasonality analysis"""
-        try:
+        
             result = analyze_seasonality(self.returns)
             self.assertIsInstance(result, (dict, pd.DataFrame))
             print("✅ Seasonality analysis passed")
-        except Exception as e:
+        :
             print(f"⚠️ Seasonality: {e}")
 
     def test_analyze_weekday_performance(self):
         """Test weekday performance analysis"""
-        try:
+        
             result = analyze_weekday_performance(self.returns)
             self.assertIsInstance(result, (dict, pd.DataFrame))
             print("✅ Weekday performance passed")
-        except Exception as e:
+        :
             print(f"⚠️ Weekday performance: {e}")
 
     def test_analyze_monthly_performance(self):
         """Test monthly performance analysis"""
-        try:
+        
             result = analyze_monthly_performance(self.returns)
             self.assertIsInstance(result, (dict, pd.DataFrame))
             print("✅ Monthly performance passed")
-        except Exception as e:
+        :
             print(f"⚠️ Monthly performance: {e}")
 
 
@@ -216,14 +216,14 @@ class TestCryptoMetrics(unittest.TestCase):
 
     def test_calculate_crypto_metrics(self):
         """Test crypto metrics calculation"""
-        try:
+        
             result = calculate_crypto_metrics(
                 prices=self.prices,
                 volume=self.volume
             )
             self.assertIsInstance(result, dict)
             print("✅ Crypto metrics passed")
-        except Exception as e:
+        :
             print(f"⚠️ Crypto metrics: {e}")
 
 
@@ -237,32 +237,32 @@ class TestMarketEdgeCases(unittest.TestCase):
 
     def test_short_time_series(self):
         """Test with short time series"""
-        try:
+        
             returns = pd.Series(np.random.normal(0.0008, 0.02, 20), index=self.dates[:20])
             result = calculate_trend_strength(returns)
             self.assertIsInstance(result, (dict, float, int))
             print("✅ Short time series handled")
-        except Exception as e:
+        :
             print(f"⚠️ Short time series: {e}")
 
     def test_constant_returns(self):
         """Test with constant returns (zero volatility)"""
-        try:
+        
             returns = pd.Series([0.001] * 100, index=self.dates)
             result = calculate_market_stress(returns.to_frame())
             self.assertIsInstance(result, (dict, float, int))
             print("✅ Constant returns handled")
-        except Exception as e:
+        :
             print(f"⚠️ Constant returns: {e}")
 
     def test_extreme_volatility(self):
         """Test with extreme volatility"""
-        try:
+        
             returns = pd.Series(np.random.normal(0, 0.1, 100), index=self.dates)
             result = analyze_volatility_clustering(returns)
             self.assertIsInstance(result, (dict, float, int))
             print("✅ Extreme volatility handled")
-        except Exception as e:
+        :
             print(f"⚠️ Extreme volatility: {e}")
 
 

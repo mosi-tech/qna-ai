@@ -8,6 +8,7 @@ Integrates with the routes.py and provides queue management capabilities.
 
 import os
 import logging
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 from motor.motor_asyncio import AsyncIOMotorClient
 
@@ -62,9 +63,7 @@ class ExecutionQueueService:
         analysis_id: str,
         session_id: str,
         user_id: str,
-        script_content: str,
-        script_name: str,
-        parameters: Optional[Dict[str, Any]] = None,
+        execution_params: Optional[Dict[str, Any]] = None,
         priority: int = 2,
         timeout_seconds: int = 300
     ) -> bool:
@@ -76,9 +75,7 @@ class ExecutionQueueService:
             analysis_id: Related analysis ID
             session_id: User session ID
             user_id: User identifier
-            script_content: Python script to execute
-            script_name: Name/filename of the script
-            parameters: Optional execution parameters
+            execution_params: Optional execution parameters
             priority: Execution priority (1=high, 2=normal, 3=low)
             timeout_seconds: Execution timeout
             
@@ -94,14 +91,12 @@ class ExecutionQueueService:
                 "analysis_id": analysis_id,
                 "session_id": session_id,
                 "user_id": user_id,
-                "script_content": script_content,
-                "script_name": script_name,
-                "parameters": parameters or {},
+                "execution_params": execution_params or {},
                 "priority": priority,
                 "timeout_seconds": timeout_seconds,
                 "metadata": {
                     "source": "api_server",
-                    "enqueued_at": "datetime.utcnow()"
+                    "enqueued_at": datetime.now(timezone.utc)
                 }
             }
             

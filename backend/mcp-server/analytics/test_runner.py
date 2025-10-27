@@ -16,7 +16,7 @@ def test_empyrical_functions():
     """Test that empyrical functions work correctly"""
     print("🧪 Testing empyrical function fixes...")
     
-    try:
+    
         import empyrical
         
         # Create sample data
@@ -57,7 +57,7 @@ def test_empyrical_functions():
         
         return True
         
-    except Exception as e:
+    :
         print(f"❌ Empyrical function test failed: {e}")
         return False
 
@@ -65,15 +65,15 @@ def test_basic_portfolio_functions():
     """Test basic portfolio function imports"""
     print("\n🧪 Testing portfolio function imports...")
     
-    try:
+    
         # Test relative imports by changing directory
         original_dir = os.getcwd()
         os.chdir(os.path.join(os.path.dirname(__file__), 'portfolio'))
         
-        try:
+        
             from metrics import calculate_portfolio_metrics
             print("✅ calculate_portfolio_metrics import successful")
-        except Exception as e:
+        :
             print(f"❌ Portfolio metrics import failed: {e}")
             return False
         finally:
@@ -81,7 +81,7 @@ def test_basic_portfolio_functions():
         
         return True
         
-    except Exception as e:
+    :
         print(f"❌ Portfolio function test failed: {e}")
         return False
 
@@ -89,15 +89,15 @@ def test_basic_performance_functions():
     """Test basic performance function imports"""
     print("\n🧪 Testing performance function imports...")
     
-    try:
+    
         # Test relative imports by changing directory
         original_dir = os.getcwd()
         os.chdir(os.path.join(os.path.dirname(__file__), 'performance'))
         
-        try:
+        
             from metrics import calculate_returns_metrics
             print("✅ calculate_returns_metrics import successful")
-        except Exception as e:
+        :
             print(f"❌ Performance metrics import failed: {e}")
             return False
         finally:
@@ -105,7 +105,7 @@ def test_basic_performance_functions():
         
         return True
         
-    except Exception as e:
+    :
         print(f"❌ Performance function test failed: {e}")
         return False
 
@@ -113,7 +113,7 @@ def test_basic_calculations():
     """Test basic calculations with sample data"""
     print("\n🧪 Testing basic calculations...")
     
-    try:
+    
         # Create sample data
         np.random.seed(42)
         dates = pd.date_range(start='2023-01-01', end='2023-12-31', freq='D')
@@ -145,7 +145,7 @@ def test_basic_calculations():
         
         return True
         
-    except Exception as e:
+    :
         print(f"❌ Basic calculations test failed: {e}")
         return False
 

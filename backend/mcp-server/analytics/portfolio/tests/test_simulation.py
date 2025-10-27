@@ -33,7 +33,7 @@ class TestDCAStrategy(unittest.TestCase):
 
     def test_simulate_dca_strategy_basic(self):
         """Test basic DCA strategy simulation"""
-        try:
+        
             result = simulate_dca_strategy(
                 prices=self.prices_series,
                 investment_amount=1000,
@@ -55,12 +55,12 @@ class TestDCAStrategy(unittest.TestCase):
             
             print("✅ DCA strategy simulation passed")
             
-        except Exception as e:
+        :
             self.fail(f"simulate_dca_strategy failed: {e}")
 
     def test_simulate_dca_strategy_weekly(self):
         """Test DCA strategy with weekly frequency"""
-        try:
+        
             result = simulate_dca_strategy(
                 prices=self.prices_series,
                 investment_amount=500,
@@ -77,12 +77,12 @@ class TestDCAStrategy(unittest.TestCase):
             
             print("✅ DCA strategy with weekly frequency passed")
             
-        except Exception as e:
+        :
             self.fail(f"DCA weekly frequency failed: {e}")
 
     def test_simulate_dca_strategy_daily(self):
         """Test DCA with daily frequency"""
-        try:
+        
             result = simulate_dca_strategy(
                 prices=self.prices_series,
                 investment_amount=50,
@@ -93,12 +93,12 @@ class TestDCAStrategy(unittest.TestCase):
             
             print("✅ DCA with daily frequency passed")
             
-        except Exception as e:
+        :
             self.fail(f"DCA daily frequency failed: {e}")
 
     def test_simulate_dca_with_date_range(self):
         """Test DCA with custom date range"""
-        try:
+        
             result = simulate_dca_strategy(
                 prices=self.prices_series,
                 investment_amount=1000,
@@ -111,7 +111,7 @@ class TestDCAStrategy(unittest.TestCase):
             
             print("✅ DCA with date range passed")
             
-        except Exception as e:
+        :
             self.fail(f"DCA with date range failed: {e}")
 
 
@@ -134,7 +134,7 @@ class TestBacktestStrategy(unittest.TestCase):
 
     def test_backtest_static_weights(self):
         """Test backtest with static weights"""
-        try:
+        
             weights = {'SPY': 0.6, 'AGG': 0.4}
             
             result = backtest_strategy(
@@ -157,12 +157,12 @@ class TestBacktestStrategy(unittest.TestCase):
             
             print("✅ Static weights backtest passed")
             
-        except Exception as e:
+        :
             self.fail(f"backtest_strategy static weights failed: {e}")
 
     def test_backtest_time_varying_weights(self):
         """Test backtest with time-varying weights"""
-        try:
+        
             # Create time-varying weights that change monthly
             weights_data = {}
             dates = pd.date_range('2023-01-01', periods=252, freq='D')
@@ -186,12 +186,12 @@ class TestBacktestStrategy(unittest.TestCase):
             
             print("✅ Time-varying weights backtest passed")
             
-        except Exception as e:
+        :
             self.fail(f"backtest time-varying weights failed: {e}")
 
     def test_backtest_quarterly_rebalance(self):
         """Test backtest with quarterly rebalancing"""
-        try:
+        
             weights = {'SPY': 0.6, 'AGG': 0.4}
             
             result = backtest_strategy(
@@ -204,12 +204,12 @@ class TestBacktestStrategy(unittest.TestCase):
             
             print("✅ Quarterly rebalancing backtest passed")
             
-        except Exception as e:
+        :
             self.fail(f"backtest quarterly rebalance failed: {e}")
 
     def test_backtest_with_transaction_cost(self):
         """Test backtest with transaction costs"""
-        try:
+        
             weights = {'SPY': 0.6, 'AGG': 0.4}
             
             result = backtest_strategy(
@@ -227,7 +227,7 @@ class TestBacktestStrategy(unittest.TestCase):
             
             print("✅ Backtest with transaction costs passed")
             
-        except Exception as e:
+        :
             self.fail(f"backtest with transaction costs failed: {e}")
 
 
@@ -248,7 +248,7 @@ class TestMonteCarloSimulation(unittest.TestCase):
 
     def test_monte_carlo_basic(self):
         """Test basic Monte Carlo simulation"""
-        try:
+        
             result = monte_carlo_simulation(
                 expected_returns=self.expected_returns,
                 covariance_matrix=self.covariance_matrix,
@@ -275,12 +275,12 @@ class TestMonteCarloSimulation(unittest.TestCase):
             
             print("✅ Monte Carlo basic simulation passed")
             
-        except Exception as e:
+        :
             self.fail(f"monte_carlo_simulation basic failed: {e}")
 
     def test_monte_carlo_with_dict_weights(self):
         """Test Monte Carlo with dictionary weights"""
-        try:
+        
             result = monte_carlo_simulation(
                 expected_returns=self.expected_returns,
                 covariance_matrix=self.covariance_matrix,
@@ -293,12 +293,12 @@ class TestMonteCarloSimulation(unittest.TestCase):
             
             print("✅ Monte Carlo with dict weights passed")
             
-        except Exception as e:
+        :
             self.fail(f"monte_carlo with dict weights failed: {e}")
 
     def test_monte_carlo_long_horizon(self):
         """Test Monte Carlo with longer time horizon"""
-        try:
+        
             result = monte_carlo_simulation(
                 expected_returns=self.expected_returns,
                 covariance_matrix=self.covariance_matrix,
@@ -315,12 +315,12 @@ class TestMonteCarloSimulation(unittest.TestCase):
             
             print("✅ Monte Carlo with long horizon passed")
             
-        except Exception as e:
+        :
             self.fail(f"monte_carlo long horizon failed: {e}")
 
     def test_monte_carlo_high_initial_value(self):
         """Test Monte Carlo with higher initial portfolio value"""
-        try:
+        
             result = monte_carlo_simulation(
                 expected_returns=self.expected_returns,
                 covariance_matrix=self.covariance_matrix,
@@ -338,12 +338,12 @@ class TestMonteCarloSimulation(unittest.TestCase):
             
             print("✅ Monte Carlo with high initial value passed")
             
-        except Exception as e:
+        :
             self.fail(f"monte_carlo high initial value failed: {e}")
 
     def test_monte_carlo_many_simulations(self):
         """Test Monte Carlo with larger simulation count"""
-        try:
+        
             result = monte_carlo_simulation(
                 expected_returns=self.expected_returns,
                 covariance_matrix=self.covariance_matrix,
@@ -360,7 +360,7 @@ class TestMonteCarloSimulation(unittest.TestCase):
             
             print("✅ Monte Carlo with 500 simulations passed")
             
-        except Exception as e:
+        :
             self.fail(f"monte_carlo many simulations failed: {e}")
 
 
@@ -374,7 +374,7 @@ class TestSimulationEdgeCases(unittest.TestCase):
 
     def test_dca_short_period(self):
         """Test DCA with short price history"""
-        try:
+        
             short_dates = pd.date_range('2023-01-01', periods=30, freq='D')
             prices = pd.Series(
                 100 * (1 + np.cumsum(np.random.normal(0.001, 0.02, 30))),
@@ -390,12 +390,12 @@ class TestSimulationEdgeCases(unittest.TestCase):
             self.assertIsInstance(result, dict)
             print("✅ DCA with short period handled")
             
-        except Exception as e:
+        :
             print(f"⚠️ DCA short period: {e}")
 
     def test_backtest_all_same_weight(self):
         """Test backtest with equal weight portfolio"""
-        try:
+        
             dates = pd.date_range('2023-01-01', periods=100, freq='D')
             prices_df = pd.DataFrame({
                 'A': 100 * (1 + np.cumsum(np.random.normal(0.001, 0.02, 100))),
@@ -413,12 +413,12 @@ class TestSimulationEdgeCases(unittest.TestCase):
             self.assertIsInstance(result, dict)
             print("✅ Equal weight backtest handled")
             
-        except Exception as e:
+        :
             print(f"⚠️ Equal weight backtest: {e}")
 
     def test_monte_carlo_low_volatility(self):
         """Test Monte Carlo with low volatility assets"""
-        try:
+        
             # Low volatility covariance matrix
             low_vol_cov = np.array([
                 [0.0001, 0.00005],
@@ -436,12 +436,12 @@ class TestSimulationEdgeCases(unittest.TestCase):
             self.assertIsInstance(result, dict)
             print("✅ Low volatility Monte Carlo handled")
             
-        except Exception as e:
+        :
             print(f"⚠️ Low volatility Monte Carlo: {e}")
 
     def test_monte_carlo_high_volatility(self):
         """Test Monte Carlo with high volatility assets"""
-        try:
+        
             # High volatility covariance matrix
             high_vol_cov = np.array([
                 [0.09, 0.02],
@@ -459,12 +459,12 @@ class TestSimulationEdgeCases(unittest.TestCase):
             self.assertIsInstance(result, dict)
             print("✅ High volatility Monte Carlo handled")
             
-        except Exception as e:
+        :
             print(f"⚠️ High volatility Monte Carlo: {e}")
 
     def test_monte_carlo_negative_correlation(self):
         """Test Monte Carlo with negatively correlated assets"""
-        try:
+        
             # Negative correlation matrix (hedging)
             neg_corr_cov = np.array([
                 [0.0064, -0.003],  # Negative covariance
@@ -482,7 +482,7 @@ class TestSimulationEdgeCases(unittest.TestCase):
             self.assertIsInstance(result, dict)
             print("✅ Negative correlation Monte Carlo handled")
             
-        except Exception as e:
+        :
             print(f"⚠️ Negative correlation: {e}")
 
 

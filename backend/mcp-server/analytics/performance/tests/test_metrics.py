@@ -65,7 +65,7 @@ class TestPerformanceMetrics(unittest.TestCase):
 
     def test_calculate_returns_metrics(self):
         """Test basic returns metrics calculation"""
-        try:
+        
             result = calculate_returns_metrics(self.returns)
             
             # Check that result is a dictionary
@@ -89,12 +89,12 @@ class TestPerformanceMetrics(unittest.TestCase):
             
             print(f"✅ Returns metrics test passed: {len(required_keys)} metrics calculated")
             
-        except Exception as e:
+        :
             self.fail(f"calculate_returns_metrics failed with error: {e}")
 
     def test_calculate_risk_metrics(self):
         """Test risk metrics calculation"""
-        try:
+        
             result = calculate_risk_metrics(
                 returns=self.returns,
                 risk_free_rate=0.02
@@ -120,12 +120,12 @@ class TestPerformanceMetrics(unittest.TestCase):
             
             print(f"✅ Risk metrics test passed")
             
-        except Exception as e:
+        :
             self.fail(f"Risk metrics calculation failed: {e}")
 
     def test_calculate_benchmark_comparison(self):
         """Test benchmark comparison metrics"""
-        try:
+        
             result = calculate_benchmark_metrics(
                 returns=self.returns,
                 benchmark_returns=self.benchmark_returns,
@@ -150,12 +150,12 @@ class TestPerformanceMetrics(unittest.TestCase):
             
             print(f"✅ Benchmark comparison test passed")
             
-        except Exception as e:
+        :
             self.fail(f"Benchmark comparison failed: {e}")
 
     def test_calculate_drawdown_analysis(self):
         """Test drawdown analysis"""
-        try:
+        
             result = calculate_drawdown_analysis(self.returns)
             
             # Check basic structure
@@ -174,12 +174,12 @@ class TestPerformanceMetrics(unittest.TestCase):
             
             print(f"✅ Drawdown analysis test passed")
             
-        except Exception as e:
+        :
             self.fail(f"Drawdown analysis failed: {e}")
 
     def test_calculate_additional_metrics(self):
         """Test additional performance metrics"""
-        try:
+        
             # Test win rate
             win_rate = calculate_win_rate(self.returns)
             self.assertIsInstance(win_rate, float)
@@ -198,12 +198,12 @@ class TestPerformanceMetrics(unittest.TestCase):
             
             print(f"✅ Additional metrics tests passed")
             
-        except Exception as e:
+        :
             self.fail(f"Additional metrics failed: {e}")
 
     def test_calculate_downside_deviation(self):
         """Test downside deviation calculation"""
-        try:
+        
             result = calculate_downside_deviation(
                 returns=self.returns,
                 target_return=0.0
@@ -215,12 +215,12 @@ class TestPerformanceMetrics(unittest.TestCase):
             
             print(f"✅ Downside deviation test passed")
             
-        except Exception as e:
+        :
             self.fail(f"Downside deviation calculation failed: {e}")
 
     def test_capture_ratios(self):
         """Test upside and downside capture ratios"""
-        try:
+        
             # Test upside capture
             result_up = calculate_upside_capture(
                 returns=self.returns,
@@ -239,12 +239,12 @@ class TestPerformanceMetrics(unittest.TestCase):
             
             print(f"✅ Capture ratios tests passed")
             
-        except Exception as e:
+        :
             self.fail(f"Capture ratios calculation failed: {e}")
 
     def test_advanced_ratios(self):
         """Test advanced performance ratios"""
-        try:
+        
             # Test Calmar ratio
             result_calmar = calculate_calmar_ratio(self.returns)
             
@@ -262,14 +262,14 @@ class TestPerformanceMetrics(unittest.TestCase):
             
             print(f"✅ Advanced ratios tests passed")
             
-        except Exception as e:
+        :
             self.fail(f"Advanced ratios calculation failed: {e}")
 
     def test_edge_cases(self):
         """Test edge cases and error handling"""
         
         # Test with all zero returns
-        try:
+        
             zero_returns = pd.Series([0.0] * 100, name='zero_returns')
             result = calculate_returns_metrics(zero_returns)
             # Should handle gracefully
@@ -278,7 +278,7 @@ class TestPerformanceMetrics(unittest.TestCase):
             pass  # Expected to fail or handle gracefully
         
         # Test with very short series
-        try:
+        
             short_returns = self.returns.head(5)
             result = calculate_risk_metrics(short_returns)
             print("✅ Short series edge case handled")
@@ -286,7 +286,7 @@ class TestPerformanceMetrics(unittest.TestCase):
             pass  # Expected to fail or handle gracefully
         
         # Test with NaN values
-        try:
+        
             nan_returns = self.returns.copy()
             nan_returns.iloc[10:20] = np.nan
             result = calculate_returns_metrics(nan_returns)
@@ -298,27 +298,27 @@ class TestPerformanceMetrics(unittest.TestCase):
         """Test data validation functionality"""
         
         # Test with non-pandas input
-        try:
+        
             list_returns = self.returns.tolist()
             result = calculate_returns_metrics(list_returns)
             print("✅ List input handled")
-        except Exception as e:
+        :
             print(f"⚠️ List input handling: {e}")
         
         # Test with mismatched indices
-        try:
+        
             mismatched_benchmark = self.benchmark_returns.iloc[10:]
             result = calculate_benchmark_metrics(
                 returns=self.returns,
                 benchmark_returns=mismatched_benchmark
             )
             print("✅ Mismatched indices handled")
-        except Exception as e:
+        :
             print(f"⚠️ Mismatched indices handling: {e}")
 
     def test_best_worst_periods(self):
         """Test best and worst periods calculation"""
-        try:
+        
             result = calculate_best_worst_periods(self.returns, window_size=30)
             
             self.assertIsInstance(result, dict)
@@ -326,12 +326,12 @@ class TestPerformanceMetrics(unittest.TestCase):
             
             print("✅ Best/worst periods test passed")
             
-        except Exception as e:
+        :
             self.fail(f"Best/worst periods calculation failed: {e}")
 
     def test_dividend_yield(self):
         """Test dividend yield calculation"""
-        try:
+        
             dividends = [2.0, 2.1, 2.2, 2.3]  # Quarterly dividends
             price = 100.0
             
@@ -341,12 +341,12 @@ class TestPerformanceMetrics(unittest.TestCase):
             
             print("✅ Dividend yield test passed")
             
-        except Exception as e:
+        :
             self.fail(f"Dividend yield calculation failed: {e}")
 
     def test_total_return(self):
         """Test total return calculation"""
-        try:
+        
             start_price = 100.0
             end_price = 120.0
             dividends = [1.0, 1.0, 1.0, 1.0]  # $4 total dividends
@@ -360,12 +360,12 @@ class TestPerformanceMetrics(unittest.TestCase):
             
             print("✅ Total return test passed")
             
-        except Exception as e:
+        :
             self.fail(f"Total return calculation failed: {e}")
 
     def test_annualized_return(self):
         """Test annualized return calculation"""
-        try:
+        
             # Calculate annualized return from prices with 252 trading days per year
             result = calculate_annualized_return(
                 prices=self.prices,
@@ -378,12 +378,12 @@ class TestPerformanceMetrics(unittest.TestCase):
             
             print("✅ Annualized return test passed")
             
-        except Exception as e:
+        :
             print(f"⚠️ Annualized return: {e}")
 
     def test_annualized_volatility(self):
         """Test annualized volatility calculation"""
-        try:
+        
             # Calculate annualized volatility from returns
             result = calculate_annualized_volatility(
                 returns=self.returns,
@@ -396,12 +396,12 @@ class TestPerformanceMetrics(unittest.TestCase):
             
             print("✅ Annualized volatility test passed")
             
-        except Exception as e:
+        :
             print(f"⚠️ Annualized volatility: {e}")
 
     def test_cagr(self):
         """Test CAGR (Compound Annual Growth Rate) calculation"""
-        try:
+        
             # Calculate CAGR from start to end price over 1 year
             start_price = self.prices.iloc[0]
             end_price = self.prices.iloc[-1]
@@ -419,12 +419,12 @@ class TestPerformanceMetrics(unittest.TestCase):
             
             print("✅ CAGR test passed")
             
-        except Exception as e:
+        :
             print(f"⚠️ CAGR: {e}")
 
     def test_leverage_fund_analysis(self):
         """Test leveraged fund analysis"""
-        try:
+        
             # Create leveraged fund price data (more volatile)
             leveraged_returns = self.returns * 2  # 2x leverage
             leveraged_prices = 100 * (1 + leveraged_returns).cumprod()
@@ -440,12 +440,12 @@ class TestPerformanceMetrics(unittest.TestCase):
             
             print("✅ Leverage fund analysis test passed")
             
-        except Exception as e:
+        :
             self.fail(f"Leverage fund analysis failed: {e}")
 
     def test_empyrical_integration(self):
         """Test that empyrical library functions are working correctly"""
-        try:
+        
             import empyrical
             
             # Test that empyrical functions don't throw errors
@@ -469,7 +469,7 @@ class TestPerformanceMetrics(unittest.TestCase):
             
             print("✅ Empyrical integration test passed")
             
-        except Exception as e:
+        :
             self.fail(f"Empyrical integration failed: {e}")
 
 

@@ -129,39 +129,34 @@ def calculate_rsi(data: Union[pd.Series, Dict[str, Any]], period: int = 14) -> D
         - Can be used for divergence analysis and trend confirmation
         - More sensitive with shorter periods, smoother with longer periods
     """
-    try:
-        prices = validate_price_data(data)
+    prices = validate_price_data(data)
         
-        # Use talib-binary - leveraging requirements.txt
-        rsi_values = talib.RSI(prices.values.astype(np.float64), timeperiod=period)
-        rsi_series = pd.Series(rsi_values, index=prices.index).dropna()
+    # Use talib-binary - leveraging requirements.txt
+    rsi_values = talib.RSI(prices.values.astype(np.float64), timeperiod=period)
+    rsi_series = pd.Series(rsi_values, index=prices.index).dropna()
         
-        latest_rsi = float(rsi_series.iloc[-1]) if len(rsi_series) > 0 else None
+    latest_rsi = float(rsi_series.iloc[-1]) if len(rsi_series) > 0 else None
         
-        # Generate signals
-        signal = "neutral"
-        if latest_rsi is not None:
-            if latest_rsi > 70:
-                signal = "overbought"
-            elif latest_rsi < 30:
-                signal = "oversold"
+    # Generate signals
+    signal = "neutral"
+    if latest_rsi is not None:
+        if latest_rsi > 70:
+            signal = "overbought"
+        elif latest_rsi < 30:
+            signal = "oversold"
         
-        result = {
-            "data": rsi_series.tolist(),
-            "rsi": rsi_series,
-            "period": period,
-            "latest_value": latest_rsi,
-            "signal": signal,
-            "overbought_level": 70,
-            "oversold_level": 30
-        }
+    result = {
+        "data": rsi_series.tolist(),
+        "rsi": rsi_series,
+        "period": period,
+        "latest_value": latest_rsi,
+        "signal": signal,
+        "overbought_level": 70,
+        "oversold_level": 30
+    }
         
-        return standardize_output(result, "calculate_rsi")
+    return standardize_output(result, "calculate_rsi")
         
-    except Exception as e:
-        return {"success": False, "error": f"RSI calculation failed: {str(e)}"}
-
-
 def calculate_stochastic(data: Union[pd.DataFrame, Dict[str, Any]], 
                         k_period: int = 14, d_period: int = 3) -> Dict[str, Any]:
     """Calculate Stochastic Oscillator using TA-Lib library.
@@ -236,75 +231,70 @@ def calculate_stochastic(data: Union[pd.DataFrame, Dict[str, Any]],
         - %K crossing below %D generates bearish signal
         - Divergence with price can signal potential reversals
     """
-    try:
-        if isinstance(data, dict):
-            # Convert dict to DataFrame
-            df = pd.DataFrame(data)
-        else:
-            df = data.copy()
+    if isinstance(data, dict):
+        # Convert dict to DataFrame
+        df = pd.DataFrame(data)
+    else:
+        df = data.copy()
         
-        # Ensure we have required columns
-        required_cols = ['high', 'low', 'close']
-        if not all(col in df.columns or col.title() in df.columns for col in required_cols):
-            raise ValueError("OHLC data required for Stochastic calculation")
+    # Ensure we have required columns
+    required_cols = ['high', 'low', 'close']
+    if not all(col in df.columns or col.title() in df.columns for col in required_cols):
+        raise ValueError("OHLC data required for Stochastic calculation")
         
-        # Standardize column names
-        high_col = 'high' if 'high' in df.columns else 'High'
-        low_col = 'low' if 'low' in df.columns else 'Low' 
-        close_col = 'close' if 'close' in df.columns else 'Close'
+    # Standardize column names
+    high_col = 'high' if 'high' in df.columns else 'High'
+    low_col = 'low' if 'low' in df.columns else 'Low' 
+    close_col = 'close' if 'close' in df.columns else 'Close'
         
-        # Use talib-binary - leveraging requirements.txt
-        slowk, slowd = talib.STOCH(
-            df[high_col].values.astype(np.float64),
-            df[low_col].values.astype(np.float64), 
-            df[close_col].values.astype(np.float64),
-            fastk_period=k_period,
-            slowk_period=3,
-            slowd_period=d_period
-        )
+    # Use talib-binary - leveraging requirements.txt
+    slowk, slowd = talib.STOCH(
+        df[high_col].values.astype(np.float64),
+        df[low_col].values.astype(np.float64), 
+        df[close_col].values.astype(np.float64),
+        fastk_period=k_period,
+        slowk_period=3,
+        slowd_period=d_period
+    )
         
-        stoch_df = pd.DataFrame({
-            'k_percent': slowk,
-            'd_percent': slowd
-        }, index=df.index).dropna()
+    stoch_df = pd.DataFrame({
+        'k_percent': slowk,
+        'd_percent': slowd
+    }, index=df.index).dropna()
         
-        # Determine column names
-        k_col = next((col for col in stoch_df.columns if 'k' in col.lower()), stoch_df.columns[0])
-        d_col = next((col for col in stoch_df.columns if 'd' in col.lower()), stoch_df.columns[1])
+    # Determine column names
+    k_col = next((col for col in stoch_df.columns if 'k' in col.lower()), stoch_df.columns[0])
+    d_col = next((col for col in stoch_df.columns if 'd' in col.lower()), stoch_df.columns[1])
         
-        # Generate signals
-        signal = "neutral"
-        if len(stoch_df) >= 2:
-            current_k = stoch_df[k_col].iloc[-1]
-            current_d = stoch_df[d_col].iloc[-1]
-            prev_k = stoch_df[k_col].iloc[-2]
-            prev_d = stoch_df[d_col].iloc[-2]
+    # Generate signals
+    signal = "neutral"
+    if len(stoch_df) >= 2:
+        current_k = stoch_df[k_col].iloc[-1]
+        current_d = stoch_df[d_col].iloc[-1]
+        prev_k = stoch_df[k_col].iloc[-2]
+        prev_d = stoch_df[d_col].iloc[-2]
             
-            if current_k > current_d and prev_k <= prev_d and current_k < 80:
-                signal = "bullish_crossover"
-            elif current_k < current_d and prev_k >= prev_d and current_k > 20:
-                signal = "bearish_crossover"
-            elif current_k > 80 and current_d > 80:
-                signal = "overbought"
-            elif current_k < 20 and current_d < 20:
-                signal = "oversold"
+        if current_k > current_d and prev_k <= prev_d and current_k < 80:
+            signal = "bullish_crossover"
+        elif current_k < current_d and prev_k >= prev_d and current_k > 20:
+            signal = "bearish_crossover"
+        elif current_k > 80 and current_d > 80:
+            signal = "overbought"
+        elif current_k < 20 and current_d < 20:
+            signal = "oversold"
         
-        result = {
-            "k_percent": stoch_df[k_col],
-            "d_percent": stoch_df[d_col],
-            "latest_k": float(stoch_df[k_col].iloc[-1]) if len(stoch_df) > 0 else None,
-            "latest_d": float(stoch_df[d_col].iloc[-1]) if len(stoch_df) > 0 else None,
-            "signal": signal,
-            "k_period": k_period,
-            "d_period": d_period
-        }
+    result = {
+        "k_percent": stoch_df[k_col],
+        "d_percent": stoch_df[d_col],
+        "latest_k": float(stoch_df[k_col].iloc[-1]) if len(stoch_df) > 0 else None,
+        "latest_d": float(stoch_df[d_col].iloc[-1]) if len(stoch_df) > 0 else None,
+        "signal": signal,
+        "k_period": k_period,
+        "d_period": d_period
+    }
         
-        return standardize_output(result, "calculate_stochastic")
+    return standardize_output(result, "calculate_stochastic")
         
-    except Exception as e:
-        return {"success": False, "error": f"Stochastic calculation failed: {str(e)}"}
-
-
 def calculate_stochastic_fast(data: Union[pd.DataFrame, Dict[str, Any]], 
                              k_period: int = 14, d_period: int = 3) -> Dict[str, Any]:
     """Calculate Fast Stochastic Oscillator using TA-Lib library.
@@ -371,69 +361,64 @@ def calculate_stochastic_fast(data: Union[pd.DataFrame, Dict[str, Any]],
         - Better for short-term trading strategies
         - Same overbought/oversold levels as regular Stochastic (80/20)
     """
-    try:
-        if isinstance(data, dict):
-            df = pd.DataFrame(data)
-        else:
-            df = data.copy()
+    if isinstance(data, dict):
+        df = pd.DataFrame(data)
+    else:
+        df = data.copy()
         
-        # Ensure we have required columns
-        required_cols = ['high', 'low', 'close']
-        if not all(col in df.columns or col.title() in df.columns for col in required_cols):
-            raise ValueError("OHLC data required for Fast Stochastic calculation")
+    # Ensure we have required columns
+    required_cols = ['high', 'low', 'close']
+    if not all(col in df.columns or col.title() in df.columns for col in required_cols):
+        raise ValueError("OHLC data required for Fast Stochastic calculation")
         
-        # Standardize column names
-        high_col = 'high' if 'high' in df.columns else 'High'
-        low_col = 'low' if 'low' in df.columns else 'Low' 
-        close_col = 'close' if 'close' in df.columns else 'Close'
+    # Standardize column names
+    high_col = 'high' if 'high' in df.columns else 'High'
+    low_col = 'low' if 'low' in df.columns else 'Low' 
+    close_col = 'close' if 'close' in df.columns else 'Close'
         
-        # Use talib-binary
-        fastk, fastd = talib.STOCHF(
-            df[high_col].values.astype(np.float64),
-            df[low_col].values.astype(np.float64), 
-            df[close_col].values.astype(np.float64),
-            fastk_period=k_period,
-            fastd_period=d_period
-        )
+    # Use talib-binary
+    fastk, fastd = talib.STOCHF(
+        df[high_col].values.astype(np.float64),
+        df[low_col].values.astype(np.float64), 
+        df[close_col].values.astype(np.float64),
+        fastk_period=k_period,
+        fastd_period=d_period
+    )
         
-        stoch_df = pd.DataFrame({
-            'fastk': fastk,
-            'fastd': fastd
-        }, index=df.index).dropna()
+    stoch_df = pd.DataFrame({
+        'fastk': fastk,
+        'fastd': fastd
+    }, index=df.index).dropna()
         
-        # Generate signals
-        signal = "neutral"
-        if len(stoch_df) >= 2:
-            current_k = stoch_df['fastk'].iloc[-1]
-            current_d = stoch_df['fastd'].iloc[-1]
-            prev_k = stoch_df['fastk'].iloc[-2]
-            prev_d = stoch_df['fastd'].iloc[-2]
+    # Generate signals
+    signal = "neutral"
+    if len(stoch_df) >= 2:
+        current_k = stoch_df['fastk'].iloc[-1]
+        current_d = stoch_df['fastd'].iloc[-1]
+        prev_k = stoch_df['fastk'].iloc[-2]
+        prev_d = stoch_df['fastd'].iloc[-2]
             
-            if current_k > current_d and prev_k <= prev_d and current_k < 80:
-                signal = "bullish_crossover"
-            elif current_k < current_d and prev_k >= prev_d and current_k > 20:
-                signal = "bearish_crossover"
-            elif current_k > 80 and current_d > 80:
-                signal = "overbought"
-            elif current_k < 20 and current_d < 20:
-                signal = "oversold"
+        if current_k > current_d and prev_k <= prev_d and current_k < 80:
+            signal = "bullish_crossover"
+        elif current_k < current_d and prev_k >= prev_d and current_k > 20:
+            signal = "bearish_crossover"
+        elif current_k > 80 and current_d > 80:
+            signal = "overbought"
+        elif current_k < 20 and current_d < 20:
+            signal = "oversold"
         
-        result = {
-            "fastk": stoch_df['fastk'],
-            "fastd": stoch_df['fastd'],
-            "latest_k": float(stoch_df['fastk'].iloc[-1]) if len(stoch_df) > 0 else None,
-            "latest_d": float(stoch_df['fastd'].iloc[-1]) if len(stoch_df) > 0 else None,
-            "signal": signal,
-            "k_period": k_period,
-            "d_period": d_period
-        }
+    result = {
+        "fastk": stoch_df['fastk'],
+        "fastd": stoch_df['fastd'],
+        "latest_k": float(stoch_df['fastk'].iloc[-1]) if len(stoch_df) > 0 else None,
+        "latest_d": float(stoch_df['fastd'].iloc[-1]) if len(stoch_df) > 0 else None,
+        "signal": signal,
+        "k_period": k_period,
+        "d_period": d_period
+    }
         
-        return standardize_output(result, "calculate_stochastic_fast")
+    return standardize_output(result, "calculate_stochastic_fast")
         
-    except Exception as e:
-        return {"success": False, "error": f"Fast Stochastic calculation failed: {str(e)}"}
-
-
 def calculate_williams_r(data: Union[pd.DataFrame, Dict[str, Any]], period: int = 14) -> Dict[str, Any]:
     """Calculate Williams %R using TA-Lib library.
     
@@ -494,56 +479,51 @@ def calculate_williams_r(data: Union[pd.DataFrame, Dict[str, Any]], period: int 
         - Fast-moving oscillator, similar to Fast %K of Stochastic
         - Best used in conjunction with trend-following indicators
     """
-    try:
-        if isinstance(data, dict):
-            df = pd.DataFrame(data)
-        else:
-            df = data.copy()
+    if isinstance(data, dict):
+        df = pd.DataFrame(data)
+    else:
+        df = data.copy()
         
-        # Ensure we have required columns
-        required_cols = ['high', 'low', 'close']
-        if not all(col in df.columns or col.title() in df.columns for col in required_cols):
-            raise ValueError("OHLC data required for Williams %R calculation")
+    # Ensure we have required columns
+    required_cols = ['high', 'low', 'close']
+    if not all(col in df.columns or col.title() in df.columns for col in required_cols):
+        raise ValueError("OHLC data required for Williams %R calculation")
         
-        # Standardize column names
-        high_col = 'high' if 'high' in df.columns else 'High'
-        low_col = 'low' if 'low' in df.columns else 'Low' 
-        close_col = 'close' if 'close' in df.columns else 'Close'
+    # Standardize column names
+    high_col = 'high' if 'high' in df.columns else 'High'
+    low_col = 'low' if 'low' in df.columns else 'Low' 
+    close_col = 'close' if 'close' in df.columns else 'Close'
         
-        # Use talib-binary
-        willr_values = talib.WILLR(
-            df[high_col].values.astype(np.float64),
-            df[low_col].values.astype(np.float64), 
-            df[close_col].values.astype(np.float64),
-            timeperiod=period
-        )
-        willr_series = pd.Series(willr_values, index=df.index).dropna()
+    # Use talib-binary
+    willr_values = talib.WILLR(
+        df[high_col].values.astype(np.float64),
+        df[low_col].values.astype(np.float64), 
+        df[close_col].values.astype(np.float64),
+        timeperiod=period
+    )
+    willr_series = pd.Series(willr_values, index=df.index).dropna()
         
-        latest_willr = float(willr_series.iloc[-1]) if len(willr_series) > 0 else None
+    latest_willr = float(willr_series.iloc[-1]) if len(willr_series) > 0 else None
         
-        # Generate signals (note: Williams %R uses inverted scale)
-        signal = "neutral"
-        if latest_willr is not None:
-            if latest_willr > -20:
-                signal = "overbought"
-            elif latest_willr < -80:
-                signal = "oversold"
+    # Generate signals (note: Williams %R uses inverted scale)
+    signal = "neutral"
+    if latest_willr is not None:
+        if latest_willr > -20:
+            signal = "overbought"
+        elif latest_willr < -80:
+            signal = "oversold"
         
-        result = {
-            "williams_r": willr_series,
-            "latest_value": latest_willr,
-            "signal": signal,
-            "period": period,
-            "overbought_level": -20,
-            "oversold_level": -80
-        }
+    result = {
+        "williams_r": willr_series,
+        "latest_value": latest_willr,
+        "signal": signal,
+        "period": period,
+        "overbought_level": -20,
+        "oversold_level": -80
+    }
         
-        return standardize_output(result, "calculate_williams_r")
+    return standardize_output(result, "calculate_williams_r")
         
-    except Exception as e:
-        return {"success": False, "error": f"Williams %R calculation failed: {str(e)}"}
-
-
 def calculate_ultimate_oscillator(data: Union[pd.DataFrame, Dict[str, Any]], 
                                  period1: int = 7, period2: int = 14, period3: int = 28) -> Dict[str, Any]:
     """Calculate Ultimate Oscillator using TA-Lib library.
@@ -614,66 +594,61 @@ def calculate_ultimate_oscillator(data: Union[pd.DataFrame, Dict[str, Any]],
         - Values below 30 typically indicate oversold conditions
         - Less prone to false signals than single-timeframe oscillators
     """
-    try:
-        if isinstance(data, dict):
-            df = pd.DataFrame(data)
-        else:
-            df = data.copy()
+    if isinstance(data, dict):
+        df = pd.DataFrame(data)
+    else:
+        df = data.copy()
         
-        # Ensure we have required columns
-        required_cols = ['high', 'low', 'close']
-        if not all(col in df.columns or col.title() in df.columns for col in required_cols):
-            raise ValueError("OHLC data required for Ultimate Oscillator calculation")
+    # Ensure we have required columns
+    required_cols = ['high', 'low', 'close']
+    if not all(col in df.columns or col.title() in df.columns for col in required_cols):
+        raise ValueError("OHLC data required for Ultimate Oscillator calculation")
         
-        # Standardize column names
-        high_col = 'high' if 'high' in df.columns else 'High'
-        low_col = 'low' if 'low' in df.columns else 'Low' 
-        close_col = 'close' if 'close' in df.columns else 'Close'
+    # Standardize column names
+    high_col = 'high' if 'high' in df.columns else 'High'
+    low_col = 'low' if 'low' in df.columns else 'Low' 
+    close_col = 'close' if 'close' in df.columns else 'Close'
         
-        # Use talib-binary
-        ultosc_values = talib.ULTOSC(
-            df[high_col].values.astype(np.float64),
-            df[low_col].values.astype(np.float64), 
-            df[close_col].values.astype(np.float64),
-            timeperiod1=period1,
-            timeperiod2=period2,
-            timeperiod3=period3
-        )
-        ultosc_series = pd.Series(ultosc_values, index=df.index).dropna()
+    # Use talib-binary
+    ultosc_values = talib.ULTOSC(
+        df[high_col].values.astype(np.float64),
+        df[low_col].values.astype(np.float64), 
+        df[close_col].values.astype(np.float64),
+        timeperiod1=period1,
+        timeperiod2=period2,
+        timeperiod3=period3
+    )
+    ultosc_series = pd.Series(ultosc_values, index=df.index).dropna()
         
-        latest_ultosc = float(ultosc_series.iloc[-1]) if len(ultosc_series) > 0 else None
+    latest_ultosc = float(ultosc_series.iloc[-1]) if len(ultosc_series) > 0 else None
         
-        # Generate signals
-        signal = "neutral"
-        if latest_ultosc is not None:
-            if latest_ultosc > 70:
-                signal = "overbought"
-            elif latest_ultosc < 30:
-                signal = "oversold"
-            elif len(ultosc_series) >= 2:
-                # Check for bullish/bearish momentum
-                if ultosc_series.iloc[-1] > ultosc_series.iloc[-2] and latest_ultosc > 50:
-                    signal = "bullish"
-                elif ultosc_series.iloc[-1] < ultosc_series.iloc[-2] and latest_ultosc < 50:
-                    signal = "bearish"
+    # Generate signals
+    signal = "neutral"
+    if latest_ultosc is not None:
+        if latest_ultosc > 70:
+            signal = "overbought"
+        elif latest_ultosc < 30:
+            signal = "oversold"
+        elif len(ultosc_series) >= 2:
+            # Check for bullish/bearish momentum
+            if ultosc_series.iloc[-1] > ultosc_series.iloc[-2] and latest_ultosc > 50:
+                signal = "bullish"
+            elif ultosc_series.iloc[-1] < ultosc_series.iloc[-2] and latest_ultosc < 50:
+                signal = "bearish"
         
-        result = {
-            "ultimate_oscillator": ultosc_series,
-            "latest_value": latest_ultosc,
-            "signal": signal,
-            "period1": period1,
-            "period2": period2,
-            "period3": period3,
-            "overbought_level": 70,
-            "oversold_level": 30
-        }
+    result = {
+        "ultimate_oscillator": ultosc_series,
+        "latest_value": latest_ultosc,
+        "signal": signal,
+        "period1": period1,
+        "period2": period2,
+        "period3": period3,
+        "overbought_level": 70,
+        "oversold_level": 30
+    }
         
-        return standardize_output(result, "calculate_ultimate_oscillator")
+    return standardize_output(result, "calculate_ultimate_oscillator")
         
-    except Exception as e:
-        return {"success": False, "error": f"Ultimate Oscillator calculation failed: {str(e)}"}
-
-
 # =============================================================================
 # DIRECTIONAL MOVEMENT INDICATORS
 # =============================================================================
@@ -734,58 +709,53 @@ def calculate_adx(data: Union[pd.DataFrame, Dict[str, Any]], period: int = 14) -
         - Does not indicate trend direction, only strength
         - Often used with +DI and -DI for complete directional analysis
     """
-    try:
-        if isinstance(data, dict):
-            df = pd.DataFrame(data)
+    if isinstance(data, dict):
+        df = pd.DataFrame(data)
+    else:
+        df = data.copy()
+        
+    # Ensure we have required columns
+    required_cols = ['high', 'low', 'close']
+    if not all(col in df.columns or col.title() in df.columns for col in required_cols):
+        raise ValueError("OHLC data required for ADX calculation")
+        
+    # Standardize column names
+    high_col = 'high' if 'high' in df.columns else 'High'
+    low_col = 'low' if 'low' in df.columns else 'Low' 
+    close_col = 'close' if 'close' in df.columns else 'Close'
+        
+    # Use talib-binary
+    adx_values = talib.ADX(
+        df[high_col].values.astype(np.float64),
+        df[low_col].values.astype(np.float64), 
+        df[close_col].values.astype(np.float64),
+        timeperiod=period
+    )
+    adx_series = pd.Series(adx_values, index=df.index).dropna()
+        
+    latest_adx = float(adx_series.iloc[-1]) if len(adx_series) > 0 else None
+        
+    # Classify trend strength
+    trend_strength = "weak"
+    if latest_adx is not None:
+        if latest_adx > 60:
+            trend_strength = "very_strong"
+        elif latest_adx > 40:
+            trend_strength = "strong"
+        elif latest_adx > 20:
+            trend_strength = "moderate"
         else:
-            df = data.copy()
+            trend_strength = "weak"
         
-        # Ensure we have required columns
-        required_cols = ['high', 'low', 'close']
-        if not all(col in df.columns or col.title() in df.columns for col in required_cols):
-            raise ValueError("OHLC data required for ADX calculation")
+    result = {
+        "adx": adx_series,
+        "latest_value": latest_adx,
+        "trend_strength": trend_strength,
+        "period": period
+    }
         
-        # Standardize column names
-        high_col = 'high' if 'high' in df.columns else 'High'
-        low_col = 'low' if 'low' in df.columns else 'Low' 
-        close_col = 'close' if 'close' in df.columns else 'Close'
+    return standardize_output(result, "calculate_adx")
         
-        # Use talib-binary
-        adx_values = talib.ADX(
-            df[high_col].values.astype(np.float64),
-            df[low_col].values.astype(np.float64), 
-            df[close_col].values.astype(np.float64),
-            timeperiod=period
-        )
-        adx_series = pd.Series(adx_values, index=df.index).dropna()
-        
-        latest_adx = float(adx_series.iloc[-1]) if len(adx_series) > 0 else None
-        
-        # Classify trend strength
-        trend_strength = "weak"
-        if latest_adx is not None:
-            if latest_adx > 60:
-                trend_strength = "very_strong"
-            elif latest_adx > 40:
-                trend_strength = "strong"
-            elif latest_adx > 20:
-                trend_strength = "moderate"
-            else:
-                trend_strength = "weak"
-        
-        result = {
-            "adx": adx_series,
-            "latest_value": latest_adx,
-            "trend_strength": trend_strength,
-            "period": period
-        }
-        
-        return standardize_output(result, "calculate_adx")
-        
-    except Exception as e:
-        return {"success": False, "error": f"ADX calculation failed: {str(e)}"}
-
-
 def calculate_adxr(data: Union[pd.DataFrame, Dict[str, Any]], period: int = 14) -> Dict[str, Any]:
     """Calculate Average Directional Movement Index Rating using TA-Lib library.
     
@@ -841,58 +811,53 @@ def calculate_adxr(data: Union[pd.DataFrame, Dict[str, Any]], period: int = 14) 
         - Lags behind ADX but provides smoother signals
         - Better for longer-term trend analysis
     """
-    try:
-        if isinstance(data, dict):
-            df = pd.DataFrame(data)
+    if isinstance(data, dict):
+        df = pd.DataFrame(data)
+    else:
+        df = data.copy()
+        
+    # Ensure we have required columns
+    required_cols = ['high', 'low', 'close']
+    if not all(col in df.columns or col.title() in df.columns for col in required_cols):
+        raise ValueError("OHLC data required for ADXR calculation")
+        
+    # Standardize column names
+    high_col = 'high' if 'high' in df.columns else 'High'
+    low_col = 'low' if 'low' in df.columns else 'Low' 
+    close_col = 'close' if 'close' in df.columns else 'Close'
+        
+    # Use talib-binary
+    adxr_values = talib.ADXR(
+        df[high_col].values.astype(np.float64),
+        df[low_col].values.astype(np.float64), 
+        df[close_col].values.astype(np.float64),
+        timeperiod=period
+    )
+    adxr_series = pd.Series(adxr_values, index=df.index).dropna()
+        
+    latest_adxr = float(adxr_series.iloc[-1]) if len(adxr_series) > 0 else None
+        
+    # Classify trend strength
+    trend_strength = "weak"
+    if latest_adxr is not None:
+        if latest_adxr > 60:
+            trend_strength = "very_strong"
+        elif latest_adxr > 40:
+            trend_strength = "strong"
+        elif latest_adxr > 20:
+            trend_strength = "moderate"
         else:
-            df = data.copy()
+            trend_strength = "weak"
         
-        # Ensure we have required columns
-        required_cols = ['high', 'low', 'close']
-        if not all(col in df.columns or col.title() in df.columns for col in required_cols):
-            raise ValueError("OHLC data required for ADXR calculation")
+    result = {
+        "adxr": adxr_series,
+        "latest_value": latest_adxr,
+        "trend_strength": trend_strength,
+        "period": period
+    }
         
-        # Standardize column names
-        high_col = 'high' if 'high' in df.columns else 'High'
-        low_col = 'low' if 'low' in df.columns else 'Low' 
-        close_col = 'close' if 'close' in df.columns else 'Close'
+    return standardize_output(result, "calculate_adxr")
         
-        # Use talib-binary
-        adxr_values = talib.ADXR(
-            df[high_col].values.astype(np.float64),
-            df[low_col].values.astype(np.float64), 
-            df[close_col].values.astype(np.float64),
-            timeperiod=period
-        )
-        adxr_series = pd.Series(adxr_values, index=df.index).dropna()
-        
-        latest_adxr = float(adxr_series.iloc[-1]) if len(adxr_series) > 0 else None
-        
-        # Classify trend strength
-        trend_strength = "weak"
-        if latest_adxr is not None:
-            if latest_adxr > 60:
-                trend_strength = "very_strong"
-            elif latest_adxr > 40:
-                trend_strength = "strong"
-            elif latest_adxr > 20:
-                trend_strength = "moderate"
-            else:
-                trend_strength = "weak"
-        
-        result = {
-            "adxr": adxr_series,
-            "latest_value": latest_adxr,
-            "trend_strength": trend_strength,
-            "period": period
-        }
-        
-        return standardize_output(result, "calculate_adxr")
-        
-    except Exception as e:
-        return {"success": False, "error": f"ADXR calculation failed: {str(e)}"}
-
-
 def calculate_dx(data: Union[pd.DataFrame, Dict[str, Any]], period: int = 14) -> Dict[str, Any]:
     """Calculate Directional Movement Index using TA-Lib library.
     
@@ -948,56 +913,51 @@ def calculate_dx(data: Union[pd.DataFrame, Dict[str, Any]], period: int = 14) ->
         - DX is smoothed to create ADX for trend strength analysis
         - More volatile than ADX, shows immediate directional changes
     """
-    try:
-        if isinstance(data, dict):
-            df = pd.DataFrame(data)
+    if isinstance(data, dict):
+        df = pd.DataFrame(data)
+    else:
+        df = data.copy()
+        
+    # Ensure we have required columns
+    required_cols = ['high', 'low', 'close']
+    if not all(col in df.columns or col.title() in df.columns for col in required_cols):
+        raise ValueError("OHLC data required for DX calculation")
+        
+    # Standardize column names
+    high_col = 'high' if 'high' in df.columns else 'High'
+    low_col = 'low' if 'low' in df.columns else 'Low' 
+    close_col = 'close' if 'close' in df.columns else 'Close'
+        
+    # Use talib-binary
+    dx_values = talib.DX(
+        df[high_col].values.astype(np.float64),
+        df[low_col].values.astype(np.float64), 
+        df[close_col].values.astype(np.float64),
+        timeperiod=period
+    )
+    dx_series = pd.Series(dx_values, index=df.index).dropna()
+        
+    latest_dx = float(dx_series.iloc[-1]) if len(dx_series) > 0 else None
+        
+    # Classify directional strength
+    directional_strength = "weak"
+    if latest_dx is not None:
+        if latest_dx > 50:
+            directional_strength = "strong"
+        elif latest_dx > 25:
+            directional_strength = "moderate"
         else:
-            df = data.copy()
+            directional_strength = "weak"
         
-        # Ensure we have required columns
-        required_cols = ['high', 'low', 'close']
-        if not all(col in df.columns or col.title() in df.columns for col in required_cols):
-            raise ValueError("OHLC data required for DX calculation")
+    result = {
+        "dx": dx_series,
+        "latest_value": latest_dx,
+        "directional_strength": directional_strength,
+        "period": period
+    }
         
-        # Standardize column names
-        high_col = 'high' if 'high' in df.columns else 'High'
-        low_col = 'low' if 'low' in df.columns else 'Low' 
-        close_col = 'close' if 'close' in df.columns else 'Close'
+    return standardize_output(result, "calculate_dx")
         
-        # Use talib-binary
-        dx_values = talib.DX(
-            df[high_col].values.astype(np.float64),
-            df[low_col].values.astype(np.float64), 
-            df[close_col].values.astype(np.float64),
-            timeperiod=period
-        )
-        dx_series = pd.Series(dx_values, index=df.index).dropna()
-        
-        latest_dx = float(dx_series.iloc[-1]) if len(dx_series) > 0 else None
-        
-        # Classify directional strength
-        directional_strength = "weak"
-        if latest_dx is not None:
-            if latest_dx > 50:
-                directional_strength = "strong"
-            elif latest_dx > 25:
-                directional_strength = "moderate"
-            else:
-                directional_strength = "weak"
-        
-        result = {
-            "dx": dx_series,
-            "latest_value": latest_dx,
-            "directional_strength": directional_strength,
-            "period": period
-        }
-        
-        return standardize_output(result, "calculate_dx")
-        
-    except Exception as e:
-        return {"success": False, "error": f"DX calculation failed: {str(e)}"}
-
-
 def calculate_minus_di(data: Union[pd.DataFrame, Dict[str, Any]], period: int = 14) -> Dict[str, Any]:
     """Calculate Minus Directional Indicator using TA-Lib library.
     
@@ -1053,56 +1013,51 @@ def calculate_minus_di(data: Union[pd.DataFrame, Dict[str, Any]], period: int = 
         - When -DI crosses above +DI, potential sell signal
         - Values typically range from 0 to 50+ in strong trends
     """
-    try:
-        if isinstance(data, dict):
-            df = pd.DataFrame(data)
+    if isinstance(data, dict):
+        df = pd.DataFrame(data)
+    else:
+        df = data.copy()
+        
+    # Ensure we have required columns
+    required_cols = ['high', 'low', 'close']
+    if not all(col in df.columns or col.title() in df.columns for col in required_cols):
+        raise ValueError("OHLC data required for Minus DI calculation")
+        
+    # Standardize column names
+    high_col = 'high' if 'high' in df.columns else 'High'
+    low_col = 'low' if 'low' in df.columns else 'Low' 
+    close_col = 'close' if 'close' in df.columns else 'Close'
+        
+    # Use talib-binary
+    minus_di_values = talib.MINUS_DI(
+        df[high_col].values.astype(np.float64),
+        df[low_col].values.astype(np.float64), 
+        df[close_col].values.astype(np.float64),
+        timeperiod=period
+    )
+    minus_di_series = pd.Series(minus_di_values, index=df.index).dropna()
+        
+    latest_minus_di = float(minus_di_series.iloc[-1]) if len(minus_di_series) > 0 else None
+        
+    # Classify selling pressure strength
+    pressure_strength = "weak"
+    if latest_minus_di is not None:
+        if latest_minus_di > 30:
+            pressure_strength = "strong"
+        elif latest_minus_di > 15:
+            pressure_strength = "moderate"
         else:
-            df = data.copy()
+            pressure_strength = "weak"
         
-        # Ensure we have required columns
-        required_cols = ['high', 'low', 'close']
-        if not all(col in df.columns or col.title() in df.columns for col in required_cols):
-            raise ValueError("OHLC data required for Minus DI calculation")
+    result = {
+        "minus_di": minus_di_series,
+        "latest_value": latest_minus_di,
+        "pressure_strength": pressure_strength,
+        "period": period
+    }
         
-        # Standardize column names
-        high_col = 'high' if 'high' in df.columns else 'High'
-        low_col = 'low' if 'low' in df.columns else 'Low' 
-        close_col = 'close' if 'close' in df.columns else 'Close'
+    return standardize_output(result, "calculate_minus_di")
         
-        # Use talib-binary
-        minus_di_values = talib.MINUS_DI(
-            df[high_col].values.astype(np.float64),
-            df[low_col].values.astype(np.float64), 
-            df[close_col].values.astype(np.float64),
-            timeperiod=period
-        )
-        minus_di_series = pd.Series(minus_di_values, index=df.index).dropna()
-        
-        latest_minus_di = float(minus_di_series.iloc[-1]) if len(minus_di_series) > 0 else None
-        
-        # Classify selling pressure strength
-        pressure_strength = "weak"
-        if latest_minus_di is not None:
-            if latest_minus_di > 30:
-                pressure_strength = "strong"
-            elif latest_minus_di > 15:
-                pressure_strength = "moderate"
-            else:
-                pressure_strength = "weak"
-        
-        result = {
-            "minus_di": minus_di_series,
-            "latest_value": latest_minus_di,
-            "pressure_strength": pressure_strength,
-            "period": period
-        }
-        
-        return standardize_output(result, "calculate_minus_di")
-        
-    except Exception as e:
-        return {"success": False, "error": f"Minus DI calculation failed: {str(e)}"}
-
-
 def calculate_plus_di(data: Union[pd.DataFrame, Dict[str, Any]], period: int = 14) -> Dict[str, Any]:
     """Calculate Plus Directional Indicator using TA-Lib library.
     
@@ -1158,56 +1113,51 @@ def calculate_plus_di(data: Union[pd.DataFrame, Dict[str, Any]], period: int = 1
         - When +DI crosses above -DI, potential buy signal
         - Values typically range from 0 to 50+ in strong trends
     """
-    try:
-        if isinstance(data, dict):
-            df = pd.DataFrame(data)
+    if isinstance(data, dict):
+        df = pd.DataFrame(data)
+    else:
+        df = data.copy()
+        
+    # Ensure we have required columns
+    required_cols = ['high', 'low', 'close']
+    if not all(col in df.columns or col.title() in df.columns for col in required_cols):
+        raise ValueError("OHLC data required for Plus DI calculation")
+        
+    # Standardize column names
+    high_col = 'high' if 'high' in df.columns else 'High'
+    low_col = 'low' if 'low' in df.columns else 'Low' 
+    close_col = 'close' if 'close' in df.columns else 'Close'
+        
+    # Use talib-binary
+    plus_di_values = talib.PLUS_DI(
+        df[high_col].values.astype(np.float64),
+        df[low_col].values.astype(np.float64), 
+        df[close_col].values.astype(np.float64),
+        timeperiod=period
+    )
+    plus_di_series = pd.Series(plus_di_values, index=df.index).dropna()
+        
+    latest_plus_di = float(plus_di_series.iloc[-1]) if len(plus_di_series) > 0 else None
+        
+    # Classify buying pressure strength
+    pressure_strength = "weak"
+    if latest_plus_di is not None:
+        if latest_plus_di > 30:
+            pressure_strength = "strong"
+        elif latest_plus_di > 15:
+            pressure_strength = "moderate"
         else:
-            df = data.copy()
+            pressure_strength = "weak"
         
-        # Ensure we have required columns
-        required_cols = ['high', 'low', 'close']
-        if not all(col in df.columns or col.title() in df.columns for col in required_cols):
-            raise ValueError("OHLC data required for Plus DI calculation")
+    result = {
+        "plus_di": plus_di_series,
+        "latest_value": latest_plus_di,
+        "pressure_strength": pressure_strength,
+        "period": period
+    }
         
-        # Standardize column names
-        high_col = 'high' if 'high' in df.columns else 'High'
-        low_col = 'low' if 'low' in df.columns else 'Low' 
-        close_col = 'close' if 'close' in df.columns else 'Close'
+    return standardize_output(result, "calculate_plus_di")
         
-        # Use talib-binary
-        plus_di_values = talib.PLUS_DI(
-            df[high_col].values.astype(np.float64),
-            df[low_col].values.astype(np.float64), 
-            df[close_col].values.astype(np.float64),
-            timeperiod=period
-        )
-        plus_di_series = pd.Series(plus_di_values, index=df.index).dropna()
-        
-        latest_plus_di = float(plus_di_series.iloc[-1]) if len(plus_di_series) > 0 else None
-        
-        # Classify buying pressure strength
-        pressure_strength = "weak"
-        if latest_plus_di is not None:
-            if latest_plus_di > 30:
-                pressure_strength = "strong"
-            elif latest_plus_di > 15:
-                pressure_strength = "moderate"
-            else:
-                pressure_strength = "weak"
-        
-        result = {
-            "plus_di": plus_di_series,
-            "latest_value": latest_plus_di,
-            "pressure_strength": pressure_strength,
-            "period": period
-        }
-        
-        return standardize_output(result, "calculate_plus_di")
-        
-    except Exception as e:
-        return {"success": False, "error": f"Plus DI calculation failed: {str(e)}"}
-
-
 def calculate_aroon(data: Union[pd.DataFrame, Dict[str, Any]], period: int = 14) -> Dict[str, Any]:
     """Calculate Aroon oscillator using TA-Lib library.
     
@@ -1269,59 +1219,54 @@ def calculate_aroon(data: Union[pd.DataFrame, Dict[str, Any]], period: int = 14)
         - Aroon Down > Aroon Up suggests bearish trend
         - Crossovers between the lines signal potential trend changes
     """
-    try:
-        if isinstance(data, dict):
-            df = pd.DataFrame(data)
-        else:
-            df = data.copy()
+    if isinstance(data, dict):
+        df = pd.DataFrame(data)
+    else:
+        df = data.copy()
         
-        # Ensure we have required columns
-        required_cols = ['high', 'low']
-        if not all(col in df.columns or col.title() in df.columns for col in required_cols):
-            raise ValueError("High and Low data required for Aroon calculation")
+    # Ensure we have required columns
+    required_cols = ['high', 'low']
+    if not all(col in df.columns or col.title() in df.columns for col in required_cols):
+        raise ValueError("High and Low data required for Aroon calculation")
         
-        # Standardize column names
-        high_col = 'high' if 'high' in df.columns else 'High'
-        low_col = 'low' if 'low' in df.columns else 'Low'
+    # Standardize column names
+    high_col = 'high' if 'high' in df.columns else 'High'
+    low_col = 'low' if 'low' in df.columns else 'Low'
         
-        # Use talib-binary
-        aroon_down, aroon_up = talib.AROON(
-            df[high_col].values.astype(np.float64),
-            df[low_col].values.astype(np.float64),
-            timeperiod=period
-        )
+    # Use talib-binary
+    aroon_down, aroon_up = talib.AROON(
+        df[high_col].values.astype(np.float64),
+        df[low_col].values.astype(np.float64),
+        timeperiod=period
+    )
         
-        aroon_df = pd.DataFrame({
-            'aroon_up': aroon_up,
-            'aroon_down': aroon_down
-        }, index=df.index).dropna()
+    aroon_df = pd.DataFrame({
+        'aroon_up': aroon_up,
+        'aroon_down': aroon_down
+    }, index=df.index).dropna()
         
-        latest_up = float(aroon_df['aroon_up'].iloc[-1]) if len(aroon_df) > 0 else None
-        latest_down = float(aroon_df['aroon_down'].iloc[-1]) if len(aroon_df) > 0 else None
+    latest_up = float(aroon_df['aroon_up'].iloc[-1]) if len(aroon_df) > 0 else None
+    latest_down = float(aroon_df['aroon_down'].iloc[-1]) if len(aroon_df) > 0 else None
         
-        # Generate signals
-        signal = "neutral"
-        if latest_up is not None and latest_down is not None:
-            if latest_up > latest_down and latest_up > 70:
-                signal = "bullish"
-            elif latest_down > latest_up and latest_down > 70:
-                signal = "bearish"
+    # Generate signals
+    signal = "neutral"
+    if latest_up is not None and latest_down is not None:
+        if latest_up > latest_down and latest_up > 70:
+            signal = "bullish"
+        elif latest_down > latest_up and latest_down > 70:
+            signal = "bearish"
         
-        result = {
-            "aroon_up": aroon_df['aroon_up'],
-            "aroon_down": aroon_df['aroon_down'],
-            "latest_up": latest_up,
-            "latest_down": latest_down,
-            "signal": signal,
-            "period": period
-        }
+    result = {
+        "aroon_up": aroon_df['aroon_up'],
+        "aroon_down": aroon_df['aroon_down'],
+        "latest_up": latest_up,
+        "latest_down": latest_down,
+        "signal": signal,
+        "period": period
+    }
         
-        return standardize_output(result, "calculate_aroon")
+    return standardize_output(result, "calculate_aroon")
         
-    except Exception as e:
-        return {"success": False, "error": f"Aroon calculation failed: {str(e)}"}
-
-
 def calculate_aroon_oscillator(data: Union[pd.DataFrame, Dict[str, Any]], period: int = 14) -> Dict[str, Any]:
     """Calculate Aroon Oscillator using TA-Lib library.
     
@@ -1379,65 +1324,60 @@ def calculate_aroon_oscillator(data: Union[pd.DataFrame, Dict[str, Any]], period
         - Values near 0 indicate weak or sideways trends
         - Crossovers above/below zero line signal trend changes
     """
-    try:
-        if isinstance(data, dict):
-            df = pd.DataFrame(data)
-        else:
-            df = data.copy()
+    if isinstance(data, dict):
+        df = pd.DataFrame(data)
+    else:
+        df = data.copy()
         
-        # Ensure we have required columns
-        required_cols = ['high', 'low']
-        if not all(col in df.columns or col.title() in df.columns for col in required_cols):
-            raise ValueError("High and Low data required for Aroon Oscillator calculation")
+    # Ensure we have required columns
+    required_cols = ['high', 'low']
+    if not all(col in df.columns or col.title() in df.columns for col in required_cols):
+        raise ValueError("High and Low data required for Aroon Oscillator calculation")
         
-        # Standardize column names
-        high_col = 'high' if 'high' in df.columns else 'High'
-        low_col = 'low' if 'low' in df.columns else 'Low'
+    # Standardize column names
+    high_col = 'high' if 'high' in df.columns else 'High'
+    low_col = 'low' if 'low' in df.columns else 'Low'
         
-        # Use talib-binary
-        aroon_osc_values = talib.AROONOSC(
-            df[high_col].values.astype(np.float64),
-            df[low_col].values.astype(np.float64),
-            timeperiod=period
-        )
-        aroon_osc_series = pd.Series(aroon_osc_values, index=df.index).dropna()
+    # Use talib-binary
+    aroon_osc_values = talib.AROONOSC(
+        df[high_col].values.astype(np.float64),
+        df[low_col].values.astype(np.float64),
+        timeperiod=period
+    )
+    aroon_osc_series = pd.Series(aroon_osc_values, index=df.index).dropna()
         
-        latest_value = float(aroon_osc_series.iloc[-1]) if len(aroon_osc_series) > 0 else None
+    latest_value = float(aroon_osc_series.iloc[-1]) if len(aroon_osc_series) > 0 else None
         
-        # Generate signals and trend strength
-        signal = "neutral"
-        trend_strength = "weak"
+    # Generate signals and trend strength
+    signal = "neutral"
+    trend_strength = "weak"
         
-        if latest_value is not None:
-            # Signal determination
-            if latest_value > 25:
-                signal = "bullish"
-            elif latest_value < -25:
-                signal = "bearish"
+    if latest_value is not None:
+        # Signal determination
+        if latest_value > 25:
+            signal = "bullish"
+        elif latest_value < -25:
+            signal = "bearish"
             
-            # Trend strength
-            abs_value = abs(latest_value)
-            if abs_value > 70:
-                trend_strength = "strong"
-            elif abs_value > 40:
-                trend_strength = "moderate"
-            else:
-                trend_strength = "weak"
+        # Trend strength
+        abs_value = abs(latest_value)
+        if abs_value > 70:
+            trend_strength = "strong"
+        elif abs_value > 40:
+            trend_strength = "moderate"
+        else:
+            trend_strength = "weak"
         
-        result = {
-            "aroon_oscillator": aroon_osc_series,
-            "latest_value": latest_value,
-            "signal": signal,
-            "trend_strength": trend_strength,
-            "period": period
-        }
+    result = {
+        "aroon_oscillator": aroon_osc_series,
+        "latest_value": latest_value,
+        "signal": signal,
+        "trend_strength": trend_strength,
+        "period": period
+    }
         
-        return standardize_output(result, "calculate_aroon_oscillator")
+    return standardize_output(result, "calculate_aroon_oscillator")
         
-    except Exception as e:
-        return {"success": False, "error": f"Aroon Oscillator calculation failed: {str(e)}"}
-
-
 # =============================================================================
 # PRICE-BASED MOMENTUM INDICATORS
 # =============================================================================
@@ -1507,59 +1447,54 @@ def calculate_macd(data: Union[pd.Series, Dict[str, Any]],
         - Zero line crossovers indicate potential trend changes
         - Divergence between price and MACD can signal trend reversals
     """
-    try:
-        prices = validate_price_data(data)
+    prices = validate_price_data(data)
         
-        # Use talib-binary - leveraging requirements.txt
-        macd_line, macd_signal, macd_hist = talib.MACD(
-            prices.values.astype(np.float64), 
-            fastperiod=fast_period, 
-            slowperiod=slow_period, 
-            signalperiod=signal_period
-        )
+    # Use talib-binary - leveraging requirements.txt
+    macd_line, macd_signal, macd_hist = talib.MACD(
+        prices.values.astype(np.float64), 
+        fastperiod=fast_period, 
+        slowperiod=slow_period, 
+        signalperiod=signal_period
+    )
         
-        macd_df = pd.DataFrame({
-            'macd': macd_line,
-            'signal': macd_signal,
-            'histogram': macd_hist
-        }, index=prices.index).dropna()
+    macd_df = pd.DataFrame({
+        'macd': macd_line,
+        'signal': macd_signal,
+        'histogram': macd_hist
+    }, index=prices.index).dropna()
         
-        # Determine column names (different libraries use different naming)
-        macd_col = next((col for col in macd_df.columns if 'macd' in col.lower() and 'signal' not in col.lower() and 'hist' not in col.lower()), macd_df.columns[0])
-        signal_col = next((col for col in macd_df.columns if 'signal' in col.lower() or 'macd' in col.lower() and 's' in col.lower()), macd_df.columns[1])
-        hist_col = next((col for col in macd_df.columns if 'hist' in col.lower() or 'h' in col.lower()), macd_df.columns[2])
+    # Determine column names (different libraries use different naming)
+    macd_col = next((col for col in macd_df.columns if 'macd' in col.lower() and 'signal' not in col.lower() and 'hist' not in col.lower()), macd_df.columns[0])
+    signal_col = next((col for col in macd_df.columns if 'signal' in col.lower() or 'macd' in col.lower() and 's' in col.lower()), macd_df.columns[1])
+    hist_col = next((col for col in macd_df.columns if 'hist' in col.lower() or 'h' in col.lower()), macd_df.columns[2])
         
-        # Generate signals
-        signal = "neutral"
-        if len(macd_df) >= 2:
-            current_macd = macd_df[macd_col].iloc[-1]
-            current_signal = macd_df[signal_col].iloc[-1]
-            prev_macd = macd_df[macd_col].iloc[-2]
-            prev_signal = macd_df[signal_col].iloc[-2]
+    # Generate signals
+    signal = "neutral"
+    if len(macd_df) >= 2:
+        current_macd = macd_df[macd_col].iloc[-1]
+        current_signal = macd_df[signal_col].iloc[-1]
+        prev_macd = macd_df[macd_col].iloc[-2]
+        prev_signal = macd_df[signal_col].iloc[-2]
             
-            if current_macd > current_signal and prev_macd <= prev_signal:
-                signal = "bullish_crossover"
-            elif current_macd < current_signal and prev_macd >= prev_signal:
-                signal = "bearish_crossover"
+        if current_macd > current_signal and prev_macd <= prev_signal:
+            signal = "bullish_crossover"
+        elif current_macd < current_signal and prev_macd >= prev_signal:
+            signal = "bearish_crossover"
         
-        result = {
-            "macd_line": macd_df[macd_col],
-            "signal_line": macd_df[signal_col],
-            "histogram": macd_df[hist_col],
-            "latest_macd": float(macd_df[macd_col].iloc[-1]) if len(macd_df) > 0 else None,
-            "latest_signal": float(macd_df[signal_col].iloc[-1]) if len(macd_df) > 0 else None,
-            "signal": signal,
-            "fast_period": fast_period,
-            "slow_period": slow_period,
-            "signal_period": signal_period
-        }
+    result = {
+        "macd_line": macd_df[macd_col],
+        "signal_line": macd_df[signal_col],
+        "histogram": macd_df[hist_col],
+        "latest_macd": float(macd_df[macd_col].iloc[-1]) if len(macd_df) > 0 else None,
+        "latest_signal": float(macd_df[signal_col].iloc[-1]) if len(macd_df) > 0 else None,
+        "signal": signal,
+        "fast_period": fast_period,
+        "slow_period": slow_period,
+        "signal_period": signal_period
+    }
         
-        return standardize_output(result, "calculate_macd")
+    return standardize_output(result, "calculate_macd")
         
-    except Exception as e:
-        return {"success": False, "error": f"MACD calculation failed: {str(e)}"}
-
-
 def calculate_ppo(data: Union[pd.Series, Dict[str, Any]], 
                   fast_period: int = 12, slow_period: int = 26, ma_type: int = 0) -> Dict[str, Any]:
     """Calculate Percentage Price Oscillator using TA-Lib library.
@@ -1620,48 +1555,43 @@ def calculate_ppo(data: Union[pd.Series, Dict[str, Any]],
         - Percentage format allows comparison across different price levels
         - Often used with a signal line (EMA of PPO) for crossover signals
     """
-    try:
-        prices = validate_price_data(data)
+    prices = validate_price_data(data)
         
-        # Use talib-binary
-        ppo_values = talib.PPO(
-            prices.values.astype(np.float64), 
-            fastperiod=fast_period, 
-            slowperiod=slow_period, 
-            matype=ma_type
-        )
-        ppo_series = pd.Series(ppo_values, index=prices.index).dropna()
+    # Use talib-binary
+    ppo_values = talib.PPO(
+        prices.values.astype(np.float64), 
+        fastperiod=fast_period, 
+        slowperiod=slow_period, 
+        matype=ma_type
+    )
+    ppo_series = pd.Series(ppo_values, index=prices.index).dropna()
         
-        latest_ppo = float(ppo_series.iloc[-1]) if len(ppo_series) > 0 else None
+    latest_ppo = float(ppo_series.iloc[-1]) if len(ppo_series) > 0 else None
         
-        # Generate signals
-        signal = "neutral"
-        if latest_ppo is not None:
-            if len(ppo_series) >= 2:
-                if latest_ppo > 0 and ppo_series.iloc[-2] <= 0:
-                    signal = "bullish"
-                elif latest_ppo < 0 and ppo_series.iloc[-2] >= 0:
-                    signal = "bearish"
-                elif latest_ppo > 0:
-                    signal = "bullish"
-                elif latest_ppo < 0:
-                    signal = "bearish"
+    # Generate signals
+    signal = "neutral"
+    if latest_ppo is not None:
+        if len(ppo_series) >= 2:
+            if latest_ppo > 0 and ppo_series.iloc[-2] <= 0:
+                signal = "bullish"
+            elif latest_ppo < 0 and ppo_series.iloc[-2] >= 0:
+                signal = "bearish"
+            elif latest_ppo > 0:
+                signal = "bullish"
+            elif latest_ppo < 0:
+                signal = "bearish"
         
-        result = {
-            "ppo": ppo_series,
-            "latest_value": latest_ppo,
-            "signal": signal,
-            "fast_period": fast_period,
-            "slow_period": slow_period,
-            "ma_type": ma_type
-        }
+    result = {
+        "ppo": ppo_series,
+        "latest_value": latest_ppo,
+        "signal": signal,
+        "fast_period": fast_period,
+        "slow_period": slow_period,
+        "ma_type": ma_type
+    }
         
-        return standardize_output(result, "calculate_ppo")
+    return standardize_output(result, "calculate_ppo")
         
-    except Exception as e:
-        return {"success": False, "error": f"PPO calculation failed: {str(e)}"}
-
-
 def calculate_mom(data: Union[pd.Series, Dict[str, Any]], period: int = 10) -> Dict[str, Any]:
     """Calculate Momentum using TA-Lib library.
     
@@ -1703,44 +1633,39 @@ def calculate_mom(data: Union[pd.Series, Dict[str, Any]], period: int = 10) -> D
         - Simple but effective measure of price acceleration
         - Often used in conjunction with other momentum indicators
     """
-    try:
-        prices = validate_price_data(data)
+    prices = validate_price_data(data)
         
-        # Use talib-binary
-        mom_values = talib.MOM(
-            prices.values.astype(np.float64), 
-            timeperiod=period
-        )
-        mom_series = pd.Series(mom_values, index=prices.index).dropna()
+    # Use talib-binary
+    mom_values = talib.MOM(
+        prices.values.astype(np.float64), 
+        timeperiod=period
+    )
+    mom_series = pd.Series(mom_values, index=prices.index).dropna()
         
-        latest_mom = float(mom_series.iloc[-1]) if len(mom_series) > 0 else None
+    latest_mom = float(mom_series.iloc[-1]) if len(mom_series) > 0 else None
         
-        # Generate signals
-        signal = "neutral"
-        if latest_mom is not None:
-            if len(mom_series) >= 2:
-                if latest_mom > 0 and mom_series.iloc[-2] <= 0:
-                    signal = "bullish"
-                elif latest_mom < 0 and mom_series.iloc[-2] >= 0:
-                    signal = "bearish"
-                elif latest_mom > 0:
-                    signal = "bullish"
-                elif latest_mom < 0:
-                    signal = "bearish"
+    # Generate signals
+    signal = "neutral"
+    if latest_mom is not None:
+        if len(mom_series) >= 2:
+            if latest_mom > 0 and mom_series.iloc[-2] <= 0:
+                signal = "bullish"
+            elif latest_mom < 0 and mom_series.iloc[-2] >= 0:
+                signal = "bearish"
+            elif latest_mom > 0:
+                signal = "bullish"
+            elif latest_mom < 0:
+                signal = "bearish"
         
-        result = {
-            "momentum": mom_series,
-            "latest_value": latest_mom,
-            "signal": signal,
-            "period": period
-        }
+    result = {
+        "momentum": mom_series,
+        "latest_value": latest_mom,
+        "signal": signal,
+        "period": period
+    }
         
-        return standardize_output(result, "calculate_mom")
+    return standardize_output(result, "calculate_mom")
         
-    except Exception as e:
-        return {"success": False, "error": f"Momentum calculation failed: {str(e)}"}
-
-
 def calculate_roc(data: Union[pd.Series, Dict[str, Any]], period: int = 10) -> Dict[str, Any]:
     """Calculate Rate of Change using TA-Lib library.
     
@@ -1783,57 +1708,52 @@ def calculate_roc(data: Union[pd.Series, Dict[str, Any]], period: int = 10) -> D
         - Percentage format allows comparison across different price levels
         - Often oscillates around zero in trending markets
     """
-    try:
-        prices = validate_price_data(data)
+    prices = validate_price_data(data)
         
-        # Use talib-binary
-        roc_values = talib.ROC(
-            prices.values.astype(np.float64), 
-            timeperiod=period
-        )
-        roc_series = pd.Series(roc_values, index=prices.index).dropna()
+    # Use talib-binary
+    roc_values = talib.ROC(
+        prices.values.astype(np.float64), 
+        timeperiod=period
+    )
+    roc_series = pd.Series(roc_values, index=prices.index).dropna()
         
-        latest_roc = float(roc_series.iloc[-1]) if len(roc_series) > 0 else None
+    latest_roc = float(roc_series.iloc[-1]) if len(roc_series) > 0 else None
         
-        # Generate signals and momentum strength
-        signal = "neutral"
-        momentum_strength = "weak"
+    # Generate signals and momentum strength
+    signal = "neutral"
+    momentum_strength = "weak"
         
-        if latest_roc is not None:
-            # Signal determination
-            if len(roc_series) >= 2:
-                if latest_roc > 0 and roc_series.iloc[-2] <= 0:
-                    signal = "bullish"
-                elif latest_roc < 0 and roc_series.iloc[-2] >= 0:
-                    signal = "bearish"
-                elif latest_roc > 0:
-                    signal = "bullish"
-                elif latest_roc < 0:
-                    signal = "bearish"
+    if latest_roc is not None:
+        # Signal determination
+        if len(roc_series) >= 2:
+            if latest_roc > 0 and roc_series.iloc[-2] <= 0:
+                signal = "bullish"
+            elif latest_roc < 0 and roc_series.iloc[-2] >= 0:
+                signal = "bearish"
+            elif latest_roc > 0:
+                signal = "bullish"
+            elif latest_roc < 0:
+                signal = "bearish"
             
-            # Momentum strength
-            abs_roc = abs(latest_roc)
-            if abs_roc > 10:
-                momentum_strength = "strong"
-            elif abs_roc > 5:
-                momentum_strength = "moderate"
-            else:
-                momentum_strength = "weak"
+        # Momentum strength
+        abs_roc = abs(latest_roc)
+        if abs_roc > 10:
+            momentum_strength = "strong"
+        elif abs_roc > 5:
+            momentum_strength = "moderate"
+        else:
+            momentum_strength = "weak"
         
-        result = {
-            "roc": roc_series,
-            "latest_value": latest_roc,
-            "signal": signal,
-            "momentum_strength": momentum_strength,
-            "period": period
-        }
+    result = {
+        "roc": roc_series,
+        "latest_value": latest_roc,
+        "signal": signal,
+        "momentum_strength": momentum_strength,
+        "period": period
+    }
         
-        return standardize_output(result, "calculate_roc")
+    return standardize_output(result, "calculate_roc")
         
-    except Exception as e:
-        return {"success": False, "error": f"ROC calculation failed: {str(e)}"}
-
-
 # =============================================================================
 # VOLUME-BASED MOMENTUM INDICATORS  
 # =============================================================================
@@ -1886,56 +1806,51 @@ def calculate_cci(data: Union[pd.DataFrame, Dict[str, Any]], period: int = 14) -
         - Originally designed for commodities but works well for stocks
         - Extreme values (+200/-200) often indicate strong continuation moves
     """
-    try:
-        if isinstance(data, dict):
-            df = pd.DataFrame(data)
-        else:
-            df = data.copy()
+    if isinstance(data, dict):
+        df = pd.DataFrame(data)
+    else:
+        df = data.copy()
         
-        # Ensure we have required columns
-        required_cols = ['high', 'low', 'close']
-        if not all(col in df.columns or col.title() in df.columns for col in required_cols):
-            raise ValueError("OHLC data required for CCI calculation")
+    # Ensure we have required columns
+    required_cols = ['high', 'low', 'close']
+    if not all(col in df.columns or col.title() in df.columns for col in required_cols):
+        raise ValueError("OHLC data required for CCI calculation")
         
-        # Standardize column names
-        high_col = 'high' if 'high' in df.columns else 'High'
-        low_col = 'low' if 'low' in df.columns else 'Low'
-        close_col = 'close' if 'close' in df.columns else 'Close'
+    # Standardize column names
+    high_col = 'high' if 'high' in df.columns else 'High'
+    low_col = 'low' if 'low' in df.columns else 'Low'
+    close_col = 'close' if 'close' in df.columns else 'Close'
         
-        # Use talib-binary
-        cci_values = talib.CCI(
-            df[high_col].values.astype(np.float64),
-            df[low_col].values.astype(np.float64),
-            df[close_col].values.astype(np.float64),
-            timeperiod=period
-        )
-        cci_series = pd.Series(cci_values, index=df.index).dropna()
+    # Use talib-binary
+    cci_values = talib.CCI(
+        df[high_col].values.astype(np.float64),
+        df[low_col].values.astype(np.float64),
+        df[close_col].values.astype(np.float64),
+        timeperiod=period
+    )
+    cci_series = pd.Series(cci_values, index=df.index).dropna()
         
-        latest_cci = float(cci_series.iloc[-1]) if len(cci_series) > 0 else None
+    latest_cci = float(cci_series.iloc[-1]) if len(cci_series) > 0 else None
         
-        # Generate signals
-        signal = "neutral"
-        if latest_cci is not None:
-            if latest_cci > 100:
-                signal = "overbought"
-            elif latest_cci < -100:
-                signal = "oversold"
+    # Generate signals
+    signal = "neutral"
+    if latest_cci is not None:
+        if latest_cci > 100:
+            signal = "overbought"
+        elif latest_cci < -100:
+            signal = "oversold"
         
-        result = {
-            "cci": cci_series,
-            "latest_value": latest_cci,
-            "signal": signal,
-            "period": period,
-            "overbought_level": 100,
-            "oversold_level": -100
-        }
+    result = {
+        "cci": cci_series,
+        "latest_value": latest_cci,
+        "signal": signal,
+        "period": period,
+        "overbought_level": 100,
+        "oversold_level": -100
+    }
         
-        return standardize_output(result, "calculate_cci")
+    return standardize_output(result, "calculate_cci")
         
-    except Exception as e:
-        return {"success": False, "error": f"CCI calculation failed: {str(e)}"}
-
-
 # =============================================================================
 # SPECIALIZED OSCILLATORS
 # =============================================================================
@@ -1984,67 +1899,62 @@ def calculate_bop(data: Union[pd.DataFrame, Dict[str, Any]]) -> Dict[str, Any]:
         - Values near 0 indicate balanced buying/selling pressure
         - No smoothing applied, shows raw market sentiment
     """
-    try:
-        if isinstance(data, dict):
-            df = pd.DataFrame(data)
-        else:
-            df = data.copy()
+    if isinstance(data, dict):
+        df = pd.DataFrame(data)
+    else:
+        df = data.copy()
         
-        # Ensure we have required columns
-        required_cols = ['open', 'high', 'low', 'close']
-        if not all(col in df.columns or col.title() in df.columns for col in required_cols):
-            raise ValueError("OHLC data required for BOP calculation")
+    # Ensure we have required columns
+    required_cols = ['open', 'high', 'low', 'close']
+    if not all(col in df.columns or col.title() in df.columns for col in required_cols):
+        raise ValueError("OHLC data required for BOP calculation")
         
-        # Standardize column names
-        open_col = 'open' if 'open' in df.columns else 'Open'
-        high_col = 'high' if 'high' in df.columns else 'High'
-        low_col = 'low' if 'low' in df.columns else 'Low'
-        close_col = 'close' if 'close' in df.columns else 'Close'
+    # Standardize column names
+    open_col = 'open' if 'open' in df.columns else 'Open'
+    high_col = 'high' if 'high' in df.columns else 'High'
+    low_col = 'low' if 'low' in df.columns else 'Low'
+    close_col = 'close' if 'close' in df.columns else 'Close'
         
-        # Use talib-binary
-        bop_values = talib.BOP(
-            df[open_col].values.astype(np.float64),
-            df[high_col].values.astype(np.float64),
-            df[low_col].values.astype(np.float64),
-            df[close_col].values.astype(np.float64)
-        )
-        bop_series = pd.Series(bop_values, index=df.index).dropna()
+    # Use talib-binary
+    bop_values = talib.BOP(
+        df[open_col].values.astype(np.float64),
+        df[high_col].values.astype(np.float64),
+        df[low_col].values.astype(np.float64),
+        df[close_col].values.astype(np.float64)
+    )
+    bop_series = pd.Series(bop_values, index=df.index).dropna()
         
-        latest_bop = float(bop_series.iloc[-1]) if len(bop_series) > 0 else None
+    latest_bop = float(bop_series.iloc[-1]) if len(bop_series) > 0 else None
         
-        # Generate signals and power strength
-        signal = "neutral"
-        power_strength = "weak"
+    # Generate signals and power strength
+    signal = "neutral"
+    power_strength = "weak"
         
-        if latest_bop is not None:
-            # Signal determination
-            if latest_bop > 0.2:
-                signal = "bullish"
-            elif latest_bop < -0.2:
-                signal = "bearish"
+    if latest_bop is not None:
+        # Signal determination
+        if latest_bop > 0.2:
+            signal = "bullish"
+        elif latest_bop < -0.2:
+            signal = "bearish"
             
-            # Power strength
-            abs_bop = abs(latest_bop)
-            if abs_bop > 0.7:
-                power_strength = "strong"
-            elif abs_bop > 0.4:
-                power_strength = "moderate"
-            else:
-                power_strength = "weak"
+        # Power strength
+        abs_bop = abs(latest_bop)
+        if abs_bop > 0.7:
+            power_strength = "strong"
+        elif abs_bop > 0.4:
+            power_strength = "moderate"
+        else:
+            power_strength = "weak"
         
-        result = {
-            "bop": bop_series,
-            "latest_value": latest_bop,
-            "signal": signal,
-            "power_strength": power_strength
-        }
+    result = {
+        "bop": bop_series,
+        "latest_value": latest_bop,
+        "signal": signal,
+        "power_strength": power_strength
+    }
         
-        return standardize_output(result, "calculate_bop")
+    return standardize_output(result, "calculate_bop")
         
-    except Exception as e:
-        return {"success": False, "error": f"BOP calculation failed: {str(e)}"}
-
-
 def calculate_cmo(data: Union[pd.Series, Dict[str, Any]], period: int = 14) -> Dict[str, Any]:
     """Calculate Chande Momentum Oscillator using TA-Lib library.
     
@@ -2103,54 +2013,49 @@ def calculate_cmo(data: Union[pd.Series, Dict[str, Any]], period: int = 14) -> D
         - Zero line crossovers indicate potential trend changes
         - Developed by Tushar Chande as an alternative to RSI
     """
-    try:
-        prices = validate_price_data(data)
+    prices = validate_price_data(data)
         
-        # Use talib-binary
-        cmo_values = talib.CMO(
-            prices.values.astype(np.float64), 
-            timeperiod=period
-        )
-        cmo_series = pd.Series(cmo_values, index=prices.index).dropna()
+    # Use talib-binary
+    cmo_values = talib.CMO(
+        prices.values.astype(np.float64), 
+        timeperiod=period
+    )
+    cmo_series = pd.Series(cmo_values, index=prices.index).dropna()
         
-        latest_cmo = float(cmo_series.iloc[-1]) if len(cmo_series) > 0 else None
+    latest_cmo = float(cmo_series.iloc[-1]) if len(cmo_series) > 0 else None
         
-        # Generate signals and momentum strength
-        signal = "neutral"
-        momentum_strength = "weak"
+    # Generate signals and momentum strength
+    signal = "neutral"
+    momentum_strength = "weak"
         
-        if latest_cmo is not None:
-            # Signal determination
-            if latest_cmo > 50:
-                signal = "overbought"
-            elif latest_cmo < -50:
-                signal = "oversold"
+    if latest_cmo is not None:
+        # Signal determination
+        if latest_cmo > 50:
+            signal = "overbought"
+        elif latest_cmo < -50:
+            signal = "oversold"
             
-            # Momentum strength
-            abs_cmo = abs(latest_cmo)
-            if abs_cmo > 70:
-                momentum_strength = "strong"
-            elif abs_cmo > 40:
-                momentum_strength = "moderate"
-            else:
-                momentum_strength = "weak"
+        # Momentum strength
+        abs_cmo = abs(latest_cmo)
+        if abs_cmo > 70:
+            momentum_strength = "strong"
+        elif abs_cmo > 40:
+            momentum_strength = "moderate"
+        else:
+            momentum_strength = "weak"
         
-        result = {
-            "cmo": cmo_series,
-            "latest_value": latest_cmo,
-            "signal": signal,
-            "momentum_strength": momentum_strength,
-            "period": period,
-            "overbought_level": 50,
-            "oversold_level": -50
-        }
+    result = {
+        "cmo": cmo_series,
+        "latest_value": latest_cmo,
+        "signal": signal,
+        "momentum_strength": momentum_strength,
+        "period": period,
+        "overbought_level": 50,
+        "oversold_level": -50
+    }
         
-        return standardize_output(result, "calculate_cmo")
+    return standardize_output(result, "calculate_cmo")
         
-    except Exception as e:
-        return {"success": False, "error": f"CMO calculation failed: {str(e)}"}
-
-
 # =============================================================================
 # REGISTRY OF ALL MOMENTUM INDICATORS
 # =============================================================================

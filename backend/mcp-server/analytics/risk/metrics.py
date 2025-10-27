@@ -109,70 +109,65 @@ def calculate_var(returns: Union[pd.Series, Dict[str, Any]],
         - Backtesting ratio should be close to 1.0 for well-calibrated models
         - Annual VaR calculated using √252 scaling factor
     """
-    try:
-        returns_series = validate_return_data(returns)
+    returns_series = validate_return_data(returns)
         
-        if method == "historical":
-            # Use empyrical - leveraging requirements.txt
-            var = empyrical.value_at_risk(returns_series, cutoff=confidence_level)
+    if method == "historical":
+        # Use empyrical - leveraging requirements.txt
+        var = empyrical.value_at_risk(returns_series, cutoff=confidence_level)
         
-        elif method == "parametric":
-            # Use scipy for parametric VaR
-            mean = returns_series.mean()
-            std = returns_series.std()
-            var = stats.norm.ppf(confidence_level, mean, std)
+    elif method == "parametric":
+        # Use scipy for parametric VaR
+        mean = returns_series.mean()
+        std = returns_series.std()
+        var = stats.norm.ppf(confidence_level, mean, std)
         
-        elif method == "cornish_fisher":
-            # Cornish-Fisher expansion using scipy
-            mean = returns_series.mean()
-            std = returns_series.std()
-            skew = stats.skew(returns_series)
-            kurt = stats.kurtosis(returns_series)
+    elif method == "cornish_fisher":
+        # Cornish-Fisher expansion using scipy
+        mean = returns_series.mean()
+        std = returns_series.std()
+        skew = stats.skew(returns_series)
+        kurt = stats.kurtosis(returns_series)
             
-            # Standard normal quantile
-            z = stats.norm.ppf(confidence_level)
+        # Standard normal quantile
+        z = stats.norm.ppf(confidence_level)
             
-            # Cornish-Fisher adjustment
-            cf_adjustment = (z + (z**2 - 1) * skew / 6 + 
-                           (z**3 - 3*z) * kurt / 24 - 
-                           (2*z**3 - 5*z) * skew**2 / 36)
+        # Cornish-Fisher adjustment
+        cf_adjustment = (z + (z**2 - 1) * skew / 6 + 
+                       (z**3 - 3*z) * kurt / 24 - 
+                       (2*z**3 - 5*z) * skew**2 / 36)
             
-            var = mean + std * cf_adjustment
+        var = mean + std * cf_adjustment
         
-        else:
-            # Default to historical method
-            var = empyrical.value_at_risk(returns_series, cutoff=confidence_level)
+    else:
+        # Default to historical method
+        var = empyrical.value_at_risk(returns_series, cutoff=confidence_level)
         
-        # Calculate daily and annual VaR
-        daily_var = float(var)
-        annual_var = daily_var * np.sqrt(252)
+    # Calculate daily and annual VaR
+    daily_var = float(var)
+    annual_var = daily_var * np.sqrt(252)
         
-        # Calculate number of violations
-        violations = (returns_series < daily_var).sum()
-        violation_rate = violations / len(returns_series)
-        expected_violations = len(returns_series) * confidence_level
+    # Calculate number of violations
+    violations = (returns_series < daily_var).sum()
+    violation_rate = violations / len(returns_series)
+    expected_violations = len(returns_series) * confidence_level
         
-        result = {
-            "var_daily": daily_var,
-            "var_daily_pct": f"{daily_var * 100:.2f}%",
-            "var_annual": annual_var,
-            "var_annual_pct": f"{annual_var * 100:.2f}%",
-            "confidence_level": confidence_level,
-            "confidence_level_pct": f"{(1 - confidence_level) * 100:.1f}%",
-            "method": method,
-            "violations": int(violations),
-            "violation_rate": float(violation_rate),
-            "violation_rate_pct": f"{violation_rate * 100:.2f}%",
-            "expected_violations": float(expected_violations),
-            "backtesting_ratio": float(violations / expected_violations) if expected_violations > 0 else 0
-        }
+    result = {
+        "var_daily": daily_var,
+        "var_daily_pct": f"{daily_var * 100:.2f}%",
+        "var_annual": annual_var,
+        "var_annual_pct": f"{annual_var * 100:.2f}%",
+        "confidence_level": confidence_level,
+        "confidence_level_pct": f"{(1 - confidence_level) * 100:.1f}%",
+        "method": method,
+        "violations": int(violations),
+        "violation_rate": float(violation_rate),
+        "violation_rate_pct": f"{violation_rate * 100:.2f}%",
+        "expected_violations": float(expected_violations),
+        "backtesting_ratio": float(violations / expected_violations) if expected_violations > 0 else 0
+    }
         
-        return standardize_output(result, "calculate_var")
+    return standardize_output(result, "calculate_var")
         
-    except Exception as e:
-        return {"success": False, "error": f"VaR calculation failed: {str(e)}"}
-
-
 def calculate_cvar(returns: Union[pd.Series, Dict[str, Any]], 
                    confidence_level: float = 0.05) -> Dict[str, Any]:
     """Calculate Conditional Value at Risk (Expected Shortfall).
@@ -227,38 +222,33 @@ def calculate_cvar(returns: Union[pd.Series, Dict[str, Any]],
         - Uses empyrical library for consistent calculation with industry standards
         - Annual CVaR calculated using √252 scaling factor
     """
-    try:
-        returns_series = validate_return_data(returns)
+    returns_series = validate_return_data(returns)
         
-        # Use empyrical - leveraging requirements.txt
-        cvar = empyrical.conditional_value_at_risk(returns_series, cutoff=confidence_level)
-        var = empyrical.value_at_risk(returns_series, cutoff=confidence_level)
+    # Use empyrical - leveraging requirements.txt
+    cvar = empyrical.conditional_value_at_risk(returns_series, cutoff=confidence_level)
+    var = empyrical.value_at_risk(returns_series, cutoff=confidence_level)
         
-        # Calculate daily and annual CVaR
-        daily_cvar = float(cvar)
-        annual_cvar = daily_cvar * np.sqrt(252)
+    # Calculate daily and annual CVaR
+    daily_cvar = float(cvar)
+    annual_cvar = daily_cvar * np.sqrt(252)
         
-        # CVaR ratio (CVaR / VaR)
-        cvar_ratio = abs(daily_cvar / var) if var != 0 else 1
+    # CVaR ratio (CVaR / VaR)
+    cvar_ratio = abs(daily_cvar / var) if var != 0 else 1
         
-        result = {
-            "cvar_daily": daily_cvar,
-            "cvar_daily_pct": f"{daily_cvar * 100:.2f}%",
-            "cvar_annual": annual_cvar,
-            "cvar_annual_pct": f"{annual_cvar * 100:.2f}%",
-            "var_daily": float(var),
-            "var_daily_pct": f"{var * 100:.2f}%",
-            "cvar_var_ratio": float(cvar_ratio),
-            "confidence_level": confidence_level,
-            "confidence_level_pct": f"{(1 - confidence_level) * 100:.1f}%"
-        }
+    result = {
+        "cvar_daily": daily_cvar,
+        "cvar_daily_pct": f"{daily_cvar * 100:.2f}%",
+        "cvar_annual": annual_cvar,
+        "cvar_annual_pct": f"{annual_cvar * 100:.2f}%",
+        "var_daily": float(var),
+        "var_daily_pct": f"{var * 100:.2f}%",
+        "cvar_var_ratio": float(cvar_ratio),
+        "confidence_level": confidence_level,
+        "confidence_level_pct": f"{(1 - confidence_level) * 100:.1f}%"
+    }
         
-        return standardize_output(result, "calculate_cvar")
+    return standardize_output(result, "calculate_cvar")
         
-    except Exception as e:
-        return {"success": False, "error": f"CVaR calculation failed: {str(e)}"}
-
-
 def calculate_correlation_analysis(returns: Union[pd.DataFrame, Dict[str, Any], List[List[float]]],
                                   method: str = "pearson") -> Dict[str, Any]:
     """Calculate comprehensive correlation analysis for multiple assets.
@@ -334,78 +324,73 @@ def calculate_correlation_analysis(returns: Union[pd.DataFrame, Dict[str, Any], 
         - Diversification benefits decrease as average correlation increases
         - NaN values are automatically removed before calculation
     """
-    try:
-        if isinstance(returns, dict):
-            returns_df = pd.DataFrame(returns)
-        elif isinstance(returns, list):
-            # Handle list of lists (each list is an asset's returns)
-            if len(returns) > 0 and isinstance(returns[0], list):
-                returns_df = pd.DataFrame(returns).T  # Transpose so each column is an asset
-                returns_df.columns = [f"Asset_{i}" for i in range(len(returns))]
-            else:
-                # Single list of returns - convert to single column
-                returns_df = pd.DataFrame({"Asset_0": returns})
+    if isinstance(returns, dict):
+        returns_df = pd.DataFrame(returns)
+    elif isinstance(returns, list):
+        # Handle list of lists (each list is an asset's returns)
+        if len(returns) > 0 and isinstance(returns[0], list):
+            returns_df = pd.DataFrame(returns).T  # Transpose so each column is an asset
+            returns_df.columns = [f"Asset_{i}" for i in range(len(returns))]
         else:
-            returns_df = returns.copy()
+            # Single list of returns - convert to single column
+            returns_df = pd.DataFrame({"Asset_0": returns})
+    else:
+        returns_df = returns.copy()
         
-        # Drop NaN values
-        returns_df = returns_df.dropna()
+    # Drop NaN values
+    returns_df = returns_df.dropna()
         
-        if len(returns_df.columns) < 2:
-            raise ValueError("At least 2 assets required for correlation analysis")
+    if len(returns_df.columns) < 2:
+        raise ValueError("At least 2 assets required for correlation analysis")
         
-        # Calculate correlation matrix using pandas
-        if method == "pearson":
-            corr_matrix = returns_df.corr(method='pearson')
-        elif method == "spearman":
-            corr_matrix = returns_df.corr(method='spearman')
-        elif method == "kendall":
-            corr_matrix = returns_df.corr(method='kendall')
-        else:
-            corr_matrix = returns_df.corr(method='pearson')
-            method = "pearson"
+    # Calculate correlation matrix using pandas
+    if method == "pearson":
+        corr_matrix = returns_df.corr(method='pearson')
+    elif method == "spearman":
+        corr_matrix = returns_df.corr(method='spearman')
+    elif method == "kendall":
+        corr_matrix = returns_df.corr(method='kendall')
+    else:
+        corr_matrix = returns_df.corr(method='pearson')
+        method = "pearson"
         
-        # Extract upper triangle (remove duplicates)
-        n = len(corr_matrix)
-        correlations = []
-        for i in range(n):
-            for j in range(i+1, n):
-                correlations.append({
-                    "asset_1": corr_matrix.index[i],
-                    "asset_2": corr_matrix.columns[j], 
-                    "correlation": float(corr_matrix.iloc[i, j])
-                })
+    # Extract upper triangle (remove duplicates)
+    n = len(corr_matrix)
+    correlations = []
+    for i in range(n):
+        for j in range(i+1, n):
+            correlations.append({
+                "asset_1": corr_matrix.index[i],
+                "asset_2": corr_matrix.columns[j], 
+                "correlation": float(corr_matrix.iloc[i, j])
+            })
         
-        # Find highest and lowest correlations
-        correlations_sorted = sorted(correlations, key=lambda x: x['correlation'])
-        highest_corr = correlations_sorted[-1] if correlations_sorted else None
-        lowest_corr = correlations_sorted[0] if correlations_sorted else None
+    # Find highest and lowest correlations
+    correlations_sorted = sorted(correlations, key=lambda x: x['correlation'])
+    highest_corr = correlations_sorted[-1] if correlations_sorted else None
+    lowest_corr = correlations_sorted[0] if correlations_sorted else None
         
-        # Calculate average correlation
-        corr_values = [c['correlation'] for c in correlations]
-        avg_correlation = np.mean(corr_values) if corr_values else 0
+    # Calculate average correlation
+    corr_values = [c['correlation'] for c in correlations]
+    avg_correlation = np.mean(corr_values) if corr_values else 0
         
-        # Diversification ratio (1 - average correlation)
-        diversification_ratio = 1 - abs(avg_correlation)
+    # Diversification ratio (1 - average correlation)
+    diversification_ratio = 1 - abs(avg_correlation)
         
-        result = {
-            "correlation_matrix": corr_matrix,
-            "method": method,
-            "pairwise_correlations": correlations,
-            "highest_correlation": highest_corr,
-            "lowest_correlation": lowest_corr,
-            "average_correlation": float(avg_correlation),
-            "diversification_ratio": float(diversification_ratio),
-            "n_assets": n,
-            "n_observations": len(returns_df)
-        }
+    result = {
+        "correlation_matrix": corr_matrix,
+        "method": method,
+        "pairwise_correlations": correlations,
+        "highest_correlation": highest_corr,
+        "lowest_correlation": lowest_corr,
+        "average_correlation": float(avg_correlation),
+        "diversification_ratio": float(diversification_ratio),
+        "n_assets": n,
+        "n_observations": len(returns_df)
+    }
         
-        return standardize_output(result, "calculate_correlation_analysis")
+    return standardize_output(result, "calculate_correlation_analysis")
         
-    except Exception as e:
-        return {"success": False, "error": f"Correlation analysis failed: {str(e)}"}
-
-
 def calculate_beta_analysis(asset_returns: Union[pd.Series, Dict[str, Any]],
                            market_returns: Union[pd.Series, Dict[str, Any]],
                            risk_free_rate: float = 0.02) -> Dict[str, Any]:
@@ -472,61 +457,56 @@ def calculate_beta_analysis(asset_returns: Union[pd.Series, Dict[str, Any]],
         - R-squared shows how much of asset's movement is explained by market
         - Uses empyrical library for consistent industry-standard calculations
     """
-    try:
-        asset_series = validate_return_data(asset_returns)
-        market_series = validate_return_data(market_returns)
+    asset_series = validate_return_data(asset_returns)
+    market_series = validate_return_data(market_returns)
         
-        # Align series
-        asset_aligned, market_aligned = align_series(asset_series, market_series)
+    # Align series
+    asset_aligned, market_aligned = align_series(asset_series, market_series)
         
-        # Use empyrical - leveraging requirements.txt
-        beta = empyrical.beta(asset_aligned, market_aligned)
-        alpha = empyrical.alpha(asset_aligned, market_aligned, risk_free=risk_free_rate)
+    # Use empyrical - leveraging requirements.txt
+    beta = empyrical.beta(asset_aligned, market_aligned)
+    alpha = empyrical.alpha(asset_aligned, market_aligned, risk_free=risk_free_rate)
         
-        # Calculate correlation
-        correlation = asset_aligned.corr(market_aligned)
+    # Calculate correlation
+    correlation = asset_aligned.corr(market_aligned)
         
-        # Calculate R-squared
-        r_squared = correlation ** 2
+    # Calculate R-squared
+    r_squared = correlation ** 2
         
-        # Calculate tracking error
-        excess_returns = asset_aligned - market_aligned
-        tracking_error = excess_returns.std() * np.sqrt(252)
+    # Calculate tracking error
+    excess_returns = asset_aligned - market_aligned
+    tracking_error = excess_returns.std() * np.sqrt(252)
         
-        # Calculate information ratio
-        information_ratio = (excess_returns.mean() * 252) / tracking_error if tracking_error > 0 else 0
+    # Calculate information ratio
+    information_ratio = (excess_returns.mean() * 252) / tracking_error if tracking_error > 0 else 0
         
-        # Interpret beta
-        if beta > 1.2:
-            beta_interpretation = "high_beta"
-        elif beta > 0.8:
-            beta_interpretation = "moderate_beta"
-        elif beta > 0:
-            beta_interpretation = "low_beta"
-        else:
-            beta_interpretation = "negative_beta"
+    # Interpret beta
+    if beta > 1.2:
+        beta_interpretation = "high_beta"
+    elif beta > 0.8:
+        beta_interpretation = "moderate_beta"
+    elif beta > 0:
+        beta_interpretation = "low_beta"
+    else:
+        beta_interpretation = "negative_beta"
         
-        result = {
-            "beta": float(beta),
-            "alpha": float(alpha),
-            "alpha_annualized": float(alpha),
-            "alpha_pct": f"{alpha * 100:.2f}%",
-            "correlation": float(correlation),
-            "r_squared": float(r_squared),
-            "tracking_error": float(tracking_error),
-            "tracking_error_pct": f"{tracking_error * 100:.2f}%",
-            "information_ratio": float(information_ratio),
-            "beta_interpretation": beta_interpretation,
-            "risk_free_rate": risk_free_rate,
-            "n_observations": len(asset_aligned)
-        }
+    result = {
+        "beta": float(beta),
+        "alpha": float(alpha),
+        "alpha_annualized": float(alpha),
+        "alpha_pct": f"{alpha * 100:.2f}%",
+        "correlation": float(correlation),
+        "r_squared": float(r_squared),
+        "tracking_error": float(tracking_error),
+        "tracking_error_pct": f"{tracking_error * 100:.2f}%",
+        "information_ratio": float(information_ratio),
+        "beta_interpretation": beta_interpretation,
+        "risk_free_rate": risk_free_rate,
+        "n_observations": len(asset_aligned)
+    }
         
-        return standardize_output(result, "calculate_beta_analysis")
+    return standardize_output(result, "calculate_beta_analysis")
         
-    except Exception as e:
-        return {"success": False, "error": f"Beta analysis failed: {str(e)}"}
-
-
 def stress_test_portfolio(returns: Union[pd.Series, Dict[str, Any]],
                          stress_scenarios: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
     """Conduct comprehensive portfolio stress testing under adverse scenarios.
@@ -609,86 +589,81 @@ def stress_test_portfolio(returns: Union[pd.Series, Dict[str, Any]],
         - Probability calculations assume stressed returns follow normal distribution
         - Results help assess portfolio resilience and potential tail losses
     """
-    try:
-        returns_series = validate_return_data(returns)
+    returns_series = validate_return_data(returns)
         
-        # Default stress scenarios if none provided
-        if stress_scenarios is None:
-            stress_scenarios = [
-                {"name": "Market Crash", "return_shock": -0.20, "volatility_multiplier": 2.0},
-                {"name": "Moderate Correction", "return_shock": -0.10, "volatility_multiplier": 1.5},
-                {"name": "High Volatility", "return_shock": 0.0, "volatility_multiplier": 2.5},
-                {"name": "Low Growth", "return_shock": -0.05, "volatility_multiplier": 1.2}
-            ]
+    # Default stress scenarios if none provided
+    if stress_scenarios is None:
+        stress_scenarios = [
+            {"name": "Market Crash", "return_shock": -0.20, "volatility_multiplier": 2.0},
+            {"name": "Moderate Correction", "return_shock": -0.10, "volatility_multiplier": 1.5},
+            {"name": "High Volatility", "return_shock": 0.0, "volatility_multiplier": 2.5},
+            {"name": "Low Growth", "return_shock": -0.05, "volatility_multiplier": 1.2}
+        ]
         
-        # Calculate base portfolio metrics
-        mean_return = returns_series.mean()
-        std_return = returns_series.std()
+    # Calculate base portfolio metrics
+    mean_return = returns_series.mean()
+    std_return = returns_series.std()
         
-        stress_results = []
+    stress_results = []
         
-        for scenario in stress_scenarios:
-            scenario_name = scenario.get("name", "Unknown")
-            return_shock = scenario.get("return_shock", 0)
-            vol_multiplier = scenario.get("volatility_multiplier", 1)
+    for scenario in stress_scenarios:
+        scenario_name = scenario.get("name", "Unknown")
+        return_shock = scenario.get("return_shock", 0)
+        vol_multiplier = scenario.get("volatility_multiplier", 1)
             
-            # Apply stress scenario
-            stressed_mean = mean_return + return_shock / 252  # Daily shock
-            stressed_std = std_return * vol_multiplier
+        # Apply stress scenario
+        stressed_mean = mean_return + return_shock / 252  # Daily shock
+        stressed_std = std_return * vol_multiplier
             
-            # Use scipy for scenario analysis
-            # Calculate probability of large losses
-            prob_loss_5pct = stats.norm.cdf(-0.05, stressed_mean, stressed_std)
-            prob_loss_10pct = stats.norm.cdf(-0.10, stressed_mean, stressed_std) 
-            prob_loss_20pct = stats.norm.cdf(-0.20, stressed_mean, stressed_std)
+        # Use scipy for scenario analysis
+        # Calculate probability of large losses
+        prob_loss_5pct = stats.norm.cdf(-0.05, stressed_mean, stressed_std)
+        prob_loss_10pct = stats.norm.cdf(-0.10, stressed_mean, stressed_std) 
+        prob_loss_20pct = stats.norm.cdf(-0.20, stressed_mean, stressed_std)
             
-            # Expected shortfall in stressed scenario
-            var_95 = stats.norm.ppf(0.05, stressed_mean, stressed_std)
-            # Approximate CVaR for normal distribution
-            cvar_95 = stressed_mean - stressed_std * stats.norm.pdf(stats.norm.ppf(0.05)) / 0.05
+        # Expected shortfall in stressed scenario
+        var_95 = stats.norm.ppf(0.05, stressed_mean, stressed_std)
+        # Approximate CVaR for normal distribution
+        cvar_95 = stressed_mean - stressed_std * stats.norm.pdf(stats.norm.ppf(0.05)) / 0.05
             
-            # Annualize metrics
-            stressed_annual_return = stressed_mean * 252
-            stressed_annual_vol = stressed_std * np.sqrt(252)
-            annual_var_95 = var_95 * np.sqrt(252)
-            annual_cvar_95 = cvar_95 * np.sqrt(252)
+        # Annualize metrics
+        stressed_annual_return = stressed_mean * 252
+        stressed_annual_vol = stressed_std * np.sqrt(252)
+        annual_var_95 = var_95 * np.sqrt(252)
+        annual_cvar_95 = cvar_95 * np.sqrt(252)
             
-            scenario_result = {
-                "scenario_name": scenario_name,
-                "return_shock": return_shock,
-                "volatility_multiplier": vol_multiplier,
-                "stressed_annual_return": float(stressed_annual_return),
-                "stressed_annual_return_pct": f"{stressed_annual_return * 100:.2f}%",
-                "stressed_annual_volatility": float(stressed_annual_vol),
-                "stressed_annual_volatility_pct": f"{stressed_annual_vol * 100:.2f}%",
-                "var_95_annual": float(annual_var_95),
-                "var_95_annual_pct": f"{annual_var_95 * 100:.2f}%",
-                "cvar_95_annual": float(annual_cvar_95),
-                "cvar_95_annual_pct": f"{annual_cvar_95 * 100:.2f}%",
-                "prob_loss_5pct": float(prob_loss_5pct),
-                "prob_loss_10pct": float(prob_loss_10pct),
-                "prob_loss_20pct": float(prob_loss_20pct)
-            }
-            
-            stress_results.append(scenario_result)
-        
-        # Find worst case scenario
-        worst_scenario = min(stress_results, key=lambda x: x['stressed_annual_return'])
-        
-        result = {
-            "base_annual_return": float(mean_return * 252),
-            "base_annual_volatility": float(std_return * np.sqrt(252)),
-            "stress_scenarios": stress_results,
-            "worst_case_scenario": worst_scenario,
-            "n_scenarios": len(stress_scenarios)
+        scenario_result = {
+            "scenario_name": scenario_name,
+            "return_shock": return_shock,
+            "volatility_multiplier": vol_multiplier,
+            "stressed_annual_return": float(stressed_annual_return),
+            "stressed_annual_return_pct": f"{stressed_annual_return * 100:.2f}%",
+            "stressed_annual_volatility": float(stressed_annual_vol),
+            "stressed_annual_volatility_pct": f"{stressed_annual_vol * 100:.2f}%",
+            "var_95_annual": float(annual_var_95),
+            "var_95_annual_pct": f"{annual_var_95 * 100:.2f}%",
+            "cvar_95_annual": float(annual_cvar_95),
+            "cvar_95_annual_pct": f"{annual_cvar_95 * 100:.2f}%",
+            "prob_loss_5pct": float(prob_loss_5pct),
+            "prob_loss_10pct": float(prob_loss_10pct),
+            "prob_loss_20pct": float(prob_loss_20pct)
         }
+            
+        stress_results.append(scenario_result)
         
-        return standardize_output(result, "stress_test_portfolio")
+    # Find worst case scenario
+    worst_scenario = min(stress_results, key=lambda x: x['stressed_annual_return'])
         
-    except Exception as e:
-        return {"success": False, "error": f"Stress testing failed: {str(e)}"}
-
-
+    result = {
+        "base_annual_return": float(mean_return * 252),
+        "base_annual_volatility": float(std_return * np.sqrt(252)),
+        "stress_scenarios": stress_results,
+        "worst_case_scenario": worst_scenario,
+        "n_scenarios": len(stress_scenarios)
+    }
+        
+    return standardize_output(result, "stress_test_portfolio")
+        
 def calculate_rolling_volatility(returns: Union[pd.Series, Dict[str, Any]], window: int = 30) -> pd.Series:
     """Calculate rolling volatility with specified window for time-series volatility analysis.
     
@@ -758,20 +733,15 @@ def calculate_rolling_volatility(returns: Union[pd.Series, Dict[str, Any]], wind
         - Results are compatible with GARCH models and volatility forecasting
         - Uses pandas rolling() function for computational efficiency
     """
-    try:
-        from ..utils.data_utils import validate_return_data
+    from ..utils.data_utils import validate_return_data
         
-        returns_series = validate_return_data(returns)
+    returns_series = validate_return_data(returns)
         
-        # Calculate rolling volatility and annualize
-        rolling_vol = returns_series.rolling(window=window).std() * np.sqrt(252)
+    # Calculate rolling volatility and annualize
+    rolling_vol = returns_series.rolling(window=window).std() * np.sqrt(252)
         
-        return rolling_vol.dropna()
+    return rolling_vol.dropna()
         
-    except Exception as e:
-        raise ValueError(f"Rolling volatility calculation failed: {str(e)}")
-
-
 def calculate_beta(stock_returns: Union[pd.Series, Dict[str, Any]], 
                    market_returns: Union[pd.Series, Dict[str, Any]]) -> float:
     """Calculate beta coefficient measuring systematic risk relative to market movements.
@@ -854,27 +824,22 @@ def calculate_beta(stock_returns: Union[pd.Series, Dict[str, Any]],
         - Defensive sectors typically have lower betas than growth/cyclical sectors
         - Uses covariance/variance calculation for numerical stability
     """
-    try:
-        from ..utils.data_utils import validate_return_data, align_series
+    from ..utils.data_utils import validate_return_data, align_series
         
-        stock_series = validate_return_data(stock_returns)
-        market_series = validate_return_data(market_returns)
+    stock_series = validate_return_data(stock_returns)
+    market_series = validate_return_data(market_returns)
         
-        # Align series
-        stock_aligned, market_aligned = align_series(stock_series, market_series)
+    # Align series
+    stock_aligned, market_aligned = align_series(stock_series, market_series)
         
-        # Calculate beta using covariance and variance
-        covariance = stock_aligned.cov(market_aligned)
-        market_variance = market_aligned.var()
+    # Calculate beta using covariance and variance
+    covariance = stock_aligned.cov(market_aligned)
+    market_variance = market_aligned.var()
         
-        beta = covariance / market_variance if market_variance > 0 else 0
+    beta = covariance / market_variance if market_variance > 0 else 0
         
-        return float(beta)
+    return float(beta)
         
-    except Exception as e:
-        raise ValueError(f"Beta calculation failed: {str(e)}")
-
-
 def calculate_correlation(series1: Union[pd.Series, Dict[str, Any]], 
                          series2: Union[pd.Series, Dict[str, Any]]) -> float:
     """Calculate Pearson correlation coefficient between two financial time series.
@@ -948,24 +913,19 @@ def calculate_correlation(series1: Union[pd.Series, Dict[str, Any]],
         - Missing values are automatically excluded from calculation
         - Essential for modern portfolio theory and risk parity strategies
     """
-    try:
-        from ..utils.data_utils import validate_return_data, align_series
+    from ..utils.data_utils import validate_return_data, align_series
         
-        s1 = validate_return_data(series1)
-        s2 = validate_return_data(series2)
+    s1 = validate_return_data(series1)
+    s2 = validate_return_data(series2)
         
-        # Align series
-        s1_aligned, s2_aligned = align_series(s1, s2)
+    # Align series
+    s1_aligned, s2_aligned = align_series(s1, s2)
         
-        # Calculate correlation
-        correlation = s1_aligned.corr(s2_aligned)
+    # Calculate correlation
+    correlation = s1_aligned.corr(s2_aligned)
         
-        return float(correlation)
+    return float(correlation)
         
-    except Exception as e:
-        raise ValueError(f"Correlation calculation failed: {str(e)}")
-
-
 def calculate_correlation_matrix(series_array: List[Union[pd.Series, Dict[str, Any]]]) -> pd.DataFrame:
     """Calculate pairwise correlation matrix for multiple financial time series.
     
@@ -1030,26 +990,21 @@ def calculate_correlation_matrix(series_array: List[Union[pd.Series, Dict[str, A
         - Large matrices (>50 assets) may have numerical stability issues
         - Essential input for Modern Portfolio Theory and CAPM calculations
     """
-    try:
-        from ..utils.data_utils import validate_return_data
+    from ..utils.data_utils import validate_return_data
         
-        # Validate and prepare all series
-        validated_series = []
-        for i, series in enumerate(series_array):
-            validated = validate_return_data(series)
-            validated.name = f"series_{i}" if validated.name is None else validated.name
-            validated_series.append(validated)
+    # Validate and prepare all series
+    validated_series = []
+    for i, series in enumerate(series_array):
+        validated = validate_return_data(series)
+        validated.name = f"series_{i}" if validated.name is None else validated.name
+        validated_series.append(validated)
         
-        # Create DataFrame and calculate correlation matrix
-        df = pd.concat(validated_series, axis=1)
-        correlation_matrix = df.corr()
+    # Create DataFrame and calculate correlation matrix
+    df = pd.concat(validated_series, axis=1)
+    correlation_matrix = df.corr()
         
-        return correlation_matrix
+    return correlation_matrix
         
-    except Exception as e:
-        raise ValueError(f"Correlation matrix calculation failed: {str(e)}")
-
-
 def calculate_skewness(returns: Union[pd.Series, Dict[str, Any]]) -> float:
     """Calculate skewness measuring asymmetry of return distribution.
     
@@ -1091,20 +1046,15 @@ def calculate_skewness(returns: Union[pd.Series, Dict[str, Any]]) -> float:
         - Positive skewness may indicate momentum or bubble patterns
         - Uses scipy.stats.skew for robust calculation
     """
-    try:
-        from ..utils.data_utils import validate_return_data
+    from ..utils.data_utils import validate_return_data
         
-        returns_series = validate_return_data(returns)
+    returns_series = validate_return_data(returns)
         
-        # Use scipy for skewness calculation
-        skewness = stats.skew(returns_series.dropna())
+    # Use scipy for skewness calculation
+    skewness = stats.skew(returns_series.dropna())
         
-        return float(skewness)
+    return float(skewness)
         
-    except Exception as e:
-        raise ValueError(f"Skewness calculation failed: {str(e)}")
-
-
 def calculate_kurtosis(returns: Union[pd.Series, Dict[str, Any]]) -> float:
     """Calculate excess kurtosis measuring tail thickness of return distribution.
     
@@ -1144,20 +1094,15 @@ def calculate_kurtosis(returns: Union[pd.Series, Dict[str, Any]]) -> float:
         - High kurtosis suggests higher crash/boom probability than normal distribution
         - Uses scipy.stats.kurtosis with Fisher=True (excess kurtosis)
     """
-    try:
-        from ..utils.data_utils import validate_return_data
+    from ..utils.data_utils import validate_return_data
         
-        returns_series = validate_return_data(returns)
+    returns_series = validate_return_data(returns)
         
-        # Use scipy for kurtosis calculation (excess kurtosis)
-        kurtosis = stats.kurtosis(returns_series.dropna())
+    # Use scipy for kurtosis calculation (excess kurtosis)
+    kurtosis = stats.kurtosis(returns_series.dropna())
         
-        return float(kurtosis)
+    return float(kurtosis)
         
-    except Exception as e:
-        raise ValueError(f"Kurtosis calculation failed: {str(e)}")
-
-
 def calculate_percentile(data: Union[pd.Series, Dict[str, Any], List[float]], percentile: float) -> float:
     """Calculate specified percentile for risk and performance analysis.
     
@@ -1199,29 +1144,24 @@ def calculate_percentile(data: Union[pd.Series, Dict[str, Any], List[float]], pe
         - 5th percentile often represents worst-case scenarios
         - 95th percentile represents best-case scenarios
     """
-    try:
-        if isinstance(data, (list, np.ndarray)):
-            data_array = np.array(data)
-        elif isinstance(data, dict):
-            data_array = np.array(list(data.values()))
-        else:
-            data_array = data.values if hasattr(data, 'values') else np.array(data)
+    if isinstance(data, (list, np.ndarray)):
+        data_array = np.array(data)
+    elif isinstance(data, dict):
+        data_array = np.array(list(data.values()))
+    else:
+        data_array = data.values if hasattr(data, 'values') else np.array(data)
         
-        # Remove NaN values
-        data_clean = data_array[~np.isnan(data_array)]
+    # Remove NaN values
+    data_clean = data_array[~np.isnan(data_array)]
         
-        if len(data_clean) == 0:
-            raise ValueError("No valid data points for percentile calculation")
+    if len(data_clean) == 0:
+        raise ValueError("No valid data points for percentile calculation")
         
-        # Use numpy percentile
-        result = np.percentile(data_clean, percentile)
+    # Use numpy percentile
+    result = np.percentile(data_clean, percentile)
         
-        return float(result)
+    return float(result)
         
-    except Exception as e:
-        raise ValueError(f"Percentile calculation failed: {str(e)}")
-
-
 def calculate_herfindahl_index(weights: Union[pd.Series, Dict[str, Any], List[float]]) -> float:
     """Calculate Herfindahl-Hirschman Index measuring portfolio concentration.
     
@@ -1258,33 +1198,28 @@ def calculate_herfindahl_index(weights: Union[pd.Series, Dict[str, Any], List[fl
         - Regulatory agencies use HHI for market concentration analysis
         - Effective number of assets ≈ 1/HHI
     """
-    try:
-        if isinstance(weights, (list, np.ndarray)):
-            weights_array = np.array(weights)
-        elif isinstance(weights, dict):
-            weights_array = np.array(list(weights.values()))
-        else:
-            weights_array = weights.values if hasattr(weights, 'values') else np.array(weights)
+    if isinstance(weights, (list, np.ndarray)):
+        weights_array = np.array(weights)
+    elif isinstance(weights, dict):
+        weights_array = np.array(list(weights.values()))
+    else:
+        weights_array = weights.values if hasattr(weights, 'values') else np.array(weights)
         
-        # Remove NaN values and ensure positive weights
-        weights_clean = weights_array[~np.isnan(weights_array)]
-        weights_clean = weights_clean[weights_clean >= 0]
+    # Remove NaN values and ensure positive weights
+    weights_clean = weights_array[~np.isnan(weights_array)]
+    weights_clean = weights_clean[weights_clean >= 0]
         
-        if len(weights_clean) == 0:
-            raise ValueError("No valid weights for Herfindahl index calculation")
+    if len(weights_clean) == 0:
+        raise ValueError("No valid weights for Herfindahl index calculation")
         
-        # Normalize weights to sum to 1
-        weights_normalized = weights_clean / weights_clean.sum()
+    # Normalize weights to sum to 1
+    weights_normalized = weights_clean / weights_clean.sum()
         
-        # Calculate Herfindahl index: sum of squared weights
-        herfindahl_index = np.sum(weights_normalized ** 2)
+    # Calculate Herfindahl index: sum of squared weights
+    herfindahl_index = np.sum(weights_normalized ** 2)
         
-        return float(herfindahl_index)
+    return float(herfindahl_index)
         
-    except Exception as e:
-        raise ValueError(f"Herfindahl index calculation failed: {str(e)}")
-
-
 def calculate_treynor_ratio(returns: Union[pd.Series, Dict[str, Any]], 
                            market_returns: Union[pd.Series, Dict[str, Any]], 
                            risk_free_rate: float = 0.02) -> float:
@@ -1324,35 +1259,30 @@ def calculate_treynor_ratio(returns: Union[pd.Series, Dict[str, Any]],
         - Assumes portfolio is well-diversified (unsystematic risk eliminated)
         - Cannot be calculated if beta is zero
     """
-    try:
-        from ..utils.data_utils import validate_return_data, align_series
+    from ..utils.data_utils import validate_return_data, align_series
         
-        portfolio_returns = validate_return_data(returns)
-        market_series = validate_return_data(market_returns)
+    portfolio_returns = validate_return_data(returns)
+    market_series = validate_return_data(market_returns)
         
-        # Align series
-        portfolio_aligned, market_aligned = align_series(portfolio_returns, market_series)
+    # Align series
+    portfolio_aligned, market_aligned = align_series(portfolio_returns, market_series)
         
-        # Calculate beta
-        beta = calculate_beta(portfolio_aligned, market_aligned)
+    # Calculate beta
+    beta = calculate_beta(portfolio_aligned, market_aligned)
         
-        if beta == 0:
-            raise ValueError("Beta is zero, cannot calculate Treynor ratio")
+    if beta == 0:
+        raise ValueError("Beta is zero, cannot calculate Treynor ratio")
         
-        # Calculate excess return
-        portfolio_annual_return = empyrical.annual_return(portfolio_aligned)
+    # Calculate excess return
+    portfolio_annual_return = empyrical.annual_return(portfolio_aligned)
         
-        excess_return = portfolio_annual_return - risk_free_rate
+    excess_return = portfolio_annual_return - risk_free_rate
         
-        # Calculate Treynor ratio
-        treynor_ratio = excess_return / beta
+    # Calculate Treynor ratio
+    treynor_ratio = excess_return / beta
         
-        return float(treynor_ratio)
+    return float(treynor_ratio)
         
-    except Exception as e:
-        raise ValueError(f"Treynor ratio calculation failed: {str(e)}")
-
-
 def calculate_portfolio_volatility(weights: Union[pd.Series, Dict[str, Any], List[float]], 
                                   correlation_matrix: Union[pd.DataFrame, Dict[str, Any]], 
                                   volatilities: Union[pd.Series, Dict[str, Any], List[float]]) -> float:
@@ -1423,50 +1353,45 @@ def calculate_portfolio_volatility(weights: Union[pd.Series, Dict[str, Any], Lis
         - Used in risk budgeting and portfolio risk management
         - Formula is exact for linear portfolios (no options or derivatives)
     """
-    try:
-        # Convert inputs to numpy arrays
-        if isinstance(weights, (list, pd.Series)):
-            w = np.array(weights)
-        elif isinstance(weights, dict):
-            w = np.array(list(weights.values()))
-        else:
-            w = np.array(weights)
+    # Convert inputs to numpy arrays
+    if isinstance(weights, (list, pd.Series)):
+        w = np.array(weights)
+    elif isinstance(weights, dict):
+        w = np.array(list(weights.values()))
+    else:
+        w = np.array(weights)
         
-        if isinstance(volatilities, (list, pd.Series)):
-            vol = np.array(volatilities)
-        elif isinstance(volatilities, dict):
-            vol = np.array(list(volatilities.values()))
-        else:
-            vol = np.array(volatilities)
+    if isinstance(volatilities, (list, pd.Series)):
+        vol = np.array(volatilities)
+    elif isinstance(volatilities, dict):
+        vol = np.array(list(volatilities.values()))
+    else:
+        vol = np.array(volatilities)
         
-        if isinstance(correlation_matrix, dict):
-            corr = np.array(list(correlation_matrix.values()))
-        elif isinstance(correlation_matrix, pd.DataFrame):
-            corr = correlation_matrix.values
-        else:
-            corr = np.array(correlation_matrix)
+    if isinstance(correlation_matrix, dict):
+        corr = np.array(list(correlation_matrix.values()))
+    elif isinstance(correlation_matrix, pd.DataFrame):
+        corr = correlation_matrix.values
+    else:
+        corr = np.array(correlation_matrix)
         
-        # Validate dimensions
-        n_assets = len(w)
-        if len(vol) != n_assets:
-            raise ValueError("Weights and volatilities must have same length")
-        if corr.shape != (n_assets, n_assets):
-            raise ValueError("Correlation matrix must be square with same dimension as weights")
+    # Validate dimensions
+    n_assets = len(w)
+    if len(vol) != n_assets:
+        raise ValueError("Weights and volatilities must have same length")
+    if corr.shape != (n_assets, n_assets):
+        raise ValueError("Correlation matrix must be square with same dimension as weights")
         
-        # Create covariance matrix
-        vol_matrix = np.outer(vol, vol)
-        cov_matrix = corr * vol_matrix
+    # Create covariance matrix
+    vol_matrix = np.outer(vol, vol)
+    cov_matrix = corr * vol_matrix
         
-        # Calculate portfolio volatility: sqrt(w' * Cov * w)
-        portfolio_variance = np.dot(w, np.dot(cov_matrix, w))
-        portfolio_vol = np.sqrt(portfolio_variance)
+    # Calculate portfolio volatility: sqrt(w' * Cov * w)
+    portfolio_variance = np.dot(w, np.dot(cov_matrix, w))
+    portfolio_vol = np.sqrt(portfolio_variance)
         
-        return float(portfolio_vol)
+    return float(portfolio_vol)
         
-    except Exception as e:
-        raise ValueError(f"Portfolio volatility calculation failed: {str(e)}")
-
-
 def calculate_component_var(weights: Union[pd.Series, Dict[str, Any], List[float]], 
                            returns: Union[pd.DataFrame, Dict[str, Any]], 
                            confidence: float) -> List[float]:
@@ -1511,57 +1436,52 @@ def calculate_component_var(weights: Union[pd.Series, Dict[str, Any], List[float
         - Used for risk budgeting and capital allocation
         - Helps identify concentration risks in portfolios
     """
-    try:
-        # Convert inputs to appropriate formats
-        if isinstance(weights, (list, pd.Series)):
-            w = np.array(weights)
-        elif isinstance(weights, dict):
-            w = np.array(list(weights.values()))
-        else:
-            w = np.array(weights)
+    # Convert inputs to appropriate formats
+    if isinstance(weights, (list, pd.Series)):
+        w = np.array(weights)
+    elif isinstance(weights, dict):
+        w = np.array(list(weights.values()))
+    else:
+        w = np.array(weights)
         
-        if isinstance(returns, dict):
-            returns_df = pd.DataFrame(returns)
-        elif isinstance(returns, list):
-            returns_df = pd.DataFrame(returns).T
-        else:
-            returns_df = returns.copy()
+    if isinstance(returns, dict):
+        returns_df = pd.DataFrame(returns)
+    elif isinstance(returns, list):
+        returns_df = pd.DataFrame(returns).T
+    else:
+        returns_df = returns.copy()
         
-        # Calculate portfolio returns
-        portfolio_returns = (returns_df * w).sum(axis=1)
+    # Calculate portfolio returns
+    portfolio_returns = (returns_df * w).sum(axis=1)
         
-        # Calculate portfolio VaR
-        portfolio_var = np.percentile(portfolio_returns, confidence * 100)
+    # Calculate portfolio VaR
+    portfolio_var = np.percentile(portfolio_returns, confidence * 100)
         
-        # Calculate marginal VaR for each component
-        n_assets = len(w)
-        marginal_vars = []
+    # Calculate marginal VaR for each component
+    n_assets = len(w)
+    marginal_vars = []
         
-        epsilon = 0.01  # Small perturbation for numerical derivative
+    epsilon = 0.01  # Small perturbation for numerical derivative
         
-        for i in range(n_assets):
-            # Create perturbed weights
-            w_plus = w.copy()
-            w_plus[i] += epsilon
-            w_plus = w_plus / w_plus.sum()  # Renormalize
+    for i in range(n_assets):
+        # Create perturbed weights
+        w_plus = w.copy()
+        w_plus[i] += epsilon
+        w_plus = w_plus / w_plus.sum()  # Renormalize
             
-            # Calculate perturbed portfolio returns and VaR
-            portfolio_returns_plus = (returns_df * w_plus).sum(axis=1)
-            var_plus = np.percentile(portfolio_returns_plus, confidence * 100)
+        # Calculate perturbed portfolio returns and VaR
+        portfolio_returns_plus = (returns_df * w_plus).sum(axis=1)
+        var_plus = np.percentile(portfolio_returns_plus, confidence * 100)
             
-            # Marginal VaR = (VaR_perturbed - VaR_original) / epsilon
-            marginal_var = (var_plus - portfolio_var) / epsilon
-            marginal_vars.append(marginal_var)
+        # Marginal VaR = (VaR_perturbed - VaR_original) / epsilon
+        marginal_var = (var_plus - portfolio_var) / epsilon
+        marginal_vars.append(marginal_var)
         
-        # Component VaR = weight * marginal VaR
-        component_vars = [float(w[i] * marginal_vars[i]) for i in range(n_assets)]
+    # Component VaR = weight * marginal VaR
+    component_vars = [float(w[i] * marginal_vars[i]) for i in range(n_assets)]
         
-        return component_vars
+    return component_vars
         
-    except Exception as e:
-        raise ValueError(f"Component VaR calculation failed: {str(e)}")
-
-
 def calculate_marginal_var(weights: Union[pd.Series, Dict[str, Any], List[float]], 
                           returns: Union[pd.DataFrame, Dict[str, Any]], 
                           confidence: float) -> List[float]:
@@ -1606,50 +1526,45 @@ def calculate_marginal_var(weights: Union[pd.Series, Dict[str, Any], List[float]
         - Essential for risk parity and risk budgeting strategies
         - Calculated via numerical differentiation (finite differences)
     """
-    try:
-        # Convert inputs
-        if isinstance(weights, (list, pd.Series)):
-            w = np.array(weights)
-        elif isinstance(weights, dict):
-            w = np.array(list(weights.values()))
-        else:
-            w = np.array(weights)
+    # Convert inputs
+    if isinstance(weights, (list, pd.Series)):
+        w = np.array(weights)
+    elif isinstance(weights, dict):
+        w = np.array(list(weights.values()))
+    else:
+        w = np.array(weights)
         
-        if isinstance(returns, dict):
-            returns_df = pd.DataFrame(returns)
-        elif isinstance(returns, list):
-            returns_df = pd.DataFrame(returns).T
-        else:
-            returns_df = returns.copy()
+    if isinstance(returns, dict):
+        returns_df = pd.DataFrame(returns)
+    elif isinstance(returns, list):
+        returns_df = pd.DataFrame(returns).T
+    else:
+        returns_df = returns.copy()
         
-        # Calculate current portfolio VaR
-        portfolio_returns = (returns_df * w).sum(axis=1)
-        current_var = np.percentile(portfolio_returns, confidence * 100)
+    # Calculate current portfolio VaR
+    portfolio_returns = (returns_df * w).sum(axis=1)
+    current_var = np.percentile(portfolio_returns, confidence * 100)
         
-        # Calculate marginal VaR using numerical differentiation
-        epsilon = 0.01
-        marginal_vars = []
+    # Calculate marginal VaR using numerical differentiation
+    epsilon = 0.01
+    marginal_vars = []
         
-        for i in range(len(w)):
-            # Increase weight of asset i by epsilon
-            w_perturbed = w.copy()
-            w_perturbed[i] += epsilon
-            w_perturbed = w_perturbed / w_perturbed.sum()  # Renormalize
+    for i in range(len(w)):
+        # Increase weight of asset i by epsilon
+        w_perturbed = w.copy()
+        w_perturbed[i] += epsilon
+        w_perturbed = w_perturbed / w_perturbed.sum()  # Renormalize
             
-            # Calculate new portfolio VaR
-            perturbed_returns = (returns_df * w_perturbed).sum(axis=1)
-            perturbed_var = np.percentile(perturbed_returns, confidence * 100)
+        # Calculate new portfolio VaR
+        perturbed_returns = (returns_df * w_perturbed).sum(axis=1)
+        perturbed_var = np.percentile(perturbed_returns, confidence * 100)
             
-            # Marginal VaR = derivative of portfolio VaR w.r.t. weight
-            marginal_var = (perturbed_var - current_var) / epsilon
-            marginal_vars.append(float(marginal_var))
+        # Marginal VaR = derivative of portfolio VaR w.r.t. weight
+        marginal_var = (perturbed_var - current_var) / epsilon
+        marginal_vars.append(float(marginal_var))
         
-        return marginal_vars
+    return marginal_vars
         
-    except Exception as e:
-        raise ValueError(f"Marginal VaR calculation failed: {str(e)}")
-
-
 def calculate_risk_budget(weights: Union[pd.Series, Dict[str, Any], List[float]], 
                          risk_contributions: Union[pd.Series, Dict[str, Any], List[float]]) -> List[float]:
     """Calculate risk budget allocation showing each asset's risk contribution percentage.
@@ -1677,40 +1592,35 @@ def calculate_risk_budget(weights: Union[pd.Series, Dict[str, Any], List[float]]
         - Used in risk parity and equal risk contribution strategies
         - Helps rebalance portfolios based on risk rather than dollar amounts
     """
-    try:
-        # Convert to numpy arrays
-        if isinstance(weights, (list, pd.Series)):
-            w = np.array(weights)
-        elif isinstance(weights, dict):
-            w = np.array(list(weights.values()))
-        else:
-            w = np.array(weights)
+    # Convert to numpy arrays
+    if isinstance(weights, (list, pd.Series)):
+        w = np.array(weights)
+    elif isinstance(weights, dict):
+        w = np.array(list(weights.values()))
+    else:
+        w = np.array(weights)
         
-        if isinstance(risk_contributions, (list, pd.Series)):
-            rc = np.array(risk_contributions)
-        elif isinstance(risk_contributions, dict):
-            rc = np.array(list(risk_contributions.values()))
-        else:
-            rc = np.array(risk_contributions)
+    if isinstance(risk_contributions, (list, pd.Series)):
+        rc = np.array(risk_contributions)
+    elif isinstance(risk_contributions, dict):
+        rc = np.array(list(risk_contributions.values()))
+    else:
+        rc = np.array(risk_contributions)
         
-        if len(w) != len(rc):
-            raise ValueError("Weights and risk contributions must have same length")
+    if len(w) != len(rc):
+        raise ValueError("Weights and risk contributions must have same length")
         
-        # Calculate risk budget: risk_contribution / total_risk
-        total_risk = np.sum(np.abs(rc))
+    # Calculate risk budget: risk_contribution / total_risk
+    total_risk = np.sum(np.abs(rc))
         
-        if total_risk == 0:
-            # Equal budget if no risk
-            risk_budget = np.ones(len(w)) / len(w)
-        else:
-            risk_budget = np.abs(rc) / total_risk
+    if total_risk == 0:
+        # Equal budget if no risk
+        risk_budget = np.ones(len(w)) / len(w)
+    else:
+        risk_budget = np.abs(rc) / total_risk
         
-        return [float(rb) for rb in risk_budget]
+    return [float(rb) for rb in risk_budget]
         
-    except Exception as e:
-        raise ValueError(f"Risk budget calculation failed: {str(e)}")
-
-
 def calculate_tail_risk(returns: Union[pd.Series, Dict[str, Any]], threshold: float) -> Dict[str, Any]:
     """Calculate comprehensive tail risk statistics for extreme events.
     
@@ -1776,55 +1686,50 @@ def calculate_tail_risk(returns: Union[pd.Series, Dict[str, Any]], threshold: fl
         - Returns empty statistics if no tail events found in data
         - Useful for stress testing and extreme risk scenario planning
     """
-    try:
-        returns_series = validate_return_data(returns)
+    returns_series = validate_return_data(returns)
         
-        # Identify tail events
-        tail_events = returns_series[returns_series <= threshold]
+    # Identify tail events
+    tail_events = returns_series[returns_series <= threshold]
         
-        if len(tail_events) == 0:
-            return {
-                "threshold": threshold,
-                "tail_frequency": 0.0,
-                "tail_mean": 0.0,
-                "tail_volatility": 0.0,
-                "tail_events_count": 0,
-                "expected_tail_loss": 0.0
-            }
-        
-        # Calculate tail statistics
-        tail_frequency = len(tail_events) / len(returns_series)
-        tail_mean = tail_events.mean()
-        tail_volatility = tail_events.std()
-        expected_tail_loss = tail_events.mean()  # Expected loss given tail event
-        
-        # Additional tail risk measures
-        tail_skewness = stats.skew(tail_events) if len(tail_events) > 2 else 0.0
-        tail_kurtosis = stats.kurtosis(tail_events) if len(tail_events) > 3 else 0.0
-        
-        result = {
-            "threshold": float(threshold),
-            "threshold_pct": f"{threshold * 100:.2f}%",
-            "tail_frequency": float(tail_frequency),
-            "tail_frequency_pct": f"{tail_frequency * 100:.2f}%",
-            "tail_mean": float(tail_mean),
-            "tail_mean_pct": f"{tail_mean * 100:.2f}%",
-            "tail_volatility": float(tail_volatility),
-            "tail_volatility_pct": f"{tail_volatility * 100:.2f}%",
-            "tail_events_count": len(tail_events),
-            "expected_tail_loss": float(expected_tail_loss),
-            "expected_tail_loss_pct": f"{expected_tail_loss * 100:.2f}%",
-            "tail_skewness": float(tail_skewness),
-            "tail_kurtosis": float(tail_kurtosis),
-            "total_observations": len(returns_series)
+    if len(tail_events) == 0:
+        return {
+            "threshold": threshold,
+            "tail_frequency": 0.0,
+            "tail_mean": 0.0,
+            "tail_volatility": 0.0,
+            "tail_events_count": 0,
+            "expected_tail_loss": 0.0
         }
         
-        return standardize_output(result, "calculate_tail_risk")
+    # Calculate tail statistics
+    tail_frequency = len(tail_events) / len(returns_series)
+    tail_mean = tail_events.mean()
+    tail_volatility = tail_events.std()
+    expected_tail_loss = tail_events.mean()  # Expected loss given tail event
         
-    except Exception as e:
-        raise ValueError(f"Tail risk calculation failed: {str(e)}")
-
-
+    # Additional tail risk measures
+    tail_skewness = stats.skew(tail_events) if len(tail_events) > 2 else 0.0
+    tail_kurtosis = stats.kurtosis(tail_events) if len(tail_events) > 3 else 0.0
+        
+    result = {
+        "threshold": float(threshold),
+        "threshold_pct": f"{threshold * 100:.2f}%",
+        "tail_frequency": float(tail_frequency),
+        "tail_frequency_pct": f"{tail_frequency * 100:.2f}%",
+        "tail_mean": float(tail_mean),
+        "tail_mean_pct": f"{tail_mean * 100:.2f}%",
+        "tail_volatility": float(tail_volatility),
+        "tail_volatility_pct": f"{tail_volatility * 100:.2f}%",
+        "tail_events_count": len(tail_events),
+        "expected_tail_loss": float(expected_tail_loss),
+        "expected_tail_loss_pct": f"{expected_tail_loss * 100:.2f}%",
+        "tail_skewness": float(tail_skewness),
+        "tail_kurtosis": float(tail_kurtosis),
+        "total_observations": len(returns_series)
+    }
+        
+    return standardize_output(result, "calculate_tail_risk")
+        
 def calculate_expected_shortfall(returns: Union[pd.Series, Dict[str, Any]], confidence: float) -> float:
     """Calculate Expected Shortfall (Conditional VaR) measuring tail risk severity.
     
@@ -1859,18 +1764,13 @@ def calculate_expected_shortfall(returns: Union[pd.Series, Dict[str, Any]], conf
         - Coherent risk measure (satisfies all mathematical risk axioms)
         - Essential for comprehensive tail risk assessment
     """
-    try:
-        returns_series = validate_return_data(returns)
+    returns_series = validate_return_data(returns)
         
-        # Use empyrical for Expected Shortfall (same as CVaR)
-        expected_shortfall = empyrical.conditional_value_at_risk(returns_series, cutoff=confidence)
+    # Use empyrical for Expected Shortfall (same as CVaR)
+    expected_shortfall = empyrical.conditional_value_at_risk(returns_series, cutoff=confidence)
         
-        return float(expected_shortfall)
+    return float(expected_shortfall)
         
-    except Exception as e:
-        raise ValueError(f"Expected Shortfall calculation failed: {str(e)}")
-
-
 def calculate_diversification_ratio(portfolio_vol: float, weighted_avg_vol: float) -> float:
     """Calculate diversification ratio measuring portfolio diversification benefits.
     
@@ -1897,22 +1797,17 @@ def calculate_diversification_ratio(portfolio_vol: float, weighted_avg_vol: floa
         - Essential for evaluating portfolio construction effectiveness
         - Used in risk parity and diversification-focused strategies
     """
-    try:
-        if portfolio_vol <= 0:
-            raise ValueError("Portfolio volatility must be positive")
-        if weighted_avg_vol <= 0:
-            raise ValueError("Weighted average volatility must be positive")
+    if portfolio_vol <= 0:
+        raise ValueError("Portfolio volatility must be positive")
+    if weighted_avg_vol <= 0:
+        raise ValueError("Weighted average volatility must be positive")
         
-        # Diversification ratio = weighted_avg_vol / portfolio_vol
-        # Higher ratio = better diversification
-        diversification_ratio = weighted_avg_vol / portfolio_vol
+    # Diversification ratio = weighted_avg_vol / portfolio_vol
+    # Higher ratio = better diversification
+    diversification_ratio = weighted_avg_vol / portfolio_vol
         
-        return float(diversification_ratio)
+    return float(diversification_ratio)
         
-    except Exception as e:
-        raise ValueError(f"Diversification ratio calculation failed: {str(e)}")
-
-
 def calculate_downside_correlation(portfolio_returns: Union[pd.Series, Dict[str, Any]], 
                                   benchmark_returns: Union[pd.Series, Dict[str, Any]]) -> Dict[str, Any]:
     """Calculate portfolio correlation with benchmark returns specifically on negative benchmark days.
@@ -1977,61 +1872,56 @@ def calculate_downside_correlation(portfolio_returns: Union[pd.Series, Dict[str,
         - Useful for evaluating defensive characteristics and tail risk management
         - Complements traditional correlation analysis by focusing on stress periods
     """
-    try:
-        portfolio_series = validate_return_data(portfolio_returns)
-        benchmark_series = validate_return_data(benchmark_returns)
+    portfolio_series = validate_return_data(portfolio_returns)
+    benchmark_series = validate_return_data(benchmark_returns)
         
-        # Align series to ensure same dates
-        portfolio_aligned, benchmark_aligned = align_series(portfolio_series, benchmark_series)
+    # Align series to ensure same dates
+    portfolio_aligned, benchmark_aligned = align_series(portfolio_series, benchmark_series)
         
-        # Filter for negative benchmark days only
-        negative_days_mask = benchmark_aligned < 0
-        negative_benchmark_days = benchmark_aligned[negative_days_mask]
-        negative_portfolio_days = portfolio_aligned[negative_days_mask]
+    # Filter for negative benchmark days only
+    negative_days_mask = benchmark_aligned < 0
+    negative_benchmark_days = benchmark_aligned[negative_days_mask]
+    negative_portfolio_days = portfolio_aligned[negative_days_mask]
         
-        # Check if we have sufficient negative days for analysis
-        if len(negative_benchmark_days) < 2:
-            return {
-                "success": False, 
-                "error": "Insufficient negative benchmark days for correlation calculation"
-            }
-        
-        # Calculate downside correlation
-        downside_correlation = negative_portfolio_days.corr(negative_benchmark_days)
-        
-        # Calculate additional downside metrics
-        portfolio_avg_negative = negative_portfolio_days.mean()
-        benchmark_avg_negative = negative_benchmark_days.mean()
-        portfolio_vol_downside = negative_portfolio_days.std()
-        benchmark_vol_downside = negative_benchmark_days.std()
-        
-        # Calculate downside beta (portfolio sensitivity during negative benchmark days)
-        covariance_downside = negative_portfolio_days.cov(negative_benchmark_days)
-        benchmark_variance_downside = negative_benchmark_days.var()
-        beta_downside = covariance_downside / benchmark_variance_downside if benchmark_variance_downside > 0 else 0
-        
-        result = {
-            "downside_correlation": float(downside_correlation) if not pd.isna(downside_correlation) else 0.0,
-            "total_observations": len(portfolio_aligned),
-            "negative_benchmark_days": len(negative_benchmark_days),
-            "negative_days_percentage": f"{len(negative_benchmark_days) / len(portfolio_aligned) * 100:.2f}%",
-            "portfolio_avg_on_negative_days": float(portfolio_avg_negative),
-            "portfolio_avg_on_negative_days_pct": f"{portfolio_avg_negative * 100:.2f}%",
-            "benchmark_avg_on_negative_days": float(benchmark_avg_negative),
-            "benchmark_avg_on_negative_days_pct": f"{benchmark_avg_negative * 100:.2f}%",
-            "portfolio_volatility_downside": float(portfolio_vol_downside),
-            "portfolio_volatility_downside_pct": f"{portfolio_vol_downside * 100:.2f}%",
-            "benchmark_volatility_downside": float(benchmark_vol_downside),
-            "benchmark_volatility_downside_pct": f"{benchmark_vol_downside * 100:.2f}%",
-            "beta_downside": float(beta_downside)
+    # Check if we have sufficient negative days for analysis
+    if len(negative_benchmark_days) < 2:
+        return {
+            "success": False, 
+            "error": "Insufficient negative benchmark days for correlation calculation"
         }
         
-        return standardize_output(result, "calculate_downside_correlation")
+    # Calculate downside correlation
+    downside_correlation = negative_portfolio_days.corr(negative_benchmark_days)
         
-    except Exception as e:
-        return {"success": False, "error": f"Downside correlation calculation failed: {str(e)}"}
-
-
+    # Calculate additional downside metrics
+    portfolio_avg_negative = negative_portfolio_days.mean()
+    benchmark_avg_negative = negative_benchmark_days.mean()
+    portfolio_vol_downside = negative_portfolio_days.std()
+    benchmark_vol_downside = negative_benchmark_days.std()
+        
+    # Calculate downside beta (portfolio sensitivity during negative benchmark days)
+    covariance_downside = negative_portfolio_days.cov(negative_benchmark_days)
+    benchmark_variance_downside = negative_benchmark_days.var()
+    beta_downside = covariance_downside / benchmark_variance_downside if benchmark_variance_downside > 0 else 0
+        
+    result = {
+        "downside_correlation": float(downside_correlation) if not pd.isna(downside_correlation) else 0.0,
+        "total_observations": len(portfolio_aligned),
+        "negative_benchmark_days": len(negative_benchmark_days),
+        "negative_days_percentage": f"{len(negative_benchmark_days) / len(portfolio_aligned) * 100:.2f}%",
+        "portfolio_avg_on_negative_days": float(portfolio_avg_negative),
+        "portfolio_avg_on_negative_days_pct": f"{portfolio_avg_negative * 100:.2f}%",
+        "benchmark_avg_on_negative_days": float(benchmark_avg_negative),
+        "benchmark_avg_on_negative_days_pct": f"{benchmark_avg_negative * 100:.2f}%",
+        "portfolio_volatility_downside": float(portfolio_vol_downside),
+        "portfolio_volatility_downside_pct": f"{portfolio_vol_downside * 100:.2f}%",
+        "benchmark_volatility_downside": float(benchmark_vol_downside),
+        "benchmark_volatility_downside_pct": f"{benchmark_vol_downside * 100:.2f}%",
+        "beta_downside": float(beta_downside)
+    }
+        
+    return standardize_output(result, "calculate_downside_correlation")
+        
 def calculate_concentration_metrics(weights: Union[pd.Series, Dict[str, Any], List[float]]) -> Dict[str, Any]:
     """Calculate comprehensive portfolio concentration and diversification metrics.
     
@@ -2097,76 +1987,71 @@ def calculate_concentration_metrics(weights: Union[pd.Series, Dict[str, Any], Li
         - Shannon entropy higher when weights are more equally distributed
         - All weights converted to absolute values and normalized
     """
-    try:
-        # Convert to numpy array
-        if isinstance(weights, (list, pd.Series)):
-            w = np.array(weights)
-        elif isinstance(weights, dict):
-            w = np.array(list(weights.values()))
-        else:
-            w = np.array(weights)
+    # Convert to numpy array
+    if isinstance(weights, (list, pd.Series)):
+        w = np.array(weights)
+    elif isinstance(weights, dict):
+        w = np.array(list(weights.values()))
+    else:
+        w = np.array(weights)
         
-        # Normalize weights to sum to 1
-        w = w / w.sum()
-        w = np.abs(w)  # Use absolute values
+    # Normalize weights to sum to 1
+    w = w / w.sum()
+    w = np.abs(w)  # Use absolute values
         
-        # Sort weights in descending order
-        w_sorted = np.sort(w)[::-1]
-        n_assets = len(w)
+    # Sort weights in descending order
+    w_sorted = np.sort(w)[::-1]
+    n_assets = len(w)
         
-        # Herfindahl-Hirschman Index (sum of squared weights)
-        hhi = np.sum(w ** 2)
+    # Herfindahl-Hirschman Index (sum of squared weights)
+    hhi = np.sum(w ** 2)
         
-        # Effective number of assets
-        effective_assets = 1 / hhi if hhi > 0 else n_assets
+    # Effective number of assets
+    effective_assets = 1 / hhi if hhi > 0 else n_assets
         
-        # Concentration ratios (top N holdings)
-        cr_1 = w_sorted[0] if n_assets >= 1 else 0
-        cr_3 = np.sum(w_sorted[:3]) if n_assets >= 3 else np.sum(w_sorted)
-        cr_5 = np.sum(w_sorted[:5]) if n_assets >= 5 else np.sum(w_sorted)
-        cr_10 = np.sum(w_sorted[:10]) if n_assets >= 10 else np.sum(w_sorted)
+    # Concentration ratios (top N holdings)
+    cr_1 = w_sorted[0] if n_assets >= 1 else 0
+    cr_3 = np.sum(w_sorted[:3]) if n_assets >= 3 else np.sum(w_sorted)
+    cr_5 = np.sum(w_sorted[:5]) if n_assets >= 5 else np.sum(w_sorted)
+    cr_10 = np.sum(w_sorted[:10]) if n_assets >= 10 else np.sum(w_sorted)
         
-        # Gini coefficient (measure of inequality)
-        if n_assets > 1:
-            # Sort weights for Gini calculation
-            w_gini = np.sort(w)
-            index = np.arange(1, n_assets + 1)
-            gini = (2 * np.sum(index * w_gini)) / (n_assets * np.sum(w_gini)) - (n_assets + 1) / n_assets
-        else:
-            gini = 0.0
+    # Gini coefficient (measure of inequality)
+    if n_assets > 1:
+        # Sort weights for Gini calculation
+        w_gini = np.sort(w)
+        index = np.arange(1, n_assets + 1)
+        gini = (2 * np.sum(index * w_gini)) / (n_assets * np.sum(w_gini)) - (n_assets + 1) / n_assets
+    else:
+        gini = 0.0
         
-        # Maximum weight
-        max_weight = np.max(w)
+    # Maximum weight
+    max_weight = np.max(w)
         
-        # Shannon entropy (information-theoretic measure)
-        # Higher entropy = lower concentration
-        w_nonzero = w[w > 0]
-        shannon_entropy = -np.sum(w_nonzero * np.log(w_nonzero)) if len(w_nonzero) > 0 else 0
+    # Shannon entropy (information-theoretic measure)
+    # Higher entropy = lower concentration
+    w_nonzero = w[w > 0]
+    shannon_entropy = -np.sum(w_nonzero * np.log(w_nonzero)) if len(w_nonzero) > 0 else 0
         
-        result = {
-            "herfindahl_index": float(hhi),
-            "effective_assets": float(effective_assets),
-            "concentration_ratio_1": float(cr_1),
-            "concentration_ratio_1_pct": f"{cr_1 * 100:.2f}%",
-            "concentration_ratio_3": float(cr_3),
-            "concentration_ratio_3_pct": f"{cr_3 * 100:.2f}%",
-            "concentration_ratio_5": float(cr_5),
-            "concentration_ratio_5_pct": f"{cr_5 * 100:.2f}%",
-            "concentration_ratio_10": float(cr_10),
-            "concentration_ratio_10_pct": f"{cr_10 * 100:.2f}%",
-            "gini_coefficient": float(gini),
-            "max_weight": float(max_weight),
-            "max_weight_pct": f"{max_weight * 100:.2f}%",
-            "shannon_entropy": float(shannon_entropy),
-            "total_assets": n_assets
-        }
+    result = {
+        "herfindahl_index": float(hhi),
+        "effective_assets": float(effective_assets),
+        "concentration_ratio_1": float(cr_1),
+        "concentration_ratio_1_pct": f"{cr_1 * 100:.2f}%",
+        "concentration_ratio_3": float(cr_3),
+        "concentration_ratio_3_pct": f"{cr_3 * 100:.2f}%",
+        "concentration_ratio_5": float(cr_5),
+        "concentration_ratio_5_pct": f"{cr_5 * 100:.2f}%",
+        "concentration_ratio_10": float(cr_10),
+        "concentration_ratio_10_pct": f"{cr_10 * 100:.2f}%",
+        "gini_coefficient": float(gini),
+        "max_weight": float(max_weight),
+        "max_weight_pct": f"{max_weight * 100:.2f}%",
+        "shannon_entropy": float(shannon_entropy),
+        "total_assets": n_assets
+    }
         
-        return standardize_output(result, "calculate_concentration_metrics")
+    return standardize_output(result, "calculate_concentration_metrics")
         
-    except Exception as e:
-        raise ValueError(f"Concentration metrics calculation failed: {str(e)}")
-
-
 # Registry of risk metrics functions - all using proven libraries
 RISK_METRICS_FUNCTIONS = {
     'calculate_var': calculate_var,

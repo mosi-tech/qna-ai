@@ -99,61 +99,56 @@ def validate_price_data(data: Union[pd.Series, pd.DataFrame, List, Dict]) -> pd.
         - List of dictionaries extracts first numeric value if no price fields found
         - Returns empty series if no valid data points remain after cleaning
     """
-    try:
-        if isinstance(data, dict):
-            if "prices" in data:
-                series = data["prices"]
-            elif "close" in data:
-                series = data["close"]
-            elif "data" in data:
-                series = data["data"]
-            else:
-                # Try to convert dict values to series
-                series = pd.Series(list(data.values()))
-        elif isinstance(data, (list, np.ndarray)):
-            # Check if it's a list of dictionaries (common MCP format)
-            if isinstance(data, list) and len(data) > 0 and isinstance(data[0], dict):
-                # Extract 'close' values from list of dictionaries
-                if "close" in data[0]:
-                    series = pd.Series([item["close"] for item in data])
-                elif "Close" in data[0]:
-                    series = pd.Series([item["Close"] for item in data])
-                else:
-                    # Use first numeric value from each dict
-                    values = []
-                    for item in data:
-                        for key, value in item.items():
-                            if isinstance(value, (int, float)):
-                                values.append(value)
-                                break
-                    series = pd.Series(values)
-            else:
-                series = pd.Series(data)
-        elif isinstance(data, pd.Series):
-            series = data.copy()
-        elif isinstance(data, pd.DataFrame):
-            # If DataFrame, try to get close column or first column
-            if "close" in data.columns:
-                series = data["close"]
-            elif "Close" in data.columns:
-                series = data["Close"]
-            else:
-                series = data.iloc[:, 0]
+    if isinstance(data, dict):
+        if "prices" in data:
+            series = data["prices"]
+        elif "close" in data:
+            series = data["close"]
+        elif "data" in data:
+            series = data["data"]
         else:
-            raise ValueError(f"Unsupported data type: {type(data)}")
+            # Try to convert dict values to series
+            series = pd.Series(list(data.values()))
+    elif isinstance(data, (list, np.ndarray)):
+        # Check if it's a list of dictionaries (common MCP format)
+        if isinstance(data, list) and len(data) > 0 and isinstance(data[0], dict):
+            # Extract 'close' values from list of dictionaries
+            if "close" in data[0]:
+                series = pd.Series([item["close"] for item in data])
+            elif "Close" in data[0]:
+                series = pd.Series([item["Close"] for item in data])
+            else:
+                # Use first numeric value from each dict
+                values = []
+                for item in data:
+                    for key, value in item.items():
+                        if isinstance(value, (int, float)):
+                            values.append(value)
+                            break
+                series = pd.Series(values)
+        else:
+            series = pd.Series(data)
+    elif isinstance(data, pd.Series):
+        series = data.copy()
+    elif isinstance(data, pd.DataFrame):
+        # If DataFrame, try to get close column or first column
+        if "close" in data.columns:
+            series = data["close"]
+        elif "Close" in data.columns:
+            series = data["Close"]
+        else:
+            series = data.iloc[:, 0]
+    else:
+        raise ValueError(f"Unsupported data type: {type(data)}")
         
-        # Convert to numeric and drop NaN
-        series = pd.to_numeric(series, errors='coerce').dropna()
+    # Convert to numeric and drop NaN
+    series = pd.to_numeric(series, errors='coerce').dropna()
         
-        if len(series) == 0:
-            raise ValueError("No valid price data after cleaning")
+    if len(series) == 0:
+        raise ValueError("No valid price data after cleaning")
         
-        return series
+    return series
         
-    except Exception as e:
-        raise ValueError(f"Data validation failed: {str(e)}")
-
-
 def validate_return_data(data: Union[pd.Series, pd.DataFrame, List, Dict]) -> pd.Series:
     """Validate and standardize return data from various input formats.
     
@@ -211,57 +206,52 @@ def validate_return_data(data: Union[pd.Series, pd.DataFrame, List, Dict]) -> pd
         - Preserves original datetime index when available for time series analysis
         - Return data validation is similar to price validation but with return-specific field names
     """
-    try:
-        if isinstance(data, dict):
-            if "returns" in data:
-                series = data["returns"]
-            elif "return" in data:
-                series = data["return"]
-            elif "data" in data:
-                series = data["data"]
-            else:
-                series = pd.Series(list(data.values()))
-        elif isinstance(data, (list, np.ndarray)):
-            # Check if it's a list of dictionaries (common MCP format)
-            if isinstance(data, list) and len(data) > 0 and isinstance(data[0], dict):
-                # Extract 'returns' values from list of dictionaries
-                if "returns" in data[0]:
-                    series = pd.Series([item["returns"] for item in data])
-                elif "return" in data[0]:
-                    series = pd.Series([item["return"] for item in data])
-                else:
-                    # Use first numeric value from each dict
-                    values = []
-                    for item in data:
-                        for key, value in item.items():
-                            if isinstance(value, (int, float)):
-                                values.append(value)
-                                break
-                    series = pd.Series(values)
-            else:
-                series = pd.Series(data)
-        elif isinstance(data, pd.Series):
-            series = data.copy()
-        elif isinstance(data, pd.DataFrame):
-            if "returns" in data.columns:
-                series = data["returns"]
-            else:
-                series = data.iloc[:, 0]
+    if isinstance(data, dict):
+        if "returns" in data:
+            series = data["returns"]
+        elif "return" in data:
+            series = data["return"]
+        elif "data" in data:
+            series = data["data"]
         else:
-            raise ValueError(f"Unsupported data type: {type(data)}")
+            series = pd.Series(list(data.values()))
+    elif isinstance(data, (list, np.ndarray)):
+        # Check if it's a list of dictionaries (common MCP format)
+        if isinstance(data, list) and len(data) > 0 and isinstance(data[0], dict):
+            # Extract 'returns' values from list of dictionaries
+            if "returns" in data[0]:
+                series = pd.Series([item["returns"] for item in data])
+            elif "return" in data[0]:
+                series = pd.Series([item["return"] for item in data])
+            else:
+                # Use first numeric value from each dict
+                values = []
+                for item in data:
+                    for key, value in item.items():
+                        if isinstance(value, (int, float)):
+                            values.append(value)
+                            break
+                series = pd.Series(values)
+        else:
+            series = pd.Series(data)
+    elif isinstance(data, pd.Series):
+        series = data.copy()
+    elif isinstance(data, pd.DataFrame):
+        if "returns" in data.columns:
+            series = data["returns"]
+        else:
+            series = data.iloc[:, 0]
+    else:
+        raise ValueError(f"Unsupported data type: {type(data)}")
         
-        # Convert to numeric and drop NaN
-        series = pd.to_numeric(series, errors='coerce').dropna()
+    # Convert to numeric and drop NaN
+    series = pd.to_numeric(series, errors='coerce').dropna()
         
-        if len(series) == 0:
-            raise ValueError("No valid return data after cleaning")
+    if len(series) == 0:
+        raise ValueError("No valid return data after cleaning")
         
-        return series
+    return series
         
-    except Exception as e:
-        raise ValueError(f"Return data validation failed: {str(e)}")
-
-
 def prices_to_returns(prices: pd.Series, method: str = "simple") -> pd.Series:
     """Convert price series to returns using standard financial calculations.
     
@@ -331,22 +321,17 @@ def prices_to_returns(prices: pd.Series, method: str = "simple") -> pd.Series:
         - Uses pandas pct_change() for simple returns and numpy log for logarithmic returns
         - Output length is always len(prices) - 1 due to differencing
     """
-    try:
-        prices = validate_price_data(prices)
+    prices = validate_price_data(prices)
         
-        if method == "simple":
-            returns = prices.pct_change().dropna()
-        elif method == "log":
-            returns = np.log(prices / prices.shift(1)).dropna()
-        else:
-            raise ValueError("Method must be 'simple' or 'log'")
+    if method == "simple":
+        returns = prices.pct_change().dropna()
+    elif method == "log":
+        returns = np.log(prices / prices.shift(1)).dropna()
+    else:
+        raise ValueError("Method must be 'simple' or 'log'")
         
-        return returns
+    return returns
         
-    except Exception as e:
-        raise ValueError(f"Price to return conversion failed: {str(e)}")
-
-
 def align_series(*series_list: pd.Series) -> List[pd.Series]:
     """Align multiple time series by their common index for consistent analysis.
     
@@ -405,24 +390,19 @@ def align_series(*series_list: pd.Series) -> List[pd.Series]:
         - Returns empty series if no common index points exist
         - Order of returned series matches order of input series
     """
-    try:
-        if len(series_list) < 2:
-            return list(series_list)
+    if len(series_list) < 2:
+        return list(series_list)
         
-        # Create DataFrame to align all series
-        df = pd.DataFrame({f"series_{i}": series for i, series in enumerate(series_list)})
-        df = df.dropna()
+    # Create DataFrame to align all series
+    df = pd.DataFrame({f"series_{i}": series for i, series in enumerate(series_list)})
+    df = df.dropna()
         
-        if len(df) == 0:
-            raise ValueError("No common data points after alignment")
+    if len(df) == 0:
+        raise ValueError("No common data points after alignment")
         
-        # Return aligned series
-        return [df.iloc[:, i] for i in range(len(series_list))]
+    # Return aligned series
+    return [df.iloc[:, i] for i in range(len(series_list))]
         
-    except Exception as e:
-        raise ValueError(f"Series alignment failed: {str(e)}")
-
-
 def resample_data(data: pd.Series, frequency: str, method: str = "last") -> pd.Series:
     """
     Resample time series data to a different frequency for analysis at multiple timeframes.
@@ -490,26 +470,21 @@ def resample_data(data: pd.Series, frequency: str, method: str = "last") -> pd.S
         - For non-aligned periods (e.g., fewer than N days in a week), 
           the aggregation still works with available data
     """
-    try:
-        if not isinstance(data.index, pd.DatetimeIndex):
-            # Try to convert index to datetime
-            data.index = pd.to_datetime(data.index)
+    if not isinstance(data.index, pd.DatetimeIndex):
+        # Try to convert index to datetime
+        data.index = pd.to_datetime(data.index)
         
-        if method == "last":
-            resampled = data.resample(frequency).last()
-        elif method == "mean":
-            resampled = data.resample(frequency).mean()
-        elif method == "sum":
-            resampled = data.resample(frequency).sum()
-        else:
-            raise ValueError(f"Unsupported method: {method}")
+    if method == "last":
+        resampled = data.resample(frequency).last()
+    elif method == "mean":
+        resampled = data.resample(frequency).mean()
+    elif method == "sum":
+        resampled = data.resample(frequency).sum()
+    else:
+        raise ValueError(f"Unsupported method: {method}")
         
-        return resampled.dropna()
+    return resampled.dropna()
         
-    except Exception as e:
-        raise ValueError(f"Data resampling failed: {str(e)}")
-
-
 def standardize_output(result: Dict[str, Any], function_name: str) -> Dict[str, Any]:
     """Standardize function output format for MCP server compatibility.
     
@@ -566,40 +541,31 @@ def standardize_output(result: Dict[str, Any], function_name: str) -> Dict[str, 
         - Handles nested data structures recursively
         - Returns error format if conversion fails to maintain API consistency
     """
-    try:
-        standardized = {
-            "success": result.get("success", True),
-            "function": function_name,
-            **result
-        }
+    standardized = {
+        "success": result.get("success", True),
+        "function": function_name,
+        **result
+    }
         
-        # Add metadata
-        if "success" not in result:
-            standardized["success"] = True
+    # Add metadata
+    if "success" not in result:
+        standardized["success"] = True
         
-        # Convert numpy types and pandas types to Python types
-        for key, value in standardized.items():
-            if isinstance(value, np.floating):
-                standardized[key] = float(value)
-            elif isinstance(value, np.integer):
-                standardized[key] = int(value)
-            # elif isinstance(value, np.ndarray):
-            #     standardized[key] = value.tolist()
-            # elif isinstance(value, pd.Series):
-                # standardized[key] = value.tolist()
-            # elif isinstance(value, pd.DataFrame):
-            #     standardized[key] = value.to_dict('records')
+    # Convert numpy types and pandas types to Python types
+    for key, value in standardized.items():
+        if isinstance(value, np.floating):
+            standardized[key] = float(value)
+        elif isinstance(value, np.integer):
+            standardized[key] = int(value)
+        # elif isinstance(value, np.ndarray):
+        #     standardized[key] = value.tolist()
+        # elif isinstance(value, pd.Series):
+            # standardized[key] = value.tolist()
+        # elif isinstance(value, pd.DataFrame):
+        #     standardized[key] = value.to_dict('records')
         
-        return standardized
+    return standardized
         
-    except Exception as e:
-        return {
-            "success": False,
-            "error": f"Output standardization failed: {str(e)}",
-            "function": function_name
-        }
-
-
 def calculate_log_returns(prices: Union[pd.Series, Dict[str, Any]]) -> pd.Series:
     """
     Calculate logarithmic returns from price series for statistical analysis.
@@ -758,18 +724,13 @@ def calculate_cumulative_returns(returns: Union[pd.Series, List, Dict[str, Any]]
         - calculate_log_returns(): For statistical analysis with log returns
         - Cumulative returns are the foundation for performance measurement
     """
-    try:
-        returns_series = validate_return_data(returns)
+    returns_series = validate_return_data(returns)
         
-        # Calculate cumulative returns using pandas
-        cumulative_returns = (1 + returns_series).cumprod() - 1
+    # Calculate cumulative returns using pandas
+    cumulative_returns = (1 + returns_series).cumprod() - 1
         
-        return cumulative_returns
+    return cumulative_returns
         
-    except Exception as e:
-        raise ValueError(f"Cumulative return calculation failed: {str(e)}")
-
-
 def calculate_monthly_returns(daily_returns: Union[pd.Series, List, Dict[str, Any]], trading_days_per_month: int = 21) -> List[float]:
     """
     Convert daily returns to monthly returns by compounding fixed-size periods.
@@ -852,33 +813,28 @@ def calculate_monthly_returns(daily_returns: Union[pd.Series, List, Dict[str, An
         - calculate_log_returns(): For log-space calculations
         - resample_data(): For time-based resampling with DatetimeIndex
     """
-    try:
-        returns_series = validate_return_data(daily_returns)
+    returns_series = validate_return_data(daily_returns)
         
-        if len(returns_series) == 0:
-            return []
+    if len(returns_series) == 0:
+        return []
         
-        # Convert to list for processing
-        returns_list = returns_series.tolist()
-        monthly_returns = []
+    # Convert to list for processing
+    returns_list = returns_series.tolist()
+    monthly_returns = []
         
-        # Group daily returns into months
-        for i in range(0, len(returns_list), trading_days_per_month):
-            month_returns = returns_list[i:i + trading_days_per_month]
-            if len(month_returns) > 0:
-                # Calculate compound monthly return: (1+r1)(1+r2)...(1+rn) - 1
-                compound_return = 1.0
-                for daily_return in month_returns:
-                    compound_return *= (1 + daily_return)
-                monthly_return = compound_return - 1
-                monthly_returns.append(monthly_return)
+    # Group daily returns into months
+    for i in range(0, len(returns_list), trading_days_per_month):
+        month_returns = returns_list[i:i + trading_days_per_month]
+        if len(month_returns) > 0:
+            # Calculate compound monthly return: (1+r1)(1+r2)...(1+rn) - 1
+            compound_return = 1.0
+            for daily_return in month_returns:
+                compound_return *= (1 + daily_return)
+            monthly_return = compound_return - 1
+            monthly_returns.append(monthly_return)
         
-        return monthly_returns
+    return monthly_returns
         
-    except Exception as e:
-        raise ValueError(f"Monthly return calculation failed: {str(e)}")
-
-
 def extract_symbols_from_alpaca_data(data: Union[Dict[str, Any], List[Dict[str, Any]], Any]) -> List[str]:
     """Extract symbol list from various Alpaca API data structures.
     
@@ -968,82 +924,75 @@ def extract_symbols_from_alpaca_data(data: Union[Dict[str, Any], List[Dict[str, 
         - Handles both live and paper trading account data formats
         - Works with historical and real-time market data responses
     """
-    try:
-        symbols = set()  # Use set to automatically handle duplicates
+    symbols = set()  # Use set to automatically handle duplicates
         
-        def _extract_symbols_recursive(obj: Any) -> None:
-            """Recursively extract symbols from nested data structures."""
-            if isinstance(obj, dict):
-                # Handle direct symbol field
-                if 'symbol' in obj:
-                    symbol = str(obj['symbol']).upper().strip()
-                    if symbol and len(symbol) <= 10:  # Basic symbol validation
-                        symbols.add(symbol)
+    def _extract_symbols_recursive(obj: Any) -> None:
+        """Recursively extract symbols from nested data structures."""
+        if isinstance(obj, dict):
+            # Handle direct symbol field
+            if 'symbol' in obj:
+                symbol = str(obj['symbol']).upper().strip()
+                if symbol and len(symbol) <= 10:  # Basic symbol validation
+                    symbols.add(symbol)
                 
-                # Handle various Alpaca response structures
-                for key, value in obj.items():
-                    if key.lower() in ['positions', 'orders', 'assets', 'bars', 'quotes', 'trades']:
-                        _extract_symbols_recursive(value)
-                    elif key.lower() == 'symbols' and isinstance(value, (list, tuple)):
-                        # Direct symbols list
-                        for sym in value:
-                            if isinstance(sym, str):
-                                clean_sym = sym.upper().strip()
-                                if clean_sym and len(clean_sym) <= 10:
-                                    symbols.add(clean_sym)
-                    elif isinstance(value, (dict, list)):
-                        _extract_symbols_recursive(value)
+            # Handle various Alpaca response structures
+            for key, value in obj.items():
+                if key.lower() in ['positions', 'orders', 'assets', 'bars', 'quotes', 'trades']:
+                    _extract_symbols_recursive(value)
+                elif key.lower() == 'symbols' and isinstance(value, (list, tuple)):
+                    # Direct symbols list
+                    for sym in value:
+                        if isinstance(sym, str):
+                            clean_sym = sym.upper().strip()
+                            if clean_sym and len(clean_sym) <= 10:
+                                symbols.add(clean_sym)
+                elif isinstance(value, (dict, list)):
+                    _extract_symbols_recursive(value)
             
-            elif isinstance(obj, (list, tuple)):
-                for item in obj:
-                    _extract_symbols_recursive(item)
+        elif isinstance(obj, (list, tuple)):
+            for item in obj:
+                _extract_symbols_recursive(item)
             
-            elif isinstance(obj, str) and len(obj) <= 10:
-                # Handle case where data might be a direct symbol string
-                clean_sym = obj.upper().strip()
-                if clean_sym.isalpha() and 1 <= len(clean_sym) <= 10:
-                    symbols.add(clean_sym)
+        elif isinstance(obj, str) and len(obj) <= 10:
+            # Handle case where data might be a direct symbol string
+            clean_sym = obj.upper().strip()
+            if clean_sym.isalpha() and 1 <= len(clean_sym) <= 10:
+                symbols.add(clean_sym)
         
-        # Handle various input formats
-        if data is None:
-            return []
-        
-        # Handle direct symbol string
-        if isinstance(data, str):
-            clean_sym = data.upper().strip()
-            if clean_sym and len(clean_sym) <= 10:
-                return [clean_sym]
-            return []
-        
-        # Handle bars/quotes data where symbols are keys
-        if isinstance(data, dict):
-            # Check if this looks like market data with symbols as keys
-            potential_symbols = []
-            for key in data.keys():
-                if (isinstance(key, str) and 
-                    key.isupper() and 
-                    1 <= len(key) <= 10 and 
-                    key.isalpha()):
-                    potential_symbols.append(key)
-            
-            # If we found symbol-like keys, they're probably symbols
-            if potential_symbols:
-                symbols.update(potential_symbols)
-        
-        # Recursive extraction for all data types
-        _extract_symbols_recursive(data)
-        
-        # Convert to sorted list
-        symbol_list = sorted(list(symbols))
-        
-        return symbol_list
-        
-    except Exception as e:
-        # Log error but don't fail - return empty list
-        print(f"Warning: Symbol extraction failed: {str(e)}")
+    # Handle various input formats
+    if data is None:
         return []
-
-
+        
+    # Handle direct symbol string
+    if isinstance(data, str):
+        clean_sym = data.upper().strip()
+        if clean_sym and len(clean_sym) <= 10:
+            return [clean_sym]
+        return []
+        
+    # Handle bars/quotes data where symbols are keys
+    if isinstance(data, dict):
+        # Check if this looks like market data with symbols as keys
+        potential_symbols = []
+        for key in data.keys():
+            if (isinstance(key, str) and 
+                key.isupper() and 
+                1 <= len(key) <= 10 and 
+                key.isalpha()):
+                potential_symbols.append(key)
+            
+        # If we found symbol-like keys, they're probably symbols
+        if potential_symbols:
+            symbols.update(potential_symbols)
+        
+    # Recursive extraction for all data types
+    _extract_symbols_recursive(data)
+        
+    # Convert to sorted list
+    symbol_list = sorted(list(symbols))
+        
+    return symbol_list
+        
 # Registry of utility functions - all using proven libraries
 DATA_UTILS_FUNCTIONS = {
     'validate_price_data': validate_price_data,

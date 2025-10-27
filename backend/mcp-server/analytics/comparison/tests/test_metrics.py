@@ -76,7 +76,7 @@ class TestComparisonMetrics(unittest.TestCase):
 
     def test_compare_performance_metrics(self):
         """Test performance metrics comparison"""
-        try:
+        
             result = compare_performance_metrics(self.returns1, self.returns2)
             
             # Check that result is a dictionary
@@ -102,12 +102,12 @@ class TestComparisonMetrics(unittest.TestCase):
             
             print("✅ Performance metrics comparison test passed")
             
-        except Exception as e:
+        :
             self.fail(f"compare_performance_metrics failed with error: {e}")
 
     def test_compare_risk_metrics(self):
         """Test risk metrics comparison"""
-        try:
+        
             result = compare_risk_metrics(self.returns1, self.returns2)
             
             # Check basic structure
@@ -122,12 +122,12 @@ class TestComparisonMetrics(unittest.TestCase):
             
             print("✅ Risk metrics comparison test passed")
             
-        except Exception as e:
+        :
             self.fail(f"Risk metrics comparison failed: {e}")
 
     def test_compare_drawdowns(self):
         """Test drawdown comparison"""
-        try:
+        
             result = compare_drawdowns(self.prices1, self.prices2)
             
             # Check basic structure
@@ -141,12 +141,12 @@ class TestComparisonMetrics(unittest.TestCase):
             
             print("✅ Drawdown comparison test passed")
             
-        except Exception as e:
+        :
             self.fail(f"Drawdown comparison failed: {e}")
 
     def test_compare_volatility_profiles(self):
         """Test volatility profiles comparison"""
-        try:
+        
             result = compare_volatility_profiles(self.returns1, self.returns2)
             
             # Check basic structure
@@ -160,12 +160,12 @@ class TestComparisonMetrics(unittest.TestCase):
             
             print("✅ Volatility profiles comparison test passed")
             
-        except Exception as e:
+        :
             self.fail(f"Volatility profiles comparison failed: {e}")
 
     def test_compare_correlation_stability(self):
         """Test correlation stability comparison"""
-        try:
+        
             result = compare_correlation_stability(self.returns1, self.returns2)
             
             # Check basic structure
@@ -179,12 +179,12 @@ class TestComparisonMetrics(unittest.TestCase):
             
             print("✅ Correlation stability comparison test passed")
             
-        except Exception as e:
+        :
             self.fail(f"Correlation stability comparison failed: {e}")
 
     def test_compare_sector_exposure(self):
         """Test sector exposure comparison"""
-        try:
+        
             # Create sample holdings data
             holdings1 = [
                 {'symbol': 'AAPL', 'sector': 'Technology', 'weight': 0.3},
@@ -210,12 +210,12 @@ class TestComparisonMetrics(unittest.TestCase):
             
             print("✅ Sector exposure comparison test passed")
             
-        except Exception as e:
+        :
             self.fail(f"Sector exposure comparison failed: {e}")
 
     def test_compare_expense_ratios(self):
         """Test expense ratios comparison"""
-        try:
+        
             # Create sample fund data
             funds = [
                 {'symbol': 'VTI', 'expense_ratio': 0.03, 'name': 'Vanguard Total Stock Market'},
@@ -237,12 +237,12 @@ class TestComparisonMetrics(unittest.TestCase):
             
             print("✅ Expense ratios comparison test passed")
             
-        except Exception as e:
+        :
             self.fail(f"Expense ratios comparison failed: {e}")
 
     def test_compare_liquidity(self):
         """Test liquidity comparison"""
-        try:
+        
             result = compare_liquidity(self.volumes1, self.volumes2)
             
             # Check basic structure
@@ -256,12 +256,12 @@ class TestComparisonMetrics(unittest.TestCase):
             
             print("✅ Liquidity comparison test passed")
             
-        except Exception as e:
+        :
             self.fail(f"Liquidity comparison failed: {e}")
 
     def test_compare_fundamental(self):
         """Test fundamental metrics comparison"""
-        try:
+        
             # Create sample fundamental data
             fundamentals1 = {
                 'pe_ratio': 15.5,
@@ -292,12 +292,12 @@ class TestComparisonMetrics(unittest.TestCase):
             
             print("✅ Fundamental comparison test passed")
             
-        except Exception as e:
+        :
             self.fail(f"Fundamental comparison failed: {e}")
 
     def test_compute_outperformance(self):
         """Test outperformance computation"""
-        try:
+        
             # Create sample returns DataFrame
             returns_df = pd.DataFrame({
                 'asset1': self.returns1,
@@ -320,14 +320,14 @@ class TestComparisonMetrics(unittest.TestCase):
             
             print("✅ Outperformance computation test passed")
             
-        except Exception as e:
+        :
             self.fail(f"Outperformance computation failed: {e}")
 
     def test_edge_cases(self):
         """Test edge cases and error handling"""
         
         # Test with identical data
-        try:
+        
             result = compare_performance_metrics(self.returns1, self.returns1)
             # Should handle gracefully
             print("✅ Identical data edge case handled")
@@ -335,7 +335,7 @@ class TestComparisonMetrics(unittest.TestCase):
             pass  # Expected to fail or handle gracefully
         
         # Test with very short series
-        try:
+        
             short_returns1 = self.returns1.head(5)
             short_returns2 = self.returns2.head(5)
             result = compare_risk_metrics(short_returns1, short_returns2)
@@ -344,7 +344,7 @@ class TestComparisonMetrics(unittest.TestCase):
             pass  # Expected to fail or handle gracefully
         
         # Test with NaN values
-        try:
+        
             nan_returns = self.returns1.copy()
             nan_returns.iloc[10:20] = np.nan
             result = compare_performance_metrics(nan_returns, self.returns2)
@@ -356,19 +356,19 @@ class TestComparisonMetrics(unittest.TestCase):
         """Test data validation functionality"""
         
         # Test with mismatched indices
-        try:
+        
             mismatched_returns = self.returns2.iloc[10:]
             result = compare_performance_metrics(self.returns1, mismatched_returns)
             print("✅ Mismatched indices handled")
-        except Exception as e:
+        :
             print(f"⚠️ Mismatched indices handling: {e}")
         
         # Test with different frequencies
-        try:
+        
             weekly_returns = self.returns1.resample('W').sum()
             result = compare_volatility_profiles(self.returns1, weekly_returns)
             print("✅ Different frequencies handled")
-        except Exception as e:
+        :
             print(f"⚠️ Different frequencies handling: {e}")
 
 

@@ -5,7 +5,7 @@ MongoDB implementation of execution queue
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Any, AsyncGenerator, Optional
 from pymongo import ReturnDocument
 from motor.motor_asyncio import AsyncIOMotorCollection, AsyncIOMotorDatabase
@@ -50,15 +50,15 @@ class MongoDBExecutionQueue(ExecutionQueueInterface):
             if not execution_id:
                 raise ValueError("execution_id is required in execution_data")
             
+            # Extract script info from execution_params if provided, fallback to top-level
+            execution_params = execution_data.get("execution_params", {})
+            
             document = {
                 "execution_id": execution_id,
                 "analysis_id": execution_data.get("analysis_id"),
                 "session_id": execution_data.get("session_id"),
                 "user_id": execution_data.get("user_id"),
                 "status": "pending",
-                "script_content": execution_data.get("script_content"),
-                "script_name": execution_data.get("script_name"),
-                "parameters": execution_data.get("parameters", {}),
                 "priority": execution_data.get("priority", 2),  # 1=high, 2=normal, 3=low
                 "created_at": datetime.utcnow(),
                 "started_at": None,
@@ -69,6 +69,7 @@ class MongoDBExecutionQueue(ExecutionQueueInterface):
                 "worker_id": None,
                 "execution_logs": [],
                 "result": None,
+                "execution_params": execution_params,
                 "metadata": execution_data.get("metadata", {})
             }
             
@@ -86,17 +87,13 @@ class MongoDBExecutionQueue(ExecutionQueueInterface):
             # Atomic find-and-modify to claim execution
             result = await self.collection.find_one_and_update(
                 {
-                    "status": "pending",
-                    "$or": [
-                        {"retry_count": {"$lt": "$max_retries"}},
-                        {"retry_count": {"$exists": False}}
-                    ]
+                    "status": "pending"
                 },
                 {
                     "$set": {
                         "status": "processing",
                         "worker_id": worker_id,
-                        "started_at": datetime.utcnow()
+                        "started_at": datetime.now(timezone.utc)
                     },
                     "$inc": {"retry_count": 1}
                 },

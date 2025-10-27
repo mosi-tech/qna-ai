@@ -11,28 +11,17 @@ import numpy as np
 from datetime import datetime, timedelta
 
 # Import functions to test
-try:
-    from ..indicators import (
-        calculate_atr,
-        calculate_natr,
-        calculate_trange,
-        calculate_bollinger_bands,
-        calculate_bollinger_percent_b,
-        calculate_bollinger_bandwidth,
-        calculate_stddev,
-        calculate_variance
-    )
-except ImportError:
-    from analytics.indicators.volatility.indicators import (
-        calculate_atr,
-        calculate_natr,
-        calculate_trange,
-        calculate_bollinger_bands,
-        calculate_bollinger_percent_b,
-        calculate_bollinger_bandwidth,
-        calculate_stddev,
-        calculate_variance
-    )
+
+from ..indicators import (
+    calculate_atr,
+    calculate_natr,
+    calculate_trange,
+    calculate_bollinger_bands,
+    calculate_bollinger_percent_b,
+    calculate_bollinger_bandwidth,
+    calculate_stddev,
+    calculate_variance
+)
 
 
 class TestATRIndicators(unittest.TestCase):
@@ -59,7 +48,7 @@ class TestATRIndicators(unittest.TestCase):
 
     def test_calculate_trange(self):
         """Test True Range calculation"""
-        try:
+        
             result = calculate_trange(
                 high=self.ohlc_df['high'],
                 low=self.ohlc_df['low'],
@@ -71,12 +60,12 @@ class TestATRIndicators(unittest.TestCase):
             
             print("✅ True Range calculation passed")
             
-        except Exception as e:
+        :
             print(f"⚠️ True Range: {e}")
 
     def test_calculate_atr(self):
         """Test Average True Range calculation"""
-        try:
+        
             result = calculate_atr(
                 high=self.ohlc_df['high'],
                 low=self.ohlc_df['low'],
@@ -87,12 +76,12 @@ class TestATRIndicators(unittest.TestCase):
             self.assertIsInstance(result, (pd.Series, dict))
             print("✅ ATR calculation passed")
             
-        except Exception as e:
+        :
             print(f"⚠️ ATR: {e}")
 
     def test_calculate_natr(self):
         """Test Normalized ATR calculation"""
-        try:
+        
             result = calculate_natr(
                 high=self.ohlc_df['high'],
                 low=self.ohlc_df['low'],
@@ -103,7 +92,7 @@ class TestATRIndicators(unittest.TestCase):
             self.assertIsInstance(result, (pd.Series, dict))
             print("✅ NATR calculation passed")
             
-        except Exception as e:
+        :
             print(f"⚠️ NATR: {e}")
 
 
@@ -120,7 +109,7 @@ class TestBollingerBands(unittest.TestCase):
 
     def test_calculate_bollinger_bands(self):
         """Test Bollinger Bands calculation"""
-        try:
+        
             result = calculate_bollinger_bands(
                 close=self.close_series,
                 period=20,
@@ -130,12 +119,12 @@ class TestBollingerBands(unittest.TestCase):
             self.assertIsInstance(result, (dict, tuple, list, pd.DataFrame))
             print("✅ Bollinger Bands calculation passed")
             
-        except Exception as e:
+        :
             print(f"⚠️ Bollinger Bands: {e}")
 
     def test_calculate_bollinger_percent_b(self):
         """Test Bollinger Bands %B calculation"""
-        try:
+        
             result = calculate_bollinger_percent_b(
                 close=self.close_series,
                 period=20,
@@ -145,12 +134,12 @@ class TestBollingerBands(unittest.TestCase):
             self.assertIsInstance(result, (pd.Series, dict))
             print("✅ Bollinger %B calculation passed")
             
-        except Exception as e:
+        :
             print(f"⚠️ Bollinger %B: {e}")
 
     def test_calculate_bollinger_bandwidth(self):
         """Test Bollinger Bands Bandwidth calculation"""
-        try:
+        
             result = calculate_bollinger_bandwidth(
                 close=self.close_series,
                 period=20,
@@ -160,7 +149,7 @@ class TestBollingerBands(unittest.TestCase):
             self.assertIsInstance(result, (pd.Series, dict))
             print("✅ Bollinger Bandwidth calculation passed")
             
-        except Exception as e:
+        :
             print(f"⚠️ Bollinger Bandwidth: {e}")
 
 
@@ -178,7 +167,7 @@ class TestStatisticalVolatility(unittest.TestCase):
 
     def test_calculate_stddev(self):
         """Test standard deviation calculation"""
-        try:
+        
             result = calculate_stddev(
                 data=self.returns,
                 period=20
@@ -187,12 +176,12 @@ class TestStatisticalVolatility(unittest.TestCase):
             self.assertIsInstance(result, (pd.Series, dict))
             print("✅ Standard deviation calculation passed")
             
-        except Exception as e:
+        :
             print(f"⚠️ Standard deviation: {e}")
 
     def test_calculate_variance(self):
         """Test variance calculation"""
-        try:
+        
             result = calculate_variance(
                 data=self.returns,
                 period=20
@@ -201,7 +190,7 @@ class TestStatisticalVolatility(unittest.TestCase):
             self.assertIsInstance(result, (pd.Series, dict))
             print("✅ Variance calculation passed")
             
-        except Exception as e:
+        :
             print(f"⚠️ Variance: {e}")
 
 
@@ -215,7 +204,7 @@ class TestVolatilityEdgeCases(unittest.TestCase):
 
     def test_short_time_series(self):
         """Test with short time series"""
-        try:
+        
             close = pd.Series([100, 101, 102, 101, 100], index=self.dates[:5])
             
             result = calculate_stddev(data=close, period=3)
@@ -223,12 +212,12 @@ class TestVolatilityEdgeCases(unittest.TestCase):
             self.assertIsInstance(result, (pd.Series, dict))
             print("✅ Short time series handled")
             
-        except Exception as e:
+        :
             print(f"⚠️ Short time series: {e}")
 
     def test_constant_prices(self):
         """Test with constant prices (zero volatility)"""
-        try:
+        
             close = pd.Series([100.0] * 50, index=self.dates)
             
             result = calculate_stddev(data=close, period=20)
@@ -236,12 +225,12 @@ class TestVolatilityEdgeCases(unittest.TestCase):
             self.assertIsInstance(result, (pd.Series, dict))
             print("✅ Constant prices handled")
             
-        except Exception as e:
+        :
             print(f"⚠️ Constant prices: {e}")
 
     def test_high_volatility(self):
         """Test with high volatility data"""
-        try:
+        
             close = pd.Series(
                 100 * (1 + np.cumsum(np.random.normal(0, 0.05, 50))),
                 index=self.dates
@@ -252,12 +241,12 @@ class TestVolatilityEdgeCases(unittest.TestCase):
             self.assertIsInstance(result, (dict, tuple, list, pd.DataFrame))
             print("✅ High volatility handled")
             
-        except Exception as e:
+        :
             print(f"⚠️ High volatility: {e}")
 
     def test_atr_with_gaps(self):
         """Test ATR with price gaps"""
-        try:
+        
             high = pd.Series([102, 104, 105, 103, 106], index=self.dates[:5])
             low = pd.Series([98, 100, 101, 99, 102], index=self.dates[:5])
             close = pd.Series([100, 102, 103, 101, 104], index=self.dates[:5])
@@ -267,7 +256,7 @@ class TestVolatilityEdgeCases(unittest.TestCase):
             self.assertIsInstance(result, (pd.Series, dict))
             print("✅ ATR with gaps handled")
             
-        except Exception as e:
+        :
             print(f"⚠️ ATR with gaps: {e}")
 
 

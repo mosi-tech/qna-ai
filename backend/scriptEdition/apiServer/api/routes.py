@@ -269,29 +269,20 @@ class APIRoutes:
             
             # Also enqueue execution in queue system for processing
             try:
-                script_name = execution_params.get("script_name", "")
-                script_content = execution_params.get("script_content", "")
-                parameters = execution_params.get("parameters", {})
+                queue_success = await execution_queue_service.enqueue_execution(
+                    execution_id=execution_id,
+                    analysis_id=analysis_id,
+                    session_id=session_id,
+                    user_id=user_id,
+                    execution_params=execution_params,
+                    priority=1,  # High priority for user-initiated executions
+                    timeout_seconds=300
+                )
                 
-                if script_content and script_name:
-                    queue_success = await execution_queue_service.enqueue_execution(
-                        execution_id=execution_id,
-                        analysis_id=analysis_id,
-                        session_id=session_id,
-                        user_id=user_id,
-                        script_content=script_content,
-                        script_name=script_name,
-                        parameters=parameters,
-                        priority=1,  # High priority for user-initiated executions
-                        timeout_seconds=300
-                    )
-                    
-                    if queue_success:
-                        logger.info(f"✓ Enqueued execution for processing: {execution_id}")
-                    else:
-                        logger.warning(f"⚠️ Failed to enqueue execution: {execution_id}")
+                if queue_success:
+                    logger.info(f"✓ Enqueued execution for processing: {execution_id}")
                 else:
-                    logger.warning(f"⚠️ No script content available for execution: {execution_id}")
+                    logger.warning(f"⚠️ Failed to enqueue execution: {execution_id}")
                     
             except Exception as queue_error:
                 # Don't fail the whole process if queue enqueue fails

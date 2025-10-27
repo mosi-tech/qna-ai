@@ -54,7 +54,7 @@ class TestDataValidation(unittest.TestCase):
 
     def test_validate_price_data_series(self):
         """Test price validation with pandas Series"""
-        try:
+        
             result = validate_price_data(self.price_series)
             
             # Should return pandas Series
@@ -71,12 +71,12 @@ class TestDataValidation(unittest.TestCase):
             
             print("✅ Price data validation (Series) passed")
             
-        except Exception as e:
+        :
             self.fail(f"validate_price_data with Series failed: {e}")
 
     def test_validate_price_data_dict(self):
         """Test price validation with dictionary"""
-        try:
+        
             result = validate_price_data(self.price_dict)
             
             # Should return pandas Series
@@ -90,12 +90,12 @@ class TestDataValidation(unittest.TestCase):
             
             print("✅ Price data validation (dict) passed")
             
-        except Exception as e:
+        :
             self.fail(f"validate_price_data with dict failed: {e}")
 
     def test_validate_price_data_list(self):
         """Test price validation with list"""
-        try:
+        
             result = validate_price_data(self.price_list)
             
             # Should return pandas Series
@@ -109,12 +109,12 @@ class TestDataValidation(unittest.TestCase):
             
             print("✅ Price data validation (list) passed")
             
-        except Exception as e:
+        :
             self.fail(f"validate_price_data with list failed: {e}")
 
     def test_validate_price_data_dataframe(self):
         """Test price validation with DataFrame"""
-        try:
+        
             result = validate_price_data(self.price_df)
             
             # Should return pandas Series
@@ -125,12 +125,12 @@ class TestDataValidation(unittest.TestCase):
             
             print("✅ Price data validation (DataFrame) passed")
             
-        except Exception as e:
+        :
             self.fail(f"validate_price_data with DataFrame failed: {e}")
 
     def test_validate_return_data(self):
         """Test return data validation"""
-        try:
+        
             result = validate_return_data(self.returns_series)
             
             # Should return pandas Series
@@ -145,7 +145,7 @@ class TestDataValidation(unittest.TestCase):
             
             print("✅ Return data validation passed")
             
-        except Exception as e:
+        :
             self.fail(f"validate_return_data failed: {e}")
 
 
@@ -162,7 +162,7 @@ class TestDataTransformation(unittest.TestCase):
 
     def test_prices_to_returns_simple(self):
         """Test simple return calculation"""
-        try:
+        
             result = prices_to_returns(self.price_series, method="simple")
             
             # Should be a pandas Series
@@ -177,12 +177,12 @@ class TestDataTransformation(unittest.TestCase):
             
             print("✅ Simple returns calculation passed")
             
-        except Exception as e:
+        :
             self.fail(f"prices_to_returns simple failed: {e}")
 
     def test_prices_to_returns_log(self):
         """Test log return calculation"""
-        try:
+        
             result = prices_to_returns(self.price_series, method="log")
             
             # Should be a pandas Series
@@ -198,12 +198,12 @@ class TestDataTransformation(unittest.TestCase):
             
             print("✅ Log returns calculation passed")
             
-        except Exception as e:
+        :
             self.fail(f"prices_to_returns log failed: {e}")
 
     def test_calculate_log_returns(self):
         """Test log returns function"""
-        try:
+        
             result = calculate_log_returns(self.price_series)
             
             # Should be a pandas Series
@@ -217,12 +217,12 @@ class TestDataTransformation(unittest.TestCase):
             
             print("✅ Log returns function passed")
             
-        except Exception as e:
+        :
             self.fail(f"calculate_log_returns failed: {e}")
 
     def test_calculate_cumulative_returns(self):
         """Test cumulative returns calculation"""
-        try:
+        
             returns = self.price_series.pct_change().dropna()
             result = calculate_cumulative_returns(returns)
             
@@ -236,12 +236,12 @@ class TestDataTransformation(unittest.TestCase):
             
             print("✅ Cumulative returns calculation passed")
             
-        except Exception as e:
+        :
             self.fail(f"calculate_cumulative_returns failed: {e}")
 
     def test_calculate_monthly_returns(self):
         """Test monthly returns calculation"""
-        try:
+        
             returns = self.price_series.pct_change().dropna()
             result = calculate_monthly_returns(returns, trading_days_per_month=21)
             
@@ -259,7 +259,7 @@ class TestDataTransformation(unittest.TestCase):
             
             print("✅ Monthly returns calculation passed")
             
-        except Exception as e:
+        :
             self.fail(f"calculate_monthly_returns failed: {e}")
 
 
@@ -279,7 +279,7 @@ class TestSeriesAlignment(unittest.TestCase):
 
     def test_align_two_series(self):
         """Test alignment of two series"""
-        try:
+        
             result = align_series(self.series1, self.series2)
             
             # Should return a list
@@ -301,12 +301,12 @@ class TestSeriesAlignment(unittest.TestCase):
             
             print("✅ Two series alignment passed")
             
-        except Exception as e:
+        :
             self.fail(f"align_series with 2 series failed: {e}")
 
     def test_align_three_series(self):
         """Test alignment of three series"""
-        try:
+        
             result = align_series(self.series1, self.series2, self.series3)
             
             # Should return a list
@@ -321,12 +321,12 @@ class TestSeriesAlignment(unittest.TestCase):
             
             print("✅ Three series alignment passed")
             
-        except Exception as e:
+        :
             self.fail(f"align_series with 3 series failed: {e}")
 
     def test_resample_data(self):
         """Test data resampling"""
-        try:
+        
             # Test weekly resampling
             result_weekly = resample_data(self.series1, frequency='W', method='last')
             
@@ -344,7 +344,7 @@ class TestSeriesAlignment(unittest.TestCase):
             
             print("✅ Data resampling passed")
             
-        except Exception as e:
+        :
             self.fail(f"resample_data failed: {e}")
 
 
@@ -353,7 +353,7 @@ class TestOutputStandardization(unittest.TestCase):
     
     def test_standardize_output(self):
         """Test output standardization function"""
-        try:
+        
             sample_result = {
                 'value': 42.5,
                 'calculation': 'test_calculation'
@@ -376,7 +376,7 @@ class TestOutputStandardization(unittest.TestCase):
             
             print("✅ Output standardization passed")
             
-        except Exception as e:
+        :
             self.fail(f"standardize_output failed: {e}")
 
 
@@ -385,7 +385,7 @@ class TestAlpacaDataExtraction(unittest.TestCase):
     
     def test_extract_symbols_from_list(self):
         """Test symbol extraction from list of dicts"""
-        try:
+        
             data = [
                 {'symbol': 'AAPL', 'price': 150.0},
                 {'symbol': 'MSFT', 'price': 300.0},
@@ -407,12 +407,12 @@ class TestAlpacaDataExtraction(unittest.TestCase):
             
             print("✅ Symbol extraction from list passed")
             
-        except Exception as e:
+        :
             self.fail(f"extract_symbols from list failed: {e}")
 
     def test_extract_symbols_from_dict(self):
         """Test symbol extraction from dict"""
-        try:
+        
             data = {
                 'AAPL': {'price': 150.0, 'volume': 1000000},
                 'MSFT': {'price': 300.0, 'volume': 800000},
@@ -430,7 +430,7 @@ class TestAlpacaDataExtraction(unittest.TestCase):
             
             print("✅ Symbol extraction from dict passed")
             
-        except Exception as e:
+        :
             self.fail(f"extract_symbols from dict failed: {e}")
 
 
@@ -448,7 +448,7 @@ class TestEdgeCases(unittest.TestCase):
         empty_series = pd.Series([], dtype=float)
         
         # Should handle gracefully
-        try:
+        
             result = validate_price_data(empty_series)
             print("✅ Empty Series handled")
         except Exception:
@@ -456,7 +456,7 @@ class TestEdgeCases(unittest.TestCase):
 
     def test_single_value_data(self):
         """Test handling of single value"""
-        try:
+        
             single_value = pd.Series([100.0], index=self.dates[:1])
             result = validate_price_data(single_value)
             
@@ -465,12 +465,12 @@ class TestEdgeCases(unittest.TestCase):
             
             print("✅ Single value data handled")
             
-        except Exception as e:
+        :
             print(f"⚠️ Single value handling: {e}")
 
     def test_nan_values(self):
         """Test handling of NaN values"""
-        try:
+        
             data_with_nan = pd.Series([100.0, np.nan, 102.0, 101.0], index=self.dates[:4])
             
             # Function should handle NaN
@@ -481,12 +481,12 @@ class TestEdgeCases(unittest.TestCase):
             
             print("✅ NaN values handled")
             
-        except Exception as e:
+        :
             print(f"⚠️ NaN handling: {e}")
 
     def test_negative_prices(self):
         """Test handling of negative prices (should be invalid)"""
-        try:
+        
             negative_data = pd.Series([-100.0, -102.0, -101.0])
             
             # Function should handle negative prices appropriately
@@ -497,7 +497,7 @@ class TestEdgeCases(unittest.TestCase):
             
             print("✅ Negative prices handled")
             
-        except Exception as e:
+        :
             print(f"⚠️ Negative prices: {e}")
 
 

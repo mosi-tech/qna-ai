@@ -62,7 +62,7 @@ class TestValueAtRisk(unittest.TestCase):
 
     def test_calculate_var(self):
         """Test VaR calculation"""
-        try:
+        
             result = calculate_var(self.returns, confidence=0.95)
             
             # Should be a dictionary
@@ -75,12 +75,12 @@ class TestValueAtRisk(unittest.TestCase):
             
             print("✅ VaR calculation passed")
             
-        except Exception as e:
+        :
             self.fail(f"calculate_var failed: {e}")
 
     def test_calculate_cvar(self):
         """Test Conditional VaR (Expected Shortfall)"""
-        try:
+        
             result = calculate_cvar(self.returns, confidence=0.95)
             
             # Should be a dictionary
@@ -93,12 +93,12 @@ class TestValueAtRisk(unittest.TestCase):
             
             print("✅ CVaR calculation passed")
             
-        except Exception as e:
+        :
             self.fail(f"calculate_cvar failed: {e}")
 
     def test_calculate_expected_shortfall(self):
         """Test Expected Shortfall"""
-        try:
+        
             result = calculate_expected_shortfall(self.returns, confidence=0.95)
             
             # Should be a float
@@ -109,7 +109,7 @@ class TestValueAtRisk(unittest.TestCase):
             
             print("✅ Expected Shortfall passed")
             
-        except Exception as e:
+        :
             self.fail(f"calculate_expected_shortfall failed: {e}")
 
 
@@ -128,7 +128,7 @@ class TestDistributionMetrics(unittest.TestCase):
 
     def test_calculate_skewness(self):
         """Test skewness calculation"""
-        try:
+        
             result = calculate_skewness(self.returns)
             
             # Should be a float
@@ -144,12 +144,12 @@ class TestDistributionMetrics(unittest.TestCase):
             
             print("✅ Skewness calculation passed")
             
-        except Exception as e:
+        :
             self.fail(f"calculate_skewness failed: {e}")
 
     def test_calculate_kurtosis(self):
         """Test kurtosis calculation"""
-        try:
+        
             result = calculate_kurtosis(self.returns)
             
             # Should be a float
@@ -165,12 +165,12 @@ class TestDistributionMetrics(unittest.TestCase):
             
             print("✅ Kurtosis calculation passed")
             
-        except Exception as e:
+        :
             self.fail(f"calculate_kurtosis failed: {e}")
 
     def test_calculate_percentile(self):
         """Test percentile calculation"""
-        try:
+        
             result = calculate_percentile(self.returns, percentile=95)
             
             # Should be a float
@@ -185,7 +185,7 @@ class TestDistributionMetrics(unittest.TestCase):
             
             print("✅ Percentile calculation passed")
             
-        except Exception as e:
+        :
             self.fail(f"calculate_percentile failed: {e}")
 
 
@@ -211,7 +211,7 @@ class TestCorrelationAnalysis(unittest.TestCase):
 
     def test_calculate_correlation(self):
         """Test correlation calculation"""
-        try:
+        
             result = calculate_correlation(self.returns1, self.returns2)
             
             # Should be a float
@@ -223,12 +223,12 @@ class TestCorrelationAnalysis(unittest.TestCase):
             
             print("✅ Correlation calculation passed")
             
-        except Exception as e:
+        :
             self.fail(f"calculate_correlation failed: {e}")
 
     def test_calculate_correlation_matrix(self):
         """Test correlation matrix calculation"""
-        try:
+        
             series_list = [self.returns1, self.returns2]
             result = calculate_correlation_matrix(series_list)
             
@@ -247,12 +247,12 @@ class TestCorrelationAnalysis(unittest.TestCase):
             
             print("✅ Correlation matrix passed")
             
-        except Exception as e:
+        :
             self.fail(f"calculate_correlation_matrix failed: {e}")
 
     def test_calculate_correlation_analysis(self):
         """Test correlation analysis"""
-        try:
+        
             returns_df = pd.DataFrame({
                 'asset1': self.returns1,
                 'asset2': self.returns2
@@ -265,7 +265,7 @@ class TestCorrelationAnalysis(unittest.TestCase):
             
             print("✅ Correlation analysis passed")
             
-        except Exception as e:
+        :
             self.fail(f"calculate_correlation_analysis failed: {e}")
 
 
@@ -289,7 +289,7 @@ class TestBetaAnalysis(unittest.TestCase):
 
     def test_calculate_beta(self):
         """Test beta calculation"""
-        try:
+        
             result = calculate_beta(self.asset_returns, self.market_returns)
             
             # Should be a float
@@ -303,12 +303,12 @@ class TestBetaAnalysis(unittest.TestCase):
             
             print("✅ Beta calculation passed")
             
-        except Exception as e:
+        :
             self.fail(f"calculate_beta failed: {e}")
 
     def test_calculate_beta_analysis(self):
         """Test beta analysis"""
-        try:
+        
             result = calculate_beta_analysis(self.asset_returns, self.market_returns)
             
             # Should be a dictionary
@@ -321,12 +321,12 @@ class TestBetaAnalysis(unittest.TestCase):
             
             print("✅ Beta analysis passed")
             
-        except Exception as e:
+        :
             self.fail(f"calculate_beta_analysis failed: {e}")
 
     def test_calculate_treynor_ratio(self):
         """Test Treynor ratio"""
-        try:
+        
             result = calculate_treynor_ratio(
                 self.asset_returns,
                 self.market_returns,
@@ -341,7 +341,7 @@ class TestBetaAnalysis(unittest.TestCase):
             
             print("✅ Treynor ratio passed")
             
-        except Exception as e:
+        :
             self.fail(f"calculate_treynor_ratio failed: {e}")
 
 
@@ -360,7 +360,7 @@ class TestVolatilityAnalysis(unittest.TestCase):
 
     def test_calculate_rolling_volatility(self):
         """Test rolling volatility"""
-        try:
+        
             result = calculate_rolling_volatility(self.returns, window=30)
             
             # Should be a pandas Series
@@ -375,7 +375,7 @@ class TestVolatilityAnalysis(unittest.TestCase):
             
             print("✅ Rolling volatility passed")
             
-        except Exception as e:
+        :
             self.fail(f"calculate_rolling_volatility failed: {e}")
 
 
@@ -400,7 +400,7 @@ class TestPortfolioRisk(unittest.TestCase):
 
     def test_calculate_herfindahl_index(self):
         """Test Herfindahl index (concentration measure)"""
-        try:
+        
             result = calculate_herfindahl_index(self.weights)
             
             # Should be a float
@@ -412,12 +412,12 @@ class TestPortfolioRisk(unittest.TestCase):
             
             print("✅ Herfindahl index passed")
             
-        except Exception as e:
+        :
             self.fail(f"calculate_herfindahl_index failed: {e}")
 
     def test_calculate_portfolio_volatility(self):
         """Test portfolio volatility"""
-        try:
+        
             result = calculate_portfolio_volatility(self.weights, self.cov_matrix)
             
             # Should be a float
@@ -428,12 +428,12 @@ class TestPortfolioRisk(unittest.TestCase):
             
             print("✅ Portfolio volatility passed")
             
-        except Exception as e:
+        :
             self.fail(f"calculate_portfolio_volatility failed: {e}")
 
     def test_calculate_concentration_metrics(self):
         """Test concentration metrics"""
-        try:
+        
             result = calculate_concentration_metrics(self.weights)
             
             # Should be a dictionary
@@ -444,12 +444,12 @@ class TestPortfolioRisk(unittest.TestCase):
             
             print("✅ Concentration metrics passed")
             
-        except Exception as e:
+        :
             self.fail(f"calculate_concentration_metrics failed: {e}")
 
     def test_calculate_risk_budget(self):
         """Test risk budget calculation"""
-        try:
+        
             result = calculate_risk_budget(self.weights, self.cov_matrix)
             
             # Should be a dictionary
@@ -457,12 +457,12 @@ class TestPortfolioRisk(unittest.TestCase):
             
             print("✅ Risk budget passed")
             
-        except Exception as e:
+        :
             self.fail(f"calculate_risk_budget failed: {e}")
 
     def test_calculate_component_var(self):
         """Test component VaR"""
-        try:
+        
             result = calculate_component_var(self.weights, self.cov_matrix)
             
             # Should be a dictionary
@@ -470,12 +470,12 @@ class TestPortfolioRisk(unittest.TestCase):
             
             print("✅ Component VaR passed")
             
-        except Exception as e:
+        :
             self.fail(f"calculate_component_var failed: {e}")
 
     def test_calculate_marginal_var(self):
         """Test marginal VaR"""
-        try:
+        
             result = calculate_marginal_var(self.weights, self.cov_matrix)
             
             # Should be a dictionary
@@ -483,12 +483,12 @@ class TestPortfolioRisk(unittest.TestCase):
             
             print("✅ Marginal VaR passed")
             
-        except Exception as e:
+        :
             self.fail(f"calculate_marginal_var failed: {e}")
 
     def test_calculate_diversification_ratio(self):
         """Test diversification ratio"""
-        try:
+        
             portfolio_vol = 0.015
             weighted_avg_vol = 0.018
             
@@ -502,7 +502,7 @@ class TestPortfolioRisk(unittest.TestCase):
             
             print("✅ Diversification ratio passed")
             
-        except Exception as e:
+        :
             self.fail(f"calculate_diversification_ratio failed: {e}")
 
 
@@ -521,7 +521,7 @@ class TestTailRisk(unittest.TestCase):
 
     def test_calculate_tail_risk(self):
         """Test tail risk calculation"""
-        try:
+        
             result = calculate_tail_risk(self.returns, threshold=0.05)
             
             # Should be a dictionary
@@ -533,7 +533,7 @@ class TestTailRisk(unittest.TestCase):
             
             print("✅ Tail risk passed")
             
-        except Exception as e:
+        :
             self.fail(f"calculate_tail_risk failed: {e}")
 
 
@@ -552,7 +552,7 @@ class TestStressTest(unittest.TestCase):
 
     def test_stress_test_portfolio(self):
         """Test portfolio stress testing"""
-        try:
+        
             market_shock = 0.1  # 10% market decline
             result = stress_test_portfolio(
                 self.returns,
@@ -564,7 +564,7 @@ class TestStressTest(unittest.TestCase):
             
             print("✅ Stress test passed")
             
-        except Exception as e:
+        :
             self.fail(f"stress_test_portfolio failed: {e}")
 
 
@@ -588,7 +588,7 @@ class TestDownsideRisk(unittest.TestCase):
 
     def test_calculate_downside_correlation(self):
         """Test downside correlation"""
-        try:
+        
             result = calculate_downside_correlation(
                 self.portfolio_returns,
                 self.downside_returns,
@@ -604,7 +604,7 @@ class TestDownsideRisk(unittest.TestCase):
             
             print("✅ Downside correlation passed")
             
-        except Exception as e:
+        :
             self.fail(f"calculate_downside_correlation failed: {e}")
 
 
@@ -620,7 +620,7 @@ class TestEdgeCases(unittest.TestCase):
         """Test handling of empty data"""
         empty_series = pd.Series([], dtype=float)
         
-        try:
+        
             result = calculate_skewness(empty_series)
             print("✅ Empty data handled")
         except Exception:
@@ -628,7 +628,7 @@ class TestEdgeCases(unittest.TestCase):
 
     def test_single_value_handling(self):
         """Test handling of single value"""
-        try:
+        
             single_value = pd.Series([0.01])
             result = calculate_skewness(single_value)
             print("✅ Single value handled")
@@ -637,12 +637,12 @@ class TestEdgeCases(unittest.TestCase):
 
     def test_constant_returns(self):
         """Test handling of constant returns"""
-        try:
+        
             constant_returns = pd.Series([0.0] * 100)
             result = calculate_rolling_volatility(constant_returns, window=30)
             # Should handle gracefully
             print("✅ Constant returns handled")
-        except Exception as e:
+        :
             print(f"⚠️ Constant returns: {e}")
 
 

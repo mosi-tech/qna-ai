@@ -83,7 +83,7 @@ def convert_for_json(obj):
 # Add MCP server directory to Python path
 script_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = "/Users/shivc/Documents/Workspace/JS/qna-ai-admin"
-mcp_server_dir = os.path.join(project_root, 'mcp-server')
+mcp_server_dir = os.path.join(project_root, 'backend/mcp-server')
 
 # Add both possible locations to path
 for path in [script_dir, mcp_server_dir]:
@@ -163,7 +163,7 @@ def convert_for_json(obj):
 # Add MCP server directory to Python path
 script_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = "/Users/shivc/Documents/Workspace/JS/qna-ai-admin"
-mcp_server_dir = os.path.join(project_root, 'mcp-server')
+mcp_server_dir = os.path.join(project_root, 'backend/mcp-server')
 
 # Add both possible locations to path
 for path in [script_dir, mcp_server_dir]:
@@ -235,7 +235,7 @@ def execute_script(script_content: str, mock_mode: bool = True, timeout: int = 3
     
     try:
         # Get project root directory - hardcoded for MCP testing
-        project_root = "/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server"
+        project_root = "/Users/shivc/Documents/Workspace/JS/qna-ai-admin/backend/mcp-server/"
         
         # Create enhance script
         enhanced_script = create_enhance_script(script_content, mock_mode, parameters)
@@ -386,7 +386,7 @@ def check_forbidden_imports(script_content: str) -> Dict[str, Any]:
                     forbidden_found.append({
                         "package": forbidden,
                         "line": line,
-                        "suggestion": get_package_suggestion(forbidden)
+                        # "suggestion": get_package_suggestion(forbidden)
                     })
     
     if forbidden_found:

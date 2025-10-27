@@ -67,7 +67,7 @@ class TestMomentumIndicators(unittest.TestCase):
 
     def test_calculate_rsi(self):
         """Test RSI calculation"""
-        try:
+        
             result = calculate_rsi(self.close_prices, period=14)
             
             # Check that result is a dictionary
@@ -93,12 +93,12 @@ class TestMomentumIndicators(unittest.TestCase):
             
             print("✅ RSI calculation test passed")
             
-        except Exception as e:
+        :
             self.fail(f"calculate_rsi failed with error: {e}")
 
     def test_calculate_stochastic(self):
         """Test Stochastic oscillator calculation"""
-        try:
+        
             result = calculate_stochastic(self.ohlc_data, k_period=14, d_period=3)
             
             # Check basic structure
@@ -116,12 +116,12 @@ class TestMomentumIndicators(unittest.TestCase):
             
             print("✅ Stochastic oscillator test passed")
             
-        except Exception as e:
+        :
             self.fail(f"Stochastic calculation failed: {e}")
 
     def test_calculate_williams_r(self):
         """Test Williams %R calculation"""
-        try:
+        
             result = calculate_williams_r(self.ohlc_data, period=14)
             
             # Check basic structure
@@ -135,12 +135,12 @@ class TestMomentumIndicators(unittest.TestCase):
             
             print("✅ Williams %R test passed")
             
-        except Exception as e:
+        :
             self.fail(f"Williams %R calculation failed: {e}")
 
     def test_calculate_adx(self):
         """Test ADX (Average Directional Index) calculation"""
-        try:
+        
             result = calculate_adx(self.ohlc_data, period=14)
             
             # Check basic structure
@@ -154,12 +154,12 @@ class TestMomentumIndicators(unittest.TestCase):
             
             print("✅ ADX calculation test passed")
             
-        except Exception as e:
+        :
             self.fail(f"ADX calculation failed: {e}")
 
     def test_calculate_macd(self):
         """Test MACD calculation"""
-        try:
+        
             result = calculate_macd(self.close_prices, fast_period=12, slow_period=26, signal_period=9)
             
             # Check basic structure
@@ -174,12 +174,12 @@ class TestMomentumIndicators(unittest.TestCase):
             
             print("✅ MACD calculation test passed")
             
-        except Exception as e:
+        :
             self.fail(f"MACD calculation failed: {e}")
 
     def test_calculate_cci(self):
         """Test Commodity Channel Index calculation"""
-        try:
+        
             result = calculate_cci(self.ohlc_data, period=14)
             
             # Check basic structure
@@ -193,12 +193,12 @@ class TestMomentumIndicators(unittest.TestCase):
             
             print("✅ CCI calculation test passed")
             
-        except Exception as e:
+        :
             self.fail(f"CCI calculation failed: {e}")
 
     def test_calculate_roc(self):
         """Test Rate of Change calculation"""
-        try:
+        
             result = calculate_roc(self.close_prices, period=10)
             
             # Check basic structure
@@ -214,12 +214,12 @@ class TestMomentumIndicators(unittest.TestCase):
             
             print("✅ ROC calculation test passed")
             
-        except Exception as e:
+        :
             self.fail(f"ROC calculation failed: {e}")
 
     def test_calculate_momentum(self):
         """Test Momentum calculation"""
-        try:
+        
             result = calculate_mom(self.close_prices, period=10)
             
             # Check basic structure
@@ -233,12 +233,12 @@ class TestMomentumIndicators(unittest.TestCase):
             
             print("✅ Momentum calculation test passed")
             
-        except Exception as e:
+        :
             self.fail(f"Momentum calculation failed: {e}")
 
     def test_calculate_ultimate_oscillator(self):
         """Test Ultimate Oscillator calculation"""
-        try:
+        
             result = calculate_ultimate_oscillator(self.ohlc_data, period1=7, period2=14, period3=28)
             
             # Check basic structure
@@ -252,12 +252,12 @@ class TestMomentumIndicators(unittest.TestCase):
             
             print("✅ Ultimate Oscillator test passed")
             
-        except Exception as e:
+        :
             self.fail(f"Ultimate Oscillator calculation failed: {e}")
 
     def test_calculate_aroon(self):
         """Test Aroon calculation"""
-        try:
+        
             result = calculate_aroon(self.ohlc_data, period=14)
             
             # Check basic structure
@@ -275,12 +275,12 @@ class TestMomentumIndicators(unittest.TestCase):
             
             print("✅ Aroon calculation test passed")
             
-        except Exception as e:
+        :
             self.fail(f"Aroon calculation failed: {e}")
     
     def test_calculate_bop_cmo(self):
         """Test BOP and CMO calculations"""
-        try:
+        
             # Test Balance of Power
             bop_result = calculate_bop(self.ohlc_data)
             self.assertIsInstance(bop_result, dict)
@@ -298,14 +298,14 @@ class TestMomentumIndicators(unittest.TestCase):
             
             print("✅ BOP and CMO calculation tests passed")
             
-        except Exception as e:
+        :
             self.fail(f"BOP/CMO calculation failed: {e}")
 
     def test_edge_cases(self):
         """Test edge cases and error handling"""
         
         # Test with very short data
-        try:
+        
             short_data = self.close_prices.head(5)
             result = calculate_rsi(short_data, period=14)
             # Should either handle gracefully or return appropriate error
@@ -314,7 +314,7 @@ class TestMomentumIndicators(unittest.TestCase):
             pass  # Expected for insufficient data
         
         # Test with NaN values
-        try:
+        
             nan_data = self.close_prices.copy()
             nan_data.iloc[10:20] = np.nan
             result = calculate_rsi(nan_data, period=14)
@@ -323,7 +323,7 @@ class TestMomentumIndicators(unittest.TestCase):
             pass  # Expected to fail or handle gracefully
         
         # Test with constant values
-        try:
+        
             constant_data = pd.Series([100.0] * 100, index=self.dates[:100])
             result = calculate_rsi(constant_data, period=14)
             print("✅ Constant values edge case handled")
@@ -339,7 +339,7 @@ class TestMomentumIndicators(unittest.TestCase):
         ]
         
         for func, params in indicators_to_test:
-            try:
+            
                 if func in [calculate_rsi]:
                     result = func(self.close_prices, **params)
                 else:
@@ -350,12 +350,12 @@ class TestMomentumIndicators(unittest.TestCase):
                     valid_signals = ['bullish', 'bearish', 'neutral', 'overbought', 'oversold', 'buy', 'sell', 'hold']
                     self.assertIn(result['signal'], valid_signals)
                 
-            except Exception as e:
+            :
                 print(f"⚠️ Signal test for {func.__name__}: {e}")
 
     def test_ta_lib_integration(self):
         """Test that TA-Lib integration is working correctly"""
-        try:
+        
             import talib
             
             # Test direct TA-Lib function
@@ -374,7 +374,7 @@ class TestMomentumIndicators(unittest.TestCase):
             
             print("✅ TA-Lib integration test passed")
             
-        except Exception as e:
+        :
             self.fail(f"TA-Lib integration failed: {e}")
 
 

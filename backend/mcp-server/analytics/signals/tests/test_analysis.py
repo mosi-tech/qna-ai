@@ -10,7 +10,7 @@ import numpy as np
 from datetime import datetime, timedelta
 
 # Import functions to test
-try:
+
     from ..analysis import (
         analyze_signal_quality,
         identify_false_signals,
@@ -41,38 +41,38 @@ class TestSignalQuality(unittest.TestCase):
 
     def test_analyze_signal_quality(self):
         """Test signal quality analysis"""
-        try:
+        
             result = analyze_signal_quality(
                 prices=self.prices,
                 signals=self.signals
             )
             self.assertIsInstance(result, dict)
             print("✅ Signal quality analysis passed")
-        except Exception as e:
+        :
             print(f"⚠️ Signal quality: {e}")
 
     def test_identify_false_signals(self):
         """Test false signal identification"""
-        try:
+        
             result = identify_false_signals(
                 prices=self.prices,
                 signals=self.signals
             )
             self.assertIsInstance(result, (dict, list, pd.DataFrame))
             print("✅ False signal identification passed")
-        except Exception as e:
+        :
             print(f"⚠️ False signals: {e}")
 
     def test_optimize_signal_parameters(self):
         """Test signal parameter optimization"""
-        try:
+        
             result = optimize_signal_parameters(
                 prices=self.prices,
                 signals=self.signals
             )
             self.assertIsInstance(result, dict)
             print("✅ Signal parameter optimization passed")
-        except Exception as e:
+        :
             print(f"⚠️ Parameter optimization: {e}")
 
 
@@ -86,50 +86,50 @@ class TestSignalQualityEdgeCases(unittest.TestCase):
 
     def test_no_signals(self):
         """Test with no signals (all zeros)"""
-        try:
+        
             prices = pd.Series(100 * (1 + np.cumsum(np.random.normal(0.0008, 0.02, 100))), index=self.dates)
             signals = pd.Series([0] * 100, index=self.dates)
             
             result = analyze_signal_quality(prices=prices, signals=signals)
             self.assertIsInstance(result, dict)
             print("✅ No signals handled")
-        except Exception as e:
+        :
             print(f"⚠️ No signals: {e}")
 
     def test_all_buy_signals(self):
         """Test with all buy signals"""
-        try:
+        
             prices = pd.Series(100 * (1 + np.cumsum(np.random.normal(0.0008, 0.02, 100))), index=self.dates)
             signals = pd.Series([1] * 100, index=self.dates)
             
             result = analyze_signal_quality(prices=prices, signals=signals)
             self.assertIsInstance(result, dict)
             print("✅ All buy signals handled")
-        except Exception as e:
+        :
             print(f"⚠️ All buy signals: {e}")
 
     def test_alternating_signals(self):
         """Test with alternating buy/sell signals"""
-        try:
+        
             prices = pd.Series(100 * (1 + np.cumsum(np.random.normal(0.0008, 0.02, 100))), index=self.dates)
             signals = pd.Series([1, -1] * 50, index=self.dates)
             
             result = analyze_signal_quality(prices=prices, signals=signals)
             self.assertIsInstance(result, dict)
             print("✅ Alternating signals handled")
-        except Exception as e:
+        :
             print(f"⚠️ Alternating signals: {e}")
 
     def test_short_price_series(self):
         """Test with short price series"""
-        try:
+        
             prices = pd.Series([100, 101, 102, 101, 100], index=self.dates[:5])
             signals = pd.Series([1, 0, -1, 0, 1], index=self.dates[:5])
             
             result = analyze_signal_quality(prices=prices, signals=signals)
             self.assertIsInstance(result, dict)
             print("✅ Short series handled")
-        except Exception as e:
+        :
             print(f"⚠️ Short series: {e}")
 
 

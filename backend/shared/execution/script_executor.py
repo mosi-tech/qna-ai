@@ -43,12 +43,8 @@ def execute_script(script_content: str, mock_mode: bool = True, timeout: int = 3
         # Create MCP injection wrapper
         mcp_wrapper = create_mcp_injection_wrapper(production_mode=not mock_mode)
         
-        # Add parameter injection if parameters provided
-        parameter_injection = ""
-        if parameters:
-            parameter_injection = f"\n# Parameter injection\nPARAMETERS = {json.dumps(parameters, indent=2)}\n\n"
-        
-        enhanced_script = mcp_wrapper + parameter_injection + script_content
+        # No parameter injection needed - pass as command line arguments
+        enhanced_script = mcp_wrapper + script_content
         
         # Create temporary file in project directory with predictable name for debugging
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -60,10 +56,14 @@ def execute_script(script_content: str, mock_mode: bool = True, timeout: int = 3
         with open(script_path, 'w') as f:
             f.write(enhanced_script)
         
-        # Execute script with appropriate flags
+        # Execute script with parameters as command line arguments
         cmd = [sys.executable, script_path]
-        if mock_mode:
-            cmd.append("--mock")
+        
+        # Add parameters as individual arguments
+        if parameters:
+            for key, value in parameters.items():
+                if value is not None:
+                    cmd.extend([f'--{key}', str(value)])
         
         start_time = datetime.now()
         
@@ -99,7 +99,8 @@ def execute_script(script_content: str, mock_mode: bool = True, timeout: int = 3
                     result_data = {
                         "success": script_success,
                         "execution_time": execution_time,
-                        "mock_mode": mock_mode
+                        "mock_mode": mock_mode,
+                        "output": output_data
                     }
                     if not script_success and script_error:
                         result_data["success"] = False

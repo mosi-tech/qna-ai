@@ -74,6 +74,7 @@ mcp-server/temp/*
 mcp-server/scripts/
 backend/mcp-server/temp/*
 backend/mcp-server/scripts/
+
 backend/scriptEdition/scripts/*
 backend/scriptEdition/data/*
 backend/scriptEdition/apiServer/search/data/*

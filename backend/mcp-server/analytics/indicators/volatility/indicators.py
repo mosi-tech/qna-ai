@@ -109,65 +109,60 @@ def calculate_atr(data: Union[pd.DataFrame, Dict[str, Any]], period: int = 14) -
         - Stop-loss distance: 1.5-2.0 × ATR from entry price
         - Position size inversely related to ATR (higher ATR = smaller position)
     """
-    try:
-        if isinstance(data, dict):
-            df = pd.DataFrame(data)
-        else:
-            df = data.copy()
+    if isinstance(data, dict):
+        df = pd.DataFrame(data)
+    else:
+        df = data.copy()
         
-        # Ensure we have required columns
-        required_cols = ['high', 'low', 'close']
-        if not all(col in df.columns or col.title() in df.columns for col in required_cols):
-            raise ValueError("OHLC data required for ATR calculation")
+    # Ensure we have required columns
+    required_cols = ['high', 'low', 'close']
+    if not all(col in df.columns or col.title() in df.columns for col in required_cols):
+        raise ValueError("OHLC data required for ATR calculation")
         
-        # Standardize column names
-        high_col = 'high' if 'high' in df.columns else 'High'
-        low_col = 'low' if 'low' in df.columns else 'Low'
-        close_col = 'close' if 'close' in df.columns else 'Close'
+    # Standardize column names
+    high_col = 'high' if 'high' in df.columns else 'High'
+    low_col = 'low' if 'low' in df.columns else 'Low'
+    close_col = 'close' if 'close' in df.columns else 'Close'
         
-        # Use talib-binary
-        atr_values = talib.ATR(
-            df[high_col].values.astype(np.float64),
-            df[low_col].values.astype(np.float64),
-            df[close_col].values.astype(np.float64),
-            timeperiod=period
-        )
-        atr_series = pd.Series(atr_values, index=df.index).dropna()
+    # Use talib-binary
+    atr_values = talib.ATR(
+        df[high_col].values.astype(np.float64),
+        df[low_col].values.astype(np.float64),
+        df[close_col].values.astype(np.float64),
+        timeperiod=period
+    )
+    atr_series = pd.Series(atr_values, index=df.index).dropna()
         
-        latest_atr = float(atr_series.iloc[-1]) if len(atr_series) > 0 else None
-        latest_price = float(df[close_col].iloc[-1]) if len(df) > 0 else None
+    latest_atr = float(atr_series.iloc[-1]) if len(atr_series) > 0 else None
+    latest_price = float(df[close_col].iloc[-1]) if len(df) > 0 else None
         
-        # Calculate ATR as percentage of price
-        atr_percent = (latest_atr / latest_price * 100) if latest_atr and latest_price else None
+    # Calculate ATR as percentage of price
+    atr_percent = (latest_atr / latest_price * 100) if latest_atr and latest_price else None
         
-        # Risk management calculations
-        stop_loss_distance = (latest_atr * 2.0) if latest_atr else None
-        position_size_factor = (1.0 / atr_percent) if atr_percent and atr_percent > 0 else None
+    # Risk management calculations
+    stop_loss_distance = (latest_atr * 2.0) if latest_atr else None
+    position_size_factor = (1.0 / atr_percent) if atr_percent and atr_percent > 0 else None
         
-        # Volatility classification
-        volatility_level = "normal"
-        if atr_percent is not None:
-            if atr_percent > 3.0:
-                volatility_level = "high"
-            elif atr_percent < 1.0:
-                volatility_level = "low"
+    # Volatility classification
+    volatility_level = "normal"
+    if atr_percent is not None:
+        if atr_percent > 3.0:
+            volatility_level = "high"
+        elif atr_percent < 1.0:
+            volatility_level = "low"
         
-        result = {
-            "atr": atr_series,
-            "latest_value": latest_atr,
-            "atr_percent": atr_percent,
-            "period": period,
-            "volatility_level": volatility_level,
-            "stop_loss_distance": stop_loss_distance,
-            "position_size_factor": position_size_factor
-        }
+    result = {
+        "atr": atr_series,
+        "latest_value": latest_atr,
+        "atr_percent": atr_percent,
+        "period": period,
+        "volatility_level": volatility_level,
+        "stop_loss_distance": stop_loss_distance,
+        "position_size_factor": position_size_factor
+    }
         
-        return standardize_output(result, "calculate_atr")
+    return standardize_output(result, "calculate_atr")
         
-    except Exception as e:
-        return {"success": False, "error": f"ATR calculation failed: {str(e)}"}
-
-
 def calculate_natr(data: Union[pd.DataFrame, Dict[str, Any]], period: int = 14) -> Dict[str, Any]:
     """Calculate Normalized Average True Range using TA-Lib library.
     
@@ -217,64 +212,59 @@ def calculate_natr(data: Union[pd.DataFrame, Dict[str, Any]], period: int = 14) 
         - Useful for portfolio volatility analysis and risk budgeting
         - Less affected by price level changes than raw ATR
     """
-    try:
-        if isinstance(data, dict):
-            df = pd.DataFrame(data)
+    if isinstance(data, dict):
+        df = pd.DataFrame(data)
+    else:
+        df = data.copy()
+        
+    # Ensure we have required columns
+    required_cols = ['high', 'low', 'close']
+    if not all(col in df.columns or col.title() in df.columns for col in required_cols):
+        raise ValueError("OHLC data required for NATR calculation")
+        
+    # Standardize column names
+    high_col = 'high' if 'high' in df.columns else 'High'
+    low_col = 'low' if 'low' in df.columns else 'Low'
+    close_col = 'close' if 'close' in df.columns else 'Close'
+        
+    # Use talib-binary
+    natr_values = talib.NATR(
+        df[high_col].values.astype(np.float64),
+        df[low_col].values.astype(np.float64),
+        df[close_col].values.astype(np.float64),
+        timeperiod=period
+    )
+    natr_series = pd.Series(natr_values, index=df.index).dropna()
+        
+    latest_natr = float(natr_series.iloc[-1]) if len(natr_series) > 0 else None
+        
+    # Volatility classification based on NATR levels
+    volatility_level = "normal"
+    volatility_rank = "moderate"
+    if latest_natr is not None:
+        if latest_natr > 6.0:
+            volatility_level = "high"
+            volatility_rank = "extreme"
+        elif latest_natr > 4.0:
+            volatility_level = "high"
+            volatility_rank = "high"
+        elif latest_natr > 1.5:
+            volatility_level = "normal"
+            volatility_rank = "moderate"
         else:
-            df = data.copy()
+            volatility_level = "low"
+            volatility_rank = "low"
         
-        # Ensure we have required columns
-        required_cols = ['high', 'low', 'close']
-        if not all(col in df.columns or col.title() in df.columns for col in required_cols):
-            raise ValueError("OHLC data required for NATR calculation")
+    result = {
+        "natr": natr_series,
+        "latest_value": latest_natr,
+        "volatility_level": volatility_level,
+        "period": period,
+        "volatility_rank": volatility_rank
+    }
         
-        # Standardize column names
-        high_col = 'high' if 'high' in df.columns else 'High'
-        low_col = 'low' if 'low' in df.columns else 'Low'
-        close_col = 'close' if 'close' in df.columns else 'Close'
+    return standardize_output(result, "calculate_natr")
         
-        # Use talib-binary
-        natr_values = talib.NATR(
-            df[high_col].values.astype(np.float64),
-            df[low_col].values.astype(np.float64),
-            df[close_col].values.astype(np.float64),
-            timeperiod=period
-        )
-        natr_series = pd.Series(natr_values, index=df.index).dropna()
-        
-        latest_natr = float(natr_series.iloc[-1]) if len(natr_series) > 0 else None
-        
-        # Volatility classification based on NATR levels
-        volatility_level = "normal"
-        volatility_rank = "moderate"
-        if latest_natr is not None:
-            if latest_natr > 6.0:
-                volatility_level = "high"
-                volatility_rank = "extreme"
-            elif latest_natr > 4.0:
-                volatility_level = "high"
-                volatility_rank = "high"
-            elif latest_natr > 1.5:
-                volatility_level = "normal"
-                volatility_rank = "moderate"
-            else:
-                volatility_level = "low"
-                volatility_rank = "low"
-        
-        result = {
-            "natr": natr_series,
-            "latest_value": latest_natr,
-            "volatility_level": volatility_level,
-            "period": period,
-            "volatility_rank": volatility_rank
-        }
-        
-        return standardize_output(result, "calculate_natr")
-        
-    except Exception as e:
-        return {"success": False, "error": f"NATR calculation failed: {str(e)}"}
-
-
 def calculate_trange(data: Union[pd.DataFrame, Dict[str, Any]]) -> Dict[str, Any]:
     """Calculate True Range using TA-Lib library.
     
@@ -322,55 +312,50 @@ def calculate_trange(data: Union[pd.DataFrame, Dict[str, Any]]) -> Dict[str, Any
         - Volatility spikes occur when True Range > 2 × Average True Range
         - Can signal potential trend changes or market events
     """
-    try:
-        if isinstance(data, dict):
-            df = pd.DataFrame(data)
-        else:
-            df = data.copy()
+    if isinstance(data, dict):
+        df = pd.DataFrame(data)
+    else:
+        df = data.copy()
         
-        # Ensure we have required columns
-        required_cols = ['high', 'low', 'close']
-        if not all(col in df.columns or col.title() in df.columns for col in required_cols):
-            raise ValueError("OHLC data required for True Range calculation")
+    # Ensure we have required columns
+    required_cols = ['high', 'low', 'close']
+    if not all(col in df.columns or col.title() in df.columns for col in required_cols):
+        raise ValueError("OHLC data required for True Range calculation")
         
-        # Standardize column names
-        high_col = 'high' if 'high' in df.columns else 'High'
-        low_col = 'low' if 'low' in df.columns else 'Low'
-        close_col = 'close' if 'close' in df.columns else 'Close'
+    # Standardize column names
+    high_col = 'high' if 'high' in df.columns else 'High'
+    low_col = 'low' if 'low' in df.columns else 'Low'
+    close_col = 'close' if 'close' in df.columns else 'Close'
         
-        # Use talib-binary
-        trange_values = talib.TRANGE(
-            df[high_col].values.astype(np.float64),
-            df[low_col].values.astype(np.float64),
-            df[close_col].values.astype(np.float64)
-        )
-        trange_series = pd.Series(trange_values, index=df.index).dropna()
+    # Use talib-binary
+    trange_values = talib.TRANGE(
+        df[high_col].values.astype(np.float64),
+        df[low_col].values.astype(np.float64),
+        df[close_col].values.astype(np.float64)
+    )
+    trange_series = pd.Series(trange_values, index=df.index).dropna()
         
-        latest_trange = float(trange_series.iloc[-1]) if len(trange_series) > 0 else None
-        average_range = float(trange_series.mean()) if len(trange_series) > 0 else None
-        max_range = float(trange_series.max()) if len(trange_series) > 0 else None
-        min_range = float(trange_series.min()) if len(trange_series) > 0 else None
+    latest_trange = float(trange_series.iloc[-1]) if len(trange_series) > 0 else None
+    average_range = float(trange_series.mean()) if len(trange_series) > 0 else None
+    max_range = float(trange_series.max()) if len(trange_series) > 0 else None
+    min_range = float(trange_series.min()) if len(trange_series) > 0 else None
         
-        # Detect volatility spikes
-        volatility_spike = False
-        if latest_trange and average_range and latest_trange > (2.0 * average_range):
-            volatility_spike = True
+    # Detect volatility spikes
+    volatility_spike = False
+    if latest_trange and average_range and latest_trange > (2.0 * average_range):
+        volatility_spike = True
         
-        result = {
-            "true_range": trange_series,
-            "latest_value": latest_trange,
-            "average_range": average_range,
-            "max_range": max_range,
-            "min_range": min_range,
-            "volatility_spike": volatility_spike
-        }
+    result = {
+        "true_range": trange_series,
+        "latest_value": latest_trange,
+        "average_range": average_range,
+        "max_range": max_range,
+        "min_range": min_range,
+        "volatility_spike": volatility_spike
+    }
         
-        return standardize_output(result, "calculate_trange")
+    return standardize_output(result, "calculate_trange")
         
-    except Exception as e:
-        return {"success": False, "error": f"True Range calculation failed: {str(e)}"}
-
-
 # =============================================================================
 # BOLLINGER BAND FAMILY
 # =============================================================================
@@ -432,77 +417,72 @@ def calculate_bollinger_bands(data: Union[pd.Series, Dict[str, Any]],
         - Approximately 95% of price action occurs within the bands
         - Breakouts above/below bands can signal trend continuation or reversal
     """
-    try:
-        prices = validate_price_data(data)
+    prices = validate_price_data(data)
         
-        # Use talib-binary
-        upper, middle, lower = talib.BBANDS(
-            prices.values.astype(np.float64), 
-            timeperiod=period, 
-            nbdevup=std_dev, 
-            nbdevdn=std_dev
-        )
+    # Use talib-binary
+    upper, middle, lower = talib.BBANDS(
+        prices.values.astype(np.float64), 
+        timeperiod=period, 
+        nbdevup=std_dev, 
+        nbdevdn=std_dev
+    )
         
-        bb_df = pd.DataFrame({
-            'upper': upper,
-            'middle': middle,
-            'lower': lower
-        }, index=prices.index).dropna()
+    bb_df = pd.DataFrame({
+        'upper': upper,
+        'middle': middle,
+        'lower': lower
+    }, index=prices.index).dropna()
         
-        # Calculate %B and bandwidth
-        current_price = prices.iloc[-1] if len(prices) > 0 else None
-        if current_price is not None and len(bb_df) > 0:
-            current_upper = bb_df['upper'].iloc[-1]
-            current_lower = bb_df['lower'].iloc[-1]
-            current_middle = bb_df['middle'].iloc[-1]
+    # Calculate %B and bandwidth
+    current_price = prices.iloc[-1] if len(prices) > 0 else None
+    if current_price is not None and len(bb_df) > 0:
+        current_upper = bb_df['upper'].iloc[-1]
+        current_lower = bb_df['lower'].iloc[-1]
+        current_middle = bb_df['middle'].iloc[-1]
             
-            percent_b = (current_price - current_lower) / (current_upper - current_lower) if current_upper != current_lower else 0.5
-            bandwidth = (current_upper - current_lower) / current_middle if current_middle != 0 else 0
-        else:
-            percent_b = None
-            bandwidth = None
+        percent_b = (current_price - current_lower) / (current_upper - current_lower) if current_upper != current_lower else 0.5
+        bandwidth = (current_upper - current_lower) / current_middle if current_middle != 0 else 0
+    else:
+        percent_b = None
+        bandwidth = None
         
-        # Generate signals and analysis
-        signal = "neutral"
-        squeeze_level = "normal"
-        breakout_potential = "moderate"
+    # Generate signals and analysis
+    signal = "neutral"
+    squeeze_level = "normal"
+    breakout_potential = "moderate"
         
-        if percent_b is not None and bandwidth is not None:
-            # Price position signals
-            if percent_b > 1.0:
-                signal = "overbought"
-            elif percent_b < 0.0:
-                signal = "oversold"
+    if percent_b is not None and bandwidth is not None:
+        # Price position signals
+        if percent_b > 1.0:
+            signal = "overbought"
+        elif percent_b < 0.0:
+            signal = "oversold"
             
-            # Squeeze analysis
-            if bandwidth < 0.1:
-                squeeze_level = "tight"
-                signal = "squeeze"
-                breakout_potential = "high"
-            elif bandwidth > 0.3:
-                squeeze_level = "wide"
-                signal = "expansion"
-                breakout_potential = "low"
+        # Squeeze analysis
+        if bandwidth < 0.1:
+            squeeze_level = "tight"
+            signal = "squeeze"
+            breakout_potential = "high"
+        elif bandwidth > 0.3:
+            squeeze_level = "wide"
+            signal = "expansion"
+            breakout_potential = "low"
             
-        result = {
-            "upper_band": bb_df['upper'],
-            "middle_band": bb_df['middle'],
-            "lower_band": bb_df['lower'],
-            "percent_b": percent_b,
-            "bandwidth": bandwidth,
-            "signal": signal,
-            "squeeze_level": squeeze_level,
-            "breakout_potential": breakout_potential,
-            "period": period,
-            "std_dev": std_dev
-        }
+    result = {
+        "upper_band": bb_df['upper'],
+        "middle_band": bb_df['middle'],
+        "lower_band": bb_df['lower'],
+        "percent_b": percent_b,
+        "bandwidth": bandwidth,
+        "signal": signal,
+        "squeeze_level": squeeze_level,
+        "breakout_potential": breakout_potential,
+        "period": period,
+        "std_dev": std_dev
+    }
         
-        return standardize_output(result, "calculate_bollinger_bands")
+    return standardize_output(result, "calculate_bollinger_bands")
         
-    except Exception as e:
-        return {"success": False, "error": f"Bollinger Bands calculation failed: {str(e)}"}
-
-
 def calculate_bollinger_percent_b(data: Union[pd.Series, Dict[str, Any]], 
                                  period: int = 20, std_dev: float = 2.0) -> Dict[str, Any]:
     """Calculate Bollinger %B using TA-Lib library.
@@ -554,72 +534,67 @@ def calculate_bollinger_percent_b(data: Union[pd.Series, Dict[str, Any]],
         - Extreme %B values often precede mean reversion
         - Useful for identifying trend strength and reversal points
     """
-    try:
-        prices = validate_price_data(data)
+    prices = validate_price_data(data)
         
-        # Calculate Bollinger Bands first
-        upper, middle, lower = talib.BBANDS(
-            prices.values.astype(np.float64), 
-            timeperiod=period, 
-            nbdevup=std_dev, 
-            nbdevdn=std_dev
-        )
+    # Calculate Bollinger Bands first
+    upper, middle, lower = talib.BBANDS(
+        prices.values.astype(np.float64), 
+        timeperiod=period, 
+        nbdevup=std_dev, 
+        nbdevdn=std_dev
+    )
         
-        # Calculate %B
-        percent_b_values = (prices.values - lower) / (upper - lower)
-        percent_b_series = pd.Series(percent_b_values, index=prices.index).dropna()
+    # Calculate %B
+    percent_b_values = (prices.values - lower) / (upper - lower)
+    percent_b_series = pd.Series(percent_b_values, index=prices.index).dropna()
         
-        latest_percent_b = float(percent_b_series.iloc[-1]) if len(percent_b_series) > 0 else None
+    latest_percent_b = float(percent_b_series.iloc[-1]) if len(percent_b_series) > 0 else None
         
-        # Generate signals and analysis
-        signal = "neutral"
-        trend_strength = "moderate"
-        reversal_probability = "moderate"
+    # Generate signals and analysis
+    signal = "neutral"
+    trend_strength = "moderate"
+    reversal_probability = "moderate"
         
-        if latest_percent_b is not None:
-            # Position signals
-            if latest_percent_b > 1.0:
-                signal = "overbought"
-                reversal_probability = "high"
-            elif latest_percent_b < 0.0:
-                signal = "oversold"
-                reversal_probability = "high"
-            elif latest_percent_b > 0.8:
-                signal = "neutral"
-                trend_strength = "strong"
-                reversal_probability = "moderate"
-            elif latest_percent_b < 0.2:
-                signal = "neutral"
-                trend_strength = "strong"
-                reversal_probability = "moderate"
+    if latest_percent_b is not None:
+        # Position signals
+        if latest_percent_b > 1.0:
+            signal = "overbought"
+            reversal_probability = "high"
+        elif latest_percent_b < 0.0:
+            signal = "oversold"
+            reversal_probability = "high"
+        elif latest_percent_b > 0.8:
+            signal = "neutral"
+            trend_strength = "strong"
+            reversal_probability = "moderate"
+        elif latest_percent_b < 0.2:
+            signal = "neutral"
+            trend_strength = "strong"
+            reversal_probability = "moderate"
             
-            # Trend strength analysis
-            if len(percent_b_series) >= 5:
-                recent_values = percent_b_series.tail(5)
-                if recent_values.std() < 0.1:
-                    if recent_values.mean() > 0.8:
-                        trend_strength = "strong"
-                    elif recent_values.mean() < 0.2:
-                        trend_strength = "strong"
-                else:
-                    trend_strength = "weak"
+        # Trend strength analysis
+        if len(percent_b_series) >= 5:
+            recent_values = percent_b_series.tail(5)
+            if recent_values.std() < 0.1:
+                if recent_values.mean() > 0.8:
+                    trend_strength = "strong"
+                elif recent_values.mean() < 0.2:
+                    trend_strength = "strong"
+            else:
+                trend_strength = "weak"
         
-        result = {
-            "percent_b": percent_b_series,
-            "latest_value": latest_percent_b,
-            "signal": signal,
-            "trend_strength": trend_strength,
-            "reversal_probability": reversal_probability,
-            "period": period,
-            "std_dev": std_dev
-        }
+    result = {
+        "percent_b": percent_b_series,
+        "latest_value": latest_percent_b,
+        "signal": signal,
+        "trend_strength": trend_strength,
+        "reversal_probability": reversal_probability,
+        "period": period,
+        "std_dev": std_dev
+    }
         
-        return standardize_output(result, "calculate_bollinger_percent_b")
+    return standardize_output(result, "calculate_bollinger_percent_b")
         
-    except Exception as e:
-        return {"success": False, "error": f"Bollinger %B calculation failed: {str(e)}"}
-
-
 def calculate_bollinger_bandwidth(data: Union[pd.Series, Dict[str, Any]], 
                                  period: int = 20, std_dev: float = 2.0) -> Dict[str, Any]:
     """Calculate Bollinger Band Width using TA-Lib library.
@@ -671,84 +646,79 @@ def calculate_bollinger_bandwidth(data: Union[pd.Series, Dict[str, Any]],
         - Squeezes are followed by expansions (and vice versa)
         - Useful for timing entry/exit points and volatility trading
     """
-    try:
-        prices = validate_price_data(data)
+    prices = validate_price_data(data)
         
-        # Calculate Bollinger Bands first
-        upper, middle, lower = talib.BBANDS(
-            prices.values.astype(np.float64), 
-            timeperiod=period, 
-            nbdevup=std_dev, 
-            nbdevdn=std_dev
-        )
+    # Calculate Bollinger Bands first
+    upper, middle, lower = talib.BBANDS(
+        prices.values.astype(np.float64), 
+        timeperiod=period, 
+        nbdevup=std_dev, 
+        nbdevdn=std_dev
+    )
         
-        # Calculate Bandwidth
-        bandwidth_values = (upper - lower) / middle
-        bandwidth_series = pd.Series(bandwidth_values, index=prices.index).dropna()
+    # Calculate Bandwidth
+    bandwidth_values = (upper - lower) / middle
+    bandwidth_series = pd.Series(bandwidth_values, index=prices.index).dropna()
         
-        latest_bandwidth = float(bandwidth_series.iloc[-1]) if len(bandwidth_series) > 0 else None
+    latest_bandwidth = float(bandwidth_series.iloc[-1]) if len(bandwidth_series) > 0 else None
         
-        # Calculate historical percentile
-        historical_percentile = None
-        if len(bandwidth_series) >= 20:
-            historical_percentile = (bandwidth_series <= latest_bandwidth).mean() * 100
+    # Calculate historical percentile
+    historical_percentile = None
+    if len(bandwidth_series) >= 20:
+        historical_percentile = (bandwidth_series <= latest_bandwidth).mean() * 100
         
-        # Generate analysis
-        volatility_state = "normal"
-        squeeze_intensity = "moderate"
-        breakout_probability = "moderate"
+    # Generate analysis
+    volatility_state = "normal"
+    squeeze_intensity = "moderate"
+    breakout_probability = "moderate"
         
-        if latest_bandwidth is not None:
-            # Volatility state analysis
-            if historical_percentile is not None:
-                if historical_percentile <= 10:
-                    volatility_state = "squeeze"
-                    squeeze_intensity = "extreme"
-                    breakout_probability = "high"
-                elif historical_percentile <= 25:
-                    volatility_state = "squeeze"
-                    squeeze_intensity = "tight"
-                    breakout_probability = "high"
-                elif historical_percentile >= 90:
-                    volatility_state = "expansion"
-                    squeeze_intensity = "loose"
-                    breakout_probability = "low"
-                elif historical_percentile >= 75:
-                    volatility_state = "expansion"
-                    squeeze_intensity = "moderate"
-                    breakout_probability = "low"
-            else:
-                # Fallback analysis without historical context
-                if latest_bandwidth < 0.05:
-                    volatility_state = "squeeze"
-                    squeeze_intensity = "extreme"
-                    breakout_probability = "high"
-                elif latest_bandwidth < 0.1:
-                    volatility_state = "squeeze"
-                    squeeze_intensity = "tight"
-                    breakout_probability = "high"
-                elif latest_bandwidth > 0.3:
-                    volatility_state = "expansion"
-                    squeeze_intensity = "loose"
-                    breakout_probability = "low"
+    if latest_bandwidth is not None:
+        # Volatility state analysis
+        if historical_percentile is not None:
+            if historical_percentile <= 10:
+                volatility_state = "squeeze"
+                squeeze_intensity = "extreme"
+                breakout_probability = "high"
+            elif historical_percentile <= 25:
+                volatility_state = "squeeze"
+                squeeze_intensity = "tight"
+                breakout_probability = "high"
+            elif historical_percentile >= 90:
+                volatility_state = "expansion"
+                squeeze_intensity = "loose"
+                breakout_probability = "low"
+            elif historical_percentile >= 75:
+                volatility_state = "expansion"
+                squeeze_intensity = "moderate"
+                breakout_probability = "low"
+        else:
+            # Fallback analysis without historical context
+            if latest_bandwidth < 0.05:
+                volatility_state = "squeeze"
+                squeeze_intensity = "extreme"
+                breakout_probability = "high"
+            elif latest_bandwidth < 0.1:
+                volatility_state = "squeeze"
+                squeeze_intensity = "tight"
+                breakout_probability = "high"
+            elif latest_bandwidth > 0.3:
+                volatility_state = "expansion"
+                squeeze_intensity = "loose"
+                breakout_probability = "low"
         
-        result = {
-            "bandwidth": bandwidth_series,
-            "latest_value": latest_bandwidth,
-            "volatility_state": volatility_state,
-            "squeeze_intensity": squeeze_intensity,
-            "breakout_probability": breakout_probability,
-            "historical_percentile": historical_percentile,
-            "period": period,
-            "std_dev": std_dev
-        }
+    result = {
+        "bandwidth": bandwidth_series,
+        "latest_value": latest_bandwidth,
+        "volatility_state": volatility_state,
+        "squeeze_intensity": squeeze_intensity,
+        "breakout_probability": breakout_probability,
+        "historical_percentile": historical_percentile,
+        "period": period,
+        "std_dev": std_dev
+    }
         
-        return standardize_output(result, "calculate_bollinger_bandwidth")
+    return standardize_output(result, "calculate_bollinger_bandwidth")
         
-    except Exception as e:
-        return {"success": False, "error": f"Bollinger Bandwidth calculation failed: {str(e)}"}
-
-
 # =============================================================================
 # STATISTICAL VOLATILITY INDICATORS
 # =============================================================================
@@ -801,55 +771,50 @@ def calculate_stddev(data: Union[pd.Series, Dict[str, Any]], period: int = 20) -
         - Often used in volatility-based trading strategies
         - Can be normalized by price level for better comparison
     """
-    try:
-        prices = validate_price_data(data)
+    prices = validate_price_data(data)
         
-        # Use talib-binary
-        stddev_values = talib.STDDEV(
-            prices.values.astype(np.float64), 
-            timeperiod=period
-        )
-        stddev_series = pd.Series(stddev_values, index=prices.index).dropna()
+    # Use talib-binary
+    stddev_values = talib.STDDEV(
+        prices.values.astype(np.float64), 
+        timeperiod=period
+    )
+    stddev_series = pd.Series(stddev_values, index=prices.index).dropna()
         
-        latest_stddev = float(stddev_series.iloc[-1]) if len(stddev_series) > 0 else None
+    latest_stddev = float(stddev_series.iloc[-1]) if len(stddev_series) > 0 else None
         
-        # Calculate percentile rank
-        percentile_rank = None
-        if len(stddev_series) >= 20:
-            percentile_rank = (stddev_series <= latest_stddev).mean() * 100
+    # Calculate percentile rank
+    percentile_rank = None
+    if len(stddev_series) >= 20:
+        percentile_rank = (stddev_series <= latest_stddev).mean() * 100
         
-        # Volatility level classification
-        volatility_level = "normal"
-        if percentile_rank is not None:
-            if percentile_rank >= 80:
-                volatility_level = "high"
-            elif percentile_rank <= 20:
-                volatility_level = "low"
+    # Volatility level classification
+    volatility_level = "normal"
+    if percentile_rank is not None:
+        if percentile_rank >= 80:
+            volatility_level = "high"
+        elif percentile_rank <= 20:
+            volatility_level = "low"
         
-        # Volatility trend analysis
-        volatility_trend = "stable"
-        if len(stddev_series) >= 5:
-            recent_slope = np.polyfit(range(5), stddev_series.tail(5).values, 1)[0]
-            if recent_slope > 0.1:
-                volatility_trend = "increasing"
-            elif recent_slope < -0.1:
-                volatility_trend = "decreasing"
+    # Volatility trend analysis
+    volatility_trend = "stable"
+    if len(stddev_series) >= 5:
+        recent_slope = np.polyfit(range(5), stddev_series.tail(5).values, 1)[0]
+        if recent_slope > 0.1:
+            volatility_trend = "increasing"
+        elif recent_slope < -0.1:
+            volatility_trend = "decreasing"
         
-        result = {
-            "stddev": stddev_series,
-            "latest_value": latest_stddev,
-            "volatility_level": volatility_level,
-            "volatility_trend": volatility_trend,
-            "percentile_rank": percentile_rank,
-            "period": period
-        }
+    result = {
+        "stddev": stddev_series,
+        "latest_value": latest_stddev,
+        "volatility_level": volatility_level,
+        "volatility_trend": volatility_trend,
+        "percentile_rank": percentile_rank,
+        "period": period
+    }
         
-        return standardize_output(result, "calculate_stddev")
+    return standardize_output(result, "calculate_stddev")
         
-    except Exception as e:
-        return {"success": False, "error": f"Standard Deviation calculation failed: {str(e)}"}
-
-
 def calculate_variance(data: Union[pd.Series, Dict[str, Any]], period: int = 20) -> Dict[str, Any]:
     """Calculate Variance using TA-Lib library.
     
@@ -896,56 +861,51 @@ def calculate_variance(data: Union[pd.Series, Dict[str, Any]], period: int = 20)
         - Foundation for many volatility-based indicators
         - Can be annualized for portfolio risk calculations
     """
-    try:
-        prices = validate_price_data(data)
+    prices = validate_price_data(data)
         
-        # Use talib-binary
-        variance_values = talib.VAR(
-            prices.values.astype(np.float64), 
-            timeperiod=period
-        )
-        variance_series = pd.Series(variance_values, index=prices.index).dropna()
+    # Use talib-binary
+    variance_values = talib.VAR(
+        prices.values.astype(np.float64), 
+        timeperiod=period
+    )
+    variance_series = pd.Series(variance_values, index=prices.index).dropna()
         
-        latest_variance = float(variance_series.iloc[-1]) if len(variance_series) > 0 else None
+    latest_variance = float(variance_series.iloc[-1]) if len(variance_series) > 0 else None
         
-        # Calculate percentile rank
-        percentile_rank = None
-        if len(variance_series) >= 20:
-            percentile_rank = (variance_series <= latest_variance).mean() * 100
+    # Calculate percentile rank
+    percentile_rank = None
+    if len(variance_series) >= 20:
+        percentile_rank = (variance_series <= latest_variance).mean() * 100
         
-        # Risk level classification
-        volatility_level = "normal"
-        risk_level = "moderate"
+    # Risk level classification
+    volatility_level = "normal"
+    risk_level = "moderate"
         
-        if percentile_rank is not None:
-            if percentile_rank >= 95:
-                volatility_level = "high"
-                risk_level = "extreme"
-            elif percentile_rank >= 80:
-                volatility_level = "high"
-                risk_level = "high"
-            elif percentile_rank <= 5:
-                volatility_level = "low"
-                risk_level = "low"
-            elif percentile_rank <= 20:
-                volatility_level = "low"
-                risk_level = "low"
+    if percentile_rank is not None:
+        if percentile_rank >= 95:
+            volatility_level = "high"
+            risk_level = "extreme"
+        elif percentile_rank >= 80:
+            volatility_level = "high"
+            risk_level = "high"
+        elif percentile_rank <= 5:
+            volatility_level = "low"
+            risk_level = "low"
+        elif percentile_rank <= 20:
+            volatility_level = "low"
+            risk_level = "low"
         
-        result = {
-            "variance": variance_series,
-            "latest_value": latest_variance,
-            "volatility_level": volatility_level,
-            "risk_level": risk_level,
-            "percentile_rank": percentile_rank,
-            "period": period
-        }
+    result = {
+        "variance": variance_series,
+        "latest_value": latest_variance,
+        "volatility_level": volatility_level,
+        "risk_level": risk_level,
+        "percentile_rank": percentile_rank,
+        "period": period
+    }
         
-        return standardize_output(result, "calculate_variance")
+    return standardize_output(result, "calculate_variance")
         
-    except Exception as e:
-        return {"success": False, "error": f"Variance calculation failed: {str(e)}"}
-
-
 # =============================================================================
 # REGISTRY OF ALL VOLATILITY INDICATORS
 # =============================================================================

@@ -104,80 +104,75 @@ def calculate_ad(data: Union[pd.DataFrame, Dict[str, Any]]) -> Dict[str, Any]:
         - Volume weighted, so gives more importance to high-volume periods
         - Useful for confirming breakouts and identifying false moves
     """
-    try:
-        if isinstance(data, dict):
-            df = pd.DataFrame(data)
-        else:
-            df = data.copy()
+    if isinstance(data, dict):
+        df = pd.DataFrame(data)
+    else:
+        df = data.copy()
         
-        # Ensure we have required columns
-        required_cols = ['high', 'low', 'close', 'volume']
-        if not all(col in df.columns or col.title() in df.columns for col in required_cols):
-            raise ValueError("OHLCV data required for A/D Line calculation")
+    # Ensure we have required columns
+    required_cols = ['high', 'low', 'close', 'volume']
+    if not all(col in df.columns or col.title() in df.columns for col in required_cols):
+        raise ValueError("OHLCV data required for A/D Line calculation")
         
-        # Standardize column names
-        high_col = 'high' if 'high' in df.columns else 'High'
-        low_col = 'low' if 'low' in df.columns else 'Low'
-        close_col = 'close' if 'close' in df.columns else 'Close'
-        volume_col = 'volume' if 'volume' in df.columns else 'Volume'
+    # Standardize column names
+    high_col = 'high' if 'high' in df.columns else 'High'
+    low_col = 'low' if 'low' in df.columns else 'Low'
+    close_col = 'close' if 'close' in df.columns else 'Close'
+    volume_col = 'volume' if 'volume' in df.columns else 'Volume'
         
-        # Use talib-binary
-        ad_values = talib.AD(
-            df[high_col].values.astype(np.float64),
-            df[low_col].values.astype(np.float64),
-            df[close_col].values.astype(np.float64),
-            df[volume_col].values.astype(np.float64)
-        )
-        ad_series = pd.Series(ad_values, index=df.index).dropna()
+    # Use talib-binary
+    ad_values = talib.AD(
+        df[high_col].values.astype(np.float64),
+        df[low_col].values.astype(np.float64),
+        df[close_col].values.astype(np.float64),
+        df[volume_col].values.astype(np.float64)
+    )
+    ad_series = pd.Series(ad_values, index=df.index).dropna()
         
-        latest_ad = float(ad_series.iloc[-1]) if len(ad_series) > 0 else None
+    latest_ad = float(ad_series.iloc[-1]) if len(ad_series) > 0 else None
         
-        # Trend direction analysis
-        trend_direction = "neutral"
-        if len(ad_series) >= 5:
-            recent_slope = np.polyfit(range(5), ad_series.tail(5).values, 1)[0]
-            if recent_slope > 0:
-                trend_direction = "accumulation"
-            elif recent_slope < 0:
-                trend_direction = "distribution"
+    # Trend direction analysis
+    trend_direction = "neutral"
+    if len(ad_series) >= 5:
+        recent_slope = np.polyfit(range(5), ad_series.tail(5).values, 1)[0]
+        if recent_slope > 0:
+            trend_direction = "accumulation"
+        elif recent_slope < 0:
+            trend_direction = "distribution"
         
-        # Divergence analysis (simplified)
-        divergence_signal = "none"
-        if len(ad_series) >= 10:
-            price_trend = np.polyfit(range(10), df[close_col].tail(10).values, 1)[0]
-            ad_trend = np.polyfit(range(10), ad_series.tail(10).values, 1)[0]
+    # Divergence analysis (simplified)
+    divergence_signal = "none"
+    if len(ad_series) >= 10:
+        price_trend = np.polyfit(range(10), df[close_col].tail(10).values, 1)[0]
+        ad_trend = np.polyfit(range(10), ad_series.tail(10).values, 1)[0]
             
-            if price_trend > 0 and ad_trend < 0:
-                divergence_signal = "bearish"
-            elif price_trend < 0 and ad_trend > 0:
-                divergence_signal = "bullish"
+        if price_trend > 0 and ad_trend < 0:
+            divergence_signal = "bearish"
+        elif price_trend < 0 and ad_trend > 0:
+            divergence_signal = "bullish"
         
-        # Volume strength assessment
-        volume_strength = "moderate"
-        if len(df) >= 5:
-            recent_volume = df[volume_col].tail(5).mean()
-            avg_volume = df[volume_col].mean()
-            volume_ratio = recent_volume / avg_volume if avg_volume > 0 else 1.0
+    # Volume strength assessment
+    volume_strength = "moderate"
+    if len(df) >= 5:
+        recent_volume = df[volume_col].tail(5).mean()
+        avg_volume = df[volume_col].mean()
+        volume_ratio = recent_volume / avg_volume if avg_volume > 0 else 1.0
             
-            if volume_ratio > 1.5:
-                volume_strength = "strong"
-            elif volume_ratio < 0.7:
-                volume_strength = "weak"
+        if volume_ratio > 1.5:
+            volume_strength = "strong"
+        elif volume_ratio < 0.7:
+            volume_strength = "weak"
         
-        result = {
-            "ad_line": ad_series,
-            "latest_value": latest_ad,
-            "trend_direction": trend_direction,
-            "divergence_signal": divergence_signal,
-            "volume_strength": volume_strength
-        }
+    result = {
+        "ad_line": ad_series,
+        "latest_value": latest_ad,
+        "trend_direction": trend_direction,
+        "divergence_signal": divergence_signal,
+        "volume_strength": volume_strength
+    }
         
-        return standardize_output(result, "calculate_ad")
+    return standardize_output(result, "calculate_ad")
         
-    except Exception as e:
-        return {"success": False, "error": f"A/D Line calculation failed: {str(e)}"}
-
-
 def calculate_adosc(data: Union[pd.DataFrame, Dict[str, Any]], 
                     fast_period: int = 3, slow_period: int = 10) -> Dict[str, Any]:
     """Calculate Accumulation/Distribution Oscillator using TA-Lib library.
@@ -233,80 +228,75 @@ def calculate_adosc(data: Union[pd.DataFrame, Dict[str, Any]],
         - More responsive than the A/D Line itself
         - Useful for timing entry/exit points
     """
-    try:
-        if isinstance(data, dict):
-            df = pd.DataFrame(data)
-        else:
-            df = data.copy()
+    if isinstance(data, dict):
+        df = pd.DataFrame(data)
+    else:
+        df = data.copy()
         
-        # Ensure we have required columns
-        required_cols = ['high', 'low', 'close', 'volume']
-        if not all(col in df.columns or col.title() in df.columns for col in required_cols):
-            raise ValueError("OHLCV data required for A/D Oscillator calculation")
+    # Ensure we have required columns
+    required_cols = ['high', 'low', 'close', 'volume']
+    if not all(col in df.columns or col.title() in df.columns for col in required_cols):
+        raise ValueError("OHLCV data required for A/D Oscillator calculation")
         
-        # Standardize column names
-        high_col = 'high' if 'high' in df.columns else 'High'
-        low_col = 'low' if 'low' in df.columns else 'Low'
-        close_col = 'close' if 'close' in df.columns else 'Close'
-        volume_col = 'volume' if 'volume' in df.columns else 'Volume'
+    # Standardize column names
+    high_col = 'high' if 'high' in df.columns else 'High'
+    low_col = 'low' if 'low' in df.columns else 'Low'
+    close_col = 'close' if 'close' in df.columns else 'Close'
+    volume_col = 'volume' if 'volume' in df.columns else 'Volume'
         
-        # Use talib-binary
-        adosc_values = talib.ADOSC(
-            df[high_col].values.astype(np.float64),
-            df[low_col].values.astype(np.float64),
-            df[close_col].values.astype(np.float64),
-            df[volume_col].values.astype(np.float64),
-            fastperiod=fast_period,
-            slowperiod=slow_period
-        )
-        adosc_series = pd.Series(adosc_values, index=df.index).dropna()
+    # Use talib-binary
+    adosc_values = talib.ADOSC(
+        df[high_col].values.astype(np.float64),
+        df[low_col].values.astype(np.float64),
+        df[close_col].values.astype(np.float64),
+        df[volume_col].values.astype(np.float64),
+        fastperiod=fast_period,
+        slowperiod=slow_period
+    )
+    adosc_series = pd.Series(adosc_values, index=df.index).dropna()
         
-        latest_adosc = float(adosc_series.iloc[-1]) if len(adosc_series) > 0 else None
+    latest_adosc = float(adosc_series.iloc[-1]) if len(adosc_series) > 0 else None
         
-        # Signal generation
-        signal = "neutral"
-        momentum_direction = "stable"
-        zero_cross_signal = "none"
+    # Signal generation
+    signal = "neutral"
+    momentum_direction = "stable"
+    zero_cross_signal = "none"
         
-        if latest_adosc is not None:
-            # Basic signal
-            if latest_adosc > 0:
-                signal = "bullish"
-            elif latest_adosc < 0:
-                signal = "bearish"
+    if latest_adosc is not None:
+        # Basic signal
+        if latest_adosc > 0:
+            signal = "bullish"
+        elif latest_adosc < 0:
+            signal = "bearish"
             
-            # Momentum direction
-            if len(adosc_series) >= 3:
-                recent_values = adosc_series.tail(3)
-                if recent_values.iloc[-1] > recent_values.iloc[-2] > recent_values.iloc[-3]:
-                    momentum_direction = "strengthening"
-                elif recent_values.iloc[-1] < recent_values.iloc[-2] < recent_values.iloc[-3]:
-                    momentum_direction = "weakening"
+        # Momentum direction
+        if len(adosc_series) >= 3:
+            recent_values = adosc_series.tail(3)
+            if recent_values.iloc[-1] > recent_values.iloc[-2] > recent_values.iloc[-3]:
+                momentum_direction = "strengthening"
+            elif recent_values.iloc[-1] < recent_values.iloc[-2] < recent_values.iloc[-3]:
+                momentum_direction = "weakening"
             
-            # Zero line crossover
-            if len(adosc_series) >= 2:
-                prev_value = adosc_series.iloc[-2]
-                if prev_value <= 0 and latest_adosc > 0:
-                    zero_cross_signal = "bullish_cross"
-                elif prev_value >= 0 and latest_adosc < 0:
-                    zero_cross_signal = "bearish_cross"
+        # Zero line crossover
+        if len(adosc_series) >= 2:
+            prev_value = adosc_series.iloc[-2]
+            if prev_value <= 0 and latest_adosc > 0:
+                zero_cross_signal = "bullish_cross"
+            elif prev_value >= 0 and latest_adosc < 0:
+                zero_cross_signal = "bearish_cross"
         
-        result = {
-            "adosc": adosc_series,
-            "latest_value": latest_adosc,
-            "signal": signal,
-            "momentum_direction": momentum_direction,
-            "zero_cross_signal": zero_cross_signal,
-            "fast_period": fast_period,
-            "slow_period": slow_period
-        }
+    result = {
+        "adosc": adosc_series,
+        "latest_value": latest_adosc,
+        "signal": signal,
+        "momentum_direction": momentum_direction,
+        "zero_cross_signal": zero_cross_signal,
+        "fast_period": fast_period,
+        "slow_period": slow_period
+    }
         
-        return standardize_output(result, "calculate_adosc")
+    return standardize_output(result, "calculate_adosc")
         
-    except Exception as e:
-        return {"success": False, "error": f"A/D Oscillator calculation failed: {str(e)}"}
-
-
 # =============================================================================
 # MONEY FLOW INDICATORS
 # =============================================================================
@@ -361,67 +351,62 @@ def calculate_mfi(data: Union[pd.DataFrame, Dict[str, Any]], period: int = 14) -
         - More reliable than RSI in volatile markets due to volume weighting
         - Useful for confirming price movements with volume analysis
     """
-    try:
-        if isinstance(data, dict):
-            df = pd.DataFrame(data)
-        else:
-            df = data.copy()
+    if isinstance(data, dict):
+        df = pd.DataFrame(data)
+    else:
+        df = data.copy()
         
-        # Ensure we have required columns
-        required_cols = ['high', 'low', 'close', 'volume']
-        if not all(col in df.columns or col.title() in df.columns for col in required_cols):
-            raise ValueError("OHLCV data required for MFI calculation")
+    # Ensure we have required columns
+    required_cols = ['high', 'low', 'close', 'volume']
+    if not all(col in df.columns or col.title() in df.columns for col in required_cols):
+        raise ValueError("OHLCV data required for MFI calculation")
         
-        # Standardize column names
-        high_col = 'high' if 'high' in df.columns else 'High'
-        low_col = 'low' if 'low' in df.columns else 'Low'
-        close_col = 'close' if 'close' in df.columns else 'Close'
-        volume_col = 'volume' if 'volume' in df.columns else 'Volume'
+    # Standardize column names
+    high_col = 'high' if 'high' in df.columns else 'High'
+    low_col = 'low' if 'low' in df.columns else 'Low'
+    close_col = 'close' if 'close' in df.columns else 'Close'
+    volume_col = 'volume' if 'volume' in df.columns else 'Volume'
         
-        # Use talib-binary
-        mfi_values = talib.MFI(
-            df[high_col].values.astype(np.float64),
-            df[low_col].values.astype(np.float64),
-            df[close_col].values.astype(np.float64),
-            df[volume_col].values.astype(np.float64),
-            timeperiod=period
-        )
-        mfi_series = pd.Series(mfi_values, index=df.index).dropna()
+    # Use talib-binary
+    mfi_values = talib.MFI(
+        df[high_col].values.astype(np.float64),
+        df[low_col].values.astype(np.float64),
+        df[close_col].values.astype(np.float64),
+        df[volume_col].values.astype(np.float64),
+        timeperiod=period
+    )
+    mfi_series = pd.Series(mfi_values, index=df.index).dropna()
         
-        latest_mfi = float(mfi_series.iloc[-1]) if len(mfi_series) > 0 else None
+    latest_mfi = float(mfi_series.iloc[-1]) if len(mfi_series) > 0 else None
         
-        # Generate signals
-        signal = "neutral"
-        money_flow_trend = "balanced"
+    # Generate signals
+    signal = "neutral"
+    money_flow_trend = "balanced"
         
-        if latest_mfi is not None:
-            if latest_mfi > 80:
-                signal = "overbought"
-                money_flow_trend = "positive"
-            elif latest_mfi < 20:
-                signal = "oversold"
-                money_flow_trend = "negative"
-            elif latest_mfi > 50:
-                money_flow_trend = "positive"
-            elif latest_mfi < 50:
-                money_flow_trend = "negative"
+    if latest_mfi is not None:
+        if latest_mfi > 80:
+            signal = "overbought"
+            money_flow_trend = "positive"
+        elif latest_mfi < 20:
+            signal = "oversold"
+            money_flow_trend = "negative"
+        elif latest_mfi > 50:
+            money_flow_trend = "positive"
+        elif latest_mfi < 50:
+            money_flow_trend = "negative"
         
-        result = {
-            "mfi": mfi_series,
-            "latest_value": latest_mfi,
-            "signal": signal,
-            "money_flow_trend": money_flow_trend,
-            "period": period,
-            "overbought_level": 80,
-            "oversold_level": 20
-        }
+    result = {
+        "mfi": mfi_series,
+        "latest_value": latest_mfi,
+        "signal": signal,
+        "money_flow_trend": money_flow_trend,
+        "period": period,
+        "overbought_level": 80,
+        "oversold_level": 20
+    }
         
-        return standardize_output(result, "calculate_mfi")
+    return standardize_output(result, "calculate_mfi")
         
-    except Exception as e:
-        return {"success": False, "error": f"MFI calculation failed: {str(e)}"}
-
-
 def calculate_obv(data: Union[pd.DataFrame, Dict[str, Any]]) -> Dict[str, Any]:
     """Calculate On Balance Volume using TA-Lib library.
     
@@ -471,83 +456,78 @@ def calculate_obv(data: Union[pd.DataFrame, Dict[str, Any]]) -> Dict[str, Any]:
         - Best used in conjunction with price analysis for confirmation
         - Useful for identifying accumulation and distribution phases
     """
-    try:
-        if isinstance(data, dict):
-            df = pd.DataFrame(data)
+    if isinstance(data, dict):
+        df = pd.DataFrame(data)
+    else:
+        df = data.copy()
+        
+    # Ensure we have required columns
+    required_cols = ['close', 'volume']
+    if not all(col in df.columns or col.title() in df.columns for col in required_cols):
+        raise ValueError("Close and Volume data required for OBV calculation")
+        
+    # Standardize column names
+    close_col = 'close' if 'close' in df.columns else 'Close'
+    volume_col = 'volume' if 'volume' in df.columns else 'Volume'
+        
+    # Use talib-binary
+    obv_values = talib.OBV(
+        df[close_col].values.astype(np.float64),
+        df[volume_col].values.astype(np.float64)
+    )
+    obv_series = pd.Series(obv_values, index=df.index).dropna()
+        
+    latest_obv = float(obv_series.iloc[-1]) if len(obv_series) > 0 else None
+        
+    # Volume trend analysis
+    volume_trend = "neutral"
+    trend_strength = "moderate"
+    if len(obv_series) >= 5:
+        recent_slope = np.polyfit(range(5), obv_series.tail(5).values, 1)[0]
+        slope_magnitude = abs(recent_slope)
+            
+        if recent_slope > 0:
+            volume_trend = "bullish"
+        elif recent_slope < 0:
+            volume_trend = "bearish"
+            
+        # Trend strength based on slope magnitude
+        if slope_magnitude > obv_series.std() * 0.5:
+            trend_strength = "strong"
+        elif slope_magnitude < obv_series.std() * 0.1:
+            trend_strength = "weak"
+        
+    # Divergence analysis
+    divergence_signal = "none"
+    confirmation_status = "neutral"
+        
+    if len(obv_series) >= 10:
+        price_trend = np.polyfit(range(10), df[close_col].tail(10).values, 1)[0]
+        obv_trend = np.polyfit(range(10), obv_series.tail(10).values, 1)[0]
+            
+        # Check for divergence
+        if price_trend > 0 and obv_trend < 0:
+            divergence_signal = "bearish"
+            confirmation_status = "conflicting"
+        elif price_trend < 0 and obv_trend > 0:
+            divergence_signal = "bullish"
+            confirmation_status = "conflicting"
+        elif (price_trend > 0 and obv_trend > 0) or (price_trend < 0 and obv_trend < 0):
+            confirmation_status = "confirmed"
         else:
-            df = data.copy()
+            confirmation_status = "unconfirmed"
         
-        # Ensure we have required columns
-        required_cols = ['close', 'volume']
-        if not all(col in df.columns or col.title() in df.columns for col in required_cols):
-            raise ValueError("Close and Volume data required for OBV calculation")
+    result = {
+        "obv": obv_series,
+        "latest_value": latest_obv,
+        "volume_trend": volume_trend,
+        "trend_strength": trend_strength,
+        "divergence_signal": divergence_signal,
+        "confirmation_status": confirmation_status
+    }
         
-        # Standardize column names
-        close_col = 'close' if 'close' in df.columns else 'Close'
-        volume_col = 'volume' if 'volume' in df.columns else 'Volume'
+    return standardize_output(result, "calculate_obv")
         
-        # Use talib-binary
-        obv_values = talib.OBV(
-            df[close_col].values.astype(np.float64),
-            df[volume_col].values.astype(np.float64)
-        )
-        obv_series = pd.Series(obv_values, index=df.index).dropna()
-        
-        latest_obv = float(obv_series.iloc[-1]) if len(obv_series) > 0 else None
-        
-        # Volume trend analysis
-        volume_trend = "neutral"
-        trend_strength = "moderate"
-        if len(obv_series) >= 5:
-            recent_slope = np.polyfit(range(5), obv_series.tail(5).values, 1)[0]
-            slope_magnitude = abs(recent_slope)
-            
-            if recent_slope > 0:
-                volume_trend = "bullish"
-            elif recent_slope < 0:
-                volume_trend = "bearish"
-            
-            # Trend strength based on slope magnitude
-            if slope_magnitude > obv_series.std() * 0.5:
-                trend_strength = "strong"
-            elif slope_magnitude < obv_series.std() * 0.1:
-                trend_strength = "weak"
-        
-        # Divergence analysis
-        divergence_signal = "none"
-        confirmation_status = "neutral"
-        
-        if len(obv_series) >= 10:
-            price_trend = np.polyfit(range(10), df[close_col].tail(10).values, 1)[0]
-            obv_trend = np.polyfit(range(10), obv_series.tail(10).values, 1)[0]
-            
-            # Check for divergence
-            if price_trend > 0 and obv_trend < 0:
-                divergence_signal = "bearish"
-                confirmation_status = "conflicting"
-            elif price_trend < 0 and obv_trend > 0:
-                divergence_signal = "bullish"
-                confirmation_status = "conflicting"
-            elif (price_trend > 0 and obv_trend > 0) or (price_trend < 0 and obv_trend < 0):
-                confirmation_status = "confirmed"
-            else:
-                confirmation_status = "unconfirmed"
-        
-        result = {
-            "obv": obv_series,
-            "latest_value": latest_obv,
-            "volume_trend": volume_trend,
-            "trend_strength": trend_strength,
-            "divergence_signal": divergence_signal,
-            "confirmation_status": confirmation_status
-        }
-        
-        return standardize_output(result, "calculate_obv")
-        
-    except Exception as e:
-        return {"success": False, "error": f"OBV calculation failed: {str(e)}"}
-
-
 # =============================================================================
 # CUSTOM VOLUME ANALYSIS FUNCTIONS
 # =============================================================================
@@ -601,66 +581,61 @@ def calculate_cmf(data: Union[pd.DataFrame, Dict[str, Any]], period: int = 20) -
         - CMF near +1/-1: Strong buying/selling pressure
         - Used to confirm trends and identify potential reversals
     """
-    try:
-        if isinstance(data, dict):
-            df = pd.DataFrame(data)
+    if isinstance(data, dict):
+        df = pd.DataFrame(data)
+    else:
+        df = data.copy()
+        
+    # Ensure we have required columns
+    required_cols = ['high', 'low', 'close', 'volume']
+    if not all(col in df.columns or col.title() in df.columns for col in required_cols):
+        raise ValueError("OHLCV data required for CMF calculation")
+        
+    # Standardize column names
+    high_col = 'high' if 'high' in df.columns else 'High'
+    low_col = 'low' if 'low' in df.columns else 'Low'
+    close_col = 'close' if 'close' in df.columns else 'Close'
+    volume_col = 'volume' if 'volume' in df.columns else 'Volume'
+        
+    # Calculate Money Flow Multiplier
+    mf_multiplier = ((df[close_col] - df[low_col]) - (df[high_col] - df[close_col])) / (df[high_col] - df[low_col])
+    mf_multiplier = mf_multiplier.fillna(0)  # Handle division by zero
+        
+    # Calculate Money Flow Volume
+    mf_volume = mf_multiplier * df[volume_col]
+        
+    # Calculate CMF
+    cmf_values = mf_volume.rolling(window=period).sum() / df[volume_col].rolling(window=period).sum()
+    cmf_series = cmf_values.dropna()
+        
+    latest_cmf = float(cmf_series.iloc[-1]) if len(cmf_series) > 0 else None
+        
+    # Generate signals
+    signal = "neutral"
+    pressure_strength = "moderate"
+        
+    if latest_cmf is not None:
+        if latest_cmf > 0.2:
+            signal = "buying_pressure"
+            if latest_cmf > 0.5:
+                pressure_strength = "strong"
+        elif latest_cmf < -0.2:
+            signal = "selling_pressure"
+            if latest_cmf < -0.5:
+                pressure_strength = "strong"
         else:
-            df = data.copy()
+            pressure_strength = "weak"
         
-        # Ensure we have required columns
-        required_cols = ['high', 'low', 'close', 'volume']
-        if not all(col in df.columns or col.title() in df.columns for col in required_cols):
-            raise ValueError("OHLCV data required for CMF calculation")
+    result = {
+        "cmf": cmf_series,
+        "latest_value": latest_cmf,
+        "signal": signal,
+        "pressure_strength": pressure_strength,
+        "period": period
+    }
         
-        # Standardize column names
-        high_col = 'high' if 'high' in df.columns else 'High'
-        low_col = 'low' if 'low' in df.columns else 'Low'
-        close_col = 'close' if 'close' in df.columns else 'Close'
-        volume_col = 'volume' if 'volume' in df.columns else 'Volume'
+    return standardize_output(result, "calculate_cmf")
         
-        # Calculate Money Flow Multiplier
-        mf_multiplier = ((df[close_col] - df[low_col]) - (df[high_col] - df[close_col])) / (df[high_col] - df[low_col])
-        mf_multiplier = mf_multiplier.fillna(0)  # Handle division by zero
-        
-        # Calculate Money Flow Volume
-        mf_volume = mf_multiplier * df[volume_col]
-        
-        # Calculate CMF
-        cmf_values = mf_volume.rolling(window=period).sum() / df[volume_col].rolling(window=period).sum()
-        cmf_series = cmf_values.dropna()
-        
-        latest_cmf = float(cmf_series.iloc[-1]) if len(cmf_series) > 0 else None
-        
-        # Generate signals
-        signal = "neutral"
-        pressure_strength = "moderate"
-        
-        if latest_cmf is not None:
-            if latest_cmf > 0.2:
-                signal = "buying_pressure"
-                if latest_cmf > 0.5:
-                    pressure_strength = "strong"
-            elif latest_cmf < -0.2:
-                signal = "selling_pressure"
-                if latest_cmf < -0.5:
-                    pressure_strength = "strong"
-            else:
-                pressure_strength = "weak"
-        
-        result = {
-            "cmf": cmf_series,
-            "latest_value": latest_cmf,
-            "signal": signal,
-            "pressure_strength": pressure_strength,
-            "period": period
-        }
-        
-        return standardize_output(result, "calculate_cmf")
-        
-    except Exception as e:
-        return {"success": False, "error": f"CMF calculation failed: {str(e)}"}
-
-
 def calculate_vpt(data: Union[pd.DataFrame, Dict[str, Any]]) -> Dict[str, Any]:
     """Calculate Volume Price Trend.
     
@@ -705,72 +680,67 @@ def calculate_vpt(data: Union[pd.DataFrame, Dict[str, Any]]) -> Dict[str, Any]:
         - Useful for confirming breakouts and trend continuation
         - Better than OBV for capturing proportional price movements
     """
-    try:
-        if isinstance(data, dict):
-            df = pd.DataFrame(data)
-        else:
-            df = data.copy()
+    if isinstance(data, dict):
+        df = pd.DataFrame(data)
+    else:
+        df = data.copy()
         
-        # Ensure we have required columns
-        required_cols = ['close', 'volume']
-        if not all(col in df.columns or col.title() in df.columns for col in required_cols):
-            raise ValueError("Close and Volume data required for VPT calculation")
+    # Ensure we have required columns
+    required_cols = ['close', 'volume']
+    if not all(col in df.columns or col.title() in df.columns for col in required_cols):
+        raise ValueError("Close and Volume data required for VPT calculation")
         
-        # Standardize column names
-        close_col = 'close' if 'close' in df.columns else 'Close'
-        volume_col = 'volume' if 'volume' in df.columns else 'Volume'
+    # Standardize column names
+    close_col = 'close' if 'close' in df.columns else 'Close'
+    volume_col = 'volume' if 'volume' in df.columns else 'Volume'
         
-        # Calculate VPT
-        price_change_pct = df[close_col].pct_change()
-        vpt_changes = df[volume_col] * price_change_pct
-        vpt_series = vpt_changes.cumsum().dropna()
+    # Calculate VPT
+    price_change_pct = df[close_col].pct_change()
+    vpt_changes = df[volume_col] * price_change_pct
+    vpt_series = vpt_changes.cumsum().dropna()
         
-        latest_vpt = float(vpt_series.iloc[-1]) if len(vpt_series) > 0 else None
+    latest_vpt = float(vpt_series.iloc[-1]) if len(vpt_series) > 0 else None
         
-        # Trend direction analysis
-        trend_direction = "neutral"
-        momentum_strength = "moderate"
+    # Trend direction analysis
+    trend_direction = "neutral"
+    momentum_strength = "moderate"
         
-        if len(vpt_series) >= 5:
-            recent_slope = np.polyfit(range(5), vpt_series.tail(5).values, 1)[0]
-            slope_magnitude = abs(recent_slope)
+    if len(vpt_series) >= 5:
+        recent_slope = np.polyfit(range(5), vpt_series.tail(5).values, 1)[0]
+        slope_magnitude = abs(recent_slope)
             
-            if recent_slope > 0:
-                trend_direction = "bullish"
-            elif recent_slope < 0:
-                trend_direction = "bearish"
+        if recent_slope > 0:
+            trend_direction = "bullish"
+        elif recent_slope < 0:
+            trend_direction = "bearish"
             
-            # Momentum strength based on slope magnitude
-            if slope_magnitude > vpt_series.std() * 0.5:
-                momentum_strength = "strong"
-            elif slope_magnitude < vpt_series.std() * 0.1:
-                momentum_strength = "weak"
+        # Momentum strength based on slope magnitude
+        if slope_magnitude > vpt_series.std() * 0.5:
+            momentum_strength = "strong"
+        elif slope_magnitude < vpt_series.std() * 0.1:
+            momentum_strength = "weak"
         
-        # Divergence analysis
-        divergence_signal = "none"
-        if len(vpt_series) >= 10:
-            price_trend = np.polyfit(range(10), df[close_col].tail(10).values, 1)[0]
-            vpt_trend = np.polyfit(range(10), vpt_series.tail(10).values, 1)[0]
+    # Divergence analysis
+    divergence_signal = "none"
+    if len(vpt_series) >= 10:
+        price_trend = np.polyfit(range(10), df[close_col].tail(10).values, 1)[0]
+        vpt_trend = np.polyfit(range(10), vpt_series.tail(10).values, 1)[0]
             
-            if price_trend > 0 and vpt_trend < 0:
-                divergence_signal = "bearish"
-            elif price_trend < 0 and vpt_trend > 0:
-                divergence_signal = "bullish"
+        if price_trend > 0 and vpt_trend < 0:
+            divergence_signal = "bearish"
+        elif price_trend < 0 and vpt_trend > 0:
+            divergence_signal = "bullish"
         
-        result = {
-            "vpt": vpt_series,
-            "latest_value": latest_vpt,
-            "trend_direction": trend_direction,
-            "momentum_strength": momentum_strength,
-            "divergence_signal": divergence_signal
-        }
+    result = {
+        "vpt": vpt_series,
+        "latest_value": latest_vpt,
+        "trend_direction": trend_direction,
+        "momentum_strength": momentum_strength,
+        "divergence_signal": divergence_signal
+    }
         
-        return standardize_output(result, "calculate_vpt")
+    return standardize_output(result, "calculate_vpt")
         
-    except Exception as e:
-        return {"success": False, "error": f"VPT calculation failed: {str(e)}"}
-
-
 def calculate_volume_sma(data: Union[pd.DataFrame, Dict[str, Any]], period: int = 20) -> Dict[str, Any]:
     """Calculate Volume Simple Moving Average.
     
@@ -821,55 +791,50 @@ def calculate_volume_sma(data: Union[pd.DataFrame, Dict[str, Any]], period: int 
         - Volume spikes can confirm breakouts or signal exhaustion
         - Used for filtering signals and confirming price movements
     """
-    try:
-        if isinstance(data, dict):
-            df = pd.DataFrame(data)
-        else:
-            df = data.copy()
+    if isinstance(data, dict):
+        df = pd.DataFrame(data)
+    else:
+        df = data.copy()
         
-        # Ensure we have required column
-        volume_col = 'volume' if 'volume' in df.columns else 'Volume'
-        if volume_col not in df.columns:
-            raise ValueError("Volume data required for Volume SMA calculation")
+    # Ensure we have required column
+    volume_col = 'volume' if 'volume' in df.columns else 'Volume'
+    if volume_col not in df.columns:
+        raise ValueError("Volume data required for Volume SMA calculation")
         
-        # Calculate Volume SMA
-        volume_sma = df[volume_col].rolling(window=period).mean()
-        volume_sma_series = volume_sma.dropna()
+    # Calculate Volume SMA
+    volume_sma = df[volume_col].rolling(window=period).mean()
+    volume_sma_series = volume_sma.dropna()
         
-        latest_volume_sma = float(volume_sma_series.iloc[-1]) if len(volume_sma_series) > 0 else None
-        current_volume = float(df[volume_col].iloc[-1]) if len(df) > 0 else None
+    latest_volume_sma = float(volume_sma_series.iloc[-1]) if len(volume_sma_series) > 0 else None
+    current_volume = float(df[volume_col].iloc[-1]) if len(df) > 0 else None
         
-        # Calculate volume ratio and signals
-        volume_ratio = None
-        volume_level = "normal"
-        activity_signal = "normal"
+    # Calculate volume ratio and signals
+    volume_ratio = None
+    volume_level = "normal"
+    activity_signal = "normal"
         
-        if latest_volume_sma and current_volume:
-            volume_ratio = current_volume / latest_volume_sma
+    if latest_volume_sma and current_volume:
+        volume_ratio = current_volume / latest_volume_sma
             
-            if volume_ratio > 1.5:
-                volume_level = "high"
-                activity_signal = "increased"
-            elif volume_ratio < 0.7:
-                volume_level = "low"
-                activity_signal = "decreased"
+        if volume_ratio > 1.5:
+            volume_level = "high"
+            activity_signal = "increased"
+        elif volume_ratio < 0.7:
+            volume_level = "low"
+            activity_signal = "decreased"
         
-        result = {
-            "volume_sma": volume_sma_series,
-            "latest_value": latest_volume_sma,
-            "current_volume": current_volume,
-            "volume_ratio": volume_ratio,
-            "volume_level": volume_level,
-            "activity_signal": activity_signal,
-            "period": period
-        }
+    result = {
+        "volume_sma": volume_sma_series,
+        "latest_value": latest_volume_sma,
+        "current_volume": current_volume,
+        "volume_ratio": volume_ratio,
+        "volume_level": volume_level,
+        "activity_signal": activity_signal,
+        "period": period
+    }
         
-        return standardize_output(result, "calculate_volume_sma")
+    return standardize_output(result, "calculate_volume_sma")
         
-    except Exception as e:
-        return {"success": False, "error": f"Volume SMA calculation failed: {str(e)}"}
-
-
 # =============================================================================
 # REGISTRY OF ALL VOLUME INDICATORS
 # =============================================================================

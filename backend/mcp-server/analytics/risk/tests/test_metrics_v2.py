@@ -46,32 +46,32 @@ class TestValueAtRisk(unittest.TestCase):
 
     def test_calculate_var(self):
         """Test VaR with correct parameters"""
-        try:
+        
             result = calculate_var(self.returns, confidence_level=0.05, method='historical')
             self.assertIsInstance(result, dict)
             self.assertTrue(result.get('success', False))
             print("✅ VaR calculation passed")
-        except Exception as e:
+        :
             self.fail(f"VaR failed: {e}")
 
     def test_calculate_cvar(self):
         """Test CVaR with correct parameters"""
-        try:
+        
             result = calculate_cvar(self.returns, confidence_level=0.05)
             self.assertIsInstance(result, dict)
             self.assertTrue(result.get('success', False))
             print("✅ CVaR calculation passed")
-        except Exception as e:
+        :
             self.fail(f"CVaR failed: {e}")
 
     def test_calculate_expected_shortfall(self):
         """Test Expected Shortfall"""
-        try:
+        
             result = calculate_expected_shortfall(self.returns, confidence=0.05)
             self.assertIsInstance(result, (int, float))
             self.assertLess(result, 0)  # Should be negative
             print("✅ Expected Shortfall passed")
-        except Exception as e:
+        :
             self.fail(f"Expected Shortfall failed: {e}")
 
 
@@ -84,31 +84,31 @@ class TestDistributionMetrics(unittest.TestCase):
         self.returns = pd.Series(np.random.normal(0.001, 0.02, 100), index=self.dates)
 
     def test_calculate_skewness(self):
-        try:
+        
             result = calculate_skewness(self.returns)
             self.assertIsInstance(result, (int, float))
             self.assertFalse(np.isnan(result))
             print("✅ Skewness passed")
-        except Exception as e:
+        :
             self.fail(f"Skewness failed: {e}")
 
     def test_calculate_kurtosis(self):
-        try:
+        
             result = calculate_kurtosis(self.returns)
             self.assertIsInstance(result, (int, float))
             self.assertFalse(np.isnan(result))
             print("✅ Kurtosis passed")
-        except Exception as e:
+        :
             self.fail(f"Kurtosis failed: {e}")
 
     def test_calculate_percentile(self):
-        try:
+        
             result = calculate_percentile(self.returns, percentile=95)
             self.assertIsInstance(result, (int, float))
             self.assertGreater(result, self.returns.min())
             self.assertLess(result, self.returns.max())
             print("✅ Percentile passed")
-        except Exception as e:
+        :
             self.fail(f"Percentile failed: {e}")
 
 
@@ -122,56 +122,56 @@ class TestCorrelationBeta(unittest.TestCase):
         self.returns2 = pd.Series(np.random.normal(0.001, 0.02, 100), index=self.dates)
 
     def test_calculate_correlation(self):
-        try:
+        
             result = calculate_correlation(self.returns1, self.returns2)
             self.assertIsInstance(result, (int, float))
             self.assertGreaterEqual(result, -1)
             self.assertLessEqual(result, 1)
             print("✅ Correlation passed")
-        except Exception as e:
+        :
             self.fail(f"Correlation failed: {e}")
 
     def test_calculate_correlation_matrix(self):
-        try:
+        
             result = calculate_correlation_matrix([self.returns1, self.returns2])
             self.assertIsInstance(result, pd.DataFrame)
             self.assertEqual(result.shape, (2, 2))
             print("✅ Correlation matrix passed")
-        except Exception as e:
+        :
             self.fail(f"Correlation matrix failed: {e}")
 
     def test_calculate_correlation_analysis(self):
-        try:
+        
             df = pd.DataFrame({'a': self.returns1, 'b': self.returns2})
             result = calculate_correlation_analysis(df)
             self.assertIsInstance(result, dict)
             print("✅ Correlation analysis passed")
-        except Exception as e:
+        :
             self.fail(f"Correlation analysis failed: {e}")
 
     def test_calculate_beta(self):
-        try:
+        
             result = calculate_beta(self.returns1, self.returns2)
             self.assertIsInstance(result, (int, float))
             print("✅ Beta calculation passed")
-        except Exception as e:
+        :
             self.fail(f"Beta failed: {e}")
 
     def test_calculate_beta_analysis(self):
-        try:
+        
             result = calculate_beta_analysis(self.returns1, self.returns2)
             self.assertIsInstance(result, dict)
             self.assertTrue(result.get('success', False))
             print("✅ Beta analysis passed")
-        except Exception as e:
+        :
             self.fail(f"Beta analysis failed: {e}")
 
     def test_calculate_treynor_ratio(self):
-        try:
+        
             result = calculate_treynor_ratio(self.returns1, self.returns2, risk_free_rate=0.02)
             self.assertIsInstance(result, (int, float))
             print("✅ Treynor ratio passed")
-        except Exception as e:
+        :
             self.fail(f"Treynor ratio failed: {e}")
 
 
@@ -185,40 +185,40 @@ class TestVolatilityConcentration(unittest.TestCase):
         self.weights = np.array([0.3, 0.5, 0.2])
 
     def test_calculate_rolling_volatility(self):
-        try:
+        
             result = calculate_rolling_volatility(self.returns, window=30)
             self.assertIsInstance(result, pd.Series)
             self.assertLess(len(result), len(self.returns))
             print("✅ Rolling volatility passed")
-        except Exception as e:
+        :
             self.fail(f"Rolling volatility failed: {e}")
 
     def test_calculate_herfindahl_index(self):
-        try:
+        
             result = calculate_herfindahl_index(self.weights)
             self.assertIsInstance(result, (int, float))
             self.assertGreater(result, 0)
             self.assertLess(result, 1)
             print("✅ Herfindahl index passed")
-        except Exception as e:
+        :
             self.fail(f"Herfindahl index failed: {e}")
 
     def test_calculate_concentration_metrics(self):
-        try:
+        
             result = calculate_concentration_metrics(self.weights)
             self.assertIsInstance(result, dict)
             self.assertIn('herfindahl_index', result)
             print("✅ Concentration metrics passed")
-        except Exception as e:
+        :
             self.fail(f"Concentration metrics failed: {e}")
 
     def test_calculate_diversification_ratio(self):
-        try:
+        
             result = calculate_diversification_ratio(portfolio_vol=0.015, weighted_avg_vol=0.018)
             self.assertIsInstance(result, (int, float))
             self.assertGreater(result, 0)
             print("✅ Diversification ratio passed")
-        except Exception as e:
+        :
             self.fail(f"Diversification ratio failed: {e}")
 
 
@@ -235,16 +235,16 @@ class TestPortfolioVolatility(unittest.TestCase):
         self.volatilities = pd.Series([0.02, 0.015, 0.025], index=['a', 'b', 'c'])
 
     def test_calculate_portfolio_volatility(self):
-        try:
+        
             result = calculate_portfolio_volatility(self.weights, self.cov_matrix, self.volatilities)
             self.assertIsInstance(result, (int, float))
             self.assertGreater(result, 0)
             print("✅ Portfolio volatility passed")
-        except Exception as e:
+        :
             self.fail(f"Portfolio volatility failed: {e}")
 
     def test_calculate_component_var(self):
-        try:
+        
             dates = pd.date_range('2023-01-01', periods=100, freq='D')
             returns_df = pd.DataFrame({
                 'a': np.random.normal(0.001, 0.02, 100),
@@ -254,11 +254,11 @@ class TestPortfolioVolatility(unittest.TestCase):
             result = calculate_component_var(self.weights, returns_df, confidence=0.05)
             self.assertIsInstance(result, (list, np.ndarray))
             print("✅ Component VaR passed")
-        except Exception as e:
+        :
             self.fail(f"Component VaR failed: {e}")
 
     def test_calculate_marginal_var(self):
-        try:
+        
             dates = pd.date_range('2023-01-01', periods=100, freq='D')
             returns_df = pd.DataFrame({
                 'a': np.random.normal(0.001, 0.02, 100),
@@ -268,16 +268,16 @@ class TestPortfolioVolatility(unittest.TestCase):
             result = calculate_marginal_var(self.weights, returns_df, confidence=0.05)
             self.assertIsInstance(result, (list, np.ndarray))
             print("✅ Marginal VaR passed")
-        except Exception as e:
+        :
             self.fail(f"Marginal VaR failed: {e}")
 
     def test_calculate_risk_budget(self):
-        try:
+        
             risk_contribs = np.array([0.005, 0.008, 0.003])
             result = calculate_risk_budget(self.weights, risk_contribs)
             self.assertIsInstance(result, (list, np.ndarray))
             print("✅ Risk budget passed")
-        except Exception as e:
+        :
             self.fail(f"Risk budget failed: {e}")
 
 
@@ -291,19 +291,19 @@ class TestTailAndDownsideRisk(unittest.TestCase):
         self.benchmark = pd.Series(np.random.normal(0.001, 0.02, 100), index=self.dates)
 
     def test_calculate_tail_risk(self):
-        try:
+        
             result = calculate_tail_risk(self.returns, threshold=0.05)
             self.assertIsInstance(result, dict)
             print("✅ Tail risk passed")
-        except Exception as e:
+        :
             self.fail(f"Tail risk failed: {e}")
 
     def test_calculate_downside_correlation(self):
-        try:
+        
             result = calculate_downside_correlation(self.returns, self.benchmark)
             self.assertIsInstance(result, dict)
             print("✅ Downside correlation passed")
-        except Exception as e:
+        :
             self.fail(f"Downside correlation failed: {e}")
 
 
@@ -316,12 +316,12 @@ class TestStressTest(unittest.TestCase):
         self.returns = pd.Series(np.random.normal(0.001, 0.02, 100), index=self.dates)
 
     def test_stress_test_portfolio(self):
-        try:
+        
             result = stress_test_portfolio(self.returns)
             self.assertIsInstance(result, dict)
             self.assertTrue(result.get('success', False))
             print("✅ Stress test passed")
-        except Exception as e:
+        :
             self.fail(f"Stress test failed: {e}")
 
 

@@ -8,11 +8,18 @@ Polls the queue for pending executions and processes them using the shared execu
 import asyncio
 import logging
 import uuid
+import sys
+import os
 from datetime import datetime
 from typing import Dict, Any, Optional
 
 from .base_queue import ExecutionQueueInterface
 from ..execution import execute_script
+
+# Import AuditService for updating execution documents
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'scriptEdition', 'apiServer'))
+from services.audit_service import AuditService
+from db import RepositoryManager, MongoDBClient
 
 logger = logging.getLogger(__name__)
 
@@ -32,12 +39,25 @@ class ExecutionQueueWorker:
         self.max_concurrent_executions = max_concurrent_executions
         self.running = False
         self.active_executions = set()
+        self.audit_service = None
         
         logger.info(f"🔧 Created worker: {self.worker_id}")
     
     async def start(self):
         """Start the worker polling loop"""
         logger.info(f"🚀 Starting worker {self.worker_id}")
+        
+        # Initialize AuditService for updating execution documents
+        try:
+            db_client = MongoDBClient()
+            repo_manager = RepositoryManager(db_client)
+            await repo_manager.initialize()
+            self.audit_service = AuditService(repo_manager)
+            logger.info("✅ AuditService initialized for execution updates")
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to initialize AuditService: {e}")
+            self.audit_service = None
+        
         self.running = True
         
         try:
@@ -121,9 +141,36 @@ class ExecutionQueueWorker:
             # Execute the script using shared execution logic
             result = await self._execute_script_with_logging(execution)
             
-            if result.get("success"):
-                # Success - ack the execution
-                await self.queue.ack(execution_id, result)
+            # Update both queue and audit service
+            success = result.get("success", False)
+            execution_time_ms = int((result.get("execution_time", 0)) * 1000)  # Convert to milliseconds
+            
+            if success:
+                # CRITICAL: Update audit service execution document FIRST
+                audit_success = False
+                if self.audit_service:
+                    try:
+                        await self.audit_service.log_execution_complete(
+                            execution_id=execution_id,
+                            result=result.get("output", {}),
+                            execution_time_ms=execution_time_ms,
+                            success=True
+                        )
+                        audit_success = True
+                        logger.info(f"✅ Updated audit execution document: {execution_id}")
+                    except Exception as audit_error:
+                        logger.error(f"❌ CRITICAL: Failed to update audit execution: {audit_error}")
+                        # Don't ack the queue - let it retry
+                        await self.queue.nack(execution_id, f"Audit save failed: {audit_error}", retry=True)
+                        return
+                else:
+                    logger.warning(f"⚠️ No audit service available - proceeding with queue ack")
+                    audit_success = True  # Proceed if no audit service configured
+                
+                # Only ack the queue AFTER successful audit save
+                if audit_success:
+                    await self.queue.ack(execution_id, result)
+                    logger.info(f"✅ Acknowledged queue after successful audit save: {execution_id}")
                 
                 await self.queue.update_logs(execution_id, {
                     "level": "INFO", 
@@ -132,8 +179,24 @@ class ExecutionQueueWorker:
                 
                 logger.info(f"✅ Completed execution: {execution_id}")
             else:
-                # Failure - nack the execution
+                # Failure case: Update audit service first, then nack queue
                 error_msg = result.get("error", "Unknown error")
+                
+                # Try to save failure to audit service first
+                if self.audit_service:
+                    try:
+                        await self.audit_service.log_execution_complete(
+                            execution_id=execution_id,
+                            result={"error": error_msg},
+                            execution_time_ms=execution_time_ms,
+                            success=False
+                        )
+                        logger.info(f"❌ Updated audit execution document with failure: {execution_id}")
+                    except Exception as audit_error:
+                        logger.error(f"❌ CRITICAL: Failed to update audit execution with failure: {audit_error}")
+                        # Even if audit fails, still nack the queue so it can retry everything
+                
+                # Nack the execution in queue (after audit attempt)
                 await self.queue.nack(execution_id, error_msg, retry=True)
                 
                 await self.queue.update_logs(execution_id, {
@@ -158,14 +221,30 @@ class ExecutionQueueWorker:
     async def _execute_script_with_logging(self, execution: Dict[str, Any]) -> Dict[str, Any]:
         """Execute script and capture logs"""
         execution_id = execution.get("execution_id")
-        script_content = execution.get("script_content")
-        parameters = execution.get("parameters", {})
+        execution_params = execution.get("execution_params", {})
+        
+        # Convert null values to None for Python compatibility
+        def convert_nulls(obj):
+            if obj is None or obj == "null":
+                return None
+            elif isinstance(obj, dict):
+                return {k: convert_nulls(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_nulls(item) for item in obj]
+            return obj
+        
+        
+        # Extract script info from execution_params
+        script_name = execution_params.get("script_name")
+        parameters = execution_params.get("parameters", {})
         timeout_seconds = execution.get("timeout_seconds", 300)
         
-        if not script_content:
+        parameters = convert_nulls(parameters)
+
+        if not script_name:
             return {
                 "success": False,
-                "error": "No script content provided",
+                "error": "No script name provided",
                 "execution_time": 0
             }
         
@@ -173,7 +252,7 @@ class ExecutionQueueWorker:
             # Log script details
             await self.queue.update_logs(execution_id, {
                 "level": "INFO",
-                "message": f"Executing script: {execution.get('script_name', 'Unknown')}"
+                "message": f"Executing script: {script_name}"
             })
             
             if parameters:
@@ -185,9 +264,22 @@ class ExecutionQueueWorker:
             # Execute script in production mode (mock_mode=False)
             start_time = datetime.now()
             
+            # Load script content from file
+            script_path = f"/Users/shivc/Documents/Workspace/JS/qna-ai-admin/backend/mcp-server/scripts/{script_name}"
+            
+            try:
+                with open(script_path, 'r') as f:
+                    script_content = f.read()
+            except FileNotFoundError:
+                return {
+                    "success": False,
+                    "error": f"Script file not found: {script_name}",
+                    "execution_time": 0
+                }
+            # TODO: Change it to False when ready
             result = execute_script(
                 script_content=script_content,
-                mock_mode=False,  # Production mode for queue executions
+                mock_mode=True,  #a Production mode for queue executions
                 timeout=timeout_seconds,
                 parameters=parameters
             )

@@ -130,27 +130,23 @@ def calculate_returns_metrics(returns: Union[pd.Series, Dict[str, Any]]) -> Dict
         - Function handles both daily and other frequency data automatically
         - Returns are calculated using time-weighted methodology for accurate performance measurement
     """
-    try:
-        returns_series = validate_return_data(returns)
-        
-        # Use empyrical library - leveraging requirements.txt
-        total_return = empyrical.cum_returns_final(returns_series)
-        annual_return = empyrical.annual_return(returns_series)
-        cumulative_returns = empyrical.cum_returns(returns_series)
-        
-        result = {
-            "total_return": float(total_return),
-            "total_return_pct": f"{total_return * 100:.2f}%",
-            "annual_return": float(annual_return),
-            "annual_return_pct": f"{annual_return * 100:.2f}%",
-            "cumulative_returns": cumulative_returns,
-            "num_observations": len(returns_series)
-        }
-        
-        return standardize_output(result, "calculate_returns_metrics")
-        
-    except Exception as e:
-        return {"success": False, "error": f"Returns calculation failed: {str(e)}"}
+    returns_series = validate_return_data(returns)
+    
+    # Use empyrical library - leveraging requirements.txt
+    total_return = empyrical.cum_returns_final(returns_series)
+    annual_return = empyrical.annual_return(returns_series)
+    cumulative_returns = empyrical.cum_returns(returns_series)
+    
+    result = {
+        "total_return": float(total_return),
+        "total_return_pct": f"{total_return * 100:.2f}%",
+        "annual_return": float(annual_return),
+        "annual_return_pct": f"{annual_return * 100:.2f}%",
+        "cumulative_returns": cumulative_returns,
+        "num_observations": len(returns_series)
+    }
+    
+    return standardize_output(result, "calculate_returns_metrics")
 
 
 def calculate_risk_metrics(returns: Union[pd.Series, Dict[str, Any]], 
@@ -257,42 +253,38 @@ def calculate_risk_metrics(returns: Union[pd.Series, Dict[str, Any]],
         - All ratios use the specified risk-free rate for excess return calculations
         - Maximum drawdown represents the worst peak-to-trough decline experienced
     """
-    try:
-        returns_series = validate_return_data(returns)
+    returns_series = validate_return_data(returns)
         
-        # Use empyrical library - leveraging requirements.txt
-        volatility = empyrical.annual_volatility(returns_series)
-        sharpe_ratio = empyrical.sharpe_ratio(returns_series, risk_free=risk_free_rate)
-        sortino_ratio = empyrical.sortino_ratio(returns_series, required_return=risk_free_rate)
-        max_drawdown = empyrical.max_drawdown(returns_series)
-        calmar_ratio = empyrical.calmar_ratio(returns_series)
-        var_95 = empyrical.value_at_risk(returns_series, cutoff=0.05)
-        cvar_95 = empyrical.conditional_value_at_risk(returns_series, cutoff=0.05)
-        # Use scipy.stats for skew and kurtosis since empyrical.stats may not have them
-        from scipy import stats
-        skewness = stats.skew(returns_series)
-        kurtosis = stats.kurtosis(returns_series)
+    # Use empyrical library - leveraging requirements.txt
+    volatility = empyrical.annual_volatility(returns_series)
+    sharpe_ratio = empyrical.sharpe_ratio(returns_series, risk_free=risk_free_rate)
+    sortino_ratio = empyrical.sortino_ratio(returns_series, required_return=risk_free_rate)
+    max_drawdown = empyrical.max_drawdown(returns_series)
+    calmar_ratio = empyrical.calmar_ratio(returns_series)
+    var_95 = empyrical.value_at_risk(returns_series, cutoff=0.05)
+    cvar_95 = empyrical.conditional_value_at_risk(returns_series, cutoff=0.05)
+    # Use scipy.stats for skew and kurtosis since empyrical.stats may not have them
+    from scipy import stats
+    skewness = stats.skew(returns_series)
+    kurtosis = stats.kurtosis(returns_series)
         
-        result = {
-            "volatility": float(volatility),
-            "volatility_pct": f"{volatility * 100:.2f}%",
-            "sharpe_ratio": float(sharpe_ratio),
-            "max_drawdown": float(max_drawdown),
-            "max_drawdown_pct": f"{max_drawdown * 100:.2f}%",
-            "sortino_ratio": float(sortino_ratio),
-            "calmar_ratio": float(calmar_ratio),
-            "var_95": float(var_95),
-            "var_95_pct": f"{var_95 * 100:.2f}%",
-            "cvar_95": float(cvar_95),
-            "cvar_95_pct": f"{cvar_95 * 100:.2f}%",
-            "skewness": float(skewness),
-            "kurtosis": float(kurtosis)
-        }
+    result = {
+        "volatility": float(volatility),
+        "volatility_pct": f"{volatility * 100:.2f}%",
+        "sharpe_ratio": float(sharpe_ratio),
+        "max_drawdown": float(max_drawdown),
+        "max_drawdown_pct": f"{max_drawdown * 100:.2f}%",
+        "sortino_ratio": float(sortino_ratio),
+        "calmar_ratio": float(calmar_ratio),
+        "var_95": float(var_95),
+        "var_95_pct": f"{var_95 * 100:.2f}%",
+        "cvar_95": float(cvar_95),
+        "cvar_95_pct": f"{cvar_95 * 100:.2f}%",
+        "skewness": float(skewness),
+        "kurtosis": float(kurtosis)
+    }
         
-        return standardize_output(result, "calculate_risk_metrics")
-        
-    except Exception as e:
-        return {"success": False, "error": f"Risk calculation failed: {str(e)}"}
+    return standardize_output(result, "calculate_risk_metrics")
 
 
 def calculate_benchmark_metrics(returns: Union[pd.Series, Dict[str, Any]],
@@ -376,55 +368,51 @@ def calculate_benchmark_metrics(returns: Union[pd.Series, Dict[str, Any]],
         - Returns are automatically aligned for fair comparison
         - Uses CAPM framework for alpha and beta calculations
     """
-    try:
-        portfolio_returns = validate_return_data(returns)
-        benchmark_returns = validate_return_data(benchmark_returns)
+    portfolio_returns = validate_return_data(returns)
+    benchmark_returns = validate_return_data(benchmark_returns)
         
-        # Align series
-        from ..utils.data_utils import align_series
-        portfolio_aligned, benchmark_aligned = align_series(portfolio_returns, benchmark_returns)
+    # Align series
+    from ..utils.data_utils import align_series
+    portfolio_aligned, benchmark_aligned = align_series(portfolio_returns, benchmark_returns)
         
-        if empyrical is None:
-            # Basic calculations
-            excess_returns = portfolio_aligned - benchmark_aligned
-            tracking_error = excess_returns.std() * np.sqrt(252)
-            information_ratio = excess_returns.mean() * 252 / tracking_error if tracking_error > 0 else 0
+    if empyrical is None:
+        # Basic calculations
+        excess_returns = portfolio_aligned - benchmark_aligned
+        tracking_error = excess_returns.std() * np.sqrt(252)
+        information_ratio = excess_returns.mean() * 252 / tracking_error if tracking_error > 0 else 0
             
-            # Beta calculation
-            covariance = np.cov(portfolio_aligned, benchmark_aligned)[0, 1]
-            benchmark_variance = np.var(benchmark_aligned)
-            beta = covariance / benchmark_variance if benchmark_variance > 0 else 1
+        # Beta calculation
+        covariance = np.cov(portfolio_aligned, benchmark_aligned)[0, 1]
+        benchmark_variance = np.var(benchmark_aligned)
+        beta = covariance / benchmark_variance if benchmark_variance > 0 else 1
             
-            alpha = portfolio_aligned.mean() * 252 - (risk_free_rate + beta * (benchmark_aligned.mean() * 252 - risk_free_rate))
-        else:
-            # Use empyrical library - leveraging requirements.txt
-            alpha = empyrical.alpha(portfolio_aligned, benchmark_aligned, risk_free=risk_free_rate)
-            beta = empyrical.beta(portfolio_aligned, benchmark_aligned)
-            tracking_error = (portfolio_aligned - benchmark_aligned).std() * np.sqrt(252)
-            information_ratio = empyrical.excess_sharpe(portfolio_aligned, benchmark_aligned)
-            up_capture = empyrical.up_capture(portfolio_aligned, benchmark_aligned)
-            down_capture = empyrical.down_capture(portfolio_aligned, benchmark_aligned)
+        alpha = portfolio_aligned.mean() * 252 - (risk_free_rate + beta * (benchmark_aligned.mean() * 252 - risk_free_rate))
+    else:
+        # Use empyrical library - leveraging requirements.txt
+        alpha = empyrical.alpha(portfolio_aligned, benchmark_aligned, risk_free=risk_free_rate)
+        beta = empyrical.beta(portfolio_aligned, benchmark_aligned)
+        tracking_error = (portfolio_aligned - benchmark_aligned).std() * np.sqrt(252)
+        information_ratio = empyrical.excess_sharpe(portfolio_aligned, benchmark_aligned)
+        up_capture = empyrical.up_capture(portfolio_aligned, benchmark_aligned)
+        down_capture = empyrical.down_capture(portfolio_aligned, benchmark_aligned)
         
-        result = {
-            "alpha": float(alpha),
-            "alpha_pct": f"{alpha * 100:.2f}%",
-            "beta": float(beta),
-            "tracking_error": float(tracking_error),
-            "tracking_error_pct": f"{tracking_error * 100:.2f}%",
-            "information_ratio": float(information_ratio),
-        }
+    result = {
+        "alpha": float(alpha),
+        "alpha_pct": f"{alpha * 100:.2f}%",
+        "beta": float(beta),
+        "tracking_error": float(tracking_error),
+        "tracking_error_pct": f"{tracking_error * 100:.2f}%",
+        "information_ratio": float(information_ratio),
+    }
         
-        # Add advanced metrics if empyrical available
-        if empyrical is not None:
-            result.update({
-                "up_capture": float(up_capture),
-                "down_capture": float(down_capture)
-            })
+    # Add advanced metrics if empyrical available
+    if empyrical is not None:
+        result.update({
+            "up_capture": float(up_capture),
+            "down_capture": float(down_capture)
+        })
         
-        return standardize_output(result, "calculate_benchmark_metrics")
-        
-    except Exception as e:
-        return {"success": False, "error": f"Benchmark comparison failed: {str(e)}"}
+    return standardize_output(result, "calculate_benchmark_metrics")
 
 
 def calculate_drawdown_analysis(returns: Union[pd.Series, Dict[str, Any]]) -> Dict[str, Any]:
@@ -500,33 +488,29 @@ def calculate_drawdown_analysis(returns: Union[pd.Series, Dict[str, Any]]) -> Di
         - Drawdown calculation accounts for compounding effects of returns
         - Essential metric for risk management and capital preservation strategies
     """
-    try:
-        returns_series = validate_return_data(returns)
+    returns_series = validate_return_data(returns)
         
-        if empyrical is None:
-            # Basic calculations
-            cumulative = (1 + returns_series).cumprod()
-            running_max = cumulative.expanding().max()
-            drawdown_series = (cumulative - running_max) / running_max
-            max_drawdown = drawdown_series.min()
-        else:
-            # Use empyrical library - leveraging requirements.txt
-            max_drawdown = empyrical.max_drawdown(returns_series)
-            # Calculate drawdown series manually since drawdown_details may not exist
-            cumulative = empyrical.cum_returns(returns_series)
-            running_max = cumulative.expanding().max()
-            drawdown_series = (cumulative - running_max) / running_max
+    if empyrical is None:
+        # Basic calculations
+        cumulative = (1 + returns_series).cumprod()
+        running_max = cumulative.expanding().max()
+        drawdown_series = (cumulative - running_max) / running_max
+        max_drawdown = drawdown_series.min()
+    else:
+        # Use empyrical library - leveraging requirements.txt
+        max_drawdown = empyrical.max_drawdown(returns_series)
+        # Calculate drawdown series manually since drawdown_details may not exist
+        cumulative = empyrical.cum_returns(returns_series)
+        running_max = cumulative.expanding().max()
+        drawdown_series = (cumulative - running_max) / running_max
         
-        result = {
-            "max_drawdown": float(max_drawdown),
-            "max_drawdown_pct": f"{max_drawdown * 100:.2f}%",
-            "drawdown_series": drawdown_series if isinstance(drawdown_series, pd.Series) else pd.Series(drawdown_series)
-        }
+    result = {
+        "max_drawdown": float(max_drawdown),
+        "max_drawdown_pct": f"{max_drawdown * 100:.2f}%",
+        "drawdown_series": drawdown_series if isinstance(drawdown_series, pd.Series) else pd.Series(drawdown_series)
+    }
         
-        return standardize_output(result, "calculate_drawdown_analysis")
-        
-    except Exception as e:
-        return {"success": False, "error": f"Drawdown analysis failed: {str(e)}"}
+    return standardize_output(result, "calculate_drawdown_analysis")
 
 
 def calculate_annualized_return(prices: Union[pd.Series, Dict[str, Any]], periods: Union[int, str] = 'daily') -> float:
@@ -580,25 +564,21 @@ def calculate_annualized_return(prices: Union[pd.Series, Dict[str, Any]], period
         - Essential for comparing investments with different time horizons
         - Handles missing values by dropping NaN returns before calculation
     """
-    try:
-        price_series = validate_price_data(prices)
+    price_series = validate_price_data(prices)
         
-        # Calculate returns from prices
-        returns = price_series.pct_change().dropna()
+    # Calculate returns from prices
+    returns = price_series.pct_change().dropna()
         
-        # Convert integer periods to string format if needed
-        period_str = periods
-        if isinstance(periods, int):
-            period_map = {252: 'daily', 52: 'weekly', 12: 'monthly', 4: 'quarterly', 1: 'yearly'}
-            period_str = period_map.get(periods, 'daily')
+    # Convert integer periods to string format if needed
+    period_str = periods
+    if isinstance(periods, int):
+        period_map = {252: 'daily', 52: 'weekly', 12: 'monthly', 4: 'quarterly', 1: 'yearly'}
+        period_str = period_map.get(periods, 'daily')
         
-        # Use empyrical for annualized return
-        annual_return = empyrical.annual_return(returns, period=period_str)
+    # Use empyrical for annualized return
+    annual_return = empyrical.annual_return(returns, period=period_str)
         
-        return float(annual_return)
-        
-    except Exception as e:
-        raise ValueError(f"Annualized return calculation failed: {str(e)}")
+    return float(annual_return)
 
 
 def calculate_annualized_volatility(returns: Union[pd.Series, Dict[str, Any]], periods_per_year: Union[int, str] = 'daily') -> float:
@@ -652,22 +632,18 @@ def calculate_annualized_volatility(returns: Union[pd.Series, Dict[str, Any]], p
         - Essential input for Sharpe ratio, VaR calculations, and option pricing
         - Assumes returns are normally distributed for scaling accuracy
     """
-    try:
-        returns_series = validate_return_data(returns)
+    returns_series = validate_return_data(returns)
         
-        # Convert integer periods to string format if needed
-        period_str = periods_per_year
-        if isinstance(periods_per_year, int):
-            period_map = {252: 'daily', 52: 'weekly', 12: 'monthly', 4: 'quarterly', 1: 'yearly'}
-            period_str = period_map.get(periods_per_year, 'daily')
+    # Convert integer periods to string format if needed
+    period_str = periods_per_year
+    if isinstance(periods_per_year, int):
+        period_map = {252: 'daily', 52: 'weekly', 12: 'monthly', 4: 'quarterly', 1: 'yearly'}
+        period_str = period_map.get(periods_per_year, 'daily')
         
-        # Use empyrical for annualized volatility
-        annual_vol = empyrical.annual_volatility(returns_series, period=period_str)
+    # Use empyrical for annualized volatility
+    annual_vol = empyrical.annual_volatility(returns_series, period=period_str)
         
-        return float(annual_vol)
-        
-    except Exception as e:
-        raise ValueError(f"Annualized volatility calculation failed: {str(e)}")
+    return float(annual_vol)
 
 
 def calculate_cagr(start_value: float, end_value: float, years: float) -> float:
@@ -738,19 +714,15 @@ def calculate_cagr(start_value: float, end_value: float, years: float) -> float:
         - Does not account for interim cash flows (dividends, contributions)
         - Result can be negative if end_value < start_value (investment loss)
     """
-    try:
-        if start_value <= 0:
-            raise ValueError("Start value must be positive")
-        if years <= 0:
-            raise ValueError("Years must be positive")
+    if start_value <= 0:
+        raise ValueError("Start value must be positive")
+    if years <= 0:
+        raise ValueError("Years must be positive")
         
-        # CAGR formula: (end_value / start_value)^(1/years) - 1
-        cagr = np.power(end_value / start_value, 1.0 / years) - 1
+    # CAGR formula: (end_value / start_value)^(1/years) - 1
+    cagr = np.power(end_value / start_value, 1.0 / years) - 1
         
-        return float(cagr)
-        
-    except Exception as e:
-        raise ValueError(f"CAGR calculation failed: {str(e)}")
+    return float(cagr)
 
 
 def calculate_total_return(start_price: float, end_price: float, dividends: Optional[list] = None) -> float:
@@ -824,26 +796,22 @@ def calculate_total_return(start_price: float, end_price: float, dividends: Opti
         - Negative values indicate total losses exceed gains
         - Essential metric for dividend growth and income investing strategies
     """
-    try:
-        if start_price <= 0:
-            raise ValueError("Start price must be positive")
+    if start_price <= 0:
+        raise ValueError("Start price must be positive")
         
-        # Price return
-        price_return = (end_price - start_price) / start_price
+    # Price return
+    price_return = (end_price - start_price) / start_price
         
-        # Dividend return
-        dividend_return = 0.0
-        if dividends and len(dividends) > 0:
-            total_dividends = np.sum(dividends)
-            dividend_return = total_dividends / start_price
+    # Dividend return
+    dividend_return = 0.0
+    if dividends and len(dividends) > 0:
+        total_dividends = np.sum(dividends)
+        dividend_return = total_dividends / start_price
         
-        # Total return
-        total_return = price_return + dividend_return
+    # Total return
+    total_return = price_return + dividend_return
         
-        return float(total_return)
-        
-    except Exception as e:
-        raise ValueError(f"Total return calculation failed: {str(e)}")
+    return float(total_return)
 
 
 def calculate_downside_deviation(returns: Union[pd.Series, Dict[str, Any]], target_return: Optional[float] = None) -> float:
@@ -901,19 +869,15 @@ def calculate_downside_deviation(returns: Union[pd.Series, Dict[str, Any]], targ
         - More relevant than standard deviation for asymmetric return distributions
         - Commonly used target thresholds: 0% (zero), risk-free rate, or minimum acceptable return
     """
-    try:
-        returns_series = validate_return_data(returns)
+    returns_series = validate_return_data(returns)
         
-        if target_return is None:
-            target_return = 0.0
+    if target_return is None:
+        target_return = 0.0
         
-        # Use empyrical for downside deviation
-        downside_dev = empyrical.downside_risk(returns_series, required_return=target_return)
+    # Use empyrical for downside deviation
+    downside_dev = empyrical.downside_risk(returns_series, required_return=target_return)
         
-        return float(downside_dev)
-        
-    except Exception as e:
-        raise ValueError(f"Downside deviation calculation failed: {str(e)}")
+    return float(downside_dev)
 
 
 def calculate_upside_capture(returns: Union[pd.Series, Dict[str, Any]], 
@@ -976,21 +940,17 @@ def calculate_upside_capture(returns: Union[pd.Series, Dict[str, Any]],
         - Returns are automatically aligned for consistent comparison
         - Useful for understanding portfolio behavior in different market conditions
     """
-    try:
-        portfolio_returns = validate_return_data(returns)
-        benchmark_series = validate_return_data(benchmark_returns)
+    portfolio_returns = validate_return_data(returns)
+    benchmark_series = validate_return_data(benchmark_returns)
         
-        # Align series
-        from ..utils.data_utils import align_series
-        portfolio_aligned, benchmark_aligned = align_series(portfolio_returns, benchmark_series)
+    # Align series
+    from ..utils.data_utils import align_series
+    portfolio_aligned, benchmark_aligned = align_series(portfolio_returns, benchmark_series)
         
-        # Use empyrical for upside capture
-        upside_capture = empyrical.up_capture(portfolio_aligned, benchmark_aligned)
+    # Use empyrical for upside capture
+    upside_capture = empyrical.up_capture(portfolio_aligned, benchmark_aligned)
         
-        return float(upside_capture)
-        
-    except Exception as e:
-        raise ValueError(f"Upside capture calculation failed: {str(e)}")
+    return float(upside_capture)
 
 
 def calculate_downside_capture(returns: Union[pd.Series, Dict[str, Any]], 
@@ -1057,21 +1017,17 @@ def calculate_downside_capture(returns: Union[pd.Series, Dict[str, Any]],
         - Returns are automatically aligned for consistent comparison
         - Lower downside capture with reasonable upside capture indicates skilled management
     """
-    try:
-        portfolio_returns = validate_return_data(returns)
-        benchmark_series = validate_return_data(benchmark_returns)
+    portfolio_returns = validate_return_data(returns)
+    benchmark_series = validate_return_data(benchmark_returns)
         
-        # Align series
-        from ..utils.data_utils import align_series
-        portfolio_aligned, benchmark_aligned = align_series(portfolio_returns, benchmark_series)
+    # Align series
+    from ..utils.data_utils import align_series
+    portfolio_aligned, benchmark_aligned = align_series(portfolio_returns, benchmark_series)
         
-        # Use empyrical for downside capture
-        downside_capture = empyrical.down_capture(portfolio_aligned, benchmark_aligned)
+    # Use empyrical for downside capture
+    downside_capture = empyrical.down_capture(portfolio_aligned, benchmark_aligned)
         
-        return float(downside_capture)
-        
-    except Exception as e:
-        raise ValueError(f"Downside capture calculation failed: {str(e)}")
+    return float(downside_capture)
 
 
 def calculate_calmar_ratio(returns: Union[pd.Series, Dict[str, Any]]) -> float:
@@ -1136,16 +1092,12 @@ def calculate_calmar_ratio(returns: Union[pd.Series, Dict[str, Any]]) -> float:
         Input: returns with 15% max drawdown, 8% annual return → 0.53 (moderate risk-adjusted return)
         Input: returns with 25% max drawdown, 12% annual return → 0.48 (lower risk efficiency)
     """
-    try:
-        returns_series = validate_return_data(returns)
+    returns_series = validate_return_data(returns)
         
-        # Use empyrical for Calmar ratio
-        calmar = empyrical.calmar_ratio(returns_series)
+    # Use empyrical for Calmar ratio
+    calmar = empyrical.calmar_ratio(returns_series)
         
-        return float(calmar)
-        
-    except Exception as e:
-        raise ValueError(f"Calmar ratio calculation failed: {str(e)}")
+    return float(calmar)
 
 
 def calculate_omega_ratio(returns: Union[pd.Series, Dict[str, Any]], threshold: Optional[float] = None) -> float:
@@ -1205,19 +1157,15 @@ def calculate_omega_ratio(returns: Union[pd.Series, Dict[str, Any]], threshold: 
         - Commonly used thresholds: 0% (zero), risk-free rate, or target return
         - Higher values indicate better risk-adjusted performance
     """
-    try:
-        returns_series = validate_return_data(returns)
+    returns_series = validate_return_data(returns)
         
-        if threshold is None:
-            threshold = 0.0
+    if threshold is None:
+        threshold = 0.0
         
-        # Use empyrical for Omega ratio
-        omega = empyrical.omega_ratio(returns_series, risk_free=threshold)
+    # Use empyrical for Omega ratio
+    omega = empyrical.omega_ratio(returns_series, risk_free=threshold)
         
-        return float(omega)
-        
-    except Exception as e:
-        raise ValueError(f"Omega ratio calculation failed: {str(e)}")
+    return float(omega)
 
 
 def calculate_win_rate(returns: Union[pd.Series, Dict[str, Any]]) -> float:
@@ -1275,22 +1223,18 @@ def calculate_win_rate(returns: Union[pd.Series, Dict[str, Any]]) -> float:
         - Particularly relevant for evaluating trading strategies and market timing
         - Should be analyzed alongside average win/loss sizes for complete picture
     """
-    try:
-        returns_series = validate_return_data(returns)
+    returns_series = validate_return_data(returns)
         
-        # Count positive returns
-        positive_returns = (returns_series > 0).sum()
-        total_returns = len(returns_series)
+    # Count positive returns
+    positive_returns = (returns_series > 0).sum()
+    total_returns = len(returns_series)
         
-        if total_returns == 0:
-            return 0.0
+    if total_returns == 0:
+        return 0.0
         
-        win_rate = positive_returns / total_returns
+    win_rate = positive_returns / total_returns
         
-        return float(win_rate)
-        
-    except Exception as e:
-        raise ValueError(f"Win rate calculation failed: {str(e)}")
+    return float(win_rate)
 
 
 def calculate_best_worst_periods(returns: Union[pd.Series, Dict[str, Any]], window_size: int) -> Dict[str, Any]:
@@ -1354,54 +1298,50 @@ def calculate_best_worst_periods(returns: Union[pd.Series, Dict[str, Any]], wind
         - Window size should be chosen based on analysis timeframe (daily, monthly, quarterly)
         - Helps identify whether extreme returns are isolated or part of extended periods
     """
-    try:
-        returns_series = validate_return_data(returns)
+    returns_series = validate_return_data(returns)
         
-        if len(returns_series) < window_size:
-            raise ValueError(f"Not enough data points for window size {window_size}")
+    if len(returns_series) < window_size:
+        raise ValueError(f"Not enough data points for window size {window_size}")
         
-        # Calculate rolling returns for specified window
-        rolling_returns = returns_series.rolling(window=window_size).apply(
-            lambda x: (1 + x).prod() - 1, raw=False
-        ).dropna()
+    # Calculate rolling returns for specified window
+    rolling_returns = returns_series.rolling(window=window_size).apply(
+        lambda x: (1 + x).prod() - 1, raw=False
+    ).dropna()
         
-        if len(rolling_returns) == 0:
-            raise ValueError("No valid rolling periods calculated")
+    if len(rolling_returns) == 0:
+        raise ValueError("No valid rolling periods calculated")
         
-        # Find best and worst periods
-        best_period_idx = rolling_returns.idxmax()
-        worst_period_idx = rolling_returns.idxmin()
+    # Find best and worst periods
+    best_period_idx = rolling_returns.idxmax()
+    worst_period_idx = rolling_returns.idxmin()
         
-        best_return = rolling_returns.loc[best_period_idx]
-        worst_return = rolling_returns.loc[worst_period_idx]
+    best_return = rolling_returns.loc[best_period_idx]
+    worst_return = rolling_returns.loc[worst_period_idx]
         
-        # Calculate period start dates
-        best_start = returns_series.index[returns_series.index.get_loc(best_period_idx) - window_size + 1]
-        worst_start = returns_series.index[returns_series.index.get_loc(worst_period_idx) - window_size + 1]
+    # Calculate period start dates
+    best_start = returns_series.index[returns_series.index.get_loc(best_period_idx) - window_size + 1]
+    worst_start = returns_series.index[returns_series.index.get_loc(worst_period_idx) - window_size + 1]
         
-        result = {
-            "window_size": window_size,
-            "best_period": {
-                "start_date": str(best_start),
-                "end_date": str(best_period_idx),
-                "return": float(best_return),
-                "return_pct": f"{best_return * 100:.2f}%"
-            },
-            "worst_period": {
-                "start_date": str(worst_start),
-                "end_date": str(worst_period_idx),
-                "return": float(worst_return),
-                "return_pct": f"{worst_return * 100:.2f}%"
-            },
-            "total_periods": len(rolling_returns),
-            "average_rolling_return": float(rolling_returns.mean()),
-            "rolling_volatility": float(rolling_returns.std())
-        }
+    result = {
+        "window_size": window_size,
+        "best_period": {
+            "start_date": str(best_start),
+            "end_date": str(best_period_idx),
+            "return": float(best_return),
+            "return_pct": f"{best_return * 100:.2f}%"
+        },
+        "worst_period": {
+            "start_date": str(worst_start),
+            "end_date": str(worst_period_idx),
+            "return": float(worst_return),
+            "return_pct": f"{worst_return * 100:.2f}%"
+        },
+        "total_periods": len(rolling_returns),
+        "average_rolling_return": float(rolling_returns.mean()),
+        "rolling_volatility": float(rolling_returns.std())
+    }
         
-        return standardize_output(result, "calculate_best_worst_periods")
-        
-    except Exception as e:
-        raise ValueError(f"Best/worst periods calculation failed: {str(e)}")
+    return standardize_output(result, "calculate_best_worst_periods")
 
 
 def calculate_dividend_yield(dividends: Union[list, np.ndarray, pd.Series], price: float) -> float:
@@ -1463,30 +1403,26 @@ def calculate_dividend_yield(dividends: Union[list, np.ndarray, pd.Series], pric
         - Should be compared to historical yields and peer companies
         - Important for dividend growth and income investing strategies
     """
-    try:
-        if price <= 0:
-            raise ValueError("Price must be positive")
+    if price <= 0:
+        raise ValueError("Price must be positive")
         
-        # Convert dividends to numpy array
-        if isinstance(dividends, (list, pd.Series)):
-            dividend_array = np.array(dividends)
-        else:
-            dividend_array = np.array(dividends)
+    # Convert dividends to numpy array
+    if isinstance(dividends, (list, pd.Series)):
+        dividend_array = np.array(dividends)
+    else:
+        dividend_array = np.array(dividends)
         
-        # Remove NaN values and negative dividends
-        dividend_clean = dividend_array[~np.isnan(dividend_array)]
-        dividend_clean = dividend_clean[dividend_clean >= 0]
+    # Remove NaN values and negative dividends
+    dividend_clean = dividend_array[~np.isnan(dividend_array)]
+    dividend_clean = dividend_clean[dividend_clean >= 0]
         
-        # Calculate total annual dividends
-        total_dividends = np.sum(dividend_clean)
+    # Calculate total annual dividends
+    total_dividends = np.sum(dividend_clean)
         
-        # Calculate dividend yield
-        dividend_yield = total_dividends / price
+    # Calculate dividend yield
+    dividend_yield = total_dividends / price
         
-        return float(dividend_yield)
-        
-    except Exception as e:
-        raise ValueError(f"Dividend yield calculation failed: {str(e)}")
+    return float(dividend_yield)
 
 
 def analyze_leverage_fund(prices: Union[pd.Series, Dict[str, Any]], 
@@ -1564,67 +1500,63 @@ def analyze_leverage_fund(prices: Union[pd.Series, Dict[str, Any]],
         - Analysis accounts for compounding effects of daily rebalancing
         - Negative leverage values supported for inverse funds
     """
-    try:
-        leveraged_prices = validate_price_data(prices)
-        underlying_series = validate_price_data(underlying_prices)
+    leveraged_prices = validate_price_data(prices)
+    underlying_series = validate_price_data(underlying_prices)
         
-        # Align series
-        from ..utils.data_utils import align_series, prices_to_returns
-        leveraged_aligned, underlying_aligned = align_series(leveraged_prices, underlying_series)
+    # Align series
+    from ..utils.data_utils import align_series, prices_to_returns
+    leveraged_aligned, underlying_aligned = align_series(leveraged_prices, underlying_series)
         
-        # Calculate returns
-        leveraged_returns = prices_to_returns(leveraged_aligned)
-        underlying_returns = prices_to_returns(underlying_aligned)
+    # Calculate returns
+    leveraged_returns = prices_to_returns(leveraged_aligned)
+    underlying_returns = prices_to_returns(underlying_aligned)
         
-        # Calculate tracking metrics
-        actual_leverage = leveraged_returns.corr(underlying_returns) * (leveraged_returns.std() / underlying_returns.std())
+    # Calculate tracking metrics
+    actual_leverage = leveraged_returns.corr(underlying_returns) * (leveraged_returns.std() / underlying_returns.std())
         
-        # Calculate daily leverage decay
-        expected_returns = underlying_returns * leverage
-        tracking_error = (leveraged_returns - expected_returns).std() * np.sqrt(252)
+    # Calculate daily leverage decay
+    expected_returns = underlying_returns * leverage
+    tracking_error = (leveraged_returns - expected_returns).std() * np.sqrt(252)
         
-        # Calculate compounding drag effect
-        underlying_vol = underlying_returns.std() * np.sqrt(252)
-        theoretical_drag = 0.5 * (leverage - 1) * (underlying_vol ** 2)
+    # Calculate compounding drag effect
+    underlying_vol = underlying_returns.std() * np.sqrt(252)
+    theoretical_drag = 0.5 * (leverage - 1) * (underlying_vol ** 2)
         
-        # Performance comparison
-        leveraged_total = (1 + leveraged_returns).prod() - 1
-        underlying_total = (1 + underlying_returns).prod() - 1
-        expected_total = (1 + underlying_returns * leverage).prod() - 1
+    # Performance comparison
+    leveraged_total = (1 + leveraged_returns).prod() - 1
+    underlying_total = (1 + underlying_returns).prod() - 1
+    expected_total = (1 + underlying_returns * leverage).prod() - 1
         
-        # Daily rebalancing cost estimation
-        daily_vol = underlying_returns.std()
-        estimated_daily_cost = (leverage - 1) * (daily_vol ** 2) / 2
-        annualized_cost = estimated_daily_cost * 252
+    # Daily rebalancing cost estimation
+    daily_vol = underlying_returns.std()
+    estimated_daily_cost = (leverage - 1) * (daily_vol ** 2) / 2
+    annualized_cost = estimated_daily_cost * 252
         
-        result = {
-            "target_leverage": float(leverage),
-            "actual_leverage": float(actual_leverage),
-            "leverage_efficiency": float(actual_leverage / leverage) if leverage != 0 else 0,
-            "tracking_error": float(tracking_error),
-            "tracking_error_pct": f"{tracking_error * 100:.2f}%",
-            "theoretical_drag": float(theoretical_drag),
-            "theoretical_drag_pct": f"{theoretical_drag * 100:.2f}%",
-            "leveraged_total_return": float(leveraged_total),
-            "leveraged_total_return_pct": f"{leveraged_total * 100:.2f}%",
-            "underlying_total_return": float(underlying_total),
-            "underlying_total_return_pct": f"{underlying_total * 100:.2f}%",
-            "expected_leveraged_return": float(expected_total),
-            "expected_leveraged_return_pct": f"{expected_total * 100:.2f}%",
-            "performance_gap": float(leveraged_total - expected_total),
-            "performance_gap_pct": f"{(leveraged_total - expected_total) * 100:.2f}%",
-            "estimated_annual_cost": float(annualized_cost),
-            "estimated_annual_cost_pct": f"{annualized_cost * 100:.2f}%",
-            "underlying_volatility": float(underlying_vol),
-            "underlying_volatility_pct": f"{underlying_vol * 100:.2f}%",
-            "leveraged_volatility": float(leveraged_returns.std() * np.sqrt(252)),
-            "leveraged_volatility_pct": f"{leveraged_returns.std() * np.sqrt(252) * 100:.2f}%"
-        }
+    result = {
+        "target_leverage": float(leverage),
+        "actual_leverage": float(actual_leverage),
+        "leverage_efficiency": float(actual_leverage / leverage) if leverage != 0 else 0,
+        "tracking_error": float(tracking_error),
+        "tracking_error_pct": f"{tracking_error * 100:.2f}%",
+        "theoretical_drag": float(theoretical_drag),
+        "theoretical_drag_pct": f"{theoretical_drag * 100:.2f}%",
+        "leveraged_total_return": float(leveraged_total),
+        "leveraged_total_return_pct": f"{leveraged_total * 100:.2f}%",
+        "underlying_total_return": float(underlying_total),
+        "underlying_total_return_pct": f"{underlying_total * 100:.2f}%",
+        "expected_leveraged_return": float(expected_total),
+        "expected_leveraged_return_pct": f"{expected_total * 100:.2f}%",
+        "performance_gap": float(leveraged_total - expected_total),
+        "performance_gap_pct": f"{(leveraged_total - expected_total) * 100:.2f}%",
+        "estimated_annual_cost": float(annualized_cost),
+        "estimated_annual_cost_pct": f"{annualized_cost * 100:.2f}%",
+        "underlying_volatility": float(underlying_vol),
+        "underlying_volatility_pct": f"{underlying_vol * 100:.2f}%",
+        "leveraged_volatility": float(leveraged_returns.std() * np.sqrt(252)),
+        "leveraged_volatility_pct": f"{leveraged_returns.std() * np.sqrt(252) * 100:.2f}%"
+    }
         
-        return standardize_output(result, "analyze_leverage_fund")
-        
-    except Exception as e:
-        return {"success": False, "error": f"Leveraged fund analysis failed: {str(e)}"}
+    return standardize_output(result, "analyze_leverage_fund")
 
 
 # Registry using library-based functions - no manual calculations

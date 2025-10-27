@@ -39,7 +39,7 @@ class TestPortfolioOptimization(unittest.TestCase):
 
     def test_optimize_portfolio(self):
         """Test general portfolio optimization"""
-        try:
+        
             result = optimize_portfolio(self.prices_df)
             
             # Should return a dictionary
@@ -56,12 +56,12 @@ class TestPortfolioOptimization(unittest.TestCase):
             
             print("✅ Portfolio optimization passed")
             
-        except Exception as e:
+        :
             self.fail(f"optimize_portfolio failed: {e}")
 
     def test_calculate_efficient_frontier(self):
         """Test efficient frontier calculation"""
-        try:
+        
             result = calculate_efficient_frontier(
                 self.prices_df,
                 n_points=20
@@ -78,12 +78,12 @@ class TestPortfolioOptimization(unittest.TestCase):
             
             print("✅ Efficient frontier calculation passed")
             
-        except Exception as e:
+        :
             self.fail(f"calculate_efficient_frontier failed: {e}")
 
     def test_optimize_max_sharpe(self):
         """Test maximum Sharpe ratio optimization"""
-        try:
+        
             result = optimize_max_sharpe(
                 self.prices_df,
                 risk_free_rate=0.02
@@ -106,12 +106,12 @@ class TestPortfolioOptimization(unittest.TestCase):
             
             print("✅ Max Sharpe optimization passed")
             
-        except Exception as e:
+        :
             self.fail(f"optimize_max_sharpe failed: {e}")
 
     def test_optimize_min_volatility(self):
         """Test minimum volatility optimization"""
-        try:
+        
             result = optimize_min_volatility(self.prices_df)
             
             # Should return a dictionary
@@ -132,12 +132,12 @@ class TestPortfolioOptimization(unittest.TestCase):
             
             print("✅ Min volatility optimization passed")
             
-        except Exception as e:
+        :
             self.fail(f"optimize_min_volatility failed: {e}")
 
     def test_calculate_risk_parity(self):
         """Test risk parity weight calculation"""
-        try:
+        
             result = calculate_risk_parity(self.prices_df)
             
             # Should return a dictionary
@@ -155,12 +155,12 @@ class TestPortfolioOptimization(unittest.TestCase):
             
             print("✅ Risk parity calculation passed")
             
-        except Exception as e:
+        :
             self.fail(f"calculate_risk_parity failed: {e}")
 
     def test_discrete_allocation(self):
         """Test discrete allocation calculation"""
-        try:
+        
             # Create weights
             weights = {'AAPL': 0.3, 'MSFT': 0.5, 'GOOGL': 0.2}
             
@@ -185,7 +185,7 @@ class TestPortfolioOptimization(unittest.TestCase):
             
             print("✅ Discrete allocation passed")
             
-        except Exception as e:
+        :
             self.fail(f"discrete_allocation failed: {e}")
 
 
@@ -199,7 +199,7 @@ class TestOptimizationEdgeCases(unittest.TestCase):
 
     def test_two_asset_optimization(self):
         """Test optimization with 2 assets"""
-        try:
+        
             prices = {}
             for symbol in ['AAPL', 'MSFT']:
                 returns = np.random.normal(0.001, 0.02, len(self.dates))
@@ -211,12 +211,12 @@ class TestOptimizationEdgeCases(unittest.TestCase):
             self.assertIsInstance(result, dict)
             print("✅ Two asset optimization passed")
             
-        except Exception as e:
+        :
             print(f"⚠️ Two asset optimization: {e}")
 
     def test_many_asset_optimization(self):
         """Test optimization with many assets"""
-        try:
+        
             prices = {}
             for i in range(10):
                 symbol = f'STOCK{i}'
@@ -229,12 +229,12 @@ class TestOptimizationEdgeCases(unittest.TestCase):
             self.assertIsInstance(result, dict)
             print("✅ Many asset optimization passed")
             
-        except Exception as e:
+        :
             print(f"⚠️ Many asset optimization: {e}")
 
     def test_correlated_assets(self):
         """Test optimization with highly correlated assets"""
-        try:
+        
             base_returns = np.random.normal(0.001, 0.02, len(self.dates))
             
             prices = {}
@@ -249,7 +249,7 @@ class TestOptimizationEdgeCases(unittest.TestCase):
             self.assertIsInstance(result, dict)
             print("✅ Correlated assets optimization passed")
             
-        except Exception as e:
+        :
             print(f"⚠️ Correlated assets: {e}")
 
 

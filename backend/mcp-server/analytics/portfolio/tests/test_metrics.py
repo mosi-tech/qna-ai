@@ -55,7 +55,7 @@ class TestPortfolioMetrics(unittest.TestCase):
 
     def test_calculate_portfolio_metrics(self):
         """Test basic portfolio metrics calculation"""
-        try:
+        
             result = calculate_portfolio_metrics(
                 weights=self.weights,
                 returns=self.returns_data[['AAPL', 'GOOGL', 'MSFT', 'TSLA']],
@@ -67,12 +67,12 @@ class TestPortfolioMetrics(unittest.TestCase):
             
             print("✅ Portfolio metrics calculation passed")
             
-        except Exception as e:
+        :
             print(f"⚠️ Portfolio metrics: {e}")
 
     def test_analyze_portfolio_concentration(self):
         """Test portfolio concentration analysis"""
-        try:
+        
             result = analyze_portfolio_concentration(
                 weights=self.weights
             )
@@ -82,12 +82,12 @@ class TestPortfolioMetrics(unittest.TestCase):
             
             print("✅ Concentration analysis passed")
             
-        except Exception as e:
+        :
             print(f"⚠️ Concentration analysis: {e}")
 
     def test_calculate_portfolio_beta(self):
         """Test portfolio beta calculation"""
-        try:
+        
             result = calculate_portfolio_beta(
                 returns=self.portfolio_returns,
                 benchmark_returns=self.benchmark_returns
@@ -98,12 +98,12 @@ class TestPortfolioMetrics(unittest.TestCase):
             
             print("✅ Portfolio beta calculation passed")
             
-        except Exception as e:
+        :
             print(f"⚠️ Portfolio beta: {e}")
 
     def test_analyze_portfolio_turnover(self):
         """Test portfolio turnover analysis"""
-        try:
+        
             # Create two weight snapshots
             old_weights = {'AAPL': 0.3, 'GOOGL': 0.25, 'MSFT': 0.25, 'TSLA': 0.2}
             new_weights = {'AAPL': 0.25, 'GOOGL': 0.3, 'MSFT': 0.25, 'TSLA': 0.2}
@@ -119,21 +119,21 @@ class TestPortfolioMetrics(unittest.TestCase):
             
             print("✅ Portfolio turnover analysis passed")
             
-        except Exception as e:
+        :
             # Try alternative parameter names
-            try:
+            
                 result = analyze_portfolio_turnover(
                     old_weights=old_weights,
                     new_weights=new_weights
                 )
                 self.assertIsInstance(result, dict)
                 print("✅ Portfolio turnover analysis passed")
-            except Exception as e2:
+            2:
                 print(f"⚠️ Portfolio turnover: {e2}")
 
     def test_calculate_active_share(self):
         """Test active share calculation"""
-        try:
+        
             # Create portfolio and benchmark holdings
             portfolio_weights = {'AAPL': 0.3, 'GOOGL': 0.25, 'MSFT': 0.25, 'TSLA': 0.2}
             benchmark_weights = {'AAPL': 0.2, 'GOOGL': 0.3, 'MSFT': 0.3, 'TSLA': 0.2}
@@ -148,12 +148,12 @@ class TestPortfolioMetrics(unittest.TestCase):
             
             print("✅ Active share calculation passed")
             
-        except Exception as e:
+        :
             print(f"⚠️ Active share: {e}")
 
     def test_perform_attribution(self):
         """Test performance attribution"""
-        try:
+        
             portfolio_rets = self.portfolio_returns
             benchmark_rets = self.benchmark_returns
             
@@ -168,12 +168,12 @@ class TestPortfolioMetrics(unittest.TestCase):
             
             print("✅ Performance attribution passed")
             
-        except Exception as e:
+        :
             print(f"⚠️ Performance attribution: {e}")
 
     def test_calculate_portfolio_var(self):
         """Test portfolio VaR calculation"""
-        try:
+        
             result = calculate_portfolio_var(
                 returns=self.portfolio_returns,
                 confidence=0.95
@@ -184,12 +184,12 @@ class TestPortfolioMetrics(unittest.TestCase):
             
             print("✅ Portfolio VaR calculation passed")
             
-        except Exception as e:
+        :
             print(f"⚠️ Portfolio VaR: {e}")
 
     def test_stress_test_portfolio(self):
         """Test portfolio stress testing"""
-        try:
+        
             result = stress_test_portfolio(
                 weights=self.weights,
                 returns=self.returns_data[['AAPL', 'GOOGL', 'MSFT', 'TSLA']]
@@ -206,7 +206,7 @@ class TestPortfolioMetrics(unittest.TestCase):
             
             print("✅ Portfolio stress testing passed")
             
-        except Exception as e:
+        :
             self.fail(f"stress_test_portfolio failed: {e}")
 
 
@@ -220,7 +220,7 @@ class TestPortfolioMetricsEdgeCases(unittest.TestCase):
 
     def test_equal_weight_portfolio(self):
         """Test with equal weight portfolio"""
-        try:
+        
             weights = {'A': 0.25, 'B': 0.25, 'C': 0.25, 'D': 0.25}
             
             result = analyze_portfolio_concentration(weights=weights)
@@ -228,12 +228,12 @@ class TestPortfolioMetricsEdgeCases(unittest.TestCase):
             self.assertIsInstance(result, dict)
             print("✅ Equal weight portfolio handled")
             
-        except Exception as e:
+        :
             print(f"⚠️ Equal weight portfolio: {e}")
 
     def test_concentrated_portfolio(self):
         """Test with highly concentrated portfolio"""
-        try:
+        
             weights = {'A': 0.9, 'B': 0.05, 'C': 0.03, 'D': 0.02}
             
             result = analyze_portfolio_concentration(weights=weights)
@@ -241,12 +241,12 @@ class TestPortfolioMetricsEdgeCases(unittest.TestCase):
             self.assertIsInstance(result, dict)
             print("✅ Concentrated portfolio handled")
             
-        except Exception as e:
+        :
             print(f"⚠️ Concentrated portfolio: {e}")
 
     def test_single_asset_portfolio(self):
         """Test with single asset portfolio"""
-        try:
+        
             weights = {'A': 1.0}
             
             result = analyze_portfolio_concentration(weights=weights)
@@ -254,12 +254,12 @@ class TestPortfolioMetricsEdgeCases(unittest.TestCase):
             self.assertIsInstance(result, dict)
             print("✅ Single asset portfolio handled")
             
-        except Exception as e:
+        :
             print(f"⚠️ Single asset portfolio: {e}")
 
     def test_perfectly_correlated_assets(self):
         """Test active share with identical portfolios"""
-        try:
+        
             weights = {'A': 0.5, 'B': 0.3, 'C': 0.2}
             
             result = calculate_active_share(
@@ -275,12 +275,12 @@ class TestPortfolioMetricsEdgeCases(unittest.TestCase):
             
             print("✅ Identical portfolios handled")
             
-        except Exception as e:
+        :
             print(f"⚠️ Identical portfolios: {e}")
 
     def test_opposite_portfolios(self):
         """Test active share with opposite portfolios"""
-        try:
+        
             portfolio_weights = {'A': 0.6, 'B': 0.4}
             benchmark_weights = {'A': 0.2, 'B': 0.8}
             
@@ -292,12 +292,12 @@ class TestPortfolioMetricsEdgeCases(unittest.TestCase):
             self.assertIsInstance(result, dict)
             print("✅ Opposite portfolios handled")
             
-        except Exception as e:
+        :
             print(f"⚠️ Opposite portfolios: {e}")
 
     def test_portfolio_turnover_zero_turnover(self):
         """Test turnover with no changes"""
-        try:
+        
             weights = {'A': 0.5, 'B': 0.3, 'C': 0.2}
             
             result = analyze_portfolio_turnover(
@@ -313,12 +313,12 @@ class TestPortfolioMetricsEdgeCases(unittest.TestCase):
             
             print("✅ Zero turnover handled")
             
-        except Exception as e:
+        :
             print(f"⚠️ Zero turnover: {e}")
 
     def test_portfolio_turnover_complete_change(self):
         """Test turnover with complete portfolio change"""
-        try:
+        
             old_weights = {'A': 1.0}
             new_weights = {'B': 1.0}
             
@@ -330,7 +330,7 @@ class TestPortfolioMetricsEdgeCases(unittest.TestCase):
             self.assertIsInstance(result, dict)
             print("✅ Complete portfolio change handled")
             
-        except Exception as e:
+        :
             print(f"⚠️ Complete portfolio change: {e}")
 
 
