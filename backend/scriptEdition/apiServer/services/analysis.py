@@ -794,14 +794,11 @@ class AnalysisService(BaseService):
                             parsed_result = json.loads(cleaned_text)
                             
                             # Look for filename and path info
-                            filename = (parsed_result.get("filename") or 
-                                      parsed_result.get("actual_filename") or
-                                      parsed_result.get("absolute_path"))
+                            saved_filename = parsed_result.get("saved_filename")
                             
-                            if filename and filename.endswith('.py'):
+                            if saved_filename and saved_filename.endswith('.py'):
                                 return {
-                                    "filename": filename,
-                                    "absolute_path": parsed_result.get("absolute_path"),
+                                    "filename": saved_filename,
                                     "size": parsed_result.get("size", 0),
                                     "success": parsed_result.get("success", False)
                                 }
@@ -810,12 +807,12 @@ class AnalysisService(BaseService):
                             continue
                     
                     elif isinstance(result_content, dict):
-                        filename = result_content.get("filename") or result_content.get("file_path")
+                        saved_filename = result_content.get("filename") or result_content.get("file_path")
                         content = result_content.get("content") or result_content.get("file_content")
                         
-                        if filename and content and filename.endswith('.py'):
+                        if saved_filename and content and saved_filename.endswith('.py'):
                             return {
-                                "filename": filename,
+                                "filename": saved_filename,
                                 "content": content,
                                 "size": len(str(content))
                             }

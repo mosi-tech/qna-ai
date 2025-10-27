@@ -7,6 +7,7 @@ Returns only validation status to LLM, never actual financial data.
 """
 
 import sys
+import os
 import json
 import logging
 import asyncio
@@ -24,7 +25,9 @@ from mcp.types import (
 )
 
 # Import shared execution logic
-from shared_script_executor import execute_script, check_forbidden_imports, check_defensive_programming
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+from shared.execution import execute_script, check_forbidden_imports, check_defensive_programming
+from shared.storage import get_storage
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -188,7 +191,8 @@ async def handle_call_tool(name: str, arguments: dict) -> list[TextContent | Ima
                 type="text",
                 text=json.dumps({
                     "error": f"Unknown validation tool: {name}",
-                    "available_tools": ["read_file", "list_files", "delete_file", "write_and_validate"]
+                    # "available_tools": ["read_file", "list_files", "delete_file", "write_and_validate"]
+                    "available_tools": ["write_and_validate"]
                 }, indent=2)
             )]
             
@@ -211,7 +215,6 @@ async def validate_script(arguments: dict) -> list[TextContent]:
     logger.info(f"🧪 Validating Python script: {script_filename} (timeout={timeout}s)")
     
     # Read script content from file
-    import os
     
     # Handle both absolute and relative paths
     if os.path.isabs(script_filename):
@@ -324,12 +327,35 @@ async def get_capabilities() -> list[TextContent]:
 
 def get_scripts_directory():
     """Get the scripts directory path"""
-    import os
     server_dir = os.path.dirname(os.path.abspath(__file__))
     scripts_dir = os.path.join(server_dir, "scripts")
     # Create directory if it doesn't exist
     os.makedirs(scripts_dir, exist_ok=True)
     return scripts_dir
+
+def _generate_guaranteed_unique_filename(filename: str) -> str:
+    """
+    Generate guaranteed unique filename without needing to check storage
+    Uses timestamp + UUID to ensure uniqueness
+    """
+    import uuid
+    from datetime import datetime
+    
+    if not filename.endswith('.py'):
+        # For non-Python files, still add timestamp to avoid conflicts
+        base_name = os.path.splitext(filename)[0]
+        extension = os.path.splitext(filename)[1]
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        unique_id = uuid.uuid4().hex[:8]
+        return f"{base_name}_{timestamp}_{unique_id}{extension}"
+    
+    # For Python files, use the existing format from generate_unique_filename
+    base_name = os.path.splitext(filename)[0]
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    unique_id = uuid.uuid4().hex[:4]  # 4 chars like the original function
+    
+    return f"{base_name}_{timestamp}_{unique_id}.py"
+
 
 def generate_unique_filename(file_path: str) -> tuple[str, str]:
     """
@@ -379,7 +405,7 @@ def generate_unique_filename(file_path: str) -> tuple[str, str]:
             return new_file_path, unique_filename
 
 async def write_file(arguments: dict) -> list[TextContent]:
-    """Write content to a file using absolute path or relative to scripts directory"""
+    """Write content to a file using storage abstraction"""
     filename = arguments.get("filename", "")
     content = arguments.get("content", "")
     
@@ -394,95 +420,76 @@ async def write_file(arguments: dict) -> list[TextContent]:
     
     try:
         import os
+        from datetime import datetime
         
         # Store original filename for response
         original_filename = filename
         
-        # Check if filename is an absolute path
-        if os.path.isabs(filename):
-            # Use absolute path directly
-            file_path = os.path.abspath(filename)
-            
-            # Security check: ensure absolute path is within allowed directories
-            allowed_bases = [
-                "/Users/shivc/Documents/Workspace/JS/qna-ai-admin",  # Project root
-                "/tmp",  # Temp directory
-                "/var/tmp"  # Alternative temp
-            ]
-            
-            # Check if the absolute path is within any allowed directory
-            path_allowed = any(
-                file_path.startswith(os.path.abspath(base)) 
-                for base in allowed_bases
-            )
-            
-            if not path_allowed:
-                return [TextContent(
-                    type="text",
-                    text=json.dumps({
-                        "success": False,
-                        "error": f"Absolute path not allowed: {file_path}. Must be within project directory or temp directories."
-                    }, indent=2)
-                )]
-            
-            # Generate unique filename for Python files
-            file_path, filename = generate_unique_filename(file_path)
-            if filename != os.path.basename(original_filename):
-                logger.info(f"🔧 Generated unique filename (absolute): '{os.path.basename(original_filename)}' → '{filename}'")
-        else:
-            # Relative path - use scripts directory
-            scripts_dir = get_scripts_directory()
-            
-            # Security check for relative paths: ensure no path traversal
-            if ".." in filename or "/" in filename or "\\" in filename:
-                return [TextContent(
-                    type="text",
-                    text=json.dumps({
-                        "success": False,
-                        "error": "Invalid relative filename: path traversal not allowed"
+        # Security check for relative paths: ensure no path traversal
+        if ".." in filename or (not filename.endswith('.py')):
+            return [TextContent(
+                type="text",
+                text=json.dumps({
+                    "success": False,
+                    "error": "Invalid filename: only .py files allowed, no path traversal"
                 }, indent=2)
             )]
-            
-            # Generate initial file path
-            file_path = os.path.join(scripts_dir, filename)
-            
-            # Generate unique filename for Python files
-            file_path, filename = generate_unique_filename(file_path)
-            if filename != original_filename:
-                logger.info(f"🔧 Generated unique filename (relative): '{original_filename}' → '{filename}'")
         
-        # Ensure parent directory exists
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        # Use storage abstraction
+        storage = get_storage()
         
-        with open(file_path, 'w', encoding='utf-8') as f:
-            f.write(content)
+        # Generate guaranteed unique filename without checking storage
+        unique_filename = _generate_guaranteed_unique_filename(filename)
         
-        logger.info(f"📝 File written: {file_path} ({len(content)} characters)")
+        if unique_filename != filename:
+            logger.info(f"🔧 Generated unique filename: '{filename}' → '{unique_filename}'")
+        
+        # Prepare metadata
+        metadata = {
+            "original_filename": original_filename,
+            "created_at": datetime.now().isoformat(),
+            "source": "mcp_validation_server",
+            "status": "validated_and_saved"
+        }
+        
+        # Write to storage
+        success = await storage.write_script(unique_filename, content, metadata=metadata)
+        
+        if not success:
+            return [TextContent(
+                type="text",
+                text=json.dumps({
+                    "success": False,
+                    "error": "Failed to write file to storage"
+                }, indent=2)
+            )]
+        
+        logger.info(f"📝 File written to storage: {unique_filename} ({len(content)} characters)")
         
         return [TextContent(
             type="text",
             text=json.dumps({
                 "success": True,
-                "message": f"File written successfully",
-                "absolute_path": file_path,
-                "input_filename": original_filename,  # Original filename from LLM
-                "actual_filename": filename,  # Actual filename used (with timestamp if Python)
-                "size": len(content)
+                "message": f"File written successfully to storage",
+                "saved_filename": unique_filename,
+                "input_filename": original_filename,
+                "storage_location": "configured_storage_provider",
+                "characters": len(content)
             }, indent=2)
         )]
         
     except Exception as e:
-        logger.error(f"❌ Failed to write file {filename}: {e}")
+        logger.error(f"❌ Failed to write file: {e}")
         return [TextContent(
             type="text",
             text=json.dumps({
                 "success": False,
-                "error": f"Failed to write file: {str(e)}"
+                "error": f"Write failed: {str(e)}"
             }, indent=2)
         )]
 
 async def read_file(arguments: dict) -> list[TextContent]:
-    """Read content from a file using absolute path or relative to scripts directory"""
+    """Read content from a file using storage abstraction"""
     filename = arguments.get("filename", "")
     
     if not filename:
@@ -495,104 +502,96 @@ async def read_file(arguments: dict) -> list[TextContent]:
         )]
     
     try:
-        import os
+        # Use storage abstraction
+        storage = get_storage()
         
-        # Check if filename is an absolute path
-        if os.path.isabs(filename):
-            # Use absolute path directly
-            file_path = os.path.abspath(filename)
-            
-            # Security check: ensure absolute path is within allowed directories
-            allowed_bases = [
-                "/Users/shivc/Documents/Workspace/JS/qna-ai-admin",  # Project root
-                "/tmp",  # Temp directory
-                "/var/tmp"  # Alternative temp
-            ]
-            
-            # Check if the absolute path is within any allowed directory
-            path_allowed = any(
-                file_path.startswith(os.path.abspath(base)) 
-                for base in allowed_bases
-            )
-            
-            if not path_allowed:
-                return [TextContent(
-                    type="text",
-                    text=json.dumps({
-                        "success": False,
-                        "error": f"Absolute path not allowed: {file_path}. Must be within project directory or temp directories."
-                    }, indent=2)
-                )]
-        else:
-            # Relative path - use scripts directory
-            scripts_dir = get_scripts_directory()
-            file_path = os.path.join(scripts_dir, filename)
-            
-            # Security check for relative paths: ensure no path traversal
-            if ".." in filename or "/" in filename or "\\" in filename:
-                return [TextContent(
-                    type="text",
-                    text=json.dumps({
-                        "success": False,
-                        "error": "Invalid relative filename: path traversal not allowed"
-                    }, indent=2)
-                )]
+        # Read from storage
+        content = await storage.read_script(filename)
+        metadata = await storage.get_script_metadata(filename)
         
-        if not os.path.exists(file_path):
-            return [TextContent(
-                type="text",
-                text=json.dumps({
-                    "success": False,
-                    "error": f"File not found: {filename}"
-                }, indent=2)
-            )]
+        result = {
+            "success": True,
+            "filename": filename,
+            "content": content,
+            "size": len(content),
+            "storage_location": "configured_storage_provider"
+        }
         
-        with open(file_path, 'r', encoding='utf-8') as f:
-            content = f.read()
+        # Add metadata if available
+        if metadata:
+            result.update({
+                "modified": metadata.get("modified", "unknown"),
+                "created": metadata.get("created", "unknown"),
+                "status": metadata.get("status", "unknown")
+            })
         
-        logger.info(f"📖 File read: {file_path} ({len(content)} characters)")
+        logger.info(f"📖 File read from storage: {filename} ({len(content)} characters)")
         
         return [TextContent(
             type="text",
-            text=json.dumps({
-                "success": True,
-                "absolute_path": file_path,
-                "input_filename": filename,
-                "content": content,
-                "size": len(content)
-            }, indent=2)
+            text=json.dumps(result, indent=2)
         )]
         
-    except Exception as e:
-        logger.error(f"❌ Failed to read file {filename}: {e}")
+    except FileNotFoundError:
         return [TextContent(
             type="text",
             text=json.dumps({
                 "success": False,
-                "error": f"Failed to read file: {str(e)}"
+                "error": f"File not found: {filename}"
             }, indent=2)
         )]
-
+    except Exception as e:
+        logger.error(f"❌ Failed to read file: {e}")
+        return [TextContent(
+            type="text",
+            text=json.dumps({
+                "success": False,
+                "error": f"Read failed: {str(e)}"
+            }, indent=2)
+        )]
 async def list_files(arguments: dict) -> list[TextContent]:
-    """List all files in the scripts directory"""
+    """List all files using storage abstraction"""
     try:
-        import os
-        scripts_dir = get_scripts_directory()
+        # Use storage abstraction
+        storage = get_storage()
         
-        if not os.path.exists(scripts_dir):
-            files = []
-        else:
-            files = [f for f in os.listdir(scripts_dir) if os.path.isfile(os.path.join(scripts_dir, f))]
+        # Get prefix filter from arguments (optional)
+        prefix = arguments.get("prefix", None)
         
-        logger.info(f"📂 Listed {len(files)} files in scripts directory")
+        # List scripts from storage
+        script_names = await storage.list_scripts(prefix=prefix)
+        
+        # Get metadata for each script
+        files_with_metadata = []
+        for script_name in script_names:
+            try:
+                metadata = await storage.get_script_metadata(script_name)
+                file_info = {
+                    "name": script_name,
+                    "size": metadata.get("size", 0) if metadata else 0,
+                    "modified": metadata.get("modified", "unknown") if metadata else "unknown",
+                    "status": metadata.get("status", "unknown") if metadata else "unknown"
+                }
+                files_with_metadata.append(file_info)
+            except Exception as e:
+                logger.warning(f"Failed to get metadata for {script_name}: {e}")
+                files_with_metadata.append({
+                    "name": script_name,
+                    "size": 0,
+                    "modified": "unknown",
+                    "status": "unknown"
+                })
+        
+        logger.info(f"📂 Listed {len(script_names)} files from storage")
         
         return [TextContent(
             type="text",
             text=json.dumps({
                 "success": True,
-                "scripts_directory": scripts_dir,
-                "files": files,
-                "count": len(files)
+                "storage_location": "configured_storage_provider",
+                "files": files_with_metadata,
+                "count": len(script_names),
+                "prefix_filter": prefix
             }, indent=2)
         )]
         
@@ -690,9 +689,22 @@ async def write_and_validate(arguments: dict) -> list[TextContent]:
         )]
     
     # Step 2: Validate the written file
-    actual_filename = write_response.get("actual_filename", filename)
+    saved_filename = write_response.get("saved_filename")
+    
+    # Ensure saved_filename is not empty
+    if not saved_filename:
+        return [TextContent(
+            type="text",
+            text=json.dumps({
+                "success": False,
+                "operation": "validation_preparation",
+                "error": "Write operation did not return a valid script name",
+                "write_result": write_response
+            }, indent=2)
+        )]
+    
     validate_result = await validate_script({
-        "script_filename": actual_filename,
+        "script_filename": saved_filename,
         "timeout": timeout,
         "parameters": parameters
     })
@@ -703,16 +715,16 @@ async def write_and_validate(arguments: dict) -> list[TextContent]:
         "success": validate_response.get("valid", False),
         "write_result": {
             "success": True,
-            "absolute_path": write_response.get("absolute_path"),
-            "input_filename": write_response.get("input_filename"),
-            "actual_filename": write_response.get("actual_filename"),
+            # "absolute_path": write_response.get("absolute_path"),
+            # "input_filename": write_response.get("input_filename"),
+            "actual_filename": write_response.get("saved_filename"),
             "size": write_response.get("size")
         },
         "validation_result": validate_response
     }
     
     if combined_result["success"]:
-        logger.info(f"✅ Write and validate successful: {actual_filename}")
+        logger.info(f"✅ Write and validate successful: {saved_filename}")
     else:
         logger.warning(f"❌ Write and validate failed: {validate_response.get('error', 'Validation failed')}")
     
