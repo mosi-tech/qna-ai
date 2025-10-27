@@ -6,7 +6,7 @@ import logging
 import uvicorn
 from contextlib import asynccontextmanager
 from typing import Optional
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 
 import sys
@@ -25,6 +25,8 @@ from services.audit_service import AuditService
 from services.execution_service import ExecutionService
 from services.progress_service import progress_manager
 from api.routes import APIRoutes
+from api.execution_routes import ExecutionRoutes
+from api.auth import UserContext, require_authenticated_user, get_optional_user
 from api.progress_routes import router as progress_router
 from api.session_routes import router as session_router
 from db import MongoDBClient, RepositoryManager
@@ -91,6 +93,8 @@ async def lifespan(app: FastAPI):
             execution_service,
             session_manager=session_manager
         )
+        logger.info("  → Creating ExecutionRoutes instance...")
+        execution_routes = ExecutionRoutes()
         logger.info("✅ API routes initialized successfully")
         
         # Store all in app state
@@ -104,6 +108,7 @@ async def lifespan(app: FastAPI):
         app.state.analysis_service = analysis_service
         app.state.search_service = search_service
         app.state.api_routes = api_routes
+        app.state.execution_routes = execution_routes
         
         provider = analysis_service.llm_service.provider_type.upper()
         logger.info(f"✅ Server ready with {provider} provider")
@@ -217,6 +222,50 @@ def create_app() -> FastAPI:
     async def list_models():
         """List available models for the current provider"""
         return await app.state.api_routes.list_models()
+    
+    # Execution Queue Routes (Secured)
+    @app.get("/execution/{execution_id}/status")
+    async def get_execution_status(
+        execution_id: str, 
+        user_context: UserContext = Depends(require_authenticated_user)
+    ):
+        """Get the status of an execution (requires authentication)"""
+        return await app.state.execution_routes.get_execution_status(execution_id, user_context)
+    
+    @app.get("/execution/{execution_id}/logs")
+    async def get_execution_logs(
+        execution_id: str, 
+        user_context: UserContext = Depends(require_authenticated_user)
+    ):
+        """Get the logs for an execution (requires authentication)"""
+        return await app.state.execution_routes.get_execution_logs(execution_id, user_context)
+    
+    @app.get("/execution/{execution_id}/stream")
+    async def stream_execution_logs(
+        execution_id: str, 
+        user_context: UserContext = Depends(require_authenticated_user)
+    ):
+        """Stream real-time execution logs via SSE (requires authentication)"""
+        return await app.state.execution_routes.stream_execution_logs(execution_id, user_context)
+    
+    @app.get("/user/executions")
+    async def get_my_executions(
+        limit: int = 50, 
+        status: Optional[str] = None,
+        user_context: UserContext = Depends(require_authenticated_user)
+    ):
+        """Get all executions for the authenticated user"""
+        return await app.state.execution_routes.get_user_executions(user_context, limit=limit, status_filter=status)
+    
+    @app.get("/session/{session_id}/executions")
+    async def get_session_executions(
+        session_id: str, 
+        limit: int = 50, 
+        status: Optional[str] = None,
+        user_context: UserContext = Depends(require_authenticated_user)
+    ):
+        """Get all executions for a specific session (user must own the executions)"""
+        return await app.state.execution_routes.get_session_executions(session_id, user_context, limit=limit, status_filter=status)
     
     @app.post("/conversation/confirm")
     async def confirm_expansion(session_id: str, confirmed: bool):

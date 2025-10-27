@@ -19,7 +19,7 @@ import uvicorn
 # Import shared execution logic
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from shared.execution import execute_script
 
 # Configure logging
@@ -180,7 +180,7 @@ Status: Ready for production execution
         "saved": True,
         "script_name": request.script_name,
         "script_path": script_path,
-        "execute_command": f"curl -X POST http://localhost:8013/execute-script -H 'Content-Type: application/json' -d '{{\"script_name\": \"{request.script_name}\"}}'"
+        "execute_command": f"curl -X POST http://localhost:8007/execute-script -H 'Content-Type: application/json' -d '{{\"script_name\": \"{request.script_name}\"}}'"
     }
 
 @app.get("/scripts")
@@ -202,7 +202,7 @@ async def list_scripts():
                 "name": filename,
                 "size": stat.st_size,
                 "modified": datetime.fromtimestamp(stat.st_mtime).isoformat(),
-                "execute_command": f"curl -X POST http://localhost:8013/execute-script -H 'Content-Type: application/json' -d '{{\"script_name\": \"{filename}\"}}'"
+                "execute_command": f"curl -X POST http://localhost:8007/execute-script -H 'Content-Type: application/json' -d '{{\"script_name\": \"{filename}\"}}'"
             })
     
     return {"scripts": scripts}
@@ -219,8 +219,8 @@ async def health_check():
 @app.on_event("startup")
 async def startup_event():
     """Initialize server on startup"""
-    logger.info("🚀 HTTP Script Execution Server started on port 8013")
+    logger.info("🚀 HTTP Script Execution Server started on port 8007")
 
 if __name__ == "__main__":
-    logger.info("🚀 Starting HTTP Script Execution Server on port 8013...")
-    uvicorn.run(app, host="0.0.0.0", port=8013)
+    logger.info("🚀 Starting HTTP Script Execution Server on port 8007...")
+    uvicorn.run(app, host="0.0.0.0", port=8007)

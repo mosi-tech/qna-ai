@@ -118,17 +118,29 @@ def main(**kwargs):
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
+    #USE UNDERSCORE based argument names (consistent with function arguments)
+    parser.add_argument('--symbol', default='QQQ', help='Stock symbol to analyze')
+    parser.add_argument('--benchmark_symbol', default='SPY', help='benchmark symbol')
+    parser.add_argument('--analysis_period_days', type=int, default=252, help='Trading periods per year')
+    
     args = parser.parse_args()
     
     logging.basicConfig(level=logging.INFO)
-    results = main()
+    results = main(
+        symbol=args.symbol,
+        benchmark_symbol=args.benchmark_symbol
+        analysis_period_days=args.analysis_period_days,
+    )
     print(json.dumps(results, indent=2, default=str))
+    args = parser.parse_args()
+    
 ```
 
 **🚨 CRITICAL REQUIREMENTS:**
 
 ✅ **PARAMETERIZATION**: Extract ALL configurable values as function parameters
 ✅ **KWARGS HANDLING**: main() function MUST extract parameters from kwargs for HTTP execution
+✅ USE UNDERSCORE based argument names (consistent with function arguments)
 ✅ **ERROR HANDLING**: Use fail-fast approach, no defensive fallbacks
 ✅ **MCP INTEGRATION**: Use call_mcp_function() wrapper for all MCP function calls;
 ❌ DO NOT implement call_mcp_function; It is provided by exeution environment.

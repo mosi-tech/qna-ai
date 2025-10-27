@@ -1,0 +1,10 @@
+# MongoDB Queue Dependencies
+motor>=3.3.0         # Async MongoDB driver
+pymongo>=4.5.0       # MongoDB driver
+fastapi>=0.104.0     # For SSE streaming response
+uvicorn>=0.24.0      # ASGI server
+
+# Optional: Future queue implementations
+# aiokafka>=0.8.0     # For Kafka queue
+# aioredis>=2.0.0     # For Redis queue  
+# boto3>=1.29.0       # For AWS SQS queue

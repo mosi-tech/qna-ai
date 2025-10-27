@@ -2,7 +2,7 @@
   "mcpServers": {
     "financial-data": {
       "command": "python",
-      "args": ["/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server/financial_server.py"],
+      "args": ["/Users/shivc/Documents/Workspace/JS/qna-ai-admin/backend/mcp-server/financial_server.py"],
       "env": {
         "PYTHONPATH": "/Users/shivc/Documents/Workspace/JS/qna-ai-admin",
         "USE_MOCK_FINANCIAL_DATA": "true"
@@ -10,14 +10,14 @@
     },
     "analytics-engine": {
       "command": "python",
-      "args": ["/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server/analytics_server.py"],
+      "args": ["/Users/shivc/Documents/Workspace/JS/qna-ai-admin/backend/mcp-server/analytics_server.py"],
       "env": {
         "PYTHONPATH": "/Users/shivc/Documents/Workspace/JS/qna-ai-admin"
       }
     },
     "validation-server": {
       "command": "python",
-      "args": ["/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server/mcp_script_validation_server.py"],
+      "args": ["/Users/shivc/Documents/Workspace/JS/qna-ai-admin/backend/mcp-server/mcp_script_validation_server.py"],
       "env": {
         "PYTHONPATH": "/Users/shivc/Documents/Workspace/JS/qna-ai-admin"
       }
