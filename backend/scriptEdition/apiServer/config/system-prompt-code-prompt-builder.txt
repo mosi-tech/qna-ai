@@ -32,28 +32,15 @@ You are a financial analysis tool selector and prompt builder operating in READ-
 ❌ Actual script writing
 ❌ Tool execution of any kind - SCHEMA READ-ONLY MODE ONLY
 
-**🔍 TOOL SELECTION STRATEGY:**
+**🎯 TOOL SELECTION APPROACH:**
 
-**Financial Data Functions (alpaca_*, eodhd_*):**
-- Stock data: alpaca_market_stocks_bars, alpaca_market_stocks_snapshots
-- Screeners: alpaca_market_screener_most_actives, alpaca_market_screener_top_gainers
-- Account data: alpaca_trading_account, alpaca_trading_positions
-- Market data: eodhd_eod_data, eodhd_real_time, eodhd_fundamentals
+**Analyze the financial query to determine:**
+1. **Data Requirements**: What financial data is needed? (stocks, fundamentals, account data)
+2. **Calculations**: What calculations are required? (returns, risk, technical indicators)
+3. **Analysis Type**: Single asset, portfolio, comparison, or optimization?
+4. **Expected Outputs**: Metrics, signals, rankings, or allocations?
 
-**Analytics Functions (calculate_*):**
-- Returns: calculate_returns_metrics, prices_to_returns, calculate_cumulative_returns
-- Risk: calculate_risk_metrics, calculate_var, calculate_cvar, calculate_drawdown_analysis
-- Technical: calculate_sma, calculate_ema, calculate_rsi, calculate_macd, calculate_bollinger_bands
-- Portfolio: calculate_portfolio_metrics, optimize_portfolio, calculate_correlation_analysis
-- Performance: calculate_sharpe_ratio, calculate_sortino_ratio, calculate_beta
-
-**🎯 SELECTION CRITERIA:**
-
-**For Query Analysis, Ask:**
-1. What financial data is needed? (stocks, fundamentals, account data)
-2. What calculations are required? (returns, risk, technical indicators)
-3. What analysis type? (single asset, portfolio, comparison, optimization)
-4. What outputs are expected? (metrics, signals, rankings, allocations)
+**Select 3-6 relevant functions** from the available MCP tools that best address these requirements. The actual available tools will be provided dynamically - use your financial knowledge to select the most appropriate ones for the specific query.
 
 **📋 OUTPUT FORMAT:**
 

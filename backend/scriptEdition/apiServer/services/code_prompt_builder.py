@@ -10,11 +10,17 @@ import asyncio
 import json
 import logging
 import os
+import sys
 from datetime import datetime
 from typing import Dict, Any, Optional, List
 
 from llm import create_code_prompt_builder_llm, LLMService, MessageFormatter
 from .base_service import BaseService
+
+# Import safe JSON utilities
+utils_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "utils")
+sys.path.append(utils_path)
+from json_utils import safe_json_loads
 
 class CodePromptBuilderService(BaseService):
     """Service that analyzes queries and builds enriched prompts for code generation"""
@@ -158,26 +164,16 @@ class CodePromptBuilderService(BaseService):
                 self.logger.error(f"❌ LLM request failed: {response.get('error')}")
                 raise Exception(f"LLM request failed: {response.get('error')}")
             
-            # Parse JSON response
-            function_selection = json.loads(response["content"])
+            # Parse JSON response using safe parser
+            function_selection = safe_json_loads(response["content"], default={})
             self.logger.info(f"📋 Selected {len(function_selection.get('selected_functions', []))} functions")
             return function_selection
             
         except Exception as e:
             self.logger.error(f"❌ Error selecting functions: {e}")
-            # Fallback to basic function set
-            return {
-                "analysis_type": "general",
-                "selected_functions": [
-                    "alpaca_market_stocks_bars",
-                    "calculate_returns_metrics",
-                    "calculate_risk_metrics"
-                ],
-                "suggested_parameters": {
-                    "symbols": ["SPY"],
-                    "analysis_period_days": 180
-                }
-            }
+            return {}
+            
+            
     
     async def _get_function_schemas_from_llm(self, function_names: List[str]) -> Dict[str, str]:
         """Get detailed function schemas with docstrings via LLM service tool calls (parallel fetching)"""
@@ -240,7 +236,7 @@ class CodePromptBuilderService(BaseService):
     async def _fetch_function_docstring(self, function_name: str) -> Optional[str]:
         """Fetch detailed docstring for a function using server-specific docstring tool"""
         # Extract server name and base function name
-        # e.g., "financial-analysis__alpaca_market_stocks_bars" -> server="financial-analysis", base="alpaca_market_stocks_bars"
+        # e.g., "financial-analysis__get_historical_data -> server="financial-analysis", base="get_historical_data"
         if "__" not in function_name:
             self.logger.debug(f"No server prefix in function name: {function_name}")
             return None
@@ -279,7 +275,7 @@ class CodePromptBuilderService(BaseService):
                 if hasattr(tool_result, 'content') and tool_result.content:
                     text_content = tool_result.content[0].text
                     try:
-                        parsed_result = json.loads(text_content.strip())
+                        parsed_result = safe_json_loads(text_content.strip(), default={})
                         if parsed_result.get('success') and parsed_result.get('docstring'):
                             docstring = parsed_result['docstring']
                             self.logger.info(f"✅ Got docstring for {base_function_name} from {server_name}")

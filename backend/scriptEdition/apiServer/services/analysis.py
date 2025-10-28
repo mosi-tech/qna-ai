@@ -6,11 +6,28 @@ Financial Analysis Service - QnA analysis with MCP tool calling
 import json
 import logging
 import os
+import sys
 from datetime import datetime
 from typing import Dict, Any, Optional, List
 
 from llm import create_analysis_llm, LLMService
 from .base_service import BaseService
+
+# Import safe JSON utilities
+utils_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "utils")
+sys.path.append(utils_path)
+from json_utils import safe_json_loads
+
+# Import verification service
+try:
+    from .verification import StandaloneVerificationService
+    from .verification.integration_helpers import VerificationIntegrationHelper
+    VERIFICATION_AVAILABLE = True
+except ImportError as e:
+    logging.getLogger(__name__).warning(f"⚠️ Verification service not available: {e}")
+    StandaloneVerificationService = None
+    VerificationIntegrationHelper = None
+    VERIFICATION_AVAILABLE = False
 
 class AnalysisService(BaseService):
     """Financial question analysis service with MCP integration"""
@@ -20,6 +37,10 @@ class AnalysisService(BaseService):
     def __init__(self, llm_service: Optional[LLMService] = None):
         super().__init__(llm_service=llm_service, service_name="analysis")
         self._load_verification_prompt()
+        
+        # Initialize verification service at startup
+        self.verification_service = self._initialize_verification_service()
+        self.verification_helper = VerificationIntegrationHelper() if VERIFICATION_AVAILABLE else None
     
     def _create_default_llm(self) -> LLMService:
         """Create default LLM service for analysis"""
@@ -47,6 +68,43 @@ class AnalysisService(BaseService):
             except FileNotFoundError:
                 logging.getLogger(__name__).warning(f"⚠️ Verification prompt config not found: {prompt_path}")
                 cls._verification_prompt_template = "Before we proceed, I need to verify something important:\n\n**Question**: {question}\n\nPlease check if the script correctly answers the question."
+    
+    def _initialize_verification_service(self):
+        """Initialize verification service at startup"""
+        if not VERIFICATION_AVAILABLE:
+            self.logger.warning("⚠️ Verification service not available")
+            return None
+            
+        if self._verification_prompt_template and StandaloneVerificationService:
+            try:
+                verification_service = StandaloneVerificationService(self._verification_prompt_template)
+                
+                # Log startup initialization summary
+                available_services = len([s for s in verification_service.llm_services if s is not None])
+                total_services = len(verification_service.llm_services)
+                
+                if available_services > 0:
+                    configs_summary = [f"{c['provider']}/{c['model']}" for c in verification_service.verification_configs]
+                    self.logger.info(f"✅ Verification service initialized at startup: {available_services}/{total_services} services available")
+                    self.logger.debug(f"Verification configs: {configs_summary}")
+                else:
+                    self.logger.warning(f"⚠️ Verification service initialized but no LLM services available - check API keys")
+                
+                return verification_service
+                
+            except Exception as e:
+                self.logger.error(f"❌ Failed to initialize verification service at startup: {e}")
+                return None
+        else:
+            self.logger.warning("⚠️ No verification prompt available, verification service not initialized")
+            return None
+    
+    def _get_verification_service(self):
+        """Get verification service (already initialized at startup)"""
+        if not VERIFICATION_AVAILABLE:
+            self.logger.warning("⚠️ Verification service not available")
+            return None
+        return self.verification_service
     
     # === ANALYSIS WORKFLOW ===
     
@@ -220,7 +278,7 @@ class AnalysisService(BaseService):
                                 
                                 # Clean the text and try parsing
                                 cleaned_text = text_content.strip()
-                                parsed_result = json.loads(cleaned_text)
+                                parsed_result = safe_json_loads(cleaned_text, default={})
                                 
                                 if (parsed_result.get("success") and 
                                     parsed_result.get("absolute_path", "").endswith(".py") and
@@ -247,7 +305,7 @@ class AnalysisService(BaseService):
                         elif isinstance(result_content, str):
                             # JSON string - parse it
                             try:
-                                parsed_result = json.loads(result_content)
+                                parsed_result = safe_json_loads(result_content, default={})
                                 if (parsed_result.get("success") and 
                                     parsed_result.get("absolute_path", "").endswith(".py") and
                                     parsed_result.get("size", 0) > 1000):
@@ -525,7 +583,7 @@ class AnalysisService(BaseService):
                 }
                 
                 # Add caching metadata to tool results for cacheable functions
-                for i, (tool_call, tool_result) in enumerate(zip(current_tool_calls, formatted_tool_results.get("content", []))):
+                for i, tool_call in enumerate(current_tool_calls):
                     function_name = tool_call.get("function", "").get("name", "")
                     # Strip MCP server prefixes to get base function name
                     base_function_name = function_name.split("__")[-1] if "__" in function_name else function_name
@@ -544,14 +602,50 @@ class AnalysisService(BaseService):
                     # Check if the last tool result indicates success
                     last_tool_result = current_tool_results[-1] if current_tool_results else None
                     if last_tool_result and self._is_validation_successful(last_tool_result):
-                        self.logger.info("📋 write_and_validate succeeded, appending verification message")
-                        from llm import MessageFormatter
-                        formatter = MessageFormatter(self.llm_service.provider_type)
-                        verification_message = formatter.create_verification_message(original_question, self._verification_prompt_template)
-                        messages.append(verification_message)
-                        self.logger.debug(f"Verification message appended: {verification_message.get('role')} role")
+                        self.logger.info("📋 write_and_validate succeeded, starting multi-model verification")
+                        
+                        # Check if verification is available
+                        if not VERIFICATION_AVAILABLE or not self.verification_helper:
+                            self.logger.warning("⚠️ Multi-model verification not available, skipping")
+                        else:
+                            # Extract script content from tool result
+                            script_content = self.verification_helper.extract_script_content_from_tool_result(last_tool_result)
+                            
+                            if script_content:
+                                # Run multi-model verification
+                                verification_service = self._get_verification_service()
+                                if verification_service:
+                                    try:
+                                        verification_result = await verification_service.verify_script(
+                                            question=original_question,
+                                            script_content=script_content
+                                        )
+                                        
+                                        # Create handoff message based on verification result
+                                        handoff_message = self.verification_helper.create_verification_handoff_message(
+                                            verification_result, original_question
+                                        )
+                                        messages.append(handoff_message)
+                                        
+                                        # Log verification summary
+                                        summary = self.verification_helper.format_model_results_summary(verification_result)
+                                        self.logger.info(f"🔍 Multi-model verification result: {'APPROVED' if verification_result.verified else 'REJECTED'}")
+                                        self.logger.debug(f"Verification details:\n{summary}")
+                                        
+                                    except Exception as e:
+                                        self.logger.error(f"❌ Multi-model verification failed: {e}")
+                                        # Fallback to simple message
+                                        fallback_message = {
+                                            "role": "user",
+                                            "content": f"Verification service error: {str(e)}. Please provide the final analysis result."
+                                        }
+                                        messages.append(fallback_message)
+                                else:
+                                    self.logger.warning("⚠️ Verification service not available, skipping verification")
+                            else:
+                                self.logger.warning("⚠️ Could not extract script content, skipping verification")
                     else:
-                        self.logger.info("⚠️ write_and_validate failed or result unavailable, skipping verification message")
+                        self.logger.info("⚠️ write_and_validate failed or result unavailable, skipping verification")
             
             # Filter messages to keep only recent relevant tool interactions
             filtered_messages = self._filter_messages_for_context(messages)
@@ -583,7 +677,7 @@ class AnalysisService(BaseService):
             if hasattr(result_data, 'content') and result_data.content:
                 try:
                     text_content = result_data.content[0].text
-                    parsed = json.loads(text_content.strip())
+                    parsed = safe_json_loads(text_content.strip(), default={})
                     # Check if validation_result.valid is true OR write_result.success is true
                     if parsed.get("validation_result", {}).get("valid"):
                         return True
@@ -603,7 +697,7 @@ class AnalysisService(BaseService):
             elif isinstance(result_data, str):
                 # Try to parse as JSON
                 try:
-                    parsed = json.loads(result_data)
+                    parsed = safe_json_loads(result_data, default={})
                     # Check for nested validation_result.valid
                     if parsed.get("validation_result", {}).get("valid"):
                         return True
@@ -684,7 +778,7 @@ class AnalysisService(BaseService):
             
             for json_text in json_matches:
                 try:
-                    parsed_json = json.loads(json_text.strip())
+                    parsed_json = safe_json_loads(json_text.strip(), default={})
                     
                     # Check if this is a script generation response
                     if "script_generation" in parsed_json:
@@ -702,7 +796,7 @@ class AnalysisService(BaseService):
             
             # If no JSON blocks found, try parsing the entire content as JSON
             try:
-                parsed_content = json.loads(content.strip())
+                parsed_content = safe_json_loads(content.strip(), default={})
                 if "script_generation" in parsed_content:
                     script_data = parsed_content["script_generation"]
                     if script_data.get("status") in ["success", "failed"]:
@@ -745,7 +839,7 @@ class AnalysisService(BaseService):
             
             for json_text in json_matches:
                 try:
-                    parsed_json = json.loads(json_text.strip())
+                    parsed_json = safe_json_loads(json_text.strip(), default={})
                     
                     # Check if this is a reuse decision
                     if "reuse_decision" in parsed_json:
@@ -763,7 +857,7 @@ class AnalysisService(BaseService):
             
             # If no JSON blocks found, try parsing the entire content as JSON
             try:
-                parsed_content = json.loads(content.strip())
+                parsed_content = safe_json_loads(content.strip(), default={})
                 if "reuse_decision" in parsed_content:
                     reuse_data = parsed_content["reuse_decision"]
                     if reuse_data.get("should_reuse") is True:

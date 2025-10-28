@@ -21,6 +21,33 @@ from .mcp_injection import create_mcp_injection_wrapper
 
 logger = logging.getLogger("shared-script-executor")
 
+
+def create_enhanced_script(script_content: str, mock_mode: bool = True) -> str:
+    """
+    Create enhanced script with MCP injection wrapper for verification purposes
+    
+    Args:
+        script_content: Raw script content to enhance
+        mock_mode: Whether to use mock mode (True) or production mode (False)
+        
+    Returns:
+        Enhanced script with MCP injection wrapper
+    """
+    try:
+        # Create MCP injection wrapper
+        mcp_wrapper = create_mcp_injection_wrapper(production_mode=not mock_mode)
+        
+        # Create enhanced script
+        enhanced_script = mcp_wrapper + script_content
+        
+        logger.debug(f"✅ Enhanced script created (wrapper: {len(mcp_wrapper)} chars, total: {len(enhanced_script)} chars)")
+        return enhanced_script
+        
+    except Exception as e:
+        logger.error(f"❌ Error creating enhanced script: {e}")
+        # Return original script if enhancement fails
+        return script_content
+
 def execute_script(script_content: str, mock_mode: bool = True, timeout: int = 30, parameters: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """
     Execute Python script with MCP function injection
@@ -38,11 +65,8 @@ def execute_script(script_content: str, mock_mode: bool = True, timeout: int = 3
     logger.info(f"🚀 Executing script (mock={mock_mode}, timeout={timeout}s)")
     
     try:
-        # Create MCP injection wrapper
-        mcp_wrapper = create_mcp_injection_wrapper(production_mode=not mock_mode)
-        
-        # Create enhanced script
-        enhanced_script = mcp_wrapper + script_content
+        # Create enhanced script with MCP injection wrapper
+        enhanced_script = create_enhanced_script(script_content, mock_mode)
         
         # Write temporary script for subprocess execution
         script_path = _write_temp_script_local(enhanced_script)
