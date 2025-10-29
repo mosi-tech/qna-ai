@@ -79,6 +79,8 @@ backend/scriptEdition/scripts/*
 backend/scriptEdition/data/*
 backend/scriptEdition/apiServer/search/data/*
 backend/scriptEdition/apiServer/data/*
+backend/scripts/batch_results
+backend/scripts/batch_processor.log
 /serena
 /backend/scriptEdition/apiServer/code_gen
 .serena
