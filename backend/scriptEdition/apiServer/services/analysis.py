@@ -442,12 +442,29 @@ class AnalysisService(BaseService):
             indices_to_keep = set()
             write_and_validate_index = None
             verification_index = None
+            verification_failure_index = None
 
             # Scan in REVERSE order to find most recent items first
             i = len(messages) - 1
             while i >= 0:
                 msg = messages[i]
                 role = msg.get("role")
+
+                # Track verification failure message (only if it's the last message)
+                if verification_failure_index is None and role == "user" and i == len(messages) - 1:
+                    content = msg.get("content", [])
+                    if isinstance(content, list):
+                        for block in content:
+                            if isinstance(block, dict) and block.get("type") == "text":
+                                text = block.get("text", "")
+                                if "Multi-model verification FAILED" in text:
+                                    verification_failure_index = i
+                                    self.logger.debug(f"Found verification failure message at index {i} (last message)")
+                                    break
+                    elif isinstance(content, str):
+                        if "Multi-model verification FAILED" in content:
+                            verification_failure_index = i
+                            self.logger.debug(f"Found verification failure message at index {i} (last message)")
 
                 # Track verification message (don't add to indices yet - validate placement later)
                 if verification_index is None and role == "user":
@@ -487,6 +504,11 @@ class AnalysisService(BaseService):
                             self.logger.debug(f"Docstring call at index {i}")
 
                 i -= 1
+
+            # Always keep verification failure message (most recent one)
+            if verification_failure_index is not None:
+                indices_to_keep.add(verification_failure_index)
+                self.logger.debug(f"Keeping verification failure message at {verification_failure_index}")
 
             # Validate verification message placement
             # Verification should only be kept if it comes AFTER write_and_validate
