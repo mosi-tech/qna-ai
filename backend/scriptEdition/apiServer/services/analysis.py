@@ -16,18 +16,11 @@ from .base_service import BaseService
 # Import safe JSON utilities
 utils_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "utils")
 sys.path.append(utils_path)
-from json_utils import safe_json_loads
+from utils.json_utils import safe_json_loads
 
 # Import verification service
-try:
-    from .verification import StandaloneVerificationService
-    from .verification.integration_helpers import VerificationIntegrationHelper
-    VERIFICATION_AVAILABLE = True
-except ImportError as e:
-    logging.getLogger(__name__).warning(f"⚠️ Verification service not available: {e}")
-    StandaloneVerificationService = None
-    VerificationIntegrationHelper = None
-    VERIFICATION_AVAILABLE = False
+from .verification import StandaloneVerificationService
+from .verification.integration_helpers import VerificationIntegrationHelper
 
 class AnalysisService(BaseService):
     """Financial question analysis service with MCP integration"""
@@ -40,7 +33,7 @@ class AnalysisService(BaseService):
         
         # Initialize verification service at startup
         self.verification_service = self._initialize_verification_service()
-        self.verification_helper = VerificationIntegrationHelper() if VERIFICATION_AVAILABLE else None
+        self.verification_helper = VerificationIntegrationHelper()
     
     def _create_default_llm(self) -> LLMService:
         """Create default LLM service for analysis"""
@@ -71,10 +64,6 @@ class AnalysisService(BaseService):
     
     def _initialize_verification_service(self):
         """Initialize verification service at startup"""
-        if not VERIFICATION_AVAILABLE:
-            self.logger.warning("⚠️ Verification service not available")
-            return None
-            
         if self._verification_prompt_template and StandaloneVerificationService:
             try:
                 verification_service = StandaloneVerificationService(self._verification_prompt_template)
@@ -101,9 +90,6 @@ class AnalysisService(BaseService):
     
     def _get_verification_service(self):
         """Get verification service (already initialized at startup)"""
-        if not VERIFICATION_AVAILABLE:
-            self.logger.warning("⚠️ Verification service not available")
-            return None
         return self.verification_service
     
     # === ANALYSIS WORKFLOW ===
@@ -604,8 +590,11 @@ class AnalysisService(BaseService):
                     if last_tool_result and self._is_validation_successful(last_tool_result):
                         self.logger.info("📋 write_and_validate succeeded, starting multi-model verification")
                         
+                        verification_result = None
+                        verification_attempted = False
+                        
                         # Check if verification is available
-                        if not VERIFICATION_AVAILABLE or not self.verification_helper:
+                        if not self.verification_helper:
                             self.logger.warning("⚠️ Multi-model verification not available, skipping")
                         else:
                             # Extract script content from tool result
@@ -616,6 +605,7 @@ class AnalysisService(BaseService):
                                 verification_service = self._get_verification_service()
                                 if verification_service:
                                     try:
+                                        verification_attempted = True
                                         verification_result = await verification_service.verify_script(
                                             question=original_question,
                                             script_content=script_content
@@ -634,18 +624,38 @@ class AnalysisService(BaseService):
                                         
                                     except Exception as e:
                                         self.logger.error(f"❌ Multi-model verification failed: {e}")
-                                        # Fallback to simple message
-                                        fallback_message = {
-                                            "role": "user",
-                                            "content": f"Verification service error: {str(e)}. Please provide the final analysis result."
-                                        }
-                                        messages.append(fallback_message)
+                                        raise
+                                        
                                 else:
                                     self.logger.warning("⚠️ Verification service not available, skipping verification")
                             else:
                                 self.logger.warning("⚠️ Could not extract script content, skipping verification")
+                        
+                        # CRITICAL: Only raise exception if verification was not attempted or did not complete
+                        if verification_attempted and verification_result:
+                            # Verification was attempted and completed - continue conversation regardless of result
+                            if verification_result.verified:
+                                self.logger.info("✅ Multi-model verification PASSED - continuing conversation")
+                            else:
+                                rejection_reasons = []
+                                for model_result in verification_result.model_results:
+                                    if model_result.verdict == "REJECT":
+                                        rejection_reasons.extend(model_result.critical_issues)
+                                
+                                self.logger.warning(f"⚠️ Multi-model verification FAILED but continuing conversation. Issues: {'; '.join(set(rejection_reasons))}")
+                        elif verification_attempted and not verification_result:
+                            # Verification was attempted but failed to produce a result
+                            error_msg = "Multi-model verification FAILED - no verification result produced"
+                            self.logger.error(f"❌ {error_msg}")
+                            raise ValueError(error_msg)
+                        elif not verification_attempted:
+                            # Verification was not attempted - this could be a configuration issue
+                            error_msg = "Multi-model verification FAILED - verification system not available or not properly configured"
+                            self.logger.error(f"❌ {error_msg}")
+                            raise ValueError(error_msg)
+                            
                     else:
-                        self.logger.info("⚠️ write_and_validate failed or result unavailable, skipping verification")
+                        self.logger.info("⚠️ write_and_validate failed or result unavailable. Continue with script generation")
             
             # Filter messages to keep only recent relevant tool interactions
             filtered_messages = self._filter_messages_for_context(messages)

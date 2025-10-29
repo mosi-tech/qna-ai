@@ -356,6 +356,14 @@ class OpenAIProvider(LLMProvider):
             }
         }
     
+    def format_assistant_message_with_tool_calls(self, tool_calls: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Format complete assistant message with tool calls for OpenAI"""
+        return {
+            "role": "assistant",
+            "content": "",  # OpenAI expects empty string content when using tool_calls
+            "tool_calls": tool_calls
+        }
+    
     def create_simulated_assistant_message_with_tool_calls(self, content: str, tool_calls: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Create a simulated assistant message with tool calls in OpenAI's format"""
         message = {

@@ -63,6 +63,8 @@ def analyze_question(
         # 2. Process results
         # 3. Format results for the specific question
 
+        #Do NOT use try/catch blocks (except the one on top)
+
         #Sample call_mcp_function() usage
         #output = call_mcp_function(
         #    "function_name",
@@ -112,27 +114,25 @@ def main(**kwargs):
         symbols=symbols,
         benchmark_symbol=benchmark_symbol,
         analysis_period_days=analysis_period_days,
-        **kwargs
     )
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     #USE UNDERSCORE based argument names (consistent with function arguments)
-    parser.add_argument('--symbol', default='QQQ', help='Stock symbol to analyze')
+    parser.add_argument('--symbols', default='QQQ', help='Stock symbol to analyze')
     parser.add_argument('--benchmark_symbol', default='SPY', help='benchmark symbol')
     parser.add_argument('--analysis_period_days', type=int, default=252, help='Trading periods per year')
     
     args = parser.parse_args()
     
     logging.basicConfig(level=logging.INFO)
-    results = main(
-        symbol=args.symbol,
+    results = analyze_question(
+        symbols=args.symbols,
         benchmark_symbol=args.benchmark_symbol
         analysis_period_days=args.analysis_period_days,
     )
     print(json.dumps(results, indent=2, default=str))
-    args = parser.parse_args()
     
 ```
 
@@ -150,6 +150,20 @@ if __name__ == "__main__":
   - Are all parts of the question answered (not partial solutions)?
   - Does the script use the signals/conditions to drive decisions (not ignore them)?
   - Would the results directly answer the user's question?
+
+CRITICAL: EXCEPTION HANDLING
+  - Do NOT use try/catch blocks around MCP function calls
+  - Let exceptions propagate naturally for debugging
+  - The execution system will handle error formatting
+  - Your script should either succeed completely or fail with clear exceptions
+  - Exception example to AVOID:
+    try:
+        result = call_mcp_function(...)
+    except Exception as e:
+        return {"error": str(e)}  # DON'T DO THIS
+
+  - Correct approach:
+    result = call_mcp_function(...)  # Let it fail if it fails
 
 **📋 PARAMETER CATEGORIES:**
 - **Data Source**: symbols, benchmark_symbol, timeframe, data_period
