@@ -332,7 +332,7 @@ def prices_to_returns(prices: pd.Series, method: str = "simple") -> pd.Series:
         
     return returns
         
-def align_series(*series_list: pd.Series) -> List[pd.Series]:
+def align_series(*args, **kwargs) -> List[pd.Series]:
     """Align multiple time series by their common index for consistent analysis.
     
     This function is essential for financial analysis involving multiple data series
@@ -341,9 +341,11 @@ def align_series(*series_list: pd.Series) -> List[pd.Series]:
     series has missing data.
     
     Args:
-        *series_list: Variable number of pandas Series to align. Each series
-            should have a meaningful index (preferably datetime) for alignment.
-            Requires at least 2 series for alignment to be meaningful.
+        *args: Variable number of pandas Series to align (for backward compatibility),
+            OR a single list of pandas Series.
+        series_list (List[pd.Series], optional): List of pandas Series to align when
+            called via keyword arguments (MCP server compatibility).
+        **kwargs: Additional keyword arguments for compatibility.
             
     Returns:
         List[pd.Series]: List of aligned series in the same order as input.
@@ -361,8 +363,15 @@ def align_series(*series_list: pd.Series) -> List[pd.Series]:
         >>> series2 = pd.Series([10, 20, 30], index=['B', 'C', 'E'])  # Missing 'A', 'D'
         >>> series3 = pd.Series([100, 200, 300], index=['A', 'B', 'C'])  # Missing 'D', 'E'
         >>> 
-        >>> # Align series - only 'B' and 'C' are common to all
+        >>> # Method 1: Individual series as arguments (backward compatibility)
         >>> aligned = align_series(series1, series2, series3)
+        >>> 
+        >>> # Method 2: List of series as single argument
+        >>> aligned = align_series([series1, series2, series3])
+        >>> 
+        >>> # Method 3: Keyword argument (MCP server compatibility)
+        >>> aligned = align_series(series_list=[series1, series2, series3])
+        >>> 
         >>> print(f"Aligned indices: {aligned[0].index.tolist()}")  # ['B', 'C']
         >>> print(f"Series 1 aligned: {aligned[0].tolist()}")  # [2, 3]
         >>> print(f"Series 2 aligned: {aligned[1].tolist()}")  # [10, 20]
@@ -382,6 +391,7 @@ def align_series(*series_list: pd.Series) -> List[pd.Series]:
     Common values preserved: [98, 105, 110] (example values from intersection)
         
     Note:
+        - Supports multiple calling patterns for maximum compatibility
         - Uses pandas DataFrame inner join for efficient alignment
         - Preserves original data types and names when possible
         - Essential for financial calculations requiring synchronized data
@@ -390,8 +400,25 @@ def align_series(*series_list: pd.Series) -> List[pd.Series]:
         - Returns empty series if no common index points exist
         - Order of returned series matches order of input series
     """
+    # Handle different calling patterns
+    series_list = []
+    
+    if args:
+        # Check if first argument is a list of series
+        if len(args) == 1 and isinstance(args[0], list):
+            series_list = args[0]
+        else:
+            # Individual series passed as arguments
+            series_list = list(args)
+    elif 'series_list' in kwargs:
+        # MCP server style - series_list as keyword argument
+        series_list = kwargs['series_list']
+    
+    if not isinstance(series_list, list):
+        series_list = list(series_list) if series_list else []
+    
     if len(series_list) < 2:
-        return list(series_list)
+        return series_list
         
     # Create DataFrame to align all series
     df = pd.DataFrame({f"series_{i}": series for i, series in enumerate(series_list)})

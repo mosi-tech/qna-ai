@@ -16,18 +16,11 @@ from .base_service import BaseService
 # Import safe JSON utilities
 utils_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "utils")
 sys.path.append(utils_path)
-from json_utils import safe_json_loads
+from utils.json_utils import safe_json_loads
 
 # Import verification service
-try:
-    from .verification import StandaloneVerificationService
-    from .verification.integration_helpers import VerificationIntegrationHelper
-    VERIFICATION_AVAILABLE = True
-except ImportError as e:
-    logging.getLogger(__name__).warning(f"⚠️ Verification service not available: {e}")
-    StandaloneVerificationService = None
-    VerificationIntegrationHelper = None
-    VERIFICATION_AVAILABLE = False
+from .verification import StandaloneVerificationService
+from .verification.integration_helpers import VerificationIntegrationHelper
 
 class AnalysisService(BaseService):
     """Financial question analysis service with MCP integration"""
@@ -40,7 +33,10 @@ class AnalysisService(BaseService):
         
         # Initialize verification service at startup
         self.verification_service = self._initialize_verification_service()
-        self.verification_helper = VerificationIntegrationHelper() if VERIFICATION_AVAILABLE else None
+        self.verification_helper = VerificationIntegrationHelper()
+        
+        # Max attempts for write_and_validate (checked in message filter)
+        self.max_write_and_validate_attempts = 4
     
     def _create_default_llm(self) -> LLMService:
         """Create default LLM service for analysis"""
@@ -71,10 +67,6 @@ class AnalysisService(BaseService):
     
     def _initialize_verification_service(self):
         """Initialize verification service at startup"""
-        if not VERIFICATION_AVAILABLE:
-            self.logger.warning("⚠️ Verification service not available")
-            return None
-            
         if self._verification_prompt_template and StandaloneVerificationService:
             try:
                 verification_service = StandaloneVerificationService(self._verification_prompt_template)
@@ -101,10 +93,8 @@ class AnalysisService(BaseService):
     
     def _get_verification_service(self):
         """Get verification service (already initialized at startup)"""
-        if not VERIFICATION_AVAILABLE:
-            self.logger.warning("⚠️ Verification service not available")
-            return None
         return self.verification_service
+    
     
     # === ANALYSIS WORKFLOW ===
     
@@ -447,103 +437,132 @@ class AnalysisService(BaseService):
         - Initial conversation messages before first tool call
         Then reconstruct in ORIGINAL order
         """
-        try:
-            if not messages:
-                return messages
+        if not messages:
+            return messages
 
-            self.logger.debug(f"Starting REVERSE filter with {len(messages)} messages")
+        self.logger.debug(f"Starting REVERSE filter with {len(messages)} messages")
 
-            indices_to_keep = set()
-            write_and_validate_index = None
-            verification_index = None
+        indices_to_keep = set()
+        write_and_validate_index = None
+        verification_index = None
+        verification_failure_index = None
+        unsuccessful_write_and_validate_count = 0
 
-            # Scan in REVERSE order to find most recent items first
-            i = len(messages) - 1
-            while i >= 0:
-                msg = messages[i]
-                role = msg.get("role")
+        # Scan in REVERSE order to find most recent items first
+        i = len(messages) - 1
+        while i >= 0:
+            msg = messages[i]
+            role = msg.get("role")
 
-                # Track verification message (don't add to indices yet - validate placement later)
-                if verification_index is None and role == "user":
-                    content = msg.get("content", [])
-                    if isinstance(content, list):
-                        for block in content:
-                            if isinstance(block, dict) and block.get("type") == "text":
-                                text = block.get("text", "").lower()
-                                if "verification" in text or "before we proceed" in text:
-                                    verification_index = i
-                                    self.logger.debug(f"Found verification message at index {i}")
-                                    break
+            # Track verification failure message (only if it's the last message)
+            if verification_failure_index is None and role == "user" and i == len(messages) - 1:
+                content = msg.get("content", [])
+                if isinstance(content, list):
+                    for block in content:
+                        if isinstance(block, dict) and block.get("type") == "text":
+                            text = block.get("text", "")
+                            if "Multi-model verification FAILED" in text:
+                                verification_failure_index = i
+                                self.logger.debug(f"Found verification failure message at index {i} (last message)")
+                                break
+                elif isinstance(content, str):
+                    if "Multi-model verification FAILED" in content:
+                        verification_failure_index = i
+                        self.logger.debug(f"Found verification failure message at index {i} (last message)")
 
-                # Check for assistant messages with tool calls
-                if role == "assistant":
-                    if self._contains_tool_calls(msg):
-                        # Check if this is write_and_validate or docstring
-                        has_write_validate = self.llm_service.provider.message_contains_function(msg, "write_and_validate")
-                        has_docstring = self.llm_service.provider.message_contains_function(msg, "get_function_docstring")
+            # Track verification message (don't add to indices yet - validate placement later)
+            if verification_index is None and role == "user":
+                content = msg.get("content", [])
+                if isinstance(content, list):
+                    for block in content:
+                        if isinstance(block, dict) and block.get("type") == "text":
+                            text = block.get("text", "").lower()
+                            if "verification" in text or "before we proceed" in text:
+                                verification_index = i
+                                self.logger.debug(f"Found verification message at index {i}")
+                                break
 
-                        if has_write_validate and write_and_validate_index is None:
-                            # Keep this write_and_validate pair (assistant + next tool result)
+            # Check for assistant messages with tool calls
+            if role == "assistant":
+                if self._contains_tool_calls(msg):
+                    # Check if this is write_and_validate or docstring
+                    has_write_validate = self.llm_service.provider.message_contains_function(msg, "write_and_validate")
+                    has_docstring = self.llm_service.provider.message_contains_function(msg, "get_function_docstring")
+
+                    if has_write_validate:
+                        # Check if this attempt was unsuccessful
+                        tool_result_role = self.llm_service.provider.get_tool_result_role()
+                        if i + 1 < len(messages) and messages[i + 1].get("role") == tool_result_role:
+                            tool_result = messages[i + 1]
+                            if not self._is_validation_successful(tool_result):
+                                unsuccessful_write_and_validate_count += 1
+                                self.logger.debug(f"Found unsuccessful write_and_validate at index {i} (count: {unsuccessful_write_and_validate_count})")
+                        
+                        # Keep only the most recent write_and_validate pair
+                        if write_and_validate_index is None:
                             write_and_validate_index = i
                             indices_to_keep.add(i)
                             # Add tool result (next message)
-                            tool_result_role = self.llm_service.provider.get_tool_result_role()
                             if i + 1 < len(messages) and messages[i + 1].get("role") == tool_result_role:
                                 indices_to_keep.add(i + 1)
                             self.logger.debug(f"Most recent write_and_validate at index {i}")
 
-                        elif has_docstring:
-                            # Keep all docstring pairs
-                            indices_to_keep.add(i)
-                            tool_result_role = self.llm_service.provider.get_tool_result_role()
-                            if i + 1 < len(messages) and messages[i + 1].get("role") == tool_result_role:
-                                indices_to_keep.add(i + 1)
-                            self.logger.debug(f"Docstring call at index {i}")
-
-                i -= 1
-
-            # Validate verification message placement
-            # Verification should only be kept if it comes AFTER write_and_validate
-            if verification_index is not None:
-                if write_and_validate_index is not None:
-                    if verification_index > write_and_validate_index:
-                        indices_to_keep.add(verification_index)
-                        self.logger.debug(f"Keeping verification at {verification_index} (after write_and_validate at {write_and_validate_index})")
-                    else:
-                        self.logger.debug(f"Removing verification at {verification_index} (before write_and_validate at {write_and_validate_index})")
-                else:
-                    # No write_and_validate found, keep verification anyway
-                    indices_to_keep.add(verification_index)
-                    self.logger.debug(f"Keeping verification at {verification_index} (no write_and_validate found)")
-
-            # Add all INITIAL messages (user and assistant) until we hit the first tool call
-            # This preserves the conversational context at the beginning
-            for i, msg in enumerate(messages):
-                role = msg.get("role")
-                if role == "user":
-                    indices_to_keep.add(i)
-                elif role == "assistant":
-                    if self._contains_tool_calls(msg):
-                        # Stop here - we've hit the tool interaction phase
-                        break
-                    else:
-                        # Non-tool assistant message at start - keep it
+                    elif has_docstring:
+                        # Keep all docstring pairs
                         indices_to_keep.add(i)
+                        tool_result_role = self.llm_service.provider.get_tool_result_role()
+                        if i + 1 < len(messages) and messages[i + 1].get("role") == tool_result_role:
+                            indices_to_keep.add(i + 1)
+                        self.logger.debug(f"Docstring call at index {i}")
 
-            # Build filtered list in ORIGINAL order
-            filtered_messages = [messages[i] for i in range(len(messages)) if i in indices_to_keep]
+            i -= 1
 
-            self.logger.debug(f"Filtered {len(messages)} → {len(filtered_messages)} messages")
-            self.logger.debug(f"Kept indices: {sorted(indices_to_keep)}")
+        # Check if unsuccessful write_and_validate limit exceeded
+        if unsuccessful_write_and_validate_count >= self.max_write_and_validate_attempts:
+            error_msg = f"Maximum unsuccessful write_and_validate attempts ({self.max_write_and_validate_attempts}) exceeded in conversation. This usually indicates the script generation is not converging. Please try rephrasing your question or breaking it into smaller parts."
+            self.logger.error(f"❌ {error_msg} (found {unsuccessful_write_and_validate_count} unsuccessful attempts)")
+            raise ValueError(error_msg)
 
-            return filtered_messages
-            
-        except Exception as e:
-            self.logger.error(f"Error filtering messages for context: {e}")
-            # Fallback: keep first message + last 6 messages (3 tool interactions)
-            if len(messages) <= 7:
-                return messages
-            return [messages[0]] + messages[-6:]
+        # Always keep verification failure message (most recent one)
+        if verification_failure_index is not None:
+            indices_to_keep.add(verification_failure_index)
+            self.logger.debug(f"Keeping verification failure message at {verification_failure_index}")
+
+        # Validate verification message placement
+        # Verification should only be kept if it comes AFTER write_and_validate
+        if verification_index is not None:
+            if write_and_validate_index is not None:
+                if verification_index > write_and_validate_index:
+                    indices_to_keep.add(verification_index)
+                    self.logger.debug(f"Keeping verification at {verification_index} (after write_and_validate at {write_and_validate_index})")
+                else:
+                    self.logger.debug(f"Removing verification at {verification_index} (before write_and_validate at {write_and_validate_index})")
+            else:
+                # No write_and_validate found, keep verification anyway
+                indices_to_keep.add(verification_index)
+                self.logger.debug(f"Keeping verification at {verification_index} (no write_and_validate found)")
+
+        # Add all INITIAL messages (user and assistant) until we hit the first tool call
+        # This preserves the conversational context at the beginning
+        for i, msg in enumerate(messages):
+            role = msg.get("role")
+            if role == "user":
+                indices_to_keep.add(i)
+            elif role == "assistant":
+                if self._contains_tool_calls(msg):
+                    # Stop here - we've hit the tool interaction phase
+                    break
+                else:
+                    # Non-tool assistant message at start - keep it
+                    indices_to_keep.add(i)
+
+        # Build filtered list in ORIGINAL order
+        filtered_messages = [messages[i] for i in range(len(messages)) if i in indices_to_keep]
+
+        self.logger.debug(f"Filtered {len(messages)} → {len(filtered_messages)} messages")
+        self.logger.debug(f"Kept indices: {sorted(indices_to_keep)}")
+
+        return filtered_messages
     
     def _contains_tool_calls(self, message_content) -> bool:
         """Check if message content contains tool calls using provider-specific logic"""
@@ -562,6 +581,7 @@ class AnalysisService(BaseService):
         
         # Check if the function name ends with write_and_validate
         return function_name.endswith("write_and_validate")
+
 
     async def _continue_conversation(self, model: str, messages: List[Dict[str, Any]], 
                                    current_tool_calls: List[Dict[str, Any]], current_tool_results: List[Dict[str, Any]],
@@ -604,8 +624,11 @@ class AnalysisService(BaseService):
                     if last_tool_result and self._is_validation_successful(last_tool_result):
                         self.logger.info("📋 write_and_validate succeeded, starting multi-model verification")
                         
+                        verification_result = None
+                        verification_attempted = False
+                        
                         # Check if verification is available
-                        if not VERIFICATION_AVAILABLE or not self.verification_helper:
+                        if not self.verification_helper:
                             self.logger.warning("⚠️ Multi-model verification not available, skipping")
                         else:
                             # Extract script content from tool result
@@ -616,6 +639,7 @@ class AnalysisService(BaseService):
                                 verification_service = self._get_verification_service()
                                 if verification_service:
                                     try:
+                                        verification_attempted = True
                                         verification_result = await verification_service.verify_script(
                                             question=original_question,
                                             script_content=script_content
@@ -634,18 +658,38 @@ class AnalysisService(BaseService):
                                         
                                     except Exception as e:
                                         self.logger.error(f"❌ Multi-model verification failed: {e}")
-                                        # Fallback to simple message
-                                        fallback_message = {
-                                            "role": "user",
-                                            "content": f"Verification service error: {str(e)}. Please provide the final analysis result."
-                                        }
-                                        messages.append(fallback_message)
+                                        raise
+                                        
                                 else:
                                     self.logger.warning("⚠️ Verification service not available, skipping verification")
                             else:
                                 self.logger.warning("⚠️ Could not extract script content, skipping verification")
+                        
+                        # CRITICAL: Only raise exception if verification was not attempted or did not complete
+                        if verification_attempted and verification_result:
+                            # Verification was attempted and completed - continue conversation regardless of result
+                            if verification_result.verified:
+                                self.logger.info("✅ Multi-model verification PASSED - continuing conversation")
+                            else:
+                                rejection_reasons = []
+                                for model_result in verification_result.model_results:
+                                    if model_result.verdict == "REJECT":
+                                        rejection_reasons.extend(model_result.critical_issues)
+                                
+                                self.logger.warning(f"⚠️ Multi-model verification FAILED but continuing conversation. Issues: {'; '.join(set(rejection_reasons))}")
+                        elif verification_attempted and not verification_result:
+                            # Verification was attempted but failed to produce a result
+                            error_msg = "Multi-model verification FAILED - no verification result produced"
+                            self.logger.error(f"❌ {error_msg}")
+                            raise ValueError(error_msg)
+                        elif not verification_attempted:
+                            # Verification was not attempted - this could be a configuration issue
+                            error_msg = "Multi-model verification FAILED - verification system not available or not properly configured"
+                            self.logger.error(f"❌ {error_msg}")
+                            raise ValueError(error_msg)
+                            
                     else:
-                        self.logger.info("⚠️ write_and_validate failed or result unavailable, skipping verification")
+                        self.logger.info("⚠️ write_and_validate failed or result unavailable. Continue with script generation")
             
             # Filter messages to keep only recent relevant tool interactions
             filtered_messages = self._filter_messages_for_context(messages)

@@ -18,7 +18,7 @@ import os
 # Import safe JSON utilities
 utils_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "utils")
 sys.path.append(utils_path)
-from json_utils import safe_json_loads
+from utils.json_utils import safe_json_loads
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from llm.service import LLMService
 from llm.utils import LLMConfig

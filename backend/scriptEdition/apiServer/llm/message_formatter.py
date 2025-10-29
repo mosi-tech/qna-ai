@@ -121,17 +121,17 @@ class BaseMessageFormatter:
     
     def build_conversation(self, 
                           user_query: str, 
-                          function_schemas: Dict[str, str], enable_caching: bool) -> Dict[str, Any]:
+                          function_schemas: Dict[str, str], enable_caching: bool = False) -> Dict[str, Any]:
         raise NotImplementedError
     
     def build_system_prompt(self,
                            user_query: str,
-                           function_schemas: Dict[str, str], enable_caching: bool) -> Dict[str, Any]:
+                           function_schemas: Dict[str, str]) -> Dict[str, Any]:
         raise NotImplementedError
     
     def build_tool_simulation(self,
                             user_query: str,
-                            function_schemas: Dict[str, str], enable_caching: bool) -> Dict[str, Any]:
+                            function_schemas: Dict[str, str]) -> Dict[str, Any]:
         raise NotImplementedError
     
     def format_assistant_response_with_tool_use(self,
@@ -367,12 +367,45 @@ class OpenAIMessageFormatter(BaseMessageFormatter):
     
     def build_conversation(self, 
                           user_query: str, 
-                          function_schemas: Dict[str, str], enable_caching: bool) -> Dict[str, Any]:
-        """Build conversation in OpenAI format"""
-        
+                          function_schemas: Dict[str, str], enable_caching: bool = False) -> Dict[str, Any]:
+        """Build conversation in OpenAI format with function documentation exchange"""
         messages = []
-        query_message = f"Write a Python script to answer this question: {user_query}"
-        messages.append({"role": "user", "content": query_message})
+        
+        # Start with assistant explaining what it will do
+        assistant_response = f"""I'll analyze this question and identify the required functions. For this analysis, I need to use the following MCP functions:
+
+{chr(10).join([f"- {func_name}" for func_name in function_schemas.keys()])}
+
+Let me get the documentation for these functions one by one."""
+        
+        messages.append({
+            "role": "assistant", 
+            "content": assistant_response
+        })
+        
+        # Exchange documentation for each function
+        for i, (func_name, schema) in enumerate(function_schemas.items(), 1):
+            assistant_request = f"Can you provide the documentation for the `{func_name}` function?"
+            messages.append({
+                "role": "assistant", 
+                "content": assistant_request
+            })
+            
+            documentation_content = f"""Here is the documentation for `{func_name}`:
+
+```
+{schema}
+```"""
+            messages.append({
+                "role": "user", 
+                "content": documentation_content
+            })
+        
+        final_assistant_message = "Perfect! Now I have all the function documentation I need. I'll write the Python script using these functions."
+        messages.append({
+            "role": "assistant", 
+            "content": final_assistant_message
+        })
         
         return {
             "mode": "conversation",
@@ -382,25 +415,107 @@ class OpenAIMessageFormatter(BaseMessageFormatter):
     
     def build_system_prompt(self,
                            user_query: str,
-                           function_schemas: Dict[str, str], enable_caching: bool) -> Dict[str, Any]:
-        """Build system prompt mode for OpenAI"""
+                           function_schemas: Dict[str, str]) -> Dict[str, Any]:
+        """Build system prompt mode for OpenAI with function docs in system message"""
         messages = []
+        
+        # Build function documentation
+        function_docs = []
+        for func_name, schema in function_schemas.items():
+            function_docs.append(f"## {func_name}")
+            function_docs.append(schema)
+            function_docs.append("")
+        
+        enhanced_system_prompt = f"""## Available MCP Functions
+
+The following functions are available for your analysis:
+
+{chr(10).join(function_docs)}
+
+## Instructions
+
+When writing the Python script:
+1. Use only the functions documented above
+2. Call functions using call_mcp_function()
+3. Follow the parameter specifications exactly
+4. Handle errors appropriately
+5. Return structured results as JSON"""
+
+        # Add system message first
+        messages.append({
+            "role": "system",
+            "content": enhanced_system_prompt
+        })
+        
         query_message = f"Write a Python script to answer this question: {user_query}"
-        messages.append({"role": "user", "content": query_message})
+        messages.append({
+            "role": "user", 
+            "content": query_message
+        })
         
         return {
             "mode": "system_prompt",
             "messages": messages,
+            "system_prompt_extension": enhanced_system_prompt,
             "message_count": len(messages)
         }
     
     def build_tool_simulation(self,
                             user_query: str,
-                            function_schemas: Dict[str, str], enable_caching: bool) -> Dict[str, Any]:
-        """Build tool simulation messages for OpenAI"""
+                            function_schemas: Dict[str, str]) -> Dict[str, Any]:
+        """Build tool simulation messages with simulated function calls for OpenAI"""
+        import json
+        
         messages = []
+        
         query_message = f"Write a Python script to answer this question: {user_query}"
-        messages.append({"role": "user", "content": query_message})
+        messages.append({
+            "role": "user",
+            "content": query_message
+        })
+        
+        # Build tool calls for function documentation
+        tool_calls = []
+        call_ids = {}
+        for func_name in function_schemas.keys():
+            arguments = {"function_name": func_name}
+            call_id = f"call_{func_name}"
+            
+            tool_call = {
+                "id": call_id,
+                "type": "function",
+                "function": {
+                    "name": "get_function_docstring",
+                    "arguments": json.dumps(arguments)
+                }
+            }
+            tool_calls.append(tool_call)
+            call_ids[func_name] = call_id
+        
+        assistant_message = {
+            "role": "assistant",
+            "content": "I need to get documentation for the required functions first.",
+            "tool_calls": tool_calls
+        }
+        messages.append(assistant_message)
+        
+        # Add tool results
+        for func_name, schema in function_schemas.items():
+            structured_result = {
+                "success": True,
+                "function_name": func_name,
+                "original_name": func_name,
+                "docstring": schema,
+                "signature": f"{func_name}(**kwargs)",
+                "module": "mcp_functions"
+            }
+            
+            tool_result = {
+                "role": "tool",
+                "tool_call_id": call_ids[func_name],
+                "content": json.dumps(structured_result, indent=2)
+            }
+            messages.append(tool_result)
         
         return {
             "mode": "tool_simulation",
@@ -413,11 +528,12 @@ class OpenAIMessageFormatter(BaseMessageFormatter):
                                                 tool_name: str,
                                                 tool_input: Dict[str, Any],
                                                 tool_id: Optional[str] = None) -> Dict[str, Any]:
-        """Format assistant message with OpenAI function_call format"""
-        
+        """Format assistant message with OpenAI tool_calls format"""
+        import json
         import uuid
+        
         if not tool_id:
-            tool_id = str(uuid.uuid4())[:8]
+            tool_id = f"call_{str(uuid.uuid4())[:8]}"
         
         content = text if text else ""
         
@@ -430,7 +546,7 @@ class OpenAIMessageFormatter(BaseMessageFormatter):
                     "type": "function",
                     "function": {
                         "name": tool_name,
-                        "arguments": str(tool_input)
+                        "arguments": json.dumps(tool_input)
                     }
                 }
             ]
@@ -450,17 +566,50 @@ class OpenAIMessageFormatter(BaseMessageFormatter):
 
 
 class OllamaMessageFormatter(BaseMessageFormatter):
-    """Format messages for Ollama API"""
+    """Format messages for Ollama API (OpenAI-compatible)"""
     
     def build_conversation(self, 
                           user_query: str, 
                           function_schemas: Dict[str, str], 
-                          enable_caching: bool) -> Dict[str, Any]:
-        """Build conversation in Ollama format (similar to OpenAI)"""
-        
+                          enable_caching: bool = False) -> Dict[str, Any]:
+        """Build conversation in Ollama format with function documentation exchange"""
         messages = []
-        query_message = f"Write a Python script to answer this question: {user_query}"
-        messages.append({"role": "user", "content": query_message})
+        
+        # Start with assistant explaining what it will do
+        assistant_response = f"""I'll analyze this question and identify the required functions. For this analysis, I need to use the following MCP functions:
+
+{chr(10).join([f"- {func_name}" for func_name in function_schemas.keys()])}
+
+Let me get the documentation for these functions one by one."""
+        
+        messages.append({
+            "role": "assistant", 
+            "content": assistant_response
+        })
+        
+        # Exchange documentation for each function
+        for i, (func_name, schema) in enumerate(function_schemas.items(), 1):
+            assistant_request = f"Can you provide the documentation for the `{func_name}` function?"
+            messages.append({
+                "role": "assistant", 
+                "content": assistant_request
+            })
+            
+            documentation_content = f"""Here is the documentation for `{func_name}`:
+
+```
+{schema}
+```"""
+            messages.append({
+                "role": "user", 
+                "content": documentation_content
+            })
+        
+        final_assistant_message = "Perfect! Now I have all the function documentation I need. I'll write the Python script using these functions."
+        messages.append({
+            "role": "assistant", 
+            "content": final_assistant_message
+        })
         
         return {
             "mode": "conversation",
@@ -470,27 +619,107 @@ class OllamaMessageFormatter(BaseMessageFormatter):
     
     def build_system_prompt(self,
                            user_query: str,
-                           function_schemas: Dict[str, str], 
-                           enable_caching: bool) -> Dict[str, Any]:
-        """Build system prompt mode for Ollama"""
+                           function_schemas: Dict[str, str]) -> Dict[str, Any]:
+        """Build system prompt mode for Ollama with function docs in system message"""
         messages = []
+        
+        # Build function documentation
+        function_docs = []
+        for func_name, schema in function_schemas.items():
+            function_docs.append(f"## {func_name}")
+            function_docs.append(schema)
+            function_docs.append("")
+        
+        enhanced_system_prompt = f"""## Available MCP Functions
+
+The following functions are available for your analysis:
+
+{chr(10).join(function_docs)}
+
+## Instructions
+
+When writing the Python script:
+1. Use only the functions documented above
+2. Call functions using call_mcp_function()
+3. Follow the parameter specifications exactly
+4. Handle errors appropriately
+5. Return structured results as JSON"""
+
+        # Add system message first (Ollama supports system messages)
+        messages.append({
+            "role": "system",
+            "content": enhanced_system_prompt
+        })
+        
         query_message = f"Write a Python script to answer this question: {user_query}"
-        messages.append({"role": "user", "content": query_message})
+        messages.append({
+            "role": "user", 
+            "content": query_message
+        })
         
         return {
             "mode": "system_prompt",
             "messages": messages,
+            "system_prompt_extension": enhanced_system_prompt,
             "message_count": len(messages)
         }
     
     def build_tool_simulation(self,
                             user_query: str,
-                            function_schemas: Dict[str, str], 
-                            enable_caching: bool) -> Dict[str, Any]:
-        """Build tool simulation messages for Ollama"""
+                            function_schemas: Dict[str, str]) -> Dict[str, Any]:
+        """Build tool simulation messages with simulated function calls for Ollama"""
+        import json
+        
         messages = []
+        
         query_message = f"Write a Python script to answer this question: {user_query}"
-        messages.append({"role": "user", "content": query_message})
+        messages.append({
+            "role": "user",
+            "content": query_message
+        })
+        
+        # Build tool calls for function documentation (OpenAI-compatible format)
+        tool_calls = []
+        call_ids = {}
+        for func_name in function_schemas.keys():
+            arguments = {"function_name": func_name}
+            call_id = f"call_{func_name}"
+            
+            tool_call = {
+                "id": call_id,
+                "type": "function",
+                "function": {
+                    "name": "get_function_docstring",
+                    "arguments": json.dumps(arguments)
+                }
+            }
+            tool_calls.append(tool_call)
+            call_ids[func_name] = call_id
+        
+        assistant_message = {
+            "role": "assistant",
+            "content": "I need to get documentation for the required functions first.",
+            "tool_calls": tool_calls
+        }
+        messages.append(assistant_message)
+        
+        # Add tool results
+        for func_name, schema in function_schemas.items():
+            structured_result = {
+                "success": True,
+                "function_name": func_name,
+                "original_name": func_name,
+                "docstring": schema,
+                "signature": f"{func_name}(**kwargs)",
+                "module": "mcp_functions"
+            }
+            
+            tool_result = {
+                "role": "tool",
+                "tool_call_id": call_ids[func_name],
+                "content": json.dumps(structured_result, indent=2)
+            }
+            messages.append(tool_result)
         
         return {
             "mode": "tool_simulation",
@@ -503,15 +732,28 @@ class OllamaMessageFormatter(BaseMessageFormatter):
                                                 tool_name: str,
                                                 tool_input: Dict[str, Any],
                                                 tool_id: Optional[str] = None) -> Dict[str, Any]:
-        """Format assistant message for Ollama"""
-        
+        """Format assistant message with tool calls for Ollama (OpenAI-compatible)"""
+        import json
         import uuid
+        
         if not tool_id:
-            tool_id = str(uuid.uuid4())[:8]
+            tool_id = f"call_{str(uuid.uuid4())[:8]}"
+        
+        content = text if text else ""
         
         return {
             "role": "assistant",
-            "content": text
+            "content": content,
+            "tool_calls": [
+                {
+                    "id": tool_id,
+                    "type": "function",
+                    "function": {
+                        "name": tool_name,
+                        "arguments": json.dumps(tool_input)
+                    }
+                }
+            ]
         }
     
     def create_verification_message(self, original_question: str, verification_prompt_template: str = "") -> Dict[str, Any]:
