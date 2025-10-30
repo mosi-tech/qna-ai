@@ -15,6 +15,9 @@ from services.progress_service import (
     progress_info,
     progress_success,
     progress_error,
+    execution_running,
+    execution_completed,
+    execution_failed,
     ProgressLevel,
 )
 
@@ -35,6 +38,7 @@ class ExecutionService:
         analysis_id: str,
         user_id: str,
         session_id: Optional[str] = None,
+        execution_id: Optional[str] = None,
         timeout_seconds: int = 300
     ) -> Dict[str, Any]:
         """
@@ -99,6 +103,9 @@ class ExecutionService:
             self.logger.info("⚙️ Executing script...")
             if session_id:
                 await progress_info(session_id, "Running script")
+                # Send execution running status update via SSE
+                if execution_id:
+                    await execution_running(session_id, execution_id, analysis_id)
             
             execution_result = await self._execute_script(
                 script_content=script_content,
@@ -113,6 +120,9 @@ class ExecutionService:
                 self.logger.error(f"❌ Execution failed: {execution_result.get('error')}")
                 if session_id:
                     await progress_error(session_id, f"Execution failed")
+                    # Send execution failed status update via SSE
+                    if execution_id:
+                        await execution_failed(session_id, execution_id, execution_result.get('error'), analysis_id)
                 
                 return {
                     "success": False,
@@ -127,6 +137,9 @@ class ExecutionService:
             
             if session_id:
                 await progress_success(session_id, "Analysis complete")
+                # Send execution completed status update via SSE
+                if execution_id:
+                    await execution_completed(session_id, execution_id, analysis_id)
             
             self.logger.info(f"✅ Execution completed successfully in {execution_time_ms}ms")
             
@@ -142,6 +155,9 @@ class ExecutionService:
             self.logger.error(f"❌ Execution service error: {e}")
             if session_id:
                 await progress_error(session_id, f"Execution error: {str(e)}")
+                # Send execution failed status update via SSE
+                if execution_id:
+                    await execution_failed(session_id, execution_id, f"Service error: {str(e)}", analysis_id)
             import traceback
             traceback.print_exc()
             return {

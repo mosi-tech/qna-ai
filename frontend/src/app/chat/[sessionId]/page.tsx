@@ -62,25 +62,27 @@ export default function ChatPage() {
           if (msg.role === 'user') return 'user';
           if (msg.role === 'assistant') {
             // Check if this assistant message contains analysis results
-            if (msg.metadata && (
+            if (msg.uiData || (msg.metadata && (
+              msg.metadata.response_type === 'analysis' ||
               msg.metadata.query_type || 
               msg.metadata.analysis_type || 
               msg.metadata.best_day ||
-              msg.metadata.response_type === 'analysis' ||
               (msg.metadata.response_data && msg.metadata.response_data.analysis_result)
-            )) {
+            ))) {
               return 'results';
+            } else if (msg.metadata && msg.metadata.response_type === 'clarification') {
+              return 'clarification';
             }
             return 'ai';
           }
-          return 'results'; // fallback
+          return 'ai'; // fallback
         };
 
         const loadedMessages = (sessionDetail.messages || []).map((msg: any, idx: number) => ({
           id: msg.id || `${session_id}-${idx}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           type: getMessageType(msg),
           content: msg.content,
-          data: msg.metadata,
+          data: msg.uiData || msg.metadata, // Prefer uiData over raw metadata
           analysisId: msg.analysisId,
           executionId: msg.executionId,
           timestamp: new Date(msg.timestamp || Date.now()),
@@ -433,25 +435,27 @@ export default function ChatPage() {
         if (msg.role === 'user') return 'user';
         if (msg.role === 'assistant') {
           // Check if this assistant message contains analysis results
-          if (msg.metadata && (
+          if (msg.uiData || (msg.metadata && (
+            msg.metadata.response_type === 'analysis' ||
             msg.metadata.query_type || 
             msg.metadata.analysis_type || 
             msg.metadata.best_day ||
-            msg.metadata.response_type === 'analysis' ||
             (msg.metadata.response_data && msg.metadata.response_data.analysis_result)
-          )) {
+          ))) {
             return 'results';
+          } else if (msg.metadata && msg.metadata.response_type === 'clarification') {
+            return 'clarification';
           }
           return 'ai';
         }
-        return 'results'; // fallback
+        return 'ai'; // fallback
       };
 
       const loadedMessages = (sessionDetail.messages || []).map((msg: any, idx: number) => ({
         id: msg.id || `${selectedSessionId}-${idx}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         type: getMessageType(msg),
         content: msg.content,
-        data: msg.metadata,
+        data: msg.uiData || msg.metadata, // Prefer uiData over raw metadata
         analysisId: msg.analysisId,
         executionId: msg.executionId,
         timestamp: new Date(msg.timestamp || Date.now()),
@@ -492,25 +496,27 @@ export default function ChatPage() {
         if (msg.role === 'user') return 'user';
         if (msg.role === 'assistant') {
           // Check if this assistant message contains analysis results
-          if (msg.metadata && (
+          if (msg.uiData || (msg.metadata && (
+            msg.metadata.response_type === 'analysis' ||
             msg.metadata.query_type || 
             msg.metadata.analysis_type || 
             msg.metadata.best_day ||
-            msg.metadata.response_type === 'analysis' ||
             (msg.metadata.response_data && msg.metadata.response_data.analysis_result)
-          )) {
+          ))) {
             return 'results';
+          } else if (msg.metadata && msg.metadata.response_type === 'clarification') {
+            return 'clarification';
           }
           return 'ai';
         }
-        return 'results'; // fallback
+        return 'ai'; // fallback
       };
 
       const olderMessages = (sessionDetail.messages || []).map((msg: any, idx: number) => ({
         id: msg.id || `${session_id}-${newOffset + idx}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         type: getMessageType(msg),
         content: msg.content,
-        data: msg.metadata,
+        data: msg.uiData || msg.metadata, // Prefer uiData over raw metadata
         analysisId: msg.analysisId,
         executionId: msg.executionId,
         timestamp: new Date(msg.timestamp || Date.now()),

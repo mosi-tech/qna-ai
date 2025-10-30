@@ -14,7 +14,6 @@ from .schemas import (
     ChatSessionModel,
     AnalysisModel,
     ExecutionModel,
-    SavedAnalysisModel,
     RoleType,
     QueryType,
 )
@@ -27,7 +26,8 @@ class ChatRepository:
     
     def __init__(self, db: MongoDBClient):
         self.db = db
-    
+        
+        
     async def start_session(self, user_id: str, title: Optional[str] = None) -> str:
         """Create new chat session"""
         session = ChatSessionModel(
@@ -260,11 +260,15 @@ class ChatRepository:
                     "role": msg.get("role"),
                     "content": msg.get("content"),
                     "timestamp": msg.get("created_at", "").isoformat() if hasattr(msg.get("created_at"), 'isoformat') else str(msg.get("created_at")),
-                    "metadata": msg.get("metadata"),
+                    "analysisId": msg.get("analysisId"),
+                    "executionId": msg.get("executionId"),
+                    "metadata": msg.get("metadata", {}),  # Return raw metadata instead of transformed uiData
                 }
                 for msg in messages
             ]
         }
+    
+    
     
     async def update_session(self, session_id: str, update_data: Dict[str, Any]) -> bool:
         """Update session metadata"""
