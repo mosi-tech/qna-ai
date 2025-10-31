@@ -45,11 +45,6 @@ class AnalysisService(BaseService):
         """Create default LLM service for analysis"""
         return create_analysis_llm()
     
-    
-    def _get_default_system_prompt(self) -> str:
-        """Default system prompt for analysis service"""
-        return "You are a helpful financial analysis assistant that generates tool calls for financial data analysis."
-    
     @classmethod
     def _load_verification_prompt(cls):
         """Load verification prompt from config file (lazy load)"""

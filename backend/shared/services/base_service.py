@@ -58,11 +58,10 @@ class BaseService(ABC):
         # Allow service-specific prompt file override
         prompt_filename = self._get_system_prompt_filename()
         
-        # Point to apiServer config directory from shared location
+        # Point to shared config directory (centralized location)
         self.system_prompt_path = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), 
-            "..", "..", 
-            "scriptEdition", "apiServer", "config", 
+            "..", "config", 
             prompt_filename
         )
         

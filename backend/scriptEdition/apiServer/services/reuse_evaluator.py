@@ -24,6 +24,8 @@ sys.path.insert(0, shared_path)
 from shared.llm import create_reuse_evaluator_llm, LLMService
 from shared.services.base_service import BaseService
 from utils.json_utils import safe_json_loads
+from shared.storage import get_storage
+
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -47,7 +49,7 @@ class ReuseEvaluatorService(BaseService):
         """Default system prompt for reuse evaluator"""
         return "You are a financial analysis reuse evaluator."
     
-    def _extract_three_sources(self, script_path: str, function_name: str = "analyze_question") -> Optional[Dict[str, str]]:
+    async def _extract_three_sources(self, script_name: str, function_name: str = "analyze_question") -> Optional[Dict[str, str]]:
         """
         Extract THREE SOURCES as raw text (no parsing/AST):
         1. Function signature - raw text of function definition
@@ -68,12 +70,9 @@ class ReuseEvaluatorService(BaseService):
             }
         """
         try:
-            if not os.path.exists(script_path):
-                logger.warning(f"Script path does not exist: {script_path}")
-                return None
             
-            with open(script_path, 'r') as f:
-                source_code = f.read()
+            storage = get_storage()
+            source_code = await storage.read_script(script_name)
             
             sources = {
                 "function_signature": "",
@@ -132,7 +131,7 @@ class ReuseEvaluatorService(BaseService):
                 sources["argparse_section"] = '\n'.join(argparse_lines)
                 logger.info(f"✅ SOURCE 3 (Argparse): Extracted {len(argparse_lines)} argument definitions")
             else:
-                logger.warning(f"⚠️  No argparse section found in {script_path}")
+                logger.warning(f"⚠️  No argparse section found in {script_name}")
             
             logger.info(f"✅ Three sources extracted successfully")
             return sources
@@ -342,37 +341,72 @@ Return ONLY valid JSON:
                         # Merge: use LLM-provided params, fallback to existing execution params
                         params_to_convert = {**execution_params, **llm_provided_params}
                         
-                        if params_to_convert:
-                            # Extract three text sources (signature + argparse + docstring)
-                            script_name = matched_analysis.get("execution", {}).get("script_name", {})
-                            project_root = "/Users/shivc/Documents/Workspace/JS/qna-ai-admin"
-                            script_path = os.path.join(project_root, 'mcp-server/scripts', script_name)
- 
-                            if script_path:
-                                sources = self._extract_three_sources(script_path)
-                                
-                                if sources:
-                                    # Convert parameters using LLM with three text sources
-                                    conversion_result = await self._convert_parameters_with_sources(
-                                        user_query=user_query,
-                                        execution_params=params_to_convert,
-                                        sources=sources
-                                    )
-                                    
-                                    # Add conversion results to decision
-                                    decision["original_execution"] = decision["execution"]
-                                    decision["execution"] = {"script_name": script_name, "parameters": conversion_result.get("converted_parameters", params_to_convert)}
-                                    decision["conversion_confidence"] = conversion_result.get("confidence", 0.5)
-                                    
-                                    logger.info(f"✅ Parameters converted with confidence: {decision['conversion_confidence']}")
-                                else:
-                                    logger.warning(f"Could not extract three sources from {script_path}")
-                                    decision["converted_parameters"] = params_to_convert
-                            else:
-                                logger.warning(f"No script path found for parameter conversion")
-                        else:
-                            logger.info(f"No parameters to convert")
-                            decision["converted_parameters"] = {}
+                        # Validate required components for parameter conversion
+                        if not params_to_convert:
+                            logger.error(f"❌ Parameter conversion failed: No parameters to convert")
+                            return {
+                                "status": "error",
+                                "reuse_decision": {
+                                    "should_reuse": False,
+                                    "reason": "Parameter conversion failed: No parameters available for conversion"
+                                },
+                                "error": "Missing parameters for conversion",
+                                "timestamp": datetime.now().isoformat()
+                            }
+                        
+                        script_name = matched_analysis.get("execution", {}).get("script_name", "")
+                        if not script_name:
+                            logger.error(f"❌ Parameter conversion failed: No script name found")
+                            return {
+                                "status": "error", 
+                                "reuse_decision": {
+                                    "should_reuse": False,
+                                    "reason": "Parameter conversion failed: Script name not found in analysis"
+                                },
+                                "error": "Missing script name for parameter conversion",
+                                "timestamp": datetime.now().isoformat()
+                            }
+                        
+                        # Extract three text sources (signature + argparse + docstring)
+                        sources = await self._extract_three_sources(script_name)
+                        if not sources:
+                            logger.error(f"❌ Parameter conversion failed: Could not extract script sources from {script_name}")
+                            return {
+                                "status": "error",
+                                "reuse_decision": {
+                                    "should_reuse": False,
+                                    "reason": f"Parameter conversion failed: Could not extract sources from script {script_name}"
+                                },
+                                "error": f"Failed to extract sources from script {script_name}",
+                                "timestamp": datetime.now().isoformat()
+                            }
+                        
+                        # Validate that sources contain required information
+                        if not sources.get("function_signature") and not sources.get("argparse_section") and not sources.get("docstring"):
+                            logger.error(f"❌ Parameter conversion failed: Sources extracted but empty for {script_name}")
+                            return {
+                                "status": "error", 
+                                "reuse_decision": {
+                                    "should_reuse": False,
+                                    "reason": "Parameter conversion failed: All extracted sources are empty"
+                                },
+                                "error": "Extracted sources contain no usable information",
+                                "timestamp": datetime.now().isoformat()
+                            }
+                        
+                        # Convert parameters using LLM with three text sources
+                        conversion_result = await self._convert_parameters_with_sources(
+                            user_query=user_query,
+                            execution_params=params_to_convert,
+                            sources=sources
+                        )
+                        
+                        # Add conversion results to decision
+                        decision["original_execution"] = decision["execution"]
+                        decision["execution"] = {"script_name": script_name, "parameters": conversion_result.get("converted_parameters", params_to_convert)}
+                        decision["conversion_confidence"] = conversion_result.get("confidence", 0.5)
+                        
+                        logger.info(f"✅ Parameters converted with confidence: {decision['conversion_confidence']}")
 
                 result = {
                     "status": "success",
