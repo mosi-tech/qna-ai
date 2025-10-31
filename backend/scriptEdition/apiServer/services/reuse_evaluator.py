@@ -296,19 +296,43 @@ Return ONLY valid JSON:
             try:
                 reuse_decision = safe_json_loads(response["content"])
                 logger.info(f"📋 Reuse decision: {reuse_decision['reuse_decision']['should_reuse']}")
+                print(reuse_decision)
 
                 decision = reuse_decision["reuse_decision"]
 
-                # If should_reuse is True, find the analysis_id by matching script_name
+                # If should_reuse is True, validate and find the analysis_id by matching script_name
                 if decision.get("should_reuse") and decision.get("script_name"):
-                    script_name = decision["script_name"].lower().strip()
-
+                    # First validate that the script_name exists in the provided analyses
+                    decision_script_name = decision["script_name"].lower().strip()
+                    valid_script_names = []
+                    
+                    for analysis in existing_analyses:
+                        execution_data = analysis.get("execution", {})
+                        if isinstance(execution_data, dict) and execution_data.get("script_name"):
+                            valid_script_names.append(execution_data["script_name"].lower().strip())
+                    
+                    if decision_script_name not in valid_script_names:
+                        logger.warning(f"⚠️ LLM returned invalid script_name '{decision['script_name']}' not found in provided analyses")
+                        logger.warning(f"📋 Valid script names: {valid_script_names}")
+                        return {
+                            "status": "error",
+                            "reuse_decision": {
+                                "should_reuse": False,
+                                "reason": f"LLM returned invalid script name '{decision['script_name']}' that doesn't exist in provided analyses"
+                            },
+                            "error": f"Invalid script name returned by LLM: {decision['script_name']}",
+                            "timestamp": datetime.now().isoformat()
+                        }
+                    
+                    script_name = decision_script_name  # Use the already validated script name
                     logger.info(f"🔍 Searching for script_name '{script_name}' in {len(existing_analyses)} analyses")
 
                     # Search for matching analysis in existing_analyses
                     found = False
                     matched_analysis = None
+                    
                     for idx, analysis in enumerate(existing_analyses):
+                        print(analysis)
                         # Log the full structure of the first analysis for debugging
                         if idx == 0:
                             logger.info(f"📋 First analysis structure: {list(analysis.keys())}")
