@@ -1,11 +1,13 @@
 'use client';
 
 import { useRef, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { ChatMessage } from '@/lib/hooks/useConversation';
 import { ProgressLog } from '@/lib/progress/ProgressManager';
 import MockOutput from '@/components/MockOutput';
 import ClarificationPrompt from './ClarificationPrompt';
 import ClarificationSummary from './ClarificationSummary';
+import AnalysisResult from './AnalysisResult';
 
 interface ChatInterfaceProps {
   messages: ChatMessage[];
@@ -19,6 +21,7 @@ interface ChatInterfaceProps {
   onLoadOlder?: () => void;
   isLoadingOlder?: boolean;
   canLoadOlder?: boolean;
+  sessionId?: string;
 }
 
 export default function ChatInterface({
@@ -33,7 +36,9 @@ export default function ChatInterface({
   onLoadOlder,
   isLoadingOlder = false,
   canLoadOlder = false,
+  sessionId,
 }: ChatInterfaceProps) {
+  const router = useRouter();
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [isUserScrolling, setIsUserScrolling] = useState(false);
@@ -181,11 +186,15 @@ export default function ChatInterface({
                 <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
                   <span className="text-green-600 text-sm">✓</span>
                 </div>
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4 max-w-2xl flex-1">
-                  <p className="text-sm text-gray-800 mb-3">{message.content}</p>
-                  {message.data && (
-                    <MockOutput moduleKey={message.data.query_type || 'default'} />
-                  )}
+                <div className="flex-1 max-w-4xl">
+                  <AnalysisResult
+                    messageId={message.id}
+                    question={message.content}
+                    results={message.data}
+                    analysisId={message.analysisId}
+                    executionId={message.executionId}
+                    sessionId={sessionId}
+                  />
                 </div>
               </div>
             ) : (
@@ -213,7 +222,7 @@ export default function ChatInterface({
                       {progressLogs.map((log, idx) => {
                         const elapsedTime = getElapsedTime(log, idx);
                         return (
-                          <div key={log.id || idx} className="text-sm text-gray-700 flex items-start gap-2">
+                          <div key={log.id || `log-${idx}-${log.timestamp}`} className="text-sm text-gray-700 flex items-start gap-2">
                             <span className="flex-shrink-0 mt-0.5">
                               {log.level === 'success' && <span className="text-green-600">✓</span>}
                               {log.level === 'error' && <span className="text-red-600">✕</span>}

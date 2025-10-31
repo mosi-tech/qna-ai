@@ -9,7 +9,7 @@ import os
 import time
 from datetime import datetime
 from fastapi import HTTPException
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 from api.models import QuestionRequest, AnalysisResponse
 from services.analysis import AnalysisService
@@ -29,7 +29,11 @@ from services.progress_service import (
     progress_info,
     progress_success,
     progress_warning,
+    execution_queued,
+    execution_failed,
 )
+from services.utils.data_transformers import DataTransformer
+
 
 logger = logging.getLogger("api-routes")
 
@@ -60,6 +64,12 @@ class APIRoutes:
         self.code_prompt_builder = code_prompt_builder or CodePromptBuilderService()
         self.reuse_evaluator = reuse_evaluator or ReuseEvaluatorService()
         self.session_manager = session_manager
+        
+        # Initialize data transformer for clean transformation operations
+        if chat_history_service and hasattr(chat_history_service, 'data_transformer'):
+            self.data_transformer = chat_history_service.data_transformer
+        else:
+            self.data_transformer = None
         
         # Load message template
         self.message_template = self._load_message_template()
@@ -205,15 +215,32 @@ class APIRoutes:
             logger.warning(f"⚠️ Failed to create {response_type} message: {e}")
             # Continue anyway - don't fail response if message creation fails
         
-        # Return message as the response data
-        # This ensures consistency: fresh load and refresh both use same data structure
+        # Return clean UI message data instead of raw metadata
+        # This ensures UI never sees internal database fields
+        mock_msg = {
+            "messageId": msg_id,
+            "role": "assistant",
+            "timestamp": None,
+            "analysisId": analysis_id,
+            "executionId": execution_id,
+            "content": message_content,
+            "metadata": msg_metadata
+        }
+        ui_data = await self.data_transformer.transform_message_to_ui_data(mock_msg)
+        
+        # Normalize response types for UI - analysis results should all be "analysis"
+        ui_response_type = response_type
+        if response_type in ["reuse_decision", "cache_hit", "analysis"]:
+            ui_response_type = "analysis"
+        
         response_data = {
             "message_id": msg_id,
             "session_id": session_id,
             "content": message_content,
-            "analysis_id": analysis_id,
-            "execution_id": execution_id,
-            "metadata": msg_metadata,
+            "analysisId": analysis_id,
+            "executionId": execution_id,
+            "uiData": ui_data,
+            "response_type": ui_response_type,
         }
         
         return AnalysisResponse(
@@ -221,6 +248,8 @@ class APIRoutes:
             data=response_data,
             timestamp=datetime.now().isoformat()
         )
+    
+    
     
     async def _error_response(self, user_message: str, internal_error: str = None, session_id: str = None, user_id: str = None) -> AnalysisResponse:
         """Create user-friendly error response (hide technical details)"""
@@ -281,12 +310,18 @@ class APIRoutes:
                 
                 if queue_success:
                     logger.info(f"✓ Enqueued execution for processing: {execution_id}")
+                    # Send execution queued status update via SSE
+                    await execution_queued(session_id, execution_id, analysis_id)
                 else:
                     logger.warning(f"⚠️ Failed to enqueue execution: {execution_id}")
+                    # Send execution failed status update via SSE
+                    await execution_failed(session_id, execution_id, "Failed to enqueue execution", analysis_id)
                     
             except Exception as queue_error:
                 # Don't fail the whole process if queue enqueue fails
                 logger.warning(f"⚠️ Failed to enqueue execution {execution_id}: {queue_error}")
+                # Send execution failed status update via SSE
+                await execution_failed(session_id, execution_id, f"Queue error: {queue_error}", analysis_id)
             
             return execution_id
             
@@ -518,7 +553,7 @@ class APIRoutes:
                     session_id=session_id,
                     user_id=user_id,
                     response_type="reuse_decision",
-                    message_content=f"Reused existing analysis: {reuse_decision.get('reason')}",
+                    message_content=reuse_decision.get('analysis_description', ''),
                     analysis_id=analysis_id,
                     execution_id=execution_id,
                     metadata=msg_metadata,

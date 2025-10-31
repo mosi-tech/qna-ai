@@ -1,0 +1,2 @@
+# Additional requirements for testing ResultFormatter
+python-dotenv>=1.0.0

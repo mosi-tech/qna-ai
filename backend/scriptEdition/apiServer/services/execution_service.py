@@ -4,19 +4,24 @@ Execution Service - Orchestrates script execution via execution server
 
 import logging
 import os
-import json
 import httpx
 from typing import Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 
 from db.repositories import RepositoryManager
-from db.schemas import AnalysisModel, ExecutionStatus
 from services.progress_service import (
     progress_info,
     progress_success,
     progress_error,
-    ProgressLevel,
+    execution_running,
+    execution_completed,
+    execution_failed,
 )
+# Import shared services
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+from shared.services.result_formatter import create_shared_result_formatter
 
 logger = logging.getLogger("execution-service")
 
@@ -29,12 +34,16 @@ class ExecutionService:
         self.analysis_repo = repo_manager.analysis
         self.audit_repo = repo_manager.execution
         self.logger = logger
+        
+        # Initialize shared result formatter
+        self.result_formatter = create_shared_result_formatter()
     
     async def execute_analysis(
         self,
         analysis_id: str,
         user_id: str,
         session_id: Optional[str] = None,
+        execution_id: Optional[str] = None,
         timeout_seconds: int = 300
     ) -> Dict[str, Any]:
         """
@@ -48,7 +57,7 @@ class ExecutionService:
         5. Update AnalysisModel with results
         6. Log execution in audit trail
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         execution_start_ms = int(start_time.timestamp() * 1000)
         
         try:
@@ -99,6 +108,9 @@ class ExecutionService:
             self.logger.info("⚙️ Executing script...")
             if session_id:
                 await progress_info(session_id, "Running script")
+                # Send execution running status update via SSE
+                if execution_id:
+                    await execution_running(session_id, execution_id, analysis_id)
             
             execution_result = await self._execute_script(
                 script_content=script_content,
@@ -106,13 +118,16 @@ class ExecutionService:
                 timeout_seconds=timeout_seconds
             )
             
-            execution_time_ms = int((datetime.utcnow().timestamp() * 1000) - execution_start_ms)
+            execution_time_ms = int((datetime.now(timezone.utc).timestamp() * 1000) - execution_start_ms)
             
             if not execution_result["success"]:
                 # Execution failed
                 self.logger.error(f"❌ Execution failed: {execution_result.get('error')}")
                 if session_id:
                     await progress_error(session_id, f"Execution failed")
+                    # Send execution failed status update via SSE
+                    if execution_id:
+                        await execution_failed(session_id, execution_id, execution_result.get('error'), analysis_id)
                 
                 return {
                     "success": False,
@@ -125,8 +140,19 @@ class ExecutionService:
             
             result_data = execution_result.get("result", {})
             
+            # Step 6: Generate markdown summary from results using original question
+            markdown_summary = await self._generate_markdown_summary(result_data, analysis.question)
+            
+            # Add markdown to result_data
+            if markdown_summary:
+                result_data["markdown"] = markdown_summary
+                self.logger.info("✅ Generated markdown summary")
+            
             if session_id:
                 await progress_success(session_id, "Analysis complete")
+                # Send execution completed status update via SSE
+                if execution_id:
+                    await execution_completed(session_id, execution_id, analysis_id)
             
             self.logger.info(f"✅ Execution completed successfully in {execution_time_ms}ms")
             
@@ -142,6 +168,9 @@ class ExecutionService:
             self.logger.error(f"❌ Execution service error: {e}")
             if session_id:
                 await progress_error(session_id, f"Execution error: {str(e)}")
+                # Send execution failed status update via SSE
+                if execution_id:
+                    await execution_failed(session_id, execution_id, f"Service error: {str(e)}", analysis_id)
             import traceback
             traceback.print_exc()
             return {
@@ -233,3 +262,22 @@ class ExecutionService:
                 "success": False,
                 "error": f"Execution error: {str(e)}"
             }
+    
+    async def _generate_markdown_summary(self, result_data: Dict[str, Any], user_question: Optional[str] = None) -> Optional[str]:
+        """Generate markdown summary from execution results using LLM"""
+        try:
+            # Check if we have results to process
+            results = result_data.get("results", {})
+            if not results:
+                return None
+            
+            self.logger.info("🤖 Generating markdown summary from results using LLM")
+            
+            # Use the shared result formatter to generate markdown with user question context
+            markdown = await self.result_formatter.format_execution_result(result_data, user_question)
+            
+            return markdown
+            
+        except Exception as e:
+            self.logger.warning(f"⚠️ Failed to generate markdown summary: {e}")
+            return None

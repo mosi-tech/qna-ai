@@ -5,8 +5,8 @@ import { useSession } from '@/lib/context/SessionContext';
 import { useConversation } from '@/lib/context/ConversationContext';
 import { useUI } from '@/lib/context/UIContext';
 import { useAnalysis } from '@/lib/hooks/useAnalysis';
-import { useProgressStream } from '@/lib/hooks/useProgressStream';
 import { useSessionManager } from '@/lib/hooks/useSessionManager';
+import { ProgressProvider, useProgress } from '@/lib/context/ProgressContext';
 import ChatInterface from '@/components/chat/ChatInterface';
 import AnalysisPanel from '@/components/chat/AnalysisPanel';
 import ProgressPanel from '@/components/progress/ProgressPanel';
@@ -16,12 +16,12 @@ import { ParameterValues } from '@/types/modules';
 import { ProgressManager } from '@/lib/progress/ProgressManager';
 import { api } from '@/lib/api';
 
-export default function Home() {
+function HomeContent() {
   const { session_id, user_id, resumeSession, updateSessionMetadata } = useSession();
   const { messages, addMessage, updateMessage, setMessages, loadSessionMessages } = useConversation();
   const { viewMode, setViewMode, isProcessing, setIsProcessing, error: uiError, setError: setUIError } = useUI();
   const { analyzeQuestion, isLoading: analysisLoading } = useAnalysis();
-  const { logs: progressLogs, isConnected, clearLogs } = useProgressStream(session_id);
+  const { logs: progressLogs, isConnected, clearLogs } = useProgress();
   const { getSessionDetail } = useSessionManager();
 
   const [chatInput, setChatInput] = useState('');
@@ -373,11 +373,32 @@ export default function Home() {
         is_archived: sessionDetail.is_archived,
       });
 
+      const getMessageType = (msg: any) => {
+        if (msg.role === 'user') return 'user';
+        if (msg.role === 'assistant') {
+          // Check if this assistant message contains analysis results
+          if (msg.metadata && (
+            msg.metadata.query_type || 
+            msg.metadata.analysis_type || 
+            msg.metadata.best_day ||
+            msg.metadata.response_type === 'analysis' ||
+            (msg.metadata.response_data && msg.metadata.response_data.analysis_result)
+          )) {
+            return 'results';
+          }
+          return 'ai';
+        }
+        return 'results'; // fallback
+      };
+
       const loadedMessages = (sessionDetail.messages || []).map((msg: any, idx: number) => ({
-        id: msg.id || `${selectedSessionId}-${idx}`,
-        type: msg.role === 'user' ? 'user' : msg.role === 'assistant' ? 'ai' : 'results',
+        id: msg.id || `${selectedSessionId}-${idx}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        type: getMessageType(msg),
         content: msg.content,
         data: msg.metadata,
+        analysisId: msg.analysisId,
+        executionId: msg.executionId,
+        timestamp: new Date(msg.timestamp || Date.now()),
       }));
 
       setMessages(loadedMessages);
@@ -411,11 +432,32 @@ export default function Home() {
         return;
       }
 
+      const getMessageType = (msg: any) => {
+        if (msg.role === 'user') return 'user';
+        if (msg.role === 'assistant') {
+          // Check if this assistant message contains analysis results
+          if (msg.metadata && (
+            msg.metadata.query_type || 
+            msg.metadata.analysis_type || 
+            msg.metadata.best_day ||
+            msg.metadata.response_type === 'analysis' ||
+            (msg.metadata.response_data && msg.metadata.response_data.analysis_result)
+          )) {
+            return 'results';
+          }
+          return 'ai';
+        }
+        return 'results'; // fallback
+      };
+
       const olderMessages = (sessionDetail.messages || []).map((msg: any, idx: number) => ({
-        id: msg.id || `${session_id}-${newOffset + idx}`,
-        type: msg.role === 'user' ? 'user' : msg.role === 'assistant' ? 'ai' : 'results',
+        id: msg.id || `${session_id}-${newOffset + idx}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        type: getMessageType(msg),
         content: msg.content,
         data: msg.metadata,
+        analysisId: msg.analysisId,
+        executionId: msg.executionId,
+        timestamp: new Date(msg.timestamp || Date.now()),
       }));
 
       setMessages((prev) => [...olderMessages, ...prev]);
@@ -606,5 +648,15 @@ export default function Home() {
         />
       )}
     </div>
+  );
+}
+
+export default function Home() {
+  const { session_id } = useSession();
+  
+  return (
+    <ProgressProvider sessionId={session_id}>
+      <HomeContent />
+    </ProgressProvider>
   );
 }

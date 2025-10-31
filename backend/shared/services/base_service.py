@@ -9,13 +9,12 @@ Provides standardized initialization for all service classes including:
 - Logging setup
 """
 
-import json
 import logging
 import os
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, List
+from typing import Optional
 
-from llm import LLMService
+from ..llm import LLMService
 
 class BaseService(ABC):
     """Base class for all services with standardized initialization"""
@@ -59,10 +58,10 @@ class BaseService(ABC):
         # Allow service-specific prompt file override
         prompt_filename = self._get_system_prompt_filename()
         
+        # Point to shared config directory (centralized location)
         self.system_prompt_path = os.path.join(
             os.path.dirname(os.path.abspath(__file__)), 
-            "..", 
-            "config", 
+            "..", "config", 
             prompt_filename
         )
         

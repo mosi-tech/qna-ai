@@ -5,8 +5,8 @@ import { useSession } from '@/lib/context/SessionContext';
 import { useConversation, ChatMessage } from '@/lib/context/ConversationContext';
 import { useUI } from '@/lib/context/UIContext';
 import { useAnalysis } from '@/lib/hooks/useAnalysis';
-import { useProgressStream } from '@/lib/hooks/useProgressStream';
 import { useSessionManager } from '@/lib/hooks/useSessionManager';
+import { ProgressProvider, useProgress } from '@/lib/context/ProgressContext';
 import ChatInterface from '@/components/chat/ChatInterface';
 import AnalysisPanel from '@/components/chat/AnalysisPanel';
 import ProgressPanel from '@/components/progress/ProgressPanel';
@@ -16,12 +16,12 @@ import { ParameterValues } from '@/types/modules';
 import { ProgressManager } from '@/lib/progress/ProgressManager';
 import { api } from '@/lib/api';
 
-export default function ChatPage() {
+function ChatPageContent() {
   const { session_id, user_id, resumeSession, updateSessionMetadata, startNewSession } = useSession();
   const { messages, addMessage, updateMessage, setMessages, loadSessionMessages } = useConversation();
   const { viewMode, setViewMode, isProcessing, setIsProcessing, error: uiError, setError: setUIError } = useUI();
   const { analyzeQuestion, isLoading: analysisLoading } = useAnalysis();
-  const { logs: progressLogs, isConnected, clearLogs } = useProgressStream(session_id);
+  const { logs: progressLogs, isConnected, clearLogs } = useProgress();
   const { getSessionDetail } = useSessionManager();
 
   const [chatInput, setChatInput] = useState('');
@@ -58,11 +58,42 @@ export default function ChatPage() {
           setSessionNotFound(true);
           return;
         }
+        const getMessageType = (msg: any) => {
+          if (msg.role === 'user') return 'user';
+          if (msg.role === 'assistant') {
+            // Use the normalized response_type field (primary)
+            const responseType = msg.response_type || msg.metadata?.response_type;
+            
+            if (responseType === 'analysis') {
+              return 'results';
+            } else if (responseType === 'needs_clarification' || responseType === 'needs_confirmation' || responseType === 'clarification') {
+              return 'clarification';
+            } else if (responseType === 'meaningless') {
+              return 'ai'; // Render as regular AI message
+            } else {
+              // Fallback: check for legacy analysis data detection
+              if (msg.uiData || (msg.metadata && (
+                msg.metadata.query_type || 
+                msg.metadata.analysis_type || 
+                msg.metadata.best_day ||
+                (msg.metadata.response_data && msg.metadata.response_data.analysis_result)
+              ))) {
+                return 'results';
+              }
+            }
+            return 'ai';
+          }
+          return 'ai'; // fallback
+        };
+
         const loadedMessages = (sessionDetail.messages || []).map((msg: any, idx: number) => ({
-          id: msg.id || `${session_id}-${idx}`,
-          type: msg.role === 'user' ? 'user' : msg.role === 'assistant' ? 'ai' : 'results',
+          id: msg.id || `${session_id}-${idx}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          type: getMessageType(msg),
           content: msg.content,
-          data: msg.metadata,
+          data: msg.uiData || msg.metadata, // Prefer uiData over raw metadata
+          analysisId: msg.analysisId,
+          executionId: msg.executionId,
+          timestamp: new Date(msg.timestamp || Date.now()),
         }));
 
         if (loadedMessages.length > 0) {
@@ -128,8 +159,8 @@ export default function ChatPage() {
           message: 'Analysis request completed successfully',
         });
 
-        const responseType = response.data.metadata?.response_type;
-        const isMeaningless = responseType === 'meaningless_query' || response.data.metadata?.is_meaningless;
+        const responseType = response.data.response_type || response.data.metadata?.response_type;
+        const isMeaningless = responseType === 'meaningless' || responseType === 'meaningless_query' || response.data.metadata?.is_meaningless;
 
         if (isMeaningless) {
           ProgressManager.addLog(session_id, {
@@ -143,7 +174,7 @@ export default function ChatPage() {
             content: errorMsg,
           });
         } else {
-          const needsClarification = responseType === 'needs_clarification' || response.data.metadata?.needs_user_input;
+          const needsClarification = responseType === 'needs_clarification' || responseType === 'needs_confirmation' || response.data.metadata?.needs_user_input;
           const clarificationData = {
             message_id: response.data.message_id,
             content: response.data.content,
@@ -408,11 +439,34 @@ export default function ChatPage() {
         is_archived: sessionDetail.is_archived,
       });
 
+      const getMessageType = (msg: any) => {
+        if (msg.role === 'user') return 'user';
+        if (msg.role === 'assistant') {
+          // Check if this assistant message contains analysis results
+          if (msg.uiData || (msg.metadata && (
+            msg.metadata.response_type === 'analysis' ||
+            msg.metadata.query_type || 
+            msg.metadata.analysis_type || 
+            msg.metadata.best_day ||
+            (msg.metadata.response_data && msg.metadata.response_data.analysis_result)
+          ))) {
+            return 'results';
+          } else if (msg.metadata && msg.metadata.response_type === 'clarification') {
+            return 'clarification';
+          }
+          return 'ai';
+        }
+        return 'ai'; // fallback
+      };
+
       const loadedMessages = (sessionDetail.messages || []).map((msg: any, idx: number) => ({
-        id: msg.id || `${selectedSessionId}-${idx}`,
-        type: msg.role === 'user' ? 'user' : msg.role === 'assistant' ? 'ai' : 'results',
+        id: msg.id || `${selectedSessionId}-${idx}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        type: getMessageType(msg),
         content: msg.content,
-        data: msg.metadata,
+        data: msg.uiData || msg.metadata, // Prefer uiData over raw metadata
+        analysisId: msg.analysisId,
+        executionId: msg.executionId,
+        timestamp: new Date(msg.timestamp || Date.now()),
       }));
 
       setMessages(loadedMessages);
@@ -446,11 +500,34 @@ export default function ChatPage() {
         return;
       }
 
+      const getMessageType = (msg: any) => {
+        if (msg.role === 'user') return 'user';
+        if (msg.role === 'assistant') {
+          // Check if this assistant message contains analysis results
+          if (msg.uiData || (msg.metadata && (
+            msg.metadata.response_type === 'analysis' ||
+            msg.metadata.query_type || 
+            msg.metadata.analysis_type || 
+            msg.metadata.best_day ||
+            (msg.metadata.response_data && msg.metadata.response_data.analysis_result)
+          ))) {
+            return 'results';
+          } else if (msg.metadata && msg.metadata.response_type === 'clarification') {
+            return 'clarification';
+          }
+          return 'ai';
+        }
+        return 'ai'; // fallback
+      };
+
       const olderMessages = (sessionDetail.messages || []).map((msg: any, idx: number) => ({
-        id: msg.id || `${session_id}-${newOffset + idx}`,
-        type: msg.role === 'user' ? 'user' : msg.role === 'assistant' ? 'ai' : 'results',
+        id: msg.id || `${session_id}-${newOffset + idx}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        type: getMessageType(msg),
         content: msg.content,
-        data: msg.metadata,
+        data: msg.uiData || msg.metadata, // Prefer uiData over raw metadata
+        analysisId: msg.analysisId,
+        executionId: msg.executionId,
+        timestamp: new Date(msg.timestamp || Date.now()),
       }));
 
       setMessages((prev) => [...olderMessages, ...prev]);
@@ -568,6 +645,7 @@ export default function ChatPage() {
             onLoadOlder={handleLoadOlderMessages}
             isLoadingOlder={isLoadingOlderMessages}
             canLoadOlder={currentSessionMessages.hasOlder}
+            sessionId={session_id}
           />
         </div>
 
@@ -628,6 +706,7 @@ export default function ChatPage() {
           onLoadOlder={handleLoadOlderMessages}
           isLoadingOlder={isLoadingOlderMessages}
           canLoadOlder={currentSessionMessages.hasOlder}
+          sessionId={session_id}
         />
       </div>
 
@@ -670,5 +749,15 @@ export default function ChatPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function ChatPage() {
+  const { session_id } = useSession();
+  
+  return (
+    <ProgressProvider sessionId={session_id}>
+      <ChatPageContent />
+    </ProgressProvider>
   );
 }

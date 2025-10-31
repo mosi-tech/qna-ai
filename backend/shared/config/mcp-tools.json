@@ -62,6 +62,9 @@
       "exclude_tools": [],
       "description": "Verification service config - no tools needed for script verification"
     },
+    "result-formatter": {
+      "enabled": false
+    },
     "none": {
       "enabled": false,
       "servers": [],

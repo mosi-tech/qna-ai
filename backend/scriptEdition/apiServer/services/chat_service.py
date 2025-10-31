@@ -25,6 +25,11 @@ class ChatHistoryService:
         self.repo = repo_manager
         self.chat_repo = repo_manager.chat
         self.logger = logger
+        
+        # Initialize data transformer for message transformation
+        from .utils.data_transformers import DataTransformer
+        self.data_transformer = DataTransformer(self.chat_repo.db)
+    
     
     async def start_session(self, user_id: str, title: Optional[str] = None) -> str:
         """Start a new chat session"""
@@ -207,11 +212,22 @@ class ChatHistoryService:
         try:
             session = await self.chat_repo.get_session_with_messages(session_id, limit=limit, offset=offset)
             if session:
+                # Transform messages to clean UI-safe data only
+                if session.get('messages'):
+                    clean_messages = []
+                    for msg in session['messages']:
+                        clean_msg = await self.data_transformer.transform_message_to_ui_data(msg)
+                        clean_messages.append(clean_msg)
+                    
+                    # Replace messages with clean versions
+                    session['messages'] = clean_messages
+                
                 self.logger.info(f"✓ Retrieved session with messages: {session_id} (offset={offset}, limit={limit})")
             return session
         except Exception as e:
             self.logger.error(f"✗ Failed to get session with messages: {e}")
             raise
+    
     
     async def update_session(
         self,

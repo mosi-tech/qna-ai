@@ -14,6 +14,7 @@ from typing import Dict, Any, Optional
 from .base_queue import ExecutionQueueInterface
 from ..execution import execute_script
 from ..storage import get_storage
+from ..services.result_formatter import create_shared_result_formatter
 
 # Import AuditService for updating execution documents
 import sys
@@ -21,6 +22,8 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'scriptEdition', 'apiServer'))
 from services.audit_service import AuditService
 from db import RepositoryManager, MongoDBClient
+
+# Note: Progress communication now uses queue-based messaging via send_progress_event
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +44,7 @@ class ExecutionQueueWorker:
         self.running = False
         self.active_executions = set()
         self.audit_service = None
+        self.result_formatter = None
         
         logger.info(f"🔧 Created worker: {self.worker_id}")
     
@@ -58,6 +62,17 @@ class ExecutionQueueWorker:
         except Exception as e:
             logger.warning(f"⚠️ Failed to initialize AuditService: {e}")
             self.audit_service = None
+        
+        # Initialize result formatter
+        try:
+            self.result_formatter = create_shared_result_formatter()
+            logger.info("✅ ResultFormatter initialized for markdown generation")
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to initialize ResultFormatter: {e}")
+            self.result_formatter = None
+        
+        # Progress communication now uses queue-based messaging via send_progress_event
+        logger.info("✅ Progress communication will use queue-based messaging")
         
         self.running = True
         
@@ -129,9 +144,26 @@ class ExecutionQueueWorker:
     async def _process_execution(self, execution: Dict[str, Any]):
         """Process a single execution"""
         execution_id = execution.get("execution_id")
+        session_id = execution.get("session_id")
+        analysis_id = execution.get("analysis_id")
         
         try:
             logger.info(f"🔨 Processing execution: {execution_id}")
+            
+            # CRITICAL: Send SSE update when execution starts running via queue
+            if session_id:
+                try:
+                    await self.queue.send_progress_event(session_id, {
+                        "type": "execution_status",
+                        "execution_id": execution_id,
+                        "analysis_id": analysis_id,
+                        "status": "running",
+                        "message": "Analysis execution in progress",
+                        "level": "info"
+                    })
+                    logger.info(f"📡 Sent SSE running status via queue for sessionL {session_id} and execution: {execution_id}")
+                except Exception as sse_error:
+                    logger.warning(f"⚠️ Failed to send SSE running status via queue: {sse_error}")
             
             # Log start
             await self.queue.update_logs(execution_id, {
@@ -147,13 +179,40 @@ class ExecutionQueueWorker:
             execution_time_ms = int((result.get("execution_time", 0)) * 1000)  # Convert to milliseconds
             
             if success:
-                # CRITICAL: Update audit service execution document FIRST
+                # Step 1: Generate markdown from results if possible
+                result_output = result.get("output", {})
+                
+                # Try to generate markdown if formatter is available
+                if self.result_formatter and result_output.get("results"):
+                    try:
+                        logger.info(f"🤖 Generating markdown for execution: {execution_id}")
+                        
+                        # Try to get original question from execution context
+                        user_question = execution.get("user_question")  # May not be available
+                        
+                        markdown = await self.result_formatter.format_execution_result(
+                            result_output, 
+                            user_question
+                        )
+                        
+                        if markdown:
+                            # Add markdown to result output
+                            result_output["markdown"] = markdown
+                            logger.info(f"✅ Generated markdown for execution: {execution_id}")
+                        else:
+                            logger.info(f"⚠️ No markdown generated for execution: {execution_id}")
+                            
+                    except Exception as markdown_error:
+                        logger.warning(f"⚠️ Failed to generate markdown for {execution_id}: {markdown_error}")
+                        # Continue without markdown - don't fail the execution
+                
+                # Step 2: CRITICAL: Update audit service execution document FIRST
                 audit_success = False
                 if self.audit_service:
                     try:
                         await self.audit_service.log_execution_complete(
                             execution_id=execution_id,
-                            result=result.get("output", {}),
+                            result=result_output,  # Now includes markdown if generated
                             execution_time_ms=execution_time_ms,
                             success=True
                         )
@@ -172,6 +231,24 @@ class ExecutionQueueWorker:
                 if audit_success:
                     await self.queue.ack(execution_id, result)
                     logger.info(f"✅ Acknowledged queue after successful audit save: {execution_id}")
+                
+                # CRITICAL: Send SSE completion update with results via queue
+                if session_id:
+                    try:
+                        await self.queue.send_progress_event(session_id, {
+                            "type": "execution_status",
+                            "execution_id": execution_id,
+                            "analysis_id": analysis_id,
+                            "status": "completed",
+                            "message": "Analysis execution completed",
+                            "level": "success",
+                            "results": result_output,
+                            "markdown": result_output.get("markdown"),
+                            "execution_time": result.get('execution_time', 0)
+                        })
+                        logger.info(f"📡 Sent SSE completed status via queue for session: {session_id} and execution: {execution_id}")
+                    except Exception as sse_error:
+                        logger.warning(f"⚠️ Failed to send SSE completed status via queue: {sse_error}")
                 
                 await self.queue.update_logs(execution_id, {
                     "level": "INFO", 
@@ -200,6 +277,22 @@ class ExecutionQueueWorker:
                 # Nack the execution in queue (after audit attempt)
                 await self.queue.nack(execution_id, error_msg, retry=True)
                 
+                # CRITICAL: Send SSE failure update via queue
+                if session_id:
+                    try:
+                        await self.queue.send_progress_event(session_id, {
+                            "type": "execution_status",
+                            "execution_id": execution_id,
+                            "analysis_id": analysis_id,
+                            "status": "failed",
+                            "message": f"Analysis execution failed: {error_msg}",
+                            "level": "error",
+                            "error": error_msg
+                        })
+                        logger.info(f"📡 Sent SSE failed status via queue for execution: {execution_id}")
+                    except Exception as sse_error:
+                        logger.warning(f"⚠️ Failed to send SSE failed status via queue: {sse_error}")
+                
                 await self.queue.update_logs(execution_id, {
                     "level": "ERROR",
                     "message": f"Execution failed: {error_msg}"
@@ -209,6 +302,22 @@ class ExecutionQueueWorker:
         
         except Exception as e:
             logger.error(f"❌ Error processing execution {execution_id}: {e}")
+            
+            # CRITICAL: Send SSE failure update for unexpected errors via queue
+            if session_id:
+                try:
+                    await self.queue.send_progress_event(session_id, {
+                        "type": "execution_status",
+                        "execution_id": execution_id,
+                        "analysis_id": analysis_id,
+                        "status": "failed",
+                        "message": f"Worker error: {str(e)}",
+                        "level": "error",
+                        "error": str(e)
+                    })
+                    logger.info(f"📡 Sent SSE failed status via queue for worker error: {execution_id}")
+                except Exception as sse_error:
+                    logger.warning(f"⚠️ Failed to send SSE failed status via queue for worker error: {sse_error}")
             
             try:
                 await self.queue.nack(execution_id, str(e), retry=True)
