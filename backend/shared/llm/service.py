@@ -387,3 +387,9 @@ def create_reuse_evaluator_llm() -> LLMService:
     config = LLMConfig.for_task("REUSE_EVALUATOR")
     config.service_name = "reuse-evaluator"
     return LLMService(config)
+
+def create_result_formatter_llm() -> LLMService:
+    """Create LLM service optimized for result formatting tasks"""
+    config = LLMConfig.for_task("RESULT_FORMATTER")
+    config.service_name = "result-formatter"
+    return LLMService(config)

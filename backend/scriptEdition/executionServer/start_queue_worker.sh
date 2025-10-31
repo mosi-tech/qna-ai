@@ -5,6 +5,14 @@ Start Queue Worker Script
 Starts the MongoDB queue worker with environment configuration.
 """
 
+# Load environment variables from .env file if it exists
+if [ -f ".env" ]; then
+    echo "📝 Loading environment variables from .env file..."
+    export $(grep -v '^#' .env | xargs)
+else
+    echo "ℹ️  No .env file found, using system environment variables"
+fi
+
 # Set default environment variables if not already set
 export MONGO_URL=${MONGO_URL:-"mongodb://localhost:27017"}
 export MONGO_DB_NAME=${MONGO_DB_NAME:-"qna_ai_admin"}

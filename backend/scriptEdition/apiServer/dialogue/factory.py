@@ -3,7 +3,12 @@
 Dialogue Factory - Creates dialogue system components with proper dependency injection
 """
 
-from llm.service import LLMService
+# Import shared services
+import sys
+import os
+shared_path = os.path.join(os.path.dirname(__file__), '..', '..', '..')
+sys.path.insert(0, shared_path)
+from shared.llm.service import LLMService
 from search.library import AnalysisLibrary
 from .context.service import create_context_service
 from .conversation.session_manager import SessionManager
@@ -32,7 +37,7 @@ class DialogueFactory:
         if llm_service:
             context_llm = llm_service  # Reuse passed LLM service
         else:
-            from llm import create_context_llm
+            from shared.llm import create_context_llm
             context_llm = create_context_llm()  # Uses CONTEXT_LLM_PROVIDER or LLM_PROVIDER
         
         self.context_service = create_context_service(context_llm)

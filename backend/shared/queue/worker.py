@@ -14,6 +14,7 @@ from typing import Dict, Any, Optional
 from .base_queue import ExecutionQueueInterface
 from ..execution import execute_script
 from ..storage import get_storage
+from ..services.result_formatter import create_shared_result_formatter
 
 # Import AuditService for updating execution documents
 import sys
@@ -41,6 +42,7 @@ class ExecutionQueueWorker:
         self.running = False
         self.active_executions = set()
         self.audit_service = None
+        self.result_formatter = None
         
         logger.info(f"🔧 Created worker: {self.worker_id}")
     
@@ -58,6 +60,14 @@ class ExecutionQueueWorker:
         except Exception as e:
             logger.warning(f"⚠️ Failed to initialize AuditService: {e}")
             self.audit_service = None
+        
+        # Initialize result formatter
+        try:
+            self.result_formatter = create_shared_result_formatter()
+            logger.info("✅ ResultFormatter initialized for markdown generation")
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to initialize ResultFormatter: {e}")
+            self.result_formatter = None
         
         self.running = True
         
@@ -147,13 +157,40 @@ class ExecutionQueueWorker:
             execution_time_ms = int((result.get("execution_time", 0)) * 1000)  # Convert to milliseconds
             
             if success:
-                # CRITICAL: Update audit service execution document FIRST
+                # Step 1: Generate markdown from results if possible
+                result_output = result.get("output", {})
+                
+                # Try to generate markdown if formatter is available
+                if self.result_formatter and result_output.get("results"):
+                    try:
+                        logger.info(f"🤖 Generating markdown for execution: {execution_id}")
+                        
+                        # Try to get original question from execution context
+                        user_question = execution.get("user_question")  # May not be available
+                        
+                        markdown = await self.result_formatter.format_execution_result(
+                            result_output, 
+                            user_question
+                        )
+                        
+                        if markdown:
+                            # Add markdown to result output
+                            result_output["markdown"] = markdown
+                            logger.info(f"✅ Generated markdown for execution: {execution_id}")
+                        else:
+                            logger.info(f"⚠️ No markdown generated for execution: {execution_id}")
+                            
+                    except Exception as markdown_error:
+                        logger.warning(f"⚠️ Failed to generate markdown for {execution_id}: {markdown_error}")
+                        # Continue without markdown - don't fail the execution
+                
+                # Step 2: CRITICAL: Update audit service execution document FIRST
                 audit_success = False
                 if self.audit_service:
                     try:
                         await self.audit_service.log_execution_complete(
                             execution_id=execution_id,
-                            result=result.get("output", {}),
+                            result=result_output,  # Now includes markdown if generated
                             execution_time_ms=execution_time_ms,
                             success=True
                         )

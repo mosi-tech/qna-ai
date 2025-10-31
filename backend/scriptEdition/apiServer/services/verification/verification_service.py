@@ -19,14 +19,13 @@ import os
 utils_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "utils")
 sys.path.append(utils_path)
 from utils.json_utils import safe_json_loads
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from llm.service import LLMService
-from llm.utils import LLMConfig
 
-# Import script enhancement
-shared_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))), "shared")
-sys.path.append(shared_path)
-from execution.script_executor import create_enhanced_script
+# Import shared services
+shared_path = os.path.join(os.path.dirname(__file__), '..', '..', '..', '..')
+sys.path.insert(0, shared_path)
+from shared.llm.service import LLMService
+from shared.llm.utils import LLMConfig
+from shared.execution.script_executor import create_enhanced_script
 
 logger = logging.getLogger(__name__)
 

@@ -5,7 +5,12 @@ Context Service - LLM-powered context understanding for conversation management
 
 import logging
 from typing import Optional, Dict, Any
-from llm import create_context_llm, LLMService
+# Import shared services
+import sys
+import os
+shared_path = os.path.join(os.path.dirname(__file__), '..', '..', '..', '..')
+sys.path.insert(0, shared_path)
+from shared.llm import create_context_llm, LLMService
 
 logger = logging.getLogger(__name__)
 

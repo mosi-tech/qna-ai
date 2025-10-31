@@ -12,8 +12,12 @@ import os
 from datetime import datetime
 from typing import Dict, Any, Optional, List
 
-from llm import create_analysis_llm, LLMService
-from .base_service import BaseService
+# Import shared services
+import sys
+shared_path = os.path.join(os.path.dirname(__file__), '..', '..', '..')
+sys.path.insert(0, shared_path)
+from shared.llm import create_analysis_llm, LLMService
+from shared.services.base_service import BaseService
 
 class AnalysisService(BaseService):
     """Simplified financial question analysis service using Claude Code CLI"""

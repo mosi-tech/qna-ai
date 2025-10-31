@@ -10,8 +10,11 @@ import sys
 from datetime import datetime
 from typing import Dict, Any, Optional, List
 
-from llm import create_analysis_llm, LLMService
-from .base_service import BaseService
+# Import shared services
+shared_path = os.path.join(os.path.dirname(__file__), '..', '..', '..')
+sys.path.insert(0, shared_path)
+from shared.llm import create_analysis_llm, LLMService
+from shared.services.base_service import BaseService
 
 # Import safe JSON utilities
 utils_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "utils")

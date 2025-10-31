@@ -61,17 +61,25 @@ export default function ChatPage() {
         const getMessageType = (msg: any) => {
           if (msg.role === 'user') return 'user';
           if (msg.role === 'assistant') {
-            // Check if this assistant message contains analysis results
-            if (msg.uiData || (msg.metadata && (
-              msg.metadata.response_type === 'analysis' ||
-              msg.metadata.query_type || 
-              msg.metadata.analysis_type || 
-              msg.metadata.best_day ||
-              (msg.metadata.response_data && msg.metadata.response_data.analysis_result)
-            ))) {
+            // Use the normalized response_type field (primary)
+            const responseType = msg.response_type || msg.metadata?.response_type;
+            
+            if (responseType === 'analysis') {
               return 'results';
-            } else if (msg.metadata && msg.metadata.response_type === 'clarification') {
+            } else if (responseType === 'needs_clarification' || responseType === 'needs_confirmation' || responseType === 'clarification') {
               return 'clarification';
+            } else if (responseType === 'meaningless') {
+              return 'ai'; // Render as regular AI message
+            } else {
+              // Fallback: check for legacy analysis data detection
+              if (msg.uiData || (msg.metadata && (
+                msg.metadata.query_type || 
+                msg.metadata.analysis_type || 
+                msg.metadata.best_day ||
+                (msg.metadata.response_data && msg.metadata.response_data.analysis_result)
+              ))) {
+                return 'results';
+              }
             }
             return 'ai';
           }
@@ -151,8 +159,8 @@ export default function ChatPage() {
           message: 'Analysis request completed successfully',
         });
 
-        const responseType = response.data.metadata?.response_type;
-        const isMeaningless = responseType === 'meaningless_query' || response.data.metadata?.is_meaningless;
+        const responseType = response.data.response_type || response.data.metadata?.response_type;
+        const isMeaningless = responseType === 'meaningless' || responseType === 'meaningless_query' || response.data.metadata?.is_meaningless;
 
         if (isMeaningless) {
           ProgressManager.addLog(session_id, {
@@ -166,7 +174,7 @@ export default function ChatPage() {
             content: errorMsg,
           });
         } else {
-          const needsClarification = responseType === 'needs_clarification' || response.data.metadata?.needs_user_input;
+          const needsClarification = responseType === 'needs_clarification' || responseType === 'needs_confirmation' || response.data.metadata?.needs_user_input;
           const clarificationData = {
             message_id: response.data.message_id,
             content: response.data.content,

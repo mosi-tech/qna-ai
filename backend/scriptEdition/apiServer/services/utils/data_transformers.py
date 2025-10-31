@@ -92,6 +92,10 @@ class DataTransformer:
         response_type = metadata.get("response_type", "")
         execution_id = msg.get("executionId")
         
+        # Normalize response types for UI - analysis results should all be "analysis"
+        if response_type in ["reuse_decision", "cache_hit", "analysis"]:
+            response_type = "analysis"
+        
         # Base message structure with essential fields
         clean_msg = {
             "id": msg.get("messageId"),
@@ -99,12 +103,14 @@ class DataTransformer:
             "timestamp": msg.get("timestamp"),
             "analysisId": msg.get("analysisId"),
             "executionId": execution_id,
+            "response_type": response_type,  # Normalized response type for UI
         }
         
         if response_type == "analysis":
-            # For analysis: content + uiData with results (consistent with AnalysisResponse)
+            # For analysis: content + uiData with results and markdown (consistent with AnalysisResponse)
             ui_data = {
                 "results": {},  # Will be populated from execution if available
+                "markdown": None,  # Will be populated if available
             }
             
             # Fetch execution results if available
@@ -112,10 +118,15 @@ class DataTransformer:
                 try:
                     execution = await self.db_client.get_execution(execution_id)
                     if execution and execution.result:
-                        # Extract only the nested results field (execution.result.results)
+                        # Extract the nested results field (execution.result.results)
                         execution_results = execution.result.get("results", {})
                         if execution_results:
                             ui_data["results"] = execution_results
+                        
+                        # Extract markdown if available
+                        markdown = execution.result.get("markdown")
+                        if markdown:
+                            ui_data["markdown"] = markdown
                 except Exception as e:
                     logger.warning(f"Failed to fetch execution results for {execution_id}: {e}")
             

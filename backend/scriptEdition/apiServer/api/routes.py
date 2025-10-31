@@ -66,8 +66,8 @@ class APIRoutes:
         self.session_manager = session_manager
         
         # Initialize data transformer for clean transformation operations
-        if chat_history_service and hasattr(chat_history_service, 'repositories'):
-            self.data_transformer = DataTransformer(chat_history_service.repositories.db)
+        if chat_history_service and hasattr(chat_history_service, 'data_transformer'):
+            self.data_transformer = chat_history_service.data_transformer
         else:
             self.data_transformer = None
         
@@ -228,6 +228,11 @@ class APIRoutes:
         }
         ui_data = await self.data_transformer.transform_message_to_ui_data(mock_msg)
         
+        # Normalize response types for UI - analysis results should all be "analysis"
+        ui_response_type = response_type
+        if response_type in ["reuse_decision", "cache_hit", "analysis"]:
+            ui_response_type = "analysis"
+        
         response_data = {
             "message_id": msg_id,
             "session_id": session_id,
@@ -235,6 +240,7 @@ class APIRoutes:
             "analysisId": analysis_id,
             "executionId": execution_id,
             "uiData": ui_data,
+            "response_type": ui_response_type,
         }
         
         return AnalysisResponse(
