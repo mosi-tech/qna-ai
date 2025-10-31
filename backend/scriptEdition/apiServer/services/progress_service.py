@@ -99,7 +99,7 @@ class ProgressStreamManager:
                     except Exception as e:
                         logger.error(f"Error calling progress subscriber: {e}")
 
-            logger.debug(f"📊 Progress event: {message} ({session_id})")
+            logger.info(f"📊 Progress event emitted: {message} ({session_id}) to {len(self.subscribers.get(session_id, []))} subscribers")
             return event
 
     def subscribe(
@@ -110,10 +110,15 @@ class ProgressStreamManager:
             self.subscribers[session_id] = []
 
         self.subscribers[session_id].append(callback)
+        logger.info(f"📡 New SSE subscriber for session {session_id}. Total: {len(self.subscribers[session_id])}")
 
         def unsubscribe():
             if session_id in self.subscribers:
-                self.subscribers[session_id].remove(callback)
+                try:
+                    self.subscribers[session_id].remove(callback)
+                    logger.info(f"📡 SSE subscriber removed for session {session_id}. Remaining: {len(self.subscribers[session_id])}")
+                except ValueError:
+                    logger.warning(f"📡 Attempted to remove non-existent subscriber for session {session_id}")
 
         return unsubscribe
 

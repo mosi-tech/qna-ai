@@ -23,6 +23,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'scriptEd
 from services.audit_service import AuditService
 from db import RepositoryManager, MongoDBClient
 
+# Note: Progress communication now uses queue-based messaging via send_progress_event
+
 logger = logging.getLogger(__name__)
 
 class ExecutionQueueWorker:
@@ -68,6 +70,9 @@ class ExecutionQueueWorker:
         except Exception as e:
             logger.warning(f"⚠️ Failed to initialize ResultFormatter: {e}")
             self.result_formatter = None
+        
+        # Progress communication now uses queue-based messaging via send_progress_event
+        logger.info("✅ Progress communication will use queue-based messaging")
         
         self.running = True
         
@@ -139,9 +144,26 @@ class ExecutionQueueWorker:
     async def _process_execution(self, execution: Dict[str, Any]):
         """Process a single execution"""
         execution_id = execution.get("execution_id")
+        session_id = execution.get("session_id")
+        analysis_id = execution.get("analysis_id")
         
         try:
             logger.info(f"🔨 Processing execution: {execution_id}")
+            
+            # CRITICAL: Send SSE update when execution starts running via queue
+            if session_id:
+                try:
+                    await self.queue.send_progress_event(session_id, {
+                        "type": "execution_status",
+                        "execution_id": execution_id,
+                        "analysis_id": analysis_id,
+                        "status": "running",
+                        "message": "Analysis execution in progress",
+                        "level": "info"
+                    })
+                    logger.info(f"📡 Sent SSE running status via queue for sessionL {session_id} and execution: {execution_id}")
+                except Exception as sse_error:
+                    logger.warning(f"⚠️ Failed to send SSE running status via queue: {sse_error}")
             
             # Log start
             await self.queue.update_logs(execution_id, {
@@ -210,6 +232,24 @@ class ExecutionQueueWorker:
                     await self.queue.ack(execution_id, result)
                     logger.info(f"✅ Acknowledged queue after successful audit save: {execution_id}")
                 
+                # CRITICAL: Send SSE completion update with results via queue
+                if session_id:
+                    try:
+                        await self.queue.send_progress_event(session_id, {
+                            "type": "execution_status",
+                            "execution_id": execution_id,
+                            "analysis_id": analysis_id,
+                            "status": "completed",
+                            "message": "Analysis execution completed",
+                            "level": "success",
+                            "results": result_output,
+                            "markdown": result_output.get("markdown"),
+                            "execution_time": result.get('execution_time', 0)
+                        })
+                        logger.info(f"📡 Sent SSE completed status via queue for session: {session_id} and execution: {execution_id}")
+                    except Exception as sse_error:
+                        logger.warning(f"⚠️ Failed to send SSE completed status via queue: {sse_error}")
+                
                 await self.queue.update_logs(execution_id, {
                     "level": "INFO", 
                     "message": f"Execution completed successfully in {result.get('execution_time', 0):.2f}s"
@@ -237,6 +277,22 @@ class ExecutionQueueWorker:
                 # Nack the execution in queue (after audit attempt)
                 await self.queue.nack(execution_id, error_msg, retry=True)
                 
+                # CRITICAL: Send SSE failure update via queue
+                if session_id:
+                    try:
+                        await self.queue.send_progress_event(session_id, {
+                            "type": "execution_status",
+                            "execution_id": execution_id,
+                            "analysis_id": analysis_id,
+                            "status": "failed",
+                            "message": f"Analysis execution failed: {error_msg}",
+                            "level": "error",
+                            "error": error_msg
+                        })
+                        logger.info(f"📡 Sent SSE failed status via queue for execution: {execution_id}")
+                    except Exception as sse_error:
+                        logger.warning(f"⚠️ Failed to send SSE failed status via queue: {sse_error}")
+                
                 await self.queue.update_logs(execution_id, {
                     "level": "ERROR",
                     "message": f"Execution failed: {error_msg}"
@@ -246,6 +302,22 @@ class ExecutionQueueWorker:
         
         except Exception as e:
             logger.error(f"❌ Error processing execution {execution_id}: {e}")
+            
+            # CRITICAL: Send SSE failure update for unexpected errors via queue
+            if session_id:
+                try:
+                    await self.queue.send_progress_event(session_id, {
+                        "type": "execution_status",
+                        "execution_id": execution_id,
+                        "analysis_id": analysis_id,
+                        "status": "failed",
+                        "message": f"Worker error: {str(e)}",
+                        "level": "error",
+                        "error": str(e)
+                    })
+                    logger.info(f"📡 Sent SSE failed status via queue for worker error: {execution_id}")
+                except Exception as sse_error:
+                    logger.warning(f"⚠️ Failed to send SSE failed status via queue for worker error: {sse_error}")
             
             try:
                 await self.queue.nack(execution_id, str(e), retry=True)

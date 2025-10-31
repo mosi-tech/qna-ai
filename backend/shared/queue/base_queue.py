@@ -103,3 +103,17 @@ class ExecutionQueueInterface(ABC):
             True if log was added successfully
         """
         pass
+    
+    @abstractmethod
+    async def send_progress_event(self, session_id: str, progress_data: Dict[str, Any]) -> bool:
+        """
+        Send progress event for SSE broadcasting
+        
+        Args:
+            session_id: Session identifier for SSE routing
+            progress_data: Progress event data with type, status, message, etc.
+            
+        Returns:
+            True if progress event was sent successfully
+        """
+        pass

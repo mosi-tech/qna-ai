@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import MockOutput from '@/components/MockOutput';
+import { useExecutionStatus } from '@/lib/hooks/useExecutionStatus';
 
 interface AnalysisResultProps {
   messageId: string;
@@ -11,6 +12,7 @@ interface AnalysisResultProps {
   expanded?: boolean;
   analysisId?: string;
   executionId?: string;
+  sessionId?: string;
   onExecutionUpdate?: (update: any) => void;
 }
 
@@ -21,18 +23,27 @@ export default function AnalysisResult({
   expanded = false,
   analysisId,
   executionId,
+  sessionId,
   onExecutionUpdate
 }: AnalysisResultProps) {
   const router = useRouter();
   // Always expanded, no state needed
   const isExpanded = true;
   
+  // Use execution status hook for real-time updates
+  const { executionStatus: liveExecutionStatus, refreshExecutionData, isExecuting, isCompleted } = useExecutionStatus(sessionId, executionId);
+  
   // Use clean uiData instead of raw results
   const uiData = results?.uiData || results; // Fallback for backward compatibility
-  const executionStatus = uiData?.execution?.status || 'completed';
-  const analysisResults = uiData?.results || {};
+  
+  // Determine which data to use - live data takes precedence if available
+  const currentExecutionStatus = liveExecutionStatus.status !== 'pending' ? liveExecutionStatus.status : (uiData?.execution?.status || 'pending');
+  const currentProgress = liveExecutionStatus.progress || uiData?.execution?.progress || 'Processing...';
+  
+  // Use live results if available (when execution completes), otherwise fall back to initial data
+  const analysisResults = liveExecutionStatus.results || uiData?.results || {};
   const analysisType = uiData?.type || 'Analysis';
-  const markdown = uiData?.markdown;
+  const markdown = liveExecutionStatus.markdown || uiData?.markdown;
 
   const formatValue = (value: any): string => {
     if (typeof value === 'number') {
@@ -113,6 +124,48 @@ export default function AnalysisResult({
   };
 
   const renderExpandedContent = () => {
+    const hasResults = markdown || (analysisResults && Object.keys(analysisResults).length > 0);
+    
+    // Show execution status if no results yet or execution is still running
+    if (!hasResults || isExecuting) {
+      return (
+        <div className="text-center py-6">
+          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg ${
+            currentExecutionStatus === 'pending' ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' :
+            currentExecutionStatus === 'queued' ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' :
+            currentExecutionStatus === 'running' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+            currentExecutionStatus === 'failed' ? 'bg-red-50 text-red-700 border border-red-200' :
+            'bg-gray-50 text-gray-700 border border-gray-200'
+          }`}>
+            {(currentExecutionStatus === 'running' || currentExecutionStatus === 'queued') && (
+              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+            )}
+            {currentExecutionStatus === 'pending' && (
+              <div className="w-2 h-2 bg-current rounded-full animate-pulse"></div>
+            )}
+            {currentExecutionStatus === 'failed' && (
+              <div className="w-2 h-2 bg-current rounded-full"></div>
+            )}
+            <span className="font-medium">{currentProgress}</span>
+          </div>
+          
+          {/* Show execution logs if available */}
+          {liveExecutionStatus.logs.length > 0 && (
+            <div className="mt-4 max-w-md mx-auto">
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                <div className="font-medium text-gray-900 mb-2 text-sm">Execution Logs</div>
+                <div className="text-xs text-gray-600 space-y-1 max-h-32 overflow-y-auto">
+                  {liveExecutionStatus.logs.slice(-5).map((log, index) => (
+                    <div key={index} className="font-mono">{log}</div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+    
     // Prioritize markdown rendering over raw results
     if (markdown) {
       return (
@@ -130,7 +183,7 @@ export default function AnalysisResult({
     // Fallback: render raw results if no markdown available
     const resultEntries = Object.entries(analysisResults);
     
-    if (!uiData || resultEntries.length === 0) {
+    if (resultEntries.length === 0) {
       return (
         <div className="text-center py-4 text-gray-500">
           <p>No results available</p>
@@ -166,7 +219,7 @@ export default function AnalysisResult({
         {renderExpandedContent()}
         
         {/* Execution Logs for Running Status */}
-        {executionStatus === 'running' && results?.execution?.logs && (
+        {currentExecutionStatus === 'running' && results?.execution?.logs && (
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
             <div className="font-medium text-gray-900 mb-2 flex items-center gap-2">
               <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
@@ -184,7 +237,7 @@ export default function AnalysisResult({
         )}
 
         {/* Execution Error Display */}
-        {executionStatus === 'failed' && results?.execution?.error && (
+        {currentExecutionStatus === 'failed' && results?.execution?.error && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-3">
             <div className="font-medium text-red-900 mb-2">Execution Failed</div>
             <div className="text-sm text-red-700">
@@ -206,9 +259,9 @@ export default function AnalysisResult({
         <div className="flex items-center gap-2 text-sm text-gray-600">
           <span>🔬</span>
           <span>
-            {executionStatus === 'running' ? 'Execution in progress...' :
-             executionStatus === 'queued' ? 'Waiting for execution...' :
-             executionStatus === 'failed' ? 'Execution failed - retry in workspace' :
+            {currentExecutionStatus === 'running' ? 'Execution in progress...' :
+             currentExecutionStatus === 'queued' ? 'Waiting for execution...' :
+             currentExecutionStatus === 'failed' ? 'Execution failed - retry in workspace' :
              'Adjust parameters and re-run analysis'}
           </span>
         </div>
@@ -216,9 +269,9 @@ export default function AnalysisResult({
         <div className="flex items-center gap-2">
           <button
             onClick={exportResults}
-            disabled={executionStatus === 'running' || executionStatus === 'queued'}
+            disabled={currentExecutionStatus === 'running' || currentExecutionStatus === 'queued'}
             className={`px-3 py-1.5 text-sm border border-gray-300 rounded-lg transition-colors ${
-              executionStatus === 'running' || executionStatus === 'queued'
+              currentExecutionStatus === 'running' || currentExecutionStatus === 'queued'
                 ? 'opacity-50 cursor-not-allowed'
                 : 'hover:bg-gray-100'
             }`}
@@ -229,7 +282,7 @@ export default function AnalysisResult({
             onClick={openWorkspace}
             className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors"
           >
-            {executionStatus === 'running' ? 'View Progress' : 'Open Workspace'}
+            {currentExecutionStatus === 'running' ? 'View Progress' : 'Open Workspace'}
           </button>
         </div>
       </div>

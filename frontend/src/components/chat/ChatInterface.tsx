@@ -21,6 +21,7 @@ interface ChatInterfaceProps {
   onLoadOlder?: () => void;
   isLoadingOlder?: boolean;
   canLoadOlder?: boolean;
+  sessionId?: string;
 }
 
 export default function ChatInterface({
@@ -35,6 +36,7 @@ export default function ChatInterface({
   onLoadOlder,
   isLoadingOlder = false,
   canLoadOlder = false,
+  sessionId,
 }: ChatInterfaceProps) {
   const router = useRouter();
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -191,6 +193,7 @@ export default function ChatInterface({
                     results={message.data}
                     analysisId={message.analysisId}
                     executionId={message.executionId}
+                    sessionId={sessionId}
                   />
                 </div>
               </div>

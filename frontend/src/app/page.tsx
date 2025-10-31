@@ -5,8 +5,8 @@ import { useSession } from '@/lib/context/SessionContext';
 import { useConversation } from '@/lib/context/ConversationContext';
 import { useUI } from '@/lib/context/UIContext';
 import { useAnalysis } from '@/lib/hooks/useAnalysis';
-import { useProgressStream } from '@/lib/hooks/useProgressStream';
 import { useSessionManager } from '@/lib/hooks/useSessionManager';
+import { ProgressProvider, useProgress } from '@/lib/context/ProgressContext';
 import ChatInterface from '@/components/chat/ChatInterface';
 import AnalysisPanel from '@/components/chat/AnalysisPanel';
 import ProgressPanel from '@/components/progress/ProgressPanel';
@@ -16,12 +16,12 @@ import { ParameterValues } from '@/types/modules';
 import { ProgressManager } from '@/lib/progress/ProgressManager';
 import { api } from '@/lib/api';
 
-export default function Home() {
+function HomeContent() {
   const { session_id, user_id, resumeSession, updateSessionMetadata } = useSession();
   const { messages, addMessage, updateMessage, setMessages, loadSessionMessages } = useConversation();
   const { viewMode, setViewMode, isProcessing, setIsProcessing, error: uiError, setError: setUIError } = useUI();
   const { analyzeQuestion, isLoading: analysisLoading } = useAnalysis();
-  const { logs: progressLogs, isConnected, clearLogs } = useProgressStream(session_id);
+  const { logs: progressLogs, isConnected, clearLogs } = useProgress();
   const { getSessionDetail } = useSessionManager();
 
   const [chatInput, setChatInput] = useState('');
@@ -648,5 +648,15 @@ export default function Home() {
         />
       )}
     </div>
+  );
+}
+
+export default function Home() {
+  const { session_id } = useSession();
+  
+  return (
+    <ProgressProvider sessionId={session_id}>
+      <HomeContent />
+    </ProgressProvider>
   );
 }

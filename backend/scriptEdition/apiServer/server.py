@@ -8,10 +8,15 @@ from contextlib import asynccontextmanager
 from typing import Optional
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
 
 import sys
 import os
 import uuid
+
+# Load environment variables from .env file
+load_dotenv()
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from api.models import QuestionRequest, AnalysisResponse
@@ -24,6 +29,7 @@ from services.analysis_persistence_service import AnalysisPersistenceService
 from services.audit_service import AuditService
 from services.execution_service import ExecutionService
 from services.progress_service import progress_manager
+from services.progress_monitor import initialize_progress_monitor, cleanup_progress_monitor
 from api.routes import APIRoutes
 from api.execution_routes import ExecutionRoutes
 from api.auth import UserContext, require_authenticated_user, get_optional_user
@@ -66,6 +72,11 @@ async def lifespan(app: FastAPI):
         audit_service = AuditService(repo_manager)
         execution_service = ExecutionService(repo_manager)
         logger.info("✅ Persistence services initialized")
+        
+        # Initialize progress monitor for queue-based SSE communication
+        logger.info("🔧 Initializing progress monitor...")
+        await initialize_progress_monitor(db_client.db)
+        logger.info("✅ Progress monitor initialized")
         
         # 3. Session manager (CRITICAL)
         logger.info("🔧 Initializing session manager...")
@@ -122,6 +133,7 @@ async def lifespan(app: FastAPI):
     
     # Shutdown
     logger.info("🛑 Shutting down Financial Analysis Server...")
+    await cleanup_progress_monitor()
     await app.state.analysis_service.close_sessions()
     
     # Shutdown database

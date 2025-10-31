@@ -553,7 +553,7 @@ class APIRoutes:
                     session_id=session_id,
                     user_id=user_id,
                     response_type="reuse_decision",
-                    message_content=f"Reused existing analysis: {reuse_decision.get('reason')}",
+                    message_content=reuse_decision.get('analysis_description', ''),
                     analysis_id=analysis_id,
                     execution_id=execution_id,
                     metadata=msg_metadata,

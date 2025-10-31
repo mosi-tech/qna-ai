@@ -21,6 +21,7 @@ class MongoDBExecutionQueue(ExecutionQueueInterface):
         self.db = db
         self.collection: AsyncIOMotorCollection = db[collection_name]
         self.collection_name = collection_name
+        self.progress_events_collection: AsyncIOMotorCollection = db["progress_events"]
         
     async def ensure_indexes(self):
         """Create necessary indexes for performance"""
@@ -37,6 +38,12 @@ class MongoDBExecutionQueue(ExecutionQueueInterface):
             
             # Index for worker_id queries
             await self.collection.create_index("worker_id", name="worker_id_idx")
+            
+            # Index for progress events by session_id and timestamp
+            await self.progress_events_collection.create_index([
+                ("session_id", 1),
+                ("timestamp", 1)
+            ], name="progress_events_idx")
             
             logger.info("✅ MongoDB queue indexes created successfully")
             
@@ -285,3 +292,21 @@ class MongoDBExecutionQueue(ExecutionQueueInterface):
         except Exception as e:
             logger.error(f"❌ Failed to cleanup old executions: {e}")
             return 0
+    
+    async def send_progress_event(self, session_id: str, progress_data: Dict[str, Any]) -> bool:
+        """Send progress event for SSE broadcasting via MongoDB"""
+        try:
+            progress_event = {
+                "session_id": session_id,
+                "timestamp": datetime.utcnow(),
+                "processed": False,  # Flag for apiServer to know if it's been broadcast
+                **progress_data
+            }
+            
+            await self.progress_events_collection.insert_one(progress_event)
+            logger.debug(f"📡 Queued progress event for session {session_id}: {progress_data.get('message', 'No message')}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to send progress event for session {session_id}: {e}")
+            return False
