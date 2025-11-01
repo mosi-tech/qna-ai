@@ -135,6 +135,34 @@ class ChatHistoryService:
             self.logger.error(f"✗ Failed to add assistant message: {e}")
             raise
     
+    async def update_assistant_message(
+        self,
+        message_id: str,
+        content: str,
+        analysis_id: str = None,
+        execution_id: str = None,
+        metadata: Dict[str, Any] = None
+    ) -> bool:
+        """Update existing assistant message with new content and metadata"""
+        try:
+            success = await self.chat_repo.update_assistant_message(
+                message_id=message_id,
+                content=content,
+                analysis_id=analysis_id,
+                execution_id=execution_id,
+                metadata=metadata
+            )
+            
+            if success:
+                self.logger.info(f"✓ Updated assistant message: {message_id}")
+            else:
+                self.logger.warning(f"⚠️ Failed to update assistant message: {message_id}")
+            
+            return success
+        except Exception as e:
+            self.logger.error(f"✗ Failed to update assistant message: {e}")
+            raise
+    
     async def get_session_context(self, session_id: str) -> Optional[Dict[str, Any]]:
         """Get session with full context for LLM"""
         try:

@@ -7,6 +7,7 @@ import logging
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 import hashlib
+from bson import ObjectId
 
 from .mongodb_client import MongoDBClient
 from .schemas import (
@@ -119,6 +120,37 @@ class ChatRepository:
             metadata=metadata or {},
         )
         return await self.db.create_message(message)
+    
+    async def update_assistant_message(
+        self,
+        message_id: str,
+        content: str,
+        analysis_id: str = None,
+        execution_id: str = None,
+        metadata: Dict[str, Any] = None,
+    ) -> bool:
+        """Update existing assistant message with new content and metadata"""
+        update_data = {
+            "content": content,
+            "updatedAt": datetime.utcnow()
+        }
+        
+        if analysis_id is not None:
+            update_data["analysisId"] = analysis_id
+        if execution_id is not None:
+            update_data["executionId"] = execution_id
+        if metadata is not None:
+            update_data["metadata"] = metadata
+            
+        # If ObjectId conversion fails, treat as string
+        query = {"messageId": message_id}
+            
+        result = await self.db.db.chat_messages.update_one(
+            query,
+            {"$set": update_data}
+        )
+        
+        return result.modified_count > 0
     
     async def get_conversation_history(self, session_id: str) -> List[Dict[str, Any]]:
         """Get conversation for LLM context"""

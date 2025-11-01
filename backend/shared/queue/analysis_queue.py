@@ -8,6 +8,7 @@ Manages queuing and processing of analysis requests.
 import asyncio
 import json
 import logging
+import os
 import uuid
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional, List
@@ -74,17 +75,6 @@ class AnalysisQueueInterface(ABC):
         """
         pass
     
-    @abstractmethod
-    async def send_progress_event(self, session_id: str, event_data: Dict[str, Any]):
-        """
-        Send progress event via SSE
-        
-        Args:
-            session_id: Session ID for routing
-            event_data: Event data to send
-        """
-        pass
-
 
 class MongoAnalysisQueue(AnalysisQueueInterface):
     """MongoDB-based analysis queue implementation"""
@@ -92,6 +82,9 @@ class MongoAnalysisQueue(AnalysisQueueInterface):
     def __init__(self, db):
         self.db = db
         self.collection = db.analysis_queue
+        # Configure max retries and retry delay from environment variables
+        self.max_retries = int(os.getenv("ANALYSIS_QUEUE_MAX_RETRIES", "3"))
+        self.retry_delay_seconds = int(os.getenv("ANALYSIS_QUEUE_RETRY_DELAY", "60"))
         self._ensure_indexes()
     
     def _ensure_indexes(self):
@@ -153,13 +146,24 @@ class MongoAnalysisQueue(AnalysisQueueInterface):
     async def dequeue_analysis(self, worker_id: str) -> Optional[Dict[str, Any]]:
         """Get next analysis for worker (atomic claim operation)"""
         try:
-            # Atomically claim next pending job
+            # Atomically claim next pending job (respect retry_at time)
+            current_time = datetime.utcnow()
             result = await self.collection.find_one_and_update(
                 {
                     "status": "pending",
-                    "$or": [
-                        {"worker_id": None},
-                        {"worker_id": worker_id}  # Allow same worker to reclaim
+                    "$and": [
+                        {
+                            "$or": [
+                                {"worker_id": None},
+                                {"worker_id": worker_id}  # Allow same worker to reclaim
+                            ]
+                        },
+                        {
+                            "$or": [
+                                {"retry_at": None},  # Jobs without retry delay
+                                {"retry_at": {"$lte": current_time}}  # Jobs ready for retry
+                            ]
+                        }
                     ]
                 },
                 {
@@ -221,9 +225,11 @@ class MongoAnalysisQueue(AnalysisQueueInterface):
                 return False
             
             retry_count = job.get("retry_count", 0)
-            max_retries = 1
             
-            if retry and retry_count < max_retries:
+            if retry and retry_count < self.max_retries:
+                # Calculate retry time with delay
+                retry_at = datetime.utcnow() + timedelta(seconds=self.retry_delay_seconds)
+                
                 # Retry the job
                 update_result = await self.collection.update_one(
                     {"job_id": job_id},
@@ -233,6 +239,7 @@ class MongoAnalysisQueue(AnalysisQueueInterface):
                             "worker_id": None,
                             "claimed_at": None,
                             "updated_at": datetime.utcnow(),
+                            "retry_at": retry_at,
                             "error": error
                         },
                         "$inc": {"retry_count": 1}
@@ -260,17 +267,6 @@ class MongoAnalysisQueue(AnalysisQueueInterface):
         except Exception as e:
             logger.error(f"❌ Failed to nack analysis: {e}")
             return False
-    
-    async def send_progress_event(self, session_id: str, event_data: Dict[str, Any]):
-        """Send progress event via progress event queue"""
-        if self.progress_event_queue:
-            try:
-                await self.progress_event_queue.send_progress_event(session_id, event_data)
-                logger.info(f"📝 Progress event stored via queue: {session_id} - {event_data.get('message', 'Progress update')}")
-            except Exception as e:
-                logger.warning(f"⚠️ Failed to store progress event via queue: {e}")
-        else:
-            logger.warning("⚠️ No progress event queue available for storing events")
     
     async def get_queue_stats(self) -> Dict[str, int]:
         """Get queue statistics"""

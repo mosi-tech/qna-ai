@@ -11,7 +11,6 @@ from shared.queue.progress_message import ProgressMessage
 
 logger = logging.getLogger(__name__)
 
-
 async def send_progress_event(session_id: str, event_data: Union[ProgressMessage, Dict[str, Any]]):
     """
     Send progress event using the queue system.
@@ -46,3 +45,126 @@ async def send_progress_error(session_id: str, message: str, **kwargs):
         "message": message,
         **kwargs
     })
+
+
+# Context-aware progress functions (no parameters needed!)
+async def send_analysis_progress(message: str, **kwargs):
+    """Send analysis progress using execution context"""
+    try:
+        from shared.queue.worker_context import get_session_id, get_message_id
+        
+        session_id = get_session_id()
+        message_id = get_message_id()
+        
+        if session_id:  # Only send if context available
+            await send_progress_event(session_id, {
+                "type": "analysis_progress",
+                "message": message,
+                "status": "running",
+                "level": "info",
+                "message_id": message_id,
+                "log_to_message": True if message_id else False,
+                **kwargs
+            })
+    except Exception as e:
+        # Graceful fallback - don't break pipeline if progress fails
+        logger.warning(f"Failed to send analysis progress: {e}")
+
+
+async def send_analysis_error(message: str, error: str = None, **kwargs):
+    """Send analysis error using execution context"""
+    await send_analysis_progress(
+        message=message,
+        status="failed",
+        level="error",
+        error=error,
+        **kwargs
+    )
+
+
+async def send_analysis_success(message: str, **kwargs):
+    """Send analysis success using execution context"""
+    await send_analysis_progress(
+        message=message,
+        status="completed", 
+        level="success",
+        **kwargs
+    )
+
+
+# Context-aware execution progress functions
+async def send_execution_progress(message: str, status: str = "running", level: str = "info", **kwargs):
+    """Send execution progress using execution context"""
+    try:
+        from shared.queue.worker_context import get_session_id, get_message_id, get_context_value
+        
+        session_id = get_session_id()
+        message_id = get_message_id()
+        execution_id = get_context_value('execution_id')
+        analysis_id = get_context_value('analysis_id')
+        
+        if session_id:  # Only send if context available
+            await send_progress_event(session_id, {
+                "type": "execution_status",
+                "execution_id": execution_id,
+                "analysis_id": analysis_id,
+                "message_id": message_id,
+                "status": status,
+                "message": message,
+                "level": level,
+                "log_to_message": True if message_id else False,
+                **kwargs
+            })
+    except Exception as e:
+        # Graceful fallback - don't break execution if progress fails
+        logger.warning(f"Failed to send execution progress: {e}")
+
+
+async def send_execution_running(message: str = "Analysis execution in progress", **kwargs):
+    """Send execution running status using execution context"""
+    await send_execution_progress(
+        message=message,
+        status="running",
+        level="info",
+        **kwargs
+    )
+
+
+async def send_execution_completed(message: str = "Analysis execution completed", results: dict = None, markdown: str = None, execution_time: float = None, **kwargs):
+    """Send execution completed status using execution context"""
+    extra_data = {}
+    if results:
+        extra_data["results"] = results
+    if markdown:
+        extra_data["markdown"] = markdown
+    if execution_time:
+        extra_data["execution_time"] = execution_time
+        
+    await send_execution_progress(
+        message=message,
+        status="completed",
+        level="success",
+        **extra_data,
+        **kwargs
+    )
+
+
+async def send_execution_failed(message: str = "Analysis execution failed", error: str = None, **kwargs):
+    """Send execution failed status using execution context"""
+    await send_execution_progress(
+        message=message,
+        status="failed",
+        level="error",
+        error=error,
+        **kwargs
+    )
+
+
+async def send_execution_queued(message: str = "Analysis queued for execution", **kwargs):
+    """Send execution queued status using execution context"""
+    await send_execution_progress(
+        message=message,
+        status="queued",
+        level="info",
+        **kwargs
+    )

@@ -17,11 +17,9 @@ from typing import Dict, Any, Optional
 # Add shared modules to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
-from .analysis_queue import AnalysisQueueInterface, get_analysis_queue
+from .analysis_queue import AnalysisQueueInterface
 from .base_worker import BaseQueueWorker
-from ..storage import get_storage
 from shared.services.progress_service import send_progress_event
-from context import set_context, send_progress_event
 from .progress_message import analysis_status_message, ProgressStatus
 
 logger = logging.getLogger(__name__)
@@ -33,17 +31,39 @@ class AnalysisQueueWorker(BaseQueueWorker):
         self, 
         queue: AnalysisQueueInterface,
         worker_id: Optional[str] = None,
-        poll_interval: int = 5,
-        max_concurrent_analyses: int = 2
+        poll_interval: Optional[int] = None,
+        max_concurrent_analyses: Optional[int] = None,
+        max_retries: Optional[int] = None,
+        retry_delay: Optional[int] = None
     ):
+        # Configure settings from environment variables with fallbacks
+        self.poll_interval = poll_interval or int(os.getenv("ANALYSIS_WORKER_POLL_INTERVAL", "5"))
+        self.max_concurrent_analyses = max_concurrent_analyses or int(os.getenv("ANALYSIS_WORKER_MAX_CONCURRENT", "2"))
+        self.max_retries = max_retries or int(os.getenv("ANALYSIS_WORKER_MAX_RETRIES", "3"))
+        self.retry_delay = retry_delay or int(os.getenv("ANALYSIS_WORKER_RETRY_DELAY", "60"))
+        
         super().__init__(
             queue=queue,
             worker_id=worker_id,
-            poll_interval=poll_interval,
-            max_concurrent_items=max_concurrent_analyses,
+            poll_interval=self.poll_interval,
+            max_concurrent_items=self.max_concurrent_analyses,
             worker_type="analysis_worker"
         )
         self.analysis_pipeline = None
+        
+        logger.info(f"🔧 Analysis Worker Config: poll_interval={self.poll_interval}s, "
+                   f"max_concurrent={self.max_concurrent_analyses}, max_retries={self.max_retries}, "
+                   f"retry_delay={self.retry_delay}s")
+        
+        # Log environment variable usage
+        env_vars_used = [
+            ("ANALYSIS_WORKER_POLL_INTERVAL", self.poll_interval),
+            ("ANALYSIS_WORKER_MAX_CONCURRENT", self.max_concurrent_analyses), 
+            ("ANALYSIS_WORKER_MAX_RETRIES", self.max_retries),
+            ("ANALYSIS_WORKER_RETRY_DELAY", self.retry_delay)
+        ]
+        for env_var, value in env_vars_used:
+            logger.debug(f"🔧 {env_var}={value} (from env: {os.getenv(env_var, 'NOT_SET')})")
     
     async def _initialize_services(self):
         """Initialize the full analysis pipeline with all required services"""
@@ -61,10 +81,12 @@ class AnalysisQueueWorker(BaseQueueWorker):
             from services.search import SearchService
             from services.chat_service import ChatHistoryService
             from services.cache_service import CacheService
+            from services.audit_service import AuditService
             from ..analyze import AnalysisService
             from ..analyze import AnalysisPersistenceService
             from ..analyze import ReuseEvaluator as ReuseEvaluatorService
             from ..analyze import CodePromptBuilderService
+            
             from db import RepositoryManager, MongoDBClient
             
             # Initialize database connection
@@ -81,6 +103,7 @@ class AnalysisQueueWorker(BaseQueueWorker):
             analysis_persistence_service = AnalysisPersistenceService(repo_manager)
             reuse_evaluator = ReuseEvaluatorService()
             code_prompt_builder = CodePromptBuilderService()
+            audit_service = AuditService(repo_manager)
             
             # Create session manager for dialogue factory
             from shared.analyze.dialogue.conversation.session_manager import SessionManager
@@ -95,7 +118,8 @@ class AnalysisQueueWorker(BaseQueueWorker):
                 analysis_persistence_service=analysis_persistence_service,
                 reuse_evaluator=reuse_evaluator,
                 code_prompt_builder=code_prompt_builder,
-                session_manager=session_manager
+                session_manager=session_manager,
+                audit_service=audit_service
             )
             
             logger.info("✅ Analysis pipeline fully initialized with all services")
@@ -117,15 +141,7 @@ class AnalysisQueueWorker(BaseQueueWorker):
         job_id = job.get("job_id")
         session_id = job.get("session_id")
         message_id = job.get("message_id")
-        user_id = job.get("user_id")
         user_question = job.get("user_question")
-        
-        set_context(
-          job_id=job_id,
-          session_id=session_id,
-          message_id=message_id,
-          user_id=request_data.get('user_id', 'anonymous')
-        )
         
         try:
             logger.info(f"🔨 Processing analysis: {job_id}")
@@ -138,6 +154,7 @@ class AnalysisQueueWorker(BaseQueueWorker):
             if session_id:
                 await send_progress_event(session_id, {
                     "message": "Analysis started",
+                    "message_id": message_id,
                     "status": ProgressStatus.RUNNING
                 })
                 logger.info(f"📡 Sent SSE analysis start for job: {job_id}")
@@ -161,16 +178,16 @@ class AnalysisQueueWorker(BaseQueueWorker):
                 "status": "running",
                 "message": "Running analysis pipeline",
                 "level": "info",
-                "log_to_message": True
+                "log_to_message": True if message_id else False
             })
             logger.info(f"🤖 Running analysis pipeline for: {user_question[:100]}...")
             
             pipeline_result = await self.analysis_pipeline.analyze_question(request_data)
             
             # Check if analysis succeeded
-            if not pipeline_result.get("success"):
-                error_msg = pipeline_result.get("error", "Analysis pipeline failed")
-                internal_error = pipeline_result.get("internal_error", "Unknown pipeline error")
+            if not getattr(pipeline_result, "success", True):
+                error_msg = getattr(pipeline_result, "error", "Analysis pipeline failed")
+                internal_error = getattr(pipeline_result, "internal_error", "Unknown pipeline error")
                 await send_progress_event(session_id, {
                     "type": "analysis_progress",
                     "job_id": job_id,
@@ -178,15 +195,15 @@ class AnalysisQueueWorker(BaseQueueWorker):
                     "status": "failed",
                     "message": f"Analysis failed: {error_msg}",
                     "level": "error",
-                    "log_to_message": True,
+                    "log_to_message": True if message_id else False,
                     "error": error_msg,
                     "internal_error": internal_error
                 })
                 raise ValueError(f"{error_msg}: {internal_error}")
             
             # Extract results from pipeline response
-            pipeline_data = pipeline_result.get("data", {})
-            response_type = pipeline_data.get("response_type", "unknown")
+            pipeline_data = getattr(pipeline_result, "data", {})
+            response_type = pipeline_data.get("response_type", "unknown") if isinstance(pipeline_data, dict) else "unknown"
             
             # Build final result for queue
             result = {
@@ -194,10 +211,10 @@ class AnalysisQueueWorker(BaseQueueWorker):
                 "status": "completed",
                 "completed_at": datetime.utcnow().isoformat(),
                 "response_type": response_type,
-                "provider": pipeline_result.get("provider", "pipeline"),
-                "processing_time": pipeline_result.get("processing_time", 0),
-                "analysis_id": pipeline_data.get("analysis_id"),
-                "execution_id": pipeline_data.get("execution_id"),
+                "provider": getattr(pipeline_result, "provider", "pipeline"),
+                "processing_time": getattr(pipeline_result, "processing_time", 0),
+                "analysis_id": pipeline_data.get("analysis_id") if isinstance(pipeline_data, dict) else None,
+                "execution_id": pipeline_data.get("execution_id") if isinstance(pipeline_data, dict) else None,
                 "message_id": message_id
             }
             
@@ -208,46 +225,31 @@ class AnalysisQueueWorker(BaseQueueWorker):
                 "status": "completed",
                 "message": "Analysis completed successfully",
                 "level": "success",
-                "log_to_message": True,
+                "log_to_message": True if message_id else False,
                 "response_type": response_type,
                 "analysis_id": result.get("analysis_id"),
                 "execution_id": result.get("execution_id")
             })
-            
-            # Send completion SSE event
-            if session_id:
-                await send_progress_event(session_id, {
-                    "type": "analysis_status",
-                    "job_id": job_id,
-                    "message_id": message_id,
-                    "status": "completed",
-                    "message": "Analysis completed successfully",
-                    "level": "success",
-                    "response_type": response_type,
-                    "analysis_id": result.get("analysis_id"),
-                    "execution_id": result.get("execution_id")
-                })
             
             await self.queue.ack_analysis(job_id, result)
             logger.info(f"✅ Completed analysis: {job_id} (type: {response_type})")
             
         except Exception as e:
             logger.error(f"❌ Error processing analysis {job_id}: {e}")
+            await send_progress_event(session_id, {
+                "type": "analysis_status",
+                "job_id": job_id,
+                "message_id": message_id,
+                "status": "failed",
+                "message": f"Analysis failed: {str(e)}",
+                "level": "error",
+                "log_to_message": True if message_id else False,
+                "error": str(e)
+            })
             
-            # Send SSE failure update with message logging
-            if session_id:
-                await send_progress_event(session_id, {
-                    "type": "analysis_status",
-                    "job_id": job_id,
-                    "message_id": message_id,
-                    "status": "failed",
-                    "message": f"Analysis failed: {str(e)}",
-                    "level": "error",
-                    "log_to_message": True,
-                    "error": str(e)
-                })
-            
-            await self.queue.nack_analysis(job_id, str(e))
+            # Use configurable retry logic
+            should_retry = hasattr(self, 'max_retries') and self.max_retries > 0
+            await self.queue.nack_analysis(job_id, str(e), retry=should_retry)
     
 
 # Worker entry point for standalone execution

@@ -4,6 +4,7 @@ Progress streaming service for real-time execution updates
 
 import asyncio
 import json
+import orjson
 import logging
 from typing import Dict, List, Optional, Callable
 from datetime import datetime
@@ -43,17 +44,36 @@ class ProgressEvent:
         self.details = details or {}
 
     def to_dict(self) -> Dict:
+        # Debug: Log details content (orjson will handle datetime objects automatically)
+        logger.debug(f"🔍 ProgressEvent.to_dict details: {self.details}")
+        
         return {
             "id": self.id,
             "timestamp": self.timestamp,
             "level": self.level.value,
             "message": self.message,
-            "details": self.details,
+            "details": self.details,  # orjson will handle datetime objects automatically
         }
 
     def to_sse(self) -> str:
         """Convert to Server-Sent Event format"""
-        return f"data: {json.dumps(self.to_dict())}\n\n"
+        try:
+            data_dict = self.to_dict()
+            logger.debug(f"🔍 Serializing SSE data: {data_dict}")
+            
+            # Use orjson which automatically handles datetime objects
+            json_bytes = orjson.dumps(data_dict, option=orjson.OPT_SERIALIZE_DATACLASS)
+            return f"data: {json_bytes.decode()}\n\n"
+        except Exception as e:
+            logger.error(f"❌ orjson serialization error in SSE: {e}")
+            logger.error(f"❌ Data causing error: {self.to_dict()}")
+            # Return a safe fallback using orjson
+            try:
+                fallback_bytes = orjson.dumps({'error': 'Serialization failed', 'message': str(e)})
+                return f"data: {fallback_bytes.decode()}\n\n"
+            except Exception as fallback_error:
+                logger.error(f"❌ Even fallback serialization failed: {fallback_error}")
+                return f"data: {{\"error\": \"Critical serialization failure\"}}\n\n"
 
 
 class ProgressStreamManager:
@@ -236,12 +256,15 @@ async def execution_status_update(
     
     final_message = message or default_messages.get(status, f"Execution status: {status}")
     
+    # Debug: Log kwargs content (orjson will handle datetime objects automatically)
+    logger.debug(f"🔍 execution_status_update kwargs: {kwargs}")
+    
     details = {
         "execution_id": execution_id,
         "execution_status": status.value,
         **({"analysis_id": analysis_id} if analysis_id else {}),
         **({"execution_logs": execution_logs} if execution_logs else {}),
-        **kwargs
+        **kwargs  # orjson will handle datetime objects automatically
     }
     
     # Use appropriate progress level based on status

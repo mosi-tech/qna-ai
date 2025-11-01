@@ -85,3 +85,4 @@ backend/scripts/batch_processor.log
 /backend/scriptEdition/apiServer/code_gen
 .serena
 .vscode
+/backend/shared/analyze/code_gen

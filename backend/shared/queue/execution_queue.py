@@ -293,20 +293,3 @@ class MongoDBExecutionQueue(ExecutionQueueInterface):
             logger.error(f"❌ Failed to cleanup old executions: {e}")
             return 0
     
-    async def send_progress_event(self, session_id: str, progress_data: Dict[str, Any]) -> bool:
-        """Send progress event for SSE broadcasting via MongoDB"""
-        try:
-            progress_event = {
-                "session_id": session_id,
-                "timestamp": datetime.utcnow(),
-                "processed": False,  # Flag for apiServer to know if it's been broadcast
-                **progress_data
-            }
-            
-            await self.progress_events_collection.insert_one(progress_event)
-            logger.debug(f"📡 Queued progress event for session {session_id}: {progress_data.get('message', 'No message')}")
-            return True
-            
-        except Exception as e:
-            logger.error(f"❌ Failed to send progress event for session {session_id}: {e}")
-            return False
