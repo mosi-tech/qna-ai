@@ -6,23 +6,18 @@ Financial Analysis Service - QnA analysis with MCP tool calling
 import json
 import logging
 import os
-import sys
 from datetime import datetime
 from typing import Dict, Any, Optional, List
 
-# Import shared services
-shared_path = os.path.join(os.path.dirname(__file__), '..', '..', '..')
-sys.path.insert(0, shared_path)
-from shared.llm import create_analysis_llm, LLMService
-from shared.services.base_service import BaseService
+# Import shared services (we're in shared/analyze/services now)
+from ...llm import create_analysis_llm, LLMService
+from ...services.base_service import BaseService
 
-# Import safe JSON utilities
-utils_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "utils")
-sys.path.append(utils_path)
-from utils.json_utils import safe_json_loads
+# Import utilities (now local to analyze/)
+from ..utils.json_utils import safe_json_loads
 
-# Import verification service
-from .verification import StandaloneVerificationService
+# Import verification service (now local to services/)
+from .verification.verification_service import StandaloneVerificationService
 from .verification.integration_helpers import VerificationIntegrationHelper
 
 class AnalysisService(BaseService):
@@ -195,6 +190,11 @@ class AnalysisService(BaseService):
             self.logger.info(f"🔧 Executing {len(tool_calls)} tool calls")
 
             # Use MCP integration for validation and execution
+            # Add apiServer path for MCP integration import
+            import sys
+            api_server_path = os.path.join(os.path.dirname(__file__), '..', '..', 'scriptEdition', 'apiServer')
+            if api_server_path not in sys.path:
+                sys.path.insert(0, api_server_path)
             from integrations.mcp.mcp_integration import MCPIntegration
             
             if not hasattr(self, 'mcp_integration'):
@@ -1030,10 +1030,3 @@ class AnalysisService(BaseService):
         self.logger.info("Closing analysis service sessions...")
         # Note: MCP client cleanup is handled by the mcp_client module
         self.logger.info("Cleaned up analysis service")
-
-# Factory function to create analysis service
-def create_analysis_service(llm_service: Optional[LLMService] = None) -> AnalysisService:
-    """Create analysis service instance"""
-    return AnalysisService(llm_service)
-
-# Note: Convenience functions removed - use AnalysisService instance directly

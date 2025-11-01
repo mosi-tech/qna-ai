@@ -10,20 +10,15 @@ import asyncio
 import json
 import logging
 import os
-import sys
 from datetime import datetime
 from typing import Dict, Any, Optional, List
 
-# Import shared services
-shared_path = os.path.join(os.path.dirname(__file__), '..', '..', '..')
-sys.path.insert(0, shared_path)
-from shared.llm import create_code_prompt_builder_llm, LLMService, MessageFormatter
-from shared.services.base_service import BaseService
+# Import shared services (we're in shared/analyze/services now)
+from ...llm import create_code_prompt_builder_llm, LLMService, MessageFormatter
+from ...services.base_service import BaseService
 
-# Import safe JSON utilities
-utils_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "utils")
-sys.path.append(utils_path)
-from json_utils import safe_json_loads
+# Import safe JSON utilities (now local to analyze/)
+from ..utils.json_utils import safe_json_loads
 
 class CodePromptBuilderService(BaseService):
     """Service that analyzes queries and builds enriched prompts for code generation"""

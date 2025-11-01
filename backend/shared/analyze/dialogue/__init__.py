@@ -15,7 +15,7 @@ Main components:
 - ContextAwareSearch: Enhanced search with context understanding
 
 Usage:
-    from dialogue.search.context_aware import search_with_context
+    from shared.analyze.dialogue.search.context_aware import search_with_context
     
     result = search_with_context(
         query="what about QQQ to SPY",

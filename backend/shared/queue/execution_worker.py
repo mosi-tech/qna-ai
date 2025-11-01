@@ -12,9 +12,11 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 from .base_queue import ExecutionQueueInterface
+from .base_worker import BaseQueueWorker
 from ..execution import execute_script
 from ..storage import get_storage
 from ..services.result_formatter import create_shared_result_formatter
+from shared.services.progress_service import send_progress_event
 
 # Import AuditService for updating execution documents
 import sys
@@ -27,7 +29,7 @@ from db import RepositoryManager, MongoDBClient
 
 logger = logging.getLogger(__name__)
 
-class ExecutionQueueWorker:
+class ExecutionQueueWorker(BaseQueueWorker):
     """Worker that polls execution queue and processes scripts"""
     
     def __init__(
@@ -37,21 +39,18 @@ class ExecutionQueueWorker:
         poll_interval: int = 5,
         max_concurrent_executions: int = 3
     ):
-        self.queue = queue
-        self.worker_id = worker_id or f"worker_{uuid.uuid4().hex[:8]}"
-        self.poll_interval = poll_interval
-        self.max_concurrent_executions = max_concurrent_executions
-        self.running = False
-        self.active_executions = set()
+        super().__init__(
+            queue=queue,
+            worker_id=worker_id,
+            poll_interval=poll_interval,
+            max_concurrent_items=max_concurrent_executions,
+            worker_type="execution_worker"
+        )
         self.audit_service = None
         self.result_formatter = None
-        
-        logger.info(f"🔧 Created worker: {self.worker_id}")
     
-    async def start(self):
-        """Start the worker polling loop"""
-        logger.info(f"🚀 Starting worker {self.worker_id}")
-        
+    async def _initialize_services(self):
+        """Initialize execution worker services"""
         # Initialize AuditService for updating execution documents
         try:
             db_client = MongoDBClient()
@@ -73,73 +72,15 @@ class ExecutionQueueWorker:
         
         # Progress communication now uses queue-based messaging via send_progress_event
         logger.info("✅ Progress communication will use queue-based messaging")
-        
-        self.running = True
-        
-        try:
-            while self.running:
-                try:
-                    # Check if we can handle more executions
-                    if len(self.active_executions) < self.max_concurrent_executions:
-                        # Try to claim an execution
-                        execution = await self.queue.dequeue(self.worker_id)
-                        
-                        if execution:
-                            # Process execution in background
-                            task = asyncio.create_task(self._process_execution(execution))
-                            self.active_executions.add(task)
-                            
-                            # Clean up completed tasks
-                            self.active_executions = {
-                                task for task in self.active_executions 
-                                if not task.done()
-                            }
-                        else:
-                            # No executions available, wait before next poll
-                            await asyncio.sleep(self.poll_interval)
-                    else:
-                        # At capacity, wait for some executions to complete
-                        await asyncio.sleep(1)
-                        
-                        # Clean up completed tasks
-                        self.active_executions = {
-                            task for task in self.active_executions 
-                            if not task.done()
-                        }
-                
-                except Exception as e:
-                    logger.error(f"❌ Error in worker polling loop: {e}")
-                    await asyncio.sleep(5)  # Wait longer on error
-        
-        except asyncio.CancelledError:
-            logger.info(f"🛑 Worker {self.worker_id} cancelled")
-        finally:
-            await self._shutdown()
     
-    async def stop(self):
-        """Stop the worker gracefully"""
-        logger.info(f"🛑 Stopping worker {self.worker_id}")
-        self.running = False
-        
-        # Wait for active executions to complete (with timeout)
-        if self.active_executions:
-            logger.info(f"⏳ Waiting for {len(self.active_executions)} active executions to complete")
-            try:
-                await asyncio.wait_for(
-                    asyncio.gather(*self.active_executions, return_exceptions=True),
-                    timeout=30
-                )
-            except asyncio.TimeoutError:
-                logger.warning("⚠️ Timeout waiting for executions to complete")
+    async def _dequeue_item(self):
+        """Dequeue an execution from the queue"""
+        return await self.queue.dequeue(self.worker_id)
     
-    async def _shutdown(self):
-        """Clean up worker resources"""
-        # Cancel any remaining tasks
-        for task in self.active_executions:
-            if not task.done():
-                task.cancel()
-        
-        logger.info(f"✅ Worker {self.worker_id} shutdown complete")
+    async def _process_item(self, item: Dict[str, Any]):
+        """Process a single execution (renamed from _process_execution)"""
+        return await self._process_execution(item)
+    
     
     async def _process_execution(self, execution: Dict[str, Any]):
         """Process a single execution"""
@@ -153,7 +94,7 @@ class ExecutionQueueWorker:
             # CRITICAL: Send SSE update when execution starts running via queue
             if session_id:
                 try:
-                    await self.queue.send_progress_event(session_id, {
+                    await send_progress_event(session_id, {
                         "type": "execution_status",
                         "execution_id": execution_id,
                         "analysis_id": analysis_id,
@@ -235,7 +176,7 @@ class ExecutionQueueWorker:
                 # CRITICAL: Send SSE completion update with results via queue
                 if session_id:
                     try:
-                        await self.queue.send_progress_event(session_id, {
+                        await send_progress_event(session_id, {
                             "type": "execution_status",
                             "execution_id": execution_id,
                             "analysis_id": analysis_id,
@@ -280,7 +221,7 @@ class ExecutionQueueWorker:
                 # CRITICAL: Send SSE failure update via queue
                 if session_id:
                     try:
-                        await self.queue.send_progress_event(session_id, {
+                        await send_progress_event(session_id, {
                             "type": "execution_status",
                             "execution_id": execution_id,
                             "analysis_id": analysis_id,
@@ -306,7 +247,7 @@ class ExecutionQueueWorker:
             # CRITICAL: Send SSE failure update for unexpected errors via queue
             if session_id:
                 try:
-                    await self.queue.send_progress_event(session_id, {
+                    await send_progress_event(session_id, {
                         "type": "execution_status",
                         "execution_id": execution_id,
                         "analysis_id": analysis_id,

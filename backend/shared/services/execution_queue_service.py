@@ -13,7 +13,6 @@ from typing import Dict, Any, Optional, List
 from motor.motor_asyncio import AsyncIOMotorClient
 
 import sys
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 from shared.queue import QueueFactory, ExecutionQueueInterface, ExecutionQueueWorker
 
 logger = logging.getLogger(__name__)

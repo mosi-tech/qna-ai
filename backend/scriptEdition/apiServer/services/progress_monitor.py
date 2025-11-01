@@ -164,8 +164,6 @@ class ProgressMonitorService:
             level = ProgressLevel.INFO
             
         # Extract optional fields
-        step = event.get("step")
-        total_steps = event.get("total_steps")
         details = {k: v for k, v in event.items() if k not in [
             "_id", "session_id", "timestamp", "processed", "type", "level", "message", "step", "total_steps"
         ]}
@@ -174,8 +172,6 @@ class ProgressMonitorService:
             session_id=session_id,
             level=level,
             message=message,
-            step=step,
-            total_steps=total_steps,
             details=details
         )
         

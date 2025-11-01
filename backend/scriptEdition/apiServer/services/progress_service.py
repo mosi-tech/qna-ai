@@ -34,16 +34,12 @@ class ProgressEvent:
         self,
         level: ProgressLevel,
         message: str,
-        step: Optional[int] = None,
-        total_steps: Optional[int] = None,
         details: Optional[Dict] = None,
     ):
         self.id = f"{datetime.now().isoformat()}-{id(self)}"
         self.timestamp = datetime.now().isoformat()
         self.level = level
         self.message = message
-        self.step = step
-        self.total_steps = total_steps
         self.details = details or {}
 
     def to_dict(self) -> Dict:
@@ -52,8 +48,6 @@ class ProgressEvent:
             "timestamp": self.timestamp,
             "level": self.level.value,
             "message": self.message,
-            "step": self.step,
-            "totalSteps": self.total_steps,
             "details": self.details,
         }
 
@@ -74,8 +68,6 @@ class ProgressStreamManager:
         session_id: str,
         level: ProgressLevel,
         message: str,
-        step: Optional[int] = None,
-        total_steps: Optional[int] = None,
         details: Optional[Dict] = None,
     ) -> ProgressEvent:
         """Emit a progress event to active subscribers only (fire and forget)"""
@@ -86,8 +78,6 @@ class ProgressStreamManager:
             event = ProgressEvent(
                 level=level,
                 message=message,
-                step=step,
-                total_steps=total_steps,
                 details=details,
             )
 
@@ -140,8 +130,6 @@ async def emit_progress(
     session_id: str,
     level: ProgressLevel,
     message: str,
-    step: Optional[int] = None,
-    total_steps: Optional[int] = None,
     details: Optional[Dict] = None,
 ) -> ProgressEvent:
     """Convenience function to emit progress"""
@@ -149,8 +137,6 @@ async def emit_progress(
         session_id=session_id,
         level=level,
         message=message,
-        step=step,
-        total_steps=total_steps,
         details=details,
     )
 
@@ -170,6 +156,54 @@ async def progress_warning(session_id: str, message: str, **kwargs):
 
 async def progress_error(session_id: str, message: str, **kwargs):
     return await emit_progress(session_id, ProgressLevel.ERROR, message, **kwargs)
+
+
+# Message-based progress logging functions
+async def log_progress_to_message(
+    message_id: str,
+    level: str,
+    message: str,
+    details: Optional[Dict] = None
+):
+    """
+    Log progress directly to a message's logs array in MongoDB.
+    
+    Args:
+        message_id: ID of the message to append log to
+        level: Log level ("info", "success", "warning", "error")
+        message: Progress message
+        details: Optional additional details
+    """
+    try:
+        from db.mongodb_client import MongoDBClient
+        from datetime import datetime
+        
+        # Get MongoDB client
+        # Note: This is a simple implementation. In production, we'd inject the DB connection
+        db_client = MongoDBClient()
+        await db_client.connect()
+        
+        # Create log entry
+        log_entry = {
+            "message": message,
+            "timestamp": datetime.utcnow(),
+            "level": level,
+            "details": details or {}
+        }
+        
+        # Append to message logs array
+        result = await db_client.db.chat_messages.update_one(
+            {"messageId": message_id},
+            {"$push": {"logs": log_entry}}
+        )
+        
+        if result.modified_count > 0:
+            logger.info(f"📝 Log added to message {message_id}: {message}")
+        else:
+            logger.warning(f"⚠️ Failed to add log to message {message_id}")
+            
+    except Exception as e:
+        logger.error(f"❌ Failed to log to message: {e}")
 
 
 # Execution status update functions

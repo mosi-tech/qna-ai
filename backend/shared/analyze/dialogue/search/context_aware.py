@@ -16,12 +16,7 @@ from ..conversation.session_manager import SessionManager
 from ..context.classifier import QueryClassifier
 from ..context.expander import ContextExpander
 from ..context.validator import CompletenessValidator
-from services.progress_service import (
-    progress_manager,
-    progress_info,
-    progress_success,
-    progress_warning,
-)
+from shared.services.progress_service import send_progress_info
 
 logger = logging.getLogger(__name__)
 
@@ -270,7 +265,7 @@ class ContextAwareSearch:
             return True
         
         try:
-            from dialogue.context.service import ContextService
+            from ..context.service import ContextService
             context_service = ContextService()
             
             system_prompt = """You are a financial query analyzer. Determine if a standalone query is meaningless, absurd, or not a valid financial analysis query.

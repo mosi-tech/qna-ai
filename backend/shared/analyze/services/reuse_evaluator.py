@@ -17,14 +17,11 @@ import os
 from datetime import datetime
 from typing import Dict, Any, Optional, List
 
-# Import shared services
-import sys
-shared_path = os.path.join(os.path.dirname(__file__), '..', '..', '..')
-sys.path.insert(0, shared_path)
-from shared.llm import create_reuse_evaluator_llm, LLMService
-from shared.services.base_service import BaseService
-from utils.json_utils import safe_json_loads
-from shared.storage import get_storage
+# Import shared services (we're in shared/analyze/services now)
+from ...llm import create_reuse_evaluator_llm, LLMService
+from ...services.base_service import BaseService
+from ..utils.json_utils import safe_json_loads
+from ...storage import get_storage
 
 
 # Configure logging

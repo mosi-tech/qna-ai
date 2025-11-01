@@ -41,6 +41,14 @@ class RoleType(str, Enum):
     SYSTEM = "system"
 
 
+class ProgressLogEntry(BaseMongoModel):
+    """Individual progress log entry within a message"""
+    message: str
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    level: str  # "info", "success", "warning", "error"
+    details: Dict[str, Any] = Field(default_factory=dict)
+
+
 # ============================================================================
 # USER COLLECTION
 # ============================================================================
@@ -199,6 +207,9 @@ class ChatMessageModel(BaseMongoModel):
     # - execution_id: which specific execution produced this message
     analysis_id: Optional[str] = Field(None, alias='analysisId')
     execution_id: Optional[str] = Field(None, alias='executionId')
+    
+    # Progress logs for real-time tracking (NEW for async analysis)
+    logs: List[ProgressLogEntry] = Field(default_factory=list)
     
     # Message metadata
     # Contains response-type specific data:
