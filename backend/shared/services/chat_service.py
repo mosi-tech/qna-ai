@@ -6,14 +6,15 @@ import logging
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 
-from db.repositories import RepositoryManager, ChatRepository
-from db.schemas import (
+from ..db.repositories import RepositoryManager, ChatRepository
+from ..db.schemas import (
     ChatMessageModel,
     ChatSessionModel,
     AnalysisModel,
     RoleType,
     QueryType,
 )
+from ..utils.data_transformers import DataTransformer
 
 logger = logging.getLogger("chat-service")
 
@@ -25,9 +26,6 @@ class ChatHistoryService:
         self.repo = repo_manager
         self.chat_repo = repo_manager.chat
         self.logger = logger
-        
-        # Initialize data transformer for message transformation
-        from .utils.data_transformers import DataTransformer
         self.data_transformer = DataTransformer(self.chat_repo.db)
     
     

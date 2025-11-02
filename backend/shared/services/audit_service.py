@@ -6,8 +6,8 @@ import logging
 from typing import Optional, List, Dict, Any
 from datetime import datetime
 
-from db.repositories import RepositoryManager
-from db.schemas import ExecutionModel
+from shared.db.repositories import RepositoryManager
+from shared.db.schemas import ExecutionModel
 
 logger = logging.getLogger("audit-service")
 

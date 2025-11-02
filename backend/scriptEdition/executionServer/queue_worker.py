@@ -25,7 +25,9 @@ from shared.queue.analysis_worker import AnalysisQueueWorker
 from shared.queue.analysis_queue import initialize_analysis_queue, get_analysis_queue
 from shared.queue.progress_event_queue import initialize_progress_event_queue, get_progress_event_queue
 from shared.queue.base_worker import BaseQueueWorker
-
+from shared.db.mongodb_client import MongoDBClient
+from shared.db.repositories import RepositoryManager
+        
 logger = logging.getLogger("queue-worker")
 
 def load_env_file(env_path: Optional[str] = None):
@@ -111,8 +113,6 @@ class QueueWorkerService:
         
         """Start analysis worker"""
         # Initialize MongoDB connection
-        from db.mongodb_client import MongoDBClient
-        from db.repositories import RepositoryManager
         
         db_client = MongoDBClient()
         await db_client.connect()
@@ -138,9 +138,6 @@ class QueueWorkerService:
     async def _start_analysis_worker(self):
         """Start analysis worker"""
         # Initialize MongoDB connection
-        from db.mongodb_client import MongoDBClient
-        from db.repositories import RepositoryManager
-        
         db_client = MongoDBClient()
         await db_client.connect()
         repo_manager = RepositoryManager(db_client)

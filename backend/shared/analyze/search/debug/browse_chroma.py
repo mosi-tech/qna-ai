@@ -7,13 +7,9 @@ import os
 import sys
 import json
 from datetime import datetime
-
-# Add search directory to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'search'))
+from ..library import AnalysisLibrary
 
 try:
-    from search.library import AnalysisLibrary
-    
     def browse_chroma():
         """Browse ChromaDB contents"""
         try:

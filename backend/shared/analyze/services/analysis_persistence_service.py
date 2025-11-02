@@ -5,8 +5,8 @@ Analysis Persistence Service - Handles analysis storage and retrieval
 import logging
 from typing import Optional, List, Dict, Any
 
-from db.repositories import RepositoryManager
-from db.schemas import AnalysisModel
+from shared.db.repositories import RepositoryManager
+from shared.db.schemas import AnalysisModel
 
 logger = logging.getLogger("analysis-persistence-service")
 

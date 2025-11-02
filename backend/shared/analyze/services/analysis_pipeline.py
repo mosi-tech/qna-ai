@@ -23,6 +23,7 @@ from ..dialogue.factory import initialize_dialogue_factory
 from shared.services.progress_service import send_progress_info, send_analysis_progress, send_analysis_error, send_analysis_success
 from shared.services.execution_queue_service import execution_queue_service
 from shared.queue.worker_context import set_context, get_message_id, get_session_id, get_user_id
+from ..dialogue import search_with_context
 
 logger = logging.getLogger(__name__)
 
@@ -258,12 +259,6 @@ class AnalysisPipelineService:
         session_id = request.session_id
         
         try:
-            # Add apiServer path for dialogue import
-            import sys
-            api_server_path = os.path.join(os.path.dirname(__file__), '..', '..', 'scriptEdition', 'apiServer')
-            if api_server_path not in sys.path:
-                sys.path.insert(0, api_server_path)
-            from ..dialogue import search_with_context
             
             step_start = time.time()
             context_result = await search_with_context(

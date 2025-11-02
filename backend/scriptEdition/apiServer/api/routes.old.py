@@ -13,7 +13,7 @@ from typing import Dict, Any, Optional, List
 
 from api.models import QuestionRequest, AnalysisResponse
 from backend.shared.analyze.services import AnalysisService
-from services.search import SearchService
+from backend.shared.services.search import SearchService
 from backend.shared.analyze.services import CodePromptBuilderService
 from backend.shared.analyze.services import ReuseEvaluator as ReuseEvaluatorService
 from services.chat_service import ChatHistoryService

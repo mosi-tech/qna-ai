@@ -16,15 +16,12 @@ from .base_worker import BaseQueueWorker
 from ..execution import execute_script
 from ..storage import get_storage
 from ..services.result_formatter import create_shared_result_formatter
-from shared.services.progress_service import send_progress_event, send_execution_running, send_execution_completed, send_execution_failed
-from shared.queue.worker_context import set_context
+from ..services.progress_service import send_progress_event, send_execution_running, send_execution_completed, send_execution_failed
+from ..queue.worker_context import set_context
 
 # Import AuditService for updating execution documents
-import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'scriptEdition', 'apiServer'))
-from services.audit_service import AuditService
-from db import RepositoryManager, MongoDBClient
+from ..services.audit_service import AuditService
+from ..db import RepositoryManager, MongoDBClient
 
 # Note: Progress communication now uses queue-based messaging via send_progress_event
 

@@ -24,11 +24,11 @@ sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '
 from api.models import QuestionRequest, AnalysisResponse
 from shared.analyze.services.analysis_service import AnalysisService
 from pydantic import BaseModel, Field
-from services.search import SearchService
-from services.chat_service import ChatHistoryService
-from services.cache_service import CacheService
+from shared.services.search import SearchService
+from shared.services.chat_service import ChatHistoryService
+from shared.services.cache_service import CacheService
 from shared.analyze.services.analysis_persistence_service import AnalysisPersistenceService
-from services.audit_service import AuditService
+from shared.services.audit_service import AuditService
 from services.execution_service import ExecutionService
 from services.progress_service import progress_manager
 from services.progress_monitor import initialize_progress_monitor, cleanup_progress_monitor
@@ -37,7 +37,7 @@ from api.execution_routes import ExecutionRoutes
 from api.auth import UserContext, require_authenticated_user, get_optional_user
 from api.progress_routes import router as progress_router
 from api.session_routes import router as session_router
-from db import MongoDBClient, RepositoryManager
+from shared.db import MongoDBClient, RepositoryManager
 
 logger = logging.getLogger("api-server")
 

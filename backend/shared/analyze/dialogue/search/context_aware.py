@@ -10,7 +10,7 @@ Flow:
 
 import logging
 from typing import Optional, Dict, Any, List
-from search.library import AnalysisLibrary
+from shared.analyze.search.library import AnalysisLibrary
 from ..conversation.store import ConversationStore, ConversationTurn
 from ..conversation.session_manager import SessionManager
 from ..context.classifier import QueryClassifier

@@ -20,7 +20,7 @@ from typing import Dict, Any, Optional, List
 # Import shared services (we're in shared/analyze/services now)
 from ...llm import create_reuse_evaluator_llm, LLMService
 from ...services.base_service import BaseService
-from ..utils.json_utils import safe_json_loads
+from shared.utils.json_utils import safe_json_loads
 from ...storage import get_storage
 
 

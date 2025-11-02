@@ -15,12 +15,23 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 # Add shared modules to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-
 from .analysis_queue import AnalysisQueueInterface
 from .base_worker import BaseQueueWorker
-from shared.services.progress_service import send_progress_event
 from .progress_message import analysis_status_message, ProgressStatus
+from ..services.progress_service import send_progress_event
+from ..analyze import AnalysisService
+from ..analyze import AnalysisPersistenceService
+from ..analyze import ReuseEvaluator as ReuseEvaluatorService
+from ..analyze import CodePromptBuilderService
+# Import required services and pipeline
+from ..analyze.services.analysis_pipeline import create_analysis_pipeline
+
+from ..services.search import SearchService
+from ..services.chat_service import ChatHistoryService
+from ..services.cache_service import CacheService
+from ..services.audit_service import AuditService
+from ..db import RepositoryManager, MongoDBClient
+            
 
 logger = logging.getLogger(__name__)
 
@@ -69,26 +80,7 @@ class AnalysisQueueWorker(BaseQueueWorker):
         """Initialize the full analysis pipeline with all required services"""
         try:
             logger.info("🔧 Initializing analysis pipeline...")
-            
-            # Import required services and pipeline
-            from ..analyze.services.analysis_pipeline import create_analysis_pipeline
-            
-            # Import services from apiServer
-            api_server_path = os.path.join(os.path.dirname(__file__), '..', '..', 'scriptEdition', 'apiServer')
-            if api_server_path not in sys.path:
-                sys.path.insert(0, api_server_path)
-            
-            from services.search import SearchService
-            from services.chat_service import ChatHistoryService
-            from services.cache_service import CacheService
-            from services.audit_service import AuditService
-            from ..analyze import AnalysisService
-            from ..analyze import AnalysisPersistenceService
-            from ..analyze import ReuseEvaluator as ReuseEvaluatorService
-            from ..analyze import CodePromptBuilderService
-            
-            from db import RepositoryManager, MongoDBClient
-            
+                        
             # Initialize database connection
             db_client = MongoDBClient()
             await db_client.connect()  # Important: Connect first

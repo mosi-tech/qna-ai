@@ -18,7 +18,7 @@ from ...llm import create_code_prompt_builder_llm, LLMService, MessageFormatter
 from ...services.base_service import BaseService
 
 # Import safe JSON utilities (now local to analyze/)
-from ..utils.json_utils import safe_json_loads
+from shared.utils.json_utils import safe_json_loads
 
 class CodePromptBuilderService(BaseService):
     """Service that analyzes queries and builds enriched prompts for code generation"""

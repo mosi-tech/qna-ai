@@ -11,14 +11,7 @@ from datetime import datetime
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
 
-# Import LLM service
 import sys
-import os
-
-# Import safe JSON utilities
-utils_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "utils")
-sys.path.append(utils_path)
-from utils.json_utils import safe_json_loads
 
 # Import shared services
 shared_path = os.path.join(os.path.dirname(__file__), '..', '..', '..', '..')
@@ -26,6 +19,7 @@ sys.path.insert(0, shared_path)
 from shared.llm.service import LLMService
 from shared.llm.utils import LLMConfig
 from shared.execution.script_executor import create_enhanced_script
+from shared.utils.json_utils import safe_json_loads
 
 logger = logging.getLogger(__name__)
 

@@ -10,7 +10,7 @@ import os
 import sys
 import re
 import logging
-from search.library import get_analysis_library
+from ..analyze.search.library import get_analysis_library
 
 logger = logging.getLogger("search-service")
 

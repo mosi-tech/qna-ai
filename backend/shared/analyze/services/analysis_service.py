@@ -14,7 +14,7 @@ from ...llm import create_analysis_llm, LLMService
 from ...services.base_service import BaseService
 
 # Import utilities (now local to analyze/)
-from ..utils.json_utils import safe_json_loads
+from shared.utils.json_utils import safe_json_loads
 
 # Import verification service (now local to services/)
 from .verification.verification_service import StandaloneVerificationService

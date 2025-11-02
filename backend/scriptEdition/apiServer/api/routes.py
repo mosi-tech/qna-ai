@@ -12,11 +12,11 @@ from fastapi import HTTPException
 from typing import Dict, Any, Optional, List
 
 from api.models import QuestionRequest, AnalysisResponse
-from services.chat_service import ChatHistoryService
-from services.cache_service import CacheService
+from shared.services.chat_service import ChatHistoryService
+from shared.services.cache_service import CacheService
 from shared.services.execution_queue_service import execution_queue_service
 from shared.analyze.services.analysis_persistence_service import AnalysisPersistenceService
-from services.audit_service import AuditService
+from shared.services.audit_service import AuditService
 from services.execution_service import ExecutionService
 from services.progress_service import (
     progress_info,

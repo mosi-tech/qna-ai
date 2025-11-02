@@ -5,7 +5,7 @@ Cache Service - Handles query result caching for performance
 import logging
 from typing import Optional, Dict, Any
 
-from db.repositories import RepositoryManager
+from ..db.repositories import RepositoryManager
 
 logger = logging.getLogger("cache-service")
 
