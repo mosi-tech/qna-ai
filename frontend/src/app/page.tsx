@@ -88,11 +88,25 @@ function HomeContent() {
         message: 'Sending analysis request to server...',
       });
 
+      console.log('[Home] Sending analysis request:', {
+        question: userMessage,
+        session_id: session_id,
+        enable_caching: true,
+      });
+      
+      console.log('[Home] About to call analyzeQuestion with:', {
+        question: userMessage,
+        session_id: session_id,
+        enable_caching: true,
+      });
+
       const response = await analyzeQuestion({
         question: userMessage,
         session_id: session_id,
         enable_caching: true,
       });
+      
+      console.log('[Home] Received response from analyzeQuestion:', response);
 
       if (response.success && response.data) {
         ProgressManager.addLog(session_id, {
@@ -163,26 +177,71 @@ function HomeContent() {
               originalQuestion: userMessage,
             });
           } else {
-            ProgressManager.addLog(session_id, {
-              level: 'success',
-              message: 'Analysis results ready for display',
-            });
+            // Check if the response is pending (async analysis) or completed
+            if (response.data.status === 'pending') {
+              ProgressManager.addLog(session_id, {
+                level: 'info',
+                message: 'Analysis queued for async processing',
+              });
 
-            const resultMsg = addMessage({
-              type: 'results',
-              content: response.data.analysis_summary || `Analysis complete for: ${userMessage}`,
-              data: response.data,
-            });
+              // Create a pending analysis message that will show ProgressPanel
+              const pendingMsg = addMessage({
+                type: 'results',
+                content: 'Analysis in progress...',
+                data: {
+                  // Set status at top level for AnalysisResult to detect
+                  status: 'pending',
+                  message_id: response.data.message_id,
+                  session_id: response.data.session_id,
+                  // Also create proper uiData structure
+                  uiData: {
+                    status: 'pending',
+                    type: 'Analysis',
+                    results: {},
+                    execution: {
+                      status: 'pending',
+                      progress: null,
+                      logs: [],
+                      error: null
+                    }
+                  }
+                },
+                // Set analysisId and executionId from response if available
+                analysisId: response.data.analysis_id,
+                executionId: response.data.execution_id,
+              });
+              
+              // Override the frontend message ID with backend message ID for SSE matching
+              pendingMsg.id = response.data.message_id;
 
-            setCurrentAnalysis({
-              messageId: resultMsg.id,
-              data: response.data,
-              originalQuestion: userMessage,
-            });
+              setCurrentAnalysis({
+                messageId: pendingMsg.id,
+                data: response.data,
+                originalQuestion: userMessage,
+              });
+            } else {
+              // Analysis completed immediately
+              ProgressManager.addLog(session_id, {
+                level: 'success',
+                message: 'Analysis results ready for display',
+              });
 
-            if (viewMode === 'single') {
-              const expandedSet = new Set<string>();
-              expandedSet.add(resultMsg.id);
+              const resultMsg = addMessage({
+                type: 'results',
+                content: response.data.analysis_summary || `Analysis complete for: ${userMessage}`,
+                data: response.data,
+              });
+
+              setCurrentAnalysis({
+                messageId: resultMsg.id,
+                data: response.data,
+                originalQuestion: userMessage,
+              });
+
+              if (viewMode === 'single') {
+                const expandedSet = new Set<string>();
+                expandedSet.add(resultMsg.id);
+              }
             }
           }
         }
@@ -460,7 +519,12 @@ function HomeContent() {
         timestamp: new Date(msg.timestamp || Date.now()),
       }));
 
-      setMessages((prev) => [...olderMessages, ...prev]);
+      setMessages((prev) => {
+        // Deduplicate: filter out messages that already exist
+        const existingIds = new Set(prev.map(msg => msg.id));
+        const newMessages = olderMessages.filter(msg => !existingIds.has(msg.id));
+        return [...newMessages, ...prev];
+      });
       setCurrentSessionMessages({
         offset: newOffset,
         limit: currentSessionMessages.limit,

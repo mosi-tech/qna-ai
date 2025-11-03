@@ -37,13 +37,6 @@ export class APIClient {
     this.enableCaching = config.enableCaching !== false;
     this.cache = defaultCache;
 
-    if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
-      console.log('[APIClient] Initialized with config:', {
-        baseURL: this.baseURL,
-        timeout: this.timeout,
-        retries: this.retries,
-      });
-    }
   }
 
   /**
@@ -114,7 +107,6 @@ export class APIClient {
       const cached = this.cache.get<APIResponse<T>>(path);
       if (cached) {
         if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
-          console.log('[APIClient] Cache hit:', path);
         }
         return cached;
       }
@@ -188,8 +180,14 @@ export class APIClient {
         fetchConfig.body = JSON.stringify(data);
       }
 
+      
+      
+      const startTime = Date.now();
+      
       const response = await fetch(url, fetchConfig);
+      const endTime = Date.now();
       clearTimeout(timeoutId);
+      
 
       // Parse response
       let responseData: any;
@@ -221,6 +219,15 @@ export class APIClient {
         timestamp: new Date().toISOString(),
       };
     } catch (error) {
+      console.error('[APIClient] Request failed:', {
+        method,
+        url,
+        error: error instanceof Error ? error.message : String(error),
+        name: error instanceof Error ? error.name : 'Unknown',
+        timeout,
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      
       if (error instanceof TypeError) {
         // Network error
         throw new NetworkError(`Failed to connect to ${url}`);
@@ -289,7 +296,6 @@ export class APIClient {
   clearCache(): void {
     this.cache.clear();
     if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
-      console.log('[APIClient] Cache cleared');
     }
   }
 

@@ -17,10 +17,11 @@ from ..execution import execute_script
 from ..storage import get_storage
 from ..services.result_formatter import create_shared_result_formatter
 from ..services.progress_service import send_progress_event, send_execution_running, send_execution_completed, send_execution_failed
-from ..queue.worker_context import set_context
+from ..queue.worker_context import set_context, get_session_id
 
 # Import AuditService for updating execution documents
 from ..services.audit_service import AuditService
+from ..locking import get_session_lock
 from ..db import RepositoryManager, MongoDBClient
 
 # Note: Progress communication now uses queue-based messaging via send_progress_event
@@ -183,6 +184,16 @@ class ExecutionQueueWorker(BaseQueueWorker):
                 })
                 
                 logger.info(f"✅ Completed execution: {execution_id}")
+                
+                # Release session lock to allow new questions
+                try:
+                    session_id = get_session_id() or execution.get("session_id")
+                    if session_id:
+                        session_lock = get_session_lock()
+                        await session_lock.release_lock(session_id)
+                        logger.info(f"🔓 Released session lock after successful execution: {session_id}")
+                except Exception as lock_error:
+                    logger.warning(f"⚠️ Failed to release session lock: {lock_error}")
             else:
                 # Failure case: Update audit service first, then nack queue
                 error_msg = result.get("error", "Unknown error")
@@ -217,6 +228,16 @@ class ExecutionQueueWorker(BaseQueueWorker):
                 })
                 
                 logger.warning(f"❌ Failed execution: {execution_id} - {error_msg}")
+                
+                # Release session lock on failure as well
+                try:
+                    session_id = get_session_id() or execution.get("session_id")
+                    if session_id:
+                        session_lock = get_session_lock()
+                        await session_lock.release_lock(session_id)
+                        logger.info(f"🔓 Released session lock after failed execution: {session_id}")
+                except Exception as lock_error:
+                    logger.warning(f"⚠️ Failed to release session lock: {lock_error}")
         
         except Exception as e:
             logger.error(f"❌ Error processing execution {execution_id}: {e}")
@@ -236,6 +257,16 @@ class ExecutionQueueWorker(BaseQueueWorker):
                 })
             except Exception as log_error:
                 logger.error(f"❌ Failed to log error for {execution_id}: {log_error}")
+            
+            # Release session lock on unexpected error as well
+            try:
+                session_id = get_session_id() or execution.get("session_id")
+                if session_id:
+                    session_lock = get_session_lock()
+                    await session_lock.release_lock(session_id)
+                    logger.info(f"🔓 Released session lock after unexpected error: {session_id}")
+            except Exception as lock_error:
+                logger.warning(f"⚠️ Failed to release session lock after error: {lock_error}")
     
     async def _execute_script_with_logging(self, execution: Dict[str, Any]) -> Dict[str, Any]:
         """Execute script and capture logs"""

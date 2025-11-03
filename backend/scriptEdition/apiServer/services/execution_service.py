@@ -9,13 +9,10 @@ from typing import Optional, Dict, Any
 from datetime import datetime, timezone
 
 
-from services.progress_service import (
-    progress_info,
-    progress_success,
-    progress_error,
-    execution_running,
-    execution_completed,
-    execution_failed,
+from shared.services.progress_service import (
+    send_progress_info,
+    send_progress_error,
+    send_progress_event,
 )
 # Import shared services
 import sys
@@ -69,7 +66,7 @@ class ExecutionService:
             
             if not analysis:
                 if session_id:
-                    await progress_error(session_id, f"Execution failed")
+                    await send_progress_error(session_id, "Execution failed")
                 return {
                     "success": False,
                     "error": f"Analysis not found: {analysis_id}"
@@ -81,7 +78,7 @@ class ExecutionService:
             
             if llm_response.get("status") != "success":
                 if session_id:
-                    await progress_error(session_id, f"Execution failed")
+                    await send_progress_error(session_id, "Execution failed")
                 return {
                     "success": False,
                     "error": f"Cannot execute failed analysis: {llm_response.get('error')}"
@@ -99,7 +96,7 @@ class ExecutionService:
             
             if not script_content:
                 if session_id:
-                    await progress_error(session_id, f"Execution failed")
+                    await send_progress_error(session_id, "Execution failed")
                 return {
                     "success": False,
                     "error": f"Failed to load script from {analysis.script_url}"
@@ -108,10 +105,10 @@ class ExecutionService:
             # Step 4: Running script
             self.logger.info("⚙️ Executing script...")
             if session_id:
-                await progress_info(session_id, "Running script")
+                await send_progress_info(session_id, "Running script")
                 # Send execution running status update via SSE
                 if execution_id:
-                    await execution_running(session_id, execution_id, analysis_id)
+                    await send_progress_event(session_id, {"type": "execution_status", "execution_id": execution_id, "analysis_id": analysis_id, "status": "running", "level": "info", "message": "Analysis execution in progress"})
             
             execution_result = await self._execute_script(
                 script_content=script_content,
@@ -125,10 +122,10 @@ class ExecutionService:
                 # Execution failed
                 self.logger.error(f"❌ Execution failed: {execution_result.get('error')}")
                 if session_id:
-                    await progress_error(session_id, f"Execution failed")
+                    await send_progress_error(session_id, "Execution failed")
                     # Send execution failed status update via SSE
                     if execution_id:
-                        await execution_failed(session_id, execution_id, execution_result.get('error'), analysis_id)
+                        await send_progress_event(session_id, {"type": "execution_status", "execution_id": execution_id, "analysis_id": analysis_id, "status": "failed", "level": "error", "message": f"Analysis execution failed: {execution_result.get('error')}"})
                 
                 return {
                     "success": False,
@@ -150,10 +147,10 @@ class ExecutionService:
                 self.logger.info("✅ Generated markdown summary")
             
             if session_id:
-                await progress_success(session_id, "Analysis complete")
+                await send_progress_event(session_id, {"type": "progress", "level": "success", "message": "Analysis complete"})
                 # Send execution completed status update via SSE
                 if execution_id:
-                    await execution_completed(session_id, execution_id, analysis_id)
+                    await send_progress_event(session_id, {"type": "execution_status", "execution_id": execution_id, "analysis_id": analysis_id, "status": "completed", "level": "success", "message": "Analysis execution completed"})
             
             self.logger.info(f"✅ Execution completed successfully in {execution_time_ms}ms")
             
@@ -171,7 +168,7 @@ class ExecutionService:
                 await progress_error(session_id, f"Execution error: {str(e)}")
                 # Send execution failed status update via SSE
                 if execution_id:
-                    await execution_failed(session_id, execution_id, f"Service error: {str(e)}", analysis_id)
+                    await send_progress_event(session_id, {"type": "execution_status", "execution_id": execution_id, "analysis_id": analysis_id, "status": "failed", "level": "error", "message": f"Service error: {str(e)}"})
             import traceback
             traceback.print_exc()
             return {

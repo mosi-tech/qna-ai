@@ -9,9 +9,10 @@ import asyncio
 import logging
 from typing import Optional
 from motor.motor_asyncio import AsyncIOMotorDatabase, AsyncIOMotorCollection
-from services.progress_service import (
-    progress_manager, ProgressLevel,
-    execution_queued, execution_running, execution_completed, execution_failed
+from services.sse import (
+    progress_sse_manager, ProgressLevel,
+    _sse_execution_queued, _sse_execution_running, 
+    _sse_execution_completed, _sse_execution_failed
 )
 
 logger = logging.getLogger("progress-monitor")
@@ -116,7 +117,7 @@ class ProgressMonitorService:
         logger.info(f"📡 Broadcasting execution status {status} for {execution_id} via SSE")
         
         if status == "running":
-            await execution_running(session_id, execution_id, analysis_id)
+            await _sse_execution_running(session_id, execution_id, analysis_id)
             logger.info(f"✅ Broadcast execution_running for {execution_id}")
         elif status == "completed":
             # Extract additional data for completion
@@ -124,7 +125,7 @@ class ProgressMonitorService:
             markdown = event.get("markdown")
             execution_time = event.get("execution_time")
             
-            await execution_completed(
+            await _sse_execution_completed(
                 session_id, execution_id, analysis_id,
                 results=results,
                 markdown=markdown,
@@ -140,14 +141,14 @@ class ProgressMonitorService:
             elif message.startswith("Worker error: "):
                 error_message = message.replace("Worker error: ", "")
                 
-            await execution_failed(
+            await _sse_execution_failed(
                 session_id, execution_id,
                 error_message=error_message,
                 analysis_id=analysis_id
             )
             logger.info(f"✅ Broadcast execution_failed for {execution_id}")
         elif status == "queued":
-            await execution_queued(session_id, execution_id, analysis_id)
+            await _sse_execution_queued(session_id, execution_id, analysis_id)
             logger.info(f"✅ Broadcast execution_queued for {execution_id}")
         else:
             logger.warning(f"Unknown execution status: {status}")
@@ -168,7 +169,7 @@ class ProgressMonitorService:
             "_id", "session_id", "timestamp", "processed", "type", "level", "message", "step", "total_steps"
         ]}
         
-        await progress_manager.emit(
+        await progress_sse_manager.emit(
             session_id=session_id,
             level=level,
             message=message,
@@ -213,3 +214,5 @@ async def cleanup_progress_monitor():
         await _progress_monitor.stop()
         _progress_monitor = None
         logger.info("✅ Global progress monitor cleaned up")
+        
+        

@@ -16,33 +16,35 @@ import { logError } from './errors';
  * Analysis Service for making analysis API calls
  */
 export class AnalysisService {
-  constructor(private client: APIClient) {}
+  constructor(private client: APIClient) { }
 
   /**
    * Analyze a financial question
    */
   async analyzeQuestion(request: AnalysisRequest): Promise<AnalysisResponse> {
     try {
-      if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
-        console.log('[AnalysisService] Analyzing question:', request.question);
-      }
+
 
       const response = await this.client.post<AnalysisResponse['data']>(
-        '/analyze',
+        '/analyze',  // Back to normal endpoint with SSE disabled
         request,
         {
-          timeout: 300000,
-          retries: 1,
+          // timeout: 300000,
+          retries: 0,
         }
       );
 
-      return {
+
+      const result = {
         success: response.success,
         data: response.data,
         error: response.error,
         timestamp: response.timestamp,
       } as AnalysisResponse;
+
+      return result;
     } catch (error) {
+      console.error('[AnalysisService] analyzeQuestion failed with error:', error);
       logError('[AnalysisService] analyzeQuestion failed', error, {
         question: request.question?.substring(0, 50),
       });

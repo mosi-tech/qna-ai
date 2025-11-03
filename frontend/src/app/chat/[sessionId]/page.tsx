@@ -530,7 +530,12 @@ function ChatPageContent() {
         timestamp: new Date(msg.timestamp || Date.now()),
       }));
 
-      setMessages((prev) => [...olderMessages, ...prev]);
+      setMessages((prev) => {
+        // Deduplicate: filter out messages that already exist
+        const existingIds = new Set(prev.map(msg => msg.id));
+        const newMessages = olderMessages.filter(msg => !existingIds.has(msg.id));
+        return [...newMessages, ...prev];
+      });
       setCurrentSessionMessages({
         offset: newOffset,
         limit: currentSessionMessages.limit,

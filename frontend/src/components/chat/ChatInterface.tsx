@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useLayoutEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChatMessage } from '@/lib/hooks/useConversation';
 import { ProgressLog } from '@/lib/progress/ProgressManager';
@@ -43,6 +43,42 @@ export default function ChatInterface({
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [isUserScrolling, setIsUserScrolling] = useState(false);
   const [, setUpdateTrigger] = useState(0);
+  const previousScrollHeightRef = useRef(0);
+  const previousMessageCountRef = useRef(0);
+  const wasLoadingOlderRef = useRef(false);
+  const savedScrollTopRef = useRef(0);
+
+  // Debounced load older function to prevent multiple rapid calls
+  const loadOlderTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const debouncedLoadOlder = useCallback(() => {
+    if (!onLoadOlder || isLoadingOlder || !canLoadOlder) return;
+    
+    // Clear existing timeout
+    if (loadOlderTimeoutRef.current) {
+      clearTimeout(loadOlderTimeoutRef.current);
+    }
+    
+    // Set new timeout for debounced call
+    loadOlderTimeoutRef.current = setTimeout(() => {
+      if (onLoadOlder && !isLoadingOlder && canLoadOlder) {
+        // Save current scroll position before loading
+        if (messagesContainerRef.current) {
+          savedScrollTopRef.current = messagesContainerRef.current.scrollTop;
+          previousScrollHeightRef.current = messagesContainerRef.current.scrollHeight;
+        }
+        onLoadOlder();
+      }
+    }, 200); // 200ms debounce
+  }, [onLoadOlder, isLoadingOlder, canLoadOlder]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (loadOlderTimeoutRef.current) {
+        clearTimeout(loadOlderTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Update component every second to refresh elapsed times
   useEffect(() => {
@@ -85,25 +121,53 @@ export default function ChatInterface({
     const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
     setIsUserScrolling(!isAtBottom);
 
-    // If scrolled near top (within 200px) and can load older, load them
-    if (scrollTop < 200 && canLoadOlder && !isLoadingOlder && onLoadOlder) {
-      onLoadOlder();
+    // If scrolled near top (within 400px) and can load older, load them (debounced)
+    if (scrollTop < 400 && canLoadOlder && !isLoadingOlder) {
+      console.log('[ChatInterface] Triggering load older - scrollTop:', scrollTop);
+      debouncedLoadOlder();
     }
   };
 
-  useEffect(() => {
-    // Always scroll to bottom if user hasn't scrolled away or on initial load
-    if (messages.length > 0 && (!isUserScrolling || isInitialLoad)) {
+  useLayoutEffect(() => {
+    if (!messagesContainerRef.current || messages.length === 0) return;
+
+    const container = messagesContainerRef.current;
+    const currentScrollHeight = container.scrollHeight;
+
+    // Detect if older messages just finished loading (was loading, now not loading, and messages increased)
+    const justFinishedLoadingOlder = wasLoadingOlderRef.current && !isLoadingOlder;
+    const messageCountIncreased = messages.length > previousMessageCountRef.current;
+    const heightIncreased = currentScrollHeight > previousScrollHeightRef.current;
+    
+    if (justFinishedLoadingOlder && messageCountIncreased && heightIncreased && previousScrollHeightRef.current > 0) {
+      // Maintain scroll position: calculate exactly where user was
+      const heightDifference = currentScrollHeight - previousScrollHeightRef.current;
+      const newScrollTop = savedScrollTopRef.current + heightDifference;
+      
+      // Instantly set scroll position to maintain user's view (no animation)
+      container.scrollTop = newScrollTop;
+      
+      console.log('[ChatInterface] Maintained scroll position after loading older messages', {
+        savedScrollTop: savedScrollTopRef.current,
+        heightDifference,
+        newScrollTop
+      });
+    }
+    // Otherwise, scroll to bottom for new messages (if user hasn't scrolled away or initial load)
+    else if (!isUserScrolling || isInitialLoad) {
       setTimeout(() => {
-        if (messagesContainerRef.current) {
-          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-          // Scroll a bit more to ensure bottom message is fully visible
-          messagesContainerRef.current.scrollTop += 50;
-        }
+        container.scrollTop = container.scrollHeight;
+        // Scroll a bit more to ensure bottom message is fully visible
+        container.scrollTop += 50;
         setIsInitialLoad(false);
       }, 0);
     }
-  }, [messages, isInitialLoad, isUserScrolling]);
+
+    // Update previous values for next comparison
+    previousScrollHeightRef.current = currentScrollHeight;
+    previousMessageCountRef.current = messages.length;
+    wasLoadingOlderRef.current = isLoadingOlder;
+  }, [messages, isInitialLoad, isUserScrolling, isLoadingOlder]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

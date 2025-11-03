@@ -64,7 +64,7 @@ class ChatHistoryService:
                     {
                         "$set": {
                             "metadata": {
-                                "response_type": "user_message",
+                                "analysis_type": "user_message",
                                 "original_question": question,
                                 "expanded_question": expanded_question,
                                 "expansion_confidence": expansion_confidence,

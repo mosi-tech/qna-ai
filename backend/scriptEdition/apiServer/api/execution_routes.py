@@ -6,7 +6,6 @@ import json
 import logging
 from datetime import datetime
 from fastapi import HTTPException
-from fastapi.responses import StreamingResponse
 from typing import Dict, Any, Optional, List
 
 from shared.services.execution_queue_service import execution_queue_service
@@ -85,86 +84,6 @@ class ExecutionRoutes:
                 "timestamp": datetime.now().isoformat()
             }
     
-    async def stream_execution_logs(self, execution_id: str, user_context: UserContext) -> StreamingResponse:
-        """Stream real-time execution logs via Server-Sent Events (SSE) with user authentication"""
-        
-        # Validate access before starting stream
-        try:
-            status_data = await execution_queue_service.get_execution_status(execution_id)
-            
-            # Validate user access to this execution
-            if not validate_user_access_to_execution(status_data, user_context):
-                raise HTTPException(
-                    status_code=403, 
-                    detail="Access denied: You don't have permission to stream this execution"
-                )
-                
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error(f"❌ Failed to validate access for streaming {execution_id}: {e}")
-            raise HTTPException(status_code=500, detail="Failed to validate execution access")
-        
-        async def generate_sse_events():
-            """Generate SSE events for execution logs"""
-            try:
-                # Send initial connection event with user/session info
-                connection_data = {
-                    'type': 'connected', 
-                    'execution_id': execution_id, 
-                    'user_id': status_data.get("user_id"),
-                    'session_id': status_data.get("session_id"),
-                    'timestamp': datetime.now().isoformat()
-                }
-                yield f"data: {json.dumps(connection_data)}\n\n"
-                
-                # Stream logs from the queue service
-                async for log_entry in execution_queue_service.stream_execution_logs(execution_id):
-                    if "error" in log_entry:
-                        # Send error event and close stream
-                        yield f"data: {json.dumps({'type': 'error', 'error': log_entry['error'], 'timestamp': datetime.now().isoformat()})}\n\n"
-                        break
-                    else:
-                        # Send log event
-                        event_data = {
-                            "type": "log",
-                            "execution_id": log_entry.get("execution_id", execution_id),
-                            "timestamp": log_entry.get("timestamp", datetime.now()).isoformat() if hasattr(log_entry.get("timestamp"), "isoformat") else str(log_entry.get("timestamp")),
-                            "level": log_entry.get("level", "INFO"),
-                            "message": log_entry.get("message", "")
-                        }
-                        yield f"data: {json.dumps(event_data)}\n\n"
-                
-                # Send completion event
-                final_status = await execution_queue_service.get_execution_status(execution_id)
-                completion_event = {
-                    "type": "completed",
-                    "execution_id": execution_id,
-                    "final_status": final_status.get("status", "unknown"),
-                    "user_id": final_status.get("user_id"),
-                    "session_id": final_status.get("session_id"),
-                    "timestamp": datetime.now().isoformat()
-                }
-                yield f"data: {json.dumps(completion_event)}\n\n"
-                
-            except Exception as e:
-                logger.error(f"❌ SSE streaming error for {execution_id}: {e}")
-                error_event = {
-                    "type": "error",
-                    "error": str(e),
-                    "timestamp": datetime.now().isoformat()
-                }
-                yield f"data: {json.dumps(error_event)}\n\n"
-        
-        return StreamingResponse(
-            generate_sse_events(),
-            media_type="text/event-stream",
-            headers={
-                "Cache-Control": "no-cache",
-                "Connection": "keep-alive",
-                "X-Accel-Buffering": "no"  # Disable nginx buffering
-            }
-        )
     
     async def get_user_executions(self, user_context: UserContext, limit: int = 50, status_filter: Optional[str] = None) -> Dict[str, Any]:
         """Get all executions for the authenticated user"""
