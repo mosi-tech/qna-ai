@@ -9,7 +9,7 @@ from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
 from typing import Dict, Any, Optional, List
 
-from services.execution_queue_service import execution_queue_service
+from shared.services.execution_queue_service import execution_queue_service
 from .auth import UserContext, validate_user_access_to_execution
 
 logger = logging.getLogger("execution-routes")

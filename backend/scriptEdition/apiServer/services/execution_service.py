@@ -8,7 +8,7 @@ import httpx
 from typing import Optional, Dict, Any
 from datetime import datetime, timezone
 
-from db.repositories import RepositoryManager
+
 from services.progress_service import (
     progress_info,
     progress_success,
@@ -22,6 +22,7 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 from shared.services.result_formatter import create_shared_result_formatter
+from shared.db.repositories import RepositoryManager
 
 logger = logging.getLogger("execution-service")
 

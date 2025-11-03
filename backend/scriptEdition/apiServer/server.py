@@ -17,16 +17,18 @@ import uuid
 # Load environment variables from .env file
 load_dotenv()
 
+# Add both current directory and backend root to Python path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..'))
 
 from api.models import QuestionRequest, AnalysisResponse
-from services.analysis import AnalysisService
+from shared.analyze.services.analysis_service import AnalysisService
 from pydantic import BaseModel, Field
-from services.search import SearchService
-from services.chat_service import ChatHistoryService
-from services.cache_service import CacheService
-from services.analysis_persistence_service import AnalysisPersistenceService
-from services.audit_service import AuditService
+from shared.services.search import SearchService
+from shared.services.chat_service import ChatHistoryService
+from shared.services.cache_service import CacheService
+from shared.analyze.services.analysis_persistence_service import AnalysisPersistenceService
+from shared.services.audit_service import AuditService
 from services.execution_service import ExecutionService
 from services.progress_service import progress_manager
 from services.progress_monitor import initialize_progress_monitor, cleanup_progress_monitor
@@ -35,7 +37,7 @@ from api.execution_routes import ExecutionRoutes
 from api.auth import UserContext, require_authenticated_user, get_optional_user
 from api.progress_routes import router as progress_router
 from api.session_routes import router as session_router
-from db import MongoDBClient, RepositoryManager
+from shared.db import MongoDBClient, RepositoryManager
 
 logger = logging.getLogger("api-server")
 
@@ -78,30 +80,34 @@ async def lifespan(app: FastAPI):
         await initialize_progress_monitor(db_client.db)
         logger.info("✅ Progress monitor initialized")
         
+        # Initialize distributed session locking
+        logger.info("🔧 Initializing session locking...")
+        from shared.locking import initialize_session_lock
+        await initialize_session_lock(db_client.db)
+        logger.info("✅ Session locking initialized")
+        
+        # Initialize analysis queue
+        logger.info("🔧 Initializing analysis queue...")
+        from shared.queue.analysis_queue import initialize_analysis_queue
+        initialize_analysis_queue(db_client.db)
+        logger.info("✅ Analysis queue initialized")
+        
         # 3. Session manager (CRITICAL)
         logger.info("🔧 Initializing session manager...")
-        from dialogue.conversation.session_manager import SessionManager
+        from shared.analyze.dialogue.conversation.session_manager import SessionManager
         session_manager = SessionManager(chat_history_service=chat_history_service)
         app.state.session_manager = session_manager
         logger.info("✅ Session manager initialized")
-        
-        # 4. Core services (CRITICAL)
-        logger.info("🔧 Initializing core services...")
-        analysis_service = AnalysisService()
-        search_service = SearchService()
-        logger.info("✅ Core services initialized")
         
         # 5. API routes (CRITICAL)
         logger.info("🔧 Initializing API routes...")
         logger.info("  → Creating APIRoutes instance...")
         api_routes = APIRoutes(
-            analysis_service,
-            search_service,
-            chat_history_service,
-            cache_service,
-            analysis_persistence_service,
-            audit_service,
-            execution_service,
+            chat_history_service=chat_history_service,
+            cache_service=cache_service,
+            analysis_persistence_service=analysis_persistence_service,
+            audit_service=audit_service,
+            execution_service=execution_service,
             session_manager=session_manager
         )
         logger.info("  → Creating ExecutionRoutes instance...")
@@ -116,13 +122,8 @@ async def lifespan(app: FastAPI):
         app.state.audit_service = audit_service
         app.state.execution_service = execution_service
         app.state.session_manager = session_manager
-        app.state.analysis_service = analysis_service
-        app.state.search_service = search_service
         app.state.api_routes = api_routes
         app.state.execution_routes = execution_routes
-        
-        provider = analysis_service.llm_service.provider_type.upper()
-        logger.info(f"✅ Server ready with {provider} provider")
         
     except Exception as e:
         logger.error(f"❌ FATAL: Server initialization failed: {e}")
@@ -134,7 +135,6 @@ async def lifespan(app: FastAPI):
     # Shutdown
     logger.info("🛑 Shutting down Financial Analysis Server...")
     await cleanup_progress_monitor()
-    await app.state.analysis_service.close_sessions()
     
     # Shutdown database
     if app.state.repo_manager:

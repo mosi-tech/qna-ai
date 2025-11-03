@@ -8,7 +8,7 @@ from typing import Dict, Any
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
 from .base_queue import ExecutionQueueInterface
-from .mongodb_queue import MongoDBExecutionQueue
+from .execution_queue import MongoDBExecutionQueue
 
 logger = logging.getLogger(__name__)
 
