@@ -49,7 +49,7 @@ class ChatRepository:
             role=RoleType.USER,
             content=question,
             metadata={
-                "analysis_type": "user_message",
+                "response_type": "user_message",
                 "original_question": question,
                 "query_type": query_type.value if query_type else None,
             },

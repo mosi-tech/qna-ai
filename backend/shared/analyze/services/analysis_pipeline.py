@@ -209,7 +209,7 @@ class AnalysisPipelineService:
                 metadata["status"] = status
                 
                 await self._update_message_only(
-                    analysis_type=response_data.get("analysis_type", "script_generation"),
+                    response_type=response_data.get("response_type", "script_generation"),
                     message_content=response_data.get("content", ""),
                     analysis_id=response_data.get("analysisId"),
                     execution_id=response_data.get("executionId"),
@@ -231,7 +231,7 @@ class AnalysisPipelineService:
             error_message = "We ran into an issue and couldn't answer your question. Please try again."
             try:
                 await self._update_message_only(
-                    analysis_type=None,  # No analysis was completed
+                    response_type=None,  # No analysis was completed
                     message_content=error_message,
                     metadata={
                         "status": MessageStatus.ANALYSIS_FAILED,
@@ -322,7 +322,7 @@ class AnalysisPipelineService:
                 cached_content = f"[Previously analyzed] This question has been analyzed before. Here are the insights:\\n\\n{original_content}"
                 
                 response = await self._create_analysis_response(
-                    analysis_type="cache_hit",
+                    response_type="cache_hit",
                     message_content=cached_content,
                     analysis_id=cached_message_data.get("analysis_id"),
                     execution_id=cached_message_data.get("execution_id"),
@@ -374,7 +374,7 @@ class AnalysisPipelineService:
             error_message = context_result.get("message") or "I need more details to help you. Please tell me what you'd like to analyze."
             
             response = await self._create_analysis_response(
-                analysis_type="meaningless",
+                response_type="meaningless",
                 message_content=error_message,
                 metadata={"is_meaningless": True}
             )
@@ -391,9 +391,9 @@ class AnalysisPipelineService:
         session_id = request.session_id
         
         if context_result.get("needs_confirmation") or context_result.get("needs_clarification"):
-            analysis_type = "needs_clarification" if context_result.get("needs_clarification") else "needs_confirmation"
+            response_type = "needs_clarification" if context_result.get("needs_clarification") else "needs_confirmation"
             return await self._create_analysis_response(
-                analysis_type=analysis_type,
+                response_type=response_type,
                 message_content=context_result.get("message", "Please confirm if this interpretation is correct."),
                 metadata={
                     "original_query": request.question,
@@ -464,7 +464,7 @@ class AnalysisPipelineService:
                         msg_metadata["warnings"] = warnings
                     
                     response = await self._create_analysis_response(
-                        analysis_type="reuse_decision",
+                        response_type="reuse_decision",
                         message_content=reuse_decision.get('analysis_description', ''),
                         analysis_id=analysis_id,
                         execution_id=execution_id,
@@ -577,7 +577,7 @@ class AnalysisPipelineService:
         
         try:
             
-            analysis_type = analysis_data.get("analysis_type", "script_generation")
+            response_type = analysis_data.get("response_type", "script_generation")
             analysis_result = analysis_data.get("analysis_result", {})
             
             # Extract consistent fields from both reuse and script generation responses
@@ -598,16 +598,16 @@ class AnalysisPipelineService:
             
             # Validate if we should save this analysis
             should_save = (
-                (analysis_type == "reuse_decision" and analysis_result.get("should_reuse")) or
-                (analysis_type == "script_generation" and analysis_result.get("status") == "success")
+                (response_type == "reuse_decision" and analysis_result.get("should_reuse")) or
+                (response_type == "script_generation" and analysis_result.get("status") == "success")
             )
             
             if not should_save:
                 error_detail = ""
-                if analysis_type == "script_generation" and analysis_result.get("status") == "failed":
+                if response_type == "script_generation" and analysis_result.get("status") == "failed":
                     error_detail = analysis_result.get('final_error', 'Unknown error')
                 else:
-                    error_detail = f"Unexpected response: type={analysis_type}, should_reuse={analysis_result.get('should_reuse')}, status={analysis_result.get('status')}"
+                    error_detail = f"Unexpected response: type={response_type}, should_reuse={analysis_result.get('should_reuse')}, status={analysis_result.get('status')}"
                 logger.error(f"❌ Analysis not suitable for saving: {error_detail}")
                 return None, warnings
             
@@ -657,7 +657,7 @@ class AnalysisPipelineService:
         user_id = request.user_id if hasattr(request, 'user_id') and request.user_id else "anonymous"
         session_id = request.session_id
         
-        analysis_type = analysis_data.get("analysis_type", "script_generation")
+        response_type = analysis_data.get("response_type", "script_generation")
         analysis_result = analysis_data.get("analysis_result", {})
         
         # Extract consistent fields from both reuse and script generation responses
@@ -677,7 +677,7 @@ class AnalysisPipelineService:
         
         # Build metadata with essential data for UI reconstruction
         msg_metadata = {
-            "analysis_type": analysis_type,
+            "response_type": response_type,
             "script_name": script_name,
             "execution": execution_params,
             "processing_time": time.time() - start_time,
@@ -689,7 +689,7 @@ class AnalysisPipelineService:
         
         # Create the response object (message will be saved later in main pipeline)
         response = await self._create_analysis_response(
-            analysis_type=analysis_type,
+            response_type=response_type,
             message_content=analysis_description,
             analysis_id=analysis_id,
             execution_id=execution_id,
@@ -724,6 +724,7 @@ class AnalysisPipelineService:
             
             user_id = get_user_id()
             session_id = get_session_id()
+            message_id = get_message_id()
 
             # Log execution start in audit service
             execution_id = await self.audit_service.log_execution_start(
@@ -745,7 +746,8 @@ class AnalysisPipelineService:
                     user_id=user_id,
                     execution_params=execution_params,
                     priority=1,  # High priority for user-initiated executions
-                    timeout_seconds=300
+                    timeout_seconds=300,
+                    message_id=message_id
                 )
                 
                 if queue_success:
@@ -764,15 +766,15 @@ class AnalysisPipelineService:
             return None
     
     
-    async def _update_message_with_response(self, analysis_type: str, 
+    async def _update_message_with_response(self, response_type: str, 
                                           message_content: str, analysis_id: Optional[str] = None, 
                                           execution_id: Optional[str] = None, metadata: Optional[Dict] = None,
                                           cache_output: bool = False) -> AnalysisResponse:
         """Update message and return AnalysisResponse - for cases where both are needed"""
-        await self._update_message_only(analysis_type, message_content, analysis_id, execution_id, metadata, cache_output)
-        return await self._create_analysis_response(analysis_type, message_content, analysis_id, execution_id, metadata)
+        await self._update_message_only(response_type, message_content, analysis_id, execution_id, metadata, cache_output)
+        return await self._create_analysis_response(response_type, message_content, analysis_id, execution_id, metadata)
     
-    async def _update_message_only(self, analysis_type: str, 
+    async def _update_message_only(self, response_type: str, 
                                  message_content: str, analysis_id: Optional[str] = None, 
                                  execution_id: Optional[str] = None, metadata: Optional[Dict] = None,
                                  cache_output: bool = False) -> None:
@@ -786,8 +788,8 @@ class AnalysisPipelineService:
         user_id = get_user_id()
         message_id = get_message_id()
         
-        # Create message with analysis_type and essential metadata only
-        msg_metadata = {"analysis_type": analysis_type}
+        # Create message with response_type and essential metadata only
+        msg_metadata = {"response_type": response_type}
         if metadata:
             msg_metadata.update(metadata)
         
@@ -801,7 +803,7 @@ class AnalysisPipelineService:
                 metadata=msg_metadata,
             )
             if success:
-                self.logger.info(f"✓ Updated {analysis_type} message in chat history: {message_id}")
+                self.logger.info(f"✓ Updated {response_type} message in chat history: {message_id}")
             else:
                 raise RuntimeError(f"Failed to update message {message_id} - core persistence failed")
         else:
@@ -822,9 +824,9 @@ class AnalysisPipelineService:
                     message_data=message_cache_data,
                     ttl_hours=24
                 )
-                self.logger.info(f"✓ Cached {analysis_type} message")
+                self.logger.info(f"✓ Cached {response_type} message")
             except Exception as cache_error:
-                self.logger.warning(f"⚠️ Failed to cache {analysis_type} message: {cache_error}")
+                self.logger.warning(f"⚠️ Failed to cache {response_type} message: {cache_error}")
         
         # Link execution to the message it created (NON-CRITICAL - bidirectional link for convenience)
         if execution_id and self.audit_service and message_id:
@@ -834,7 +836,7 @@ class AnalysisPipelineService:
             except Exception as link_error:
                 self.logger.warning(f"⚠️ Failed to link execution to message: {link_error}")
 
-    async def _create_analysis_response(self, analysis_type: str, 
+    async def _create_analysis_response(self, response_type: str, 
                                       message_content: str, analysis_id: Optional[str] = None, 
                                       execution_id: Optional[str] = None, metadata: Optional[Dict] = None) -> AnalysisResponse:
         """Create AnalysisResponse object for returning to caller"""
@@ -847,8 +849,8 @@ class AnalysisPipelineService:
         error_message = None
         
         # Normalize analysis types for UI - analysis results should all be "script_generation"
-        ui_analysis_type = analysis_type
-        if analysis_type == "analysis":
+        ui_analysis_type = response_type
+        if response_type == "analysis":
             ui_analysis_type = "script_generation"
         
         response_data = {
@@ -857,7 +859,7 @@ class AnalysisPipelineService:
             "content": message_content,
             "analysisId": analysis_id,
             "executionId": execution_id,
-            "analysis_type": ui_analysis_type,
+            "response_type": ui_analysis_type,
             "status": status,
             "error": error_message,
             "timestamp": datetime.now().isoformat()

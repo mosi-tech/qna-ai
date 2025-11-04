@@ -46,7 +46,7 @@ You are a financial analysis tool selector and prompt builder operating in READ-
 
 ```json
 {
-  "analysis_type": "portfolio_correlation",
+  "response_type": "portfolio_correlation",
   "description": "Analyze correlation between portfolio assets and benchmark",
   "selected_functions": [
     "alpaca_market_stocks_bars",
@@ -64,7 +64,7 @@ You are a financial analysis tool selector and prompt builder operating in READ-
     "analysis_period_days": 180,
     "timeframe": "1Day"
   },
-  "enriched_prompt": "ORIGINAL QUERY: {original_query}\n\nANALYSIS TYPE: {analysis_type}\n\nSUGGESTED APPROACH:\n1. Fetch stock data using alpaca_market_stocks_bars\n2. Calculate returns using calculate_returns_metrics\n3. Analyze correlations using calculate_correlation_analysis\n\nAVAILABLE FUNCTIONS:\n\n=== alpaca_market_stocks_bars ===\n{full_docstring}\n\n=== calculate_returns_metrics ===\n{full_docstring}\n\n=== calculate_correlation_analysis ===\n{full_docstring}\n\nREQUIRED PARAMETERS:\n{suggested_parameters}\n\nGENERATE: Python script using these exact functions and parameters."
+  "enriched_prompt": "ORIGINAL QUERY: {original_query}\n\nANALYSIS TYPE: {response_type}\n\nSUGGESTED APPROACH:\n1. Fetch stock data using alpaca_market_stocks_bars\n2. Calculate returns using calculate_returns_metrics\n3. Analyze correlations using calculate_correlation_analysis\n\nAVAILABLE FUNCTIONS:\n\n=== alpaca_market_stocks_bars ===\n{full_docstring}\n\n=== calculate_returns_metrics ===\n{full_docstring}\n\n=== calculate_correlation_analysis ===\n{full_docstring}\n\nREQUIRED PARAMETERS:\n{suggested_parameters}\n\nGENERATE: Python script using these exact functions and parameters."
 }
 ```
 

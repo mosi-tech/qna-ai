@@ -467,7 +467,7 @@ def analyze_financial_question(
             "metadata": {
                 "timestamp": datetime.now().isoformat(),
                 "data_source": "MCP Financial + Analytics Servers",
-                "analysis_type": "CUSTOMIZE: Brief description of what analysis was performed"
+                "response_type": "CUSTOMIZE: Brief description of what analysis was performed"
             }
         }
         

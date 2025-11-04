@@ -64,7 +64,8 @@ class ExecutionQueueService:
         user_id: str,
         execution_params: Optional[Dict[str, Any]] = None,
         priority: int = 2,
-        timeout_seconds: int = 300
+        timeout_seconds: int = 300,
+        message_id: Optional[str] = None
     ) -> bool:
         """
         Enqueue an execution for processing
@@ -77,6 +78,7 @@ class ExecutionQueueService:
             execution_params: Optional execution parameters
             priority: Execution priority (1=high, 2=normal, 3=low)
             timeout_seconds: Execution timeout
+            message_id: Optional message ID for SSE context
             
         Returns:
             True if successfully enqueued
@@ -90,6 +92,7 @@ class ExecutionQueueService:
                 "analysis_id": analysis_id,
                 "session_id": session_id,
                 "user_id": user_id,
+                "message_id": message_id,
                 "execution_params": execution_params or {},
                 "priority": priority,
                 "timeout_seconds": timeout_seconds,

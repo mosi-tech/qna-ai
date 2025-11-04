@@ -162,43 +162,8 @@ async def _sse_emit_progress(
     )
 
 
-async def _sse_execution_queued(session_id: str, execution_id: str, analysis_id: str = None, **kwargs):
-    """INTERNAL: Direct SSE emit for execution queued status"""
-    details = {"execution_id": execution_id, "execution_status": "queued"}
-    if analysis_id:
-        details["analysis_id"] = analysis_id
-    details.update(kwargs)
-    return await _sse_emit_progress(session_id, ProgressLevel.INFO, "Analysis queued for execution", details)
-
-
-async def _sse_execution_running(session_id: str, execution_id: str, analysis_id: str = None, **kwargs):
-    """INTERNAL: Direct SSE emit for execution running status"""
-    details = {"execution_id": execution_id, "execution_status": "running"}
-    if analysis_id:
-        details["analysis_id"] = analysis_id
-    details.update(kwargs)
-    return await _sse_emit_progress(session_id, ProgressLevel.INFO, "Analysis execution in progress", details)
-
-
-async def _sse_execution_completed(session_id: str, execution_id: str, analysis_id: str = None, **kwargs):
-    """INTERNAL: Direct SSE emit for execution completed status"""
-    details = {"execution_id": execution_id, "execution_status": "completed"}
-    if analysis_id:
-        details["analysis_id"] = analysis_id
-    details.update(kwargs)
-    return await _sse_emit_progress(session_id, ProgressLevel.SUCCESS, "Analysis execution completed", details)
-
-
-async def _sse_execution_failed(session_id: str, execution_id: str, error_message: str = None, analysis_id: str = None, **kwargs):
-    """INTERNAL: Direct SSE emit for execution failed status"""
-    message = f"Analysis execution failed: {error_message}" if error_message else "Analysis execution failed"
-    details = {"execution_id": execution_id, "execution_status": "failed"}
-    if analysis_id:
-        details["analysis_id"] = analysis_id
-    if error_message:
-        details["error"] = error_message
-    details.update(kwargs)
-    return await _sse_emit_progress(session_id, ProgressLevel.ERROR, message, details)
+# Removed _sse_execution_* functions - they were unnecessary complexity
+# Now using _sse_progress_info for all execution status updates
 
 
 async def _sse_progress_info(session_id: str, message: str, **kwargs):

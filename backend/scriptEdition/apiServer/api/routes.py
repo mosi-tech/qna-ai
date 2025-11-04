@@ -208,7 +208,7 @@ class APIRoutes:
             timestamp=datetime.now().isoformat()
         )
     
-    async def _submit_execution(self, user_id: str, session_id: str, analysis_id: str, question: str, execution_params: Dict[str, Any]) -> Optional[str]:
+    async def _submit_execution(self, user_id: str, session_id: str, analysis_id: str, question: str, execution_params: Dict[str, Any], message_id: Optional[str] = None) -> Optional[str]:
         """
         Submit execution for analysis and log it.
         
@@ -218,6 +218,7 @@ class APIRoutes:
             analysis_id: Analysis ID
             question: User's original question
             execution_params: Execution metadata
+            message_id: Optional message ID for SSE context
             
         Returns:
             execution_id if successful, None if failed
@@ -247,7 +248,8 @@ class APIRoutes:
                     user_id=user_id,
                     execution_params=execution_params,
                     priority=1,  # High priority for user-initiated executions
-                    timeout_seconds=300
+                    timeout_seconds=300,
+                    message_id=message_id
                 )
                 
                 if queue_success:
@@ -324,7 +326,7 @@ class APIRoutes:
             )
             logger.info(f"✓ Created user message: {user_message_id}")
             
-            # Step 3: Create analysis message
+            # Step 3: Create analysis message with basic metadata
             analysis_message_id = await self.chat_history_service.add_assistant_message(
                 session_id=session_id,
                 user_id=user_id,
@@ -332,7 +334,8 @@ class APIRoutes:
                 metadata={
                     "status": MessageStatus.PENDING,
                     "user_message_id": user_message_id,
-                    "queued_at": datetime.now().isoformat()
+                    "queued_at": datetime.now().isoformat(),
+                    "response_type": "script_generation"
                 }
             )
             logger.info(f"✓ Created analysis message: {analysis_message_id}")
@@ -351,17 +354,40 @@ class APIRoutes:
             
             logger.info(f"📥 Queued analysis job: {job_id} for message {analysis_message_id}")
             
-            # Step 5: Return immediately with pending status
-            return AnalysisResponse(
-                success=True,
-                data={
+            # Step 5: Create minimal message structure and transform to UI format
+            # Since get_message doesn't exist, we'll create the minimal structure needed for transformation
+            message_for_transform = {
+                "messageId": analysis_message_id,
+                "role": "assistant",
+                "timestamp": datetime.now().isoformat(),
+                "metadata": {
+                    "status": MessageStatus.PENDING,
+                    "user_message_id": user_message_id,
+                    "job_id": job_id,
+                    "queued_at": datetime.now().isoformat(),
+                    "response_type": "script_generation"
+                }
+            }
+            
+            if self.data_transformer:
+                clean_msg = await self.data_transformer.transform_message_to_ui_data(message_for_transform)
+            else:
+                # Fallback for cases where transformer is unavailable
+                clean_msg = {
                     "message_id": analysis_message_id,
                     "user_message_id": user_message_id,
                     "job_id": job_id,
                     "status": MessageStatus.PENDING,
-                    "session_id": session_id,
-                    "user_id": user_id,
                     "queued_at": datetime.now().isoformat()
+                }
+            
+            # Step 6: Return immediately with pending status and consistent UI format
+            return AnalysisResponse(
+                success=True,
+                data={
+                    **clean_msg,  # Use transformer-generated UI data for consistency
+                    "session_id": session_id,
+                    "user_id": user_id
                 },
                 timestamp=datetime.now().isoformat()
             )
@@ -434,7 +460,7 @@ class APIRoutes:
             )
             logger.info(f"✓ Created user message: {user_message_id}")
             
-            # Step 4: Create analysis message
+            # Step 4: Create analysis message with basic metadata including job placeholder
             analysis_message_id = await self.chat_history_service.add_assistant_message(
                 session_id=session_id,
                 user_id=user_id,
@@ -442,7 +468,8 @@ class APIRoutes:
                 metadata={
                     "status": MessageStatus.PENDING,
                     "user_message_id": user_message_id,
-                    "queued_at": datetime.now().isoformat()
+                    "queued_at": datetime.now().isoformat(),
+                    "response_type": "script_generation"
                 }
             )
             logger.info(f"✓ Created analysis message: {analysis_message_id}")
@@ -462,7 +489,6 @@ class APIRoutes:
             # Step 6: Log initial progress to message
             # TODO: We have confusing progress_info (one is memory SSE and other is queue based SSE)
             # We need to either rename or do sthg
-            await send_progress_info(session_id, "Analysis queued for processing")
             
             # Step 7: Queue analysis for worker processing
             job_id = await analysis_queue.enqueue_analysis({
@@ -472,20 +498,43 @@ class APIRoutes:
                 "user_message_id": user_message_id,
                 "user_id": user_id
             })
-            
+            await send_progress_info(session_id, "Analysis queued for processing")
             logger.info(f"📥 Queued analysis job: {job_id} for message {analysis_message_id}")
             
-            # Step 8: Return immediately with pending status
-            return AnalysisResponse(
-                success=True,
-                data={
+            # Step 8: Create minimal message structure and transform to UI format
+            # Since get_message doesn't exist, we'll create the minimal structure needed for transformation
+            message_for_transform = {
+                "messageId": analysis_message_id,
+                "role": "assistant",
+                "timestamp": datetime.now().isoformat(),
+                "metadata": {
+                    "status": MessageStatus.PENDING,
+                    "user_message_id": user_message_id,
+                    "job_id": job_id,
+                    "queued_at": datetime.now().isoformat(),
+                    "response_type": "script_generation"
+                }
+            }
+            
+            if self.data_transformer:
+                clean_msg = await self.data_transformer.transform_message_to_ui_data(message_for_transform)
+            else:
+                # Fallback for cases where transformer is unavailable
+                clean_msg = {
                     "message_id": analysis_message_id,
                     "user_message_id": user_message_id,
                     "job_id": job_id,
                     "status": MessageStatus.PENDING,
-                    "session_id": session_id,
-                    "user_id": user_id,
                     "queued_at": datetime.now().isoformat()
+                }
+            
+            # Step 9: Return immediately with pending status and consistent UI format
+            return AnalysisResponse(
+                success=True,
+                data={
+                    **clean_msg,  # Use transformer-generated UI data for consistency
+                    "session_id": session_id,
+                    "user_id": user_id
                 },
                 timestamp=datetime.now().isoformat()
             )

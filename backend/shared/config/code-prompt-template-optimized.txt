@@ -50,7 +50,7 @@ You are a financial analysis parameterized script executor with MCP-based valida
 
 ORIGINAL QUERY: {user_query}
 
-ANALYSIS TYPE: {analysis_type}
+ANALYSIS TYPE: {response_type}
 
 SELECTED MCP FUNCTIONS (ASSESS RELEVANCE FOR YOUR SPECIFIC QUERY - ONLY USE WHAT'S ACTUALLY NEEDED):
 

@@ -11,8 +11,7 @@ from typing import Optional
 from motor.motor_asyncio import AsyncIOMotorDatabase, AsyncIOMotorCollection
 from services.sse import (
     progress_sse_manager, ProgressLevel,
-    _sse_execution_queued, _sse_execution_running, 
-    _sse_execution_completed, _sse_execution_failed
+    _sse_progress_info
 )
 
 logger = logging.getLogger("progress-monitor")
@@ -105,53 +104,38 @@ class ProgressMonitorService:
             await self._mark_processed(event["_id"])
             
     async def _handle_execution_status(self, session_id: str, event: dict):
-        """Handle execution status update events"""
+        """Handle execution status update events - SIMPLIFIED to use _sse_progress_info"""
         execution_id = event.get("execution_id")
         status = event.get("status")
-        analysis_id = event.get("analysis_id")
         
         if not execution_id or not status:
             logger.warning(f"Invalid execution status event: {event}")
             return
             
+        # Create appropriate message based on status
+        if status == "running":
+            message = "Analysis execution in progress"
+        elif status == "completed":
+            message = "Analysis execution completed"
+        elif status == "failed":
+            error = event.get("error", "Unknown error")
+            message = f"Analysis execution failed: {error}"
+        elif status == "queued":
+            message = "Analysis queued for execution"
+        else:
+            message = f"Analysis execution status: {status}"
+            
         logger.info(f"📡 Broadcasting execution status {status} for {execution_id} via SSE")
         
-        if status == "running":
-            await _sse_execution_running(session_id, execution_id, analysis_id)
-            logger.info(f"✅ Broadcast execution_running for {execution_id}")
-        elif status == "completed":
-            # Extract additional data for completion
-            results = event.get("results")
-            markdown = event.get("markdown")
-            execution_time = event.get("execution_time")
-            
-            await _sse_execution_completed(
-                session_id, execution_id, analysis_id,
-                results=results,
-                markdown=markdown,
-                execution_time=execution_time
-            )
-            logger.info(f"✅ Broadcast execution_completed for {execution_id}")
-        elif status == "failed":
-            error_message = event.get("error")
-            message = event.get("message", "")
-            # Extract just the error part from the message
-            if message.startswith("Analysis execution failed: "):
-                error_message = message.replace("Analysis execution failed: ", "")
-            elif message.startswith("Worker error: "):
-                error_message = message.replace("Worker error: ", "")
-                
-            await _sse_execution_failed(
-                session_id, execution_id,
-                error_message=error_message,
-                analysis_id=analysis_id
-            )
-            logger.info(f"✅ Broadcast execution_failed for {execution_id}")
-        elif status == "queued":
-            await _sse_execution_queued(session_id, execution_id, analysis_id)
-            logger.info(f"✅ Broadcast execution_queued for {execution_id}")
-        else:
-            logger.warning(f"Unknown execution status: {status}")
+        # Extract only the actual business data for SSE details
+        # Exclude all SSE-level fields (id, timestamp, level, message) and MongoDB metadata
+        sse_details = {k: v for k, v in event.items() if k not in [
+            "_id", "session_id", "timestamp", "processed", "type", 
+            "level", "message", "id", "event_id"  # Don't pass event structure fields
+        ]}
+        
+        await _sse_progress_info(session_id, message, **sse_details)
+        logger.info(f"✅ Broadcast execution status {status} for {execution_id}")
             
     async def _handle_generic_progress(self, session_id: str, event: dict):
         """Handle generic progress events"""

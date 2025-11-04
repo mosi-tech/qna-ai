@@ -1,80 +1,39 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import MockOutput from '@/components/MockOutput';
-import ProgressPanel from '@/components/progress/ProgressPanel';
-import { useProgress } from '@/lib/context/ProgressContext';
 
 interface AnalysisResultProps {
   messageId: string;
   question: string;
   results: any;
-  expanded?: boolean;
   analysisId?: string;
   executionId?: string;
-  sessionId?: string;
-  onExecutionUpdate?: (update: any) => void;
 }
 
-export default function AnalysisResult({ 
-  messageId, 
-  question, 
-  results, 
-  expanded = false,
+export default function AnalysisResult({
+  messageId,
+  question,
+  results,
   analysisId,
-  executionId,
-  sessionId,
-  onExecutionUpdate
+  executionId
 }: AnalysisResultProps) {
   const router = useRouter();
-  // Always expanded, no state needed
-  const isExpanded = true;
-  
-  
-  // State to track when analysis completes via SSE
-  const [sseCompleted, setSseCompleted] = useState(false);
-  
+
   // Use clean uiData from backend transform (includes unified status)
   const uiData = results?.uiData || results; // Fallback for backward compatibility
-  
-  // Use backend's unified status instead of complex detection logic
-  const currentStatus = uiData?.status || 'completed';
+
+  // Use backend status - no SSE handling here, status comes from upstream
+  const currentStatus = uiData?.status || results?.status || 'completed';
   const currentError = uiData?.error;
   const analysisResults = uiData?.results || {};
   const analysisType = uiData?.type || 'Analysis';
   const markdown = uiData?.markdown;
-  
-  // Callback for when analysis completes via SSE
-  const handleAnalysisComplete = useCallback((status: 'completed' | 'failed', data?: any) => {
-    console.log('[AnalysisResult] Analysis completed via SSE:', status, data);
-    setSseCompleted(true);
-    
-    // Try to trigger refresh via callback first
-    if (onExecutionUpdate) {
-      onExecutionUpdate({ status, ...data });
-    } else {
-      // Fallback: trigger page refresh after a short delay to let the backend process
-      setTimeout(() => {
-        console.log('[AnalysisResult] Refreshing page to load updated message data');
-        window.location.reload();
-      }, 1500);
-    }
-  }, [onExecutionUpdate]);
-  
-  // Use session-level progress context (single SSE connection per session)
-  const { logs: progressLogs, isConnected, error, clearLogs, registerAnalysisCompleteCallback } = useProgress();
 
-  // Register analysis completion callback for this specific message
-  useEffect(() => {
-    if (!messageId) return;
-    
-    const unregister = registerAnalysisCompleteCallback(messageId, handleAnalysisComplete);
-    return unregister;
-  }, [messageId, registerAnalysisCompleteCallback, handleAnalysisComplete]);
-  
-  // Determine if analysis is actively processing
-  const isProcessing = currentStatus === 'pending' && !sseCompleted;
+  // Extract IDs from submission response if not provided as props
+  const effectiveAnalysisId = analysisId || results?.analysis_id;
+  const effectiveExecutionId = executionId || results?.execution_id;
+
 
   const formatValue = (value: any): string => {
     if (typeof value === 'number') {
@@ -87,33 +46,33 @@ export default function AnalysisResult({
   const openWorkspace = () => {
     // Use clean UI data for workspace navigation
     const workspaceData = {
-      executionId: executionId || null,
-      analysisId: analysisId || null,
+      executionId: effectiveExecutionId || null,
+      analysisId: effectiveAnalysisId || null,
       parameters: uiData?.parameters || {},
       analysis_type: uiData?.type || 'analysis',
       query_type: 'analysis'
     };
-    
+
     // Build URL with IDs as query parameters for better data extraction
     const params = new URLSearchParams({
       results: JSON.stringify(workspaceData)
     });
-    
-    if (analysisId) {
-      params.set('analysisId', analysisId);
+
+    if (effectiveAnalysisId) {
+      params.set('analysisId', effectiveAnalysisId);
     }
-    
-    if (executionId) {
-      params.set('executionId', executionId);
+
+    if (effectiveExecutionId) {
+      params.set('executionId', effectiveExecutionId);
     }
-    
+
     const analysisUrl = `/analysis/${messageId}?${params.toString()}`;
     router.push(analysisUrl);
   };
 
   const exportResults = () => {
     if (!uiData) return;
-    
+
     // Export clean UI data instead of raw metadata
     const exportData = {
       analysisType: uiData.type,
@@ -122,7 +81,7 @@ export default function AnalysisResult({
       parameters: uiData.parameters,
       timestamp: new Date().toISOString(),
     };
-    
+
     const dataStr = JSON.stringify(exportData, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
@@ -150,51 +109,20 @@ export default function AnalysisResult({
       .replace(/^- (.*$)/gim, '<li class="ml-4">• $1</li>')
       // Line breaks
       .replace(/\n/g, '<br/>');
-    
+
     return html;
   };
 
   const renderExpandedContent = () => {
     const hasResults = markdown || (analysisResults && Object.keys(analysisResults).length > 0);
-    
-    // Show status indicator if no results yet or still processing
-    if (!hasResults || currentStatus === 'running' || currentStatus === 'queued') {
-      return (
-        <div className="text-center py-6">
-          <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg ${
-            currentStatus === 'pending' ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' :
-            currentStatus === 'queued' ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' :
-            currentStatus === 'running' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
-            currentStatus === 'failed' ? 'bg-red-50 text-red-700 border border-red-200' :
-            'bg-gray-50 text-gray-700 border border-gray-200'
-          }`}>
-            {(currentStatus === 'running' || currentStatus === 'queued') && (
-              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-            )}
-            {currentStatus === 'pending' && (
-              <div className="w-2 h-2 bg-current rounded-full animate-pulse"></div>
-            )}
-            {currentStatus === 'failed' && (
-              <div className="w-2 h-2 bg-current rounded-full"></div>
-            )}
-            <span className="font-medium">
-              {currentStatus === 'pending' ? 'Analysis in progress...' :
-               currentStatus === 'queued' ? 'Queued for execution...' :
-               currentStatus === 'running' ? 'Executing analysis...' :
-               'Processing...'}
-            </span>
-          </div>
-        </div>
-      );
-    }
-    
+
     // Prioritize markdown rendering over raw results
     if (markdown) {
       return (
         <div className="prose prose-sm max-w-none">
-          <div 
+          <div
             className="markdown-content space-y-2"
-            dangerouslySetInnerHTML={{ 
+            dangerouslySetInnerHTML={{
               __html: renderMarkdown(markdown)
             }}
           />
@@ -204,7 +132,7 @@ export default function AnalysisResult({
 
     // Fallback: render raw results if no markdown available
     const resultEntries = Object.entries(analysisResults);
-    
+
     if (resultEntries.length === 0) {
       return (
         <div className="text-center py-4 text-gray-500">
@@ -234,98 +162,19 @@ export default function AnalysisResult({
     );
   }
 
-  // If this is a pending analysis, show the progress panel
-  // But if SSE indicates completion, show a brief "refreshing" message instead
-  if (currentStatus === 'pending') {
-    if (sseCompleted) {
-      return (
-        <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-          <div className="p-4 text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-green-50 text-green-700 border border-green-200">
-              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-              <span className="font-medium">Analysis completed! Loading results...</span>
-            </div>
-          </div>
-        </div>
-      );
-    }
-    return (
-      <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-        <div className="p-4">
-          <div className="mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Analysis in Progress</h3>
-            <p className="text-sm text-gray-600">{question}</p>
-          </div>
-          
-          {/* Progress Panel for SSE logs */}
-          <div className="h-96 border border-gray-200 rounded-lg overflow-hidden">
-            <ProgressPanel 
-              logs={progressLogs}
-              isConnected={isConnected}
-              isProcessing={isProcessing}
-              onClear={clearLogs}
-            />
-          </div>
-          
-          {/* Status indicator */}
-          <div className="mt-4 flex items-center gap-2 text-sm text-gray-600">
-            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-            <span>Analyzing your question...</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  
-  // If analysis failed, show error message with both uiData.error and content
-  if (currentStatus === 'failed') {
-    return (
-      <div className="bg-white border border-red-200 rounded-lg overflow-hidden">
-        <div className="p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center">
-              <span className="text-red-600 text-sm">✕</span>
-            </div>
-            <h3 className="text-lg font-semibold text-red-900">Analysis Failed</h3>
-          </div>
-          <p className="text-sm text-gray-600 mb-3">{question}</p>
-          
-          {/* Show structured error message */}
-          {currentError && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
-              <p className="text-sm text-red-700 font-medium">Error Details:</p>
-              <p className="text-sm text-red-700">{currentError}</p>
-            </div>
-          )}
-          
-          {/* Show content (which contains the error message from analysis pipeline) */}
-          {results?.content && (
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-              <p className="text-sm text-gray-700">{results.content}</p>
-            </div>
-          )}
-          
-          {/* Retry button */}
-          <div className="mt-4 flex justify-end">
-            <button
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors"
-            >
-              Try Again
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // AnalysisResult should only be used for completed results
+  // Progress is now handled by ChatMessage component
 
+
+  // AnalysisResult component now only handles script_generation responses
+  // Other response types (meaningless, needs_clarification) are handled by ChatMessage component
   return (
     <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
       {/* Content - Always Expanded */}
       <div className="p-4 space-y-4">
         {renderExpandedContent()}
-        
-        
+
+
         {/* Show MockOutput for mock data */}
         {results?.query_type && (
           <div>
@@ -340,22 +189,21 @@ export default function AnalysisResult({
           <span>🔬</span>
           <span>
             {currentStatus === 'running' ? 'Execution in progress...' :
-             currentStatus === 'queued' ? 'Waiting for execution...' :
-             currentStatus === 'pending' ? 'Analysis in progress...' :
-             currentStatus === 'failed' ? 'Analysis failed - retry in workspace' :
-             'Adjust parameters and re-run analysis'}
+              currentStatus === 'queued' ? 'Waiting for execution...' :
+                currentStatus === 'pending' ? 'Analysis in progress...' :
+                  currentStatus === 'failed' ? 'Analysis failed - retry in workspace' :
+                    'Adjust parameters and re-run analysis'}
           </span>
         </div>
-        
+
         <div className="flex items-center gap-2">
           <button
             onClick={exportResults}
             disabled={!uiData?.canExport}
-            className={`px-3 py-1.5 text-sm border border-gray-300 rounded-lg transition-colors ${
-              !uiData?.canExport
-                ? 'opacity-50 cursor-not-allowed'
-                : 'hover:bg-gray-100'
-            }`}
+            className={`px-3 py-1.5 text-sm border border-gray-300 rounded-lg transition-colors ${!uiData?.canExport
+              ? 'opacity-50 cursor-not-allowed'
+              : 'hover:bg-gray-100'
+              }`}
           >
             Export
           </button>

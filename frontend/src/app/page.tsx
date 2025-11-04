@@ -432,27 +432,12 @@ function HomeContent() {
         is_archived: sessionDetail.is_archived,
       });
 
-      const getMessageType = (msg: any) => {
-        if (msg.role === 'user') return 'user';
-        if (msg.role === 'assistant') {
-          // Check if this assistant message contains analysis results
-          if (msg.metadata && (
-            msg.metadata.query_type || 
-            msg.metadata.analysis_type || 
-            msg.metadata.best_day ||
-            msg.metadata.response_type === 'analysis' ||
-            (msg.metadata.response_data && msg.metadata.response_data.analysis_result)
-          )) {
-            return 'results';
-          }
-          return 'ai';
-        }
-        return 'results'; // fallback
-      };
-
       const loadedMessages = (sessionDetail.messages || []).map((msg: any, idx: number) => ({
         id: msg.id || `${selectedSessionId}-${idx}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        type: getMessageType(msg),
+        type: (msg.role === 'user' ? 'user' : 'ai') as 'user' | 'ai',
+        role: msg.role,
+        response_type: msg.response_type,
+        status: msg.status,
         content: msg.content,
         data: msg.metadata,
         analysisId: msg.analysisId,

@@ -16,7 +16,7 @@ from .base_worker import BaseQueueWorker
 from ..execution import execute_script
 from ..storage import get_storage
 from ..services.result_formatter import create_shared_result_formatter
-from ..services.progress_service import send_progress_event, send_execution_running, send_execution_completed, send_execution_failed
+from ..services.progress_service import send_progress_event, send_execution_running, send_execution_completed, send_execution_failed, send_analysis_error
 from ..queue.worker_context import set_context, get_session_id
 
 # Import AuditService for updating execution documents
@@ -95,6 +95,9 @@ class ExecutionQueueWorker(BaseQueueWorker):
             analysis_id=analysis_id,
             message_id=message_id
         )
+        
+        # Debug: Log context information including message_id
+        logger.info(f"🔨 Processing execution {execution_id} with context: session={session_id}, analysis={analysis_id}, message={message_id}")
         
         try:
             logger.info(f"🔨 Processing execution: {execution_id}")
@@ -213,7 +216,7 @@ class ExecutionQueueWorker(BaseQueueWorker):
                         # Even if audit fails, still nack the queue so it can retry everything
                 
                 # Nack the execution in queue (after audit attempt)
-                await self.queue.nack(execution_id, error_msg, retry=True)
+                nack_result = await self.queue.nack(execution_id, error_msg, retry=True)
                 
                 # CRITICAL: Send SSE failure update via queue
                 try:
@@ -221,6 +224,17 @@ class ExecutionQueueWorker(BaseQueueWorker):
                     logger.info(f"📡 Sent SSE failed status via queue for execution: {execution_id}")
                 except Exception as sse_error:
                     logger.warning(f"⚠️ Failed to send SSE failed status via queue: {sse_error}")
+                
+                # CRITICAL: Send final analysis failure message ONLY on final attempt
+                if nack_result.get("is_final_attempt", True):
+                    try:
+                        retry_info = f" after {nack_result.get('retry_count', 0)} attempts"
+                        await send_analysis_error(f"Analysis failed during execution{retry_info}: {error_msg}", error=error_msg)
+                        logger.info(f"📡 Sent FINAL analysis failure message via queue for execution: {execution_id}")
+                    except Exception as sse_error:
+                        logger.warning(f"⚠️ Failed to send final analysis failure message via queue: {sse_error}")
+                else:
+                    logger.info(f"🔄 Execution {execution_id} will be retried, not sending final failure message")
                 
                 await self.queue.update_logs(execution_id, {
                     "level": "ERROR",
@@ -247,10 +261,21 @@ class ExecutionQueueWorker(BaseQueueWorker):
                 await send_execution_failed(message=f"Worker error: {str(e)}", error=str(e))
                 logger.info(f"📡 Sent SSE failed status via queue for worker error: {execution_id}")
             except Exception as sse_error:
-                logger.warning(f"⚠️ Failed to send SSE failed status via queue for worker error: {sse_error}")
+                logger.warning(f"⚠️ Failed to send SSE failed status via queue: {sse_error}")
             
             try:
-                await self.queue.nack(execution_id, str(e), retry=True)
+                nack_result = await self.queue.nack(execution_id, str(e), retry=True)
+                
+                # CRITICAL: Send final analysis failure message ONLY on final attempt for unexpected errors
+                if nack_result.get("is_final_attempt", True):
+                    try:
+                        retry_info = f" after {nack_result.get('retry_count', 0)} attempts"
+                        await send_analysis_error(f"Analysis failed due to worker error{retry_info}: {str(e)}", error=str(e))
+                        logger.info(f"📡 Sent FINAL analysis failure message via queue for worker error: {execution_id}")
+                    except Exception as sse_error:
+                        logger.warning(f"⚠️ Failed to send final analysis failure message via queue for worker error: {sse_error}")
+                else:
+                    logger.info(f"🔄 Worker error for {execution_id} will be retried, not sending final failure message")
                 await self.queue.update_logs(execution_id, {
                     "level": "ERROR",
                     "message": f"Worker error: {str(e)}"

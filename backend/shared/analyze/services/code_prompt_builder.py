@@ -104,7 +104,7 @@ class CodePromptBuilderService(BaseService):
                 "status": "success",
                 "mode": code_prompt_mode,
                 "provider": provider_type,
-                "analysis_type": function_selection.get('analysis_type', 'general'),
+                "response_type": function_selection.get('response_type', 'general'),
                 "selected_functions": function_selection['selected_functions'],
                 "function_schemas": function_schemas,
                 "suggested_parameters": function_selection.get('suggested_parameters', {}),
@@ -141,7 +141,7 @@ class CodePromptBuilderService(BaseService):
         Analyze this financial question and select the most relevant MCP functions needed.
         
         Return only JSON with:
-        - analysis_type: Single word category (portfolio, correlation, risk, etc.)
+        - response_type: Single word category (portfolio, correlation, risk, etc.)
         - selected_functions: Array of 3-6 function names only (no descriptions)
         - suggested_parameters: Essential parameters only
         
@@ -351,7 +351,7 @@ class CodePromptBuilderService(BaseService):
 """
             
             debug_content += f"""=== METADATA ===
-Analysis Type: {result['analysis_type']}
+Analysis Type: {result['response_type']}
 Selected Functions: {len(result['selected_functions'])}
 Function List: {result['selected_functions']}
 Total Messages: {len(result['user_messages'])}

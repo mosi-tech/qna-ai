@@ -57,6 +57,17 @@ export interface AnalysisData {
   message?: string;
   options?: string[];
   suggestion?: string;
+  // Additional properties from backend response
+  response_type?: string;
+  content?: string;
+  metadata?: Record<string, any>;
+  message_id?: string;
+  analysis_id?: string;
+  execution_id?: string;
+  stage?: string;
+  uiData?: any;
+  // Allow additional dynamic properties
+  [key: string]: unknown;
 }
 
 export interface AnalysisResponse extends APIResponse<AnalysisData> {}

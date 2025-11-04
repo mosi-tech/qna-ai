@@ -41,16 +41,13 @@ class DataTransformer:
         
         # Default response structure
         ui_data = {
-            "type": metadata.get("analysis_type") or metadata.get("query_type", "Financial Analysis"),
             "results": {},
             "execution": {
-                "status": "completed",
+                "status": "pending",
                 "progress": None,
                 "logs": [],
                 "error": None,
             },
-            "parameters": {},
-            "confidence": metadata.get("confidence"),
             "canRerun": True,
             "canExport": True,
         }
@@ -67,35 +64,12 @@ class DataTransformer:
             # Get execution results - aggregation already extracts execution.result into "results"
             if execution_data.get("results"):
                 # aggregation pipeline puts execution.result into execution_data["results"]
-                # Now we need to extract the "results" field from that
-                result_data = execution_data["results"]
-                
-                if isinstance(result_data, dict) and "results" in result_data:
-                    execution_results = result_data["results"]
-                    ui_data["results"] = execution_results
-                else:
-                    # Fallback: if result_data is already the results
-                    ui_data["results"] = result_data
+                markdown = execution_data["results"].get("markdown")
+                if markdown:
+                    ui_data["results"]["markdown"] = markdown
             
             # Get parameters from execution  
-            ui_data["parameters"] = execution_data.get("parameters", {})
-        elif execution_id and self.db_client:
-            # Fallback to individual DB call if no pre-populated data
-            try:
-                execution = await self.db_client.get_execution(execution_id)
-                if execution:
-                    # Update execution status
-                    execution_status = execution.status.value if hasattr(execution.status, 'value') else str(execution.status)
-                    execution_error = execution.error
-                    
-                    # Get execution results directly from results field
-                    if execution.result:
-                        ui_data["results"] = extract_key_findings_from_execution(execution.result)
-                    
-                    # Get parameters from execution
-                    ui_data["parameters"] = execution.parameters or {}
-            except Exception as e:
-                logger.warning(f"Failed to fetch execution {execution_id}: {e}")
+            ui_data["results"]["parameters"] = execution_data.get("parameters", {})
         
         # Step 2: Extract metadata status information using MessageStatus constants
         metadata_status = metadata.get("status")  # Using MessageStatus constants
@@ -147,9 +121,9 @@ class DataTransformer:
                 ui_data["parameters"].update(llm_params)
             
             # Update analysis type if available
-            analysis_type = analysis_data["llm_response"].get("analysis_type") or analysis_data["llm_response"].get("query_type")
-            if analysis_type:
-                ui_data["type"] = analysis_type
+            response_type = analysis_data["llm_response"].get("response_type") or analysis_data["llm_response"].get("query_type")
+            if response_type:
+                ui_data["type"] = response_type
         elif analysis_id and self.db_client:
             # Fallback to individual DB call if no pre-populated data
             try:
@@ -161,9 +135,9 @@ class DataTransformer:
                         ui_data["parameters"].update(llm_params)
                     
                     # Update analysis type if available
-                    analysis_type = analysis.llm_response.get("analysis_type") or analysis.llm_response.get("query_type")
-                    if analysis_type:
-                        ui_data["type"] = analysis_type
+                    response_type = analysis.llm_response.get("response_type") or analysis.llm_response.get("query_type")
+                    if response_type:
+                        ui_data["type"] = response_type
             except Exception as e:
                 logger.warning(f"Failed to fetch analysis {analysis_id}: {e}")
         
@@ -181,12 +155,12 @@ class DataTransformer:
     async def transform_message_to_ui_data(self, msg: Dict[str, Any]) -> Dict[str, Any]:
         """Transform message to complete UI-safe data - includes all essential fields"""
         metadata = msg.get("metadata", {})
-        analysis_type = metadata.get("analysis_type", "") or metadata.get("response_type", "") #Backward compatible
+        response_type = metadata.get("response_type", "")
         execution_id = msg.get("executionId")
         
         # Normalize analysis types for UI - analysis results should all be "script_generation"  
-        if analysis_type in ["reuse_decision", "cache_hit", "analysis", "script_generation"]:
-            analysis_type = "script_generation"
+        if response_type in ["reuse_decision", "cache_hit", "analysis", "script_generation"]:
+            response_type = "script_generation"
         
         # Base message structure with essential fields
         clean_msg = {
@@ -195,14 +169,13 @@ class DataTransformer:
             "timestamp": msg.get("timestamp"),
             "analysisId": msg.get("analysisId"),
             "executionId": execution_id,
-            "analysis_type": analysis_type,  # Normalized analysis type for UI
+            "response_type": response_type, 
         }
         
-        if analysis_type == "script_generation":
+        if response_type == "script_generation":
             # For analysis: Use the improved transform_analysis_data_to_ui for complete status handling
             execution_data = msg.get("execution")
             analysis_data = msg.get("analysis") 
-            
             
             # Get complete UI data with combined status from both metadata and execution
             ui_data = await self.transform_analysis_data_to_ui(
@@ -213,32 +186,15 @@ class DataTransformer:
                 analysis_data=analysis_data
             )
             
-            # Handle markdown from execution results if available
-            if execution_data and execution_data.get("results"):
-                # Extract markdown from pre-populated execution data
-                markdown = execution_data["results"].get("markdown")
-                if markdown:
-                    ui_data["markdown"] = markdown
-            elif execution_id and self.db_client:
-                # Fallback to individual DB call for markdown
-                try:
-                    execution = await self.db_client.get_execution(execution_id)
-                    if execution and execution.result:
-                        markdown = execution.result.get("markdown")
-                        if markdown:
-                            ui_data["markdown"] = markdown
-                except Exception as e:
-                    logger.warning(f"Failed to fetch execution markdown for {execution_id}: {e}")
-            
             clean_msg.update({
                 "content": msg.get("content", ""),
-                "uiData": ui_data,  # Complete UI data with status information
+                **ui_data,  # Flatten UI data properties directly into clean_msg
             })
             
-        elif analysis_type == "clarification":
+        elif response_type == "clarification":
             # For clarification: different structure with original/expanded queries
             clean_msg.update({
-                "type": "clarification",
+                "response_type": "clarification",
                 "content": msg.get("content", ""),
                 "originalQuery": metadata.get("original_query", ""),
                 "expandedQuery": metadata.get("expanded_query", ""),
@@ -250,7 +206,7 @@ class DataTransformer:
             # For regular messages (user or assistant): just content
             clean_msg.update({
                 "content": msg.get("content", ""),
-                "type": analysis_type or msg.get("role", "assistant"),
+                "response_type": response_type or msg.get("role", "assistant"),
             })
         
         return clean_msg
@@ -288,16 +244,16 @@ def transform_clarification_metadata(metadata: Dict[str, Any]) -> Dict[str, Any]
     }
 
 
-def generate_analysis_summary(analysis_type: str, key_findings: list) -> str:
+def generate_analysis_summary(response_type: str, key_findings: list) -> str:
     """Generate user-friendly summary text"""
     if not key_findings:
-        return f"{analysis_type} completed successfully."
+        return f"{response_type} completed successfully."
     
-    if "weekday" in analysis_type.lower() or "performance" in analysis_type.lower():
+    if "weekday" in response_type.lower() or "performance" in response_type.lower():
         best_day_finding = next((f for f in key_findings if "day" in f["label"].lower()), None)
         return_finding = next((f for f in key_findings if "return" in f["label"].lower()), None)
         
         if best_day_finding and return_finding:
             return f"Analysis shows {best_day_finding['value']} performs best with {return_finding['value']} average return."
     
-    return f"{analysis_type} completed with {len(key_findings)} key finding{'s' if len(key_findings) != 1 else ''}."
+    return f"{response_type} completed with {len(key_findings)} key finding{'s' if len(key_findings) != 1 else ''}."
