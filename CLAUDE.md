@@ -1,21 +1,43 @@
 # QnA AI Admin - Claude Developer Guide
 
 ## Project Overview
-This is a Next.js prototype application that creates a QnA-driven JSON output workflow for financial data. The app features a two-panel interface where users can ask investment/trading questions and preview corresponding well-formatted JSON outputs with descriptive field explanations.
+This is a distributed financial analysis platform that transforms natural language investment questions into executable Python code using AI. The system features a modern Next.js frontend with a sophisticated backend architecture that generates, validates, and executes financial analysis scripts in real-time.
 
-## Key Components
-- **Left Panel (30%)**: QnA chat interface for investment questions
-- **Right Panel (70%)**: JSON output layer showing well-formatted financial data with descriptive field explanations
-- **Data Storage**: JSON files (`data/experimental.json`, `data/approved.json`) for persistence
-- **JSON Output Registry**: JSON files stored in `experimental/` directory with metadata
+### Core Architecture
+- **Frontend**: Next.js 15 with TypeScript (Port 3003), featuring chat interfaces, progress tracking, and real-time analysis results
+- **API Server**: FastAPI-based script generation server (Port 8010) with session management and context awareness  
+- **Execution Server**: Sandboxed Python runtime (Port 3002) with security validation and resource limits
+- **MCP Servers**: Model Context Protocol servers for financial data, analytics, and validation
+- **Storage**: Redis for session/cache management, MongoDB for persistence, with async queue processing
+
+### Key Features
+- **Natural Language to Code**: AI-powered generation of Python analysis scripts from investment questions
+- **Real-time Execution**: Sandboxed script execution with progress tracking and streaming results
+- **Session Management**: Persistent chat sessions with context awareness and conversation history
+- **Security**: AST-based validation, resource limits, and execution sandboxing
+- **Async Processing**: Queue-based architecture for handling long-running analysis tasks
 
 ## Development Workflow
 
 ### Starting Development
 ```bash
+# Frontend (Next.js)
+cd frontend
 npm install
-npm run dev
-# App runs at http://localhost:3000
+npm run dev # Runs on http://localhost:3003
+
+# Backend Services
+cd backend/scriptEdition/apiServer
+pip install -r requirements.txt
+python server.py # API Server on port 8010
+
+cd backend/executionServer  
+python queue_worker.py # Execution Server on port 3002
+
+# MCP Servers
+cd backend/mcp-server
+python financial_server.py # Port 3003
+python analytics_server.py # Port 3004
 ```
 
 ### Build and Production
@@ -71,36 +93,43 @@ npm run lint
 - **Alpaca Trading** (`alpaca.trading.spec.json`): Account management, positions, orders, portfolio management  
 - **EODHD** (`EODHD.spec.json`): Additional financial data endpoints
 
-## Unified MCP Architecture
-The project now includes a unified Python MCP architecture in the `mcp/` folder:
+## Current System Architecture
 
-### Structure
-- **`mcp/financial/`**: Python financial server functions (replaces JavaScript mcp-financial-server)
-- **`mcp/analytics/`**: Technical analysis and portfolio optimization engine
-- **`mcp/tools/`**: Retail analysis tools using real financial data
-- **`mcp/financial_server.py`**: Standalone MCP financial server
-- **`mcp/analytics_server.py`**: Standalone MCP analytics server
+### Request Flow
+```
+User Question (Frontend) 
+    ↓
+API Server (Port 8010) - Context awareness, session management
+    ↓  
+LLM Provider (Anthropic/OpenAI/Ollama) - Code generation
+    ↓
+Execution Server (Port 3002) - Script validation & execution
+    ↓
+MCP Servers (Financial Data + Analytics) - Data retrieval & processing
+    ↓
+Results (JSON) → Frontend Display
+```
 
-### Key Features
+### Core Components
+
+#### Script Edition API Server (`backend/scriptEdition/apiServer/`)
+- **FastAPI-based** request handler with async processing
+- **Session Management** via Redis for conversation continuity
+- **Context Awareness** with dialogue/search modules for question expansion
+- **Multi-provider LLM Support** (Anthropic, OpenAI, Ollama)
+- **Progress Tracking** with Server-Sent Events (SSE) for real-time updates
+
+#### Execution Engine (`backend/executionServer/`)  
+- **Sandboxed Python Runtime** with AST-based security validation
+- **Resource Limits** (timeout, memory, CPU constraints)
+- **Queue-based Processing** for handling concurrent analysis requests
+- **MCP Integration** for accessing financial data and analytics tools
+
+#### MCP Financial & Analytics Servers (`backend/mcp-server/`)
+- **Financial Server**: Market data, trading account, fundamentals (Alpaca, EODHD APIs)
+- **Analytics Server**: Technical indicators, risk metrics, portfolio optimization
+- **Industry Libraries**: talib-binary, empyrical, PyPortfolioOpt for proven calculations
 - **Real Data Integration**: All tools use actual financial data (no mock data)
-- **Industry Libraries**: Uses talib-binary, empyrical, PyPortfolioOpt for proven calculations
-- **End-to-End Flow**: Financial Server → Analytics Engine → Retail Tools
-- **MCP Compatible**: Full MCP server implementations with proper tool schemas
-
-### Testing
-```bash
-# Test the unified architecture
-python test_unified_mcp.py
-```
-
-### Running MCP Servers
-```bash
-# Financial server
-python mcp/financial_server.py
-
-# Analytics server  
-python mcp/analytics_server.py
-```
 
 ## Adding New JSON Outputs
 1. Create JSON file in `experimental/` (e.g., `MyOutput.json`)
@@ -162,18 +191,32 @@ All JSON output files must follow this structure:
 - Use `type: "engine"` when Python processing is required (clearly state inputs, outputs, and calculations performed). Set `function` to the MCP analytics server tool name (e.g., "calculate_daily_returns", "calculate_rolling_volatility").
 - Use `type: "compute"` for lightweight, in-app calculations that do not require Python. Set `function` to "client_compute" for local processing.
 
-## File Structure
-- `pages/index.tsx`: Main QnA interface with auto-preview
-- `pages/experimental.tsx`: Manage experimental JSON outputs
-- `pages/approved.tsx`: Manage approved JSON outputs
-- `pages/api/`: File-backed API routes (approve, unapprove, etc.)
-- `experimental/`: JSON output files and registry
-- `data/`: JSON persistence files
-- `engine/`: Python code for data processing (if needed)
+## Project Structure
+```
+├── frontend/                    # Next.js 15 frontend application  
+│   ├── src/app/                # App router pages (chat, analysis, backtester)
+│   ├── src/components/         # React components (chat, progress, analysis)  
+│   └── src/lib/               # Utilities, context, hooks, API client
+├── backend/
+│   ├── scriptEdition/         # Main API server & execution infrastructure
+│   │   ├── apiServer/         # FastAPI server (Port 8010)
+│   │   ├── executionServer/   # Script execution worker (Port 3002)  
+│   │   └── infrastructure/    # Process management & deployment scripts
+│   ├── mcp-server/           # MCP servers for financial data & analytics
+│   │   ├── financial/        # Financial data server functions
+│   │   ├── analytics/        # Technical analysis & portfolio tools
+│   │   └── scripts/          # Generated analysis scripts cache
+│   └── shared/               # Common utilities & services
+│       ├── analyze/          # Analysis pipeline & code generation
+│       ├── db/              # Database repositories & schemas  
+│       ├── queue/           # Async processing queues & workers
+│       └── services/        # Core business logic services
+└── specs/                   # API specifications (Alpaca, EODHD)
+```
 
 ## Development Notes
-- No database - uses file-based JSON storage
-- JSON outputs should include field descriptions and calculation explanations
-- Promotion/demotion preserves all metadata between experimental and approved
-- Server-side Alpaca API integration needed for production (keys in env)
-- No authentication implemented - add before production deployment
+- **Database**: Redis for caching/sessions, MongoDB for persistence (async processing)
+- **Security**: AST validation, sandboxed execution, resource limits
+- **LLM Support**: Anthropic Claude, OpenAI GPT, local Ollama models
+- **Real-time**: WebSocket/SSE for progress tracking and live results
+- **Production Ready**: Containerized services, queue-based scaling, comprehensive logging

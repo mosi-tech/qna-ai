@@ -25,6 +25,7 @@ from shared.services.execution_queue_service import execution_queue_service
 from shared.queue.worker_context import set_context, get_message_id, get_session_id, get_user_id
 from ..dialogue import search_with_context
 from shared.constants import MessageStatus
+from shared.storage import get_storage
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +57,8 @@ class AnalysisPipelineService:
         reuse_evaluator=None,
         code_prompt_builder=None,
         session_manager=None,
-        audit_service=None
+        audit_service=None,
+        verification_service=None
     ):
         # Initialize logger
         self.logger = logging.getLogger(__name__)
@@ -71,6 +73,7 @@ class AnalysisPipelineService:
         self.code_prompt_builder = code_prompt_builder
         self.session_manager = session_manager
         self.audit_service = audit_service
+        self.verification_service = verification_service
         
         # Validate critical dependencies - fail fast if missing
         if not self.analysis_service:
@@ -421,7 +424,7 @@ class AnalysisPipelineService:
         self.logger.info(f"🔍 Found {len(similar_analyses)} similar analyses from context search")
         
         if not similar_analyses or not self.reuse_evaluator:
-            self.logger.warn(f"No similar analyses found or reuse evalautor service set")
+            self.logger.warning(f"No similar analyses found or reuse evaluator service set")
             return None, warnings  # No similar analyses or evaluator - proceed with new analysis
         
         # Evaluate reuse potential
@@ -443,6 +446,13 @@ class AnalysisPipelineService:
                 
                 reuse_decision = reuse_result["reuse_decision"]
                 analysis_id = reuse_decision.get("analysis_id")
+                
+                # 🔍 NEW: Verify reused script before execution (Issue #117)
+                verification_passed = await self._verify_reused_script(request.question, reuse_decision, warnings)
+                
+                if not verification_passed:
+                    self.logger.warning("❌ Reuse verification failed - falling back to new analysis generation")
+                    return None, warnings  # Fall back to new analysis
                 
                 # Submit execution for reused analysis
                 execution_id = await self._submit_execution(
@@ -882,6 +892,105 @@ class AnalysisPipelineService:
             message_id=get_message_id(),
             timestamp=datetime.now().isoformat()
         )
+
+    async def _verify_reused_script(self, question: str, reuse_decision: Dict[str, Any], warnings: List) -> bool:
+        """
+        Verify reused script before execution (GitHub Issue #117)
+        
+        Args:
+            question: User's original question
+            reuse_decision: Reuse decision from evaluator
+            warnings: List to append warnings to
+            
+        Returns:
+            True if verification passed, False if verification failed
+        """
+        if not self.verification_service:
+            warning_msg = "No verification service available - skipping reuse verification"
+            self.logger.warning(f"⚠️ {warning_msg}")
+            warnings.append({"step": "reuse_verification", "message": warning_msg})
+            return True  # Allow reuse if no verification service
+        
+        try:
+            # Extract script name and get script content
+            execution_data = reuse_decision.get("execution", {})
+            script_name = execution_data.get("script_name")
+            
+            if not script_name:
+                warning_msg = "No script name found in reuse decision"
+                self.logger.warning(f"❌ {warning_msg}")
+                warnings.append({"step": "reuse_verification", "message": warning_msg})
+                return False
+            
+            # Get script content from storage
+            storage = get_storage()
+            try:
+                script_content = await storage.read_script(script_name)
+                if not script_content:
+                    warning_msg = f"Script content not found for {script_name}"
+                    self.logger.warning(f"❌ {warning_msg}")
+                    warnings.append({"step": "reuse_verification", "message": warning_msg})
+                    return False
+                    
+            except Exception as e:
+                warning_msg = f"Failed to read script {script_name}: {e}"
+                self.logger.warning(f"❌ {warning_msg}")
+                warnings.append({"step": "reuse_verification", "message": warning_msg})
+                return False
+            
+            # Run verification on the script
+            self.logger.info(f"🔍 Verifying reused script {script_name} for appropriateness")
+            
+            verification_start = time.time()
+            verification_result = await self.verification_service.verify_script(
+                question=question,
+                script_content=script_content
+            )
+            verification_duration = time.time() - verification_start
+            
+            self.logger.info(f"⏱️ TIMING - Reuse Verification: {verification_duration:.3f}s")
+            
+            if verification_result.verified:
+                self.logger.info(f"✅ Reuse verification passed - script is appropriate for question")
+                
+                # Add verification metadata to warnings for UI visibility
+                verification_info = {
+                    "step": "reuse_verification",
+                    "message": f"Script verified by {len(verification_result.model_results)} models",
+                    "verification_time_ms": verification_result.verification_time_ms,
+                    "verified": True
+                }
+                warnings.append(verification_info)
+                
+                return True
+            else:
+                # Collect rejection reasons from models
+                rejection_reasons = []
+                for model_result in verification_result.model_results:
+                    if model_result.verdict == "REJECT" and model_result.reasoning:
+                        rejection_reasons.append(f"{model_result.model}: {model_result.reasoning}")
+                
+                reason_summary = "; ".join(rejection_reasons[:2])  # Show first 2 reasons
+                warning_msg = f"Reuse verification failed: {reason_summary}"
+                self.logger.warning(f"❌ {warning_msg}")
+                
+                # Add detailed verification failure info for UI
+                verification_info = {
+                    "step": "reuse_verification", 
+                    "message": warning_msg,
+                    "verification_time_ms": verification_result.verification_time_ms,
+                    "verified": False,
+                    "rejection_reasons": rejection_reasons
+                }
+                warnings.append(verification_info)
+                
+                return False
+                
+        except Exception as e:
+            warning_msg = f"Reuse verification error: {e}"
+            self.logger.error(f"❌ {warning_msg}")
+            warnings.append({"step": "reuse_verification", "message": warning_msg})
+            return False  # Fail safe - reject reuse on verification errors
 
 
 # Factory function
