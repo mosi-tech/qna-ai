@@ -57,7 +57,7 @@ async def send_analysis_progress(message: str, **kwargs):
         message_id = get_message_id()
         
         if session_id:  # Only send if context available
-            await send_progress_event(session_id, {
+            event_data = {
                 "type": "analysis_progress",
                 "message": message,
                 "status": "running",
@@ -65,7 +65,12 @@ async def send_analysis_progress(message: str, **kwargs):
                 "message_id": message_id,
                 "log_to_message": True if message_id else False,
                 **kwargs
-            })
+            }
+            
+            # Debug: Log SSE event with message_id
+            logger.info(f"📡 Sending SSE event: {event_data['type']} for session={session_id}, message={message_id}, status={event_data.get('status', 'running')}")
+            
+            await send_progress_event(session_id, event_data)
     except Exception as e:
         # Graceful fallback - don't break pipeline if progress fails
         logger.warning(f"Failed to send analysis progress: {e}")
@@ -104,7 +109,7 @@ async def send_execution_progress(message: str, status: str = "running", level: 
         analysis_id = get_context_value('analysis_id')
         
         if session_id:  # Only send if context available
-            await send_progress_event(session_id, {
+            event_data = {
                 "type": "execution_status",
                 "execution_id": execution_id,
                 "analysis_id": analysis_id,
@@ -114,7 +119,12 @@ async def send_execution_progress(message: str, status: str = "running", level: 
                 "level": level,
                 "log_to_message": True if message_id else False,
                 **kwargs
-            })
+            }
+            
+            # Debug: Log SSE event with message_id
+            logger.info(f"📡 Sending SSE event: {event_data['type']} for session={session_id}, message={message_id}, status={status}")
+            
+            await send_progress_event(session_id, event_data)
     except Exception as e:
         # Graceful fallback - don't break execution if progress fails
         logger.warning(f"Failed to send execution progress: {e}")
@@ -130,15 +140,11 @@ async def send_execution_running(message: str = "Analysis execution in progress"
     )
 
 
-async def send_execution_completed(message: str = "Analysis execution completed", results: dict = None, markdown: str = None, execution_time: float = None, **kwargs):
+async def send_execution_completed(message: str = "Analysis execution completed", results: dict = None, **kwargs):
     """Send execution completed status using execution context"""
     extra_data = {}
     if results:
         extra_data["results"] = results
-    if markdown:
-        extra_data["markdown"] = markdown
-    if execution_time:
-        extra_data["execution_time"] = execution_time
         
     await send_execution_progress(
         message=message,

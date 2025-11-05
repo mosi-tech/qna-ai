@@ -7,7 +7,7 @@ import json
 import logging
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
-from services.progress_service import progress_manager, ProgressEvent
+from services.sse import progress_sse_manager, ProgressEvent
 
 logger = logging.getLogger("progress-routes")
 
@@ -49,7 +49,7 @@ async def stream_progress(session_id: str, request: Request):
         async def on_progress(event: ProgressEvent):
             await queue.put(event)
 
-        unsubscribe = progress_manager.subscribe(session_id, on_progress)
+        unsubscribe = progress_sse_manager.subscribe(session_id, on_progress)
 
         try:
             while True:
@@ -81,7 +81,7 @@ async def get_progress_events(session_id: str):
     """
     Get all progress events for a session (non-streaming)
     """
-    events = progress_manager.get_events(session_id)
+    events = progress_sse_manager.get_events(session_id)
     return {
         "session_id": session_id,
         "events": [event.to_dict() for event in events],
@@ -94,5 +94,5 @@ async def clear_progress(session_id: str):
     """
     Clear all progress events for a session
     """
-    progress_manager.clear(session_id)
+    progress_sse_manager.clear(session_id)
     return {"success": True, "session_id": session_id, "message": "Progress cleared"}

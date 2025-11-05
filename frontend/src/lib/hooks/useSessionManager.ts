@@ -27,6 +27,10 @@ export interface SessionDetail {
   updated_at: string;
   is_archived: boolean;
   messages: SessionMessage[];
+  offset?: number;
+  limit?: number;
+  total_messages?: number;
+  has_older?: boolean;
 }
 
 export const useSessionManager = () => {

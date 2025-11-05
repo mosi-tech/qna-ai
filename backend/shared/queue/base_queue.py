@@ -50,7 +50,7 @@ class ExecutionQueueInterface(ABC):
         pass
     
     @abstractmethod
-    async def nack(self, execution_id: str, error: str, retry: bool = True) -> bool:
+    async def nack(self, execution_id: str, error: str, retry: bool = True) -> Dict[str, Any]:
         """
         Mark execution as failed
         
@@ -60,7 +60,11 @@ class ExecutionQueueInterface(ABC):
             retry: Whether execution should be retried
             
         Returns:
-            True if successfully marked as failed
+            Dict with keys:
+            - success: bool - whether the nack operation succeeded
+            - is_final_attempt: bool - whether this was the final retry attempt
+            - retry_count: int - current retry count
+            - max_retries: int - maximum retries allowed
         """
         pass
     

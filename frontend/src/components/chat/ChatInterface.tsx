@@ -1,27 +1,22 @@
 'use client';
 
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useLayoutEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChatMessage } from '@/lib/hooks/useConversation';
-import { ProgressLog } from '@/lib/progress/ProgressManager';
-import MockOutput from '@/components/MockOutput';
-import ClarificationPrompt from './ClarificationPrompt';
-import ClarificationSummary from './ClarificationSummary';
-import AnalysisResult from './AnalysisResult';
+import { ChatMessage as ChatMessageType } from '@/lib/hooks/useConversation';
+import ChatMessage from './ChatMessage';
 
 interface ChatInterfaceProps {
-  messages: ChatMessage[];
+  messages: ChatMessageType[];
   chatInput: string;
   setChatInput: (value: string) => void;
   isProcessing: boolean;
   onSendMessage: (message: string) => void;
   onClarificationResponse?: (response: string, clarificationData: any) => void;
   pendingClarificationId?: string | null;
-  progressLogs?: ProgressLog[];
   onLoadOlder?: () => void;
   isLoadingOlder?: boolean;
   canLoadOlder?: boolean;
-  sessionId?: string;
+  onExecutionUpdate?: (messageId: string, update: any) => void;
 }
 
 export default function ChatInterface({
@@ -32,49 +27,53 @@ export default function ChatInterface({
   onSendMessage,
   onClarificationResponse,
   pendingClarificationId,
-  progressLogs = [],
   onLoadOlder,
   isLoadingOlder = false,
   canLoadOlder = false,
-  sessionId,
+  onExecutionUpdate,
 }: ChatInterfaceProps) {
   const router = useRouter();
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [isUserScrolling, setIsUserScrolling] = useState(false);
-  const [, setUpdateTrigger] = useState(0);
+  const previousScrollHeightRef = useRef(0);
+  const previousMessageCountRef = useRef(0);
+  const wasLoadingOlderRef = useRef(false);
+  const savedScrollTopRef = useRef(0);
 
-  // Update component every second to refresh elapsed times
+  // Debounced load older function to prevent multiple rapid calls
+  const loadOlderTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const debouncedLoadOlder = useCallback(() => {
+    if (!onLoadOlder || isLoadingOlder || !canLoadOlder) return;
+    
+    // Clear existing timeout
+    if (loadOlderTimeoutRef.current) {
+      clearTimeout(loadOlderTimeoutRef.current);
+    }
+    
+    // Set new timeout for debounced call
+    loadOlderTimeoutRef.current = setTimeout(() => {
+      if (onLoadOlder && !isLoadingOlder && canLoadOlder) {
+        // Save current scroll position before loading
+        if (messagesContainerRef.current) {
+          savedScrollTopRef.current = messagesContainerRef.current.scrollTop;
+          previousScrollHeightRef.current = messagesContainerRef.current.scrollHeight;
+        }
+        onLoadOlder();
+      }
+    }, 200); // 200ms debounce
+  }, [onLoadOlder, isLoadingOlder, canLoadOlder]);
+
+  // Cleanup timeout on unmount
   useEffect(() => {
-    if (!isProcessing || progressLogs.length === 0) return;
-    
-    const timer = setInterval(() => {
-      setUpdateTrigger(prev => prev + 1);
-    }, 1000);
-    
-    return () => clearInterval(timer);
-  }, [isProcessing, progressLogs.length]);
+    return () => {
+      if (loadOlderTimeoutRef.current) {
+        clearTimeout(loadOlderTimeoutRef.current);
+      }
+    };
+  }, []);
 
-  const getElapsedTime = (log: ProgressLog, index: number) => {
-    const currentTime = Date.now();
-    const timeDiff = currentTime - log.timestamp;
-    
-    // If this is the last log and still processing, show elapsed time from log creation
-    if (index === progressLogs.length - 1 && isProcessing) {
-      const seconds = Math.floor(timeDiff / 1000);
-      return seconds > 0 ? `${seconds}s` : '0s';
-    }
-    
-    // If there's a next log, calculate time between this log and the next one
-    if (index < progressLogs.length - 1) {
-      const nextLog = progressLogs[index + 1];
-      const durationMs = nextLog.timestamp - log.timestamp;
-      const durationSeconds = Math.floor(durationMs / 1000);
-      return durationSeconds > 0 ? `${durationSeconds}s` : '0s';
-    }
-    
-    return null;
-  };
+
 
   const handleScroll = () => {
     if (!messagesContainerRef.current) return;
@@ -85,25 +84,53 @@ export default function ChatInterface({
     const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
     setIsUserScrolling(!isAtBottom);
 
-    // If scrolled near top (within 200px) and can load older, load them
-    if (scrollTop < 200 && canLoadOlder && !isLoadingOlder && onLoadOlder) {
-      onLoadOlder();
+    // If scrolled near top (within 400px) and can load older, load them (debounced)
+    if (scrollTop < 400 && canLoadOlder && !isLoadingOlder) {
+      console.log('[ChatInterface] Triggering load older - scrollTop:', scrollTop);
+      debouncedLoadOlder();
     }
   };
 
-  useEffect(() => {
-    // Always scroll to bottom if user hasn't scrolled away or on initial load
-    if (messages.length > 0 && (!isUserScrolling || isInitialLoad)) {
+  useLayoutEffect(() => {
+    if (!messagesContainerRef.current || messages.length === 0) return;
+
+    const container = messagesContainerRef.current;
+    const currentScrollHeight = container.scrollHeight;
+
+    // Detect if older messages just finished loading (was loading, now not loading, and messages increased)
+    const justFinishedLoadingOlder = wasLoadingOlderRef.current && !isLoadingOlder;
+    const messageCountIncreased = messages.length > previousMessageCountRef.current;
+    const heightIncreased = currentScrollHeight > previousScrollHeightRef.current;
+    
+    if (justFinishedLoadingOlder && messageCountIncreased && heightIncreased && previousScrollHeightRef.current > 0) {
+      // Maintain scroll position: calculate exactly where user was
+      const heightDifference = currentScrollHeight - previousScrollHeightRef.current;
+      const newScrollTop = savedScrollTopRef.current + heightDifference;
+      
+      // Instantly set scroll position to maintain user's view (no animation)
+      container.scrollTop = newScrollTop;
+      
+      console.log('[ChatInterface] Maintained scroll position after loading older messages', {
+        savedScrollTop: savedScrollTopRef.current,
+        heightDifference,
+        newScrollTop
+      });
+    }
+    // Otherwise, scroll to bottom for new messages (if user hasn't scrolled away or initial load)
+    else if (!isUserScrolling || isInitialLoad) {
       setTimeout(() => {
-        if (messagesContainerRef.current) {
-          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-          // Scroll a bit more to ensure bottom message is fully visible
-          messagesContainerRef.current.scrollTop += 50;
-        }
+        container.scrollTop = container.scrollHeight;
+        // Scroll a bit more to ensure bottom message is fully visible
+        container.scrollTop += 50;
         setIsInitialLoad(false);
       }, 0);
     }
-  }, [messages, isInitialLoad, isUserScrolling]);
+
+    // Update previous values for next comparison
+    previousScrollHeightRef.current = currentScrollHeight;
+    previousMessageCountRef.current = messages.length;
+    wasLoadingOlderRef.current = isLoadingOlder;
+  }, [messages, isInitialLoad, isUserScrolling, isLoadingOlder]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,122 +162,15 @@ export default function ChatInterface({
             </div>
           )}
           {messages.map((message) => (
-          <div key={message.id} className="flex gap-3">
-            {message.type === 'user' ? (
-              <div className="flex gap-3 justify-end w-full">
-                <div className="bg-blue-600 text-white rounded-lg p-3 max-w-md">
-                  <p className="text-sm">{message.content}</p>
-                </div>
-                <div className="w-8 h-8 rounded-full bg-blue-200 flex items-center justify-center flex-shrink-0">
-                  <span className="text-xs text-blue-600">You</span>
-                </div>
-              </div>
-            ) : message.type === 'error' ? (
-              <div className="flex gap-3 w-full">
-                <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-                  <span className="text-red-600 text-sm">✕</span>
-                </div>
-                <div className="bg-red-50 border border-red-200 rounded-lg p-3 max-w-md">
-                  <p className="text-sm text-red-800">{message.content}</p>
-                </div>
-              </div>
-            ) : message.type === 'clarification' ? (
-              message.data ? (
-                <ClarificationPrompt
-                  originalQuery={message.data.original_query}
-                  expandedQuery={message.data.expanded_query}
-                  message={message.data.message || message.content}
-                  suggestion={message.data.suggestion}
-                  confidence={message.data.confidence}
-                  isLoading={isProcessing && pendingClarificationId === message.id}
-                  isPending={pendingClarificationId === message.id}
-                  onConfirm={() => {
-                    onClarificationResponse?.('yes', message.data);
-                  }}
-                  onReject={() => {
-                    onClarificationResponse?.('no', message.data);
-                  }}
-                  onProvideDetails={(details) => {
-                    onClarificationResponse?.(details, message.data);
-                  }}
-                />
-              ) : (
-                <ClarificationSummary
-                  message={message.content}
-                  expandedQuery={undefined}
-                  status="pending"
-                />
-              )
-            ) : message.type === 'results' ? (
-              <div className="flex gap-3 w-full">
-                <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                  <span className="text-green-600 text-sm">✓</span>
-                </div>
-                <div className="flex-1 max-w-4xl">
-                  <AnalysisResult
-                    messageId={message.id}
-                    question={message.content}
-                    results={message.data}
-                    analysisId={message.analysisId}
-                    executionId={message.executionId}
-                    sessionId={sessionId}
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="flex gap-3 w-full">
-                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                  <span className="text-blue-600 text-sm">AI</span>
-                </div>
-                <div className="bg-blue-50 rounded-lg p-3 max-w-md">
-                  <p className="text-sm text-gray-800">{message.content}</p>
-                </div>
-              </div>
-            )}
-          </div>
+            <ChatMessage
+              key={message.id}
+              message={message}
+              onClarificationResponse={onClarificationResponse}
+              pendingClarificationId={pendingClarificationId}
+              onExecutionUpdate={onExecutionUpdate}
+            />
           ))}
 
-          {isProcessing && (
-            <div className="flex gap-3">
-              <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
-                <div className="w-4 h-4 border-2 border-gray-400 border-t-gray-600 rounded-full animate-spin"></div>
-              </div>
-              <div className="bg-gray-100 rounded-lg p-3 max-w-2xl flex-1">
-                <div className="space-y-2">
-                  {progressLogs.length > 0 ? (
-                    <>
-                      {progressLogs.map((log, idx) => {
-                        const elapsedTime = getElapsedTime(log, idx);
-                        return (
-                          <div key={log.id || `log-${idx}-${log.timestamp}`} className="text-sm text-gray-700 flex items-start gap-2">
-                            <span className="flex-shrink-0 mt-0.5">
-                              {log.level === 'success' && <span className="text-green-600">✓</span>}
-                              {log.level === 'error' && <span className="text-red-600">✕</span>}
-                              {log.level === 'warning' && <span className="text-yellow-600">⚠</span>}
-                              {log.level === 'info' && <span className="text-blue-600">•</span>}
-                            </span>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-1">
-                                <span>{log.message}</span>
-                                {elapsedTime && <span className="font-semibold text-blue-600">{elapsedTime}</span>}
-                              </div>
-                              {log.step && log.totalSteps && (
-                                <span className="text-xs text-gray-500 ml-2">
-                                  (Step {log.step}/{log.totalSteps})
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </>
-                  ) : (
-                    <p className="text-sm text-gray-600">Analyzing...</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 

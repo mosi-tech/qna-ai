@@ -16,6 +16,7 @@ from typing import Dict, Any, Optional, List
 # Import shared services (we're in shared/analyze/services now)
 from ...llm import create_code_prompt_builder_llm, LLMService, MessageFormatter
 from ...services.base_service import BaseService
+from ...integrations.mcp.mcp_client import mcp_client
 
 # Import safe JSON utilities (now local to analyze/)
 from shared.utils.json_utils import safe_json_loads
@@ -104,7 +105,7 @@ class CodePromptBuilderService(BaseService):
                 "status": "success",
                 "mode": code_prompt_mode,
                 "provider": provider_type,
-                "analysis_type": function_selection.get('analysis_type', 'general'),
+                "response_type": function_selection.get('response_type', 'general'),
                 "selected_functions": function_selection['selected_functions'],
                 "function_schemas": function_schemas,
                 "suggested_parameters": function_selection.get('suggested_parameters', {}),
@@ -141,7 +142,7 @@ class CodePromptBuilderService(BaseService):
         Analyze this financial question and select the most relevant MCP functions needed.
         
         Return only JSON with:
-        - analysis_type: Single word category (portfolio, correlation, risk, etc.)
+        - response_type: Single word category (portfolio, correlation, risk, etc.)
         - selected_functions: Array of 3-6 function names only (no descriptions)
         - suggested_parameters: Essential parameters only
         
@@ -159,139 +160,234 @@ class CodePromptBuilderService(BaseService):
             
             # Check if LLM request was successful
             if not response.get("success"):
-                self.logger.error(f"❌ LLM request failed: {response.get('error')}")
-                raise Exception(f"LLM request failed: {response.get('error')}")
+                error_msg = f"LLM request failed: {response.get('error')}"
+                self.logger.error(f"❌ {error_msg}")
+                raise Exception(error_msg)
             
-            # Parse JSON response using safe parser
-            function_selection = safe_json_loads(response["content"], default={})
-            self.logger.info(f"📋 Selected {len(function_selection.get('selected_functions', []))} functions")
+            # Parse JSON response - don't use default fallback for critical data
+            content = response.get("content", "").strip()
+            if not content:
+                raise Exception("LLM returned empty content for function selection")
+            
+            function_selection = safe_json_loads(content)
+            if not function_selection:
+                raise Exception(f"Failed to parse LLM response as JSON: {content[:200]}")
+            
+            # Validate critical fields exist
+            if "selected_functions" not in function_selection:
+                raise Exception("LLM response missing required 'selected_functions' field")
+            
+            if not isinstance(function_selection["selected_functions"], list):
+                raise Exception("'selected_functions' must be a list")
+            
+            if len(function_selection["selected_functions"]) == 0:
+                raise Exception("LLM returned empty function selection - no functions selected for query")
+            
+            # Fix function names that LLM might have modified
+            corrected_functions = self._correct_function_names(function_selection["selected_functions"])
+            function_selection["selected_functions"] = corrected_functions
+            
+            self.logger.info(f"📋 Selected {len(function_selection['selected_functions'])} functions: {function_selection['selected_functions']}")
             return function_selection
             
         except Exception as e:
-            self.logger.error(f"❌ Error selecting functions: {e}")
-            return {}
-            
-            
+            error_msg = f"Critical error in function selection: {str(e)}"
+            self.logger.error(f"❌ {error_msg}")
+            # Re-raise the exception instead of returning empty dict
+            raise Exception(error_msg) from e
     
+    def _correct_function_names(self, llm_function_names: List[str]) -> List[str]:
+        """Correct function names that LLM might have modified to match actual tool names"""
+        # Get available tool names
+        available_tools = self.llm_service.default_tools
+        if not available_tools:
+            self.logger.warning("No tools available for function name correction")
+            return llm_function_names
+        
+        actual_tool_names = {tool.get("function", {}).get("name", "") for tool in available_tools if tool.get("type") == "function"}
+        
+        corrected_names = []
+        for llm_name in llm_function_names:
+            # First try exact match
+            if llm_name in actual_tool_names:
+                corrected_names.append(llm_name)
+                continue
+            
+            # Try to find similar name by fixing common LLM mistakes
+            best_match = None
+            for actual_name in actual_tool_names:
+                # Common mistakes: underscores vs hyphens, missing/extra parts
+                if self._names_are_similar(llm_name, actual_name):
+                    best_match = actual_name
+                    break
+            
+            if best_match:
+                self.logger.info(f"🔧 Corrected function name: '{llm_name}' -> '{best_match}'")
+                corrected_names.append(best_match)
+            else:
+                self.logger.warning(f"⚠️ Could not find match for LLM function name: '{llm_name}'")
+                corrected_names.append(llm_name)  # Keep original, will fail later with clear error
+        
+        return corrected_names
+    
+    def _names_are_similar(self, llm_name: str, actual_name: str) -> bool:
+        """Check if two function names are similar enough to be considered a match"""
+        # Convert both to normalized form for comparison
+        def normalize(name: str) -> str:
+            # Replace underscores with hyphens, remove common prefixes/suffixes
+            normalized = name.replace('_', '-').replace('__', '__')  # Keep double underscores
+            return normalized.lower()
+        
+        llm_normalized = normalize(llm_name)
+        actual_normalized = normalize(actual_name)
+        
+        # Check if they're the same after normalization
+        if llm_normalized == actual_normalized:
+            return True
+        
+        # Check if the base function name matches (after server prefix)
+        if '__' in llm_name and '__' in actual_name:
+            llm_base = llm_name.split('__', 1)[1]
+            actual_base = actual_name.split('__', 1)[1]
+            if normalize(llm_base) == normalize(actual_base):
+                return True
+        
+        return False
+              
     async def _get_function_schemas_from_llm(self, function_names: List[str]) -> Dict[str, str]:
         """Get detailed function schemas with docstrings via LLM service tool calls (parallel fetching)"""
+        if not function_names:
+            raise Exception("No function names provided for schema retrieval")
+        
         schemas = {}
         
         self.logger.info(f"🔍 Getting detailed schemas for {len(function_names)} functions (parallel fetch)")
         
         # Get available tools from LLM service to verify functions exist
         available_tools = self.llm_service.default_tools
+        if not available_tools:
+            raise Exception("No tools available in LLM service - MCP tools may not be loaded")
+        
         tool_map = {tool.get("function", {}).get("name", ""): tool for tool in available_tools if tool.get("type") == "function"}
         
         self.logger.info(f"📋 Available tools in LLM service: {len(tool_map)}")
         
         # Separate functions that exist from those that don't
         existing_functions = []
+        missing_functions = []
         for function_name in function_names:
             if function_name not in tool_map:
-                schemas[function_name] = f"Function: {function_name} (not found in available tools)"
+                missing_functions.append(function_name)
                 self.logger.warning(f"⚠️ Function {function_name} not found in available tools")
             else:
                 existing_functions.append(function_name)
         
-        # Fetch docstrings in parallel for all existing functions
-        if existing_functions:
-            docstring_tasks = [self._fetch_function_docstring(fn) for fn in existing_functions]
-            docstring_results = await asyncio.gather(*docstring_tasks, return_exceptions=True)
-            
-            # Process results
-            for function_name, docstring_result in zip(existing_functions, docstring_results):
-                try:
-                    # Check if the result is an exception
-                    if isinstance(docstring_result, Exception):
-                        self.logger.error(f"❌ Error getting docstring for {function_name}: {docstring_result}")
-                        docstring = None
-                    else:
-                        docstring = docstring_result
-                    
-                    if docstring:
-                        schemas[function_name] = docstring
-                        self.logger.info(f"📖 Got detailed docstring for {function_name}")
-                    else:
-                        # Fallback to basic tool schema if docstring fetch fails
-                        tool_func = tool_map[function_name].get("function", {})
-                        schema = f"Function: {function_name}\n"
-                        schema += f"Description: {tool_func.get('description', 'No description available')}\n"
-                        
-                        parameters = tool_func.get('parameters', {})
-                        if parameters:
-                            schema += f"Parameters: {json.dumps(parameters, indent=2)}"
-                        
-                        schemas[function_name] = schema
-                        self.logger.info(f"📖 Used basic schema for {function_name} (docstring unavailable)")
-                        
-                except Exception as e:
-                    self.logger.error(f"❌ Error processing schema for {function_name}: {e}")
-                    schemas[function_name] = f"Function: {function_name} (error fetching schema)"
+        # Any missing functions is a critical error - LLM selected these as necessary
+        if missing_functions:
+            raise Exception(f"Critical: {len(missing_functions)} selected functions are missing from available tools: {missing_functions}. This indicates MCP tools are not properly loaded or function names are incorrect.")
         
+        # At this point, existing_functions should contain all function_names
+        # But let's add a sanity check
+        if not existing_functions:
+            raise Exception("Internal error: No existing functions found despite no missing functions")
+        
+        # Fetch docstrings in parallel for all existing functions
+        docstring_tasks = [self._fetch_function_docstring(fn) for fn in existing_functions]
+        docstring_results = await asyncio.gather(*docstring_tasks, return_exceptions=True)
+        
+        successful_schemas = 0
+        
+        # Process results - we need schemas for ALL functions since they're all critical
+        for function_name, docstring_result in zip(existing_functions, docstring_results):
+            try:
+                # Check if the result is an exception
+                if isinstance(docstring_result, Exception):
+                    self.logger.warning(f"⚠️ Docstring fetch failed for {function_name}: {docstring_result}")
+                    # Don't fail - fallback to basic schema since function exists in available tools
+                    docstring = None
+                else:
+                    docstring = docstring_result
+                
+                if docstring:
+                    schemas[function_name] = docstring
+                    successful_schemas += 1
+                    self.logger.info(f"📖 Got detailed docstring for {function_name}")
+                else:
+                    # Critical: docstring is required for proper function usage
+                    raise Exception(f"Failed to retrieve docstring for critical function: {function_name}")
+                    
+            except Exception as e:
+                # This is a critical error - we must have some schema for each function
+                error_msg = f"Critical error processing schema for required function {function_name}: {str(e)}"
+                self.logger.error(f"❌ {error_msg}")
+                raise Exception(error_msg) from e
+        
+        # Validate that we got schemas for ALL functions (should always be true now)
+        if successful_schemas != len(existing_functions):
+            raise Exception(f"Internal error: Expected {len(existing_functions)} schemas but got {successful_schemas}")
+        
+        self.logger.info(f"✅ Successfully retrieved schemas for all {successful_schemas} required functions")
         return schemas
     
-    async def _fetch_function_docstring(self, function_name: str) -> Optional[str]:
+    async def _fetch_function_docstring(self, function_name: str) -> str:
         """Fetch detailed docstring for a function using server-specific docstring tool"""
         # Extract server name and base function name
         # e.g., "financial-analysis__get_historical_data -> server="financial-analysis", base="get_historical_data"
         if "__" not in function_name:
-            self.logger.debug(f"No server prefix in function name: {function_name}")
-            return None
+            raise Exception(f"Invalid function name format: {function_name} (missing server prefix)")
             
         server_name, base_function_name = function_name.split("__", 1)
         
+        self.logger.debug(f"Attempting docstring fetch for: {base_function_name} from server: {server_name}")
+        
+        if not mcp_client:
+            raise Exception("MCP client not available for docstring fetching")
+        
+        # Construct the expected docstring tool name for this server
+        docstring_tool = f"{server_name}__get_function_docstring"
+        
+        # Check if this specific docstring tool is available
+        available_tool_names = {tool.get("function", {}).get("name", "") for tool in self.llm_service.default_tools if tool.get("type") == "function"}
+        
+        if docstring_tool not in available_tool_names:
+            raise Exception(f"Docstring tool {docstring_tool} not available in MCP tools")
+        
+        self.logger.debug(f"🔧 Using {docstring_tool} for {base_function_name}")
+        
         try:
-            self.logger.debug(f"Attempting docstring fetch for: {base_function_name} from server: {server_name}")
+            tool_result = await mcp_client.call_tool(
+                docstring_tool,
+                {"function_name": base_function_name}
+            )
             
-            # Try direct MCP client call
-            from integrations.mcp.mcp_client import mcp_client
+            # Parse the result - handle various formats
+            if hasattr(tool_result, 'content') and tool_result.content:
+                text_content = tool_result.content[0].text
+                try:
+                    parsed_result = safe_json_loads(text_content.strip(), default={})
+                    if parsed_result.get('success') and parsed_result.get('docstring'):
+                        docstring = parsed_result['docstring']
+                        self.logger.info(f"✅ Got docstring for {base_function_name} from {server_name}")
+                        return docstring
+                    elif parsed_result.get('success') is False:
+                        raise Exception(f"Docstring tool returned failure: {parsed_result.get('error', 'Unknown error')}")
+                except json.JSONDecodeError:
+                    # Try as plain text if it's substantial
+                    if text_content and len(text_content) > 50:
+                        self.logger.info(f"✅ Got plain text docstring for {base_function_name} from {server_name}")
+                        return text_content
+                    else:
+                        raise Exception(f"Docstring tool returned insufficient content: {text_content[:100]}")
             
-            if not mcp_client:
-                self.logger.debug("MCP client not available")
-                return None
-            
-            # Construct the expected docstring tool name for this server
-            docstring_tool = f"{server_name}__get_function_docstring"
-            
-            # Check if this specific docstring tool is available
-            available_tool_names = {tool.get("function", {}).get("name", "") for tool in self.llm_service.default_tools if tool.get("type") == "function"}
-            
-            if docstring_tool not in available_tool_names:
-                self.logger.debug(f"Docstring tool {docstring_tool} not available")
-                return None
-            
-            self.logger.debug(f"🔧 Using {docstring_tool} for {base_function_name}")
-            
-            try:
-                tool_result = await mcp_client.call_tool(
-                    docstring_tool,
-                    {"function_name": base_function_name}
-                )
-                
-                # Parse the result - handle various formats
-                if hasattr(tool_result, 'content') and tool_result.content:
-                    text_content = tool_result.content[0].text
-                    try:
-                        parsed_result = safe_json_loads(text_content.strip(), default={})
-                        if parsed_result.get('success') and parsed_result.get('docstring'):
-                            docstring = parsed_result['docstring']
-                            self.logger.info(f"✅ Got docstring for {base_function_name} from {server_name}")
-                            return docstring
-                    except json.JSONDecodeError:
-                        # Try as plain text if it's substantial
-                        if text_content and len(text_content) > 50:
-                            self.logger.info(f"✅ Got plain text docstring for {base_function_name} from {server_name}")
-                            return text_content
-                            
-            except Exception as e:
-                self.logger.debug(f"⚠️ Error calling {docstring_tool}: {e}")
-            
-            return None
+            raise Exception(f"Docstring tool {docstring_tool} returned empty or invalid result")
             
         except Exception as e:
-            self.logger.debug(f"Error in docstring fetch for {base_function_name}: {e}")
-            return None
+            if "Docstring tool" in str(e):
+                # Re-raise our own exceptions
+                raise
+            else:
+                # Wrap other exceptions with context
+                raise Exception(f"Error calling docstring tool {docstring_tool}: {str(e)}") from e
     
     def _save_messages_for_debugging(self, result: Dict[str, Any], user_query: str):
         """Save generated messages to code_gen folder for debugging"""
@@ -351,7 +447,7 @@ class CodePromptBuilderService(BaseService):
 """
             
             debug_content += f"""=== METADATA ===
-Analysis Type: {result['analysis_type']}
+Analysis Type: {result['response_type']}
 Selected Functions: {len(result['selected_functions'])}
 Function List: {result['selected_functions']}
 Total Messages: {len(result['user_messages'])}

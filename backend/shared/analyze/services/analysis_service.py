@@ -19,6 +19,7 @@ from shared.utils.json_utils import safe_json_loads
 # Import verification service (now local to services/)
 from .verification.verification_service import StandaloneVerificationService
 from .verification.integration_helpers import VerificationIntegrationHelper
+from ...integrations.mcp.mcp_integration import MCPIntegration
 
 class AnalysisService(BaseService):
     """Financial question analysis service with MCP integration"""
@@ -33,12 +34,16 @@ class AnalysisService(BaseService):
         self.verification_service = self._initialize_verification_service()
         self.verification_helper = VerificationIntegrationHelper()
         
+        # Initialize MCP integration at startup
+        self.mcp_integration = MCPIntegration()
+        
         # Max attempts for write_and_validate (checked in message filter)
         self.max_write_and_validate_attempts = 4
     
     def _create_default_llm(self) -> LLMService:
         """Create default LLM service for analysis"""
         return create_analysis_llm()
+    
     
     @classmethod
     def _load_verification_prompt(cls):
@@ -190,16 +195,7 @@ class AnalysisService(BaseService):
             self.logger.info(f"🔧 Executing {len(tool_calls)} tool calls")
 
             # Use MCP integration for validation and execution
-            # Add apiServer path for MCP integration import
-            import sys
-            api_server_path = os.path.join(os.path.dirname(__file__), '..', '..', 'scriptEdition', 'apiServer')
-            if api_server_path not in sys.path:
-                sys.path.insert(0, api_server_path)
-            from integrations.mcp.mcp_integration import MCPIntegration
-            
-            if not hasattr(self, 'mcp_integration'):
-                self.mcp_integration = MCPIntegration()
-                await self.mcp_integration.ensure_mcp_initialized()
+            await self.mcp_integration.ensure_mcp_initialized()
             
             # Validate MCP functions (tool filtering handled by SimplifiedMCPLoader)
             validation = self.mcp_integration.validate_mcp_functions(tool_calls, [])

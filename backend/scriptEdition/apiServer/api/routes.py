@@ -17,11 +17,12 @@ from shared.services.cache_service import CacheService
 from shared.services.execution_queue_service import execution_queue_service
 from shared.analyze.services.analysis_persistence_service import AnalysisPersistenceService
 from shared.services.audit_service import AuditService
+from shared.constants import MessageStatus
 from services.execution_service import ExecutionService
-from services.progress_service import (
-    progress_info,
-    execution_queued,
-    execution_failed,
+from shared.services.progress_service import (
+    send_progress_info,
+    send_execution_queued,
+    send_execution_failed,
 )
 
 
@@ -207,7 +208,7 @@ class APIRoutes:
             timestamp=datetime.now().isoformat()
         )
     
-    async def _submit_execution(self, user_id: str, session_id: str, analysis_id: str, question: str, execution_params: Dict[str, Any]) -> Optional[str]:
+    async def _submit_execution(self, user_id: str, session_id: str, analysis_id: str, question: str, execution_params: Dict[str, Any], message_id: Optional[str] = None) -> Optional[str]:
         """
         Submit execution for analysis and log it.
         
@@ -217,6 +218,7 @@ class APIRoutes:
             analysis_id: Analysis ID
             question: User's original question
             execution_params: Execution metadata
+            message_id: Optional message ID for SSE context
             
         Returns:
             execution_id if successful, None if failed
@@ -246,23 +248,24 @@ class APIRoutes:
                     user_id=user_id,
                     execution_params=execution_params,
                     priority=1,  # High priority for user-initiated executions
-                    timeout_seconds=300
+                    timeout_seconds=300,
+                    message_id=message_id
                 )
                 
                 if queue_success:
                     logger.info(f"✓ Enqueued execution for processing: {execution_id}")
                     # Send execution queued status update via SSE
-                    await execution_queued(session_id, execution_id, analysis_id)
+                    await send_execution_queued()
                 else:
                     logger.warning(f"⚠️ Failed to enqueue execution: {execution_id}")
                     # Send execution failed status update via SSE
-                    await execution_failed(session_id, execution_id, "Failed to enqueue execution", analysis_id)
+                    await send_execution_failed("Failed to enqueue execution")
                     
             except Exception as queue_error:
                 # Don't fail the whole process if queue enqueue fails
                 logger.warning(f"⚠️ Failed to enqueue execution {execution_id}: {queue_error}")
                 # Send execution failed status update via SSE
-                await execution_failed(session_id, execution_id, f"Queue error: {queue_error}", analysis_id)
+                await send_execution_failed(f"Queue error: {queue_error}")
             
             return execution_id
             
@@ -296,6 +299,112 @@ class APIRoutes:
         
         return None  # No confirmation needed - continue
 
+    async def analyze_question_simple(self, request: QuestionRequest) -> AnalysisResponse:
+        """
+        SIMPLE VERSION - Minimal analysis endpoint without session locking for debugging
+        """
+        user_id = request.user_id if hasattr(request, 'user_id') and request.user_id else "anonymous"
+        session_id = request.session_id
+        user_question = request.question
+
+        try:
+            logger.info(f"📝 SIMPLE analyze request: {user_question[:100]}...")
+            
+            # Step 1: Validate session exists
+            if not session_id:
+                logger.error(f"❌ No session_id provided in request")
+                raise HTTPException(400, "Session ID is required. Please start a new conversation.")
+            
+            # Step 2: Create user message
+            if not self.chat_history_service:
+                raise HTTPException(500, "Chat history service not available")
+            
+            user_message_id = await self.chat_history_service.add_user_message(
+                session_id=session_id,
+                user_id=user_id,
+                question=user_question
+            )
+            logger.info(f"✓ Created user message: {user_message_id}")
+            
+            # Step 3: Create analysis message with basic metadata
+            analysis_message_id = await self.chat_history_service.add_assistant_message(
+                session_id=session_id,
+                user_id=user_id,
+                content="Analysis in progress...",
+                metadata={
+                    "status": MessageStatus.PENDING,
+                    "user_message_id": user_message_id,
+                    "queued_at": datetime.now().isoformat(),
+                    "response_type": "script_generation"
+                }
+            )
+            logger.info(f"✓ Created analysis message: {analysis_message_id}")
+            
+            # Step 4: Queue analysis (without session locking)
+            from shared.queue.analysis_queue import get_analysis_queue
+            analysis_queue = get_analysis_queue()
+            
+            job_id = await analysis_queue.enqueue_analysis({
+                "session_id": session_id,
+                "message_id": analysis_message_id,
+                "user_question": user_question,
+                "user_message_id": user_message_id,
+                "user_id": user_id
+            })
+            
+            logger.info(f"📥 Queued analysis job: {job_id} for message {analysis_message_id}")
+            
+            # Step 5: Create minimal message structure and transform to UI format
+            # Since get_message doesn't exist, we'll create the minimal structure needed for transformation
+            message_for_transform = {
+                "messageId": analysis_message_id,
+                "role": "assistant",
+                "timestamp": datetime.now().isoformat(),
+                "metadata": {
+                    "status": MessageStatus.PENDING,
+                    "user_message_id": user_message_id,
+                    "job_id": job_id,
+                    "queued_at": datetime.now().isoformat(),
+                    "response_type": "script_generation"
+                }
+            }
+            
+            if self.data_transformer:
+                clean_msg = await self.data_transformer.transform_message_to_ui_data(message_for_transform)
+            else:
+                # Fallback for cases where transformer is unavailable
+                clean_msg = {
+                    "message_id": analysis_message_id,
+                    "user_message_id": user_message_id,
+                    "job_id": job_id,
+                    "status": MessageStatus.PENDING,
+                    "queued_at": datetime.now().isoformat()
+                }
+            
+            # Step 6: Return immediately with pending status and consistent UI format
+            return AnalysisResponse(
+                success=True,
+                data={
+                    **clean_msg,  # Use transformer-generated UI data for consistency
+                    "session_id": session_id,
+                    "user_id": user_id
+                },
+                timestamp=datetime.now().isoformat()
+            )
+                
+        except HTTPException:
+            # Re-raise HTTPExceptions as-is
+            raise
+        except Exception as e:
+            logger.error(f"❌ SIMPLE analyze endpoint error: {e}", exc_info=True)
+            
+            return await self._error_response(
+                user_message="We ran into an issue and couldn't queue your analysis. Please try again.",
+                internal_error=str(e),
+                session_id=session_id,
+                user_id=user_id
+            )
+
     async def analyze_question(self, request: QuestionRequest) -> AnalysisResponse:
         """
         Async analysis endpoint - queues analysis and returns immediately with pending status
@@ -324,16 +433,25 @@ class APIRoutes:
             # if not await self.chat_history_service.session_exists(session_id):
             #     raise HTTPException(404, "Session not found. Please start a new conversation.")
             
-            # Step 2: Check distributed session lock
-            active_message_id = await session_lock.get_active_message(session_id)
-            if active_message_id:
-                logger.warning(f"⚠️ Session {session_id} already has active analysis: {active_message_id}")
-                raise HTTPException(409, f"Analysis already in progress for this session: {active_message_id}")
+            # Step 2: TEMPORARILY BYPASS LOCK LOGIC FOR DEBUGGING
+            # TODO: Re-enable after fixing database hanging issue
+            logger.info(f"⚠️ BYPASSING session lock for debugging: {session_id}")
+            # lock_acquired = await session_lock.acquire_lock_or_takeover(
+            #     session_id, 
+            #     "temp_analysis_lock",  # Temporary placeholder - will update after message creation
+            #     ttl_seconds=1800, 
+            #     max_wait_seconds=5  # Reduced from 30 to 5 seconds for better UX
+            # )
+            # 
+            # if not lock_acquired:
+            #     logger.warning(f"⚠️ Cannot acquire session lock - analysis still active: {session_id}")
+            #     raise HTTPException(409, "Session is currently processing another analysis. Please wait and try again.")
+            # 
+            # logger.info(f"🔒 Session lock acquired for new analysis: {session_id}")
             
-            # Step 3: Create user message
+            # Step 3: Create user message (now protected by lock)
             if not self.chat_history_service:
                 raise HTTPException(500, "Chat history service not available")
-            
             
             user_message_id = await self.chat_history_service.add_user_message(
                 session_id=session_id,
@@ -342,31 +460,35 @@ class APIRoutes:
             )
             logger.info(f"✓ Created user message: {user_message_id}")
             
-            # Step 4: Create analysis message with pending status and empty logs
+            # Step 4: Create analysis message with basic metadata including job placeholder
             analysis_message_id = await self.chat_history_service.add_assistant_message(
                 session_id=session_id,
                 user_id=user_id,
                 content="Analysis in progress...",
                 metadata={
-                    "status": "pending",
+                    "status": MessageStatus.PENDING,
                     "user_message_id": user_message_id,
-                    "queued_at": datetime.now().isoformat()
+                    "queued_at": datetime.now().isoformat(),
+                    "response_type": "script_generation"
                 }
             )
             logger.info(f"✓ Created analysis message: {analysis_message_id}")
             
-            # Step 5: Acquire distributed lock
-            lock_acquired = await session_lock.acquire_lock(session_id, analysis_message_id, ttl_seconds=1800)
-            if not lock_acquired:
-                logger.error(f"❌ Failed to acquire session lock for {session_id}")
-                raise HTTPException(409, "Failed to acquire session lock")
-            
-            logger.info(f"🔒 Acquired session lock: {session_id} → {analysis_message_id}")
+            # Step 5: TEMPORARILY BYPASS LOCK UPDATE FOR DEBUGGING
+            # TODO: Re-enable after fixing database hanging issue
+            logger.info(f"⚠️ BYPASSING lock update for debugging: {session_id} → {analysis_message_id}")
+            # await session_lock.release_lock(session_id)
+            # final_lock_acquired = await session_lock.acquire_lock(session_id, analysis_message_id, ttl_seconds=1800)
+            # 
+            # if not final_lock_acquired:
+            #     logger.error(f"❌ Failed to re-acquire session lock with message ID: {analysis_message_id}")
+            #     raise HTTPException(500, "Failed to finalize session lock for analysis")
+            # 
+            # logger.info(f"🔒 Session lock updated with message ID: {session_id} → {analysis_message_id}")
             
             # Step 6: Log initial progress to message
             # TODO: We have confusing progress_info (one is memory SSE and other is queue based SSE)
             # We need to either rename or do sthg
-            await progress_info(session_id, "Analysis queued for processing")
             
             # Step 7: Queue analysis for worker processing
             job_id = await analysis_queue.enqueue_analysis({
@@ -376,20 +498,43 @@ class APIRoutes:
                 "user_message_id": user_message_id,
                 "user_id": user_id
             })
-            
+            await send_progress_info(session_id, "Analysis queued for processing")
             logger.info(f"📥 Queued analysis job: {job_id} for message {analysis_message_id}")
             
-            # Step 8: Return immediately with pending status
-            return AnalysisResponse(
-                success=True,
-                data={
+            # Step 8: Create minimal message structure and transform to UI format
+            # Since get_message doesn't exist, we'll create the minimal structure needed for transformation
+            message_for_transform = {
+                "messageId": analysis_message_id,
+                "role": "assistant",
+                "timestamp": datetime.now().isoformat(),
+                "metadata": {
+                    "status": MessageStatus.PENDING,
+                    "user_message_id": user_message_id,
+                    "job_id": job_id,
+                    "queued_at": datetime.now().isoformat(),
+                    "response_type": "script_generation"
+                }
+            }
+            
+            if self.data_transformer:
+                clean_msg = await self.data_transformer.transform_message_to_ui_data(message_for_transform)
+            else:
+                # Fallback for cases where transformer is unavailable
+                clean_msg = {
                     "message_id": analysis_message_id,
                     "user_message_id": user_message_id,
                     "job_id": job_id,
-                    "status": "pending",
-                    "session_id": session_id,
-                    "user_id": user_id,
+                    "status": MessageStatus.PENDING,
                     "queued_at": datetime.now().isoformat()
+                }
+            
+            # Step 9: Return immediately with pending status and consistent UI format
+            return AnalysisResponse(
+                success=True,
+                data={
+                    **clean_msg,  # Use transformer-generated UI data for consistency
+                    "session_id": session_id,
+                    "user_id": user_id
                 },
                 timestamp=datetime.now().isoformat()
             )
@@ -405,8 +550,9 @@ class APIRoutes:
                 from shared.locking import get_session_lock
                 session_lock = get_session_lock()
                 await session_lock.release_lock(session_id)
-            except:
-                pass
+                logger.info(f"🔓 Released session lock on error: {session_id}")
+            except Exception as lock_error:
+                logger.warning(f"⚠️ Failed to release lock on error: {lock_error}")
             
             return await self._error_response(
                 user_message="We ran into an issue and couldn't queue your analysis. Please try again.",

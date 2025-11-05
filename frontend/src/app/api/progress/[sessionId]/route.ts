@@ -13,6 +13,9 @@ export async function GET(
 ) {
   const { sessionId } = await Promise.resolve(params);
 
+  console.log(`[Progress Route] Starting SSE proxy for session: ${sessionId}`);
+
+  // ENABLED CODE:
   const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
   const progressUrl = `${backendUrl}/api/progress/${sessionId}`;
 

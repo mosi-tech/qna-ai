@@ -30,7 +30,7 @@ from shared.services.cache_service import CacheService
 from shared.analyze.services.analysis_persistence_service import AnalysisPersistenceService
 from shared.services.audit_service import AuditService
 from services.execution_service import ExecutionService
-from services.progress_service import progress_manager
+from services.sse import progress_sse_manager
 from services.progress_monitor import initialize_progress_monitor, cleanup_progress_monitor
 from api.routes import APIRoutes
 from api.execution_routes import ExecutionRoutes
@@ -75,7 +75,6 @@ async def lifespan(app: FastAPI):
         execution_service = ExecutionService(repo_manager)
         logger.info("✅ Persistence services initialized")
         
-        # Initialize progress monitor for queue-based SSE communication
         logger.info("🔧 Initializing progress monitor...")
         await initialize_progress_monitor(db_client.db)
         logger.info("✅ Progress monitor initialized")
@@ -210,6 +209,34 @@ def create_app() -> FastAPI:
         """Analyze a financial question and generate tool calls without execution"""
         return await app.state.api_routes.analyze_question(request)
     
+    @app.post("/analyze-simple", response_model=AnalysisResponse)
+    async def analyze_question_simple(request: QuestionRequest):
+        """SIMPLE VERSION - Analyze question without session locking for debugging"""
+        return await app.state.api_routes.analyze_question_simple(request)
+    
+    @app.post("/test-immediate")
+    async def test_immediate(request: QuestionRequest):
+        """ULTRA SIMPLE - Immediate response with no database calls"""
+        from fastapi import Response
+        import json
+        
+        response_data = {
+            "success": True,
+            "data": {
+                "message": f"Received: {request.question}",
+                "session_id": request.session_id,
+                "timestamp": "immediate"
+            }
+        }
+        
+        # Force connection close to prevent connection pooling issues
+        response = Response(
+            content=json.dumps(response_data),
+            media_type="application/json",
+            headers={"Connection": "close"}
+        )
+        return response
+    
     @app.get("/health")
     async def health_check():
         """Health check endpoint"""
@@ -252,13 +279,6 @@ def create_app() -> FastAPI:
         """Get the logs for an execution (requires authentication)"""
         return await app.state.execution_routes.get_execution_logs(execution_id, user_context)
     
-    @app.get("/execution/{execution_id}/stream")
-    async def stream_execution_logs(
-        execution_id: str, 
-        user_context: UserContext = Depends(require_authenticated_user)
-    ):
-        """Stream real-time execution logs via SSE (requires authentication)"""
-        return await app.state.execution_routes.stream_execution_logs(execution_id, user_context)
     
     @app.get("/user/executions")
     async def get_my_executions(
@@ -362,7 +382,10 @@ def run_server(host: str = "0.0.0.0", port: int = 8010, reload: bool = False, de
         host=host,
         port=port,
         reload=reload,
-        log_config=None  # Use our own logging configuration
+        log_config=None,  # Use our own logging configuration
+        workers=1,  # Single worker but with more connections
+        limit_concurrency=100,  # Allow more concurrent connections
+        limit_max_requests=1000,  # Allow more requests before restart
     )
 
 

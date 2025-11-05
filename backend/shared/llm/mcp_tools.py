@@ -8,7 +8,7 @@ import logging
 import os
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass
-from integrations.mcp.mcp_client import mcp_client, initialize_mcp_client
+from  ..integrations.mcp.mcp_client import mcp_client, initialize_mcp_client
 
 logger = logging.getLogger("mcp-tools")
 

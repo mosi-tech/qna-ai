@@ -2,7 +2,8 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useSession } from '@/lib/context/SessionContext';
-import { useConversation, ChatMessage } from '@/lib/context/ConversationContext';
+import { useConversation } from '@/lib/context/ConversationContext';
+import { ChatMessage } from '@/lib/hooks/useConversation';
 import { useUI } from '@/lib/context/UIContext';
 import { useAnalysis } from '@/lib/hooks/useAnalysis';
 import { useSessionManager } from '@/lib/hooks/useSessionManager';
@@ -14,14 +15,13 @@ import CustomizationForm from '@/components/chat/CustomizationForm';
 import SessionList from '@/components/chat/SessionList';
 import { ParameterValues } from '@/types/modules';
 import { ProgressManager } from '@/lib/progress/ProgressManager';
-import { api } from '@/lib/api';
 
 function ChatPageContent() {
   const { session_id, user_id, resumeSession, updateSessionMetadata, startNewSession } = useSession();
-  const { messages, addMessage, updateMessage, setMessages, loadSessionMessages } = useConversation();
+  const { messages, addMessage, updateMessage, setMessages } = useConversation();
   const { viewMode, setViewMode, isProcessing, setIsProcessing, error: uiError, setError: setUIError } = useUI();
   const { analyzeQuestion, isLoading: analysisLoading } = useAnalysis();
-  const { logs: progressLogs, isConnected, clearLogs } = useProgress();
+  const { logs: progressLogs, isConnected, clearLogs, registerAnalysisCompleteCallback } = useProgress();
   const { getSessionDetail } = useSessionManager();
 
   const [chatInput, setChatInput] = useState('');
@@ -58,43 +58,15 @@ function ChatPageContent() {
           setSessionNotFound(true);
           return;
         }
-        const getMessageType = (msg: any) => {
-          if (msg.role === 'user') return 'user';
-          if (msg.role === 'assistant') {
-            // Use the normalized response_type field (primary)
-            const responseType = msg.response_type || msg.metadata?.response_type;
-            
-            if (responseType === 'analysis') {
-              return 'results';
-            } else if (responseType === 'needs_clarification' || responseType === 'needs_confirmation' || responseType === 'clarification') {
-              return 'clarification';
-            } else if (responseType === 'meaningless') {
-              return 'ai'; // Render as regular AI message
-            } else {
-              // Fallback: check for legacy analysis data detection
-              if (msg.uiData || (msg.metadata && (
-                msg.metadata.query_type || 
-                msg.metadata.analysis_type || 
-                msg.metadata.best_day ||
-                (msg.metadata.response_data && msg.metadata.response_data.analysis_result)
-              ))) {
-                return 'results';
-              }
-            }
-            return 'ai';
-          }
-          return 'ai'; // fallback
-        };
-
-        const loadedMessages = (sessionDetail.messages || []).map((msg: any, idx: number) => ({
-          id: msg.id || `${session_id}-${idx}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          type: getMessageType(msg),
-          content: msg.content,
-          data: msg.uiData || msg.metadata, // Prefer uiData over raw metadata
-          analysisId: msg.analysisId,
-          executionId: msg.executionId,
-          timestamp: new Date(msg.timestamp || Date.now()),
-        }));
+        const loadedMessages = (sessionDetail.messages || []).map((msg: any, idx: number) => {
+          console.log(`[DEBUG] Loading message ${idx}:`, msg);
+          return {
+            id: msg.id || `${session_id}-${idx}-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+            type: (msg.role === 'user' ? 'user' : 'ai') as ChatMessage['type'],
+            ...msg,  // Flatten all message properties directly
+            timestamp: new Date(msg.timestamp || Date.now()),
+          };
+        });
 
         if (loadedMessages.length > 0) {
           setMessages(loadedMessages);
@@ -114,159 +86,216 @@ function ChatPageContent() {
     loadInitialMessages();
   }, [session_id, getSessionDetail, setMessages]);
 
-  const handleSendMessage = async (userMessage: string) => {
-    if (!session_id || !userMessage.trim()) return;
 
-    try {
-      setIsProcessing(true);
-      setChatInput('');
-      setUIError(null);
-      clearLogs();
+  // Helper functions for handleSendMessage
+  const setupAnalysisRequest = (userMessage: string) => {
+    setIsProcessing(true);
+    setChatInput('');
+    setUIError(null);
+    clearLogs();
 
+    if (session_id) {
       ProgressManager.addLog(session_id, {
         level: 'info',
         message: `Processing question: "${userMessage}"`,
       });
+    }
 
-      if (lastClarificationMessageId) {
-        updateMessage(lastClarificationMessageId, {
-          type: 'clarification',
-          content: 'Clarification was skipped',
-          data: undefined,
-        });
-        setLastClarificationMessageId(null);
-      }
-
-      addMessage({
-        type: 'user',
-        content: userMessage,
+    // Clear any pending clarification
+    if (lastClarificationMessageId) {
+      updateMessage(lastClarificationMessageId, {
+        type: 'clarification',
+        content: 'Clarification was skipped',
+        data: undefined,
       });
+      setLastClarificationMessageId(null);
+    }
 
+    addMessage({
+      type: 'user',
+      content: userMessage,
+    });
+  };
+
+  const handleMeaninglessResponse = (response: any) => {
+    if (session_id) {
+      ProgressManager.addLog(session_id, {
+        level: 'warning',
+        message: 'Query was not specific enough. Requesting clarification.',
+      });
+    }
+
+    const errorMsg = response.data.content || 'I need more details to help you. Please tell me what you\'d like to analyze.';
+    addMessage({
+      type: 'ai',
+      content: errorMsg,
+    });
+  };
+
+  const handleClarificationResponse = (response: any, userMessage: string) => {
+    const clarificationData = {
+      message_id: response.data.id,
+      content: response.data.content,
+      ...response.data.metadata,
+    };
+
+    if (session_id) {
       ProgressManager.addLog(session_id, {
         level: 'info',
-        message: 'Sending analysis request to server...',
+        message: 'Analysis requires user clarification',
+        details: {
+          confidence: response.data.expansion_confidence || response.data.metadata?.confidence,
+        },
       });
+    }
+
+    const clarificationMsg = addMessage({
+      type: 'clarification',
+      content: clarificationData.content || 'Please confirm the interpretation',
+      data: clarificationData,
+    });
+
+    setLastClarificationMessageId(clarificationMsg.id);
+    setCurrentAnalysis({
+      messageId: clarificationMsg.id,
+      data: clarificationData,
+      originalQuestion: userMessage,
+    });
+  };
+
+  const handleConfirmationResponse = (response: any, userMessage: string) => {
+    const clarificationData = {
+      message_id: response.data.id,
+      content: response.data.content,
+      ...response.data.metadata,
+    };
+
+    if (session_id) {
+      ProgressManager.addLog(session_id, {
+        level: 'info',
+        message: 'Analysis requires user confirmation',
+      });
+    }
+
+    const confirmMsg = addMessage({
+      type: 'clarification',
+      content: clarificationData.content || 'Please confirm',
+      data: clarificationData,
+    });
+
+    setCurrentAnalysis({
+      messageId: confirmMsg.id,
+      data: clarificationData,
+      originalQuestion: userMessage,
+    });
+  };
+
+  const handleAnalysisResponse = (response: any, userMessage: string) => {
+    if (session_id) {
+      ProgressManager.addLog(session_id, {
+        level: 'success',
+        message: 'Analysis results ready for display',
+      });
+    }
+
+    const resultMsg = addMessage({
+      type: 'results',
+      //TODO: check if we need backfill
+      content: response.data.content || response.data.metadata?.analysis_summary || `Analysis complete for: ${userMessage}`,
+      ...response.data,
+    });
+
+    // Register completion callback for SSE events
+    const backendMessageId = response.data.id;
+
+    if (backendMessageId) {
+      registerAnalysisCompleteCallback(backendMessageId, (status: 'completed' | 'failed', data?: any) => {
+        handleExecutionUpdate(backendMessageId, {
+          details: {
+            ...data.details,
+            content: data?.message,
+            error: data?.error,
+            message_id: backendMessageId
+          }
+        });
+      });
+
+      console.log(`[SSE] Registered callback for message: ${backendMessageId}`);
+    } else {
+      console.error('[SSE] No backend message ID found - callback not registered!', response.data);
+    }
+
+    setCurrentAnalysis({
+      messageId: resultMsg.id,
+      data: response.data,
+      originalQuestion: userMessage,
+    });
+  };
+
+  const handleAnalysisError = (response: any) => {
+    if (session_id) {
+      ProgressManager.addLog(session_id, {
+        level: 'error',
+        message: response.error || 'Analysis failed',
+      });
+    }
+
+    const errorContent = response.error || 'Analysis failed. Please try again.';
+    addMessage({
+      type: 'error',
+      content: errorContent,
+    });
+    setUIError(response.error || 'Analysis failed');
+  };
+
+  const handleSendMessage = async (userMessage: string) => {
+    if (!session_id || !userMessage.trim()) return;
+
+    try {
+      setupAnalysisRequest(userMessage);
+
+      if (session_id) {
+        ProgressManager.addLog(session_id, {
+          level: 'info',
+          message: 'Sending analysis request to server...',
+        });
+      }
 
       const response = await analyzeQuestion({
         question: userMessage,
         session_id: session_id,
-        enable_caching: true,
       });
 
       if (response.success && response.data) {
-        ProgressManager.addLog(session_id, {
-          level: 'success',
-          message: 'Analysis request completed successfully',
-        });
-
-        const responseType = response.data.response_type || response.data.metadata?.response_type;
-        const isMeaningless = responseType === 'meaningless' || responseType === 'meaningless_query' || response.data.metadata?.is_meaningless;
-
-        if (isMeaningless) {
+        if (session_id) {
           ProgressManager.addLog(session_id, {
-            level: 'warning',
-            message: 'Query was not specific enough. Requesting clarification.',
+            level: 'success',
+            message: 'Analysis request completed successfully',
           });
+        }
 
-          const errorMsg = response.data.content || 'I need more details to help you. Please tell me what you\'d like to analyze.';
-          addMessage({
-            type: 'ai',
-            content: errorMsg,
-          });
+        const responseType = response.data.response_type;
+
+        if (responseType === 'meaningless') {
+          handleMeaninglessResponse(response);
+        } else if (responseType === 'needs_clarification') {
+          handleClarificationResponse(response, userMessage);
+        } else if (responseType === 'needs_confirmation') {
+          handleConfirmationResponse(response, userMessage);
         } else {
-          const needsClarification = responseType === 'needs_clarification' || responseType === 'needs_confirmation' || response.data.metadata?.needs_user_input;
-          const clarificationData = {
-            message_id: response.data.message_id,
-            content: response.data.content,
-            ...response.data.metadata,
-          };
-          
-          if (needsClarification) {
-            ProgressManager.addLog(session_id, {
-              level: 'info',
-              message: 'Analysis requires user clarification',
-              details: {
-                confidence: clarificationData.expansion_confidence || clarificationData.confidence,
-              },
-            });
-
-            const clarificationMsg = addMessage({
-              type: 'clarification',
-              content: clarificationData.content || 'Please confirm the interpretation',
-              data: clarificationData,
-            });
-            setLastClarificationMessageId(clarificationMsg.id);
-            setCurrentAnalysis({
-              messageId: clarificationMsg.id,
-              data: clarificationData,
-              originalQuestion: userMessage,
-            });
-          } else if (responseType === 'needs_confirmation') {
-            ProgressManager.addLog(session_id, {
-              level: 'info',
-              message: 'Analysis requires user confirmation',
-            });
-
-            const confirmMsg = addMessage({
-              type: 'clarification',
-              content: clarificationData.content || 'Please confirm',
-              data: clarificationData,
-            });
-            setCurrentAnalysis({
-              messageId: confirmMsg.id,
-              data: clarificationData,
-              originalQuestion: userMessage,
-            });
-          } else {
-            ProgressManager.addLog(session_id, {
-              level: 'success',
-              message: 'Analysis results ready for display',
-            });
-
-            const resultData = {
-              message_id: response.data.message_id,
-              analysis_id: response.data.analysis_id,
-              execution_id: response.data.execution_id,
-              ...response.data.metadata,
-            };
-
-            const resultMsg = addMessage({
-              type: 'results',
-              content: response.data.content || response.data.metadata?.analysis_summary || `Analysis complete for: ${userMessage}`,
-              data: resultData,
-            });
-
-            setCurrentAnalysis({
-              messageId: resultMsg.id,
-              data: resultData,
-              originalQuestion: userMessage,
-            });
-
-            if (viewMode === 'single') {
-              const expandedSet = new Set<string>();
-              expandedSet.add(resultMsg.id);
-            }
-          }
+          handleAnalysisResponse(response, userMessage);
         }
       } else {
-        ProgressManager.addLog(session_id, {
-          level: 'error',
-          message: response.error || 'Analysis failed',
-        });
-
-        const errorContent = response.error || 'Analysis failed. Please try again.';
-        addMessage({
-          type: 'error',
-          content: errorContent,
-        });
-        setUIError(response.error || 'Analysis failed');
+        handleAnalysisError(response);
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'An error occurred';
-      ProgressManager.addLog(session_id, {
-        level: 'error',
-        message: `Exception: ${errorMsg}`,
-      });
+      if (session_id) {
+        ProgressManager.addLog(session_id, {
+          level: 'error',
+          message: `Exception: ${errorMsg}`,
+        });
+      }
 
       addMessage({
         type: 'error',
@@ -279,118 +308,7 @@ function ChatPageContent() {
     }
   };
 
-  const handleClarificationResponse = async (
-    userResponse: string,
-    clarificationData: any
-  ) => {
-    if (!session_id || !clarificationData) return;
 
-    try {
-      setIsProcessing(true);
-      setChatInput('');
-
-      addMessage({
-        type: 'user',
-        content: userResponse,
-      });
-
-      const response = await api.analysis.handleClarificationResponse(
-        session_id,
-        userResponse,
-        clarificationData.original_query,
-        clarificationData.expanded_query
-      );
-
-      if (response.success && response.data) {
-        if (response.data.stage === 'needs_input') {
-          if (lastClarificationMessageId) {
-            updateMessage(lastClarificationMessageId, {
-              type: 'clarification',
-              content: 'Your previous response was not accepted. ' + (response.data.message || ''),
-              data: undefined,
-            });
-            setLastClarificationMessageId(null);
-          } else {
-            addMessage({
-              type: 'ai',
-              content: response.data.message || 'Please rephrase your question with more details.',
-            });
-          }
-        } else if (response.data.stage === 'ready' || response.data.search_results) {
-          if (lastClarificationMessageId) {
-            updateMessage(lastClarificationMessageId, {
-              type: 'results',
-              content: response.data.analysis_summary || 'Analysis complete',
-              data: response.data,
-            });
-            setLastClarificationMessageId(null);
-            setCurrentAnalysis({
-              messageId: lastClarificationMessageId,
-              data: response.data,
-              originalQuestion: clarificationData.original_query,
-            });
-          } else {
-            const resultMsg = addMessage({
-              type: 'results',
-              content: response.data.analysis_summary || 'Analysis complete',
-              data: response.data,
-            });
-            setCurrentAnalysis({
-              messageId: resultMsg.id,
-              data: response.data,
-              originalQuestion: clarificationData.original_query,
-            });
-          }
-        } else {
-          if (lastClarificationMessageId) {
-            updateMessage(lastClarificationMessageId, {
-              type: 'results',
-              content: response.data.analysis_summary || 'Analysis complete',
-              data: response.data,
-            });
-            setLastClarificationMessageId(null);
-            setCurrentAnalysis({
-              messageId: lastClarificationMessageId,
-              data: response.data,
-              originalQuestion: clarificationData.original_query,
-            });
-          } else {
-            const resultMsg = addMessage({
-              type: 'results',
-              content: response.data.analysis_summary || 'Analysis complete',
-              data: response.data,
-            });
-            setCurrentAnalysis({
-              messageId: resultMsg.id,
-              data: response.data,
-              originalQuestion: clarificationData.original_query,
-            });
-          }
-        }
-      } else {
-        addMessage({
-          type: 'error',
-          content: response.error || 'Failed to process response. Please try again.',
-        });
-        setUIError(response.error || 'Response processing failed');
-      }
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'An error occurred';
-      addMessage({
-        type: 'error',
-        content: errorMsg,
-      });
-      setUIError(errorMsg);
-      console.error('Clarification response error:', err);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handleCustomizeAnalysis = (moduleKey: string) => {
-    setSelectedModule(moduleKey);
-    setShowCustomization(true);
-  };
 
   const handleCustomizationSubmit = () => {
     setShowCustomization(false);
@@ -404,6 +322,135 @@ function ChatPageContent() {
 
     setSelectedModule(null);
   };
+
+  const handleExecutionUpdate = useCallback((messageId: string, update: any) => {
+    // Enhanced SSE Event Logging
+    console.group('%c[SSE EVENT RECEIVED]', 'color: blue; font-weight: bold; font-size: 14px;');
+    console.log('%cMessage ID:', 'font-weight: bold;', messageId);
+    console.log('%cFull SSE Event:', 'font-weight: bold;', update);
+    console.log('%cSSE Event Type:', 'font-weight: bold;', update.type);
+    console.log('%cSSE Level:', 'font-weight: bold;', update.level);
+    console.log('%cSSE Message:', 'font-weight: bold;', update.message);
+    console.log('%cSSE Details:', 'font-weight: bold;', update.details);
+
+    // Map SSE event details to proper message structure
+    const details = update.details || {};
+    const messageUpdate: any = {};
+
+    // Map core status and content
+    if (details.status) {
+      messageUpdate.status = details.status;
+    }
+    if (update.error) {
+      messageUpdate.error = update.error;
+    }
+    if (update.message || details.content) {
+      messageUpdate.content = update.message || details.content;
+    }
+
+    // Map execution data to execution object structure (matching API response format)
+    if (details.status || details.error || details.execution_id) {
+      messageUpdate.execution = {
+        ...(messageUpdate.execution || {}),
+        status: details.status,
+        error: details.error,
+        executionId: details.execution_id,
+      };
+    }
+
+    // Map response type and IDs
+    if (details.response_type) {
+      messageUpdate.response_type = details.response_type;
+    }
+    if (details.analysis_id) {
+      messageUpdate.analysisId = details.analysis_id;
+    }
+    if (details.execution_id) {
+      messageUpdate.executionId = details.execution_id;
+    }
+
+    // Update UI controls based on status
+    if (details.status === 'failed') {
+      messageUpdate.canRerun = true;
+      messageUpdate.canExport = false;
+    } else if (details.status === 'completed') {
+      messageUpdate.canRerun = true;
+      messageUpdate.canExport = true;
+    }
+
+    if (details.results) {
+      messageUpdate.results = details.results
+    }
+
+    // Log the mapped message update
+    console.log('%cMapped Message Update:', 'font-weight: bold; color: green;', messageUpdate);
+
+    // Note: This function only UPDATES existing messages, never creates new ones
+    const isCompletionStatus = details.status === 'failed' || details.status === 'completed';
+    const hasMessageId = !!details.message_id;
+
+    console.log('%cMessage Update Analysis:', 'font-weight: bold; color: purple;');
+    console.log('%c- Status is completion status (failed/completed):', 'color: purple;', isCompletionStatus, `(${details.status})`);
+    console.log('%c- Has message_id:', 'color: purple;', hasMessageId, `(${details.message_id})`);
+    console.log('%c- Target Message ID for update:', 'color: purple;', messageId);
+
+    if (isCompletionStatus) {
+      console.log('%c✅ COMPLETION STATUS - Message will be marked as finished', 'color: green; font-size: 14px; font-weight: bold;');
+    } else {
+      console.log('%c📝 Progress update - Message remains in progress', 'color: orange; font-weight: bold;');
+    }
+
+    console.log('%c⚠️  NOTE: This function only UPDATES existing messages, never creates new ones', 'color: orange; font-style: italic;');
+
+    console.groupEnd();
+
+    updateMessage(messageId, messageUpdate);
+  }, [updateMessage]);
+
+  // Re-register SSE callbacks for pending messages on page refresh
+  useEffect(() => {
+    console.log(`[DEBUG] Callback registration effect triggered: messages.length=${messages.length}, isConnected=${isConnected}`);
+    
+    if (!messages.length || !isConnected) {
+      console.log(`[DEBUG] Skipping callback registration - messages=${messages.length}, connected=${isConnected}`);
+      return;
+    }
+
+    // Add a small delay to ensure SSE connection is fully established
+    const timeoutId = setTimeout(() => {
+      console.log(`[DEBUG] Starting callback registration after delay...`);
+      
+      let registeredCount = 0;
+      messages.forEach((message: ChatMessage) => {
+        // Check if message is in pending status and has backend ID for callback registration
+        const isPending = message.status && ['pending', 'running', 'queued'].includes(message.status);
+        const backendMessageId = (message as any).id;
+        
+        console.log(`[DEBUG] Message ${message.id}: status=${message.status}, isPending=${isPending}, backendId=${backendMessageId}`, message);
+
+        if (isPending && backendMessageId) {
+          console.log(`[SSE] Re-registering callback for pending message: ${backendMessageId}`);
+          registeredCount++;
+          
+          registerAnalysisCompleteCallback(backendMessageId, (status: 'completed' | 'failed', data?: any) => {
+            console.log(`[SSE] Callback triggered for message ${backendMessageId} with status: ${status}`);
+            handleExecutionUpdate(backendMessageId, {
+              details: {
+                ...data?.details,
+                content: data?.message,
+                error: data?.error,
+                message_id: backendMessageId
+              }
+            });
+          });
+        }
+      });
+      
+      console.log(`[DEBUG] Registered ${registeredCount} callbacks`);
+    }, 500); // Wait 500ms for SSE connection to stabilize
+
+    return () => clearTimeout(timeoutId);
+  }, [messages, isConnected, registerAnalysisCompleteCallback, handleExecutionUpdate]);
 
   const handleSelectSession = useCallback(async (selectedSessionId: string) => {
     try {
@@ -439,33 +486,10 @@ function ChatPageContent() {
         is_archived: sessionDetail.is_archived,
       });
 
-      const getMessageType = (msg: any) => {
-        if (msg.role === 'user') return 'user';
-        if (msg.role === 'assistant') {
-          // Check if this assistant message contains analysis results
-          if (msg.uiData || (msg.metadata && (
-            msg.metadata.response_type === 'analysis' ||
-            msg.metadata.query_type || 
-            msg.metadata.analysis_type || 
-            msg.metadata.best_day ||
-            (msg.metadata.response_data && msg.metadata.response_data.analysis_result)
-          ))) {
-            return 'results';
-          } else if (msg.metadata && msg.metadata.response_type === 'clarification') {
-            return 'clarification';
-          }
-          return 'ai';
-        }
-        return 'ai'; // fallback
-      };
-
       const loadedMessages = (sessionDetail.messages || []).map((msg: any, idx: number) => ({
-        id: msg.id || `${selectedSessionId}-${idx}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        type: getMessageType(msg),
-        content: msg.content,
-        data: msg.uiData || msg.metadata, // Prefer uiData over raw metadata
-        analysisId: msg.analysisId,
-        executionId: msg.executionId,
+        id: msg.id || `${selectedSessionId}-${idx}-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+        type: (msg.role === 'user' ? 'user' : 'ai') as ChatMessage['type'],
+        ...msg,  // Flatten all message properties directly
         timestamp: new Date(msg.timestamp || Date.now()),
       }));
 
@@ -476,7 +500,7 @@ function ChatPageContent() {
         total: sessionDetail.total_messages || 0,
         hasOlder: sessionDetail.has_older || false,
       });
-      
+
       console.log(`[ChatPage] Resumed session ${selectedSessionId} with ${loadedMessages.length} messages`);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to resume session';
@@ -493,44 +517,24 @@ function ChatPageContent() {
     try {
       setIsLoadingOlderMessages(true);
       const newOffset = currentSessionMessages.offset + currentSessionMessages.limit;
-      
+
       const sessionDetail = await getSessionDetail(session_id, newOffset, currentSessionMessages.limit);
       if (!sessionDetail) {
         setUIError('Failed to load older messages');
         return;
       }
 
-      const getMessageType = (msg: any) => {
-        if (msg.role === 'user') return 'user';
-        if (msg.role === 'assistant') {
-          // Check if this assistant message contains analysis results
-          if (msg.uiData || (msg.metadata && (
-            msg.metadata.response_type === 'analysis' ||
-            msg.metadata.query_type || 
-            msg.metadata.analysis_type || 
-            msg.metadata.best_day ||
-            (msg.metadata.response_data && msg.metadata.response_data.analysis_result)
-          ))) {
-            return 'results';
-          } else if (msg.metadata && msg.metadata.response_type === 'clarification') {
-            return 'clarification';
-          }
-          return 'ai';
-        }
-        return 'ai'; // fallback
-      };
-
-      const olderMessages = (sessionDetail.messages || []).map((msg: any, idx: number) => ({
-        id: msg.id || `${session_id}-${newOffset + idx}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        type: getMessageType(msg),
-        content: msg.content,
-        data: msg.uiData || msg.metadata, // Prefer uiData over raw metadata
-        analysisId: msg.analysisId,
-        executionId: msg.executionId,
+      const olderMessages: ChatMessage[] = (sessionDetail.messages || []).map((msg: any, idx: number) => ({
+        id: msg.id || `${session_id}-${newOffset + idx}-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+        type: (msg.role === 'user' ? 'user' : 'ai') as ChatMessage['type'],
+        ...msg,  // Flatten all message properties directly
         timestamp: new Date(msg.timestamp || Date.now()),
       }));
 
-      setMessages((prev) => [...olderMessages, ...prev]);
+      // Deduplicate: filter out messages that already exist
+      const existingIds = new Set(messages.map((msg: ChatMessage) => msg.id));
+      const newMessages = olderMessages.filter((msg: ChatMessage) => !existingIds.has(msg.id));
+      setMessages([...newMessages, ...messages]);
       setCurrentSessionMessages({
         offset: newOffset,
         limit: currentSessionMessages.limit,
@@ -641,11 +645,10 @@ function ChatPageContent() {
             onSendMessage={handleSendMessage}
             onClarificationResponse={handleClarificationResponse}
             pendingClarificationId={lastClarificationMessageId}
-            progressLogs={progressLogs}
             onLoadOlder={handleLoadOlderMessages}
             isLoadingOlder={isLoadingOlderMessages}
             canLoadOlder={currentSessionMessages.hasOlder}
-            sessionId={session_id}
+            onExecutionUpdate={handleExecutionUpdate}
           />
         </div>
 
@@ -688,7 +691,7 @@ function ChatPageContent() {
           currentSessionId={session_id || undefined}
           onSelectSession={handleSelectSession}
           isOpen={true}
-          onClose={() => {}}
+          onClose={() => { }}
           hideHeader={true}
         />
       </div>
@@ -702,11 +705,10 @@ function ChatPageContent() {
           onSendMessage={handleSendMessage}
           onClarificationResponse={handleClarificationResponse}
           pendingClarificationId={lastClarificationMessageId}
-          progressLogs={progressLogs}
           onLoadOlder={handleLoadOlderMessages}
           isLoadingOlder={isLoadingOlderMessages}
           canLoadOlder={currentSessionMessages.hasOlder}
-          sessionId={session_id}
+          onExecutionUpdate={handleExecutionUpdate}
         />
       </div>
 
@@ -754,7 +756,7 @@ function ChatPageContent() {
 
 export default function ChatPage() {
   const { session_id } = useSession();
-  
+
   return (
     <ProgressProvider sessionId={session_id}>
       <ChatPageContent />

@@ -13,6 +13,7 @@ import uuid
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional, List
 from abc import ABC, abstractmethod
+from shared.constants import MessageStatus
 
 logger = logging.getLogger(__name__)
 
@@ -122,7 +123,7 @@ class MongoAnalysisQueue(AnalysisQueueInterface):
             "message_id": analysis_data.get("message_id"),
             "user_question": analysis_data.get("user_question"),
             "user_message_id": analysis_data.get("user_message_id"),
-            "status": "pending",
+            "status": MessageStatus.PENDING,
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow(),
             "worker_id": None,
@@ -150,7 +151,7 @@ class MongoAnalysisQueue(AnalysisQueueInterface):
             current_time = datetime.utcnow()
             result = await self.collection.find_one_and_update(
                 {
-                    "status": "pending",
+                    "status": MessageStatus.PENDING,
                     "$and": [
                         {
                             "$or": [
@@ -235,7 +236,7 @@ class MongoAnalysisQueue(AnalysisQueueInterface):
                     {"job_id": job_id},
                     {
                         "$set": {
-                            "status": "pending",
+                            "status": MessageStatus.PENDING,
                             "worker_id": None,
                             "claimed_at": None,
                             "updated_at": datetime.utcnow(),

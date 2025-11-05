@@ -57,9 +57,9 @@ class SharedResultFormatter(BaseService):
                 return None
             
             # Try to extract analysis type from execution metadata
-            analysis_type = execution_result.get("analysis_type") or "Financial Analysis"
+            response_type = execution_result.get("response_type") or "Financial Analysis"
             
-            return await self.format_results_to_markdown(results, analysis_type, user_question)
+            return await self.format_results_to_markdown(results, response_type, user_question)
             
         except Exception as e:
             logger.error(f"❌ Error formatting execution result: {e}")
@@ -68,7 +68,7 @@ class SharedResultFormatter(BaseService):
     async def format_results_to_markdown(
         self, 
         results: Dict[str, Any], 
-        analysis_type: Optional[str] = None,
+        response_type: Optional[str] = None,
         user_question: Optional[str] = None
     ) -> Optional[str]:
         """
@@ -76,7 +76,7 @@ class SharedResultFormatter(BaseService):
         
         Args:
             results: Dictionary containing analysis results
-            analysis_type: Optional type of analysis for context
+            response_type: Optional type of analysis for context
             user_question: Optional original user question for context
             
         Returns:
@@ -91,7 +91,7 @@ class SharedResultFormatter(BaseService):
             system_prompt = await self.get_system_prompt()
             
             # Prepare user message with results and question context
-            user_message = self._prepare_formatting_request(results, analysis_type, user_question)
+            user_message = self._prepare_formatting_request(results, response_type, user_question)
             
             self.logger.info(f"🤖 Formatting results using {self.llm_service.provider_type}")
             
@@ -114,20 +114,20 @@ class SharedResultFormatter(BaseService):
                     return markdown_content
                 else:
                     self.logger.warning("LLM returned empty markdown content")
-                    return self._generate_simple_markdown(results, analysis_type, user_question)
+                    return self._generate_simple_markdown(results, response_type, user_question)
             else:
                 error_msg = response.get("error", "Unknown LLM error") if response else "No response from LLM"
                 self.logger.error(f"❌ LLM formatting failed: {error_msg}")
-                return self._generate_simple_markdown(results, analysis_type, user_question)
+                return self._generate_simple_markdown(results, response_type, user_question)
                 
         except Exception as e:
             self.logger.error(f"❌ Error generating markdown summary: {e}")
-            return self._generate_simple_markdown(results, analysis_type, user_question)
+            return self._generate_simple_markdown(results, response_type, user_question)
     
     def _prepare_formatting_request(
         self, 
         results: Dict[str, Any], 
-        analysis_type: Optional[str] = None,
+        response_type: Optional[str] = None,
         user_question: Optional[str] = None
     ) -> str:
         """
@@ -135,7 +135,7 @@ class SharedResultFormatter(BaseService):
         
         Args:
             results: Analysis results to format
-            analysis_type: Optional analysis type for context
+            response_type: Optional analysis type for context
             user_question: Optional original user question for context
             
         Returns:
@@ -151,9 +151,6 @@ class SharedResultFormatter(BaseService):
         if user_question:
             context_parts.append(f"Original Question: {user_question}")
             context_parts.append("")
-        
-        if analysis_type:
-            context_parts.append(f"Analysis Type: {analysis_type}")
         
         context_parts.append("Raw Results Data:")
         context_parts.append("```json")
@@ -171,7 +168,7 @@ class SharedResultFormatter(BaseService):
     def _generate_simple_markdown(
         self, 
         results: Dict[str, Any], 
-        analysis_type: Optional[str] = None,
+        response_type: Optional[str] = None,
         user_question: Optional[str] = None
     ) -> str:
         """Generate simple markdown fallback when LLM is not available"""
@@ -180,10 +177,6 @@ class SharedResultFormatter(BaseService):
         # Add question context if available
         if user_question:
             markdown_lines.append(f"**Question**: {user_question}")
-            markdown_lines.append("")
-        
-        if analysis_type:
-            markdown_lines.append(f"**Analysis Type**: {analysis_type}")
             markdown_lines.append("")
         
         # Add key metrics

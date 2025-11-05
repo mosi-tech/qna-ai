@@ -24,6 +24,7 @@ from shared.services.progress_service import send_progress_info, send_analysis_p
 from shared.services.execution_queue_service import execution_queue_service
 from shared.queue.worker_context import set_context, get_message_id, get_session_id, get_user_id
 from ..dialogue import search_with_context
+from shared.constants import MessageStatus
 
 logger = logging.getLogger(__name__)
 
@@ -130,6 +131,11 @@ class AnalysisPipelineService:
         session_id = request.session_id
         message_id = request.message_id
         
+        # Initialize pipeline state
+        final_response = None
+        warnings = []
+        context_result = {}
+        
         try:
             # Set context for this analysis pipeline run
             set_context(
@@ -140,57 +146,78 @@ class AnalysisPipelineService:
             
             self.logger.info(f"📝 Received question: {request.question[:100]}...")
             
-            # Send initial pipeline start event
+            # Update message status to indicate analysis has started
+            if message_id:
+                try:
+                    await self.chat_history_service.update_assistant_message(
+                        message_id=message_id,
+                        content="Analysis in progress...",
+                        metadata={"status": MessageStatus.ANALYSIS_STARTED}
+                    )
+                except Exception as update_error:
+                    self.logger.warning(f"⚠️ Failed to update message status to analysis_started: {update_error}")
+            
             await send_analysis_progress("Starting analysis pipeline", step="pipeline_start", status="started")
             
-            # Step 1: Check message-level cache for early return
-            await send_analysis_progress("Checking analysis library", step="cache_check")
-            cache_response, warnings = await self._check_message_cache(request)
-            if cache_response:
-                return cache_response
-            # Step 2: Context-aware search and meaningless query detection  
-            await send_analysis_progress("Building context and searching for similar analyses", step="context_search")
-            search_response, context_result = await self._perform_context_search(request)
-            if search_response:
-                return search_response
+            # Define pipeline steps - each returns (response, should_continue)
+            pipeline_steps = [
+                ("cache_check", "Checking analysis library", self._step_check_cache),
+                ("context_search", "Building context and searching for similar analyses", self._step_context_search),
+                ("confirmation", "Handling confirmation requests", self._step_handle_confirmation),
+                ("reuse_evaluation", "Evaluating reuse potential", self._step_evaluate_reuse),
+                ("analysis_generation", "Building new analysis", self._step_build_analysis),
+            ]
             
-            # Step 3: Handle confirmation requests for low-confidence expansions
-            confirmation_response = await self._handle_confirmation_requests(request, context_result)
-            if confirmation_response:
-                return confirmation_response
-            # Get the final query to analyze (expanded if contextual)
-            expanded_query = context_result.get("expanded_query", request.question)
+            # Execute pipeline steps until one returns a response
+            for step_name, step_description, step_function in pipeline_steps:
+                await send_analysis_progress(step_description, step=step_name)
+                
+                if step_name == "context_search":
+                    response, context_result = await step_function(request)
+                elif step_name == "confirmation":
+                    response = await step_function(request, context_result)
+                elif step_name == "reuse_evaluation":
+                    expanded_query = context_result.get("expanded_query", request.question)
+                    response, step_warnings = await step_function(request, context_result, expanded_query)
+                    warnings.extend(step_warnings)
+                elif step_name == "analysis_generation":
+                    expanded_query = context_result.get("expanded_query", request.question)
+                    response = await step_function(request, expanded_query, context_result, warnings, start_time)
+                else:
+                    response, step_warnings = await step_function(request)
+                    warnings.extend(step_warnings)
+                
+                if response:
+                    final_response = response
+                    break
             
-            # Step 4: Evaluate reuse potential with similar analyses
-            await send_analysis_progress("Evaluating reuse potential with similar analyses", step="reuse_evaluation")
-            reuse_response, reuse_warnings = await self._evaluate_reuse_potential(request, context_result, expanded_query)
-            warnings.extend(reuse_warnings)
-            if reuse_response:
-                return reuse_response
-            # Step 5: Execute analysis using either direct mode or code prompt builder
-            await send_analysis_progress("Building new analysis with AI models", step="analysis_generation")
-            analysis_response = await self._build_analysis(request, expanded_query, context_result)
-            if not analysis_response:
-                raise RuntimeError("Analysis builder failed")
-            # Step 6: Process and save analysis results
-            if analysis_response["success"]:
-                await send_analysis_progress("Processing and saving analysis results", step="analysis_processing")
-                analysis_id, processing_warnings = await self._process_and_save_analysis(request, analysis_response["data"])
-                warnings.extend(processing_warnings)
-                if not analysis_id:
-                    raise RuntimeError("Failed to process and save analysis")
-                # Step 7: Create execution and final response
-                await send_analysis_progress("Creating execution and finalizing response", step="execution_creation")
-                final_response = await self._create_final_response(request, analysis_response["data"], analysis_id, warnings, start_time)
+            # If no response was generated, something went wrong
+            if not final_response:
+                raise RuntimeError("Pipeline completed without generating a response")
+            
+            # Save the message to database now that we have the final response
+            if final_response and final_response.success and final_response.data:
+                response_data = final_response.data
                 
-                # Send pipeline completion event
-                await send_analysis_success("Analysis pipeline completed successfully", 
-                                          step="pipeline_complete", 
-                                          processing_time=time.time() - start_time)
+                # Update message status based on analysis completion and execution submission
+                status = MessageStatus.ANALYSIS_COMPLETED
+                if response_data.get("executionId"):
+                    status = MessageStatus.EXECUTION_QUEUED
                 
-                return final_response
-            else:
-                raise RuntimeError(analysis_response.get("error", "Unknown analysis error"))
+                # Add status to metadata
+                metadata = response_data.get("metadata", {})
+                metadata["status"] = status
+                
+                await self._update_message_only(
+                    response_type=response_data.get("response_type", "script_generation"),
+                    message_content=response_data.get("content", ""),
+                    analysis_id=response_data.get("analysisId"),
+                    execution_id=response_data.get("executionId"),
+                    metadata=metadata,
+                    cache_output=True
+                )
+            
+            return final_response
         except Exception as e:
             self.logger.error(f"❌ Analysis endpoint error: {e}", exc_info=True)
             
@@ -200,10 +227,71 @@ class AnalysisPipelineService:
                                      error=str(e), 
                                      processing_time=time.time() - start_time)
             
+            # Update the message with error information
+            error_message = "We ran into an issue and couldn't answer your question. Please try again."
+            try:
+                await self._update_message_only(
+                    response_type=None,  # No analysis was completed
+                    message_content=error_message,
+                    metadata={
+                        "status": MessageStatus.ANALYSIS_FAILED,
+                        "error": error_message,
+                        "internal_error": str(e),
+                        "processing_time": time.time() - start_time,
+                        "failed_at": datetime.now().isoformat()
+                    }
+                )
+            except Exception as update_error:
+                self.logger.error(f"❌ Failed to update message with error: {update_error}")
+            
             return await self._error_response(
-                user_message="We ran into an issue and couldn't answer your question. Please try again.",
+                user_message=error_message,
                 internal_error=str(e)
             )
+    
+    # === PIPELINE STEP WRAPPERS ===
+    
+    async def _step_check_cache(self, request: QuestionRequest):
+        """Step wrapper for cache checking"""
+        return await self._check_message_cache(request)
+    
+    async def _step_context_search(self, request: QuestionRequest):
+        """Step wrapper for context search"""
+        return await self._perform_context_search(request)
+    
+    async def _step_handle_confirmation(self, request: QuestionRequest, context_result: Dict):
+        """Step wrapper for confirmation handling"""
+        response = await self._handle_confirmation_requests(request, context_result)
+        return response  # This returns response or None
+    
+    async def _step_evaluate_reuse(self, request: QuestionRequest, context_result: Dict, expanded_query: str):
+        """Step wrapper for reuse evaluation"""
+        return await self._evaluate_reuse_potential(request, context_result, expanded_query)
+    
+    async def _step_build_analysis(self, request: QuestionRequest, expanded_query: str, context_result: Dict, warnings: list, start_time: float):
+        """Step wrapper for building new analysis - this is the final step that always returns a response"""
+        analysis_response = await self._build_analysis(request, expanded_query, context_result)
+        if not analysis_response:
+            raise RuntimeError("Analysis builder failed")
+        
+        if analysis_response["success"]:
+            await send_analysis_progress("Processing and saving analysis results", step="analysis_processing")
+            analysis_id, processing_warnings = await self._process_and_save_analysis(request, analysis_response["data"])
+            warnings.extend(processing_warnings)
+            if not analysis_id:
+                raise RuntimeError("Failed to process and save analysis")
+            
+            await send_analysis_progress("Creating execution and finalizing response", step="execution_creation")
+            final_response = await self._create_final_response(request, analysis_response["data"], analysis_id, warnings, start_time)
+            
+            await send_analysis_success("Analysis pipeline completed successfully", 
+                                      step="pipeline_complete", 
+                                      processing_time=time.time() - start_time)
+            
+            return final_response
+        else:
+            raise RuntimeError(analysis_response.get("error", "Unknown analysis error"))
+    
     # === PIPELINE STEPS ===
 
     async def _check_message_cache(self, request: QuestionRequest) -> Tuple[Optional[AnalysisResponse], List]:
@@ -233,14 +321,14 @@ class AnalysisPipelineService:
                 original_content = cached_message_data.get("content", "Analysis completed")
                 cached_content = f"[Previously analyzed] This question has been analyzed before. Here are the insights:\\n\\n{original_content}"
                 
-                response = await self._update_message_with_response(
+                response = await self._create_analysis_response(
                     response_type="cache_hit",
                     message_content=cached_content,
                     analysis_id=cached_message_data.get("analysis_id"),
                     execution_id=cached_message_data.get("execution_id"),
                     metadata={
                         "cache_hit": True,
-                    },
+                    }
                 )
                 return response, warnings
         except Exception as e:
@@ -285,7 +373,7 @@ class AnalysisPipelineService:
         if context_result.get("is_meaningless"):
             error_message = context_result.get("message") or "I need more details to help you. Please tell me what you'd like to analyze."
             
-            response = await self._update_message_with_response(
+            response = await self._create_analysis_response(
                 response_type="meaningless",
                 message_content=error_message,
                 metadata={"is_meaningless": True}
@@ -304,7 +392,7 @@ class AnalysisPipelineService:
         
         if context_result.get("needs_confirmation") or context_result.get("needs_clarification"):
             response_type = "needs_clarification" if context_result.get("needs_clarification") else "needs_confirmation"
-            return await self._update_message_with_response(
+            return await self._create_analysis_response(
                 response_type=response_type,
                 message_content=context_result.get("message", "Please confirm if this interpretation is correct."),
                 metadata={
@@ -375,13 +463,12 @@ class AnalysisPipelineService:
                     if warnings:
                         msg_metadata["warnings"] = warnings
                     
-                    response = await self._update_message_with_response(
+                    response = await self._create_analysis_response(
                         response_type="reuse_decision",
                         message_content=reuse_decision.get('analysis_description', ''),
                         analysis_id=analysis_id,
                         execution_id=execution_id,
-                        metadata=msg_metadata,
-                        cache_output=True,
+                        metadata=msg_metadata
                     )
                     return response, warnings
                 else:
@@ -490,7 +577,7 @@ class AnalysisPipelineService:
         
         try:
             
-            response_type = analysis_data.get("response_type")
+            response_type = analysis_data.get("response_type", "script_generation")
             analysis_result = analysis_data.get("analysis_result", {})
             
             # Extract consistent fields from both reuse and script generation responses
@@ -570,7 +657,7 @@ class AnalysisPipelineService:
         user_id = request.user_id if hasattr(request, 'user_id') and request.user_id else "anonymous"
         session_id = request.session_id
         
-        response_type = analysis_data.get("response_type")
+        response_type = analysis_data.get("response_type", "script_generation")
         analysis_result = analysis_data.get("analysis_result", {})
         
         # Extract consistent fields from both reuse and script generation responses
@@ -578,7 +665,7 @@ class AnalysisPipelineService:
         execution_params = analysis_result.get("execution", {})
         analysis_description = analysis_result.get("analysis_description", "")
         
-        # Submit execution
+        # Submit execution (CRITICAL - must succeed)
         execution_id = await self._submit_execution(
             analysis_id=analysis_id,
             question=request.question,
@@ -586,11 +673,11 @@ class AnalysisPipelineService:
         )
         
         if not execution_id:
-            execution_id = f"exec_{int(time.time())}"  # Fallback
+            raise RuntimeError("Failed to submit execution - this is a critical error")
         
         # Build metadata with essential data for UI reconstruction
         msg_metadata = {
-            "analysis_type": response_type,
+            "response_type": response_type,
             "script_name": script_name,
             "execution": execution_params,
             "processing_time": time.time() - start_time,
@@ -600,13 +687,13 @@ class AnalysisPipelineService:
         if warnings:
             msg_metadata["warnings"] = warnings
         
-        response = await self._update_message_with_response(
+        # Create the response object (message will be saved later in main pipeline)
+        response = await self._create_analysis_response(
             response_type=response_type,
             message_content=analysis_description,
             analysis_id=analysis_id,
             execution_id=execution_id,
-            metadata=msg_metadata,
-            cache_output=True,
+            metadata=msg_metadata
         )
         
         return response
@@ -637,6 +724,7 @@ class AnalysisPipelineService:
             
             user_id = get_user_id()
             session_id = get_session_id()
+            message_id = get_message_id()
 
             # Log execution start in audit service
             execution_id = await self.audit_service.log_execution_start(
@@ -658,7 +746,8 @@ class AnalysisPipelineService:
                     user_id=user_id,
                     execution_params=execution_params,
                     priority=1,  # High priority for user-initiated executions
-                    timeout_seconds=300
+                    timeout_seconds=300,
+                    message_id=message_id
                 )
                 
                 if queue_success:
@@ -681,6 +770,14 @@ class AnalysisPipelineService:
                                           message_content: str, analysis_id: Optional[str] = None, 
                                           execution_id: Optional[str] = None, metadata: Optional[Dict] = None,
                                           cache_output: bool = False) -> AnalysisResponse:
+        """Update message and return AnalysisResponse - for cases where both are needed"""
+        await self._update_message_only(response_type, message_content, analysis_id, execution_id, metadata, cache_output)
+        return await self._create_analysis_response(response_type, message_content, analysis_id, execution_id, metadata)
+    
+    async def _update_message_only(self, response_type: str, 
+                                 message_content: str, analysis_id: Optional[str] = None, 
+                                 execution_id: Optional[str] = None, metadata: Optional[Dict] = None,
+                                 cache_output: bool = False) -> None:
         """
         Update the existing message with the analysis response.
         Since we create an empty message at the beginning, this updates it with the final content.
@@ -691,82 +788,88 @@ class AnalysisPipelineService:
         user_id = get_user_id()
         message_id = get_message_id()
         
-        try:
-            # Create message with response_type and essential metadata only
-            msg_metadata = {"response_type": response_type}
-            if metadata:
-                msg_metadata.update(metadata)
-            
-            # Update the existing message created at the beginning of analysis
-            if message_id:
-                success = await self.chat_history_service.update_assistant_message(
-                    message_id=message_id,
-                    content=message_content,
-                    analysis_id=analysis_id,
-                    execution_id=execution_id,
-                    metadata=msg_metadata,
-                )
-                if success:
-                    self.logger.info(f"✓ Updated {response_type} message in chat history: {message_id}")
-                else:
-                    raise RuntimeError(f"Failed to update message {message_id} - core persistence failed")
+        # Create message with response_type and essential metadata only
+        msg_metadata = {"response_type": response_type}
+        if metadata:
+            msg_metadata.update(metadata)
+        
+        # Update the existing message created at the beginning of analysis
+        if message_id:
+            success = await self.chat_history_service.update_assistant_message(
+                message_id=message_id,
+                content=message_content,
+                analysis_id=analysis_id,
+                execution_id=execution_id,
+                metadata=msg_metadata,
+            )
+            if success:
+                self.logger.info(f"✓ Updated {response_type} message in chat history: {message_id}")
             else:
-                raise RuntimeError("No message_id in context - cannot persist conversation")
-            
-            # Cache the assistant message for future reuse (NON-CRITICAL)
-            if self.cache_service and analysis_id and execution_id and cache_output:
-                try:
-                    message_cache_data = {
-                        "content": message_content,
-                        "analysis_id": analysis_id,
-                        "execution_id": execution_id,
-                        "response_data": metadata.get("response_data", {}) if metadata else {},
-                    }
-                    await self.cache_service.cache_assistant_message(
-                        question=metadata.get("original_query", "") if metadata else "",
-                        user_id=user_id,
-                        message_data=message_cache_data,
-                        ttl_hours=24
-                    )
-                    self.logger.info(f"✓ Cached {response_type} message")
-                except Exception as cache_error:
-                    self.logger.warning(f"⚠️ Failed to cache {response_type} message: {cache_error}")
-            
-            # Link execution to the message it created (NON-CRITICAL - bidirectional link for convenience)
-            if execution_id and self.audit_service and message_id:
-                try:
-                    await self.audit_service.link_execution_to_message(execution_id, message_id)
-                    self.logger.info(f"✓ Linked execution {execution_id} to message {message_id}")
-                except Exception as link_error:
-                    self.logger.warning(f"⚠️ Failed to link execution to message: {link_error}")
-            
-            # Normalize response types for UI - analysis results should all be "analysis"
-            ui_response_type = response_type
-            if response_type in ["reuse_decision", "cache_hit", "analysis"]:
-                ui_response_type = "analysis"
-            
-            response_data = {
-                "message_id": message_id,  # Use message_id from context (original empty message)
-                "session_id": session_id,
-                "content": message_content,
-                "analysisId": analysis_id,
-                "executionId": execution_id,
-                "response_type": ui_response_type,
-                "timestamp": datetime.now().isoformat()
-            }
-            
-            return AnalysisResponse(
-                success=True,
-                data=response_data,
-                timestamp=datetime.now().isoformat()
-            )
-            
-        except Exception as e:
-            self.logger.error(f"❌ Failed to update {response_type} message: {e}")
-            return await self._error_response(
-                user_message="We ran into an issue saving your conversation. Please try again.",
-                internal_error=f"Message update failed: {e}"
-            )
+                raise RuntimeError(f"Failed to update message {message_id} - core persistence failed")
+        else:
+            raise RuntimeError("No message_id in context - cannot persist conversation")
+        
+        # Cache the assistant message for future reuse (NON-CRITICAL)
+        if self.cache_service and analysis_id and execution_id and cache_output:
+            try:
+                message_cache_data = {
+                    "content": message_content,
+                    "analysis_id": analysis_id,
+                    "execution_id": execution_id,
+                    "response_data": metadata.get("response_data", {}) if metadata else {},
+                }
+                await self.cache_service.cache_assistant_message(
+                    question=metadata.get("original_query", "") if metadata else "",
+                    user_id=user_id,
+                    message_data=message_cache_data,
+                    ttl_hours=24
+                )
+                self.logger.info(f"✓ Cached {response_type} message")
+            except Exception as cache_error:
+                self.logger.warning(f"⚠️ Failed to cache {response_type} message: {cache_error}")
+        
+        # Link execution to the message it created (NON-CRITICAL - bidirectional link for convenience)
+        if execution_id and self.audit_service and message_id:
+            try:
+                await self.audit_service.link_execution_to_message(execution_id, message_id)
+                self.logger.info(f"✓ Linked execution {execution_id} to message {message_id}")
+            except Exception as link_error:
+                self.logger.warning(f"⚠️ Failed to link execution to message: {link_error}")
+
+    async def _create_analysis_response(self, response_type: str, 
+                                      message_content: str, analysis_id: Optional[str] = None, 
+                                      execution_id: Optional[str] = None, metadata: Optional[Dict] = None) -> AnalysisResponse:
+        """Create AnalysisResponse object for returning to caller"""
+        # Get context values
+        session_id = get_session_id()
+        message_id = get_message_id()
+        
+        # Add status and error fields for better error handling
+        status = "completed"  # Default for successful responses
+        error_message = None
+        
+        # Normalize analysis types for UI - analysis results should all be "script_generation"
+        ui_analysis_type = response_type
+        if response_type == "analysis":
+            ui_analysis_type = "script_generation"
+        
+        response_data = {
+            "message_id": message_id,  # Use message_id from context (original empty message)
+            "session_id": session_id,
+            "content": message_content,
+            "analysisId": analysis_id,
+            "executionId": execution_id,
+            "response_type": ui_analysis_type,
+            "status": status,
+            "error": error_message,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        return AnalysisResponse(
+            success=True,
+            data=response_data,
+            timestamp=datetime.now().isoformat()
+        )
     
     async def _error_response(self, user_message: str, internal_error: str) -> AnalysisResponse:
         """Create standardized error response using context values"""

@@ -139,15 +139,31 @@ class ChatRepository:
             update_data["analysisId"] = analysis_id
         if execution_id is not None:
             update_data["executionId"] = execution_id
-        if metadata is not None:
-            update_data["metadata"] = metadata
             
         # If ObjectId conversion fails, treat as string
         query = {"messageId": message_id}
+        
+        # Build update operations
+        update_operations = {"$set": update_data}
+        
+        # If metadata is provided, merge it with existing metadata instead of replacing
+        if metadata is not None:
+            # Use MongoDB $mergeObjects to merge metadata fields
+            # First check if message exists and get current metadata
+            existing_message = await self.db.db.chat_messages.find_one(query, {"metadata": 1})
+            
+            if existing_message:
+                existing_metadata = existing_message.get("metadata", {})
+                # Merge existing metadata with new metadata (new metadata takes precedence)
+                merged_metadata = {**existing_metadata, **metadata}
+                update_data["metadata"] = merged_metadata
+            else:
+                # Message doesn't exist or no existing metadata, just use new metadata
+                update_data["metadata"] = metadata
             
         result = await self.db.db.chat_messages.update_one(
             query,
-            {"$set": update_data}
+            update_operations
         )
         
         return result.modified_count > 0
@@ -238,7 +254,7 @@ class ChatRepository:
         return result
     
     async def get_session_with_messages(self, session_id: str, limit: int = 5, offset: int = 0) -> Optional[Dict[str, Any]]:
-        """Get session with paginated messages for resume"""
+        """Get session with paginated messages for resume using efficient aggregation"""
         # Get session document
         session = await self.db.db.chat_sessions.find_one({"sessionId": session_id})
         
@@ -265,15 +281,98 @@ class ChatRepository:
         # Get total message count
         total_messages = await self.db.db.chat_messages.count_documents({"sessionId": session_id})
         
-        # Get messages (newest first, then reverse for correct order)
-        messages = await self.db.db.chat_messages.find({"sessionId": session_id})\
-            .sort("created_at", -1)\
-            .skip(offset)\
-            .limit(limit)\
-            .to_list(limit)
+        # Use aggregation pipeline to join messages with execution and analysis data in single query
+        pipeline = [
+            # Match messages for this session
+            {"$match": {"sessionId": session_id}},
+            
+            # Sort newest first for pagination  
+            {"$sort": {"createdAt": -1}},
+            
+            # Apply pagination
+            {"$skip": offset},
+            {"$limit": limit},
+            
+            # Left join with executions collection
+            {
+                "$lookup": {
+                    "from": "executions",
+                    "localField": "executionId", 
+                    "foreignField": "executionId",
+                    "as": "execution_data"
+                }
+            },
+            
+            # Left join with analyses collection  
+            {
+                "$lookup": {
+                    "from": "analyses",
+                    "localField": "analysisId",
+                    "foreignField": "analysisId", 
+                    "as": "analysis_data"
+                }
+            },
+            
+            # Project final structure with joined data
+            {
+                "$project": {
+                    "messageId": 1,
+                    "role": 1,
+                    "content": 1,
+                    "createdAt": 1,
+                    "analysisId": 1,
+                    "executionId": 1,
+                    "metadata": 1,
+                    "logs": 1,  # Include logs field for progress history
+                    # Include execution data as nested object
+                    "execution": {
+                        "$cond": {
+                            "if": {"$gt": [{"$size": "$execution_data"}, 0]},
+                            "then": {
+                                "executionId": "$executionId",
+                                "status": {"$arrayElemAt": ["$execution_data.status", 0]},
+                                "results": {
+                                    "$cond": {
+                                        "if": {"$eq": [{"$arrayElemAt": ["$execution_data.status", 0]}, "success"]},
+                                        "then": {"$arrayElemAt": ["$execution_data.result", 0]},
+                                        "else": None
+                                    }
+                                }
+                            },
+                            "else": {
+                                "executionId": "$executionId",
+                                "status": None,
+                                "results": None
+                            }
+                        }
+                    },
+                    # Include analysis data if available  
+                    "analysis": {
+                        "$cond": {
+                            "if": {"$gt": [{"$size": "$analysis_data"}, 0]},
+                            "then": {
+                                "llm_response": {"$arrayElemAt": ["$analysis_data.llm_response", 0]},
+                                "question": {"$arrayElemAt": ["$analysis_data.question", 0]}
+                            },
+                            "else": None
+                        }
+                    }
+                }
+            },
+            
+            # Sort by creation time ascending so newest appears last when rendered
+            {"$sort": {"createdAt": 1}}
+        ]
         
-        # Reverse to get chronological order
-        messages.reverse()
+        # Execute aggregation
+        messages_cursor = self.db.db.chat_messages.aggregate(pipeline)
+        messages = await messages_cursor.to_list(limit)
+        
+        # Debug: Log the message ordering
+        if messages:
+            logger.info(f"DEBUG: Retrieved {len(messages)} messages, first: {messages[0].get('createdAt')}, last: {messages[-1].get('createdAt')}")
+            logger.info(f"DEBUG: Message order - first message content: {messages[0].get('content', '')[:50]}...")
+            logger.info(f"DEBUG: Message order - last message content: {messages[-1].get('content', '')[:50]}...")
         
         return {
             "session_id": session.get("sessionId"),
@@ -288,13 +387,17 @@ class ChatRepository:
             "has_older": (offset + limit) < total_messages,
             "messages": [
                 {
-                    "id": msg.get("messageId"),
+                    "messageId": msg.get("messageId"),
                     "role": msg.get("role"),
                     "content": msg.get("content"),
                     "timestamp": msg.get("created_at", "").isoformat() if hasattr(msg.get("created_at"), 'isoformat') else str(msg.get("created_at")),
                     "analysisId": msg.get("analysisId"),
                     "executionId": msg.get("executionId"),
-                    "metadata": msg.get("metadata", {}),  # Return raw metadata instead of transformed uiData
+                    "metadata": msg.get("metadata", {}),
+                    "logs": msg.get("logs", []),  # Include logs for progress history
+                    # Include pre-populated execution and analysis data
+                    "execution": msg.get("execution"),
+                    "analysis": msg.get("analysis")
                 }
                 for msg in messages
             ]

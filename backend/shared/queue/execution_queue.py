@@ -65,6 +65,7 @@ class MongoDBExecutionQueue(ExecutionQueueInterface):
                 "analysis_id": execution_data.get("analysis_id"),
                 "session_id": execution_data.get("session_id"),
                 "user_id": execution_data.get("user_id"),
+                "message_id": execution_data.get("message_id"),
                 "status": "pending",
                 "priority": execution_data.get("priority", 2),  # 1=high, 2=normal, 3=low
                 "created_at": datetime.utcnow(),
@@ -144,14 +145,27 @@ class MongoDBExecutionQueue(ExecutionQueueInterface):
             logger.error(f"❌ Failed to ack execution {execution_id}: {e}")
             return False
     
-    async def nack(self, execution_id: str, error: str, retry: bool = True) -> bool:
-        """Mark execution as failed"""
+    async def nack(self, execution_id: str, error: str, retry: bool = True) -> Dict[str, Any]:
+        """Mark execution as failed
+        
+        Returns:
+            Dict with keys:
+            - success: bool - whether the nack operation succeeded
+            - is_final_attempt: bool - whether this was the final retry attempt
+            - retry_count: int - current retry count
+            - max_retries: int - maximum retries allowed
+        """
         try:
             # Determine if we should retry or mark as permanently failed
             execution = await self.collection.find_one({"execution_id": execution_id})
             if not execution:
                 logger.warning(f"⚠️ Execution not found for nack: {execution_id}")
-                return False
+                return {
+                    "success": False,
+                    "is_final_attempt": True,  # Treat missing execution as final
+                    "retry_count": 0,
+                    "max_retries": 0
+                }
             
             retry_count = execution.get("retry_count", 0)
             max_retries = execution.get("max_retries", 3)
@@ -159,10 +173,12 @@ class MongoDBExecutionQueue(ExecutionQueueInterface):
             if retry and retry_count < max_retries:
                 # Reset to pending for retry
                 new_status = "pending"
+                is_final_attempt = False
                 logger.info(f"🔄 Execution {execution_id} will be retried (attempt {retry_count + 1}/{max_retries})")
             else:
                 # Mark as permanently failed
                 new_status = "failed"
+                is_final_attempt = True
                 logger.warning(f"❌ Execution {execution_id} permanently failed after {retry_count} attempts")
             
             update_result = await self.collection.update_one(
@@ -183,11 +199,21 @@ class MongoDBExecutionQueue(ExecutionQueueInterface):
                 }
             )
             
-            return update_result.modified_count > 0
+            return {
+                "success": update_result.modified_count > 0,
+                "is_final_attempt": is_final_attempt,
+                "retry_count": retry_count,
+                "max_retries": max_retries
+            }
             
         except Exception as e:
             logger.error(f"❌ Failed to nack execution {execution_id}: {e}")
-            return False
+            return {
+                "success": False,
+                "is_final_attempt": True,  # Treat errors as final
+                "retry_count": 0,
+                "max_retries": 0
+            }
     
     async def get_status(self, execution_id: str) -> Dict[str, Any]:
         """Get execution status and logs"""

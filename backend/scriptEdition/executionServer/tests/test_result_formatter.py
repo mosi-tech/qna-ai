@@ -38,7 +38,7 @@ logger = logging.getLogger("result-formatter-test")
 def create_sample_execution_result():
     """Create sample execution result data for testing"""
     return {
-        "analysis_type": "Stock Volatility Analysis",
+        "response_type": "Stock Volatility Analysis",
         "results": {
             "top_volatile_stocks": [
                 {"symbol": "TSLA", "volatility": 0.045, "price": 234.56},
