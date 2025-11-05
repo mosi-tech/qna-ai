@@ -75,7 +75,7 @@ def analyze_question(
         #    }
         #)
         
-        results = {
+        output = {
             "question": "Your question here",
             "analysis_completed": True,
             "parameters_used": {
@@ -90,7 +90,7 @@ def analyze_question(
             }
         }
         
-        return results
+        return output
         
     except Exception as e:
         import traceback
@@ -127,12 +127,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     logging.basicConfig(level=logging.INFO)
-    results = analyze_question(
+    result = analyze_question(
         symbols=args.symbols,
         benchmark_symbol=args.benchmark_symbol
         analysis_period_days=args.analysis_period_days,
     )
-    print(json.dumps(results, indent=2, default=str))
+    print(json.dumps(result, indent=2, default=str))
     
 ```
 

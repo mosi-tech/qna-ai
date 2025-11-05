@@ -140,15 +140,11 @@ async def send_execution_running(message: str = "Analysis execution in progress"
     )
 
 
-async def send_execution_completed(message: str = "Analysis execution completed", results: dict = None, markdown: str = None, execution_time: float = None, **kwargs):
+async def send_execution_completed(message: str = "Analysis execution completed", results: dict = None, **kwargs):
     """Send execution completed status using execution context"""
     extra_data = {}
     if results:
         extra_data["results"] = results
-    if markdown:
-        extra_data["markdown"] = markdown
-    if execution_time:
-        extra_data["execution_time"] = execution_time
         
     await send_execution_progress(
         message=message,

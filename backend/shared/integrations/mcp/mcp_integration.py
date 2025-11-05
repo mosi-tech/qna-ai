@@ -6,7 +6,7 @@ import json
 import logging
 import os
 from typing import Dict, Any, List
-from integrations.mcp.mcp_client import mcp_client, initialize_mcp_client
+from .mcp_client import mcp_client, initialize_mcp_client
 
 logger = logging.getLogger("mcp-integration")
 

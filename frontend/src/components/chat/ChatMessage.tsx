@@ -177,11 +177,7 @@ export default function ChatMessage({
           </div>
           <div className="flex-1 max-w-4xl">
             <AnalysisResult
-              messageId={message.id}
-              question={message.content}
-              results={message.data}
-              analysisId={message.analysisId}
-              executionId={message.executionId}
+              message={message}
             />
           </div>
         </div>
@@ -231,11 +227,7 @@ export default function ChatMessage({
         </div>
         <div className="flex-1 max-w-4xl">
           <AnalysisResult
-            messageId={message.id}
-            question={message.content}
-            results={message.data}
-            analysisId={message.analysisId}
-            executionId={message.executionId}
+            message={message}
           />
         </div>
       </div>

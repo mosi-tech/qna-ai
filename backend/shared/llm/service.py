@@ -8,6 +8,8 @@ from typing import Dict, Any, Optional, List
 from .providers import create_provider, LLMProvider
 from .utils import LLMConfig, validate_llm_config
 from .cache import ProviderCacheManager
+from .mcp_tools import _mcp_loader
+
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +55,6 @@ class LLMService:
             service_name = self.config.service_name or "default"
             
             # Use simplified MCP loader with service-specific configuration
-            from .mcp_tools import _mcp_loader
             self.default_tools = await _mcp_loader.load_tools_for_service(service_name)
             logger.info(f"🔧 Loaded {len(self.default_tools)} MCP tools for service '{service_name}'")
             
@@ -61,7 +62,6 @@ class LLMService:
             self.provider.set_tools(self.default_tools)
             
             # Set filtered MCP config on provider for CLI access
-            from .mcp_tools import _mcp_loader
             filtered_config = _mcp_loader.get_filtered_mcp_config(service_name)
             if filtered_config:
                 self.provider.set_mcp_config(filtered_config, service_name)

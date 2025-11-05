@@ -176,8 +176,6 @@ class ExecutionQueueWorker(BaseQueueWorker):
                 # CRITICAL: Send SSE completion update with results via queue
                 await send_execution_completed(
                     results=result_output,
-                    markdown=result_output.get("markdown"),
-                    execution_time=result.get('execution_time', 0)
                 )
                 logger.info(f"📡 Sent SSE completed status via queue for session: {session_id} and execution: {execution_id}")
         

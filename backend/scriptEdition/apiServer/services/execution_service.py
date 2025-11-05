@@ -165,7 +165,7 @@ class ExecutionService:
         except Exception as e:
             self.logger.error(f"❌ Execution service error: {e}")
             if session_id:
-                await progress_error(session_id, f"Execution error: {str(e)}")
+                await send_progress_event(session_id, f"Execution error: {str(e)}")
                 # Send execution failed status update via SSE
                 if execution_id:
                     await send_progress_event(session_id, {"type": "execution_status", "execution_id": execution_id, "analysis_id": analysis_id, "status": "failed", "level": "error", "message": f"Service error: {str(e)}"})
