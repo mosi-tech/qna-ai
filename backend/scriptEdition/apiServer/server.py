@@ -107,7 +107,8 @@ async def lifespan(app: FastAPI):
             analysis_persistence_service=analysis_persistence_service,
             audit_service=audit_service,
             execution_service=execution_service,
-            session_manager=session_manager
+            session_manager=session_manager,
+            analysis_pipeline_service=None  # Analysis is handled by queue worker
         )
         logger.info("  → Creating ExecutionRoutes instance...")
         execution_routes = ExecutionRoutes()
@@ -213,6 +214,18 @@ def create_app() -> FastAPI:
     async def analyze_question_simple(request: QuestionRequest):
         """SIMPLE VERSION - Analyze question without session locking for debugging"""
         return await app.state.api_routes.analyze_question_simple(request)
+    
+    @app.post("/chat", response_model=AnalysisResponse)
+    async def chat_with_analysis(request: QuestionRequest):
+        """
+        Hybrid chat + analysis endpoint (GitHub Issue #122)
+        
+        Intelligent routing between:
+        - Educational financial chat responses
+        - Analysis suggestions and confirmations  
+        - Direct analysis execution when needed
+        """
+        return await app.state.api_routes.chat_with_analysis(request)
     
     @app.post("/test-immediate")
     async def test_immediate(request: QuestionRequest):

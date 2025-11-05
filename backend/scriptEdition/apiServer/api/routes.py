@@ -39,7 +39,8 @@ class APIRoutes:
         analysis_persistence_service: AnalysisPersistenceService = None,
         audit_service: AuditService = None,
         execution_service: ExecutionService = None,
-        session_manager = None
+        session_manager = None,
+        analysis_pipeline_service = None
     ):
         self.chat_history_service = chat_history_service
         self.cache_service = cache_service
@@ -47,6 +48,16 @@ class APIRoutes:
         self.audit_service = audit_service
         self.execution_service = execution_service
         self.session_manager = session_manager
+        self.analysis_pipeline_service = analysis_pipeline_service
+        
+        # Initialize hybrid message handler for chat + analysis (GitHub Issue #122)
+        self.hybrid_handler = None
+        if chat_history_service:
+            from shared.analyze.services.hybrid_message_handler import HybridMessageHandler
+            self.hybrid_handler = HybridMessageHandler(
+                chat_history_service=chat_history_service,
+                analysis_pipeline_service=analysis_pipeline_service
+            )
         
         # Initialize data transformer for clean transformation operations
         if chat_history_service and hasattr(chat_history_service, 'data_transformer'):
@@ -556,6 +567,168 @@ class APIRoutes:
             
             return await self._error_response(
                 user_message="We ran into an issue and couldn't queue your analysis. Please try again.",
+                internal_error=str(e),
+                session_id=session_id,
+                user_id=user_id
+            )
+    
+    async def chat_with_analysis(self, request: QuestionRequest) -> AnalysisResponse:
+        """
+        Hybrid chat + analysis endpoint (GitHub Issue #122)
+        
+        Routes user messages through financial analyst chat that can:
+        1. Provide educational responses about financial topics
+        2. Suggest relevant analysis when appropriate  
+        3. Queue analysis when user confirms or directly requests it
+        4. Handle follow-up questions naturally
+        """
+        user_id = request.user_id if hasattr(request, 'user_id') and request.user_id else "anonymous"
+        session_id = request.session_id
+        user_message = request.question
+        
+        try:
+            logger.info(f"💬📊 Hybrid chat request: {user_message[:100]}...")
+            
+            # Validate session
+            if not session_id:
+                logger.error(f"❌ No session_id provided in hybrid request")
+                raise HTTPException(400, "Session ID is required. Please start a new conversation.")
+            
+            # Check if hybrid handler is available
+            if not self.hybrid_handler:
+                logger.error("❌ Hybrid message handler not initialized")
+                raise HTTPException(500, "Chat functionality is currently unavailable")
+            
+            # Process message through hybrid handler
+            start_time = time.time()
+            hybrid_response = await self.hybrid_handler.handle_message(
+                user_message=user_message,
+                session_id=session_id,
+                user_id=user_id
+            )
+            processing_time = time.time() - start_time
+            
+            logger.info(f"⏱️ Hybrid processing: {processing_time:.3f}s, Type: {hybrid_response.response_type}")
+            
+            # Handle different response types
+            if hybrid_response.response_type in ["chat", "educational_chat", "follow_up_chat"]:
+                # Pure chat response - return immediately
+                return AnalysisResponse(
+                    success=True,
+                    message_id=hybrid_response.message_id,
+                    session_id=session_id,
+                    content=hybrid_response.content,
+                    response_type=hybrid_response.response_type,
+                    status="completed",
+                    metadata=hybrid_response.metadata,
+                    timestamp=datetime.now().isoformat()
+                )
+            
+            elif hybrid_response.response_type == "analysis_queued":
+                # Queue analysis and return pending response
+                if hybrid_response.should_queue_analysis and hybrid_response.analysis_question:
+                    
+                    # Import queue here to avoid circular imports
+                    from shared.queue.analysis_queue import get_analysis_queue
+                    analysis_queue = get_analysis_queue()
+                    
+                    # Create analysis job
+                    job_id = f"hybrid_{session_id}_{int(time.time())}"
+                    
+                    # Queue the analysis
+                    queued = await analysis_queue.enqueue_analysis(
+                        job_id=job_id,
+                        session_id=session_id,
+                        user_question=hybrid_response.analysis_question,
+                        message_id=hybrid_response.message_id,
+                        priority="normal"
+                    )
+                    
+                    if queued:
+                        logger.info(f"✅ Analysis queued: {job_id}")
+                        
+                        # Send progress notification
+                        await send_execution_queued(
+                            session_id=session_id,
+                            message_id=hybrid_response.message_id,
+                            job_id=job_id
+                        )
+                        
+                        return AnalysisResponse(
+                            success=True,
+                            message_id=hybrid_response.message_id,
+                            session_id=session_id,
+                            content=hybrid_response.content,
+                            response_type="analysis_queued",
+                            status="queued",
+                            metadata={
+                                **(hybrid_response.metadata or {}),
+                                "job_id": job_id,
+                                "analysis_question": hybrid_response.analysis_question
+                            },
+                            timestamp=datetime.now().isoformat()
+                        )
+                    else:
+                        logger.error(f"❌ Failed to queue analysis for job: {job_id}")
+                        error_msg = "I apologize, but I'm unable to run the analysis right now. Please try again later."
+                        
+                        # Add error message to chat
+                        error_message_id = await self.chat_history_service.add_assistant_message(
+                            session_id=session_id,
+                            message=error_msg,
+                            response_type="error",
+                            in_reply_to=hybrid_response.message_id
+                        )
+                        
+                        return AnalysisResponse(
+                            success=False,
+                            message_id=error_message_id,
+                            session_id=session_id,
+                            content=error_msg,
+                            error="Failed to queue analysis",
+                            timestamp=datetime.now().isoformat()
+                        )
+                else:
+                    # Analysis queued but no question provided - shouldn't happen
+                    logger.error("❌ Analysis queued but no question provided")
+                    return AnalysisResponse(
+                        success=False,
+                        session_id=session_id,
+                        content="There was an issue processing your analysis request.",
+                        error="No analysis question provided",
+                        timestamp=datetime.now().isoformat()
+                    )
+            
+            elif hybrid_response.response_type == "error":
+                # Error response
+                return AnalysisResponse(
+                    success=False,
+                    session_id=session_id,
+                    content=hybrid_response.content,
+                    error="Hybrid processing error",
+                    timestamp=datetime.now().isoformat()
+                )
+            
+            else:
+                # Unknown response type
+                logger.error(f"❌ Unknown hybrid response type: {hybrid_response.response_type}")
+                return AnalysisResponse(
+                    success=False,
+                    session_id=session_id,
+                    content="I encountered an unexpected error. Please try again.",
+                    error=f"Unknown response type: {hybrid_response.response_type}",
+                    timestamp=datetime.now().isoformat()
+                )
+        
+        except HTTPException:
+            raise  # Re-raise HTTP exceptions
+        except Exception as e:
+            logger.error(f"❌ Hybrid chat error: {e}")
+            # Ensure error is saved to chat history
+            await self._ensure_error_saved(user_message, session_id, user_id)
+            
+            return await self._error_response(
+                user_message="I apologize, but I encountered an error. Please try again.",
                 internal_error=str(e),
                 session_id=session_id,
                 user_id=user_id
