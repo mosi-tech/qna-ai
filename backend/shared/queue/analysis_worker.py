@@ -25,6 +25,7 @@ from ..analyze import ReuseEvaluator as ReuseEvaluatorService
 from ..analyze import CodePromptBuilderService
 # Import required services and pipeline
 from ..analyze.services.analysis_pipeline import create_analysis_pipeline
+from ..analyze.services.verification.verification_service import StandaloneVerificationService
 
 from ..services.search import SearchService
 from ..services.chat_service import ChatHistoryService
@@ -97,6 +98,9 @@ class AnalysisQueueWorker(BaseQueueWorker):
             code_prompt_builder = CodePromptBuilderService()
             audit_service = AuditService(repo_manager)
             
+            # Initialize verification service for reuse verification (Issue #117)
+            verification_service = self._initialize_verification_service()
+            
             # Create session manager for dialogue factory
             from shared.analyze.dialogue.conversation.session_manager import SessionManager
             session_manager = SessionManager(chat_history_service=chat_history_service)
@@ -111,7 +115,8 @@ class AnalysisQueueWorker(BaseQueueWorker):
                 reuse_evaluator=reuse_evaluator,
                 code_prompt_builder=code_prompt_builder,
                 session_manager=session_manager,
-                audit_service=audit_service
+                audit_service=audit_service,
+                verification_service=verification_service  # Add verification service (Issue #117)
             )
             
             logger.info("✅ Analysis pipeline fully initialized with all services")
@@ -119,6 +124,36 @@ class AnalysisQueueWorker(BaseQueueWorker):
         except Exception as e:
             logger.error(f"❌ Failed to initialize analysis pipeline: {e}")
             raise  # Re-raise to stop worker startup
+    
+    def _initialize_verification_service(self) -> Optional[StandaloneVerificationService]:
+        """
+        Initialize verification service for reuse verification (GitHub Issue #117)
+        
+        Returns:
+            StandaloneVerificationService instance or None if initialization fails
+        """
+        try:
+            # Use a simple verification prompt template
+            verification_prompt_template = "Before we proceed, I need to verify something important:\n\n**Question**: {question}\n\nPlease check if the script correctly answers the question."
+            
+            verification_service = StandaloneVerificationService(verification_prompt_template)
+            
+            # Check if any verification models are available
+            available_services = len([s for s in verification_service.llm_services if s is not None])
+            total_services = len(verification_service.llm_services)
+            
+            if available_services > 0:
+                configs_summary = [f"{c['provider']}/{c['model']}" for c in verification_service.verification_configs]
+                logger.info(f"✅ Verification service initialized for reuse verification: {available_services}/{total_services} services available")
+                logger.debug(f"Verification configs: {configs_summary}")
+                return verification_service
+            else:
+                logger.warning(f"⚠️ Verification service initialized but no LLM services available - reuse verification will be skipped")
+                return None
+                
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize verification service: {e}")
+            return None  # Return None so pipeline can still work without verification
     
     async def _dequeue_item(self):
         """Dequeue an analysis from the queue"""
