@@ -323,6 +323,7 @@ class ChatRepository:
                     "analysisId": 1,
                     "executionId": 1,
                     "metadata": 1,
+                    "logs": 1,  # Include logs field for progress history
                     # Include execution data as nested object
                     "execution": {
                         "$cond": {
@@ -393,6 +394,7 @@ class ChatRepository:
                     "analysisId": msg.get("analysisId"),
                     "executionId": msg.get("executionId"),
                     "metadata": msg.get("metadata", {}),
+                    "logs": msg.get("logs", []),  # Include logs for progress history
                     # Include pre-populated execution and analysis data
                     "execution": msg.get("execution"),
                     "analysis": msg.get("analysis")

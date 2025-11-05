@@ -141,6 +141,10 @@ export default function ChatMessage({
 
   // Show progress for pending/running states
   if (message.status === 'pending' || message.status === 'running') {
+    // Combine historical logs from message with live progress logs
+    const historicalLogs = (message as any).logs || [];
+    const combinedLogs = [...historicalLogs, ...progressLogs];
+    
     return (
       <div className="flex gap-3 w-full">
         <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
@@ -156,7 +160,7 @@ export default function ChatMessage({
                 <p className="text-sm text-gray-600">{message.content}</p>
               </div>
               <StepProgressDisplay
-                logs={progressLogs}
+                logs={combinedLogs}
                 isProcessing={true}
               />
             </div>
@@ -215,23 +219,6 @@ export default function ChatMessage({
         </div>
       );
     }
-  }
-
-  // Handle legacy 'results' type messages (backward compatibility)
-  // BUT respect current status - if failed, let error handling take precedence
-  if (message.type === 'results' && message.status !== 'failed' && message.data?.status !== 'failed') {
-    return (
-      <div className="flex gap-3 w-full">
-        <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-          <span className="text-green-600 text-sm">✓</span>
-        </div>
-        <div className="flex-1 max-w-4xl">
-          <AnalysisResult
-            message={message}
-          />
-        </div>
-      </div>
-    );
   }
 
   // Default: simple AI message

@@ -191,6 +191,21 @@ class DataTransformer:
                 **ui_data,  # Flatten UI data properties directly into clean_msg
             })
             
+            # Add logs for pending/running messages so frontend can display progress history
+            if ui_data.get("status") in ["pending", "running", "queued"]:
+                logs = msg.get("logs", [])
+                if logs:
+                    # Clean logs - keep only essential fields for frontend
+                    clean_logs = []
+                    for log in logs:
+                        clean_log = {
+                            "message": log.get("message"),
+                            "timestamp": log.get("timestamp"),
+                            "level": log.get("level", "info")
+                        }
+                        clean_logs.append(clean_log)
+                    clean_msg["logs"] = clean_logs
+            
         elif response_type == "clarification":
             # For clarification: different structure with original/expanded queries
             clean_msg.update({

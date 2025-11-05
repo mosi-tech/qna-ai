@@ -58,12 +58,15 @@ function ChatPageContent() {
           setSessionNotFound(true);
           return;
         }
-        const loadedMessages = (sessionDetail.messages || []).map((msg: any, idx: number) => ({
-          id: msg.id || `${session_id}-${idx}-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
-          type: (msg.role === 'user' ? 'user' : 'ai') as ChatMessage['type'],
-          ...msg,  // Flatten all message properties directly
-          timestamp: new Date(msg.timestamp || Date.now()),
-        }));
+        const loadedMessages = (sessionDetail.messages || []).map((msg: any, idx: number) => {
+          console.log(`[DEBUG] Loading message ${idx}:`, msg);
+          return {
+            id: msg.id || `${session_id}-${idx}-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+            type: (msg.role === 'user' ? 'user' : 'ai') as ChatMessage['type'],
+            ...msg,  // Flatten all message properties directly
+            timestamp: new Date(msg.timestamp || Date.now()),
+          };
+        });
 
         if (loadedMessages.length > 0) {
           setMessages(loadedMessages);
@@ -82,6 +85,7 @@ function ChatPageContent() {
 
     loadInitialMessages();
   }, [session_id, getSessionDetail, setMessages]);
+
 
   // Helper functions for handleSendMessage
   const setupAnalysisRequest = (userMessage: string) => {
@@ -196,6 +200,7 @@ function ChatPageContent() {
 
     const resultMsg = addMessage({
       type: 'results',
+      //TODO: check if we need backfill
       content: response.data.content || response.data.metadata?.analysis_summary || `Analysis complete for: ${userMessage}`,
       ...response.data,
     });
@@ -205,7 +210,7 @@ function ChatPageContent() {
 
     if (backendMessageId) {
       registerAnalysisCompleteCallback(backendMessageId, (status: 'completed' | 'failed', data?: any) => {
-        handleExecutionUpdate(resultMsg.id, {
+        handleExecutionUpdate(backendMessageId, {
           details: {
             ...data.details,
             content: data?.message,
@@ -373,6 +378,10 @@ function ChatPageContent() {
       messageUpdate.canExport = true;
     }
 
+    if (details.results) {
+      messageUpdate.results = details.results
+    }
+
     // Log the mapped message update
     console.log('%cMapped Message Update:', 'font-weight: bold; color: green;', messageUpdate);
 
@@ -397,6 +406,51 @@ function ChatPageContent() {
 
     updateMessage(messageId, messageUpdate);
   }, [updateMessage]);
+
+  // Re-register SSE callbacks for pending messages on page refresh
+  useEffect(() => {
+    console.log(`[DEBUG] Callback registration effect triggered: messages.length=${messages.length}, isConnected=${isConnected}`);
+    
+    if (!messages.length || !isConnected) {
+      console.log(`[DEBUG] Skipping callback registration - messages=${messages.length}, connected=${isConnected}`);
+      return;
+    }
+
+    // Add a small delay to ensure SSE connection is fully established
+    const timeoutId = setTimeout(() => {
+      console.log(`[DEBUG] Starting callback registration after delay...`);
+      
+      let registeredCount = 0;
+      messages.forEach((message: ChatMessage) => {
+        // Check if message is in pending status and has backend ID for callback registration
+        const isPending = message.status && ['pending', 'running', 'queued'].includes(message.status);
+        const backendMessageId = (message as any).id;
+        
+        console.log(`[DEBUG] Message ${message.id}: status=${message.status}, isPending=${isPending}, backendId=${backendMessageId}`, message);
+
+        if (isPending && backendMessageId) {
+          console.log(`[SSE] Re-registering callback for pending message: ${backendMessageId}`);
+          registeredCount++;
+          
+          registerAnalysisCompleteCallback(backendMessageId, (status: 'completed' | 'failed', data?: any) => {
+            console.log(`[SSE] Callback triggered for message ${backendMessageId} with status: ${status}`);
+            handleExecutionUpdate(backendMessageId, {
+              details: {
+                ...data?.details,
+                content: data?.message,
+                error: data?.error,
+                message_id: backendMessageId
+              }
+            });
+          });
+        }
+      });
+      
+      console.log(`[DEBUG] Registered ${registeredCount} callbacks`);
+    }, 500); // Wait 500ms for SSE connection to stabilize
+
+    return () => clearTimeout(timeoutId);
+  }, [messages, isConnected, registerAnalysisCompleteCallback, handleExecutionUpdate]);
 
   const handleSelectSession = useCallback(async (selectedSessionId: string) => {
     try {

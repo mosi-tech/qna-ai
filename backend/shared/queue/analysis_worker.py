@@ -197,7 +197,6 @@ class AnalysisQueueWorker(BaseQueueWorker):
             pipeline_data = getattr(pipeline_result, "data", {})
             response_type = pipeline_data.get("response_type", "unknown") if isinstance(pipeline_data, dict) else "unknown"
             
-            print(pipeline_data)
             
             # Build final result for queue
             result = {
@@ -217,11 +216,11 @@ class AnalysisQueueWorker(BaseQueueWorker):
                 "type": "analysis_progress",
                 "job_id": job_id,
                 "message_id": message_id,
-                "status": "completed",
-                "message": result.get("content"),
+                "status":  "pending", # Analysis done, but execution still pending
+                "message": "Analysis completed successfully",
                 "level": "success",
                 "log_to_message": True if message_id else False,
-                "response_type": response_type,
+                "response_type": "script_generation", #This is SSE event so we 
                 "analysis_id": result.get("analysis_id"),
                 "execution_id": result.get("execution_id")
             })
