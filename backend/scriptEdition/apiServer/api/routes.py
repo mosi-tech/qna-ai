@@ -56,7 +56,7 @@ class APIRoutes:
             from shared.analyze.services.hybrid_message_handler import HybridMessageHandler
             self.hybrid_handler = HybridMessageHandler(
                 chat_history_service=chat_history_service,
-                analysis_pipeline_service=analysis_pipeline_service
+                analyze_question_callable=self.analyze_question  # Pass existing analyze_question method
             )
         
         # Initialize data transformer for clean transformation operations
@@ -574,20 +574,20 @@ class APIRoutes:
     
     async def chat_with_analysis(self, request: QuestionRequest) -> AnalysisResponse:
         """
-        Hybrid chat + analysis endpoint (GitHub Issue #122)
+        Hybrid chat + analysis endpoint (GitHub Issue #122) - FIXED VERSION
         
-        Routes user messages through financial analyst chat that can:
-        1. Provide educational responses about financial topics
-        2. Suggest relevant analysis when appropriate  
-        3. Queue analysis when user confirms or directly requests it
-        4. Handle follow-up questions naturally
+        Uses the corrected V2 hybrid handler that:
+        1. Returns chat response immediately
+        2. Flags when analysis should be triggered
+        3. Uses existing analyze_question() flow instead of manual queueing
+        4. Follows proper BaseService patterns
         """
         user_id = request.user_id if hasattr(request, 'user_id') and request.user_id else "anonymous"
         session_id = request.session_id
         user_message = request.question
         
         try:
-            logger.info(f"💬📊 Hybrid chat request: {user_message[:100]}...")
+            logger.info(f"💬📊 Hybrid chat V2 request: {user_message[:100]}...")
             
             # Validate session
             if not session_id:
@@ -599,7 +599,7 @@ class APIRoutes:
                 logger.error("❌ Hybrid message handler not initialized")
                 raise HTTPException(500, "Chat functionality is currently unavailable")
             
-            # Process message through hybrid handler
+            # Process message through hybrid handler V2
             start_time = time.time()
             hybrid_response = await self.hybrid_handler.handle_message(
                 user_message=user_message,
@@ -608,122 +608,56 @@ class APIRoutes:
             )
             processing_time = time.time() - start_time
             
-            logger.info(f"⏱️ Hybrid processing: {processing_time:.3f}s, Type: {hybrid_response.response_type}")
+            logger.info(f"⏱️ Hybrid V2 processing: {processing_time:.3f}s, Type: {hybrid_response.response_type}")
             
-            # Handle different response types
-            if hybrid_response.response_type in ["chat", "educational_chat", "follow_up_chat"]:
-                # Pure chat response - return immediately
-                return AnalysisResponse(
-                    success=True,
-                    message_id=hybrid_response.message_id,
+            # Create base response data from hybrid response
+            response_data = {
+                "message_id": hybrid_response.message_id,
+                "session_id": session_id,
+                "content": hybrid_response.content,
+                "response_type": hybrid_response.response_type,
+                "metadata": hybrid_response.metadata or {}
+            }
+            
+            # Check if analysis should be triggered (FIXED APPROACH)
+            if hybrid_response.should_trigger_analysis and hybrid_response.analysis_question:
+                logger.info(f"🔄 Triggering analysis internally: {hybrid_response.analysis_question[:50]}...")
+                
+                # Create analysis request for internal call to existing analyze_question()
+                analysis_request = QuestionRequest(
+                    question=hybrid_response.analysis_question,
                     session_id=session_id,
-                    content=hybrid_response.content,
-                    response_type=hybrid_response.response_type,
-                    status="completed",
-                    metadata=hybrid_response.metadata,
-                    timestamp=datetime.now().isoformat()
+                    user_id=user_id
                 )
-            
-            elif hybrid_response.response_type == "analysis_queued":
-                # Queue analysis and return pending response
-                if hybrid_response.should_queue_analysis and hybrid_response.analysis_question:
-                    
-                    # Import queue here to avoid circular imports
-                    from shared.queue.analysis_queue import get_analysis_queue
-                    analysis_queue = get_analysis_queue()
-                    
-                    # Create analysis job
-                    job_id = f"hybrid_{session_id}_{int(time.time())}"
-                    
-                    # Queue the analysis
-                    queued = await analysis_queue.enqueue_analysis(
-                        job_id=job_id,
-                        session_id=session_id,
-                        user_question=hybrid_response.analysis_question,
-                        message_id=hybrid_response.message_id,
-                        priority="normal"
+                
+                # Trigger analysis using existing flow (background - no await)
+                # This ensures chat response returns immediately while analysis runs
+                try:
+                    asyncio.create_task(
+                        self._trigger_background_analysis(analysis_request, hybrid_response.message_id)
                     )
+                    logger.info(f"✅ Background analysis triggered for question: {hybrid_response.analysis_question[:50]}...")
                     
-                    if queued:
-                        logger.info(f"✅ Analysis queued: {job_id}")
-                        
-                        # Send progress notification
-                        await send_execution_queued(
-                            session_id=session_id,
-                            message_id=hybrid_response.message_id,
-                            job_id=job_id
-                        )
-                        
-                        return AnalysisResponse(
-                            success=True,
-                            message_id=hybrid_response.message_id,
-                            session_id=session_id,
-                            content=hybrid_response.content,
-                            response_type="analysis_queued",
-                            status="queued",
-                            metadata={
-                                **(hybrid_response.metadata or {}),
-                                "job_id": job_id,
-                                "analysis_question": hybrid_response.analysis_question
-                            },
-                            timestamp=datetime.now().isoformat()
-                        )
-                    else:
-                        logger.error(f"❌ Failed to queue analysis for job: {job_id}")
-                        error_msg = "I apologize, but I'm unable to run the analysis right now. Please try again later."
-                        
-                        # Add error message to chat
-                        error_message_id = await self.chat_history_service.add_assistant_message(
-                            session_id=session_id,
-                            message=error_msg,
-                            response_type="error",
-                            in_reply_to=hybrid_response.message_id
-                        )
-                        
-                        return AnalysisResponse(
-                            success=False,
-                            message_id=error_message_id,
-                            session_id=session_id,
-                            content=error_msg,
-                            error="Failed to queue analysis",
-                            timestamp=datetime.now().isoformat()
-                        )
-                else:
-                    # Analysis queued but no question provided - shouldn't happen
-                    logger.error("❌ Analysis queued but no question provided")
-                    return AnalysisResponse(
-                        success=False,
-                        session_id=session_id,
-                        content="There was an issue processing your analysis request.",
-                        error="No analysis question provided",
-                        timestamp=datetime.now().isoformat()
-                    )
+                    # Update metadata to indicate analysis was triggered
+                    response_data["metadata"]["analysis_triggered"] = True
+                    response_data["metadata"]["analysis_question"] = hybrid_response.analysis_question
+                    
+                except Exception as background_error:
+                    logger.error(f"❌ Failed to trigger background analysis: {background_error}")
+                    response_data["metadata"]["analysis_trigger_failed"] = True
+                    response_data["metadata"]["analysis_error"] = str(background_error)
             
-            elif hybrid_response.response_type == "error":
-                # Error response
-                return AnalysisResponse(
-                    success=False,
-                    session_id=session_id,
-                    content=hybrid_response.content,
-                    error="Hybrid processing error",
-                    timestamp=datetime.now().isoformat()
-                )
-            
-            else:
-                # Unknown response type
-                logger.error(f"❌ Unknown hybrid response type: {hybrid_response.response_type}")
-                return AnalysisResponse(
-                    success=False,
-                    session_id=session_id,
-                    content="I encountered an unexpected error. Please try again.",
-                    error=f"Unknown response type: {hybrid_response.response_type}",
-                    timestamp=datetime.now().isoformat()
-                )
+            # Always return chat response immediately (KEY CHANGE)
+            return AnalysisResponse(
+                success=True,
+                data=response_data,
+                timestamp=datetime.now().isoformat()
+            )
         
         except HTTPException:
             raise  # Re-raise HTTP exceptions
         except Exception as e:
-            logger.error(f"❌ Hybrid chat error: {e}")
+            logger.error(f"❌ Hybrid chat V2 error: {e}")
             # Ensure error is saved to chat history
             await self._ensure_error_saved(user_message, session_id, user_id)
             
@@ -733,6 +667,32 @@ class APIRoutes:
                 session_id=session_id,
                 user_id=user_id
             )
+    
+    async def _trigger_background_analysis(self, analysis_request: QuestionRequest, chat_message_id: str):
+        """
+        Background task to trigger analysis using existing analyze_question() flow
+        
+        This allows chat response to return immediately while analysis runs in background
+        """
+        try:
+            logger.info(f"🔄 Starting background analysis for: {analysis_request.question[:50]}...")
+            
+            # Call existing analyze_question method internally
+            analysis_response = await self.analyze_question(analysis_request)
+            
+            if analysis_response.success:
+                logger.info(f"✅ Background analysis completed successfully")
+                # Analysis progress and results will be sent via existing SSE system
+                
+            else:
+                logger.error(f"❌ Background analysis failed: {analysis_response.error}")
+                # Send error via SSE
+                await send_execution_failed(f"Analysis failed: {analysis_response.error}")
+                
+        except Exception as e:
+            logger.error(f"❌ Background analysis exception: {e}")
+            # Send error via SSE
+            await send_execution_failed(f"Analysis error: {e}")
     
     async def handle_clarification_response(self, 
                                           session_id: str,

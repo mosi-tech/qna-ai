@@ -49,7 +49,8 @@ class DialogueFactory:
             analysis_library=self.analysis_library,
             session_manager=self.session_manager,
             classifier=self.classifier,
-            expander=self.expander
+            expander=self.expander,
+            llm_service=context_llm
         )
     
     def get_context_aware_search(self):
@@ -58,7 +59,7 @@ class DialogueFactory:
     
     def get_session_manager(self):
         """Get the session manager"""
-        return session_manager
+        return self.session_manager
     
     async def search_with_context(self, query: str, session_id: str = None, auto_expand: bool = True):
         """Convenience method for context-aware search"""

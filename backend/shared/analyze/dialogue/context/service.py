@@ -149,19 +149,50 @@ class ContextService:
             if not result["success"]:
                 return {"success": False, "error": result["error"]}
             
-            # Clean up response - should be a complete question
-            expanded_query = result["content"].strip()
-            
-            # Remove any extra text before/after the question
-            if "?" in expanded_query:
-                expanded_query = expanded_query.split("?")[0] + "?"
-            
-            return {
-                "success": True,
-                "expanded_query": expanded_query,
-                "llm_response": result["content"],
-                "context_used": conversation_context
-            }
+            # Parse JSON response
+            try:
+                import json
+                response_content = result["content"].strip()
+                
+                # Clean up response - remove markdown if present
+                if response_content.startswith("```json"):
+                    start_index = response_content.find("{")
+                    end_index = response_content.rfind("}") + 1
+                    if start_index != -1 and end_index != -1:
+                        response_content = response_content[start_index:end_index]
+                
+                parsed_response = json.loads(response_content)
+                
+                expanded_query = parsed_response.get("expanded_query", "").strip()
+                confidence = float(parsed_response.get("confidence", 0.7))
+                
+                # Clamp confidence to valid range
+                confidence = max(0.0, min(1.0, confidence))
+                
+                return {
+                    "success": True,
+                    "expanded_query": expanded_query,
+                    "confidence": confidence,
+                    "llm_response": result["content"],
+                    "context_used": conversation_context
+                }
+                
+            except (json.JSONDecodeError, ValueError, KeyError) as e:
+                logger.warning(f"Failed to parse expansion JSON response: {e}")
+                # Fallback to plain text parsing for backward compatibility
+                expanded_query = result["content"].strip()
+                
+                # Remove any extra text before/after the question
+                if "?" in expanded_query:
+                    expanded_query = expanded_query.split("?")[0] + "?"
+                
+                return {
+                    "success": True,
+                    "expanded_query": expanded_query,
+                    "confidence": 0.7,  # Medium confidence for fallback parsing
+                    "llm_response": result["content"],
+                    "context_used": conversation_context
+                }
             
         except Exception as e:
             logger.error(f"Context expansion error: {e}")
@@ -353,7 +384,17 @@ EXAMPLES:
 - Contextual Query: "what about monthly timeframe"
 - Expanded: "Show correlation between SPY and VIX over last year using monthly data"
 
-Return only the complete expanded question, nothing else."""
+RESPONSE FORMAT:
+Return a JSON object with:
+{
+    "expanded_query": "The complete expanded question",
+    "confidence": 0.0-1.0
+}
+
+Confidence should reflect how certain you are that:
+- The expansion correctly interprets the user's intent
+- All necessary context was preserved from conversation history
+- The expanded query is complete and answerable"""
         
         user_message = f"""CONVERSATION CONTEXT:
 {conversation_context}

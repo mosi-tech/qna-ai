@@ -286,3 +286,73 @@ class ChatHistoryService:
         except Exception as e:
             self.logger.error(f"✗ Failed to delete session: {e}")
             raise
+    
+    # === HYBRID CHAT + ANALYSIS SUPPORT (GitHub Issue #122) ===
+    
+    async def add_hybrid_message(
+        self,
+        session_id: str,
+        user_id: str,
+        content: str,
+        message_type: str,  # "chat", "educational_chat", "analysis_confirmation", etc.
+        intent: str = None,
+        analysis_suggestion: Dict[str, Any] = None,
+        analysis_id: str = None,
+        execution_id: str = None,
+        in_reply_to: str = None
+    ) -> str:
+        """
+        Add hybrid chat+analysis message with enhanced metadata for tracking
+        
+        Args:
+            session_id: Chat session ID
+            user_id: User ID 
+            content: Message content
+            message_type: Type of hybrid message (chat, educational_chat, etc.)
+            intent: Classified intent from IntentClassifierService
+            analysis_suggestion: Analysis suggestion data if applicable
+            analysis_id: Reference to analysis if applicable
+            execution_id: Reference to execution if applicable
+            in_reply_to: Message ID this is replying to
+            
+        Returns:
+            Message ID
+        """
+        try:
+            # Build hybrid metadata
+            hybrid_metadata = {
+                "response_type": message_type,
+                "intent": intent,
+                "hybrid_chat": True,  # Flag to identify hybrid messages
+                "timestamp": datetime.utcnow().isoformat()
+            }
+            
+            # Add analysis suggestion if provided
+            if analysis_suggestion:
+                hybrid_metadata["analysis_suggestion"] = {
+                    "topic": analysis_suggestion.get("topic"),
+                    "description": analysis_suggestion.get("description"), 
+                    "suggested_question": analysis_suggestion.get("suggested_question"),
+                    "analysis_type": analysis_suggestion.get("analysis_type")
+                }
+            
+            # Add reply reference if provided
+            if in_reply_to:
+                hybrid_metadata["in_reply_to"] = in_reply_to
+            
+            # Add message using existing method
+            msg_id = await self.add_assistant_message(
+                session_id=session_id,
+                user_id=user_id,
+                content=content,
+                analysis_id=analysis_id,
+                execution_id=execution_id,
+                metadata=hybrid_metadata
+            )
+            
+            self.logger.info(f"✓ Added hybrid message: {msg_id} (type: {message_type})")
+            return msg_id
+            
+        except Exception as e:
+            self.logger.error(f"✗ Failed to add hybrid message: {e}")
+            raise

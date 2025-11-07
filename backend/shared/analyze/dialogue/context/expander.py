@@ -38,10 +38,7 @@ class ContextExpander:
         # Use LLM to expand the query with conversation context
         expansion_result = await self._expand_with_llm(contextual_query, conversation_context)
         
-        # Set confidence for successful expansion
-        if expansion_result["success"]:
-            expansion_result["confidence"] = 0.9  # High confidence when expansion succeeds
-        
+        # LLM now returns confidence, no need to override
         return expansion_result
     
     def _build_conversation_context(self, conversation_turns: List[ConversationTurn]) -> str:

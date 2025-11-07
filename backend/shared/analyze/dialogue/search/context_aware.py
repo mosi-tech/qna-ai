@@ -28,12 +28,13 @@ class ContextAwareSearch:
                  session_manager: SessionManager = None,
                  classifier: QueryClassifier = None,
                  expander: ContextExpander = None,
-                 validator: CompletenessValidator = None):
+                 validator: CompletenessValidator = None,
+                 llm_service = None):
         self.analysis_library = analysis_library or AnalysisLibrary()
         self.session_manager = session_manager
         self.classifier = classifier
         self.expander = expander
-        self.validator = validator or CompletenessValidator()
+        self.validator = validator or CompletenessValidator(llm_service=llm_service)
         
         self.default_similarity_threshold = 0.3
     
@@ -166,20 +167,20 @@ class ContextAwareSearch:
             logger.info(f"🔹 Query is not meaningless, proceeding to validation")
 
         # Step 3: VALIDATE - Check if query is complete
-        # await progress_info(session_id, "Checking question for completeness...")
-        # validation = self.validator.validate(expanded_query)
+        await send_progress_info(session_id, "Checking question for completeness...")
+        validation = await self.validator.validate(expanded_query)
 
-        # if not validation["complete"]:
-        #     missing = ", ".join(validation["missing"])
-        #     logger.info(f"Validation failed, missing: {missing}")
-        #     return self._request_clarification(
-        #         original_query=query,
-        #         expanded_query=expanded_query,
-        #         confidence=expansion_confidence,
-        #         session_id=session_id,
-        #         query_type="contextual" if is_contextual else "standalone",
-        #         reason=f"Missing information: {missing}"
-        #     )
+        if not validation["complete"]:
+            missing = ", ".join(validation["missing"])
+            logger.info(f"Validation failed, missing: {missing}")
+            return self._request_clarification(
+                original_query=query,
+                expanded_query=expanded_query,
+                confidence=expansion_confidence,
+                session_id=session_id,
+                query_type="contextual" if is_contextual else "standalone",
+                reason=f"Missing information: {missing}"
+            )
 
         # Step 4: SEARCH - Query is ready
         # logger.info(f"Query validated, proceeding with search: {expanded_query[:100]}...")
@@ -524,6 +525,7 @@ Is this a meaningless or non-financial query that shouldn't be analyzed?"""
 def create_context_aware_search(analysis_library: AnalysisLibrary = None,
                                session_manager: SessionManager = None,
                                classifier: QueryClassifier = None,
-                               expander: ContextExpander = None) -> ContextAwareSearch:
+                               expander: ContextExpander = None,
+                               llm_service = None) -> ContextAwareSearch:
     """Create context-aware search with all dependencies"""
-    return ContextAwareSearch(analysis_library, session_manager, classifier, expander)
+    return ContextAwareSearch(analysis_library, session_manager, classifier, expander, llm_service=llm_service)
