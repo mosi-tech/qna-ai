@@ -20,7 +20,7 @@ function ChatPageContent() {
   const { session_id, user_id, resumeSession, updateSessionMetadata, startNewSession } = useSession();
   const { messages, addMessage, updateMessage, setMessages } = useConversation();
   const { viewMode, setViewMode, isProcessing, setIsProcessing, error: uiError, setError: setUIError } = useUI();
-  const { analyzeQuestion, isLoading: analysisLoading } = useAnalysis();
+  const { sendChatMessage, isLoading: analysisLoading } = useAnalysis();
   const { logs: progressLogs, isConnected, clearLogs, registerAnalysisCompleteCallback } = useProgress();
   const { getSessionDetail } = useSessionManager();
 
@@ -190,6 +190,68 @@ function ChatPageContent() {
     });
   };
 
+  const handleChatResponse = (response: any) => {
+    if (session_id) {
+      ProgressManager.addLog(session_id, {
+        level: 'success',
+        message: 'Chat response ready',
+      });
+    }
+
+    // Simple chat message - no analysis or execution tracking
+    addMessage({
+      type: 'ai',
+      content: response.data.content || 'Chat response received',
+      ...response.data,
+      status: 'completed', // Always completed for chat
+    });
+  };
+
+  const handleAnalysisTriggerResponse = (response: any, userMessage: string) => {
+    if (session_id) {
+      ProgressManager.addLog(session_id, {
+        level: 'info',
+        message: 'Analysis triggered - processing...',
+      });
+    }
+
+    const metadata = response.data.metadata || {};
+    
+    // Create pending message that will show "Analysis in Progress"
+    const resultMsg = addMessage({
+      type: 'results',
+      content: response.data.content || 'Analysis in progress...',
+      status: 'pending', // This triggers the pending UI
+      ...response.data,
+    });
+
+    // Register completion callback for SSE events if analysis was triggered
+    const backendMessageId = response.data.id;
+
+    if (backendMessageId && metadata.analysis_triggered) {
+      registerAnalysisCompleteCallback(backendMessageId, (completionStatus: 'completed' | 'failed', data?: any) => {
+        handleExecutionUpdate(backendMessageId, {
+          details: {
+            ...data.details,
+            content: data?.message,
+            error: data?.error,
+            message_id: backendMessageId
+          }
+        });
+      });
+
+      console.log(`[SSE] Registered callback for message: ${backendMessageId}`);
+    } else {
+      console.error('[SSE] No backend message ID found or analysis not triggered!', response.data);
+    }
+
+    setCurrentAnalysis({
+      messageId: resultMsg.id,
+      data: response.data,
+      originalQuestion: userMessage,
+    });
+  };
+
   const handleAnalysisResponse = (response: any, userMessage: string) => {
     if (session_id) {
       ProgressManager.addLog(session_id, {
@@ -209,7 +271,7 @@ function ChatPageContent() {
     const backendMessageId = response.data.id;
 
     if (backendMessageId) {
-      registerAnalysisCompleteCallback(backendMessageId, (status: 'completed' | 'failed', data?: any) => {
+      registerAnalysisCompleteCallback(backendMessageId, (completionStatus: 'completed' | 'failed', data?: any) => {
         handleExecutionUpdate(backendMessageId, {
           details: {
             ...data.details,
@@ -261,7 +323,7 @@ function ChatPageContent() {
         });
       }
 
-      const response = await analyzeQuestion({
+      const response = await sendChatMessage({
         question: userMessage,
         session_id: session_id,
       });
@@ -282,7 +344,14 @@ function ChatPageContent() {
           handleClarificationResponse(response, userMessage);
         } else if (responseType === 'needs_confirmation') {
           handleConfirmationResponse(response, userMessage);
+        } else if (responseType === 'chat_response' || responseType === 'educational') {
+          // Handle pure chat responses
+          handleChatResponse(response);
+        } else if (responseType === 'analysis_trigger') {
+          // Handle analysis trigger responses (thinking state)
+          handleAnalysisTriggerResponse(response, userMessage);
         } else {
+          // Default to analysis response for backward compatibility
           handleAnalysisResponse(response, userMessage);
         }
       } else {

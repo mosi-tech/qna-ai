@@ -200,14 +200,25 @@ class FinancialAnalystChatService(BaseService):
         start_time = time.time()
         messages = [{"role": "user", "content": educational_prompt}]
         
+        # Load system prompt if not cached
+        if not self.system_prompt:
+            self.system_prompt = await self.load_system_prompt()
+        
         response = await self.llm_service.make_request(
             messages=messages,
             max_tokens=1200,
-            temperature=0.7
+            temperature=0.7,
+            system_prompt=self.system_prompt
         )
         duration = time.time() - start_time
         
         logger.debug(f"⏱️ Educational response generation: {duration:.3f}s")
+        logger.debug(f"🔍 LLM response type: {type(response)}, content: {str(response)[:200]}...")
+        
+        # Check if response is a string (unexpected) vs dict (expected)
+        if isinstance(response, str):
+            logger.error(f"❌ Expected dict response but got string: {response[:100]}...")
+            return self._create_fallback_response(user_message)
         
         if not response.get("success"):
             error_msg = response.get("error", "Unknown error")
@@ -243,8 +254,11 @@ class FinancialAnalystChatService(BaseService):
         # Check if there's a pending analysis suggestion
         if session_context and session_context.get("pending_analysis"):
             pending = session_context["pending_analysis"]
-            suggested_topic = pending.get("suggestion", {}).get("topic", "analysis")
-            content = f"Perfect! Let me run that {suggested_topic} analysis for you. This will provide valuable insights into your question."
+            if isinstance(pending, dict):
+                suggested_topic = pending.get("suggestion", {}).get("topic", "analysis")
+                content = f"Perfect! Let me run that {suggested_topic} analysis for you. This will provide valuable insights into your question."
+            else:
+                content = "Perfect! Let me run that analysis for you. This will provide valuable insights into your question."
         else:
             content = "Great! Let me run that analysis for you right away."
         
@@ -263,16 +277,26 @@ class FinancialAnalystChatService(BaseService):
         start_time = time.time()
         messages = [{"role": "user", "content": follow_up_prompt}]
         
+        # Load system prompt if not cached
+        if not self.system_prompt:
+            self.system_prompt = await self.load_system_prompt()
+        
         response = await self.llm_service.make_request(
             messages=messages,
             max_tokens=800,
-            temperature=0.6
+            temperature=0.6,
+            system_prompt=self.system_prompt
         )
         duration = time.time() - start_time
         
         logger.debug(f"⏱️ Follow-up response generation: {duration:.3f}s")
+        logger.debug(f"🔍 Follow-up response type: {type(response)}, content: {str(response)[:200]}...")
         
-        if not response.get("success"):
+        # Check if response is a string (unexpected) vs dict (expected)
+        if isinstance(response, str):
+            logger.error(f"❌ Expected dict response but got string: {response[:100]}...")
+            content = "That's a great follow-up question. Let me help you understand that better based on the previous analysis."
+        elif not response.get("success"):
             content = "That's a great follow-up question. Let me help you understand that better based on the previous analysis."
         else:
             content = response.get("content", "").strip()
@@ -292,7 +316,12 @@ class FinancialAnalystChatService(BaseService):
         
         if session_context and session_context.get("last_analysis"):
             analysis = session_context["last_analysis"]
-            context_parts.append(f"PREVIOUS ANALYSIS: {analysis.get('description', '')[:200]}")
+            if isinstance(analysis, dict):
+                context_parts.append(f"PREVIOUS ANALYSIS: {analysis.get('description', '')[:200]}")
+            elif isinstance(analysis, str):
+                context_parts.append(f"PREVIOUS ANALYSIS: {analysis[:200]}")
+            else:
+                logger.debug(f"Unexpected analysis type: {type(analysis)}")
         
         return "\\n\\n".join(context_parts) if context_parts else "No previous context"
     
@@ -386,11 +415,23 @@ Please provide a friendly, professional response as a financial analyst assistan
         
         messages = [{"role": "user", "content": chat_prompt}]
         
+        # Load system prompt if not cached
+        if not self.system_prompt:
+            self.system_prompt = await self.load_system_prompt()
+        
         response = await self.llm_service.make_request(
             messages=messages,
             max_tokens=400,
-            temperature=0.8
+            temperature=0.8,
+            system_prompt=self.system_prompt
         )
+        
+        logger.debug(f"🔍 Chat response type: {type(response)}, content: {str(response)[:200]}...")
+        
+        # Check if response is a string (unexpected) vs dict (expected)
+        if isinstance(response, str):
+            logger.error(f"❌ Expected dict response but got string: {response[:100]}...")
+            return "I'm here to help with your financial questions and analysis. What can I assist you with today?"
         
         if response.get("success"):
             return response.get("content", "I'm here to help with your financial questions!").strip()
@@ -410,7 +451,12 @@ Please provide a friendly, professional response as a financial analyst assistan
         
         if session_context and session_context.get("last_analysis"):
             analysis = session_context["last_analysis"]
-            context_parts.append(f"LAST ANALYSIS RESULTS: {analysis.get('description', '')[:300]}")
+            if isinstance(analysis, dict):
+                context_parts.append(f"LAST ANALYSIS RESULTS: {analysis.get('description', '')[:300]}")
+            elif isinstance(analysis, str):
+                context_parts.append(f"LAST ANALYSIS RESULTS: {analysis[:300]}")
+            else:
+                logger.debug(f"Unexpected analysis type in follow-up context: {type(analysis)}")
         
         return "\\n\\n".join(context_parts) if context_parts else "No previous context"
     

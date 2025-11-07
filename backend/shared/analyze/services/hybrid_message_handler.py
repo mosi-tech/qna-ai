@@ -140,7 +140,7 @@ class HybridMessageHandler:
                 
         elif intent_result.intent == MessageIntent.EDUCATIONAL:
             return await self._handle_educational_response(
-                analyst_response, session_id, user_id, user_message_id
+                analyst_response, intent_result, user_message, session_id, user_id, user_message_id
             )
                 
         elif intent_result.intent == MessageIntent.ANALYSIS_REQUEST:
@@ -161,7 +161,7 @@ class HybridMessageHandler:
         else:
             # Default to educational chat
             return await self._handle_educational_response(
-                analyst_response, session_id, user_id, user_message_id
+                analyst_response, intent_result, user_message, session_id, user_id, user_message_id
             )
     
     async def _handle_pure_chat(self, 
@@ -191,6 +191,8 @@ class HybridMessageHandler:
     
     async def _handle_educational_response(self,
                                          analyst_response: AnalystResponse,
+                                         intent_result: IntentResult,
+                                         user_message: str,
                                          session_id: str,
                                          user_id: str,
                                          user_message_id: str) -> HybridResponse:
@@ -225,6 +227,16 @@ class HybridMessageHandler:
             intent="educational",
             analysis_suggestion=suggestion_data,
             in_reply_to=user_message_id
+        )
+        
+        # Update ConversationStore with hybrid turn
+        await self._save_hybrid_turn(
+            session_id=session_id,
+            user_query=user_message,
+            message_intent=intent_result.intent,
+            response_type="educational_chat", 
+            assistant_response=analyst_response.content,
+            triggered_analysis=False
         )
         
         metadata = {
@@ -455,3 +467,33 @@ class HybridMessageHandler:
         if session_id in self.session_states:
             del self.session_states[session_id]
             logger.debug(f"Cleaned up session state for {session_id}")
+    
+    async def _save_hybrid_turn(self,
+                              session_id: str,
+                              user_query: str,
+                              message_intent,  # MessageIntent enum
+                              response_type: str,
+                              assistant_response: str,
+                              triggered_analysis: bool = False):
+        """Save conversation turn to ConversationStore using session manager"""
+        try:
+            # Import MessageIntent from ConversationStore
+            from shared.analyze.dialogue.conversation.store import MessageIntent
+            
+            # Get conversation store via session manager
+            conversation = await self.session_manager.get_session(session_id)
+            if conversation:
+                conversation.add_hybrid_turn(
+                    user_query=user_query,
+                    message_intent=message_intent,
+                    response_type=response_type,
+                    assistant_response=assistant_response,
+                    triggered_analysis=triggered_analysis
+                )
+                # Save the updated conversation
+                await self.session_manager.save_session(conversation)
+                logger.debug(f"💾 Saved hybrid turn for session {session_id}: {message_intent.value if message_intent else 'unknown'}")
+            else:
+                logger.warning(f"⚠️ No conversation found for session {session_id}")
+        except Exception as e:
+            logger.error(f"❌ Failed to save hybrid turn for session {session_id}: {e}")
