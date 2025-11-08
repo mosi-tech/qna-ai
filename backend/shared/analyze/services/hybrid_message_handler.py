@@ -198,15 +198,12 @@ class HybridMessageHandler:
                                          user_message_id: str) -> HybridResponse:
         """Handle educational responses with potential analysis suggestions"""
         
-        # Store analysis suggestion in session state if provided
+        # Analysis suggestion is automatically persisted in message metadata (line 231)
+        # No need for volatile session state - we can reconstruct from conversation history
         if analyst_response.analysis_suggestion:
-            if session_id not in self.session_states:
-                self.session_states[session_id] = {}
-            
-            self.session_states[session_id]["pending_analysis"] = {
-                "suggestion": analyst_response.analysis_suggestion,
-                "timestamp": time.time()
-            }
+            logger.info(f"✅ Analysis suggestion will be persisted in message metadata for session {session_id}: {analyst_response.analysis_suggestion.topic}")
+        else:
+            logger.warning(f"⚠️ No analysis suggestion provided by financial analyst for session {session_id}")
         
         # Prepare analysis suggestion data for metadata
         suggestion_data = None
@@ -236,7 +233,8 @@ class HybridMessageHandler:
             message_intent=intent_result.intent,
             response_type="educational_chat", 
             assistant_response=analyst_response.content,
-            triggered_analysis=False
+            triggered_analysis=False,
+            analysis_suggestion=suggestion_data
         )
         
         metadata = {
@@ -294,12 +292,8 @@ class HybridMessageHandler:
                                           user_message_id: str) -> HybridResponse:
         """Handle user confirmation of suggested analysis - FIXED: uses existing flow"""
         
-        # Get pending analysis from session state
-        pending_analysis = None
-        if session_id in self.session_states and "pending_analysis" in self.session_states[session_id]:
-            pending_analysis = self.session_states[session_id]["pending_analysis"]
-            # Clear pending analysis
-            del self.session_states[session_id]["pending_analysis"]
+        # Get pending analysis from ConversationStore (persistent across restarts)
+        pending_analysis = await self._get_pending_analysis_from_conversation_store(session_id)
         
         if not pending_analysis:
             # No pending analysis - treat as general chat
@@ -331,7 +325,7 @@ class HybridMessageHandler:
         )
         
         # Get analysis question from pending suggestion
-        analysis_question = pending_analysis["suggestion"].suggested_question
+        analysis_question = pending_analysis.get("suggested_question")
         
         # FIXED: Return chat response + flag to trigger analysis
         return HybridResponse(
@@ -343,7 +337,7 @@ class HybridMessageHandler:
             analysis_question=analysis_question,  # Suggested analysis question
             metadata={
                 "intent": "confirmed_analysis",
-                "original_suggestion": pending_analysis["suggestion"].topic
+                "original_suggestion": pending_analysis.get("topic", "unknown")
             }
         )
     
@@ -462,6 +456,35 @@ class HybridMessageHandler:
                 metadata={"error": True, "chat_save_failed": True}
             )
     
+    async def _get_pending_analysis_from_conversation_store(self, session_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get pending analysis suggestion from ConversationStore (persistent across restarts)
+        
+        Uses ConversationStore's centralized method for consistency.
+        """
+        try:
+            logger.info(f"🔍 Looking for pending analysis in ConversationStore for session {session_id}")
+            
+            # Get conversation from session manager
+            conversation = await self.session_manager.get_session(session_id)
+            if not conversation:
+                logger.info(f"⚠️ No conversation found for session {session_id}")
+                return None
+            
+            # Use ConversationStore's centralized method
+            pending_analysis = conversation.get_pending_analysis_suggestion()
+            
+            if pending_analysis:
+                logger.info(f"✅ Found pending analysis suggestion: {pending_analysis.get('topic', 'unknown')}")
+            else:
+                logger.info(f"⚠️ No pending analysis found in ConversationStore for session {session_id}")
+            
+            return pending_analysis
+                
+        except Exception as e:
+            logger.error(f"❌ Error getting pending analysis from ConversationStore: {e}")
+            return None
+
     def cleanup_session_state(self, session_id: str):
         """Clean up session state when session ends"""
         if session_id in self.session_states:
@@ -474,7 +497,8 @@ class HybridMessageHandler:
                               message_intent,  # MessageIntent enum
                               response_type: str,
                               assistant_response: str,
-                              triggered_analysis: bool = False):
+                              triggered_analysis: bool = False,
+                              analysis_suggestion: Optional[Dict[str, Any]] = None):
         """Save conversation turn to ConversationStore using session manager"""
         try:
             # Import MessageIntent from ConversationStore
@@ -488,10 +512,11 @@ class HybridMessageHandler:
                     message_intent=message_intent,
                     response_type=response_type,
                     assistant_response=assistant_response,
-                    triggered_analysis=triggered_analysis
+                    triggered_analysis=triggered_analysis,
+                    analysis_suggestion=analysis_suggestion
                 )
-                # Save the updated conversation
-                await self.session_manager.save_session(conversation)
+                # Note: SessionManager auto-persists through ChatHistoryService
+                # No explicit save needed - the add_hybrid_message calls handle persistence
                 logger.debug(f"💾 Saved hybrid turn for session {session_id}: {message_intent.value if message_intent else 'unknown'}")
             else:
                 logger.warning(f"⚠️ No conversation found for session {session_id}")

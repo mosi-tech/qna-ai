@@ -168,17 +168,28 @@ class ChatRepository:
         
         return result.modified_count > 0
     
-    async def get_conversation_history(self, session_id: str) -> List[Dict[str, Any]]:
-        """Get conversation for LLM context"""
+    async def get_conversation_history(self, session_id: str, include_metadata: bool = False) -> List[Dict[str, Any]]:
+        """Get conversation for LLM context
+        
+        Args:
+            session_id: Session ID to get messages for
+            include_metadata: If True, includes full message metadata (needed for ConversationStore reconstruction)
+        """
         messages = await self.db.get_session_messages(session_id)
         
         history = []
         for msg in messages:
-            history.append({
+            message_data = {
                 "role": msg.role.value,
                 "content": msg.content,
                 "timestamp": msg.created_at.isoformat(),
-            })
+            }
+            
+            # Include metadata if requested (needed for ConversationStore reconstruction)
+            if include_metadata and msg.metadata:
+                message_data["metadata"] = msg.metadata
+            
+            history.append(message_data)
         
         return history
     
@@ -408,6 +419,18 @@ class ChatRepository:
     async def update_session(self, session_id: str, update_data: Dict[str, Any]) -> bool:
         """Update session metadata"""
         return await self.db.update_session(session_id, update_data)
+    
+    async def clear_session_messages(self, session_id: str) -> int:
+        """Clear all messages from a session but keep the session"""
+        result = await self.db.db.chat_messages.delete_many({"sessionId": session_id})
+        
+        # Update session message count to 0
+        await self.db.db.chat_sessions.update_one(
+            {"sessionId": session_id},
+            {"$set": {"message_count": 0, "updated_at": datetime.now()}}
+        )
+        
+        return result.deleted_count
     
     async def delete_session(self, session_id: str) -> bool:
         """Delete session and all its messages"""

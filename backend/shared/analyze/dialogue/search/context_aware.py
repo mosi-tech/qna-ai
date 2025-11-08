@@ -169,6 +169,13 @@ class ContextAwareSearch:
         # Step 3: VALIDATE - Check if query is complete
         await send_progress_info(session_id, "Checking question for completeness...")
         validation = await self.validator.validate(expanded_query)
+        
+        if not validation["success"]:
+            return self._error_response(
+                message="Unable to run validation",
+                session_id=session_id,
+                original_query=query
+            )
 
         if not validation["complete"]:
             missing = ", ".join(validation["missing"])

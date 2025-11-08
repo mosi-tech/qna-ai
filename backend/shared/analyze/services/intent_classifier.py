@@ -112,7 +112,7 @@ class IntentClassifierService(BaseService):
             if not response.get("success"):
                 error_msg = response.get("error", "Unknown error")
                 logger.error(f"❌ Intent classification failed: {error_msg}")
-                return self._create_fallback_intent(user_message)
+                raise ValueError(f"Intent classification LLM request failed: {error_msg}")
             
             # Parse classification result
             content = response.get("content", "")
@@ -124,7 +124,7 @@ class IntentClassifierService(BaseService):
             
         except Exception as e:
             logger.error(f"❌ Intent classification error: {e}")
-            return self._create_fallback_intent(user_message)
+            raise
     
     def _prepare_classification_context(self, conversation) -> str:
         """Prepare context information for classification using ConversationStore"""
@@ -140,9 +140,17 @@ class IntentClassifierService(BaseService):
         if context_summary.get("has_history"):
             context_info = []
             if context_summary.get("last_query"):
-                context_info.append(f"Last query: {context_summary['last_query'][:100]}")
+                last_query = context_summary['last_query']
+                # Allow longer queries for better context
+                if len(last_query) > 300:
+                    last_query = last_query[:300] + "..."
+                context_info.append(f"Last query: {last_query}")
             if context_summary.get("last_analysis"):
-                context_info.append(f"Previous analysis: {context_summary['last_analysis'][:100]}")
+                last_analysis = context_summary['last_analysis']
+                # Keep more analysis context since it's critical for intent classification
+                if len(last_analysis) > 500:
+                    last_analysis = last_analysis[:500] + "..."
+                context_info.append(f"Previous analysis: {last_analysis}")
             if context_summary.get("turn_count"):
                 context_info.append(f"Turn count: {context_summary['turn_count']}")
             
@@ -151,12 +159,41 @@ class IntentClassifierService(BaseService):
         
         # Add recent conversation turns for more detailed context
         if conversation.turns:
-            recent_turns = conversation.turns[-3:]  # Last 3 turns
+            recent_turns = conversation.turns[-2:]  # Last 2 turns (most relevant)
             turn_texts = []
             for turn in recent_turns:
-                turn_texts.append(f"User: {turn.user_query[:100]}")
+                # Keep user queries reasonably short but not too truncated
+                user_query_text = turn.user_query
+                if len(user_query_text) > 200:
+                    user_query_text = user_query_text[:200] + "..."
+                turn_texts.append(f"User: {user_query_text}")
+                
+                # Include FULL assistant responses (especially important for analysis suggestions)
+                if turn.assistant_response:
+                    response_label = "Assistant"
+                    if turn.response_type:
+                        if turn.response_type == "educational_chat":
+                            response_label = "Assistant (Educational)"
+                        elif turn.response_type in ["script_generation", "reuse_decision"]:
+                            response_label = "Assistant (Analysis Result)"
+                        elif turn.response_type == "analysis_confirmation":
+                            response_label = "Assistant (Analysis Started)"
+                    
+                    # Use full assistant response - critical for analysis suggestions at the end!
+                    assistant_text = turn.assistant_response
+                    # Only truncate if extremely long (>2000 chars) to preserve analysis suggestions
+                    if len(assistant_text) > 2000:
+                        # Smart truncation: keep end of message where analysis suggestions are
+                        assistant_text = "..." + assistant_text[-1800:]
+                    
+                    turn_texts.append(f"{response_label}: {assistant_text}")
+                
+                # Also include analysis summary if available (for analysis result context)
                 if turn.analysis_summary:
-                    turn_texts.append(f"Analysis: {turn.analysis_summary[:100]}")
+                    summary_text = turn.analysis_summary
+                    if len(summary_text) > 500:
+                        summary_text = summary_text[:500] + "..."
+                    turn_texts.append(f"Analysis Summary: {summary_text}")
             
             if turn_texts:
                 context_parts.append(f"RECENT CONVERSATION:\\n{chr(10).join(turn_texts)}")
@@ -187,16 +224,16 @@ Please classify this message and respond in JSON format with your analysis."""
             parsed = safe_json_loads(cleaned_content, default={})
             
             if not parsed:
-                logger.warning("Failed to parse classification response as JSON")
-                return self._create_fallback_intent(original_message)
+                logger.error("Failed to parse classification response as JSON")
+                raise ValueError("Intent classification response could not be parsed as JSON")
             
             # Extract classification data
             intent_str = parsed.get("intent", "pure_chat")
             try:
                 intent = MessageIntent(intent_str)
             except ValueError:
-                logger.warning(f"Unknown intent value: {intent_str}")
-                intent = MessageIntent.PURE_CHAT
+                logger.error(f"Unknown intent value: {intent_str}")
+                raise ValueError(f"Invalid intent classification result: {intent_str}")
             
             confidence = float(parsed.get("confidence", 0.5))
             confidence = max(0.0, min(1.0, confidence))  # Clamp to 0-1
@@ -217,7 +254,7 @@ Please classify this message and respond in JSON format with your analysis."""
             
         except Exception as e:
             logger.error(f"Error parsing classification response: {e}")
-            return self._create_fallback_intent(original_message)
+            raise
     
     def _create_fallback_intent(self, user_message: str) -> IntentResult:
         """Create fallback intent classification using simple heuristics"""

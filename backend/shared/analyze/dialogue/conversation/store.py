@@ -36,6 +36,7 @@ class ConversationTurn:
     response_type: Optional[str]                # Response type (chat, educational_chat, etc.)
     assistant_response: Optional[str]           # Assistant's response content
     triggered_analysis: bool = False            # Whether this triggered an analysis
+    analysis_suggestion: Optional[Dict[str, Any]] = None  # Analysis suggestion data if provided
     
     # Legacy analysis fields (for backward compatibility)
     query_type: Optional[QueryType] = None
@@ -80,10 +81,10 @@ class ConversationStore:
         self._context_window_size = 10  # Keep last 10 turns max
     
     def _populate_from_messages(self, db_messages: List[Dict[str, Any]]) -> None:
-        """Populate turns from MongoDB messages
+        """Populate turns from MongoDB messages - updated for hybrid chat
         
         Converts MongoDB messages to ConversationTurn objects
-        Pairs user messages with their assistant responses
+        Pairs user messages with their assistant responses using hybrid pattern
         """
         if not db_messages:
             return
@@ -95,19 +96,44 @@ class ConversationStore:
             
             if role == "user":
                 question = msg.get("content", "")
-                analysis_summary = None
+                assistant_response = None
+                message_intent = None
+                response_type = None
+                triggered_analysis = False
                 
                 # Look ahead for assistant response
                 if i + 1 < len(db_messages):
                     next_msg = db_messages[i + 1]
                     if next_msg.get("role") == "assistant":
-                        analysis_summary = next_msg.get("content", "")[:100]
+                        assistant_response = next_msg.get("content", "")
+                        
+                        # Extract hybrid metadata from assistant message
+                        metadata = next_msg.get("metadata", {})
+                        analysis_suggestion = None
+                        
+                        if isinstance(metadata, dict):
+                            # Get message intent from metadata
+                            intent_str = metadata.get("intent")
+                            if intent_str:
+                                try:
+                                    message_intent = MessageIntent(intent_str)
+                                except ValueError:
+                                    pass  # Invalid intent, leave as None
+                            
+                            response_type = metadata.get("message_type")
+                            triggered_analysis = metadata.get("analysis_triggered", False)
+                            
+                            # Extract analysis suggestion from metadata
+                            analysis_suggestion = metadata.get("analysis_suggestion")
                 
-                self.add_turn(
+                # Create hybrid turn
+                self.add_hybrid_turn(
                     user_query=question,
-                    query_type=QueryType.COMPLETE,
-                    analysis_summary=analysis_summary,
-                    context_used=False
+                    message_intent=message_intent,
+                    response_type=response_type or "chat",
+                    assistant_response=assistant_response or "",
+                    triggered_analysis=triggered_analysis,
+                    analysis_suggestion=analysis_suggestion
                 )
             
             i += 1
@@ -119,6 +145,7 @@ class ConversationStore:
                  response_type: Optional[str] = None,
                  assistant_response: Optional[str] = None,
                  triggered_analysis: bool = False,
+                 analysis_suggestion: Optional[Dict[str, Any]] = None,
                  # Legacy fields (for backward compatibility)
                  query_type: Optional[QueryType] = None,
                  expanded_query: Optional[str] = None,
@@ -136,6 +163,7 @@ class ConversationStore:
             response_type=response_type,
             assistant_response=assistant_response,
             triggered_analysis=triggered_analysis,
+            analysis_suggestion=analysis_suggestion,
             # Legacy fields
             query_type=query_type,
             expanded_query=expanded_query,
@@ -157,14 +185,16 @@ class ConversationStore:
                        message_intent: MessageIntent,
                        response_type: str,
                        assistant_response: str,
-                       triggered_analysis: bool = False) -> ConversationTurn:
+                       triggered_analysis: bool = False,
+                       analysis_suggestion: Optional[Dict[str, Any]] = None) -> ConversationTurn:
         """Convenience method for adding hybrid chat turns"""
         return self.add_turn(
             user_query=user_query,
             message_intent=message_intent,
             response_type=response_type,
             assistant_response=assistant_response,
-            triggered_analysis=triggered_analysis
+            triggered_analysis=triggered_analysis,
+            analysis_suggestion=analysis_suggestion
         )
     
     def get_last_turn(self) -> Optional[ConversationTurn]:
@@ -193,6 +223,35 @@ class ConversationStore:
             if turn.message_intent == MessageIntent.EDUCATIONAL:
                 return turn
         return None
+    
+    def get_pending_analysis_suggestion(self) -> Optional[Dict[str, Any]]:
+        """
+        Get pending analysis suggestion from most recent educational turn
+        
+        Returns analysis suggestion if:
+        1. There's a recent educational turn with analysis_suggestion
+        2. No analysis confirmation has occurred after it
+        """
+        # Find the most recent educational turn with analysis suggestion
+        educational_turn = None
+        for turn in reversed(self.turns):
+            if (turn.message_intent == MessageIntent.EDUCATIONAL and 
+                turn.analysis_suggestion):
+                educational_turn = turn
+                break
+        
+        if not educational_turn:
+            return None
+        
+        # Check if there's been an analysis confirmation after this educational turn
+        educational_index = self.turns.index(educational_turn)
+        for turn in self.turns[educational_index + 1:]:
+            if turn.message_intent == MessageIntent.ANALYSIS_CONFIRMATION:
+                # Found confirmation after educational turn - no pending analysis
+                return None
+        
+        # No confirmation found - return the pending analysis suggestion
+        return educational_turn.analysis_suggestion
     
     def get_recent_chat_history(self, max_turns: int = 5) -> List[Dict[str, str]]:
         """Get recent chat history formatted for LLM context"""

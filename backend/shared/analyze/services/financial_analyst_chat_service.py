@@ -122,7 +122,7 @@ class FinancialAnalystChatService(BaseService):
                         for turn in conversation.turns[-5:]:  # Last 5 turns
                             conversation_history.extend([
                                 {"role": "user", "content": turn.user_query},
-                                {"role": "assistant", "content": turn.analysis_summary or "Analysis completed"}
+                                {"role": "assistant", "content": turn.assistant_response or turn.analysis_summary or "Analysis completed"}
                             ])
                         
                         # Get session context from ConversationStore
@@ -158,7 +158,7 @@ class FinancialAnalystChatService(BaseService):
                 
         except Exception as e:
             logger.error(f"❌ Analyst response generation error: {e}")
-            return self._create_fallback_response(user_message)
+            raise
     
     async def _generate_chat_response(self, 
                                     user_message: str, 
@@ -296,12 +296,19 @@ class FinancialAnalystChatService(BaseService):
         if isinstance(response, str):
             logger.error(f"❌ Expected dict response but got string: {response[:100]}...")
             content = "That's a great follow-up question. Let me help you understand that better based on the previous analysis."
+            return AnalystResponse(content=content)
         elif not response.get("success"):
             content = "That's a great follow-up question. Let me help you understand that better based on the previous analysis."
+            return AnalystResponse(content=content)
         else:
             content = response.get("content", "").strip()
         
-        return AnalystResponse(content=content)
+        # Try to parse analysis suggestion from follow-up response (same logic as educational)
+        return self._parse_educational_response(content, IntentResult(
+            intent=MessageIntent.FOLLOW_UP,
+            confidence=0.9,
+            educational_topic="follow_up"
+        ))
     
     def _prepare_educational_context(self, 
                                    conversation_history: List[Dict[str, str]], 
@@ -366,6 +373,9 @@ Please provide an educational response as a professional financial analyst. Foll
                                 suggested_question=suggestion_data.get("suggested_question", ""),
                                 analysis_type=suggestion_data.get("analysis_type", "general")
                             )
+                            logger.info(f"✅ Parsed analysis suggestion: {analysis_suggestion.topic} - {analysis_suggestion.description}")
+                        else:
+                            logger.warning(f"⚠️ No analysis_suggestion found in parsed JSON: {parsed.keys()}")
                         
                         return AnalystResponse(
                             content=parsed.get("content", content),
@@ -467,9 +477,21 @@ Please provide a friendly, professional response as a financial analyst assistan
 
 FOLLOW-UP QUESTION: {user_message}
 
-Please provide a helpful response that addresses the user's follow-up question based on the previous conversation and analysis. Be specific and educational."""
+Please provide a helpful response that addresses the user's follow-up question based on the previous conversation and analysis. Be specific and educational.
+
+If appropriate, suggest a related analysis that would provide deeper insights. Use the following JSON format:
+
+```json
+{{
+    "content": "Your detailed educational response here...",
+    "analysis_suggestion": {{
+        "topic": "Short descriptive name for the analysis",
+        "description": "What this analysis would reveal",
+        "suggested_question": "Specific analysis question to run",
+        "analysis_type": "correlation|volatility|returns|comparison|general"
+    }}
+}}
+```
+
+If no analysis suggestion is appropriate, just provide the response as plain text."""
     
-    def _create_fallback_response(self, user_message: str) -> AnalystResponse:
-        """Create fallback response when LLM generation fails"""
-        content = "I understand your question and I'm here to help. Could you please rephrase or provide more details so I can give you the best possible assistance?"
-        return AnalystResponse(content=content)

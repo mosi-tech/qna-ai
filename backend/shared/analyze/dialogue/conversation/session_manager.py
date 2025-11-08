@@ -186,8 +186,11 @@ class SessionManager:
             return None
         
         try:
-            # ChatHistoryService should have method to get conversation history
-            db_messages = await self.chat_history_service.chat_repo.get_conversation_history(session_id)
+            # Get conversation history with full metadata for ConversationStore reconstruction
+            db_messages = await self.chat_history_service.chat_repo.get_conversation_history(
+                session_id=session_id, 
+                include_metadata=True  # Include metadata to preserve analysis suggestions
+            )
             
             if not db_messages:
                 return None

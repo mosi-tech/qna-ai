@@ -326,16 +326,25 @@ class APIRoutes:
                 logger.error(f"❌ No session_id provided in request")
                 raise HTTPException(400, "Session ID is required. Please start a new conversation.")
             
-            # Step 2: Create user message
+            # Step 2: Create user message (ONLY if not triggered by hybrid handler)
+            # Check if this is a background analysis from hybrid chat confirmation
+            is_background_analysis = hasattr(request, '_from_hybrid_background') and request._from_hybrid_background
+            
             if not self.chat_history_service:
                 raise HTTPException(500, "Chat history service not available")
             
-            user_message_id = await self.chat_history_service.add_user_message(
-                session_id=session_id,
-                user_id=user_id,
-                question=user_question
-            )
-            logger.info(f"✓ Created user message: {user_message_id}")
+            if not is_background_analysis:
+                user_message_id = await self.chat_history_service.add_user_message(
+                    session_id=session_id,
+                    user_id=user_id,
+                    question=user_question
+                )
+                logger.info(f"✓ Created user message: {user_message_id}")
+            else:
+                # For background analysis, we don't create a new user message
+                # The original "Yes" message already exists
+                user_message_id = None
+                logger.info(f"🔄 Background analysis - skipping user message creation")
             
             # Step 3: Create analysis message with basic metadata
             analysis_message_id = await self.chat_history_service.add_assistant_message(
@@ -461,29 +470,44 @@ class APIRoutes:
             # logger.info(f"🔒 Session lock acquired for new analysis: {session_id}")
             
             # Step 3: Create user message (now protected by lock)
+            # Skip user message creation if this is a background analysis from hybrid handler
             if not self.chat_history_service:
                 raise HTTPException(500, "Chat history service not available")
             
-            user_message_id = await self.chat_history_service.add_user_message(
-                session_id=session_id,
-                user_id=user_id,
-                question=user_question
-            )
-            logger.info(f"✓ Created user message: {user_message_id}")
+            user_message_id = None
+            if hasattr(request, '_from_hybrid_background') and request._from_hybrid_background:
+                logger.info(f"⏩ Skipping user message creation for background analysis")
+                # Use placeholder for message ID tracking
+                user_message_id = "hybrid_background_analysis"
+            else:
+                user_message_id = await self.chat_history_service.add_user_message(
+                    session_id=session_id,
+                    user_id=user_id,
+                    question=user_question
+                )
+                logger.info(f"✓ Created user message: {user_message_id}")
             
             # Step 4: Create analysis message with basic metadata including job placeholder
-            analysis_message_id = await self.chat_history_service.add_assistant_message(
-                session_id=session_id,
-                user_id=user_id,
-                content="Analysis in progress...",
-                metadata={
-                    "status": MessageStatus.PENDING,
-                    "user_message_id": user_message_id,
-                    "queued_at": datetime.now().isoformat(),
-                    "response_type": "script_generation"
-                }
-            )
-            logger.info(f"✓ Created analysis message: {analysis_message_id}")
+            # Skip analysis message creation if this is a background analysis from hybrid handler
+            analysis_message_id = None
+            if hasattr(request, '_from_hybrid_background') and request._from_hybrid_background:
+                logger.info(f"⏩ Skipping analysis message creation for background analysis")
+                # Use the existing assistant message ID from hybrid handler
+                analysis_message_id = getattr(request, '_hybrid_assistant_message_id', 'hybrid_background_analysis_msg')
+                logger.info(f"✓ Using existing assistant message: {analysis_message_id}")
+            else:
+                analysis_message_id = await self.chat_history_service.add_assistant_message(
+                    session_id=session_id,
+                    user_id=user_id,
+                    content="Analysis in progress...",
+                    metadata={
+                        "status": MessageStatus.PENDING,
+                        "user_message_id": user_message_id,
+                        "queued_at": datetime.now().isoformat(),
+                        "response_type": "script_generation"
+                    }
+                )
+                logger.info(f"✓ Created analysis message: {analysis_message_id}")
             
             # Step 5: TEMPORARILY BYPASS LOCK UPDATE FOR DEBUGGING
             # TODO: Re-enable after fixing database hanging issue
@@ -629,6 +653,9 @@ class APIRoutes:
                     session_id=session_id,
                     user_id=user_id
                 )
+                # Mark as background analysis to avoid creating duplicate messages
+                analysis_request._from_hybrid_background = True
+                analysis_request._hybrid_assistant_message_id = hybrid_response.message_id
                 
                 # Trigger analysis using existing flow (background - no await)
                 # This ensures chat response returns immediately while analysis runs
