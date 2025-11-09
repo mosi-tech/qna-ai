@@ -193,7 +193,7 @@ def create_app() -> FastAPI:
             return {
                 "session_id": session_id,
                 "status": "active",
-                "messages": store.turns if hasattr(store, 'turns') else [],
+                "messages": [msg.to_dict() for msg in store.messages] if hasattr(store, 'messages') else [],
                 "context_summary": context
             }
         except Exception as e:

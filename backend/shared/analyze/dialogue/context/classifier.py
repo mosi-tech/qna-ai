@@ -39,7 +39,15 @@ class QueryClassifier:
             # Use LLM to detect contextual vs standalone
             # Provide conversation history so LLM can detect patterns (pronouns, references)
             # But LLM doesn't fill gaps - just detects if query references prior context
-            llm_result = await self.context_service.classify_contextual(user_query, last_turn)
+            
+            # Build context from new message-based approach
+            context = {}
+            if last_user_message:
+                context["last_user_query"] = last_user_message.content
+            if last_assistant_message:
+                context["last_assistant_response"] = last_assistant_message.content
+                
+            llm_result = await self.context_service.classify_contextual(user_query, context)
             
             if not llm_result["success"]:
                 logger.error(f"❌ Classification failed: {llm_result.get('error')}")

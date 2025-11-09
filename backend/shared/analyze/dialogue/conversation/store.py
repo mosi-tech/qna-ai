@@ -196,13 +196,12 @@ class ConversationStore:
         return store
     
     def _populate_from_db_messages(self, db_messages: List[Dict[str, Any]]) -> None:
-        """Populate both new messages list and legacy turns from DB messages"""
+        """Populate messages list from DB messages"""
         if not db_messages:
             return
         
         # Clear existing data
         self.messages = []
-        self.turns = []
         
         # Populate new message-based structure
         for db_msg in db_messages:

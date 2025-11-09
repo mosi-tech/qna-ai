@@ -222,8 +222,10 @@ class ContextAwareSearch:
         """Classify if query is CONTEXTUAL or STANDALONE"""
         
         try:
-            last_turn = conversation.get_last_turn()
-            result = await self.classifier.classify(query, last_turn)
+            # Get last messages using new message-based architecture
+            last_user_message = conversation.get_last_user_message()
+            last_assistant_message = conversation.get_last_assistant_message()
+            result = await self.classifier.classify(query, last_user_message, last_assistant_message)
             
             if result["success"]:
                 query_type = "contextual" if result["is_contextual"] else "standalone"
@@ -345,7 +347,7 @@ Is this a meaningless or non-financial query that shouldn't be analyzed?"""
                 # Include assistant responses that aren't error messages
                 if not any(indicator in message.content.lower() for indicator in ['error', 'sorry', 'apologize']):
                     context_lines.append(f"A: {message.content[:100]}...")
-                context_lines.append(f"(expanded to: {turn.expanded_query})")
+                # Note: expanded_query functionality would need to be handled differently in message-based approach
         
         return "\n".join(context_lines)
     
@@ -475,9 +477,9 @@ Is this a meaningless or non-financial query that shouldn't be analyzed?"""
                     original_query=original_query
                 )
 
-            # Add to conversation history
-            turn = conversation.add_turn(
-                user_query=original_query,
+            # Add to conversation history using new message-based approach
+            await conversation.add_user_message(
+                content=original_query,
                 query_type="contextual",
                 expanded_query=expanded_query,
                 context_used=True

@@ -77,12 +77,7 @@ class IntentClassifierService(BaseService):
             logger.debug(f"🔍 Classifying intent for: {user_message[:100]}...")
             
             # Get conversation from session manager (consistent with existing approach)
-            conversation = None
-            if self.session_manager and session_id:
-                try:
-                    conversation = await self.session_manager.get_session(session_id)
-                except Exception as e:
-                    logger.warning(f"⚠️ Could not get session from session manager: {e}")
+            conversation = await self.session_manager.get_session(session_id)
             
             # Prepare context for classification
             context_info = self._prepare_classification_context(conversation)

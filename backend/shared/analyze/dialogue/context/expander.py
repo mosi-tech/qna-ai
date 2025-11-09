@@ -42,9 +42,9 @@ class ContextExpander:
         return expansion_result
     
     def _build_conversation_context(self, conversation_messages: List[Union[UserMessage, AssistantMessage]]) -> str:
-        """Build formatted conversation context from turns
+        """Build formatted conversation context from messages
 
-        IMPORTANT: Skips turns where assistant returned an error message.
+        IMPORTANT: Skips messages where assistant returned an error message.
         Error messages don't provide useful context for expanding queries.
         """
 
@@ -66,7 +66,7 @@ class ContextExpander:
         return "\n".join(context_lines)
 
     def _is_error_response(self, message: AssistantMessage) -> bool:
-        """Check if a conversation turn represents an error response
+        """Check if a conversation message represents an error response
 
         Returns True if the assistant message was an error (no successful analysis).
         This helps skip failed queries when building context.

@@ -4,13 +4,13 @@ Session Manager - Coordinates ConversationStore with ChatHistoryService
 
 Architecture:
 - SessionManager: Thin coordinator that manages session state
-- ConversationStore: In-memory short-term context window (last 10 turns)
+- ConversationStore: In-memory short-term context window (last 20 messages)
 - ChatHistoryService: Persistent storage of all messages (for UI, full history)
 - MongoDB: Underlying persistent store
 
 Data Flow:
 1. get_or_create_session() loads messages from ChatHistoryService → hydrates ConversationStore
-2. add_turn() updates ConversationStore in-memory + persists via ChatHistoryService
+2. add_user_message()/add_assistant_message() updates ConversationStore in-memory + persists via ChatHistoryService
 3. Sessions cached in-memory during active conversation
 """
 

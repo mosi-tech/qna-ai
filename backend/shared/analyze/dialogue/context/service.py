@@ -24,14 +24,18 @@ class ContextService:
         # Prompts for context operations
         self._prompts = ContextPrompts()
     
-    async def classify_contextual(self, current_query: str, last_turn=None) -> Dict[str, Any]:
+    async def classify_contextual(self, current_query: str, context=None) -> Dict[str, Any]:
         """Classify if query is CONTEXTUAL or STANDALONE (not about completeness)
         
         CONTEXTUAL: References prior context (pronouns, phrases)
         STANDALONE: Can be understood in isolation
+        
+        Args:
+            current_query: The user's current query
+            context: Dictionary with 'last_user_query' and 'last_assistant_response' from messages
         """
         
-        last_query = last_turn.user_query if last_turn else None
+        last_query = context.get("last_user_query") if context else None
         
         system_prompt, user_message = self._prompts.build_contextual_classification_messages(
             current_query=current_query,
