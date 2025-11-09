@@ -180,6 +180,8 @@ class ChatRepository:
         history = []
         for msg in messages:
             message_data = {
+                "user_id": msg.user_id, 
+                "message_id": msg.message_id, 
                 "role": msg.role.value,
                 "content": msg.content,
                 "timestamp": msg.created_at.isoformat(),

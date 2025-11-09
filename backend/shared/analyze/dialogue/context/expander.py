@@ -5,8 +5,8 @@ Context Expander - Expand contextual queries using conversation history
 
 import json
 import logging
-from typing import Optional, Dict, Any, List
-from ..conversation.store import ConversationTurn
+from typing import Optional, Dict, Any, List, Union
+from ..conversation.store import UserMessage, AssistantMessage
 from .service import ContextService
 from .classifier import QueryClassifier
 
@@ -21,10 +21,10 @@ class ContextExpander:
     
     async def expand_query(self, 
                           contextual_query: str, 
-                          conversation_turns: List[ConversationTurn]) -> Dict[str, Any]:
+                          conversation_messages: List[Union[UserMessage, AssistantMessage]]) -> Dict[str, Any]:
         """Expand contextual query using conversation history"""
         
-        if not conversation_turns:
+        if not conversation_messages:
             return {
                 "success": False,
                 "error": "No conversation history available for expansion",
@@ -32,8 +32,8 @@ class ContextExpander:
                 "confidence": 0.0
             }
         
-        # Build conversation context from turns
-        conversation_context = self._build_conversation_context(conversation_turns)
+        # Build conversation context from messages
+        conversation_context = self._build_conversation_context(conversation_messages)
         
         # Use LLM to expand the query with conversation context
         expansion_result = await self._expand_with_llm(contextual_query, conversation_context)
@@ -41,7 +41,7 @@ class ContextExpander:
         # LLM now returns confidence, no need to override
         return expansion_result
     
-    def _build_conversation_context(self, conversation_turns: List[ConversationTurn]) -> str:
+    def _build_conversation_context(self, conversation_messages: List[Union[UserMessage, AssistantMessage]]) -> str:
         """Build formatted conversation context from turns
 
         IMPORTANT: Skips turns where assistant returned an error message.
@@ -50,38 +50,30 @@ class ContextExpander:
 
         context_lines = []
 
-        # Include up to last 3 SUCCESSFUL turns for context (avoid too much noise)
-        # Filter out error responses first
-        successful_turns = [
-            turn for turn in conversation_turns
-            if not self._is_error_response(turn)
-        ]
-
-        recent_turns = successful_turns[-3:] if len(successful_turns) > 3 else successful_turns
-
-        for i, turn in enumerate(recent_turns):
-            if turn.user_query:
-                context_lines.append(f"User: {turn.user_query}")
-
-            # Add analysis summary if available
-            if turn.analysis_summary:
-                context_lines.append(f"Analysis: {turn.analysis_summary}")
-
-            # Add separator between turns
-            if i < len(recent_turns) - 1:
-                context_lines.append("---")
+        # Include up to last 6 messages for context (3 exchanges)
+        recent_messages = conversation_messages[-6:] if len(conversation_messages) > 6 else conversation_messages
+        
+        for i, message in enumerate(recent_messages):
+            if isinstance(message, UserMessage):
+                context_lines.append(f"User: {message.content}")
+            elif isinstance(message, AssistantMessage) and not self._is_error_response(message):
+                context_lines.append(f"Assistant: {message.content[:200]}...")  # Truncate long responses
+                
+                # Add separator between message pairs
+                if i < len(recent_messages) - 2:
+                    context_lines.append("---")
 
         return "\n".join(context_lines)
 
-    def _is_error_response(self, turn: ConversationTurn) -> bool:
+    def _is_error_response(self, message: AssistantMessage) -> bool:
         """Check if a conversation turn represents an error response
 
         Returns True if the assistant message was an error (no successful analysis).
         This helps skip failed queries when building context.
         """
-        # Check if analysis summary indicates an error
-        if turn.analysis_summary:
-            summary_lower = turn.analysis_summary.lower()
+        # Check if assistant message indicates an error
+        if message.content:
+            content_lower = message.content.lower()
             error_indicators = [
                 "something went wrong",
                 "could not answer",
@@ -89,12 +81,14 @@ class ContextExpander:
                 "failed to",
                 "unable to",
                 "couldn't process",
-                "I don't understand your request"
+                "I don't understand your request",
+                "sorry",
+                "apologize"
             ]
-            return any(indicator in summary_lower for indicator in error_indicators)
+            return any(indicator in content_lower for indicator in error_indicators)
 
-        # If no analysis summary at all, likely an error
-        return not turn.analysis_summary
+        # If no content at all, likely an error
+        return not message.content
     
     async def _expand_with_llm(self, contextual_query: str, conversation_context: str) -> Dict[str, Any]:
         """Use LLM to expand contextual query with conversation context"""

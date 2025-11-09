@@ -6,7 +6,7 @@ Does NOT validate completeness - that's the validator's job
 
 import logging
 from typing import Optional, Dict, Any
-from ..conversation.store import ConversationTurn
+from ..conversation.store import UserMessage, AssistantMessage
 from .service import ContextService
 
 logger = logging.getLogger(__name__)
@@ -17,7 +17,7 @@ class QueryClassifier:
     def __init__(self, context_service: ContextService):
         self.context_service = context_service
     
-    async def classify(self, user_query: str, last_turn: Optional[ConversationTurn] = None) -> Dict[str, Any]:
+    async def classify(self, user_query: str, last_user_message: Optional[UserMessage] = None, last_assistant_message: Optional[AssistantMessage] = None) -> Dict[str, Any]:
         """
         Detect if query is CONTEXTUAL or STANDALONE
         

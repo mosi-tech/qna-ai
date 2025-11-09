@@ -5,9 +5,139 @@ Conversation Storage - Efficient conversation history management
 
 import uuid
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Tuple, Union
 from dataclasses import dataclass, asdict
 from enum import Enum
+from abc import ABC, abstractmethod
+
+
+@dataclass
+class BaseMessage(ABC):
+    """Base class for all messages in conversation"""
+    id: str
+    content: str
+    timestamp: datetime
+    metadata: Dict[str, Any] = None
+    
+    def __post_init__(self):
+        if self.metadata is None:
+            self.metadata = {}
+    
+    @property
+    @abstractmethod
+    def role(self) -> str:
+        """Role identifier for the message"""
+        pass
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for serialization"""
+        result = asdict(self)
+        result['role'] = self.role
+        result['timestamp'] = self.timestamp.isoformat()
+        return result
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]):
+        """Create message from dictionary based on role"""
+        role = data.get('role')
+        if role == 'user':
+            return UserMessage.from_dict(data)
+        elif role == 'assistant':
+            return AssistantMessage.from_dict(data)
+        else:
+            raise ValueError(f"Unknown message role: {role}")
+
+@dataclass
+class UserMessage(BaseMessage):
+    """Message from a user"""
+    user_id: str = "anonymous"
+    
+    @property
+    def role(self) -> str:
+        return "user"
+    
+    @classmethod
+    def create(cls, content: str, user_id: str = "anonymous", **metadata) -> 'UserMessage':
+        """Create a user message"""
+        return cls(
+            id=str(uuid.uuid4())[:8],
+            content=content,
+            timestamp=datetime.now(),
+            user_id=user_id,
+            metadata=metadata
+        )
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'UserMessage':
+        """Create UserMessage from dictionary"""
+        return cls(
+            id=data.get('id') or data.get('message_id') or str(uuid.uuid4())[:8],  # Check id, then message_id, then generate
+            content=data.get('content', ""),
+            timestamp=datetime.fromisoformat(data['timestamp']) if data.get('timestamp') else datetime.now(),
+            user_id=data.get('user_id', data.get('metadata', {}).get('user_id', 'anonymous')),
+            metadata=data.get('metadata', {})
+        )
+
+@dataclass
+class AssistantMessage(BaseMessage):
+    """Message from the assistant"""
+    message_type: Optional[str] = None
+    intent: Optional[str] = None
+    analysis_triggered: bool = False
+    analysis_suggestion: Optional[Dict[str, Any]] = None
+    
+    @property
+    def role(self) -> str:
+        return "assistant"
+    
+    @classmethod
+    def create(cls, content: str, **metadata) -> 'AssistantMessage':
+        """Create an assistant message"""
+        # Extract known fields from metadata
+        message_type = metadata.pop('message_type', None)
+        intent = metadata.pop('intent', None)
+        analysis_triggered = metadata.pop('analysis_triggered', False)
+        analysis_suggestion = metadata.pop('analysis_suggestion', None)
+        
+        return cls(
+            id=str(uuid.uuid4())[:8],
+            content=content,
+            timestamp=datetime.now(),
+            message_type=message_type,
+            intent=intent,
+            analysis_triggered=analysis_triggered,
+            analysis_suggestion=analysis_suggestion,
+            metadata=metadata
+        )
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> 'AssistantMessage':
+        """Create AssistantMessage from dictionary"""
+        metadata = data.get('metadata', {})
+        return cls(
+            id=data.get('id') or data.get('message_id') or str(uuid.uuid4())[:8],  # Check id, then message_id, then generate
+            content=data.get('content', ""),
+            timestamp=datetime.fromisoformat(data['timestamp']) if data.get('timestamp') else datetime.now(),
+            # Try top-level fields first, then fallback to metadata
+            message_type=data.get('message_type') or metadata.get('message_type'),
+            intent=data.get('intent') or metadata.get('intent'),
+            analysis_triggered=data.get('analysis_triggered', metadata.get('analysis_triggered', False)),
+            analysis_suggestion=data.get('analysis_suggestion') or metadata.get('analysis_suggestion'),
+            metadata=metadata
+        )
+    
+    def has_analysis_suggestion(self) -> bool:
+        """Check if this message has an analysis suggestion"""
+        return self.analysis_suggestion is not None
+    
+    def get_analysis_topic(self) -> Optional[str]:
+        """Get the analysis suggestion topic if available"""
+        if self.analysis_suggestion:
+            return self.analysis_suggestion.get('topic')
+        return None
+
+# Type alias for any message type
+Message = Union[UserMessage, AssistantMessage]
 
 class QueryType(Enum):
     # Legacy analysis types (for backward compatibility)
@@ -24,283 +154,229 @@ class MessageIntent(Enum):
     ANALYSIS_CONFIRMATION = "analysis_confirmation"  # Confirming analysis suggestion
     FOLLOW_UP = "follow_up"                   # Follow-up to previous analysis
 
-@dataclass
-class ConversationTurn:
-    """Single conversation exchange - updated for hybrid chat pattern"""
-    id: str
-    timestamp: datetime
-    user_query: str                 # Original user input
-    
-    # Hybrid message fields (new)
-    message_intent: Optional[MessageIntent]     # Intent classification for hybrid chat
-    response_type: Optional[str]                # Response type (chat, educational_chat, etc.)
-    assistant_response: Optional[str]           # Assistant's response content
-    triggered_analysis: bool = False            # Whether this triggered an analysis
-    analysis_suggestion: Optional[Dict[str, Any]] = None  # Analysis suggestion data if provided
-    
-    # Legacy analysis fields (for backward compatibility)
-    query_type: Optional[QueryType] = None
-    expanded_query: Optional[str] = None        # LLM-expanded query if contextual
-    analysis_summary: Optional[str] = None      # Brief summary of analysis found
-    context_used: bool = False
-    expansion_confidence: float = 0.0
-
-    def to_dict(self) -> dict:
-        """Convert to dictionary for JSON serialization"""
-        result = asdict(self)
-        result['timestamp'] = self.timestamp.isoformat()
-        
-        # Handle enum serialization
-        if self.message_intent:
-            result['message_intent'] = self.message_intent.value
-        if self.query_type:
-            result['query_type'] = self.query_type.value
-        
-        return result
-
-    @classmethod
-    def from_dict(cls, data: dict) -> 'ConversationTurn':
-        """Create from dictionary"""
-        data = data.copy()  # Avoid mutating original
-        data['timestamp'] = datetime.fromisoformat(data['timestamp'])
-        
-        # Handle enum deserialization
-        if data.get('message_intent'):
-            data['message_intent'] = MessageIntent(data['message_intent'])
-        if data.get('query_type'):
-            data['query_type'] = QueryType(data['query_type'])
-            
-        return cls(**data)
 
 class ConversationStore:
-    """Interface to conversation data stored in MongoDB/Redis"""
+    """Single source of truth for conversation data - message-based design
     
-    def __init__(self, session_id: str):
+    Handles independent user and assistant messages in sequential order.
+    Supports real conversation patterns like multiple user messages, missing responses, etc.
+    """
+    
+    def __init__(self, session_id: str, chat_history_service=None):
         self.session_id = session_id
-        self.turns: List[ConversationTurn] = []
-        self._context_window_size = 10  # Keep last 10 turns max
-    
-    def _populate_from_messages(self, db_messages: List[Dict[str, Any]]) -> None:
-        """Populate turns from MongoDB messages - updated for hybrid chat
+        self.messages: List[Message] = []  # Sequential independent messages (Union[UserMessage, AssistantMessage])
+        self._context_window_size = 20  # Keep last 20 messages (10 exchanges)
+        self.chat_history_service = chat_history_service
         
-        Converts MongoDB messages to ConversationTurn objects
-        Pairs user messages with their assistant responses using hybrid pattern
-        """
+    
+    @classmethod
+    async def load_or_create(cls, session_id: str, chat_history_service) -> 'ConversationStore':
+        """Load existing conversation from DB or create new empty one"""
+        store = cls(session_id, chat_history_service)
+        
+        if chat_history_service:
+            try:
+                # Try to load existing conversation from DB
+                db_messages = await chat_history_service.get_conversation_history(
+                    session_id=session_id,
+                    include_metadata=True  # Include metadata to preserve analysis suggestions
+                )
+                
+                if db_messages:
+                    store._populate_from_db_messages(db_messages)
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.debug(f"✓ Loaded {len(db_messages)} messages for session {session_id[:8]}...")
+                
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"⚠️ Failed to load session from DB, starting fresh: {e}")
+        
+        return store
+    
+    def _populate_from_db_messages(self, db_messages: List[Dict[str, Any]]) -> None:
+        """Populate both new messages list and legacy turns from DB messages"""
         if not db_messages:
             return
         
-        i = 0
-        while i < len(db_messages):
-            msg = db_messages[i]
-            role = msg.get("role", "user")
-            
+        # Clear existing data
+        self.messages = []
+        self.turns = []
+        
+        # Populate new message-based structure
+        for db_msg in db_messages:
+            role = db_msg.get("role", "user")
             if role == "user":
-                question = msg.get("content", "")
-                assistant_response = None
-                message_intent = None
-                response_type = None
-                triggered_analysis = False
-                
-                # Look ahead for assistant response
-                if i + 1 < len(db_messages):
-                    next_msg = db_messages[i + 1]
-                    if next_msg.get("role") == "assistant":
-                        assistant_response = next_msg.get("content", "")
-                        
-                        # Extract hybrid metadata from assistant message
-                        metadata = next_msg.get("metadata", {})
-                        analysis_suggestion = None
-                        
-                        if isinstance(metadata, dict):
-                            # Get message intent from metadata
-                            intent_str = metadata.get("intent")
-                            if intent_str:
-                                try:
-                                    message_intent = MessageIntent(intent_str)
-                                except ValueError:
-                                    pass  # Invalid intent, leave as None
-                            
-                            response_type = metadata.get("message_type")
-                            triggered_analysis = metadata.get("analysis_triggered", False)
-                            
-                            # Extract analysis suggestion from metadata
-                            analysis_suggestion = metadata.get("analysis_suggestion")
-                
-                # Create hybrid turn
-                self.add_hybrid_turn(
-                    user_query=question,
-                    message_intent=message_intent,
-                    response_type=response_type or "chat",
-                    assistant_response=assistant_response or "",
-                    triggered_analysis=triggered_analysis,
-                    analysis_suggestion=analysis_suggestion
+                message = UserMessage.from_dict(db_msg)
+            else:
+                message = AssistantMessage.from_dict(db_msg)
+            self.messages.append(message)
+        
+    
+    
+    # ========== NEW MESSAGE-BASED API ==========
+    
+    async def add_user_message(self, content: str, user_id: str = "anonymous", **metadata) -> UserMessage:
+        """Add user message - immediately persisted, independent of assistant response"""
+        message = UserMessage.create(content, user_id, **metadata)
+        
+        # 1. Add to memory immediately  
+        self.messages.append(message)
+        
+        # 2. Persist to database immediately (never lost)
+        if self.chat_history_service:
+            try:
+                await self.chat_history_service.add_user_message(
+                    session_id=self.session_id,
+                    user_id=user_id,
+                    question=content
                 )
-            
-            i += 1
-    
-    def add_turn(self, 
-                 user_query: str,
-                 # New hybrid fields
-                 message_intent: Optional[MessageIntent] = None,
-                 response_type: Optional[str] = None,
-                 assistant_response: Optional[str] = None,
-                 triggered_analysis: bool = False,
-                 analysis_suggestion: Optional[Dict[str, Any]] = None,
-                 # Legacy fields (for backward compatibility)
-                 query_type: Optional[QueryType] = None,
-                 expanded_query: Optional[str] = None,
-                 analysis_summary: Optional[str] = None,
-                 context_used: bool = False,
-                 expansion_confidence: float = 0.0) -> ConversationTurn:
-        """Add new conversation turn"""
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"❌ Failed to persist user message: {e}")
+                # Continue - message preserved in memory
         
-        turn = ConversationTurn(
-            id=str(uuid.uuid4())[:8],
-            timestamp=datetime.now(),
-            user_query=user_query,
-            # New hybrid fields
-            message_intent=message_intent,
-            response_type=response_type,
-            assistant_response=assistant_response,
-            triggered_analysis=triggered_analysis,
-            analysis_suggestion=analysis_suggestion,
-            # Legacy fields
-            query_type=query_type,
-            expanded_query=expanded_query,
-            analysis_summary=analysis_summary,
-            context_used=context_used,
-            expansion_confidence=expansion_confidence
-        )
+        # 3. Trim context window
+        self._trim_messages()
         
-        self.turns.append(turn)
+        return message
+    
+    async def add_assistant_message(self, content: str, user_id: str = "anonymous", **metadata) -> AssistantMessage:
+        """Add assistant message - independent of user message"""
+        message = AssistantMessage.create(content, **metadata)
         
-        # Trim to context window
-        if len(self.turns) > self._context_window_size:
-            self.turns = self.turns[-self._context_window_size:]
+        # 1. Add to memory immediately
+        self.messages.append(message)
         
-        return turn
+        # 2. Persist to database
+        if self.chat_history_service:
+            try:
+                await self.chat_history_service.add_assistant_message(
+                    session_id=self.session_id,
+                    user_id=user_id,
+                    content=content,
+                    metadata=metadata
+                )
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"❌ Failed to persist assistant message: {e}")
+                # Continue - message preserved in memory
+        
+        # 3. Trim context window
+        self._trim_messages()
+        
+        return message
     
-    def add_hybrid_turn(self, 
-                       user_query: str,
-                       message_intent: MessageIntent,
-                       response_type: str,
-                       assistant_response: str,
-                       triggered_analysis: bool = False,
-                       analysis_suggestion: Optional[Dict[str, Any]] = None) -> ConversationTurn:
-        """Convenience method for adding hybrid chat turns"""
-        return self.add_turn(
-            user_query=user_query,
-            message_intent=message_intent,
-            response_type=response_type,
-            assistant_response=assistant_response,
-            triggered_analysis=triggered_analysis,
-            analysis_suggestion=analysis_suggestion
-        )
+    def _trim_messages(self):
+        """Trim messages to context window size"""
+        if len(self.messages) > self._context_window_size:
+            self.messages = self.messages[-self._context_window_size:]
     
-    def get_last_turn(self) -> Optional[ConversationTurn]:
-        """Get most recent conversation turn"""
-        return self.turns[-1] if self.turns else None
+    def get_messages(self, role: Optional[str] = None, limit: Optional[int] = None) -> List[Message]:
+        """Get messages, optionally filtered by role"""
+        messages = self.messages
+        if role:
+            messages = [m for m in messages if m.role == role]
+        if limit:
+            messages = messages[-limit:]
+        return messages
     
-    def get_last_complete_turn(self) -> Optional[ConversationTurn]:
-        """Find most recent turn with complete query (not contextual) - legacy method"""
-        for turn in reversed(self.turns):
-            if (turn.query_type == QueryType.COMPLETE and 
-                turn.analysis_summary and 
-                not turn.context_used):
-                return turn
+    def get_last_user_message(self) -> Optional[UserMessage]:
+        """Get most recent user message"""
+        for message in reversed(self.messages):
+            if isinstance(message, UserMessage):
+                return message
         return None
     
-    def get_last_analysis_turn(self) -> Optional[ConversationTurn]:
-        """Find most recent turn that triggered analysis (hybrid pattern)"""
-        for turn in reversed(self.turns):
-            if turn.triggered_analysis or turn.analysis_summary:
-                return turn
+    def get_last_assistant_message(self) -> Optional[AssistantMessage]:
+        """Get most recent assistant message"""
+        for message in reversed(self.messages):
+            if isinstance(message, AssistantMessage):
+                return message
         return None
     
-    def get_last_educational_turn(self) -> Optional[ConversationTurn]:
-        """Find most recent educational chat turn"""
-        for turn in reversed(self.turns):
-            if turn.message_intent == MessageIntent.EDUCATIONAL:
-                return turn
+    def get_conversation_history_for_llm(self) -> List[Dict[str, str]]:
+        """Get conversation history in LLM-compatible format"""
+        return [
+            {"role": msg.role, "content": msg.content}
+            for msg in self.messages
+        ]
+    
+    async def get_pending_analysis_suggestion(self) -> Optional[Dict[str, Any]]:
+        """Get pending analysis suggestion from most recent educational message"""
+        for message in reversed(self.messages):
+            if (isinstance(message, AssistantMessage) and 
+                message.has_analysis_suggestion()):
+                
+                # Check if there's been a confirmation after this suggestion
+                message_index = self.messages.index(message)
+                for later_msg in self.messages[message_index + 1:]:
+                    if (isinstance(later_msg, AssistantMessage) and
+                        later_msg.analysis_triggered):
+                        return None  # Already confirmed
+                
+                return message.analysis_suggestion
         return None
     
-    def get_pending_analysis_suggestion(self) -> Optional[Dict[str, Any]]:
-        """
-        Get pending analysis suggestion from most recent educational turn
-        
-        Returns analysis suggestion if:
-        1. There's a recent educational turn with analysis_suggestion
-        2. No analysis confirmation has occurred after it
-        """
-        # Find the most recent educational turn with analysis suggestion
-        educational_turn = None
-        for turn in reversed(self.turns):
-            if (turn.message_intent == MessageIntent.EDUCATIONAL and 
-                turn.analysis_suggestion):
-                educational_turn = turn
-                break
-        
-        if not educational_turn:
-            return None
-        
-        # Check if there's been an analysis confirmation after this educational turn
-        educational_index = self.turns.index(educational_turn)
-        for turn in self.turns[educational_index + 1:]:
-            if turn.message_intent == MessageIntent.ANALYSIS_CONFIRMATION:
-                # Found confirmation after educational turn - no pending analysis
-                return None
-        
-        # No confirmation found - return the pending analysis suggestion
-        return educational_turn.analysis_suggestion
-    
-    def get_recent_chat_history(self, max_turns: int = 5) -> List[Dict[str, str]]:
-        """Get recent chat history formatted for LLM context"""
-        history = []
-        for turn in self.turns[-max_turns:]:
-            # Add user message
-            history.append({
-                "role": "user",
-                "content": turn.user_query
-            })
-            # Add assistant response if available
-            if turn.assistant_response:
-                history.append({
-                    "role": "assistant", 
-                    "content": turn.assistant_response
-                })
-        return history
+    async def add_conversation_exchange(self, 
+                                      user_content: str, 
+                                      assistant_content: str, 
+                                      user_id: str = "anonymous",
+                                      **assistant_metadata) -> Tuple[UserMessage, AssistantMessage]:
+        """Convenience method to add a user message + assistant response pair"""
+        user_msg = await self.add_user_message(user_content, user_id)
+        assistant_msg = await self.add_assistant_message(assistant_content, user_id, **assistant_metadata)
+        return user_msg, assistant_msg
     
     def get_context_summary(self) -> dict:
-        """Get minimal context summary for LLM - updated for hybrid chat pattern"""
-        last_turn = self.get_last_turn()
-        last_analysis_turn = self.get_last_analysis_turn()
-        last_educational_turn = self.get_last_educational_turn()
+        """Get minimal context summary for LLM - message-based implementation"""
+        last_user_msg = self.get_last_user_message()
+        last_assistant_msg = self.get_last_assistant_message()
+        
+        # Find last assistant message with analysis suggestion
+        last_educational_msg = None
+        for msg in reversed(self.messages):
+            if isinstance(msg, AssistantMessage) and msg.has_analysis_suggestion():
+                last_educational_msg = msg
+                break
+        
+        # Check for recent analysis triggers
+        recent_analysis_triggered = any(
+            isinstance(msg, AssistantMessage) and msg.analysis_triggered 
+            for msg in self.messages[-6:]
+        )
         
         return {
-            "has_history": len(self.turns) > 0,
-            "last_query": last_turn.user_query if last_turn else None,
-            "last_message_intent": last_turn.message_intent.value if last_turn and last_turn.message_intent else None,
-            "last_response_type": last_turn.response_type if last_turn else None,
-            "last_assistant_response": last_turn.assistant_response[:200] if last_turn and last_turn.assistant_response else None,
-            "last_analysis": last_analysis_turn.analysis_summary if last_analysis_turn else None,
-            "last_educational_topic": last_educational_turn.assistant_response[:100] if last_educational_turn else None,
-            "recent_analysis_triggered": any(turn.triggered_analysis for turn in self.turns[-3:]) if self.turns else False,
-            "turn_count": len(self.turns),
-            
-            # Legacy fields for backward compatibility
-            "last_query_type": last_turn.query_type.value if last_turn and last_turn.query_type else None
+            "has_history": len(self.messages) > 0,
+            "last_query": last_user_msg.content if last_user_msg else None,
+            "last_message_intent": last_assistant_msg.intent if last_assistant_msg else None,
+            "last_response_type": last_assistant_msg.message_type if last_assistant_msg else None,
+            "last_assistant_response": last_assistant_msg.content[:200] if last_assistant_msg else None,
+            "last_analysis": last_assistant_msg.content[:200] if last_assistant_msg and last_assistant_msg.analysis_triggered else None,
+            "last_educational_topic": last_educational_msg.content[:100] if last_educational_msg else None,
+            "recent_analysis_triggered": recent_analysis_triggered,
+            "message_count": len(self.messages)
         }
     
     def to_dict(self) -> dict:
         """Serialize conversation for storage"""
         return {
             "session_id": self.session_id,
-            "turns": [turn.to_dict() for turn in self.turns]
+            "messages": [msg.to_dict() for msg in self.messages]
         }
     
     @classmethod
     def from_dict(cls, data: dict) -> 'ConversationStore':
         """Deserialize conversation from storage"""
         store = cls(data["session_id"])
-        store.turns = [ConversationTurn.from_dict(turn_data) for turn_data in data["turns"]]
+        
+        # Load messages from the new format if available
+        if "messages" in data:
+            for msg_data in data["messages"]:
+                message = BaseMessage.from_dict(msg_data)
+                store.messages.append(message)
+        
         return store

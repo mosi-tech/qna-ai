@@ -170,10 +170,10 @@ class ChatHistoryService:
             self.logger.error(f"✗ Failed to get session context: {e}")
             raise
     
-    async def get_conversation_history(self, session_id: str) -> List[Dict[str, Any]]:
+    async def get_conversation_history(self, session_id: str, include_metadata: bool = False) -> List[Dict[str, Any]]:
         """Get conversation history for LLM context"""
         try:
-            history = await self.chat_repo.get_conversation_history(session_id)
+            history = await self.chat_repo.get_conversation_history(session_id, include_metadata=include_metadata)
             self.logger.info(f"✓ Retrieved conversation history: {len(history)} messages")
             return history
         except Exception as e:

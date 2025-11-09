@@ -74,14 +74,7 @@ class HybridMessageHandler:
         try:
             logger.info(f"🔀 Hybrid handler V2 processing: {user_message[:100]}...")
             
-            # Step 1: Add user message to chat history
-            user_message_id = await self.chat_history_service.add_user_message(
-                session_id=session_id,
-                user_id=user_id,
-                question=user_message
-            )
-            
-            # Step 2: Classify intent with proper service using session manager (consistent approach)
+            # Step 1: Classify intent
             start_time = time.time()
             intent_result = await self.intent_classifier.classify_intent(
                 user_message=user_message,
@@ -91,7 +84,7 @@ class HybridMessageHandler:
             
             logger.info(f"⏱️ Intent classification: {intent_duration:.3f}s, Intent: {intent_result.intent.value}")
             
-            # Step 3: Generate analyst response with proper service
+            # Step 2: Generate analyst response
             start_time = time.time()
             analyst_response = await self.financial_analyst.generate_response(
                 user_message=user_message,
@@ -103,12 +96,11 @@ class HybridMessageHandler:
             
             logger.info(f"⏱️ Analyst response: {analyst_duration:.3f}s")
             
-            # Step 5: Route based on intent - FIXED APPROACH
-            return await self._route_based_on_intent(
+            # Step 3: Route based on intent and persist ONLY via ConversationStore
+            return await self._route_and_persist(
                 intent_result=intent_result,
                 analyst_response=analyst_response,
                 user_message=user_message,
-                user_message_id=user_message_id,
                 session_id=session_id,
                 user_id=user_id
             )
@@ -121,11 +113,79 @@ class HybridMessageHandler:
                 user_id=user_id
             )
     
+    async def _route_and_persist(self,
+                               intent_result: IntentResult,
+                               analyst_response: AnalystResponse,
+                               user_message: str,
+                               session_id: str,
+                               user_id: str) -> HybridResponse:
+        """Route based on intent and persist ONLY via ConversationStore (no dual calls)"""
+        from shared.analyze.dialogue.conversation.store import MessageIntent
+        
+        # Map IntentResult.intent to MessageIntent
+        message_intent_map = {
+            'pure_chat': MessageIntent.PURE_CHAT,
+            'educational': MessageIntent.EDUCATIONAL,
+            'analysis_request': MessageIntent.ANALYSIS_REQUEST,
+            'analysis_confirmation': MessageIntent.ANALYSIS_CONFIRMATION,
+            'follow_up': MessageIntent.FOLLOW_UP
+        }
+        message_intent = message_intent_map.get(intent_result.intent.value, MessageIntent.PURE_CHAT)
+        
+        # Determine response type and analysis trigger
+        if intent_result.intent.value == "analysis_confirmation":
+            response_type = "analysis_trigger"
+            triggered_analysis = True
+        else:
+            response_type = intent_result.intent.value.replace('_', '_').lower()
+            triggered_analysis = False
+        
+        # Save messages independently using new message-based API
+        await self._save_conversation_messages(
+            session_id=session_id,
+            user_message=user_message,
+            user_id=user_id,
+            assistant_response=analyst_response.content,
+            message_intent=message_intent,
+            response_type=response_type,
+            triggered_analysis=triggered_analysis,
+            analysis_suggestion=analyst_response.analysis_suggestion.__dict__ if analyst_response.analysis_suggestion else None
+        )
+        
+        # Build metadata for response
+        metadata = {
+            "intent": intent_result.intent.value,
+            "message_type": response_type,
+        }
+        
+        if analyst_response.analysis_suggestion:
+            metadata["has_analysis_suggestion"] = True
+            metadata["suggested_analysis"] = {
+                "topic": analyst_response.analysis_suggestion.topic,
+                "description": analyst_response.analysis_suggestion.description
+            }
+        
+        if triggered_analysis:
+            metadata["analysis_triggered"] = True
+            # Get pending analysis for the expanded question
+            conversation = await self.session_manager.get_session(session_id)
+            if conversation:
+                pending = await conversation.get_pending_analysis_suggestion()
+                if pending:
+                    metadata["analysis_question"] = pending.get("suggested_question", "Analysis in progress...")
+        
+        return HybridResponse(
+            response_type=response_type,
+            content=analyst_response.content,
+            message_id="conversation_store_managed",  # ConversationStore manages IDs
+            session_id=session_id,
+            metadata=metadata
+        )
+
     async def _route_based_on_intent(self,
                                    intent_result: IntentResult,
                                    analyst_response: AnalystResponse,
                                    user_message: str,
-                                   user_message_id: str,
                                    session_id: str,
                                    user_id: str) -> HybridResponse:
         """
@@ -491,34 +551,33 @@ class HybridMessageHandler:
             del self.session_states[session_id]
             logger.debug(f"Cleaned up session state for {session_id}")
     
-    async def _save_hybrid_turn(self,
-                              session_id: str,
-                              user_query: str,
-                              message_intent,  # MessageIntent enum
-                              response_type: str,
-                              assistant_response: str,
-                              triggered_analysis: bool = False,
-                              analysis_suggestion: Optional[Dict[str, Any]] = None):
-        """Save conversation turn to ConversationStore using session manager"""
+    async def _save_conversation_messages(self,
+                                        session_id: str,
+                                        user_message: str,
+                                        user_id: str,
+                                        assistant_response: str,
+                                        message_intent,
+                                        response_type: str,
+                                        triggered_analysis: bool = False,
+                                        analysis_suggestion: Optional[Dict[str, Any]] = None):
+        """Save conversation messages independently using new message-based API"""
         try:
-            # Import MessageIntent from ConversationStore
-            from shared.analyze.dialogue.conversation.store import MessageIntent
-            
-            # Get conversation store via session manager
+            # Get conversation store (load_or_create ensures we always get a store)
             conversation = await self.session_manager.get_session(session_id)
-            if conversation:
-                conversation.add_hybrid_turn(
-                    user_query=user_query,
-                    message_intent=message_intent,
-                    response_type=response_type,
-                    assistant_response=assistant_response,
-                    triggered_analysis=triggered_analysis,
-                    analysis_suggestion=analysis_suggestion
-                )
-                # Note: SessionManager auto-persists through ChatHistoryService
-                # No explicit save needed - the add_hybrid_message calls handle persistence
-                logger.debug(f"💾 Saved hybrid turn for session {session_id}: {message_intent.value if message_intent else 'unknown'}")
-            else:
-                logger.warning(f"⚠️ No conversation found for session {session_id}")
+            
+            # Add user and assistant messages independently (new message-based API)
+            await conversation.add_conversation_exchange(
+                user_content=user_message,
+                assistant_content=assistant_response,
+                user_id=user_id,
+                # Assistant metadata
+                message_type=response_type,
+                intent=message_intent.value if message_intent else None,
+                analysis_triggered=triggered_analysis,
+                analysis_suggestion=analysis_suggestion,
+                has_analysis_suggestion=bool(analysis_suggestion)
+            )
+            
+            logger.debug(f"💾 Saved independent messages for session {session_id}: {message_intent.value if message_intent else 'unknown'}")
         except Exception as e:
-            logger.error(f"❌ Failed to save hybrid turn for session {session_id}: {e}")
+            logger.error(f"❌ Failed to save conversation messages for session {session_id}: {e}")

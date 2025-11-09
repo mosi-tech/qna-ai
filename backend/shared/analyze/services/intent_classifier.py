@@ -76,7 +76,6 @@ class IntentClassifierService(BaseService):
         try:
             logger.debug(f"🔍 Classifying intent for: {user_message[:100]}...")
             
-            
             # Get conversation from session manager (consistent with existing approach)
             conversation = None
             if self.session_manager and session_id:
@@ -130,7 +129,7 @@ class IntentClassifierService(BaseService):
         """Prepare context information for classification using ConversationStore"""
         context_parts = []
         
-        if not conversation or not hasattr(conversation, 'turns'):
+        if not conversation or not hasattr(conversation, 'messages'):
             return "No previous context"
         
         # Get context summary from ConversationStore (consistent with existing approach)
@@ -151,52 +150,50 @@ class IntentClassifierService(BaseService):
                 if len(last_analysis) > 500:
                     last_analysis = last_analysis[:500] + "..."
                 context_info.append(f"Previous analysis: {last_analysis}")
-            if context_summary.get("turn_count"):
-                context_info.append(f"Turn count: {context_summary['turn_count']}")
+            if context_summary.get("message_count"):
+                context_info.append(f"Message count: {context_summary['message_count']}")
             
             if context_info:
                 context_parts.append(f"CONVERSATION CONTEXT:\\n{'; '.join(context_info)}")
         
-        # Add recent conversation turns for more detailed context
-        if conversation.turns:
-            recent_turns = conversation.turns[-2:]  # Last 2 turns (most relevant)
-            turn_texts = []
-            for turn in recent_turns:
-                # Keep user queries reasonably short but not too truncated
-                user_query_text = turn.user_query
-                if len(user_query_text) > 200:
-                    user_query_text = user_query_text[:200] + "..."
-                turn_texts.append(f"User: {user_query_text}")
-                
-                # Include FULL assistant responses (especially important for analysis suggestions)
-                if turn.assistant_response:
-                    response_label = "Assistant"
-                    if turn.response_type:
-                        if turn.response_type == "educational_chat":
-                            response_label = "Assistant (Educational)"
-                        elif turn.response_type in ["script_generation", "reuse_decision"]:
-                            response_label = "Assistant (Analysis Result)"
-                        elif turn.response_type == "analysis_confirmation":
-                            response_label = "Assistant (Analysis Started)"
+        # Add recent messages for more detailed context
+        if hasattr(conversation, 'messages') and conversation.messages:
+            recent_messages = conversation.get_messages(limit=6)  # Last 6 messages (3 exchanges)
+            message_texts = []
+            for message in recent_messages:
+                if hasattr(message, 'role'):
+                    role = message.role
+                    content = message.content
                     
-                    # Use full assistant response - critical for analysis suggestions at the end!
-                    assistant_text = turn.assistant_response
-                    # Only truncate if extremely long (>2000 chars) to preserve analysis suggestions
-                    if len(assistant_text) > 2000:
-                        # Smart truncation: keep end of message where analysis suggestions are
-                        assistant_text = "..." + assistant_text[-1800:]
+                    # Format based on message type
+                    if role == "user":
+                        # Keep user queries reasonably short but not too truncated
+                        if len(content) > 200:
+                            content = content[:200] + "..."
+                        message_texts.append(f"User: {content}")
                     
-                    turn_texts.append(f"{response_label}: {assistant_text}")
-                
-                # Also include analysis summary if available (for analysis result context)
-                if turn.analysis_summary:
-                    summary_text = turn.analysis_summary
-                    if len(summary_text) > 500:
-                        summary_text = summary_text[:500] + "..."
-                    turn_texts.append(f"Analysis Summary: {summary_text}")
+                    elif role == "assistant":
+                        # Include FULL assistant responses (especially important for analysis suggestions)
+                        response_label = "Assistant"
+                        if hasattr(message, 'message_type') and message.message_type:
+                            if message.message_type == "educational_chat":
+                                response_label = "Assistant (Educational)"
+                            elif message.message_type in ["script_generation", "reuse_decision"]:
+                                response_label = "Assistant (Analysis Result)"
+                            elif message.message_type == "analysis_confirmation":
+                                response_label = "Assistant (Analysis Started)"
+                        
+                        # Use full assistant response - critical for analysis suggestions at the end!
+                        assistant_text = content
+                        # Only truncate if extremely long (>2000 chars) to preserve analysis suggestions
+                        if len(assistant_text) > 2000:
+                            # Smart truncation: keep end of message where analysis suggestions are
+                            assistant_text = "..." + assistant_text[-1800:]
+                        
+                        message_texts.append(f"{response_label}: {assistant_text}")
             
-            if turn_texts:
-                context_parts.append(f"RECENT CONVERSATION:\\n{chr(10).join(turn_texts)}")
+            if message_texts:
+                context_parts.append(f"RECENT CONVERSATION:\\n{chr(10).join(message_texts)}")
         
         return "\\n\\n".join(context_parts) if context_parts else "No previous context"
     

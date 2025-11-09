@@ -24,7 +24,7 @@ Usage:
     )
 """
 
-from .conversation.store import ConversationStore, ConversationTurn, QueryType
+from .conversation.store import ConversationStore, UserMessage, AssistantMessage, MessageIntent, QueryType
 from .factory import (
     initialize_dialogue_factory, 
     get_dialogue_factory, 
@@ -38,7 +38,9 @@ __author__ = "Financial API Server"
 __all__ = [
     # Core classes
     "ConversationStore",
-    "ConversationTurn", 
+    "UserMessage", 
+    "AssistantMessage",
+    "MessageIntent",
     "QueryType",
     
     # Factory and initialization

@@ -17,8 +17,8 @@ Data Flow:
 import uuid
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, Optional, Tuple
-from .store import ConversationStore, ConversationTurn
+from typing import Dict, Optional, Tuple, List, Union
+from .store import ConversationStore, Message, UserMessage, AssistantMessage
 
 logger = logging.getLogger(__name__)
 
@@ -71,46 +71,72 @@ class SessionManager:
             logger.debug(f"✓ Session {session_id[:8]}... loaded from cache")
             return cached_store
         
-        # Load from MongoDB
-        store = await self._load_session_from_db(session_id)
-        if store:
-            self._cache_session(session_id, store)
-            logger.info(f"✓ Session {session_id[:8]}... loaded from MongoDB")
-            return store
+        # Load or create ConversationStore (handles DB loading internally)
+        store = await ConversationStore.load_or_create(session_id, self.chat_history_service)
+        self._cache_session(session_id, store)
         
-        return None
+        # Check if it actually loaded data or is empty (new session)
+        if store.messages:
+            logger.info(f"✓ Session {session_id[:8]}... loaded from MongoDB with {len(store.messages)} messages")
+        else:
+            logger.debug(f"✓ Session {session_id[:8]}... created as new empty conversation")
+        
+        return store
     
-    async def add_turn(self, session_id: str, user_query: str, query_type: str,
-                      expanded_query: Optional[str] = None,
-                      analysis_summary: Optional[str] = None,
-                      context_used: bool = False,
-                      expansion_confidence: float = 0.0) -> ConversationTurn:
-        """Add turn to session (in-memory + persisted)
-        
-        Updates both:
-        1. In-memory ConversationStore
-        2. MongoDB via ChatHistoryService
-        """
-        # Get or load session
+    # ========== NEW MESSAGE-BASED API ==========
+    
+    async def add_user_message(self, session_id: str, content: str, user_id: str = "anonymous", **metadata) -> UserMessage:
+        """Add user message to session - immediately persisted"""
+        store = await self.get_session(session_id)
+        message = await store.add_user_message(content, user_id, **metadata)
+        logger.debug(f"✓ User message added: {content[:40]}...")
+        return message
+    
+    async def add_assistant_message(self, session_id: str, content: str, user_id: str = "anonymous", **metadata) -> AssistantMessage:
+        """Add assistant message to session - independently persisted"""
+        store = await self.get_session(session_id)
+        message = await store.add_assistant_message(content, user_id, **metadata)
+        logger.debug(f"✓ Assistant message added: {content[:40]}...")
+        return message
+    
+    async def add_conversation_exchange(self, session_id: str, user_content: str, assistant_content: str, 
+                                      user_id: str = "anonymous", **assistant_metadata) -> Tuple[UserMessage, AssistantMessage]:
+        """Add user + assistant message pair (convenience method)"""
+        store = await self.get_session(session_id)
+        user_msg, assistant_msg = await store.add_conversation_exchange(
+            user_content, assistant_content, user_id, **assistant_metadata
+        )
+        logger.debug(f"✓ Conversation exchange added: {user_content[:40]}... -> {assistant_content[:40]}...")
+        return user_msg, assistant_msg
+    
+    def get_messages(self, session_id: str, role: Optional[str] = None, limit: Optional[int] = None) -> List[Message]:
+        """Get messages from session (requires session to be cached)"""
+        store = self.get_session_store(session_id)
+        if not store:
+            return []
+        return store.get_messages(role, limit)
+    
+    def get_last_user_message(self, session_id: str) -> Optional[UserMessage]:
+        """Get last user message from session"""
+        store = self.get_session_store(session_id)
+        if not store:
+            return None
+        return store.get_last_user_message()
+    
+    def get_last_assistant_message(self, session_id: str) -> Optional[AssistantMessage]:
+        """Get last assistant message from session"""
+        store = self.get_session_store(session_id)
+        if not store:
+            return None
+        return store.get_last_assistant_message()
+    
+    async def get_pending_analysis_suggestion(self, session_id: str) -> Optional[dict]:
+        """Get pending analysis suggestion from session"""
         store = await self.get_session(session_id)
         if not store:
-            # Create new store if session doesn't exist
-            store = ConversationStore(session_id)
-            self._cache_session(session_id, store)
-        
-        # Add to in-memory store
-        turn = store.add_turn(
-            user_query=user_query,
-            query_type=query_type,
-            expanded_query=expanded_query,
-            analysis_summary=analysis_summary,
-            context_used=context_used,
-            expansion_confidence=expansion_confidence
-        )
-        
-        logger.debug(f"✓ Turn added to ConversationStore: {user_query[:40]}...")
-        
-        return turn
+            return None
+        return await store.get_pending_analysis_suggestion()
+    
     
     def get_session_store(self, session_id: str) -> Optional[ConversationStore]:
         """Get in-memory ConversationStore (no load from DB)
@@ -131,6 +157,13 @@ class SessionManager:
         if not store:
             return None
         return store.get_context_summary()
+    
+    def get_conversation_history_for_llm(self, session_id: str) -> List[Dict[str, str]]:
+        """Get conversation history in LLM-compatible format"""
+        store = self.get_session_store(session_id)
+        if not store:
+            return []
+        return store.get_conversation_history_for_llm()
     
     async def delete_session(self, session_id: str) -> bool:
         """Delete session from MongoDB and clear cache"""
@@ -180,28 +213,6 @@ class SessionManager:
             store, _ = self._sessions[session_id]
             self._sessions[session_id] = (store, datetime.now())
     
-    async def _load_session_from_db(self, session_id: str) -> Optional[ConversationStore]:
-        """Load session from MongoDB via ChatHistoryService"""
-        if not self.chat_history_service:
-            return None
-        
-        try:
-            # Get conversation history with full metadata for ConversationStore reconstruction
-            db_messages = await self.chat_history_service.chat_repo.get_conversation_history(
-                session_id=session_id, 
-                include_metadata=True  # Include metadata to preserve analysis suggestions
-            )
-            
-            if not db_messages:
-                return None
-            
-            store = ConversationStore(session_id)
-            store._populate_from_messages(db_messages)
-            
-            return store
-        except Exception as e:
-            logger.warning(f"⚠️ Failed to load session from DB: {e}")
-            return None
     
     def get_cache_stats(self) -> Dict:
         """Get cache statistics for monitoring"""
@@ -211,10 +222,51 @@ class SessionManager:
             "sessions": [
                 {
                     "session_id": sid[:8],
-                    "turns": len(store.turns),
+                    "messages": len(store.messages) if hasattr(store, 'messages') else 0,
                     "age_seconds": (datetime.now() - cached_at).total_seconds()
                 }
                 for sid, (store, cached_at) in self._sessions.items()
             ]
         }
+    
+    # ========== MESSAGE UTILITIES ==========
+    
+    async def get_recent_conversation(self, session_id: str, max_messages: int = 10) -> List[Message]:
+        """Get recent conversation messages for context"""
+        store = await self.get_session(session_id)
+        if not store:
+            return []
+        
+        # Get last N messages
+        return store.get_messages(limit=max_messages)
+    
+    # ========== MESSAGE TYPE UTILITIES ==========
+    
+    def get_user_messages(self, session_id: str, limit: Optional[int] = None) -> List[UserMessage]:
+        """Get user messages only"""
+        store = self.get_session_store(session_id)
+        if not store:
+            return []
+        return [msg for msg in store.get_messages(role="user", limit=limit) if isinstance(msg, UserMessage)]
+    
+    def get_assistant_messages(self, session_id: str, limit: Optional[int] = None) -> List[AssistantMessage]:
+        """Get assistant messages only"""
+        store = self.get_session_store(session_id)
+        if not store:
+            return []
+        return [msg for msg in store.get_messages(role="assistant", limit=limit) if isinstance(msg, AssistantMessage)]
+    
+    def get_messages_with_analysis_suggestions(self, session_id: str) -> List[AssistantMessage]:
+        """Get assistant messages that have analysis suggestions"""
+        assistant_messages = self.get_assistant_messages(session_id)
+        return [msg for msg in assistant_messages if msg.has_analysis_suggestion()]
+    
+    async def count_messages(self, session_id: str, role: Optional[str] = None) -> int:
+        """Count messages in session, optionally filtered by role"""
+        store = await self.get_session(session_id)
+        if not store:
+            return 0
+        
+        messages = store.get_messages(role)
+        return len(messages)
 

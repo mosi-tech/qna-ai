@@ -11,7 +11,7 @@ Flow:
 import logging
 from typing import Optional, Dict, Any, List
 from shared.analyze.search.library import AnalysisLibrary
-from ..conversation.store import ConversationStore, ConversationTurn
+from ..conversation.store import ConversationStore, UserMessage, AssistantMessage
 from ..conversation.session_manager import SessionManager
 from ..context.classifier import QueryClassifier
 from ..context.expander import ContextExpander
@@ -243,10 +243,10 @@ class ContextAwareSearch:
         """Expand contextual query using conversation history"""
         
         try:
-            # Get conversation turns (expander expects ConversationTurn objects, not string)
-            turns = conversation.turns
+            # Get conversation messages (expander expects message objects)
+            messages = conversation.messages
             
-            result = await self.expander.expand_query(query, turns)
+            result = await self.expander.expand_query(query, messages)
             
             if result["success"]:
                 logger.info(f"Query expanded to: {result['expanded_query'][:100]}...")
@@ -335,12 +335,16 @@ Is this a meaningless or non-financial query that shouldn't be analyzed?"""
     def _format_conversation_context(self, conversation: ConversationStore) -> str:
         """Format conversation history as string context"""
         
-        turns = conversation.turns[-5:]  # Last 5 turns for context
+        messages = conversation.messages[-10:]  # Last 10 messages (5 exchanges) for context
         context_lines = []
         
-        for turn in turns:
-            context_lines.append(f"Q: {turn.user_query}")
-            if turn.expanded_query and turn.expanded_query != turn.user_query:
+        for message in messages:
+            if isinstance(message, UserMessage):
+                context_lines.append(f"Q: {message.content}")
+            elif isinstance(message, AssistantMessage):
+                # Include assistant responses that aren't error messages
+                if not any(indicator in message.content.lower() for indicator in ['error', 'sorry', 'apologize']):
+                    context_lines.append(f"A: {message.content[:100]}...")
                 context_lines.append(f"(expanded to: {turn.expanded_query})")
         
         return "\n".join(context_lines)

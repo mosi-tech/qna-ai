@@ -117,13 +117,14 @@ class FinancialAnalystChatService(BaseService):
             if session_manager and session_id:
                 try:
                     conversation = await session_manager.get_session(session_id)
-                    if conversation and hasattr(conversation, 'turns'):
-                        # Convert ConversationStore to simple format for backward compatibility
-                        for turn in conversation.turns[-5:]:  # Last 5 turns
-                            conversation_history.extend([
-                                {"role": "user", "content": turn.user_query},
-                                {"role": "assistant", "content": turn.assistant_response or turn.analysis_summary or "Analysis completed"}
-                            ])
+                    if conversation and hasattr(conversation, 'messages'):
+                        # Use new message-based architecture
+                        recent_messages = conversation.get_messages(limit=10)  # Last 10 messages (5 exchanges)
+                        for message in recent_messages:
+                            conversation_history.append({
+                                "role": message.role,
+                                "content": message.content
+                            })
                         
                         # Get session context from ConversationStore
                         session_context = conversation.get_context_summary()
@@ -292,21 +293,19 @@ class FinancialAnalystChatService(BaseService):
         logger.debug(f"⏱️ Follow-up response generation: {duration:.3f}s")
         logger.debug(f"🔍 Follow-up response type: {type(response)}, content: {str(response)[:200]}...")
         
-        # Check if response is a string (unexpected) vs dict (expected)
-        if isinstance(response, str):
-            logger.error(f"❌ Expected dict response but got string: {response[:100]}...")
-            content = "That's a great follow-up question. Let me help you understand that better based on the previous analysis."
-            return AnalystResponse(content=content)
-        elif not response.get("success"):
-            content = "That's a great follow-up question. Let me help you understand that better based on the previous analysis."
-            return AnalystResponse(content=content)
-        else:
-            content = response.get("content", "").strip()
+        # TODO: Fix this response
+        if not response.get("success"):
+            logger.error("Error generating follow-up response")
+            raise
+
+        content = response.get("content", "").strip()
         
         # Try to parse analysis suggestion from follow-up response (same logic as educational)
         return self._parse_educational_response(content, IntentResult(
             intent=MessageIntent.FOLLOW_UP,
             confidence=0.9,
+            reasoning="Follow-up response generated",
+            requires_analysis=False,
             educational_topic="follow_up"
         ))
     
