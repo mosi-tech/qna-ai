@@ -74,6 +74,14 @@ class HybridMessageHandler:
         try:
             logger.info(f"🔀 Hybrid handler V2 processing: {user_message[:100]}...")
             
+            # Step 0: Save user message immediately (independent of assistant response)
+            conversation = await self.session_manager.get_session(session_id)
+            user_message_obj = await conversation.add_user_message(
+                content=user_message,
+                user_id=user_id
+            )
+            logger.debug(f"✅ User message saved immediately: {user_message_obj.id}")
+            
             # Step 1: Classify intent
             start_time = time.time()
             intent_result = await self.intent_classifier.classify_intent(
@@ -102,7 +110,8 @@ class HybridMessageHandler:
                 analyst_response=analyst_response,
                 user_message=user_message,
                 session_id=session_id,
-                user_id=user_id
+                user_id=user_id,
+                user_message_obj=user_message_obj
             )
             
         except Exception as e:
@@ -118,7 +127,8 @@ class HybridMessageHandler:
                                analyst_response: AnalystResponse,
                                user_message: str,
                                session_id: str,
-                               user_id: str) -> HybridResponse:
+                               user_id: str,
+                               user_message_obj) -> HybridResponse:
         """Route based on intent and persist ONLY via ConversationStore (no dual calls)"""
         from shared.analyze.dialogue.conversation.store import MessageIntent
         
@@ -140,15 +150,14 @@ class HybridMessageHandler:
             response_type = intent_result.intent.value.replace('_', '_').lower()
             triggered_analysis = False
         
-        # Save messages independently using new message-based API
-        await self._save_conversation_messages(
-            session_id=session_id,
-            user_message=user_message,
+        # Save assistant message independently (user message already saved immediately)
+        conversation = await self.session_manager.get_session(session_id)
+        assistant_message_obj = await conversation.add_assistant_message(
+            content=analyst_response.content,
             user_id=user_id,
-            assistant_response=analyst_response.content,
-            message_intent=message_intent,
-            response_type=response_type,
-            triggered_analysis=triggered_analysis,
+            message_type=response_type,
+            intent=message_intent.value if message_intent else None,
+            analysis_triggered=triggered_analysis,
             analysis_suggestion=analyst_response.analysis_suggestion.__dict__ if analyst_response.analysis_suggestion else None
         )
         
@@ -177,7 +186,7 @@ class HybridMessageHandler:
         return HybridResponse(
             response_type=response_type,
             content=analyst_response.content,
-            message_id="conversation_store_managed",  # ConversationStore manages IDs
+            message_id=assistant_message_obj.id,
             session_id=session_id,
             metadata=metadata
         )
@@ -195,33 +204,33 @@ class HybridMessageHandler:
         # Route to appropriate handler based on intent
         if intent_result.intent == MessageIntent.PURE_CHAT:
             return await self._handle_pure_chat(
-                analyst_response, session_id, user_id, user_message_id
+                analyst_response, session_id, user_id, user_message_obj.id
             )
                 
         elif intent_result.intent == MessageIntent.EDUCATIONAL:
             return await self._handle_educational_response(
-                analyst_response, intent_result, user_message, session_id, user_id, user_message_id
+                analyst_response, intent_result, user_message, session_id, user_id, user_message_obj.id
             )
                 
         elif intent_result.intent == MessageIntent.ANALYSIS_REQUEST:
             return await self._handle_analysis_request(
-                analyst_response, user_message, session_id, user_id, user_message_id
+                analyst_response, user_message, session_id, user_id, user_message_obj.id
             )
                 
         elif intent_result.intent == MessageIntent.ANALYSIS_CONFIRMATION:
             return await self._handle_analysis_confirmation(
-                analyst_response, session_id, user_id, user_message_id
+                analyst_response, session_id, user_id, user_message_obj.id
             )
                 
         elif intent_result.intent == MessageIntent.FOLLOW_UP:
             return await self._handle_follow_up_response(
-                analyst_response, session_id, user_id, user_message_id
+                analyst_response, session_id, user_id, user_message_obj.id
             )
         
         else:
             # Default to educational chat
             return await self._handle_educational_response(
-                analyst_response, intent_result, user_message, session_id, user_id, user_message_id
+                analyst_response, intent_result, user_message, session_id, user_id, user_message_obj.id
             )
     
     async def _handle_pure_chat(self, 
