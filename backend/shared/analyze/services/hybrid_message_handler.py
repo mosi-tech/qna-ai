@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from .intent_classifier import IntentClassifierService, MessageIntent, IntentResult
 from .financial_analyst_chat_service import FinancialAnalystChatService, AnalystResponse, AnalysisSuggestion
 from shared.services.chat_service import ChatHistoryService
+from shared.services.session_manager import SessionManager
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +48,6 @@ class HybridMessageHandler:
         self.analyze_question_callable = analyze_question_callable
         
         # Create SessionManager for ConversationStore integration (consistent with existing approach)
-        from shared.analyze.dialogue.conversation.session_manager import SessionManager
         self.session_manager = SessionManager(chat_history_service=chat_history_service)
         
         # Initialize proper services with session manager dependency

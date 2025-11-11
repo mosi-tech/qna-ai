@@ -32,7 +32,7 @@ from ..services.chat_service import ChatHistoryService
 from ..services.cache_service import CacheService
 from ..services.audit_service import AuditService
 from ..db import RepositoryManager, MongoDBClient
-            
+from shared.services.session_manager import SessionManager
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +102,6 @@ class AnalysisQueueWorker(BaseQueueWorker):
             verification_service = self._initialize_verification_service()
             
             # Create session manager for dialogue factory
-            from shared.analyze.dialogue.conversation.session_manager import SessionManager
             session_manager = SessionManager(chat_history_service=chat_history_service)
             
             # Create the complete analysis pipeline

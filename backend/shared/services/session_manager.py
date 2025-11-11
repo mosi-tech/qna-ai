@@ -18,7 +18,7 @@ import uuid
 import logging
 from datetime import datetime, timedelta
 from typing import Dict, Optional, Tuple, List, Union
-from .store import ConversationStore, Message, UserMessage, AssistantMessage
+from ..analyze.dialogue.conversation.store import ConversationStore, Message, UserMessage, AssistantMessage
 
 logger = logging.getLogger(__name__)
 
@@ -156,14 +156,17 @@ class SessionManager:
         store = self.get_session_store(session_id)
         if not store:
             return None
-        return store.get_context_summary()
-    
-    def get_conversation_history_for_llm(self, session_id: str) -> List[Dict[str, str]]:
-        """Get conversation history in LLM-compatible format"""
-        store = self.get_session_store(session_id)
-        if not store:
-            return []
-        return store.get_conversation_history_for_llm()
+        
+        # Use message-based context instead of legacy get_context_summary
+        last_user_msg = store.get_last_user_message()
+        last_assistant_msg = store.get_last_assistant_message()
+        
+        return {
+            "has_history": len(store.messages) > 0,
+            "last_query": last_user_msg.content if last_user_msg else None,
+            "last_response": last_assistant_msg.content[:200] if last_assistant_msg else None,
+            "message_count": len(store.messages)
+        }
     
     async def delete_session(self, session_id: str) -> bool:
         """Delete session from MongoDB and clear cache"""

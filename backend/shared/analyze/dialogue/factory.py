@@ -11,7 +11,7 @@ sys.path.insert(0, shared_path)
 from shared.llm.service import LLMService
 from ..search.library import AnalysisLibrary
 from .context.service import create_context_service
-from .conversation.session_manager import SessionManager
+from ...services.session_manager import SessionManager
 from .context.classifier import create_query_classifier
 from .context.expander import create_context_expander
 from .search.context_aware import create_context_aware_search

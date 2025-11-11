@@ -71,9 +71,9 @@ class UserMessage(BaseMessage):
     def from_dict(cls, data: Dict[str, Any]) -> 'UserMessage':
         """Create UserMessage from dictionary"""
         return cls(
-            id=data.get('id') or data.get('message_id') or str(uuid.uuid4())[:8],  # Check id, then message_id, then generate
-            content=data.get('content', ""),
-            timestamp=datetime.fromisoformat(data['timestamp']) if data.get('timestamp') else datetime.now(),
+            id=data.get('id', str(uuid.uuid4())[:8]),  # Generate new ID if not present
+            content=data['content'],
+            timestamp=datetime.fromisoformat(data['timestamp']),
             user_id=data.get('user_id', data.get('metadata', {}).get('user_id', 'anonymous')),
             metadata=data.get('metadata', {})
         )
@@ -115,9 +115,9 @@ class AssistantMessage(BaseMessage):
         """Create AssistantMessage from dictionary"""
         metadata = data.get('metadata', {})
         return cls(
-            id=data.get('id') or data.get('message_id') or str(uuid.uuid4())[:8],  # Check id, then message_id, then generate
+            id=data.get('id', str(uuid.uuid4())[:8]),  # Generate new ID if not present
             content=data.get('content', ""),
-            timestamp=datetime.fromisoformat(data['timestamp']) if data.get('timestamp') else datetime.now(),
+            timestamp=datetime.fromisoformat(data['timestamp']),
             # Try top-level fields first, then fallback to metadata
             message_type=data.get('message_type') or metadata.get('message_type'),
             intent=data.get('intent') or metadata.get('intent'),
@@ -135,6 +135,42 @@ class AssistantMessage(BaseMessage):
         if self.analysis_suggestion:
             return self.analysis_suggestion.get('topic')
         return None
+    
+    def to_context_string(self) -> str:
+        """Format assistant message for context with rich metadata inline"""
+        # Start with the main content
+        result = self.content
+        
+        # Add metadata as natural annotations
+        metadata_parts = []
+        
+        if self.message_type and self.message_type != "chat":
+            metadata_parts.append(f"Response type: {self.message_type}")
+            
+        if self.intent:
+            metadata_parts.append(f"Intent: {self.intent}")
+            
+        if self.analysis_triggered:
+            metadata_parts.append("Analysis was triggered")
+            
+        if self.has_analysis_suggestion():
+            suggestion = self.analysis_suggestion
+            topic = suggestion.get('topic', '')
+            description = suggestion.get('description', '')
+            suggested_question = suggestion.get('suggested_question', '')
+            
+            if topic:
+                metadata_parts.append(f"Analysis suggestion: {topic}")
+            if description and len(description) <= 100:
+                metadata_parts.append(f"Description: {description}")
+            if suggested_question and len(suggested_question) <= 150:
+                metadata_parts.append(f"Suggested question: {suggested_question}")
+        
+        # Add metadata as natural postfix if any exists
+        if metadata_parts:
+            result += f"\n[Metadata: {' | '.join(metadata_parts)}]"
+            
+        return result
 
 # Type alias for any message type
 Message = Union[UserMessage, AssistantMessage]
@@ -196,7 +232,7 @@ class ConversationStore:
         return store
     
     def _populate_from_db_messages(self, db_messages: List[Dict[str, Any]]) -> None:
-        """Populate messages list from DB messages"""
+        """Populate both new messages list and legacy turns from DB messages"""
         if not db_messages:
             return
         
@@ -297,13 +333,6 @@ class ConversationStore:
                 return message
         return None
     
-    def get_conversation_history_for_llm(self) -> List[Dict[str, str]]:
-        """Get conversation history in LLM-compatible format"""
-        return [
-            {"role": msg.role, "content": msg.content}
-            for msg in self.messages
-        ]
-    
     async def get_pending_analysis_suggestion(self) -> Optional[Dict[str, Any]]:
         """Get pending analysis suggestion from most recent educational message"""
         for message in reversed(self.messages):
@@ -330,35 +359,6 @@ class ConversationStore:
         assistant_msg = await self.add_assistant_message(assistant_content, user_id, **assistant_metadata)
         return user_msg, assistant_msg
     
-    def get_context_summary(self) -> dict:
-        """Get minimal context summary for LLM - message-based implementation"""
-        last_user_msg = self.get_last_user_message()
-        last_assistant_msg = self.get_last_assistant_message()
-        
-        # Find last assistant message with analysis suggestion
-        last_educational_msg = None
-        for msg in reversed(self.messages):
-            if isinstance(msg, AssistantMessage) and msg.has_analysis_suggestion():
-                last_educational_msg = msg
-                break
-        
-        # Check for recent analysis triggers
-        recent_analysis_triggered = any(
-            isinstance(msg, AssistantMessage) and msg.analysis_triggered 
-            for msg in self.messages[-6:]
-        )
-        
-        return {
-            "has_history": len(self.messages) > 0,
-            "last_query": last_user_msg.content if last_user_msg else None,
-            "last_message_intent": last_assistant_msg.intent if last_assistant_msg else None,
-            "last_response_type": last_assistant_msg.message_type if last_assistant_msg else None,
-            "last_assistant_response": last_assistant_msg.content[:200] if last_assistant_msg else None,
-            "last_analysis": last_assistant_msg.content[:200] if last_assistant_msg and last_assistant_msg.analysis_triggered else None,
-            "last_educational_topic": last_educational_msg.content[:100] if last_educational_msg else None,
-            "recent_analysis_triggered": recent_analysis_triggered,
-            "message_count": len(self.messages)
-        }
     
     def to_dict(self) -> dict:
         """Serialize conversation for storage"""

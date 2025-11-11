@@ -12,7 +12,7 @@ import logging
 from typing import Optional, Dict, Any, List
 from shared.analyze.search.library import AnalysisLibrary
 from ..conversation.store import ConversationStore, UserMessage, AssistantMessage
-from ..conversation.session_manager import SessionManager
+from ....services.session_manager import SessionManager
 from ..context.classifier import QueryClassifier
 from ..context.expander import ContextExpander
 from ..context.validator import CompletenessValidator
@@ -219,7 +219,8 @@ class ContextAwareSearch:
         }
     
     async def _classify_contextual(self, query: str, conversation: ConversationStore) -> Dict[str, Any]:
-        """Classify if query is CONTEXTUAL or STANDALONE"""
+        """Classify if 
+        query is CONTEXTUAL or STANDALONE"""
         
         try:
             # Get last messages using new message-based architecture
@@ -347,7 +348,7 @@ Is this a meaningless or non-financial query that shouldn't be analyzed?"""
                 # Include assistant responses that aren't error messages
                 if not any(indicator in message.content.lower() for indicator in ['error', 'sorry', 'apologize']):
                     context_lines.append(f"A: {message.content[:100]}...")
-                # Note: expanded_query functionality would need to be handled differently in message-based approach
+                context_lines.append(f"(expanded to: {turn.expanded_query})")
         
         return "\n".join(context_lines)
     
@@ -477,9 +478,9 @@ Is this a meaningless or non-financial query that shouldn't be analyzed?"""
                     original_query=original_query
                 )
 
-            # Add to conversation history using new message-based approach
-            await conversation.add_user_message(
-                content=original_query,
+            # Add to conversation history
+            turn = conversation.add_turn(
+                user_query=original_query,
                 query_type="contextual",
                 expanded_query=expanded_query,
                 context_used=True
@@ -532,7 +533,24 @@ Is this a meaningless or non-financial query that shouldn't be analyzed?"""
         if not conversation:
             return {"error": "Session not found"}
         
-        return conversation.get_context_summary()
+        # Revolutionary approach: Return raw conversation for LLM instead of building context
+        try:
+            # Format conversation as simple message history
+            conversation_history = []
+            if conversation.messages:
+                for message in conversation.messages[-10:]:  # Last 10 messages
+                    conversation_history.append({
+                        "role": message.role,
+                        "content": message.content
+                    })
+            
+            return {
+                "conversation_history": conversation_history, 
+                "message_count": len(conversation.messages),
+                "approach": "raw_conversation"
+            }
+        except Exception as e:
+            return {"error": f"Conversation retrieval failed: {e}", "message_count": len(conversation.messages)}
 
 # Factory function to create context-aware search with dependencies
 def create_context_aware_search(analysis_library: AnalysisLibrary = None,
