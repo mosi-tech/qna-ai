@@ -89,17 +89,39 @@ async def lifespan(app: FastAPI):
         await initialize_session_lock(db_client.db)
         logger.info("✅ Session locking initialized")
         
+        # Initialize progress event queue (needed for real-time progress updates)
+        logger.info("🔧 Initializing progress event queue...")
+        from shared.queue.progress_event_queue import initialize_progress_event_queue
+        initialize_progress_event_queue(db_client.db)
+        logger.info("✅ Progress event queue initialized")
+        
         # Initialize analysis queue
         logger.info("🔧 Initializing analysis queue...")
         initialize_analysis_queue(db_client.db)
         logger.info("✅ Analysis queue initialized")
         
-        # 3. Session manager (CRITICAL)
+        # 3. Redis client for ConversationStore
+        logger.info("🔧 Initializing Redis client...")
+        try:
+            from shared.services.redis_client import get_redis_client
+            redis_client = await get_redis_client()
+            if redis_client:
+                logger.info("✅ Redis client initialized for ConversationStore")
+            else:
+                logger.warning("⚠️ Redis client unavailable - ConversationStore will use DB-only mode")
+        except Exception as e:
+            logger.warning(f"⚠️ Redis client initialization failed: {e}")
+            redis_client = None
+        
+        # 4. Session manager (CRITICAL)
         logger.info("🔧 Initializing session manager...")
         
-        session_manager = SessionManager(chat_history_service=chat_history_service)
+        session_manager = SessionManager(
+            chat_history_service=chat_history_service,
+            redis_client=redis_client
+        )
         app.state.session_manager = session_manager
-        logger.info("✅ Session manager initialized")
+        logger.info("✅ Session manager initialized with Redis support")
         
         # 5. API routes (CRITICAL)
         logger.info("🔧 Initializing API routes...")

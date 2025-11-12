@@ -7,7 +7,9 @@ uvicorn>=0.24.0      # ASGI server
 # Storage Dependencies
 aiofiles>=23.0.0     # Async file I/O
 
+# Redis for ConversationStore
+redis>=4.5.0          # Redis client with async support
+
 # Optional: Future queue implementations
 # aiokafka>=0.8.0     # For Kafka queue
-# aioredis>=2.0.0     # For Redis queue  
 # boto3>=1.29.0       # For AWS SQS queue

@@ -224,8 +224,8 @@ class ContextAwareSearch:
         
         try:
             # Get last messages using new message-based architecture
-            last_user_message = conversation.get_last_user_message()
-            last_assistant_message = conversation.get_last_assistant_message()
+            last_user_message = await conversation.get_last_user_message()
+            last_assistant_message = await conversation.get_last_assistant_message()
             result = await self.classifier.classify(query, last_user_message, last_assistant_message)
             
             if result["success"]:
@@ -247,7 +247,7 @@ class ContextAwareSearch:
         
         try:
             # Get conversation messages (expander expects message objects)
-            messages = conversation.messages
+            messages = await conversation.get_messages()
             
             result = await self.expander.expand_query(query, messages)
             
@@ -335,10 +335,11 @@ Is this a meaningless or non-financial query that shouldn't be analyzed?"""
                 return True
             return False
     
-    def _format_conversation_context(self, conversation: ConversationStore) -> str:
+    async def _format_conversation_context(self, conversation: ConversationStore) -> str:
         """Format conversation history as string context"""
         
-        messages = conversation.messages[-10:]  # Last 10 messages (5 exchanges) for context
+        messages_all = await conversation.get_messages()
+        messages = messages_all[-10:]  # Last 10 messages (5 exchanges) for context
         context_lines = []
         
         for message in messages:
@@ -537,8 +538,9 @@ Is this a meaningless or non-financial query that shouldn't be analyzed?"""
         try:
             # Format conversation as simple message history
             conversation_history = []
-            if conversation.messages:
-                for message in conversation.messages[-10:]:  # Last 10 messages
+            messages = await conversation.get_messages()
+            if messages:
+                for message in messages[-10:]:  # Last 10 messages
                     conversation_history.append({
                         "role": message.role,
                         "content": message.content
@@ -546,11 +548,11 @@ Is this a meaningless or non-financial query that shouldn't be analyzed?"""
             
             return {
                 "conversation_history": conversation_history, 
-                "message_count": len(conversation.messages),
+                "message_count": len(messages),
                 "approach": "raw_conversation"
             }
         except Exception as e:
-            return {"error": f"Conversation retrieval failed: {e}", "message_count": len(conversation.messages)}
+            return {"error": f"Conversation retrieval failed: {e}", "message_count": 0}
 
 # Factory function to create context-aware search with dependencies
 def create_context_aware_search(analysis_library: AnalysisLibrary = None,

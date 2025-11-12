@@ -123,7 +123,8 @@ class HybridMessageHandler:
             return await self._create_error_response(
                 error_message=f"I apologize, but I encountered an error processing your message. Please try again.",
                 session_id=session_id,
-                user_id=user_id
+                user_id=user_id,
+                internal_error=str(e)
             )
     
     async def _route_response_new(self,
@@ -141,7 +142,7 @@ class HybridMessageHandler:
         """
         
         # Handle different intent types
-        if chat_response.message_type == MessageIntent.PURE_CHAT:
+        if intent_result.message_type == MessageIntent.PURE_CHAT:
             return await self._handle_pure_chat(chat_response, session_id, user_message_id)
             
         elif chat_response.message_type == MessageIntent.EDUCATIONAL:

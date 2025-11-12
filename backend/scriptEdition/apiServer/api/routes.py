@@ -54,9 +54,14 @@ class APIRoutes:
         self.hybrid_handler = None
         if chat_history_service:
             from shared.analyze.services.hybrid_message_handler import HybridMessageHandler
+            
+            # Get Redis client from session_manager if available
+            redis_client = getattr(session_manager, 'redis_client', None) if session_manager else None
+            
             self.hybrid_handler = HybridMessageHandler(
                 chat_history_service=chat_history_service,
-                analyze_question_callable=self.analyze_question  # Pass existing analyze_question method
+                analyze_question_callable=self.analyze_question,  # Pass existing analyze_question method
+                redis_client=redis_client
             )
         
         # Initialize data transformer for clean transformation operations
@@ -478,7 +483,8 @@ class APIRoutes:
             if hasattr(request, '_from_hybrid_background') and request._from_hybrid_background:
                 logger.info(f"⏩ Skipping user message creation for background analysis")
                 # Use placeholder for message ID tracking
-                user_message_id = "hybrid_background_analysis"
+                user_message_id = getattr(request, '_hybrid_user_message_id', 'hybrid_background_user_msg')
+                logger.info(f"✓ Using existing user message: {user_message_id}")
             else:
                 user_message_id = await self.chat_history_service.add_user_message(
                     session_id=session_id,
@@ -655,6 +661,7 @@ class APIRoutes:
                 )
                 # Mark as background analysis to avoid creating duplicate messages
                 analysis_request._from_hybrid_background = True
+                analysis_request._hybrid_user_message_id = hybrid_response.user_message_id
                 analysis_request._hybrid_assistant_message_id = hybrid_response.message_id
                 
                 # Trigger analysis using existing flow (background - no await)

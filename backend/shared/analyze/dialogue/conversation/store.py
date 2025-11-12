@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 """
 Conversation Storage - Efficient conversation history management
+Now with Redis backend for cross-process message sharing
 """
 
 import uuid
+import json
 from datetime import datetime
 from typing import Dict, List, Optional, Any, Tuple, Union
 from dataclasses import dataclass, asdict
-from enum import Enum
 from abc import ABC, abstractmethod
+
+from shared.constants import QueryType, MessageIntent
 
 
 @dataclass
@@ -60,7 +63,7 @@ class UserMessage(BaseMessage):
     def create(cls, content: str, user_id: str = "anonymous", **metadata) -> 'UserMessage':
         """Create a user message"""
         return cls(
-            id=str(uuid.uuid4())[:8],
+            id=str(uuid.uuid4()),
             content=content,
             timestamp=datetime.now(),
             user_id=user_id,
@@ -71,7 +74,7 @@ class UserMessage(BaseMessage):
     def from_dict(cls, data: Dict[str, Any]) -> 'UserMessage':
         """Create UserMessage from dictionary"""
         return cls(
-            id=data.get('id', str(uuid.uuid4())[:8]),  # Generate new ID if not present
+            id=data.get('id', str(uuid.uuid4())),  # Generate new ID if not present
             content=data['content'],
             timestamp=datetime.fromisoformat(data['timestamp']),
             user_id=data.get('user_id', data.get('metadata', {}).get('user_id', 'anonymous')),
@@ -100,7 +103,7 @@ class AssistantMessage(BaseMessage):
         analysis_suggestion = metadata.pop('analysis_suggestion', None)
         
         return cls(
-            id=str(uuid.uuid4())[:8],
+            id=str(uuid.uuid4()),
             content=content,
             timestamp=datetime.now(),
             message_type=message_type,
@@ -115,7 +118,7 @@ class AssistantMessage(BaseMessage):
         """Create AssistantMessage from dictionary"""
         metadata = data.get('metadata', {})
         return cls(
-            id=data.get('id', str(uuid.uuid4())[:8]),  # Generate new ID if not present
+            id=data.get('id', str(uuid.uuid4())),  # Generate new ID if not present
             content=data.get('content', ""),
             timestamp=datetime.fromisoformat(data['timestamp']),
             # Try top-level fields first, then fallback to metadata
@@ -175,21 +178,6 @@ class AssistantMessage(BaseMessage):
 # Type alias for any message type
 Message = Union[UserMessage, AssistantMessage]
 
-class QueryType(Enum):
-    # Legacy analysis types (for backward compatibility)
-    COMPLETE = "complete"           # Full standalone question
-    CONTEXTUAL = "contextual"       # "what about QQQ to SPY"
-    COMPARATIVE = "comparative"     # "how does that compare"
-    PARAMETER = "parameter"         # "what if 3% instead"
-
-class MessageIntent(Enum):
-    """Message intents for hybrid chat pattern"""
-    PURE_CHAT = "pure_chat"                    # General conversation
-    EDUCATIONAL = "educational"                # Educational about finance
-    ANALYSIS_REQUEST = "analysis_request"      # Direct analysis request
-    ANALYSIS_CONFIRMATION = "analysis_confirmation"  # Confirming analysis suggestion
-    FOLLOW_UP = "follow_up"                   # Follow-up to previous analysis
-
 
 class ConversationStore:
     """Single source of truth for conversation data - message-based design
@@ -198,18 +186,34 @@ class ConversationStore:
     Supports real conversation patterns like multiple user messages, missing responses, etc.
     """
     
-    def __init__(self, session_id: str, chat_history_service=None):
+    def __init__(self, session_id: str, chat_history_service=None, redis_client=None):
         self.session_id = session_id
-        self.messages: List[Message] = []  # Sequential independent messages (Union[UserMessage, AssistantMessage])
+        self.redis_client = redis_client
+        self._redis_key = f"conversation:{session_id}"
         self._context_window_size = 20  # Keep last 20 messages (10 exchanges)
         self.chat_history_service = chat_history_service
         
     
     @classmethod
-    async def load_or_create(cls, session_id: str, chat_history_service) -> 'ConversationStore':
-        """Load existing conversation from DB or create new empty one"""
-        store = cls(session_id, chat_history_service)
+    async def load_or_create(cls, session_id: str, chat_history_service, redis_client=None) -> 'ConversationStore':
+        """Load existing conversation from Redis/DB or create new empty one"""
+        store = cls(session_id, chat_history_service, redis_client)
         
+        # Try to load from Redis first (faster)
+        if redis_client:
+            try:
+                redis_messages = await redis_client.lrange(store._redis_key, 0, -1)
+                if redis_messages:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.debug(f"✓ Loaded {len(redis_messages)} messages from Redis for session {session_id[:8]}...")
+                    return store
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"⚠️ Failed to load session from Redis: {e}")
+        
+        # Fallback to DB if Redis is empty or unavailable
         if chat_history_service:
             try:
                 # Try to load existing conversation from DB
@@ -219,10 +223,10 @@ class ConversationStore:
                 )
                 
                 if db_messages:
-                    store._populate_from_db_messages(db_messages)
+                    await store._populate_from_db_messages(db_messages)
                     import logging
                     logger = logging.getLogger(__name__)
-                    logger.debug(f"✓ Loaded {len(db_messages)} messages for session {session_id[:8]}...")
+                    logger.debug(f"✓ Loaded {len(db_messages)} messages from DB for session {session_id[:8]}...")
                 
             except Exception as e:
                 import logging
@@ -231,22 +235,22 @@ class ConversationStore:
         
         return store
     
-    def _populate_from_db_messages(self, db_messages: List[Dict[str, Any]]) -> None:
-        """Populate both new messages list and legacy turns from DB messages"""
-        if not db_messages:
+    async def _populate_from_db_messages(self, db_messages: List[Dict[str, Any]]) -> None:
+        """Populate Redis from DB messages"""
+        if not db_messages or not self.redis_client:
             return
         
-        # Clear existing data
-        self.messages = []
+        # Clear existing Redis data
+        await self.redis_client.delete(self._redis_key)
         
-        # Populate new message-based structure
+        # Populate Redis from DB messages
         for db_msg in db_messages:
             role = db_msg.get("role", "user")
             if role == "user":
                 message = UserMessage.from_dict(db_msg)
             else:
                 message = AssistantMessage.from_dict(db_msg)
-            self.messages.append(message)
+            await self._add_message_to_redis(message)
         
     
     
@@ -256,8 +260,8 @@ class ConversationStore:
         """Add user message - immediately persisted, independent of assistant response"""
         message = UserMessage.create(content, user_id, **metadata)
         
-        # 1. Add to memory immediately  
-        self.messages.append(message)
+        # 1. Add to Redis immediately  
+        await self._add_message_to_redis(message)
         
         # 2. Persist to database immediately (never lost)
         if self.chat_history_service:
@@ -271,10 +275,10 @@ class ConversationStore:
                 import logging
                 logger = logging.getLogger(__name__)
                 logger.error(f"❌ Failed to persist user message: {e}")
-                # Continue - message preserved in memory
+                # Continue - message preserved in Redis
         
         # 3. Trim context window
-        self._trim_messages()
+        await self._trim_messages()
         
         return message
     
@@ -282,8 +286,8 @@ class ConversationStore:
         """Add assistant message - independent of user message"""
         message = AssistantMessage.create(content, **metadata)
         
-        # 1. Add to memory immediately
-        self.messages.append(message)
+        # 1. Add to Redis immediately
+        await self._add_message_to_redis(message)
         
         # 2. Persist to database
         if self.chat_history_service:
@@ -292,56 +296,109 @@ class ConversationStore:
                     session_id=self.session_id,
                     user_id=user_id,
                     content=content,
+                    message_id=message.id,  # Pass the local ID to ensure consistency
                     metadata=metadata
                 )
             except Exception as e:
                 import logging
                 logger = logging.getLogger(__name__)
                 logger.error(f"❌ Failed to persist assistant message: {e}")
-                # Continue - message preserved in memory
+                # Continue - message preserved in Redis
         
         # 3. Trim context window
-        self._trim_messages()
+        await self._trim_messages()
         
         return message
     
-    def _trim_messages(self):
-        """Trim messages to context window size"""
-        if len(self.messages) > self._context_window_size:
-            self.messages = self.messages[-self._context_window_size:]
+    async def update_assistant_message(self, message_id: str, content: str = None, analysis_id: str = None, 
+                                     execution_id: str = None, **metadata) -> bool:
+        """Update existing assistant message by ID"""
+        # 1. Find and update message in Redis
+        success = await self._update_message_in_redis(message_id, content, analysis_id, execution_id, **metadata)
+        
+        if not success:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"⚠️ Message {message_id} not found in conversation store")
+            messages = await self.get_messages()
+            logger.debug(f"Available assistant messages: {[(m.id, m.content[:50] + '...' if len(m.content) > 50 else m.content) for m in messages if isinstance(m, AssistantMessage)]}")
+            logger.debug(f"All messages: {[(m.id, m.role, m.content[:30] + '...' if len(m.content) > 30 else m.content) for m in messages]}")
+            logger.debug(f"Session ID: {getattr(self, 'session_id', 'unknown')}")
+            logger.debug(f"Searching for message_id: '{message_id}' (type: {type(message_id)})")
+            return False
+        
+        # 2. Persist to database
+        if self.chat_history_service:
+            try:
+                db_success = await self.chat_history_service.update_assistant_message(
+                    message_id=message_id,
+                    content=content,
+                    analysis_id=analysis_id,
+                    execution_id=execution_id,
+                    metadata=metadata
+                )
+                return db_success
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"❌ Failed to update assistant message {message_id}: {e}")
+                return False
+        
+        # If no chat_history_service, consider it successful (Redis-only update)
+        return True
     
-    def get_messages(self, role: Optional[str] = None, limit: Optional[int] = None) -> List[Message]:
+    async def _trim_messages(self):
+        """Trim messages to context window size"""
+        if not self.redis_client:
+            return
+            
+        try:
+            message_count = await self.redis_client.llen(self._redis_key)
+            if message_count > self._context_window_size:
+                # Remove oldest messages (from the right side of the list)
+                excess_count = message_count - self._context_window_size
+                for _ in range(excess_count):
+                    await self.redis_client.rpop(self._redis_key)
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"⚠️ Failed to trim messages: {e}")
+    
+    async def get_messages(self, role: Optional[str] = None, limit: Optional[int] = None) -> List[Message]:
         """Get messages, optionally filtered by role"""
-        messages = self.messages
+        messages = await self._get_messages_from_redis()
         if role:
             messages = [m for m in messages if m.role == role]
         if limit:
             messages = messages[-limit:]
         return messages
     
-    def get_last_user_message(self) -> Optional[UserMessage]:
+    async def get_last_user_message(self) -> Optional[UserMessage]:
         """Get most recent user message"""
-        for message in reversed(self.messages):
+        messages = await self._get_messages_from_redis()
+        for message in reversed(messages):
             if isinstance(message, UserMessage):
                 return message
         return None
     
-    def get_last_assistant_message(self) -> Optional[AssistantMessage]:
+    async def get_last_assistant_message(self) -> Optional[AssistantMessage]:
         """Get most recent assistant message"""
-        for message in reversed(self.messages):
+        messages = await self._get_messages_from_redis()
+        for message in reversed(messages):
             if isinstance(message, AssistantMessage):
                 return message
         return None
     
     async def get_pending_analysis_suggestion(self) -> Optional[Dict[str, Any]]:
         """Get pending analysis suggestion from most recent educational message"""
-        for message in reversed(self.messages):
+        messages = await self._get_messages_from_redis()
+        for i, message in enumerate(reversed(messages)):
             if (isinstance(message, AssistantMessage) and 
                 message.has_analysis_suggestion()):
                 
                 # Check if there's been a confirmation after this suggestion
-                message_index = self.messages.index(message)
-                for later_msg in self.messages[message_index + 1:]:
+                # Note: reversed list, so later messages have smaller indices
+                for later_msg in messages[len(messages) - i:]:
                     if (isinstance(later_msg, AssistantMessage) and
                         later_msg.analysis_triggered):
                         return None  # Already confirmed
@@ -360,22 +417,100 @@ class ConversationStore:
         return user_msg, assistant_msg
     
     
-    def to_dict(self) -> dict:
+    async def to_dict(self) -> dict:
         """Serialize conversation for storage"""
+        messages = await self._get_messages_from_redis()
         return {
             "session_id": self.session_id,
-            "messages": [msg.to_dict() for msg in self.messages]
+            "messages": [msg.to_dict() for msg in messages]
         }
     
     @classmethod
-    def from_dict(cls, data: dict) -> 'ConversationStore':
+    async def from_dict(cls, data: dict, redis_client=None) -> 'ConversationStore':
         """Deserialize conversation from storage"""
-        store = cls(data["session_id"])
+        store = cls(data["session_id"], redis_client=redis_client)
         
         # Load messages from the new format if available
-        if "messages" in data:
+        if "messages" in data and redis_client:
             for msg_data in data["messages"]:
                 message = BaseMessage.from_dict(msg_data)
-                store.messages.append(message)
+                await store._add_message_to_redis(message)
         
         return store
+    
+    # ========== REDIS HELPER METHODS ==========
+    
+    async def _add_message_to_redis(self, message: Message) -> None:
+        """Add message to Redis list"""
+        if not self.redis_client:
+            return
+            
+        try:
+            message_json = json.dumps(message.to_dict())
+            await self.redis_client.lpush(self._redis_key, message_json)
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"❌ Failed to add message to Redis: {e}")
+    
+    async def _get_messages_from_redis(self) -> List[Message]:
+        """Get all messages from Redis"""
+        if not self.redis_client:
+            return []
+            
+        try:
+            messages_json = await self.redis_client.lrange(self._redis_key, 0, -1)
+            messages = []
+            for msg_json in reversed(messages_json):  # Redis stores in reverse order (newest first)
+                msg_dict = json.loads(msg_json)
+                message = BaseMessage.from_dict(msg_dict)
+                messages.append(message)
+            return messages
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"❌ Failed to get messages from Redis: {e}")
+            return []
+    
+    async def _update_message_in_redis(self, message_id: str, content: str = None, 
+                                     analysis_id: str = None, execution_id: str = None, 
+                                     **metadata) -> bool:
+        """Update specific message in Redis"""
+        if not self.redis_client:
+            return False
+            
+        try:
+            messages_json = await self.redis_client.lrange(self._redis_key, 0, -1)
+            for i, msg_json in enumerate(messages_json):
+                msg_dict = json.loads(msg_json)
+                if msg_dict.get('id') == message_id:
+                    # Update message content and metadata
+                    if content is not None:
+                        msg_dict['content'] = content
+                    if analysis_id is not None:
+                        if 'metadata' not in msg_dict:
+                            msg_dict['metadata'] = {}
+                        msg_dict['metadata']['analysis_id'] = analysis_id
+                    if execution_id is not None:
+                        if 'metadata' not in msg_dict:
+                            msg_dict['metadata'] = {}
+                        msg_dict['metadata']['execution_id'] = execution_id
+                    
+                    # Update additional metadata
+                    if 'metadata' not in msg_dict:
+                        msg_dict['metadata'] = {}
+                    msg_dict['metadata'].update(metadata)
+                    
+                    # Update timestamp
+                    msg_dict['timestamp'] = datetime.now().isoformat()
+                    
+                    # Replace message in Redis
+                    updated_json = json.dumps(msg_dict)
+                    await self.redis_client.lset(self._redis_key, i, updated_json)
+                    return True
+            return False
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"❌ Failed to update message in Redis: {e}")
+            return False

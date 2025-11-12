@@ -31,7 +31,11 @@ class DialogueFactory:
             self.session_manager = session_manager
         else:
             # Fallback: create local instance if not provided
-            self.session_manager = SessionManager(chat_history_service=chat_history_service)
+            # Note: This fallback skips Redis to avoid async complexity
+            self.session_manager = SessionManager(
+                chat_history_service=chat_history_service,
+                redis_client=None
+            )
         
         # Create context service - use passed LLM service or create context-optimized one
         if llm_service:

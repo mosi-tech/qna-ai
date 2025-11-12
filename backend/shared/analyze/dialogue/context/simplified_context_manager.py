@@ -79,7 +79,7 @@ class SimplifiedFinancialContextManager:
             if not current_query:
                 raise ValueError("current_query is required")
             
-            all_messages = conversation.get_messages()
+            all_messages = await conversation.get_messages()
             if not all_messages:
                 return f"CURRENT USER QUERY: {current_query}\n\nNo previous conversation history."
             
@@ -123,11 +123,15 @@ class SimplifiedFinancialContextManager:
             List of messages in LLM format: [{"role": "user/assistant", "content": "..."}]
         """
         try:
-            if not conversation or not conversation.messages:
+            if not conversation:
                 # No conversation - just the current query
                 return [{"role": "user", "content": current_query}]
             
-            all_messages = conversation.get_messages()
+            all_messages = await conversation.get_messages()
+            if not all_messages:
+                # No messages - just the current query
+                return [{"role": "user", "content": current_query}]
+                
             logger.debug(f"🔍 Formatting {len(all_messages)} messages for LLM ({context_type.value})")
             
             # Phase 1: Smart context window sizing

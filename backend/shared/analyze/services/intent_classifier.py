@@ -9,22 +9,14 @@ Follows BaseService pattern with proper LLM integration.
 import logging
 import time
 from typing import Optional
-from enum import Enum
 from dataclasses import dataclass
 
 from ...llm import LLMService
 from ...services.base_service import BaseService
 from shared.utils.json_utils import safe_json_loads
+from shared.constants import MessageIntent
 
 logger = logging.getLogger(__name__)
-
-class MessageIntent(Enum):
-    """Classification of user message intent"""
-    PURE_CHAT = "pure_chat"           # General conversation, greetings
-    EDUCATIONAL = "educational"        # Wants to learn about financial concepts
-    ANALYSIS_REQUEST = "analysis_request"  # Direct request for analysis
-    ANALYSIS_CONFIRMATION = "analysis_confirmation"  # Confirming suggested analysis
-    FOLLOW_UP = "follow_up"           # Follow-up on previous analysis
 
 @dataclass
 class IntentResult:
@@ -97,7 +89,7 @@ class IntentClassifierService(BaseService):
             
             response = await self.llm_service.make_request(
                 messages=messages,
-                max_tokens=300,
+                max_tokens=1000,
                 temperature=0.1,
                 system_prompt=self.system_prompt
             )

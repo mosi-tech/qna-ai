@@ -13,13 +13,15 @@ Implements GitHub Issue #122 - Mix of LLM chat + analysis
 import asyncio
 import logging
 import time
+from datetime import datetime
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
 
-from .intent_classifier import IntentClassifierService, MessageIntent, IntentResult
+from .intent_classifier import IntentClassifierService, IntentResult
 from .financial_analyst_chat_service import FinancialAnalystChatService, AnalystResponse, AnalysisSuggestion
 from shared.services.chat_service import ChatHistoryService
 from shared.services.session_manager import SessionManager
+from shared.constants import MetadataConstants, MessageIntent
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +31,7 @@ class HybridResponse:
     response_type: str  # "chat", "educational_chat", "analysis_confirmation", "analysis_trigger"
     content: str
     message_id: str
+    user_message_id: str
     session_id: str
     metadata: Optional[Dict[str, Any]] = None
     
@@ -43,12 +46,16 @@ class HybridMessageHandler:
     
     def __init__(self, 
                  chat_history_service: ChatHistoryService,
-                 analyze_question_callable=None):
+                 analyze_question_callable=None,
+                 redis_client=None):
         self.chat_history_service = chat_history_service
         self.analyze_question_callable = analyze_question_callable
         
         # Create SessionManager for ConversationStore integration (consistent with existing approach)
-        self.session_manager = SessionManager(chat_history_service=chat_history_service)
+        self.session_manager = SessionManager(
+            chat_history_service=chat_history_service,
+            redis_client=redis_client
+        )
         
         # Initialize proper services with session manager dependency
         self.intent_classifier = IntentClassifierService(session_manager=self.session_manager)
@@ -71,6 +78,7 @@ class HybridMessageHandler:
         4. If analysis needed: trigger existing analyze_question + return chat message
         5. Otherwise: return chat response only
         """
+        start_time = time.time()
         try:
             logger.info(f"🔀 Hybrid handler V2 processing: {user_message[:100]}...")
             
@@ -83,12 +91,12 @@ class HybridMessageHandler:
             logger.debug(f"✅ User message saved immediately: {user_message_obj.id}")
             
             # Step 1: Classify intent
-            start_time = time.time()
+            intent_start_time = time.time()
             intent_result = await self.intent_classifier.classify_intent(
                 user_message=user_message,
                 session_id=session_id
             )
-            intent_duration = time.time() - start_time
+            intent_duration = time.time() - intent_start_time
             
             logger.info(f"⏱️ Intent classification: {intent_duration:.3f}s, Intent: {intent_result.intent.value}")
             
@@ -119,7 +127,9 @@ class HybridMessageHandler:
             return await self._create_error_response(
                 error_message=f"I apologize, but I encountered an error processing your message. Please try again.",
                 session_id=session_id,
-                user_id=user_id
+                user_id=user_id,
+                internal_error=str(e),
+                start_time=start_time
             )
     
     async def _route_and_persist(self,
@@ -130,310 +140,79 @@ class HybridMessageHandler:
                                user_id: str,
                                user_message_obj) -> HybridResponse:
         """Route based on intent and persist ONLY via ConversationStore (no dual calls)"""
-        from shared.analyze.dialogue.conversation.store import MessageIntent
         
-        # Map IntentResult.intent to MessageIntent
-        message_intent_map = {
-            'pure_chat': MessageIntent.PURE_CHAT,
-            'educational': MessageIntent.EDUCATIONAL,
-            'analysis_request': MessageIntent.ANALYSIS_REQUEST,
-            'analysis_confirmation': MessageIntent.ANALYSIS_CONFIRMATION,
-            'follow_up': MessageIntent.FOLLOW_UP
-        }
-        message_intent = message_intent_map.get(intent_result.intent.value, MessageIntent.PURE_CHAT)
+        # Use the intent directly from IntentResult (already a MessageIntent enum)
+        message_intent = intent_result.intent
         
         # Determine response type and analysis trigger
-        if intent_result.intent.value == "analysis_confirmation":
-            response_type = "analysis_trigger"
+        if intent_result.intent.value == MetadataConstants.INTENT_ANALYSIS_CONFIRMATION:
+            response_type = MetadataConstants.RESPONSE_TYPE_ANALYSIS
+            triggered_analysis = True
+        elif intent_result.intent.value == MetadataConstants.INTENT_ANALYSIS_REQUEST:
+            response_type = MetadataConstants.RESPONSE_TYPE_ANALYSIS
             triggered_analysis = True
         else:
             response_type = intent_result.intent.value.replace('_', '_').lower()
             triggered_analysis = False
         
-        # Save assistant message independently (user message already saved immediately)
+        # Build complete metadata first
+        metadata = {
+            MetadataConstants.INTENT: intent_result.intent.value,
+            MetadataConstants.RESPONSE_TYPE: response_type,
+            MetadataConstants.MESSAGE_TYPE: response_type,
+            MetadataConstants.ANALYSIS_TRIGGERED: triggered_analysis,
+        }
+        
+        
+        if analyst_response.analysis_suggestion:
+            metadata[MetadataConstants.HAS_ANALYSIS_SUGGESTION] = True
+            metadata[MetadataConstants.SUGGESTED_ANALYSIS] = {
+                MetadataConstants.SUGGESTION_TOPIC: analyst_response.analysis_suggestion.topic,
+                MetadataConstants.SUGGESTION_DESCRIPTION: analyst_response.analysis_suggestion.description
+            }
+            metadata[MetadataConstants.ANALYSIS_SUGGESTION] = analyst_response.analysis_suggestion.__dict__
+        
+        # Determine analysis triggering details
+        should_trigger_analysis = triggered_analysis
+        analysis_question = None
+        
+        if triggered_analysis:
+            metadata[MetadataConstants.RESPONSE_STATUS] = MetadataConstants.STATUS_PENDING
+            # For analysis_request: use original user message as analysis question
+            # For analysis_confirmation: get pending analysis suggestion
+            if intent_result.intent.value == MetadataConstants.INTENT_ANALYSIS_REQUEST:
+                analysis_question = user_message
+                metadata[MetadataConstants.ANALYSIS_QUESTION] = user_message
+            else:
+                conversation = await self.session_manager.get_session(session_id)
+                if conversation:
+                    pending = await conversation.get_pending_analysis_suggestion()
+                    if pending:
+                        analysis_question = pending.get(MetadataConstants.SUGGESTED_QUESTION, "Analysis in progress...")
+                        metadata[MetadataConstants.ANALYSIS_QUESTION] = analysis_question
+        else:
+            # For non-analysis responses, mark as completed
+            metadata[MetadataConstants.RESPONSE_STATUS] = MetadataConstants.STATUS_COMPLETED
+        
+        # Save assistant message with complete metadata
         conversation = await self.session_manager.get_session(session_id)
         assistant_message_obj = await conversation.add_assistant_message(
             content=analyst_response.content,
             user_id=user_id,
-            message_type=response_type,
-            intent=message_intent.value if message_intent else None,
-            analysis_triggered=triggered_analysis,
-            analysis_suggestion=analyst_response.analysis_suggestion.__dict__ if analyst_response.analysis_suggestion else None
+            **metadata
         )
-        
-        # Build metadata for response
-        metadata = {
-            "intent": intent_result.intent.value,
-            "message_type": response_type,
-        }
-        
-        if analyst_response.analysis_suggestion:
-            metadata["has_analysis_suggestion"] = True
-            metadata["suggested_analysis"] = {
-                "topic": analyst_response.analysis_suggestion.topic,
-                "description": analyst_response.analysis_suggestion.description
-            }
-        
-        if triggered_analysis:
-            metadata["analysis_triggered"] = True
-            # Get pending analysis for the expanded question
-            conversation = await self.session_manager.get_session(session_id)
-            if conversation:
-                pending = await conversation.get_pending_analysis_suggestion()
-                if pending:
-                    metadata["analysis_question"] = pending.get("suggested_question", "Analysis in progress...")
         
         return HybridResponse(
             response_type=response_type,
             content=analyst_response.content,
             message_id=assistant_message_obj.id,
+            user_message_id=user_message_obj.id,
             session_id=session_id,
-            metadata=metadata
+            metadata=metadata,
+            should_trigger_analysis=should_trigger_analysis,
+            analysis_question=analysis_question
         )
 
-    async def _route_based_on_intent(self,
-                                   intent_result: IntentResult,
-                                   analyst_response: AnalystResponse,
-                                   user_message: str,
-                                   session_id: str,
-                                   user_id: str) -> HybridResponse:
-        """
-        FIXED: Route based on intent using existing analyze_question flow
-        """
-        
-        # Route to appropriate handler based on intent
-        if intent_result.intent == MessageIntent.PURE_CHAT:
-            return await self._handle_pure_chat(
-                analyst_response, session_id, user_id, user_message_obj.id
-            )
-                
-        elif intent_result.intent == MessageIntent.EDUCATIONAL:
-            return await self._handle_educational_response(
-                analyst_response, intent_result, user_message, session_id, user_id, user_message_obj.id
-            )
-                
-        elif intent_result.intent == MessageIntent.ANALYSIS_REQUEST:
-            return await self._handle_analysis_request(
-                analyst_response, user_message, session_id, user_id, user_message_obj.id
-            )
-                
-        elif intent_result.intent == MessageIntent.ANALYSIS_CONFIRMATION:
-            return await self._handle_analysis_confirmation(
-                analyst_response, session_id, user_id, user_message_obj.id
-            )
-                
-        elif intent_result.intent == MessageIntent.FOLLOW_UP:
-            return await self._handle_follow_up_response(
-                analyst_response, session_id, user_id, user_message_obj.id
-            )
-        
-        else:
-            # Default to educational chat
-            return await self._handle_educational_response(
-                analyst_response, intent_result, user_message, session_id, user_id, user_message_obj.id
-            )
-    
-    async def _handle_pure_chat(self, 
-                              analyst_response: AnalystResponse,
-                              session_id: str,
-                              user_id: str,
-                              user_message_id: str) -> HybridResponse:
-        """Handle pure chat interactions (greetings, thanks, etc.)"""
-        
-        # Add chat response to history using hybrid method
-        assistant_message_id = await self.chat_history_service.add_hybrid_message(
-            session_id=session_id,
-            user_id=user_id,
-            content=analyst_response.content,
-            message_type="chat",
-            intent="pure_chat",
-            in_reply_to=user_message_id
-        )
-        
-        return HybridResponse(
-            response_type="chat",
-            content=analyst_response.content,
-            message_id=assistant_message_id,
-            session_id=session_id,
-            metadata={"intent": "pure_chat"}
-        )
-    
-    async def _handle_educational_response(self,
-                                         analyst_response: AnalystResponse,
-                                         intent_result: IntentResult,
-                                         user_message: str,
-                                         session_id: str,
-                                         user_id: str,
-                                         user_message_id: str) -> HybridResponse:
-        """Handle educational responses with potential analysis suggestions"""
-        
-        # Analysis suggestion is automatically persisted in message metadata (line 231)
-        # No need for volatile session state - we can reconstruct from conversation history
-        if analyst_response.analysis_suggestion:
-            logger.info(f"✅ Analysis suggestion will be persisted in message metadata for session {session_id}: {analyst_response.analysis_suggestion.topic}")
-        else:
-            logger.warning(f"⚠️ No analysis suggestion provided by financial analyst for session {session_id}")
-        
-        # Prepare analysis suggestion data for metadata
-        suggestion_data = None
-        if analyst_response.analysis_suggestion:
-            suggestion_data = {
-                "topic": analyst_response.analysis_suggestion.topic,
-                "description": analyst_response.analysis_suggestion.description,
-                "suggested_question": analyst_response.analysis_suggestion.suggested_question,
-                "analysis_type": analyst_response.analysis_suggestion.analysis_type
-            }
-        
-        # Add educational response to history
-        assistant_message_id = await self.chat_history_service.add_hybrid_message(
-            session_id=session_id,
-            user_id=user_id,
-            content=analyst_response.content,
-            message_type="educational_chat",
-            intent="educational",
-            analysis_suggestion=suggestion_data,
-            in_reply_to=user_message_id
-        )
-        
-        # Update ConversationStore with hybrid turn
-        await self._save_hybrid_turn(
-            session_id=session_id,
-            user_query=user_message,
-            message_intent=intent_result.intent,
-            response_type="educational_chat", 
-            assistant_response=analyst_response.content,
-            triggered_analysis=False,
-            analysis_suggestion=suggestion_data
-        )
-        
-        metadata = {
-            "intent": "educational",
-            "has_analysis_suggestion": bool(analyst_response.analysis_suggestion)
-        }
-        
-        if suggestion_data:
-            metadata["suggested_analysis"] = {
-                "topic": suggestion_data["topic"],
-                "description": suggestion_data["description"]
-            }
-        
-        return HybridResponse(
-            response_type="educational_chat",
-            content=analyst_response.content,
-            message_id=assistant_message_id,
-            session_id=session_id,
-            metadata=metadata
-        )
-    
-    async def _handle_analysis_request(self,
-                                     analyst_response: AnalystResponse,
-                                     user_message: str,
-                                     session_id: str,
-                                     user_id: str,
-                                     user_message_id: str) -> HybridResponse:
-        """Handle direct analysis requests - FIXED: uses existing flow"""
-        
-        # Add confirmation message to chat
-        assistant_message_id = await self.chat_history_service.add_hybrid_message(
-            session_id=session_id,
-            user_id=user_id,
-            content=analyst_response.content,
-            message_type="analysis_confirmation",
-            intent="analysis_request",
-            in_reply_to=user_message_id
-        )
-        
-        # FIXED: Return chat response + flag to trigger analysis
-        return HybridResponse(
-            response_type="analysis_trigger",
-            content=analyst_response.content,
-            message_id=assistant_message_id,
-            session_id=session_id,
-            should_trigger_analysis=True,  # KEY: Flag for API to call analyze_question
-            analysis_question=user_message,  # Original user question
-            metadata={"intent": "direct_analysis"}
-        )
-    
-    async def _handle_analysis_confirmation(self,
-                                          analyst_response: AnalystResponse,
-                                          session_id: str,
-                                          user_id: str,
-                                          user_message_id: str) -> HybridResponse:
-        """Handle user confirmation of suggested analysis - FIXED: uses existing flow"""
-        
-        # Get pending analysis from ConversationStore (persistent across restarts)
-        pending_analysis = await self._get_pending_analysis_from_conversation_store(session_id)
-        
-        if not pending_analysis:
-            # No pending analysis - treat as general chat
-            assistant_message_id = await self.chat_history_service.add_hybrid_message(
-                session_id=session_id,
-                user_id=user_id,
-                content="I'd be happy to help with analysis! Could you please specify what you'd like me to analyze?",
-                message_type="chat",
-                intent="confirmation_without_pending",
-                in_reply_to=user_message_id
-            )
-            
-            return HybridResponse(
-                response_type="chat",
-                content="I'd be happy to help with analysis! Could you please specify what you'd like me to analyze?",
-                message_id=assistant_message_id,
-                session_id=session_id,
-                metadata={"intent": "confirmation_without_pending"}
-            )
-        
-        # Add confirmation response to chat
-        assistant_message_id = await self.chat_history_service.add_hybrid_message(
-            session_id=session_id,
-            user_id=user_id,
-            content=analyst_response.content,
-            message_type="analysis_confirmation",
-            intent="analysis_confirmation",
-            in_reply_to=user_message_id
-        )
-        
-        # Get analysis question from pending suggestion
-        analysis_question = pending_analysis.get("suggested_question")
-        
-        # FIXED: Return chat response + flag to trigger analysis
-        return HybridResponse(
-            response_type="analysis_trigger",
-            content=analyst_response.content,
-            message_id=assistant_message_id,
-            session_id=session_id,
-            should_trigger_analysis=True,  # KEY: Flag for API to call analyze_question
-            analysis_question=analysis_question,  # Suggested analysis question
-            metadata={
-                "intent": "confirmed_analysis",
-                "original_suggestion": pending_analysis.get("topic", "unknown")
-            }
-        )
-    
-    async def _handle_follow_up_response(self,
-                                       analyst_response: AnalystResponse,
-                                       session_id: str,
-                                       user_id: str,
-                                       user_message_id: str) -> HybridResponse:
-        """Handle follow-up questions about previous analysis"""
-        
-        # Add follow-up response to chat
-        assistant_message_id = await self.chat_history_service.add_hybrid_message(
-            session_id=session_id,
-            user_id=user_id,
-            content=analyst_response.content,
-            message_type="follow_up_chat",
-            intent="follow_up",
-            in_reply_to=user_message_id
-        )
-        
-        return HybridResponse(
-            response_type="follow_up_chat",
-            content=analyst_response.content,
-            message_id=assistant_message_id,
-            session_id=session_id,
-            metadata={"intent": "follow_up"}
-        )
     
     async def _get_session_context(self, session_id: str) -> Dict[str, Any]:
         """Get session context including recent analysis results"""
@@ -467,6 +246,7 @@ class HybridMessageHandler:
         
         return context
     
+
     async def _get_conversation_history(self, session_id: str) -> List[Dict[str, str]]:
         """Get recent conversation history for context"""
         try:
@@ -495,7 +275,9 @@ class HybridMessageHandler:
     async def _create_error_response(self, 
                                    error_message: str, 
                                    session_id: str,
-                                   user_id: str) -> HybridResponse:
+                                   user_id: str,
+                                   internal_error: str = None,
+                                   start_time: float = None) -> HybridResponse:
         """Create error response"""
         try:
             # Add error message to chat history
@@ -503,26 +285,38 @@ class HybridMessageHandler:
                 session_id=session_id,
                 user_id=user_id,
                 content=error_message,
-                message_type="error",
-                intent="error"
+                message_type=MetadataConstants.MESSAGE_TYPE_ERROR,
+                intent=MetadataConstants.INTENT_ERROR
             )
             
             return HybridResponse(
-                response_type="error",
+                response_type=MetadataConstants.RESPONSE_TYPE_ERROR,
                 content=error_message,
                 message_id=error_message_id,
                 session_id=session_id,
-                metadata={"error": True}
+                metadata={
+                    MetadataConstants.RESPONSE_STATUS: MetadataConstants.STATUS_FAILED,
+                    MetadataConstants.RESPONSE_ERROR: error_message,
+                    MetadataConstants.INTERNAL_ERROR: internal_error or "Unknown error",
+                    MetadataConstants.PROCESSING_TIME: (time.time() - start_time) if start_time else None,
+                    MetadataConstants.FAILED_AT: datetime.now().isoformat()
+                }
             )
         except Exception as e:
             logger.error(f"Failed to create error response: {e}")
             # Fallback response without chat history
             return HybridResponse(
-                response_type="error",
+                response_type=MetadataConstants.RESPONSE_TYPE_ERROR,
                 content=error_message,
                 message_id="error",
                 session_id=session_id,
-                metadata={"error": True, "chat_save_failed": True}
+                metadata={
+                    MetadataConstants.RESPONSE_STATUS: MetadataConstants.STATUS_FAILED,
+                    MetadataConstants.RESPONSE_ERROR: f"Failed to save chat message: {error_message}",
+                    MetadataConstants.INTERNAL_ERROR: internal_error or "Unknown error",
+                    MetadataConstants.PROCESSING_TIME: (time.time() - start_time) if start_time else None,
+                    MetadataConstants.FAILED_AT: datetime.now().isoformat()
+                }
             )
     
     async def _get_pending_analysis_from_conversation_store(self, session_id: str) -> Optional[Dict[str, Any]]:

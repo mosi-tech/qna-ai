@@ -111,6 +111,7 @@ class ChatHistoryService:
         session_id: str,
         user_id: str,
         content: str,
+        message_id: str = None,
         analysis_id: str = None,
         execution_id: str = None,
         metadata: Dict[str, Any] = None
@@ -121,6 +122,7 @@ class ChatHistoryService:
                 session_id=session_id,
                 user_id=user_id,
                 content=content,
+                message_id=message_id,
                 analysis_id=analysis_id,
                 execution_id=execution_id,
                 metadata=metadata

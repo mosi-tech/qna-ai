@@ -101,6 +101,7 @@ class ChatRepository:
         session_id: str,
         user_id: str,
         content: str,
+        message_id: str = None,
         analysis_id: str = None,
         execution_id: str = None,
         metadata: Dict[str, Any] = None,
@@ -109,16 +110,23 @@ class ChatRepository:
         # Get message count to set message_index
         message_count = await self.db.db.chat_messages.count_documents({"sessionId": session_id})
         
-        message = ChatMessageModel(
-            session_id=session_id,
-            user_id=user_id,
-            role=RoleType.ASSISTANT,
-            content=content,
-            analysis_id=analysis_id,
-            execution_id=execution_id,
-            message_index=message_count,
-            metadata=metadata or {},
-        )
+        # Build message data, only include message_id if provided
+        message_data = {
+            "session_id": session_id,
+            "user_id": user_id,
+            "role": RoleType.ASSISTANT,
+            "content": content,
+            "analysis_id": analysis_id,
+            "execution_id": execution_id,
+            "message_index": message_count,
+            "metadata": metadata or {},
+        }
+        
+        # Only include message_id if explicitly provided
+        if message_id is not None:
+            message_data["message_id"] = message_id
+            
+        message = ChatMessageModel(**message_data)
         return await self.db.create_message(message)
     
     async def update_assistant_message(

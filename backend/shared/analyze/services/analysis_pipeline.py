@@ -24,7 +24,7 @@ from shared.services.progress_service import send_progress_info, send_analysis_p
 from shared.services.execution_queue_service import execution_queue_service
 from shared.queue.worker_context import set_context, get_message_id, get_session_id, get_user_id
 from ..dialogue import search_with_context
-from shared.constants import MessageStatus
+from shared.constants import MessageStatus, MetadataConstants
 from shared.storage import get_storage
 
 logger = logging.getLogger(__name__)
@@ -217,7 +217,6 @@ class AnalysisPipelineService:
                     analysis_id=response_data.get("analysisId"),
                     execution_id=response_data.get("executionId"),
                     metadata=metadata,
-                    cache_output=True
                 )
             
             return final_response
@@ -237,11 +236,11 @@ class AnalysisPipelineService:
                     response_type=None,  # No analysis was completed
                     message_content=error_message,
                     metadata={
-                        "status": MessageStatus.ANALYSIS_FAILED,
-                        "error": error_message,
-                        "internal_error": str(e),
-                        "processing_time": time.time() - start_time,
-                        "failed_at": datetime.now().isoformat()
+                        MetadataConstants.RESPONSE_STATUS: MetadataConstants.STATUS_FAILED,
+                        MetadataConstants.RESPONSE_ERROR: error_message,
+                        MetadataConstants.INTERNAL_ERROR: str(e),
+                        MetadataConstants.PROCESSING_TIME: time.time() - start_time,
+                        MetadataConstants.FAILED_AT: datetime.now().isoformat()
                     }
                 )
             except Exception as update_error:
@@ -776,18 +775,9 @@ class AnalysisPipelineService:
             return None
     
     
-    async def _update_message_with_response(self, response_type: str, 
-                                          message_content: str, analysis_id: Optional[str] = None, 
-                                          execution_id: Optional[str] = None, metadata: Optional[Dict] = None,
-                                          cache_output: bool = False) -> AnalysisResponse:
-        """Update message and return AnalysisResponse - for cases where both are needed"""
-        await self._update_message_only(response_type, message_content, analysis_id, execution_id, metadata, cache_output)
-        return await self._create_analysis_response(response_type, message_content, analysis_id, execution_id, metadata)
-    
     async def _update_message_only(self, response_type: str, 
                                  message_content: str, analysis_id: Optional[str] = None, 
-                                 execution_id: Optional[str] = None, metadata: Optional[Dict] = None,
-                                 cache_output: bool = False) -> None:
+                                 execution_id: Optional[str] = None, metadata: Optional[Dict] = None) -> None:
         """
         Update the existing message with the analysis response.
         Since we create an empty message at the beginning, this updates it with the final content.
@@ -805,38 +795,20 @@ class AnalysisPipelineService:
         
         # Update the existing message created at the beginning of analysis
         if message_id:
-            success = await self.chat_history_service.update_assistant_message(
+            conversation = await self.session_manager.get_session(session_id)
+            success = await conversation.update_assistant_message(
                 message_id=message_id,
                 content=message_content,
                 analysis_id=analysis_id,
                 execution_id=execution_id,
-                metadata=msg_metadata,
+                **msg_metadata
             )
             if success:
-                self.logger.info(f"✓ Updated {response_type} message in chat history: {message_id}")
+                self.logger.info(f"✓ Updated {response_type} message via conversation store: {message_id}")
             else:
-                raise RuntimeError(f"Failed to update message {message_id} - core persistence failed")
+                raise RuntimeError(f"Failed to update message {message_id} - conversation store update failed")
         else:
             raise RuntimeError("No message_id in context - cannot persist conversation")
-        
-        # Cache the assistant message for future reuse (NON-CRITICAL)
-        if self.cache_service and analysis_id and execution_id and cache_output:
-            try:
-                message_cache_data = {
-                    "content": message_content,
-                    "analysis_id": analysis_id,
-                    "execution_id": execution_id,
-                    "response_data": metadata.get("response_data", {}) if metadata else {},
-                }
-                await self.cache_service.cache_assistant_message(
-                    question=metadata.get("original_query", "") if metadata else "",
-                    user_id=user_id,
-                    message_data=message_cache_data,
-                    ttl_hours=24
-                )
-                self.logger.info(f"✓ Cached {response_type} message")
-            except Exception as cache_error:
-                self.logger.warning(f"⚠️ Failed to cache {response_type} message: {cache_error}")
         
         # Link execution to the message it created (NON-CRITICAL - bidirectional link for convenience)
         if execution_id and self.audit_service and message_id:

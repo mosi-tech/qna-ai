@@ -101,8 +101,17 @@ class AnalysisQueueWorker(BaseQueueWorker):
             # Initialize verification service for reuse verification (Issue #117)
             verification_service = self._initialize_verification_service()
             
-            # Create session manager for dialogue factory
-            session_manager = SessionManager(chat_history_service=chat_history_service)
+            # Create session manager for dialogue factory with Redis support
+            try:
+                from shared.services.redis_client import get_redis_client
+                redis_client = await get_redis_client()
+            except Exception:
+                redis_client = None
+            
+            session_manager = SessionManager(
+                chat_history_service=chat_history_service,
+                redis_client=redis_client
+            )
             
             # Create the complete analysis pipeline
             self.analysis_pipeline = create_analysis_pipeline(
