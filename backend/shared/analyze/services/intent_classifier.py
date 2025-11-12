@@ -48,6 +48,53 @@ class IntentClassifierService(BaseService):
         """Use intent classifier specific system prompt"""
         return "system-prompt-intent-classifier.txt"
     
+    def _get_default_system_prompt(self) -> str:
+        """Get comprehensive default system prompt for intent classification"""
+        return """You are an intent classification system for a financial analysis chat application.
+
+Your task is to classify user messages into one of these specific intents:
+
+**INTENT TYPES:**
+1. **pure_chat** - General conversation, greetings, non-financial topics
+2. **educational** - Asking about financial concepts, how things work
+3. **analysis_request** - Direct request for financial analysis of stocks/ETFs/data
+4. **analysis_confirmation** - User confirming they want to proceed with a suggested analysis
+5. **follow_up_analysis** - Request for additional analysis based on PRIOR analysis results (only after analysis has been performed)
+6. **follow_up_chat** - Conversational follow-up about prior analysis without requesting new analysis
+
+**CRITICAL DISTINCTION - Follow-up Types:**
+- **follow_up_analysis**: User wants NEW analysis based on previous results (e.g., "Do the same for Tesla", "What about during 2020?", "Analyze NVDA with similar parameters")
+- **follow_up_chat**: User wants to DISCUSS previous analysis (e.g., "That's interesting", "Tell me more about this", "What does this mean?", "Can you explain this better?")
+
+**FOLLOW_UP_ANALYSIS RULES:**
+- Only classify as follow_up_analysis if there's clear evidence of prior analysis in the conversation
+- User must be requesting NEW computational analysis, not just discussion
+- Look for phrases like: "do the same for", "analyze X too", "what about [different timeframe/symbol]", "compare with"
+
+**FOLLOW_UP_CHAT RULES:**
+- User wants explanation, clarification, or discussion about existing results
+- No new analysis computation requested
+- Look for phrases like: "tell me more", "explain this", "what does this mean", "that's interesting"
+
+**OUTPUT FORMAT:**
+Return JSON with:
+{
+    "intent": "one_of_the_intent_types",
+    "confidence": 0.85,
+    "reasoning": "Brief explanation of classification decision",
+    "educational_topic": "topic if educational, null otherwise"
+}
+
+**EXAMPLES:**
+- "Hello" → pure_chat
+- "What is a P/E ratio?" → educational
+- "Analyze Apple stock performance" → analysis_request
+- "Yes, proceed with that analysis" → analysis_confirmation
+- "Do the same analysis for Tesla" → follow_up_analysis (ONLY if prior analysis exists)
+- "That's really interesting, tell me more" → follow_up_chat
+
+Be precise with follow_up classifications - they require prior analysis context to be valid."""
+    
     def _initialize_service_specific(self):
         """Initialize intent classifier specific components"""
         logger.info("✅ Intent classifier service initialized")
@@ -139,7 +186,11 @@ class IntentClassifierService(BaseService):
             educational_topic = parsed.get("educational_topic")
             
             # Determine if analysis is required
-            requires_analysis = intent in [MessageIntent.ANALYSIS_REQUEST, MessageIntent.ANALYSIS_CONFIRMATION]
+            requires_analysis = intent in [
+                MessageIntent.ANALYSIS_REQUEST, 
+                MessageIntent.ANALYSIS_CONFIRMATION,
+                MessageIntent.FOLLOW_UP_ANALYSIS
+            ]
             
             return IntentResult(
                 intent=intent,

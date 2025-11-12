@@ -96,8 +96,11 @@ class FinancialAnalystChatService(BaseService):
             elif intent_result.intent == MessageIntent.ANALYSIS_CONFIRMATION:
                 return await self._generate_confirmation_response(user_message, conversation)
                 
-            elif intent_result.intent == MessageIntent.FOLLOW_UP:
-                return await self._generate_follow_up_response(user_message, conversation)
+            elif intent_result.intent == MessageIntent.FOLLOW_UP_ANALYSIS:
+                return await self._generate_follow_up_analysis_response(user_message, conversation)
+                
+            elif intent_result.intent == MessageIntent.FOLLOW_UP_CHAT:
+                return await self._generate_follow_up_chat_response(user_message, conversation)
             
             else:
                 # Fallback to educational response
@@ -208,12 +211,27 @@ class FinancialAnalystChatService(BaseService):
         
         return AnalystResponse(content=content)
     
-    async def _generate_follow_up_response(self, 
-                                         user_message: str,
-                                         conversation) -> AnalystResponse:
-        """Generate response for follow-up questions"""
+    async def _generate_follow_up_analysis_response(self, 
+                                                  user_message: str,
+                                                  conversation) -> AnalystResponse:
+        """Generate response for follow-up analysis requests (user wants NEW analysis based on prior results)"""
         
-        # Use smart conversation logic for follow-up responses
+        content = "I'll run that additional analysis for you based on our previous discussion. This will help provide more insights into your questions."
+        
+        # Could enhance this to be more specific based on the request and context
+        if any(word in user_message.lower() for word in ["same", "similar", "like that"]):
+            content = "I'll run a similar analysis for you with the new parameters. This will help compare the results with what we looked at before."
+        elif any(word in user_message.lower() for word in ["compare", "vs", "versus"]):
+            content = "I'll run a comparative analysis to show you how these different options stack up against each other."
+        elif any(word in user_message.lower() for word in ["what about", "how about"]):
+            content = "Great question! I'll analyze that for you as well to give you a complete picture."
+        
+        return AnalystResponse(content=content)
+    
+    async def _generate_follow_up_chat_response(self, 
+                                              user_message: str,
+                                              conversation) -> AnalystResponse:
+        """Generate response for follow-up chat (user wants to DISCUSS prior analysis results)"""
         
         context_manager = SimplifiedFinancialContextManager()
         # Get properly formatted messages for LLM
@@ -221,8 +239,8 @@ class FinancialAnalystChatService(BaseService):
             conversation, ContextType.FOLLOW_UP_GENERATION, user_message
         )
         
-        # Add intent-specific instruction for follow-up response
-        instruction = "Please provide a helpful response that addresses the user's follow-up question based on the previous conversation. Be specific and educational. If appropriate, suggest a related analysis. Respond in JSON format: {'content': 'your response', 'analysis_suggestion': {'topic': 'analysis name', 'description': 'what it analyzes', 'suggested_question': 'specific question'}}"
+        # Add intent-specific instruction for follow-up chat response
+        instruction = "Please provide a helpful conversational response that addresses the user's follow-up question based on the previous conversation and analysis results. Focus on explanation, clarification, or discussion rather than suggesting new analysis. Be specific and educational about the existing results."
         
         messages.append({
             "role": "user",
@@ -243,24 +261,17 @@ class FinancialAnalystChatService(BaseService):
         )
         duration = time.time() - start_time
         
-        logger.debug(f"⏱️ Follow-up response generation: {duration:.3f}s")
-        logger.debug(f"🔍 Follow-up response type: {type(response)}, content: {str(response)[:200]}...")
+        logger.debug(f"⏱️ Follow-up chat response generation: {duration:.3f}s")
         
-        # TODO: Fix this response
         if not response.get("success"):
-            logger.error("Error generating follow-up response")
-            raise
+            error_msg = response.get("error", "Unknown error")
+            logger.error(f"❌ Follow-up chat response generation failed: {error_msg}")
+            return AnalystResponse(content="I'd be happy to discuss the results further. Could you clarify what specific aspect you'd like me to explain?")
 
         content = response.get("content", "").strip()
         
-        # Try to parse analysis suggestion from follow-up response (same logic as educational)
-        return self._parse_educational_response(content, IntentResult(
-            intent=MessageIntent.FOLLOW_UP,
-            confidence=0.9,
-            reasoning="Follow-up response generated",
-            requires_analysis=False,
-            educational_topic="follow_up"
-        ))
+        # Follow-up chat doesn't suggest new analysis, just discusses existing results
+        return AnalystResponse(content=content)
     
     def _parse_educational_response(self, 
                                   content: str, 

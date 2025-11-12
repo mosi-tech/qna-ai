@@ -44,6 +44,7 @@ class ChatHistoryService:
         session_id: str,
         user_id: str,
         question: str,
+        message_id: Optional[str] = None,
         query_type: QueryType = QueryType.COMPLETE,
         expanded_question: Optional[str] = None,
         expansion_confidence: float = 0.0,
@@ -54,6 +55,7 @@ class ChatHistoryService:
                 session_id=session_id,
                 user_id=user_id,
                 question=question,
+                message_id=message_id,
                 query_type=query_type,
             )
             

@@ -151,6 +151,12 @@ class HybridMessageHandler:
         elif intent_result.intent.value == MetadataConstants.INTENT_ANALYSIS_REQUEST:
             response_type = MetadataConstants.RESPONSE_TYPE_ANALYSIS
             triggered_analysis = True
+        elif intent_result.intent.value == MetadataConstants.INTENT_FOLLOW_UP_ANALYSIS:
+            response_type = MetadataConstants.RESPONSE_TYPE_ANALYSIS
+            triggered_analysis = True
+        elif intent_result.intent.value == MetadataConstants.INTENT_FOLLOW_UP_CHAT:
+            response_type = MetadataConstants.RESPONSE_TYPE_CHAT
+            triggered_analysis = False
         else:
             response_type = intent_result.intent.value.replace('_', '_').lower()
             triggered_analysis = False
@@ -178,12 +184,16 @@ class HybridMessageHandler:
         
         if triggered_analysis:
             metadata[MetadataConstants.RESPONSE_STATUS] = MetadataConstants.STATUS_PENDING
-            # For analysis_request: use original user message as analysis question
+            # For analysis_request and follow_up_analysis: use original user message as analysis question
             # For analysis_confirmation: get pending analysis suggestion
-            if intent_result.intent.value == MetadataConstants.INTENT_ANALYSIS_REQUEST:
+            if intent_result.intent.value in [
+                MetadataConstants.INTENT_ANALYSIS_REQUEST, 
+                MetadataConstants.INTENT_FOLLOW_UP_ANALYSIS
+            ]:
                 analysis_question = user_message
                 metadata[MetadataConstants.ANALYSIS_QUESTION] = user_message
             else:
+                # For analysis_confirmation: use pending suggestion
                 conversation = await self.session_manager.get_session(session_id)
                 if conversation:
                     pending = await conversation.get_pending_analysis_suggestion()

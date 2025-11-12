@@ -224,9 +224,7 @@ class ContextAwareSearch:
         
         try:
             # Get last messages using new message-based architecture
-            last_user_message = await conversation.get_last_user_message()
-            last_assistant_message = await conversation.get_last_assistant_message()
-            result = await self.classifier.classify(query, last_user_message, last_assistant_message)
+            result = await self.classifier.classify(query, conversation)
             
             if result["success"]:
                 query_type = "contextual" if result["is_contextual"] else "standalone"
@@ -243,13 +241,11 @@ class ContextAwareSearch:
             }
     
     async def _expand_query(self, query: str, conversation: ConversationStore) -> Dict[str, Any]:
-        """Expand contextual query using conversation history"""
+        """Expand contextual query using conversation history with SimplifiedFinancialContextManager"""
         
         try:
-            # Get conversation messages (expander expects message objects)
-            messages = await conversation.get_messages()
-            
-            result = await self.expander.expand_query(query, messages)
+            # Use new modernized expand_query method that accepts ConversationStore directly
+            result = await self.expander.expand_query(query, conversation)
             
             if result["success"]:
                 logger.info(f"Query expanded to: {result['expanded_query'][:100]}...")
@@ -311,12 +307,22 @@ Examples:
 Is this a meaningless or non-financial query that shouldn't be analyzed?"""
             
             logger.info(f"📞 Calling LLM for meaningless query check")
-            result = await context_service._make_cached_llm_call(
+            
+            # Use the LLM service directly since this is a simple call
+            messages = [{"role": "user", "content": user_message}]
+            
+            response = await context_service.llm_service.make_request(
+                messages=messages,
                 system_prompt=system_prompt,
-                user_message=user_message,
                 max_tokens=1000,
-                task="meaningless_query_check"
+                temperature=0.1
             )
+            
+            # Convert to expected format for backward compatibility
+            result = {
+                "success": response.get("success", False),
+                "content": response.get("content", "")
+            }
             
             if result["success"]:
                 response = result["content"].upper().strip()
@@ -334,24 +340,6 @@ Is this a meaningless or non-financial query that shouldn't be analyzed?"""
                 logger.info(f"⚡ Fallback: '{query}' looks like generic question")
                 return True
             return False
-    
-    async def _format_conversation_context(self, conversation: ConversationStore) -> str:
-        """Format conversation history as string context"""
-        
-        messages_all = await conversation.get_messages()
-        messages = messages_all[-10:]  # Last 10 messages (5 exchanges) for context
-        context_lines = []
-        
-        for message in messages:
-            if isinstance(message, UserMessage):
-                context_lines.append(f"Q: {message.content}")
-            elif isinstance(message, AssistantMessage):
-                # Include assistant responses that aren't error messages
-                if not any(indicator in message.content.lower() for indicator in ['error', 'sorry', 'apologize']):
-                    context_lines.append(f"A: {message.content[:100]}...")
-                context_lines.append(f"(expanded to: {turn.expanded_query})")
-        
-        return "\n".join(context_lines)
     
     def _request_clarification(self,
                              original_query: str,

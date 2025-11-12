@@ -6,7 +6,7 @@ Does NOT validate completeness - that's the validator's job
 
 import logging
 from typing import Optional, Dict, Any
-from ..conversation.store import UserMessage, AssistantMessage
+from ..conversation.store import ConversationStore
 from .service import ContextService
 
 logger = logging.getLogger(__name__)
@@ -17,14 +17,18 @@ class QueryClassifier:
     def __init__(self, context_service: ContextService):
         self.context_service = context_service
     
-    async def classify(self, user_query: str, last_user_message: Optional[UserMessage] = None, last_assistant_message: Optional[AssistantMessage] = None) -> Dict[str, Any]:
+    async def classify(self, user_query: str, conversation: Optional[ConversationStore] = None) -> Dict[str, Any]:
         """
-        Detect if query is CONTEXTUAL or STANDALONE
+        Detect if query is CONTEXTUAL or STANDALONE using ConversationStore
         
         CONTEXTUAL: References prior context (pronouns, phrases like "what about")
         STANDALONE: Complete query that can be understood in isolation
         
         Does NOT validate completeness - that's done by validator after expansion
+        
+        Args:
+            user_query: The user's query to classify
+            conversation: ConversationStore with conversation history
         
         Returns:
             {
@@ -36,18 +40,8 @@ class QueryClassifier:
         """
         
         try:
-            # Use LLM to detect contextual vs standalone
-            # Provide conversation history so LLM can detect patterns (pronouns, references)
-            # But LLM doesn't fill gaps - just detects if query references prior context
-            
-            # Build context from new message-based approach
-            context = {}
-            if last_user_message:
-                context["last_user_query"] = last_user_message.content
-            if last_assistant_message:
-                context["last_assistant_response"] = last_assistant_message.content
-                
-            llm_result = await self.context_service.classify_contextual(user_query, context)
+            # Use modernized ContextService with ConversationStore
+            llm_result = await self.context_service.classify_contextual(user_query, conversation)
             
             if not llm_result["success"]:
                 logger.error(f"❌ Classification failed: {llm_result.get('error')}")

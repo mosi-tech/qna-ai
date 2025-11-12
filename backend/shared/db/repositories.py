@@ -38,23 +38,30 @@ class ChatRepository:
         return await self.db.create_session(session)
     
     async def add_user_message(self, session_id: str, user_id: str, 
-                               question: str, query_type: QueryType = QueryType.COMPLETE) -> str:
+                               question: str, message_id: Optional[str] = None, query_type: QueryType = QueryType.COMPLETE) -> str:
         """Add user message to conversation"""
         # Get message count to set message_index
         message_count = await self.db.db.chat_messages.count_documents({"sessionId": session_id})
         
-        message = ChatMessageModel(
-            session_id=session_id,
-            user_id=user_id,
-            role=RoleType.USER,
-            content=question,
-            metadata={
+        # Build message data, only include message_id if provided
+        message_data = {
+            "session_id": session_id,
+            "user_id": user_id,
+            "role": RoleType.USER,
+            "content": question,
+            "metadata": {
                 "response_type": "user_message",
                 "original_question": question,
                 "query_type": query_type.value if query_type else None,
             },
-            message_index=message_count,
-        )
+            "message_index": message_count,
+        }
+        
+        # Only include message_id if explicitly provided
+        if message_id is not None:
+            message_data["message_id"] = message_id
+            
+        message = ChatMessageModel(**message_data)
         return await self.db.create_message(message)
     
     async def add_assistant_message_with_analysis(

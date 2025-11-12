@@ -46,7 +46,8 @@ class MetadataConstants:
     INTENT_EDUCATIONAL = "educational"
     INTENT_ANALYSIS_REQUEST = "analysis_request"
     INTENT_ANALYSIS_CONFIRMATION = "analysis_confirmation"
-    INTENT_FOLLOW_UP = "follow_up"
+    INTENT_FOLLOW_UP_ANALYSIS = "follow_up_analysis"
+    INTENT_FOLLOW_UP_CHAT = "follow_up_chat"
     INTENT_DIRECT_ANALYSIS = "direct_analysis"
     INTENT_CONFIRMED_ANALYSIS = "confirmed_analysis"
     INTENT_CONFIRMATION_WITHOUT_PENDING = "confirmation_without_pending"
@@ -77,4 +78,5 @@ class MessageIntent(Enum):
     EDUCATIONAL = MetadataConstants.INTENT_EDUCATIONAL                # Educational about finance
     ANALYSIS_REQUEST = MetadataConstants.INTENT_ANALYSIS_REQUEST      # Direct analysis request
     ANALYSIS_CONFIRMATION = MetadataConstants.INTENT_ANALYSIS_CONFIRMATION  # Confirming analysis suggestion
-    FOLLOW_UP = MetadataConstants.INTENT_FOLLOW_UP                   # Follow-up to previous analysis
+    FOLLOW_UP_ANALYSIS = MetadataConstants.INTENT_FOLLOW_UP_ANALYSIS  # Request analysis based on prior analysis results
+    FOLLOW_UP_CHAT = MetadataConstants.INTENT_FOLLOW_UP_CHAT          # Continue conversation about prior analysis

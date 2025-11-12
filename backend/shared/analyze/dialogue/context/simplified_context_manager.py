@@ -27,6 +27,7 @@ class ContextType(Enum):
     INTENT_CLASSIFICATION = "intent_classification"
     CONTEXTUAL_DETECTION = "contextual_detection" 
     FOLLOW_UP_GENERATION = "follow_up_generation"
+    QUERY_EXPANSION = "contextual_query_expansion"
 
 @dataclass
 class ContextWindowRequirements:
@@ -46,7 +47,8 @@ class SimplifiedFinancialContextManager:
         self.requirements = {
             ContextType.INTENT_CLASSIFICATION: ContextWindowRequirements(1, 1, 8),
             ContextType.CONTEXTUAL_DETECTION: ContextWindowRequirements(2, 1, 6),
-            ContextType.FOLLOW_UP_GENERATION: ContextWindowRequirements(2, 2, 15)
+            ContextType.FOLLOW_UP_GENERATION: ContextWindowRequirements(2, 2, 15),
+            ContextType.QUERY_EXPANSION: ContextWindowRequirements(2, 2, 15)
         }
         
         # Incremental summarization cache
@@ -57,51 +59,6 @@ class SimplifiedFinancialContextManager:
         self.llm_service = llm_service
         
         logger.info("✅ SimplifiedFinancialContextManager initialized")
-    
-    async def get_conversation_context(self, conversation: ConversationStore, 
-                               context_type: ContextType,
-                               current_query: str) -> str:
-        """
-        Main API - returns rich formatted conversation string.
-        
-        Args:
-            conversation: ConversationStore with message history
-            context_type: Type of context needed  
-            current_query: Current user query being processed
-            
-        Returns:
-            Rich formatted conversation string with all metadata preserved
-        """
-        try:
-            # Validate inputs
-            if not conversation:
-                raise ValueError("ConversationStore cannot be None")
-            if not current_query:
-                raise ValueError("current_query is required")
-            
-            all_messages = await conversation.get_messages()
-            if not all_messages:
-                return f"CURRENT USER QUERY: {current_query}\n\nNo previous conversation history."
-            
-            logger.debug(f"🔍 Getting {context_type.value} context for query: {current_query[:50]}...")
-            
-            # Smart window sizing based on conversation structure
-            recent_window = self._get_smart_context_window(all_messages, context_type)
-            
-            # Get historical summary if needed (cached for performance)
-            historical_summary = await self._get_cached_summary_if_needed(
-                conversation.session_id, all_messages, len(recent_window)
-            )
-            
-            # Format complete context as rich string
-            return await self._format_complete_context(
-                historical_summary, recent_window, current_query
-            )
-            
-        except Exception as e:
-            logger.error(f"❌ Context extraction failed: {e}", exc_info=True)
-            # Safe fallback
-            return f"CURRENT USER QUERY: {current_query}\n\nContext extraction failed: {str(e)}"
     
     async def get_conversation_messages_for_llm(self, 
                                               conversation: ConversationStore, 
@@ -398,38 +355,6 @@ Summary:"""
         
         return ". ".join(summary_parts)
     
-    # ========== PHASE 3: Rich Context Formatting ==========
-    
-    async def _format_complete_context(self, historical_summary: Optional[str], 
-                               recent_messages: List[Message], 
-                               current_query: str) -> str:
-        """
-        Format complete context as rich string with all metadata preserved.
-        This is the key innovation - let LLM see full conversation patterns.
-        """
-        context_parts = []
-        
-        # Historical context (summarized for efficiency)
-        if historical_summary:
-            context_parts.append(f"CONVERSATION BACKGROUND:\n{historical_summary}")
-        
-        # Recent detailed conversation (preserve all metadata)
-        if recent_messages:
-            recent_formatted = []
-            for msg in recent_messages:
-                if isinstance(msg, UserMessage):
-                    recent_formatted.append(f"User: {msg.content}")
-                else:
-                    # Use the rich formatting method from AssistantMessage class
-                    recent_formatted.append(msg.to_context_string())
-            
-            context_parts.append(f"RECENT CONVERSATION:\n" + "\n".join(recent_formatted))
-        
-        # Current query (what we're responding to)
-        context_parts.append(f"CURRENT USER QUERY: {current_query}")
-        
-        return "\n\n".join(context_parts)
-    
     # ========== Utility Methods ==========
     
     def clear_session_cache(self, session_id: str):
@@ -463,22 +388,6 @@ def get_simplified_context_manager() -> SimplifiedFinancialContextManager:
         _simplified_context_manager = create_simplified_context_manager()
     return _simplified_context_manager
 
-# ========== Integration Helper Functions (Drop-in Replacements) ==========
-
-async def get_intent_context_string(conversation: ConversationStore, current_query: str) -> str:
-    """Drop-in replacement for intent classification context"""
-    manager = get_simplified_context_manager()
-    return await manager.get_conversation_context(conversation, ContextType.INTENT_CLASSIFICATION, current_query)
-
-async def get_contextual_detection_string(conversation: ConversationStore, current_query: str) -> str:
-    """Drop-in replacement for contextual detection context"""
-    manager = get_simplified_context_manager()
-    return await manager.get_conversation_context(conversation, ContextType.CONTEXTUAL_DETECTION, current_query)
-
-async def get_followup_context_string(conversation: ConversationStore, current_query: str) -> str:
-    """Drop-in replacement for follow-up generation context"""
-    manager = get_simplified_context_manager()
-    return await manager.get_conversation_context(conversation, ContextType.FOLLOW_UP_GENERATION, current_query)
 
 # Public API
 __all__ = [
@@ -486,7 +395,5 @@ __all__ = [
     'SimplifiedFinancialContextManager',
     'create_simplified_context_manager',
     'get_simplified_context_manager',
-    'get_intent_context_string',
-    'get_contextual_detection_string',
     'get_followup_context_string'
 ]

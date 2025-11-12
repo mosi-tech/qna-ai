@@ -74,7 +74,7 @@ class UserMessage(BaseMessage):
     def from_dict(cls, data: Dict[str, Any]) -> 'UserMessage':
         """Create UserMessage from dictionary"""
         return cls(
-            id=data.get('id', str(uuid.uuid4())),  # Generate new ID if not present
+            id=data.get('message_id', str(uuid.uuid4())),  # Generate new ID if not present
             content=data['content'],
             timestamp=datetime.fromisoformat(data['timestamp']),
             user_id=data.get('user_id', data.get('metadata', {}).get('user_id', 'anonymous')),
@@ -118,7 +118,7 @@ class AssistantMessage(BaseMessage):
         """Create AssistantMessage from dictionary"""
         metadata = data.get('metadata', {})
         return cls(
-            id=data.get('id', str(uuid.uuid4())),  # Generate new ID if not present
+            id=data.get('message_id', str(uuid.uuid4())),  # Generate new ID if not present
             content=data.get('content', ""),
             timestamp=datetime.fromisoformat(data['timestamp']),
             # Try top-level fields first, then fallback to metadata
@@ -193,45 +193,69 @@ class ConversationStore:
         self._context_window_size = 20  # Keep last 20 messages (10 exchanges)
         self.chat_history_service = chat_history_service
         
+        # Redis health tracking to prevent stale data issues
+        self.redis_loaded = False  # True when Redis has been successfully loaded/populated
+        
     
     @classmethod
     async def load_or_create(cls, session_id: str, chat_history_service, redis_client=None) -> 'ConversationStore':
-        """Load existing conversation from Redis/DB or create new empty one"""
+        """
+        Load existing conversation with Redis health tracking
+        
+        Logic:
+        1. If Redis was never successfully loaded (redis_loaded=False), load from DB first
+        2. If Redis read/write fails, mark redis_loaded=False and fallback to DB
+        3. Only trust Redis if it was previously loaded successfully
+        """
         store = cls(session_id, chat_history_service, redis_client)
         
-        # Try to load from Redis first (faster)
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Check if we should trust Redis (was it successfully loaded before?)
+        redis_available = False
         if redis_client:
             try:
+                # Test Redis connectivity
+                await redis_client.ping()
                 redis_messages = await redis_client.lrange(store._redis_key, 0, -1)
+                redis_available = True
+                
+                # Only use Redis if it has data AND we trust it's up-to-date
+                # For now, we'll prioritize DB consistency and populate Redis from DB
                 if redis_messages:
-                    import logging
-                    logger = logging.getLogger(__name__)
-                    logger.debug(f"✓ Loaded {len(redis_messages)} messages from Redis for session {session_id[:8]}...")
-                    return store
+                    logger.debug(f"🔍 Found {len(redis_messages)} messages in Redis for session {session_id[:8]}")
+                    # But we still load from DB to ensure consistency
+                
             except Exception as e:
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.warning(f"⚠️ Failed to load session from Redis: {e}")
+                logger.warning(f"⚠️ Redis connectivity failed: {e}")
+                store.redis_loaded = False
         
-        # Fallback to DB if Redis is empty or unavailable
+        # Always load from DB first to ensure we have the latest data
         if chat_history_service:
             try:
-                # Try to load existing conversation from DB
                 db_messages = await chat_history_service.get_conversation_history(
                     session_id=session_id,
-                    include_metadata=True  # Include metadata to preserve analysis suggestions
+                    include_metadata=True
                 )
                 
                 if db_messages:
-                    await store._populate_from_db_messages(db_messages)
-                    import logging
-                    logger = logging.getLogger(__name__)
-                    logger.debug(f"✓ Loaded {len(db_messages)} messages from DB for session {session_id[:8]}...")
+                    # Populate Redis from DB (source of truth)
+                    if redis_available:
+                        await store._populate_from_db_messages(db_messages)
+                        store.redis_loaded = True
+                        logger.debug(f"✅ Loaded {len(db_messages)} messages from DB and synced to Redis")
+                    else:
+                        logger.debug(f"✅ Loaded {len(db_messages)} messages from DB (Redis unavailable)")
+                else:
+                    # New conversation - mark Redis as loaded if available
+                    if redis_available:
+                        store.redis_loaded = True
+                        logger.debug(f"✅ New conversation created with Redis available")
                 
             except Exception as e:
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.warning(f"⚠️ Failed to load session from DB, starting fresh: {e}")
+                logger.warning(f"⚠️ Failed to load session from DB: {e}")
+                store.redis_loaded = False
         
         return store
     
@@ -269,6 +293,7 @@ class ConversationStore:
                 await self.chat_history_service.add_user_message(
                     session_id=self.session_id,
                     user_id=user_id,
+                    message_id=message.id,  # Pass the local ID to ensure consistency
                     question=content
                 )
             except Exception as e:
@@ -325,8 +350,9 @@ class ConversationStore:
             logger.debug(f"All messages: {[(m.id, m.role, m.content[:30] + '...' if len(m.content) > 30 else m.content) for m in messages]}")
             logger.debug(f"Session ID: {getattr(self, 'session_id', 'unknown')}")
             logger.debug(f"Searching for message_id: '{message_id}' (type: {type(message_id)})")
-            return False
-        
+            # Don't fail if redis update fails
+            self.redis_loaded = False
+            
         # 2. Persist to database
         if self.chat_history_service:
             try:
@@ -365,17 +391,50 @@ class ConversationStore:
             logger.warning(f"⚠️ Failed to trim messages: {e}")
     
     async def get_messages(self, role: Optional[str] = None, limit: Optional[int] = None) -> List[Message]:
-        """Get messages, optionally filtered by role"""
-        messages = await self._get_messages_from_redis()
+        """Get messages with Redis health tracking fallback"""
+        messages = []
+        
+        # Try Redis first if it's been successfully loaded
+        if self.redis_loaded and self.redis_client:
+            messages = await self._get_messages_from_redis()
+            
+        # Fallback to DB if Redis is not loaded or failed
+        if not messages and not self.redis_loaded and self.chat_history_service:
+            try:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.debug(f"📄 Falling back to DB for session {self.session_id[:8]} (Redis not loaded)")
+                
+                db_messages = await self.chat_history_service.get_conversation_history(
+                    session_id=self.session_id,
+                    include_metadata=True
+                )
+                
+                # Convert DB messages to Message objects
+                for db_msg in db_messages:
+                    role_val = db_msg.get("role", "user")
+                    if role_val == "user":
+                        message = UserMessage.from_dict(db_msg)
+                    else:
+                        message = AssistantMessage.from_dict(db_msg)
+                    messages.append(message)
+                    
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"❌ Failed to fallback to DB: {e}")
+        
+        # Apply filters
         if role:
             messages = [m for m in messages if m.role == role]
         if limit:
             messages = messages[-limit:]
+            
         return messages
     
     async def get_last_user_message(self) -> Optional[UserMessage]:
         """Get most recent user message"""
-        messages = await self._get_messages_from_redis()
+        messages = await self.get_messages()
         for message in reversed(messages):
             if isinstance(message, UserMessage):
                 return message
@@ -383,7 +442,7 @@ class ConversationStore:
     
     async def get_last_assistant_message(self) -> Optional[AssistantMessage]:
         """Get most recent assistant message"""
-        messages = await self._get_messages_from_redis()
+        messages = await self.get_messages()
         for message in reversed(messages):
             if isinstance(message, AssistantMessage):
                 return message
@@ -391,7 +450,7 @@ class ConversationStore:
     
     async def get_pending_analysis_suggestion(self) -> Optional[Dict[str, Any]]:
         """Get pending analysis suggestion from most recent educational message"""
-        messages = await self._get_messages_from_redis()
+        messages = await self.get_messages()
         for i, message in enumerate(reversed(messages)):
             if (isinstance(message, AssistantMessage) and 
                 message.has_analysis_suggestion()):
@@ -441,20 +500,24 @@ class ConversationStore:
     # ========== REDIS HELPER METHODS ==========
     
     async def _add_message_to_redis(self, message: Message) -> None:
-        """Add message to Redis list"""
+        """Add message to Redis list with health tracking"""
         if not self.redis_client:
             return
             
         try:
             message_json = json.dumps(message.to_dict())
             await self.redis_client.lpush(self._redis_key, message_json)
+            # Redis operation successful - we can trust Redis again
+            self.redis_loaded = True
         except Exception as e:
             import logging
             logger = logging.getLogger(__name__)
             logger.error(f"❌ Failed to add message to Redis: {e}")
+            # Redis failed - mark as unreliable
+            self.redis_loaded = False
     
     async def _get_messages_from_redis(self) -> List[Message]:
-        """Get all messages from Redis"""
+        """Get all messages from Redis with health tracking"""
         if not self.redis_client:
             return []
             
@@ -465,11 +528,16 @@ class ConversationStore:
                 msg_dict = json.loads(msg_json)
                 message = BaseMessage.from_dict(msg_dict)
                 messages.append(message)
+            # Redis read successful - we can trust Redis
+            if messages:  # Only mark as loaded if we actually got data
+                self.redis_loaded = True
             return messages
         except Exception as e:
             import logging
             logger = logging.getLogger(__name__)
             logger.error(f"❌ Failed to get messages from Redis: {e}")
+            # Redis failed - mark as unreliable
+            self.redis_loaded = False
             return []
     
     async def _update_message_in_redis(self, message_id: str, content: str = None, 

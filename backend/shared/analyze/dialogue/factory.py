@@ -48,7 +48,7 @@ class DialogueFactory:
         
         # Create dialogue components with dependencies
         self.classifier = create_query_classifier(self.context_service)
-        self.expander = create_context_expander(self.context_service, self.classifier)
+        self.expander = create_context_expander(self.context_service)
         self.context_aware_search = create_context_aware_search(
             analysis_library=self.analysis_library,
             session_manager=self.session_manager,
