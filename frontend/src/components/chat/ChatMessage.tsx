@@ -33,8 +33,6 @@ export default function ChatMessage({
   onExecutionUpdate
 }: ChatMessageProps) {
   const { logs: progressLogs } = useProgress();
-  console.log(message)
-  console.log((message.type === 'error' || message.status === 'failed'))
 
   // Handle user messages
   if (message.role === 'user' || message.type === 'user') {
@@ -145,7 +143,7 @@ export default function ChatMessage({
     // Combine historical logs from message with live progress logs
     const historicalLogs = (message as any).logs || [];
     const combinedLogs = [...historicalLogs, ...progressLogs];
-    
+
     return (
       <div className="flex gap-3 w-full">
         <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
@@ -196,7 +194,7 @@ export default function ChatMessage({
           </div>
           <div className="flex-1 max-w-4xl">
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-              <div 
+              <div
                 className="text-sm text-gray-700 prose prose-sm max-w-none"
                 dangerouslySetInnerHTML={{
                   __html: renderMarkdown(message.content || "I understand your question, but it doesn't seem to require financial analysis. Feel free to ask about portfolio analysis, trading strategies, risk assessment, or investment research.")
@@ -216,7 +214,7 @@ export default function ChatMessage({
           <div className="flex-1 max-w-4xl">
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
               <p className="text-yellow-800 font-medium mb-2">I need more information</p>
-              <div 
+              <div
                 className="text-yellow-700 prose prose-sm max-w-none"
                 dangerouslySetInnerHTML={{
                   __html: renderMarkdown(message.content || "Could you provide more details about what you're looking for? This will help me give you a more accurate analysis.")
@@ -240,7 +238,7 @@ export default function ChatMessage({
       </div>
       <div className="flex-1 max-w-4xl">
         <div className="bg-white border border-gray-200 rounded-lg p-3">
-          <div 
+          <div
             className="text-sm text-gray-700 prose prose-sm max-w-none"
             dangerouslySetInnerHTML={{
               __html: renderMarkdown(message.content)

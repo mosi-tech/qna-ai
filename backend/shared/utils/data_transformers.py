@@ -221,7 +221,7 @@ class DataTransformer:
             # For regular messages (user or assistant): just content
             clean_msg.update({
                 "content": msg.get("content", ""),
-                "response_type": response_type or msg.get("role", "assistant"),
+                "response_type": response_type,
             })
         
         return clean_msg

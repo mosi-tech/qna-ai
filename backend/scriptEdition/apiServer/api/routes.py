@@ -641,14 +641,16 @@ class APIRoutes:
             logger.info(f"⏱️ Hybrid V2 processing: {processing_time:.3f}s, Type: {hybrid_response.response_type}")
             
             # Create base response data from hybrid response
-            response_data = {
-                "message_id": hybrid_response.message_id,
-                "session_id": session_id,
+            message_for_transform = {
+                "messageId": hybrid_response.message_id,
+                "role": "assistant",
+                "timestamp": datetime.now().isoformat(),
                 "content": hybrid_response.content,
-                "response_type": hybrid_response.response_type,
-                "metadata": hybrid_response.metadata or {}
+                "sessionId": session_id,
+                "content": hybrid_response.content,
+                "metadata": hybrid_response.metadata
             }
-            
+                 
             # Check if analysis should be triggered (FIXED APPROACH)
             if hybrid_response.should_trigger_analysis and hybrid_response.analysis_question:
                 logger.info(f"🔄 Triggering analysis internally: {hybrid_response.analysis_question[:50]}...")
@@ -673,18 +675,21 @@ class APIRoutes:
                     logger.info(f"✅ Background analysis triggered for question: {hybrid_response.analysis_question[:50]}...")
                     
                     # Update metadata to indicate analysis was triggered
-                    response_data["metadata"]["analysis_triggered"] = True
-                    response_data["metadata"]["analysis_question"] = hybrid_response.analysis_question
+                    message_for_transform["metadata"]["analysis_triggered"] = True
+                    message_for_transform["metadata"]["analysis_question"] = hybrid_response.analysis_question
                     
                 except Exception as background_error:
                     logger.error(f"❌ Failed to trigger background analysis: {background_error}")
-                    response_data["metadata"]["analysis_trigger_failed"] = True
-                    response_data["metadata"]["analysis_error"] = str(background_error)
+                    message_for_transform["metadata"]["analysis_trigger_failed"] = True
+                    message_for_transform["metadata"]["analysis_error"] = str(background_error)
+            
+            
+            clean_msg = await self.data_transformer.transform_message_to_ui_data(message_for_transform)
             
             # Always return chat response immediately (KEY CHANGE)
             return AnalysisResponse(
                 success=True,
-                data=response_data,
+                data=clean_msg,
                 timestamp=datetime.now().isoformat()
             )
         

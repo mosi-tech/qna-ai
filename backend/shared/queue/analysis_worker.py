@@ -255,15 +255,18 @@ class AnalysisQueueWorker(BaseQueueWorker):
                 "content": pipeline_data.get("content", "Analysis completed successfully")
             }
             
+            # Determine actual status based on response type from pipeline
+            actual_status = "completed" if response_type in ["needs_clarification", "needs_confirmation"] else "pending"
+            
             await send_progress_event(session_id, {
                 "type": "analysis_progress",
                 "job_id": job_id,
                 "message_id": message_id,
-                "status":  "pending", # Analysis done, but execution still pending
+                "status": actual_status,  # Use actual status based on pipeline result
                 "message": "Analysis completed successfully",
                 "level": "success",
                 "log_to_message": True if message_id else False,
-                "response_type": "script_generation", #This is SSE event so we 
+                "response_type": response_type,  # Use actual response type from pipeline
                 "analysis_id": result.get("analysis_id"),
                 "execution_id": result.get("execution_id")
             })

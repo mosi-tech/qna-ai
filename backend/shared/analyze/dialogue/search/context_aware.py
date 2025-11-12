@@ -366,12 +366,11 @@ Is this a meaningless or non-financial query that shouldn't be analyzed?"""
 
         return {
             "success": True,
-            "type": "clarification_needed",
+            "needs_clarification": True,
             "session_id": session_id,
             "query_type": query_type,
             "original_query": original_query,
             "expanded_query": expanded_query,
-            "needs_clarification": True,
             "confidence": confidence,
             "reason": reason,
             "message": message,

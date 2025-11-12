@@ -216,7 +216,7 @@ function ChatPageContent() {
     }
 
     const metadata = response.data.metadata || {};
-    
+
     // Create pending message that will show "Analysis in Progress"
     const resultMsg = addMessage({
       type: 'results',
@@ -347,7 +347,7 @@ function ChatPageContent() {
         } else if (responseType === 'chat_response' || responseType === 'educational') {
           // Handle pure chat responses
           handleChatResponse(response);
-        } else if (responseType === 'analysis_trigger') {
+        } else if (responseType === 'analysis') {
           // Handle analysis trigger responses (thinking state)
           handleAnalysisTriggerResponse(response, userMessage);
         } else {
@@ -479,7 +479,7 @@ function ChatPageContent() {
   // Re-register SSE callbacks for pending messages on page refresh
   useEffect(() => {
     console.log(`[DEBUG] Callback registration effect triggered: messages.length=${messages.length}, isConnected=${isConnected}`);
-    
+
     if (!messages.length || !isConnected) {
       console.log(`[DEBUG] Skipping callback registration - messages=${messages.length}, connected=${isConnected}`);
       return;
@@ -488,19 +488,19 @@ function ChatPageContent() {
     // Add a small delay to ensure SSE connection is fully established
     const timeoutId = setTimeout(() => {
       console.log(`[DEBUG] Starting callback registration after delay...`);
-      
+
       let registeredCount = 0;
       messages.forEach((message: ChatMessage) => {
         // Check if message is in pending status and has backend ID for callback registration
         const isPending = message.status && ['pending', 'running', 'queued'].includes(message.status);
         const backendMessageId = (message as any).id;
-        
+
         console.log(`[DEBUG] Message ${message.id}: status=${message.status}, isPending=${isPending}, backendId=${backendMessageId}`, message);
 
         if (isPending && backendMessageId) {
           console.log(`[SSE] Re-registering callback for pending message: ${backendMessageId}`);
           registeredCount++;
-          
+
           registerAnalysisCompleteCallback(backendMessageId, (status: 'completed' | 'failed', data?: any) => {
             console.log(`[SSE] Callback triggered for message ${backendMessageId} with status: ${status}`);
             handleExecutionUpdate(backendMessageId, {
@@ -514,7 +514,7 @@ function ChatPageContent() {
           });
         }
       });
-      
+
       console.log(`[DEBUG] Registered ${registeredCount} callbacks`);
     }, 500); // Wait 500ms for SSE connection to stabilize
 

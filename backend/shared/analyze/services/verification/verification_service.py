@@ -205,6 +205,27 @@ class StandaloneVerificationService:
         
         return question
     
+    def _load_verification_system_prompt(self) -> str:
+        """Load verification system prompt from config file"""
+        try:
+            config_path = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'config', 'verification-prompt.txt')
+            with open(config_path, 'r') as f:
+                return f.read().strip()
+        except Exception as e:
+            logger.warning(f"Failed to load verification prompt from file: {e}, using fallback")
+            # Fallback prompt
+            return """You are a financial script verification expert. Your task is to verify that Python scripts correctly answer specific financial questions.
+
+Focus on functional compatibility and analytical correctness, not cosmetic documentation issues.
+
+RESPONSE FORMAT:
+{
+    "verdict": "APPROVE" or "REJECT",
+    "confidence": 0.0-1.0,
+    "critical_issues": ["list of critical problems found"],
+    "reasoning": "brief explanation of decision"
+}"""
+    
     def _create_verification_content(self, question: str, script_content: str) -> tuple[str, str]:
         """
         Create system prompt and user message content for provider-agnostic verification
@@ -213,19 +234,8 @@ class StandaloneVerificationService:
         # Extract core question without expanded requirements
         core_question = self._extract_core_question(question)
         
-        # System prompt with verification instructions
-        system_prompt = """You are a financial script verification expert. Your task is to verify that Python scripts correctly answer specific financial questions.
-
-The script has been enhanced with MCP function injection wrapper to provide access to financial data and analytics functions. Focus on verifying the core script logic (after the MCP wrapper code at the beginning).
-
-RESPONSE FORMAT:
-You must respond in EXACTLY this JSON format (no other text):
-{
-    "verdict": "APPROVE" or "REJECT",
-    "confidence": 0.0-1.0,
-    "critical_issues": ["list of critical problems found"],
-    "reasoning": "brief explanation of decision"
-}"""
+        # Load system prompt from config file
+        system_prompt = self._load_verification_system_prompt()
 
         # Use existing verification prompt as base with core question
         base_verification = self.existing_verification_prompt.format(question=core_question)

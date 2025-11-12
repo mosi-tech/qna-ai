@@ -286,10 +286,6 @@ class AnalysisPipelineService:
             await send_analysis_progress("Creating execution and finalizing response", step="execution_creation")
             final_response = await self._create_final_response(request, analysis_response["data"], analysis_id, warnings, start_time)
             
-            await send_analysis_success("Analysis pipeline completed successfully", 
-                                      step="pipeline_complete", 
-                                      processing_time=time.time() - start_time)
-            
             return final_response
         else:
             raise RuntimeError(analysis_response.get("error", "Unknown analysis error"))
