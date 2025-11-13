@@ -64,6 +64,94 @@ class ChatRepository:
         message = ChatMessageModel(**message_data)
         return await self.db.create_message(message)
     
+    async def get_message_by_id(self, message_id: str) -> Optional[Dict[str, Any]]:
+        """Get a specific message by its ID with execution and analysis data populated"""
+        try:
+            # Use same aggregation pipeline as get_session_with_messages to populate execution and analysis
+            pipeline = [
+                # Match specific message
+                {"$match": {"messageId": message_id}},
+                
+                # Left join with executions collection
+                {
+                    "$lookup": {
+                        "from": "executions",
+                        "localField": "executionId", 
+                        "foreignField": "executionId",
+                        "as": "execution_data"
+                    }
+                },
+                
+                # Left join with analyses collection  
+                {
+                    "$lookup": {
+                        "from": "analyses",
+                        "localField": "analysisId",
+                        "foreignField": "analysisId", 
+                        "as": "analysis_data"
+                    }
+                },
+                
+                # Project final structure with joined data
+                {
+                    "$project": {
+                        "messageId": 1,
+                        "sessionId": 1,  # Keep sessionId for session verification
+                        "role": 1,
+                        "content": 1,
+                        "createdAt": 1,
+                        "analysisId": 1,
+                        "executionId": 1,
+                        "metadata": 1,
+                        "logs": 1,  # Include logs field for progress history
+                        # Include execution data as nested object
+                        "execution": {
+                            "$cond": {
+                                "if": {"$gt": [{"$size": "$execution_data"}, 0]},
+                                "then": {
+                                    "executionId": "$executionId",
+                                    "status": {"$arrayElemAt": ["$execution_data.status", 0]},
+                                    "results": {
+                                        "$cond": {
+                                            "if": {"$eq": [{"$arrayElemAt": ["$execution_data.status", 0]}, "success"]},
+                                            "then": {"$arrayElemAt": ["$execution_data.result", 0]},
+                                            "else": None
+                                        }
+                                    }
+                                },
+                                "else": {
+                                    "executionId": "$executionId",
+                                    "status": None,
+                                    "results": None
+                                }
+                            }
+                        },
+                        # Include analysis data if available  
+                        "analysis": {
+                            "$cond": {
+                                "if": {"$gt": [{"$size": "$analysis_data"}, 0]},
+                                "then": {
+                                    "llm_response": {"$arrayElemAt": ["$analysis_data.llm_response", 0]},
+                                    "question": {"$arrayElemAt": ["$analysis_data.question", 0]}
+                                },
+                                "else": None
+                            }
+                        }
+                    }
+                }
+            ]
+            
+            # Execute aggregation and get first (and only) result
+            cursor = self.db.db.chat_messages.aggregate(pipeline)
+            messages = await cursor.to_list(1)  # Limit to 1 since we're getting a specific message
+            
+            return messages[0] if messages else None
+            
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(f"Failed to get message {message_id}: {e}")
+            raise
+    
     async def add_assistant_message_with_analysis(
         self,
         session_id: str,

@@ -291,6 +291,20 @@ class ChatHistoryService:
             self.logger.error(f"✗ Failed to delete session: {e}")
             raise
     
+    async def get_message_by_id(self, message_id: str) -> Optional[Dict[str, Any]]:
+        """Get a specific message by its ID with UI transformation"""
+        try:
+            message = await self.chat_repo.get_message_by_id(message_id)
+            if message:
+                # Transform message to clean UI-safe data (same pattern as get_session_with_messages)
+                ui_message = await self.data_transformer.transform_message_to_ui_data(message)
+                self.logger.info(f"✓ Retrieved and transformed message: {message_id}")
+                return ui_message
+            return None
+        except Exception as e:
+            self.logger.error(f"✗ Failed to get message: {e}")
+            raise
+    
     # === HYBRID CHAT + ANALYSIS SUPPORT (GitHub Issue #122) ===
     
     async def add_hybrid_message(

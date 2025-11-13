@@ -165,6 +165,7 @@ class DataTransformer:
         # Base message structure with essential fields
         clean_msg = {
             "id": msg.get("messageId"),
+            "sessionId": msg.get("sessionId"),
             "role": msg.get("role"),
             "timestamp": msg.get("timestamp"),
             "analysisId": msg.get("analysisId"),

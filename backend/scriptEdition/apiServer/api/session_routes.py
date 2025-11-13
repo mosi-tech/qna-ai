@@ -3,15 +3,18 @@ Session Management Routes - Handle chat history and session management
 """
 
 import logging
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel
+
 
 logger = logging.getLogger("session-routes")
 
 
 
 router = APIRouter(prefix="/api/sessions", tags=["sessions"])
+
+
 
 
 class SessionMetadata(BaseModel):
@@ -161,5 +164,52 @@ async def delete_session(request: Request, session_id: str):
     except Exception as e:
         logger.error(f"✗ Failed to delete session: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{session_id}/messages/{message_id}")
+async def get_session_message(
+    request: Request,
+    session_id: str,
+    message_id: str,
+) -> Dict[str, Any]:
+    """
+    Get a specific message from a session with UI transformation
+    
+    Args:
+        request: FastAPI request object
+        session_id: Chat session identifier  
+        message_id: Message identifier
+    
+    Returns:
+        UI-transformed message data
+    """
+    try:
+        # Use the same chat service pattern as other endpoints
+        chat_history_service = request.app.state.chat_history_service
+        if not chat_history_service:
+            raise HTTPException(status_code=500, detail="Chat service not available")
+        
+        logger.info(f"📨 Fetching message {message_id} from session {session_id}")
+        
+        # Get the specific message (already UI-transformed by service)
+        message = await chat_history_service.get_message_by_id(message_id)
+        
+        if not message:
+            logger.warning(f"❌ Message {message_id} not found")
+            raise HTTPException(status_code=404, detail="Message not found")
+        
+        # Verify the message belongs to the requested session
+        if message.get('sessionId') != session_id:
+            logger.warning(f"❌ Message {message_id} does not belong to session {session_id}")
+            raise HTTPException(status_code=404, detail="Message not found in specified session")
+        
+        logger.info(f"✅ Successfully retrieved message {message_id}")
+        return message
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error fetching message {message_id}: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
