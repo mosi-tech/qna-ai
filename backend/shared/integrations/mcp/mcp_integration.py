@@ -29,14 +29,14 @@ class MCPIntegration:
             logger.info(f"✅ MCP client already initialized with {len(self.mcp_client.available_tools)} tools")
             return True
         else:
-            logger.warning("⚠️ MCP client not initialized - should be initialized by SimplifiedMCPLoader in LLMService")
-            return False
+            logger.error("❌ Critical: MCP client not initialized - should be initialized by SimplifiedMCPLoader in LLMService")
+            raise RuntimeError("Critical: MCP client not initialized - tool discovery failed")
     
     def get_mcp_tools(self) -> List[Dict[str, Any]]:
         """Convert MCP tools to OpenAI-compatible format for LLM"""
         if not self.mcp_client or not self.mcp_client.available_tools:
-            logger.warning("No MCP tools available")
-            return []
+            logger.error("❌ Critical: No MCP tools available - tool discovery failed")
+            raise RuntimeError("Critical: No MCP tools available - tool discovery failed")
         
         all_tools = []
         

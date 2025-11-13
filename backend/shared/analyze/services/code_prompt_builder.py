@@ -201,8 +201,8 @@ class CodePromptBuilderService(BaseService):
         # Get available tool names
         available_tools = self.llm_service.default_tools
         if not available_tools:
-            self.logger.warning("No tools available for function name correction")
-            return llm_function_names
+            self.logger.error("❌ Critical: No MCP tools available for function name correction - MCP tool discovery failed")
+            raise Exception("Critical: MCP tools not available - tool discovery failed. Cannot proceed with analysis without MCP tool access.")
         
         actual_tool_names = {tool.get("function", {}).get("name", "") for tool in available_tools if tool.get("type") == "function"}
         

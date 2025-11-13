@@ -147,15 +147,15 @@ class SimplifiedMCPLoader:
             logger.info(f"🔌 MCP initialized for {config_key} with {server_count} servers")
             
         except Exception as e:
-            logger.error(f"❌ Failed to initialize MCP for {config_key}: {e}")
+            logger.error(f"❌ Critical: Failed to initialize MCP for {config_key}: {e}")
             self._mcp_initialized[config_key] = False
-            raise
+            raise RuntimeError(f"Critical MCP initialization failure for {config_key}: {e}") from e
     
     async def _load_tools_with_filtering(self, tools_config: MCPToolsConfig) -> List[Dict[str, Any]]:
         """Load tools from MCP client with filtering"""
         if not mcp_client or not mcp_client.available_tools:
-            logger.warning("⚠️ No MCP tools available")
-            return []
+            logger.error("❌ Critical: No MCP tools available - MCP client or tool discovery failed")
+            raise RuntimeError("Critical: MCP tools not available - client initialization or tool discovery failed")
         
         all_tools = []
         exclude_tools = tools_config.exclude_tools or []
