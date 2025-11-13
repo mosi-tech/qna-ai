@@ -724,8 +724,8 @@ class AnalysisPipelineService:
         """
         try:
             if self.audit_service is None:
-                logger.warning("⚠️ Audit service not available for execution logging - skipping execution logging")
-                return None
+                logger.error("❌ Critical: Audit service not available for execution logging - cannot proceed without execution tracking")
+                raise RuntimeError("Critical: Audit service not available - execution logging is required for analysis pipeline")
             
             user_id = get_user_id()
             session_id = get_session_id()
@@ -758,17 +758,18 @@ class AnalysisPipelineService:
                 if queue_success:
                     logger.info(f"✓ Enqueued execution for processing: {execution_id}")
                 else:
-                    logger.error(f"⚠️ Failed to enqueue execution: {execution_id}")
+                    logger.error(f"❌ Critical: Failed to enqueue execution: {execution_id}")
+                    raise RuntimeError(f"Critical: Failed to enqueue execution {execution_id} - execution will not be processed")
                     
             except Exception as queue_error:
-                # Don't fail the whole process if queue enqueue fails
-                logger.warning(f"⚠️ Failed to enqueue execution {execution_id}: {queue_error}")
+                logger.error(f"❌ Critical: Failed to enqueue execution {execution_id}: {queue_error}")
+                raise RuntimeError(f"Critical: Failed to enqueue execution {execution_id}: {queue_error}") from queue_error
             
             return execution_id
             
         except Exception as e:
-            logger.error(f"❌ Failed to log execution: {e}")
-            return None
+            logger.error(f"❌ Critical: Failed to log execution: {e}")
+            raise RuntimeError(f"Critical: Failed to log execution start: {e}") from e
     
     
     async def _update_message_only(self, response_type: str, 
@@ -877,7 +878,7 @@ class AnalysisPipelineService:
             warning_msg = "No verification service available - skipping reuse verification"
             self.logger.warning(f"⚠️ {warning_msg}")
             warnings.append({"step": "reuse_verification", "message": warning_msg})
-            return True  # Allow reuse if no verification service
+            return False  # Allow reuse if no verification service
         
         try:
             # Extract script name and get script content
