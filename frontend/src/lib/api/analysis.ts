@@ -19,7 +19,38 @@ export class AnalysisService {
   constructor(private client: APIClient) { }
 
   /**
-   * Analyze a financial question
+   * Send a hybrid chat message (combines chat + analysis)
+   */
+  async sendChatMessage(request: AnalysisRequest): Promise<AnalysisResponse> {
+    try {
+      const response = await this.client.post<AnalysisResponse['data']>(
+        '/chat',  // Hybrid chat endpoint
+        request,
+        {
+          retries: 0,
+        }
+      );
+
+      const result = {
+        success: response.success,
+        data: response.data,
+        error: response.error,
+        timestamp: response.timestamp,
+      } as AnalysisResponse;
+
+      return result;
+    } catch (error) {
+      console.error('[AnalysisService] sendChatMessage failed with error:', error);
+      logError('[AnalysisService] sendChatMessage failed', error, {
+        question: request.question?.substring(0, 50),
+      });
+
+      throw error;
+    }
+  }
+
+  /**
+   * Analyze a financial question (legacy endpoint)
    */
   async analyzeQuestion(request: AnalysisRequest): Promise<AnalysisResponse> {
     try {

@@ -11,8 +11,8 @@ Flow:
 import logging
 from typing import Optional, Dict, Any, List
 from shared.analyze.search.library import AnalysisLibrary
-from ..conversation.store import ConversationStore, ConversationTurn
-from ..conversation.session_manager import SessionManager
+from ..conversation.store import ConversationStore, UserMessage, AssistantMessage
+from ....services.session_manager import SessionManager
 from ..context.classifier import QueryClassifier
 from ..context.expander import ContextExpander
 from ..context.validator import CompletenessValidator
@@ -28,12 +28,13 @@ class ContextAwareSearch:
                  session_manager: SessionManager = None,
                  classifier: QueryClassifier = None,
                  expander: ContextExpander = None,
-                 validator: CompletenessValidator = None):
+                 validator: CompletenessValidator = None,
+                 llm_service = None):
         self.analysis_library = analysis_library or AnalysisLibrary()
         self.session_manager = session_manager
         self.classifier = classifier
         self.expander = expander
-        self.validator = validator or CompletenessValidator()
+        self.validator = validator or CompletenessValidator(llm_service=llm_service)
         
         self.default_similarity_threshold = 0.3
     
@@ -166,20 +167,27 @@ class ContextAwareSearch:
             logger.info(f"🔹 Query is not meaningless, proceeding to validation")
 
         # Step 3: VALIDATE - Check if query is complete
-        # await progress_info(session_id, "Checking question for completeness...")
-        # validation = self.validator.validate(expanded_query)
+        await send_progress_info(session_id, "Checking question for completeness...")
+        validation = await self.validator.validate(expanded_query)
+        
+        if not validation["success"]:
+            return self._error_response(
+                message="Unable to run validation",
+                session_id=session_id,
+                original_query=query
+            )
 
-        # if not validation["complete"]:
-        #     missing = ", ".join(validation["missing"])
-        #     logger.info(f"Validation failed, missing: {missing}")
-        #     return self._request_clarification(
-        #         original_query=query,
-        #         expanded_query=expanded_query,
-        #         confidence=expansion_confidence,
-        #         session_id=session_id,
-        #         query_type="contextual" if is_contextual else "standalone",
-        #         reason=f"Missing information: {missing}"
-        #     )
+        if not validation["complete"]:
+            missing = ", ".join(validation["missing"])
+            logger.info(f"Validation failed, missing: {missing}")
+            return self._request_clarification(
+                original_query=query,
+                expanded_query=expanded_query,
+                confidence=expansion_confidence,
+                session_id=session_id,
+                query_type="contextual" if is_contextual else "standalone",
+                reason=f"Missing information: {missing}"
+            )
 
         # Step 4: SEARCH - Query is ready
         # logger.info(f"Query validated, proceeding with search: {expanded_query[:100]}...")
@@ -211,11 +219,12 @@ class ContextAwareSearch:
         }
     
     async def _classify_contextual(self, query: str, conversation: ConversationStore) -> Dict[str, Any]:
-        """Classify if query is CONTEXTUAL or STANDALONE"""
+        """Classify if 
+        query is CONTEXTUAL or STANDALONE"""
         
         try:
-            last_turn = conversation.get_last_turn()
-            result = await self.classifier.classify(query, last_turn)
+            # Get last messages using new message-based architecture
+            result = await self.classifier.classify(query, conversation)
             
             if result["success"]:
                 query_type = "contextual" if result["is_contextual"] else "standalone"
@@ -232,13 +241,11 @@ class ContextAwareSearch:
             }
     
     async def _expand_query(self, query: str, conversation: ConversationStore) -> Dict[str, Any]:
-        """Expand contextual query using conversation history"""
+        """Expand contextual query using conversation history with SimplifiedFinancialContextManager"""
         
         try:
-            # Get conversation turns (expander expects ConversationTurn objects, not string)
-            turns = conversation.turns
-            
-            result = await self.expander.expand_query(query, turns)
+            # Use new modernized expand_query method that accepts ConversationStore directly
+            result = await self.expander.expand_query(query, conversation)
             
             if result["success"]:
                 logger.info(f"Query expanded to: {result['expanded_query'][:100]}...")
@@ -300,12 +307,22 @@ Examples:
 Is this a meaningless or non-financial query that shouldn't be analyzed?"""
             
             logger.info(f"📞 Calling LLM for meaningless query check")
-            result = await context_service._make_cached_llm_call(
+            
+            # Use the LLM service directly since this is a simple call
+            messages = [{"role": "user", "content": user_message}]
+            
+            response = await context_service.llm_service.make_request(
+                messages=messages,
                 system_prompt=system_prompt,
-                user_message=user_message,
                 max_tokens=1000,
-                task="meaningless_query_check"
+                temperature=0.1
             )
+            
+            # Convert to expected format for backward compatibility
+            result = {
+                "success": response.get("success", False),
+                "content": response.get("content", "")
+            }
             
             if result["success"]:
                 response = result["content"].upper().strip()
@@ -323,19 +340,6 @@ Is this a meaningless or non-financial query that shouldn't be analyzed?"""
                 logger.info(f"⚡ Fallback: '{query}' looks like generic question")
                 return True
             return False
-    
-    def _format_conversation_context(self, conversation: ConversationStore) -> str:
-        """Format conversation history as string context"""
-        
-        turns = conversation.turns[-5:]  # Last 5 turns for context
-        context_lines = []
-        
-        for turn in turns:
-            context_lines.append(f"Q: {turn.user_query}")
-            if turn.expanded_query and turn.expanded_query != turn.user_query:
-                context_lines.append(f"(expanded to: {turn.expanded_query})")
-        
-        return "\n".join(context_lines)
     
     def _request_clarification(self,
                              original_query: str,
@@ -362,12 +366,11 @@ Is this a meaningless or non-financial query that shouldn't be analyzed?"""
 
         return {
             "success": True,
-            "type": "clarification_needed",
+            "needs_clarification": True,
             "session_id": session_id,
             "query_type": query_type,
             "original_query": original_query,
             "expanded_query": expanded_query,
-            "needs_clarification": True,
             "confidence": confidence,
             "reason": reason,
             "message": message,
@@ -518,12 +521,31 @@ Is this a meaningless or non-financial query that shouldn't be analyzed?"""
         if not conversation:
             return {"error": "Session not found"}
         
-        return conversation.get_context_summary()
+        # Revolutionary approach: Return raw conversation for LLM instead of building context
+        try:
+            # Format conversation as simple message history
+            conversation_history = []
+            messages = await conversation.get_messages()
+            if messages:
+                for message in messages[-10:]:  # Last 10 messages
+                    conversation_history.append({
+                        "role": message.role,
+                        "content": message.content
+                    })
+            
+            return {
+                "conversation_history": conversation_history, 
+                "message_count": len(messages),
+                "approach": "raw_conversation"
+            }
+        except Exception as e:
+            return {"error": f"Conversation retrieval failed: {e}", "message_count": 0}
 
 # Factory function to create context-aware search with dependencies
 def create_context_aware_search(analysis_library: AnalysisLibrary = None,
                                session_manager: SessionManager = None,
                                classifier: QueryClassifier = None,
-                               expander: ContextExpander = None) -> ContextAwareSearch:
+                               expander: ContextExpander = None,
+                               llm_service = None) -> ContextAwareSearch:
     """Create context-aware search with all dependencies"""
-    return ContextAwareSearch(analysis_library, session_manager, classifier, expander)
+    return ContextAwareSearch(analysis_library, session_manager, classifier, expander, llm_service=llm_service)

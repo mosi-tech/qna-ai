@@ -6,13 +6,14 @@ import logging
 import uvicorn
 from contextlib import asynccontextmanager
 from typing import Optional
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Response
 from fastapi.middleware.cors import CORSMiddleware
+        
 from dotenv import load_dotenv
 
 import sys
 import os
-import uuid
+import json
 
 # Load environment variables from .env file
 load_dotenv()
@@ -38,6 +39,9 @@ from api.auth import UserContext, require_authenticated_user, get_optional_user
 from api.progress_routes import router as progress_router
 from api.session_routes import router as session_router
 from shared.db import MongoDBClient, RepositoryManager
+from shared.services.session_manager import SessionManager
+from shared.locking import initialize_session_lock
+from shared.queue.analysis_queue import initialize_analysis_queue
 
 logger = logging.getLogger("api-server")
 
@@ -81,22 +85,43 @@ async def lifespan(app: FastAPI):
         
         # Initialize distributed session locking
         logger.info("🔧 Initializing session locking...")
-        from shared.locking import initialize_session_lock
+        
         await initialize_session_lock(db_client.db)
         logger.info("✅ Session locking initialized")
         
+        # Initialize progress event queue (needed for real-time progress updates)
+        logger.info("🔧 Initializing progress event queue...")
+        from shared.queue.progress_event_queue import initialize_progress_event_queue
+        initialize_progress_event_queue(db_client.db)
+        logger.info("✅ Progress event queue initialized")
+        
         # Initialize analysis queue
         logger.info("🔧 Initializing analysis queue...")
-        from shared.queue.analysis_queue import initialize_analysis_queue
         initialize_analysis_queue(db_client.db)
         logger.info("✅ Analysis queue initialized")
         
-        # 3. Session manager (CRITICAL)
+        # 3. Redis client for ConversationStore
+        logger.info("🔧 Initializing Redis client...")
+        try:
+            from shared.services.redis_client import get_redis_client
+            redis_client = await get_redis_client()
+            if redis_client:
+                logger.info("✅ Redis client initialized for ConversationStore")
+            else:
+                logger.warning("⚠️ Redis client unavailable - ConversationStore will use DB-only mode")
+        except Exception as e:
+            logger.warning(f"⚠️ Redis client initialization failed: {e}")
+            redis_client = None
+        
+        # 4. Session manager (CRITICAL)
         logger.info("🔧 Initializing session manager...")
-        from shared.analyze.dialogue.conversation.session_manager import SessionManager
-        session_manager = SessionManager(chat_history_service=chat_history_service)
+        
+        session_manager = SessionManager(
+            chat_history_service=chat_history_service,
+            redis_client=redis_client
+        )
         app.state.session_manager = session_manager
-        logger.info("✅ Session manager initialized")
+        logger.info("✅ Session manager initialized with Redis support")
         
         # 5. API routes (CRITICAL)
         logger.info("🔧 Initializing API routes...")
@@ -107,7 +132,8 @@ async def lifespan(app: FastAPI):
             analysis_persistence_service=analysis_persistence_service,
             audit_service=audit_service,
             execution_service=execution_service,
-            session_manager=session_manager
+            session_manager=session_manager,
+            analysis_pipeline_service=None  # Analysis is handled by queue worker
         )
         logger.info("  → Creating ExecutionRoutes instance...")
         execution_routes = ExecutionRoutes()
@@ -186,13 +212,16 @@ def create_app() -> FastAPI:
         try:
             store = await app.state.session_manager.get_session(session_id)
             
-            # Get context summary
-            context = store.get_context_summary() if store and hasattr(store, 'get_context_summary') else {}
+            # Get basic context - legacy method removed, use SimplifiedFinancialContextManager for rich context
+            context = {
+                "message_count": len(store.messages) if hasattr(store, 'messages') else 0,
+                "has_history": bool(store and hasattr(store, 'messages') and store.messages)
+            }
             
             return {
                 "session_id": session_id,
                 "status": "active",
-                "messages": store.turns if hasattr(store, 'turns') else [],
+                "messages": [msg.to_dict() for msg in store.messages] if hasattr(store, 'messages') else [],
                 "context_summary": context
             }
         except Exception as e:
@@ -214,12 +243,21 @@ def create_app() -> FastAPI:
         """SIMPLE VERSION - Analyze question without session locking for debugging"""
         return await app.state.api_routes.analyze_question_simple(request)
     
+    @app.post("/chat", response_model=AnalysisResponse)
+    async def chat_with_analysis(request: QuestionRequest):
+        """
+        Hybrid chat + analysis endpoint (GitHub Issue #122)
+        
+        Intelligent routing between:
+        - Educational financial chat responses
+        - Analysis suggestions and confirmations  
+        - Direct analysis execution when needed
+        """
+        return await app.state.api_routes.chat_with_analysis(request)
+    
     @app.post("/test-immediate")
     async def test_immediate(request: QuestionRequest):
         """ULTRA SIMPLE - Immediate response with no database calls"""
-        from fastapi import Response
-        import json
-        
         response_data = {
             "success": True,
             "data": {

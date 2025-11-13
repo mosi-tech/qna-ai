@@ -205,4 +205,5 @@ class SharedResultFormatter(BaseService):
 # Factory function for easy initialization
 def create_shared_result_formatter(llm_service=None) -> SharedResultFormatter:
     """Create and return a SharedResultFormatter instance"""
+    logger.info("Initializing the result formatter service")
     return SharedResultFormatter(llm_service=llm_service)

@@ -1,8 +1,8 @@
 """Conversation management components"""
-from .store import ConversationStore, ConversationTurn, QueryType
-from .session_manager import SessionManager
+from .store import ConversationStore, UserMessage, AssistantMessage, MessageIntent, QueryType
+from ....services.session_manager import SessionManager
 
 __all__ = [
-    "ConversationStore", "ConversationTurn", "QueryType",
+    "ConversationStore", "UserMessage", "AssistantMessage", "MessageIntent", "QueryType",
     "SessionManager"
 ]

@@ -32,7 +32,7 @@ from ..services.chat_service import ChatHistoryService
 from ..services.cache_service import CacheService
 from ..services.audit_service import AuditService
 from ..db import RepositoryManager, MongoDBClient
-            
+from shared.services.session_manager import SessionManager
 
 logger = logging.getLogger(__name__)
 
@@ -101,9 +101,17 @@ class AnalysisQueueWorker(BaseQueueWorker):
             # Initialize verification service for reuse verification (Issue #117)
             verification_service = self._initialize_verification_service()
             
-            # Create session manager for dialogue factory
-            from shared.analyze.dialogue.conversation.session_manager import SessionManager
-            session_manager = SessionManager(chat_history_service=chat_history_service)
+            # Create session manager for dialogue factory with Redis support
+            try:
+                from shared.services.redis_client import get_redis_client
+                redis_client = await get_redis_client()
+            except Exception:
+                redis_client = None
+            
+            session_manager = SessionManager(
+                chat_history_service=chat_history_service,
+                redis_client=redis_client
+            )
             
             # Create the complete analysis pipeline
             self.analysis_pipeline = create_analysis_pipeline(
@@ -247,15 +255,18 @@ class AnalysisQueueWorker(BaseQueueWorker):
                 "content": pipeline_data.get("content", "Analysis completed successfully")
             }
             
+            # Determine actual status based on response type from pipeline
+            actual_status = "completed" if response_type in ["needs_clarification", "needs_confirmation"] else "pending"
+            
             await send_progress_event(session_id, {
                 "type": "analysis_progress",
                 "job_id": job_id,
                 "message_id": message_id,
-                "status":  "pending", # Analysis done, but execution still pending
+                "status": actual_status,  # Use actual status based on pipeline result
                 "message": "Analysis completed successfully",
                 "level": "success",
                 "log_to_message": True if message_id else False,
-                "response_type": "script_generation", #This is SSE event so we 
+                "response_type": response_type,  # Use actual response type from pipeline
                 "analysis_id": result.get("analysis_id"),
                 "execution_id": result.get("execution_id")
             })

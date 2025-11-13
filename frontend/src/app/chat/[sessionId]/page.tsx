@@ -20,9 +20,31 @@ function ChatPageContent() {
   const { session_id, user_id, resumeSession, updateSessionMetadata, startNewSession } = useSession();
   const { messages, addMessage, updateMessage, setMessages } = useConversation();
   const { viewMode, setViewMode, isProcessing, setIsProcessing, error: uiError, setError: setUIError } = useUI();
-  const { analyzeQuestion, isLoading: analysisLoading } = useAnalysis();
+  const { sendChatMessage, isLoading: analysisLoading } = useAnalysis();
   const { logs: progressLogs, isConnected, clearLogs, registerAnalysisCompleteCallback } = useProgress();
   const { getSessionDetail } = useSessionManager();
+
+  // Function to fetch updated message content from API
+  const fetchUpdatedMessage = useCallback(async (messageId: string) => {
+    if (!session_id) {
+      console.warn('No session_id available for fetching message');
+      return null;
+    }
+
+    try {
+      const response = await fetch(`/api/chat/${session_id}/${messageId}`);
+      if (response.ok) {
+        const messageData = await response.json();
+        return messageData;
+      } else {
+        console.warn(`Failed to fetch updated message ${messageId}:`, response.statusText);
+        return null;
+      }
+    } catch (error) {
+      console.error(`Error fetching updated message ${messageId}:`, error);
+      return null;
+    }
+  }, [session_id]);
 
   const [chatInput, setChatInput] = useState('');
   const [currentAnalysis, setCurrentAnalysis] = useState<{
@@ -190,6 +212,80 @@ function ChatPageContent() {
     });
   };
 
+  const handleChatResponse = (response: any) => {
+    if (session_id) {
+      ProgressManager.addLog(session_id, {
+        level: 'success',
+        message: 'Chat response ready',
+      });
+    }
+
+    // Simple chat message - no analysis or execution tracking
+    addMessage({
+      type: 'ai',
+      content: response.data.content || 'Chat response received',
+      ...response.data,
+      status: 'completed', // Always completed for chat
+    });
+  };
+
+  const handleAnalysisTriggerResponse = (response: any, userMessage: string) => {
+    if (session_id) {
+      ProgressManager.addLog(session_id, {
+        level: 'info',
+        message: 'Analysis triggered - processing...',
+      });
+    }
+
+
+    // Create pending message that will show "Analysis in Progress"
+    const resultMsg = addMessage({
+      type: 'results',
+      content: response.data.content || 'Analysis in progress...',
+      status: 'pending', // This triggers the pending UI
+      ...response.data,
+    });
+
+    // Register completion callback for SSE events if analysis was triggered
+    const backendMessageId = response.data.id;
+
+    if (backendMessageId) {
+      registerAnalysisCompleteCallback(backendMessageId, async (completionStatus: 'completed' | 'failed', data?: any) => {
+        // For completed status, fetch updated message content from API instead of relying on SSE data
+        if (completionStatus === 'completed') {
+          const updatedMessage = await fetchUpdatedMessage(backendMessageId);
+          if (updatedMessage) {
+            updateMessage(backendMessageId, {
+              ...updatedMessage,
+              content: updatedMessage.content,
+              status: 'completed',
+              response_type: updatedMessage.response_type,
+            });
+            return;
+          }
+        }
+
+        // Fallback to SSE data for failed status or if fetch fails
+        updateMessage(backendMessageId, {
+          content: data?.message,
+          status: completionStatus,
+          error: data?.error,
+          ...(data?.details || {}),
+        });
+      });
+
+      console.log(`[SSE] Registered callback for message: ${backendMessageId}`);
+    } else {
+      console.error('[SSE] No backend message ID found or analysis not triggered!', response.data);
+    }
+
+    setCurrentAnalysis({
+      messageId: resultMsg.id,
+      data: response.data,
+      originalQuestion: userMessage,
+    });
+  };
+
   const handleAnalysisResponse = (response: any, userMessage: string) => {
     if (session_id) {
       ProgressManager.addLog(session_id, {
@@ -209,14 +305,27 @@ function ChatPageContent() {
     const backendMessageId = response.data.id;
 
     if (backendMessageId) {
-      registerAnalysisCompleteCallback(backendMessageId, (status: 'completed' | 'failed', data?: any) => {
-        handleExecutionUpdate(backendMessageId, {
-          details: {
-            ...data.details,
-            content: data?.message,
-            error: data?.error,
-            message_id: backendMessageId
+      registerAnalysisCompleteCallback(backendMessageId, async (completionStatus: 'completed' | 'failed', data?: any) => {
+        // For completed status, fetch updated message content from API instead of relying on SSE data
+        if (completionStatus === 'completed') {
+          const updatedMessage = await fetchUpdatedMessage(backendMessageId);
+          if (updatedMessage) {
+            updateMessage(backendMessageId, {
+              ...updatedMessage,
+              content: updatedMessage.content,
+              status: 'completed',
+              response_type: updatedMessage.response_type,
+            });
+            return;
           }
+        }
+
+        // Fallback to SSE data for failed status or if fetch fails
+        updateMessage(backendMessageId, {
+          content: data?.message,
+          status: completionStatus,
+          error: data?.error,
+          ...(data?.details || {}),
         });
       });
 
@@ -261,7 +370,7 @@ function ChatPageContent() {
         });
       }
 
-      const response = await analyzeQuestion({
+      const response = await sendChatMessage({
         question: userMessage,
         session_id: session_id,
       });
@@ -282,7 +391,14 @@ function ChatPageContent() {
           handleClarificationResponse(response, userMessage);
         } else if (responseType === 'needs_confirmation') {
           handleConfirmationResponse(response, userMessage);
+        } else if (responseType === 'chat_response' || responseType === 'educational') {
+          // Handle pure chat responses
+          handleChatResponse(response);
+        } else if (responseType === 'script_generation') {
+          // Handle analysis trigger responses (thinking state)
+          handleAnalysisTriggerResponse(response, userMessage);
         } else {
+          // Default to analysis response for backward compatibility
           handleAnalysisResponse(response, userMessage);
         }
       } else {
@@ -410,7 +526,7 @@ function ChatPageContent() {
   // Re-register SSE callbacks for pending messages on page refresh
   useEffect(() => {
     console.log(`[DEBUG] Callback registration effect triggered: messages.length=${messages.length}, isConnected=${isConnected}`);
-    
+
     if (!messages.length || !isConnected) {
       console.log(`[DEBUG] Skipping callback registration - messages=${messages.length}, connected=${isConnected}`);
       return;
@@ -419,33 +535,47 @@ function ChatPageContent() {
     // Add a small delay to ensure SSE connection is fully established
     const timeoutId = setTimeout(() => {
       console.log(`[DEBUG] Starting callback registration after delay...`);
-      
+
       let registeredCount = 0;
       messages.forEach((message: ChatMessage) => {
         // Check if message is in pending status and has backend ID for callback registration
         const isPending = message.status && ['pending', 'running', 'queued'].includes(message.status);
         const backendMessageId = (message as any).id;
-        
+
         console.log(`[DEBUG] Message ${message.id}: status=${message.status}, isPending=${isPending}, backendId=${backendMessageId}`, message);
 
         if (isPending && backendMessageId) {
           console.log(`[SSE] Re-registering callback for pending message: ${backendMessageId}`);
           registeredCount++;
-          
-          registerAnalysisCompleteCallback(backendMessageId, (status: 'completed' | 'failed', data?: any) => {
-            console.log(`[SSE] Callback triggered for message ${backendMessageId} with status: ${status}`);
-            handleExecutionUpdate(backendMessageId, {
-              details: {
-                ...data?.details,
-                content: data?.message,
-                error: data?.error,
-                message_id: backendMessageId
+
+          registerAnalysisCompleteCallback(backendMessageId, async (completionStatus: 'completed' | 'failed', data?: any) => {
+            console.log(`[SSE] Callback triggered for message ${backendMessageId} with status: ${completionStatus}`);
+            
+            // For completed status, fetch updated message content from API instead of relying on SSE data
+            if (completionStatus === 'completed') {
+              const updatedMessage = await fetchUpdatedMessage(backendMessageId);
+              if (updatedMessage) {
+                updateMessage(backendMessageId, {
+                  ...updatedMessage,
+                  content: updatedMessage.content,
+                  status: 'completed',
+                  response_type: updatedMessage.response_type,
+                });
+                return;
               }
+            }
+            
+            // Fallback to SSE data for failed status or if fetch fails
+            updateMessage(backendMessageId, {
+              content: data?.message,
+              status: completionStatus,
+              error: data?.error,
+              ...(data?.details || {}),
             });
           });
         }
       });
-      
+
       console.log(`[DEBUG] Registered ${registeredCount} callbacks`);
     }, 500); // Wait 500ms for SSE connection to stabilize
 

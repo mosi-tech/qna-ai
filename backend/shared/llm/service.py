@@ -4,6 +4,7 @@ Core LLM Service - Pure LLM provider abstraction with cache management
 """
 
 import logging
+import asyncio
 from typing import Dict, Any, Optional, List
 from .providers import create_provider, LLMProvider
 from .utils import LLMConfig, validate_llm_config
@@ -184,7 +185,10 @@ class LLMService:
             tools: Tools available for function calling
             max_tokens: Maximum tokens to generate
             temperature: Sampling temperature
-            **kwargs: Additional provider-specific parameters
+            force_api: Force API call bypassing cache
+            **kwargs: Additional provider-specific parameters including:
+                     - max_retries (int): Maximum retry attempts for 500 errors (default: 3)
+                     - retry_delay (float): Base delay for exponential backoff (default: 1.0)
             
         Returns:
             Dict with 'success', 'content', 'tool_calls', etc.
@@ -211,15 +215,53 @@ class LLMService:
             if system_prompt:
                 self.provider.set_system_prompt(system_prompt)
             
-            # Make the request using provider's call_api method
+            # Make the request using provider's call_api method with retry logic
             # Note: temperature not yet supported by provider interface
-            raw_response = await self.provider.call_api(
-                model=model,
-                messages=messages,
-                max_tokens=max_tokens,
-                enable_caching=kwargs.get('enable_caching', False),
-                force_api=force_api
-            )
+            max_retries = kwargs.get('max_retries', 3)
+            base_delay = kwargs.get('retry_delay', 1.0)
+            
+            for attempt in range(max_retries + 1):
+                try:
+                    raw_response = await self.provider.call_api(
+                        model=model,
+                        messages=messages,
+                        max_tokens=max_tokens,
+                        enable_caching=kwargs.get('enable_caching', False),
+                        force_api=force_api
+                    )
+                    
+                    # Check for 500-level errors in the response
+                    if (raw_response.get("success") == False and 
+                        raw_response.get("error") and 
+                        "500" in str(raw_response.get("error"))):
+                        
+                        if attempt < max_retries:
+                            delay = base_delay * (2 ** attempt)  # Exponential backoff
+                            logger.warning(f"⚠️ LLM request failed with 500 error (attempt {attempt + 1}/{max_retries + 1}), retrying in {delay}s: {raw_response.get('error')}")
+                            await asyncio.sleep(delay)
+                            continue
+                        else:
+                            logger.error(f"❌ LLM request failed after {max_retries} retries: {raw_response.get('error')}")
+                            break
+                    
+                    # Success or non-retryable error, break out of retry loop
+                    break
+                    
+                except Exception as e:
+                    # Check if it's a 500-level HTTP error
+                    if "500" in str(e) or "502" in str(e) or "503" in str(e) or "504" in str(e):
+                        if attempt < max_retries:
+                            delay = base_delay * (2 ** attempt)  # Exponential backoff
+                            logger.warning(f"⚠️ LLM request failed with HTTP error (attempt {attempt + 1}/{max_retries + 1}), retrying in {delay}s: {e}")
+                            await asyncio.sleep(delay)
+                            continue
+                        else:
+                            logger.error(f"❌ LLM request failed after {max_retries} retries: {e}")
+                            # Re-raise the exception to be caught by outer try-catch
+                            raise
+                    else:
+                        # Non-retryable error, re-raise immediately
+                        raise
             
             # Check if the call was successful
             if not raw_response.get("success"):
@@ -250,7 +292,9 @@ class LLMService:
                               model: Optional[str] = None,
                               system_prompt: Optional[str] = None,
                               max_tokens: Optional[int] = None,
-                              temperature: Optional[float] = None) -> Dict[str, Any]:
+                              temperature: Optional[float] = None,
+                              max_retries: Optional[int] = None,
+                              retry_delay: Optional[float] = None) -> Dict[str, Any]:
         """
         Simple text completion without tools
         
@@ -260,11 +304,19 @@ class LLMService:
             system_prompt: System prompt
             max_tokens: Maximum tokens
             temperature: Sampling temperature
+            max_retries: Maximum retry attempts for 500 errors
+            retry_delay: Base delay for exponential backoff
             
         Returns:
             Dict with 'success', 'content', etc.
         """
         messages = [{"role": "user", "content": prompt}]
+        
+        kwargs = {}
+        if max_retries is not None:
+            kwargs['max_retries'] = max_retries
+        if retry_delay is not None:
+            kwargs['retry_delay'] = retry_delay
         
         return await self.make_request(
             messages=messages,
@@ -272,7 +324,8 @@ class LLMService:
             system_prompt=system_prompt,
             tools=None,  # No tools for simple completion
             max_tokens=max_tokens,
-            temperature=temperature
+            temperature=temperature,
+            **kwargs
         )
     
     async def warm_cache(self, model: Optional[str] = None) -> bool:

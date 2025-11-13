@@ -38,24 +38,119 @@ class ChatRepository:
         return await self.db.create_session(session)
     
     async def add_user_message(self, session_id: str, user_id: str, 
-                               question: str, query_type: QueryType = QueryType.COMPLETE) -> str:
+                               question: str, message_id: Optional[str] = None, query_type: QueryType = QueryType.COMPLETE) -> str:
         """Add user message to conversation"""
         # Get message count to set message_index
         message_count = await self.db.db.chat_messages.count_documents({"sessionId": session_id})
         
-        message = ChatMessageModel(
-            session_id=session_id,
-            user_id=user_id,
-            role=RoleType.USER,
-            content=question,
-            metadata={
+        # Build message data, only include message_id if provided
+        message_data = {
+            "session_id": session_id,
+            "user_id": user_id,
+            "role": RoleType.USER,
+            "content": question,
+            "metadata": {
                 "response_type": "user_message",
                 "original_question": question,
                 "query_type": query_type.value if query_type else None,
             },
-            message_index=message_count,
-        )
+            "message_index": message_count,
+        }
+        
+        # Only include message_id if explicitly provided
+        if message_id is not None:
+            message_data["message_id"] = message_id
+            
+        message = ChatMessageModel(**message_data)
         return await self.db.create_message(message)
+    
+    async def get_message_by_id(self, message_id: str) -> Optional[Dict[str, Any]]:
+        """Get a specific message by its ID with execution and analysis data populated"""
+        try:
+            # Use same aggregation pipeline as get_session_with_messages to populate execution and analysis
+            pipeline = [
+                # Match specific message
+                {"$match": {"messageId": message_id}},
+                
+                # Left join with executions collection
+                {
+                    "$lookup": {
+                        "from": "executions",
+                        "localField": "executionId", 
+                        "foreignField": "executionId",
+                        "as": "execution_data"
+                    }
+                },
+                
+                # Left join with analyses collection  
+                {
+                    "$lookup": {
+                        "from": "analyses",
+                        "localField": "analysisId",
+                        "foreignField": "analysisId", 
+                        "as": "analysis_data"
+                    }
+                },
+                
+                # Project final structure with joined data
+                {
+                    "$project": {
+                        "messageId": 1,
+                        "sessionId": 1,  # Keep sessionId for session verification
+                        "role": 1,
+                        "content": 1,
+                        "createdAt": 1,
+                        "analysisId": 1,
+                        "executionId": 1,
+                        "metadata": 1,
+                        "logs": 1,  # Include logs field for progress history
+                        # Include execution data as nested object
+                        "execution": {
+                            "$cond": {
+                                "if": {"$gt": [{"$size": "$execution_data"}, 0]},
+                                "then": {
+                                    "executionId": "$executionId",
+                                    "status": {"$arrayElemAt": ["$execution_data.status", 0]},
+                                    "results": {
+                                        "$cond": {
+                                            "if": {"$eq": [{"$arrayElemAt": ["$execution_data.status", 0]}, "success"]},
+                                            "then": {"$arrayElemAt": ["$execution_data.result", 0]},
+                                            "else": None
+                                        }
+                                    }
+                                },
+                                "else": {
+                                    "executionId": "$executionId",
+                                    "status": None,
+                                    "results": None
+                                }
+                            }
+                        },
+                        # Include analysis data if available  
+                        "analysis": {
+                            "$cond": {
+                                "if": {"$gt": [{"$size": "$analysis_data"}, 0]},
+                                "then": {
+                                    "llm_response": {"$arrayElemAt": ["$analysis_data.llm_response", 0]},
+                                    "question": {"$arrayElemAt": ["$analysis_data.question", 0]}
+                                },
+                                "else": None
+                            }
+                        }
+                    }
+                }
+            ]
+            
+            # Execute aggregation and get first (and only) result
+            cursor = self.db.db.chat_messages.aggregate(pipeline)
+            messages = await cursor.to_list(1)  # Limit to 1 since we're getting a specific message
+            
+            return messages[0] if messages else None
+            
+        except Exception as e:
+            import logging
+            logging.getLogger(__name__).error(f"Failed to get message {message_id}: {e}")
+            raise
     
     async def add_assistant_message_with_analysis(
         self,
@@ -101,6 +196,7 @@ class ChatRepository:
         session_id: str,
         user_id: str,
         content: str,
+        message_id: str = None,
         analysis_id: str = None,
         execution_id: str = None,
         metadata: Dict[str, Any] = None,
@@ -109,16 +205,23 @@ class ChatRepository:
         # Get message count to set message_index
         message_count = await self.db.db.chat_messages.count_documents({"sessionId": session_id})
         
-        message = ChatMessageModel(
-            session_id=session_id,
-            user_id=user_id,
-            role=RoleType.ASSISTANT,
-            content=content,
-            analysis_id=analysis_id,
-            execution_id=execution_id,
-            message_index=message_count,
-            metadata=metadata or {},
-        )
+        # Build message data, only include message_id if provided
+        message_data = {
+            "session_id": session_id,
+            "user_id": user_id,
+            "role": RoleType.ASSISTANT,
+            "content": content,
+            "analysis_id": analysis_id,
+            "execution_id": execution_id,
+            "message_index": message_count,
+            "metadata": metadata or {},
+        }
+        
+        # Only include message_id if explicitly provided
+        if message_id is not None:
+            message_data["message_id"] = message_id
+            
+        message = ChatMessageModel(**message_data)
         return await self.db.create_message(message)
     
     async def update_assistant_message(
@@ -168,17 +271,30 @@ class ChatRepository:
         
         return result.modified_count > 0
     
-    async def get_conversation_history(self, session_id: str) -> List[Dict[str, Any]]:
-        """Get conversation for LLM context"""
+    async def get_conversation_history(self, session_id: str, include_metadata: bool = False) -> List[Dict[str, Any]]:
+        """Get conversation for LLM context
+        
+        Args:
+            session_id: Session ID to get messages for
+            include_metadata: If True, includes full message metadata (needed for ConversationStore reconstruction)
+        """
         messages = await self.db.get_session_messages(session_id)
         
         history = []
         for msg in messages:
-            history.append({
+            message_data = {
+                "user_id": msg.user_id, 
+                "message_id": msg.message_id, 
                 "role": msg.role.value,
                 "content": msg.content,
                 "timestamp": msg.created_at.isoformat(),
-            })
+            }
+            
+            # Include metadata if requested (needed for ConversationStore reconstruction)
+            if include_metadata and msg.metadata:
+                message_data["metadata"] = msg.metadata
+            
+            history.append(message_data)
         
         return history
     
@@ -408,6 +524,18 @@ class ChatRepository:
     async def update_session(self, session_id: str, update_data: Dict[str, Any]) -> bool:
         """Update session metadata"""
         return await self.db.update_session(session_id, update_data)
+    
+    async def clear_session_messages(self, session_id: str) -> int:
+        """Clear all messages from a session but keep the session"""
+        result = await self.db.db.chat_messages.delete_many({"sessionId": session_id})
+        
+        # Update session message count to 0
+        await self.db.db.chat_sessions.update_one(
+            {"sessionId": session_id},
+            {"$set": {"message_count": 0, "updated_at": datetime.now()}}
+        )
+        
+        return result.deleted_count
     
     async def delete_session(self, session_id: str) -> bool:
         """Delete session and all its messages"""

@@ -11,7 +11,7 @@ sys.path.insert(0, shared_path)
 from shared.llm.service import LLMService
 from ..search.library import AnalysisLibrary
 from .context.service import create_context_service
-from .conversation.session_manager import SessionManager
+from ...services.session_manager import SessionManager
 from .context.classifier import create_query_classifier
 from .context.expander import create_context_expander
 from .search.context_aware import create_context_aware_search
@@ -31,7 +31,11 @@ class DialogueFactory:
             self.session_manager = session_manager
         else:
             # Fallback: create local instance if not provided
-            self.session_manager = SessionManager(chat_history_service=chat_history_service)
+            # Note: This fallback skips Redis to avoid async complexity
+            self.session_manager = SessionManager(
+                chat_history_service=chat_history_service,
+                redis_client=None
+            )
         
         # Create context service - use passed LLM service or create context-optimized one
         if llm_service:
@@ -44,12 +48,13 @@ class DialogueFactory:
         
         # Create dialogue components with dependencies
         self.classifier = create_query_classifier(self.context_service)
-        self.expander = create_context_expander(self.context_service, self.classifier)
+        self.expander = create_context_expander(self.context_service)
         self.context_aware_search = create_context_aware_search(
             analysis_library=self.analysis_library,
             session_manager=self.session_manager,
             classifier=self.classifier,
-            expander=self.expander
+            expander=self.expander,
+            llm_service=context_llm
         )
     
     def get_context_aware_search(self):
@@ -58,7 +63,7 @@ class DialogueFactory:
     
     def get_session_manager(self):
         """Get the session manager"""
-        return session_manager
+        return self.session_manager
     
     async def search_with_context(self, query: str, session_id: str = None, auto_expand: bool = True):
         """Convenience method for context-aware search"""

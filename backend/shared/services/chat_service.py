@@ -44,6 +44,7 @@ class ChatHistoryService:
         session_id: str,
         user_id: str,
         question: str,
+        message_id: Optional[str] = None,
         query_type: QueryType = QueryType.COMPLETE,
         expanded_question: Optional[str] = None,
         expansion_confidence: float = 0.0,
@@ -54,6 +55,7 @@ class ChatHistoryService:
                 session_id=session_id,
                 user_id=user_id,
                 question=question,
+                message_id=message_id,
                 query_type=query_type,
             )
             
@@ -111,6 +113,7 @@ class ChatHistoryService:
         session_id: str,
         user_id: str,
         content: str,
+        message_id: str = None,
         analysis_id: str = None,
         execution_id: str = None,
         metadata: Dict[str, Any] = None
@@ -121,6 +124,7 @@ class ChatHistoryService:
                 session_id=session_id,
                 user_id=user_id,
                 content=content,
+                message_id=message_id,
                 analysis_id=analysis_id,
                 execution_id=execution_id,
                 metadata=metadata
@@ -170,10 +174,10 @@ class ChatHistoryService:
             self.logger.error(f"✗ Failed to get session context: {e}")
             raise
     
-    async def get_conversation_history(self, session_id: str) -> List[Dict[str, Any]]:
+    async def get_conversation_history(self, session_id: str, include_metadata: bool = False) -> List[Dict[str, Any]]:
         """Get conversation history for LLM context"""
         try:
-            history = await self.chat_repo.get_conversation_history(session_id)
+            history = await self.chat_repo.get_conversation_history(session_id, include_metadata=include_metadata)
             self.logger.info(f"✓ Retrieved conversation history: {len(history)} messages")
             return history
         except Exception as e:
@@ -285,4 +289,88 @@ class ChatHistoryService:
             return result
         except Exception as e:
             self.logger.error(f"✗ Failed to delete session: {e}")
+            raise
+    
+    async def get_message_by_id(self, message_id: str) -> Optional[Dict[str, Any]]:
+        """Get a specific message by its ID with UI transformation"""
+        try:
+            message = await self.chat_repo.get_message_by_id(message_id)
+            if message:
+                # Transform message to clean UI-safe data (same pattern as get_session_with_messages)
+                ui_message = await self.data_transformer.transform_message_to_ui_data(message)
+                self.logger.info(f"✓ Retrieved and transformed message: {message_id}")
+                return ui_message
+            return None
+        except Exception as e:
+            self.logger.error(f"✗ Failed to get message: {e}")
+            raise
+    
+    # === HYBRID CHAT + ANALYSIS SUPPORT (GitHub Issue #122) ===
+    
+    async def add_hybrid_message(
+        self,
+        session_id: str,
+        user_id: str,
+        content: str,
+        message_type: str,  # "chat", "educational_chat", "analysis_confirmation", etc.
+        intent: str = None,
+        analysis_suggestion: Dict[str, Any] = None,
+        analysis_id: str = None,
+        execution_id: str = None,
+        in_reply_to: str = None
+    ) -> str:
+        """
+        Add hybrid chat+analysis message with enhanced metadata for tracking
+        
+        Args:
+            session_id: Chat session ID
+            user_id: User ID 
+            content: Message content
+            message_type: Type of hybrid message (chat, educational_chat, etc.)
+            intent: Classified intent from IntentClassifierService
+            analysis_suggestion: Analysis suggestion data if applicable
+            analysis_id: Reference to analysis if applicable
+            execution_id: Reference to execution if applicable
+            in_reply_to: Message ID this is replying to
+            
+        Returns:
+            Message ID
+        """
+        try:
+            # Build hybrid metadata
+            hybrid_metadata = {
+                "response_type": message_type,
+                "intent": intent,
+                "hybrid_chat": True,  # Flag to identify hybrid messages
+                "timestamp": datetime.utcnow().isoformat()
+            }
+            
+            # Add analysis suggestion if provided
+            if analysis_suggestion:
+                hybrid_metadata["analysis_suggestion"] = {
+                    "topic": analysis_suggestion.get("topic"),
+                    "description": analysis_suggestion.get("description"), 
+                    "suggested_question": analysis_suggestion.get("suggested_question"),
+                    "analysis_type": analysis_suggestion.get("analysis_type")
+                }
+            
+            # Add reply reference if provided
+            if in_reply_to:
+                hybrid_metadata["in_reply_to"] = in_reply_to
+            
+            # Add message using existing method
+            msg_id = await self.add_assistant_message(
+                session_id=session_id,
+                user_id=user_id,
+                content=content,
+                analysis_id=analysis_id,
+                execution_id=execution_id,
+                metadata=hybrid_metadata
+            )
+            
+            self.logger.info(f"✓ Added hybrid message: {msg_id} (type: {message_type})")
+            return msg_id
+            
+        except Exception as e:
+            self.logger.error(f"✗ Failed to add hybrid message: {e}")
             raise
