@@ -24,7 +24,7 @@ export default function UserMenu() {
                     Sign in
                 </button>
                 <button
-                    onClick={() => router.push('/auth/register')}
+                    onClick={() => router.push('/auth/signup')}
                     className="px-3 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
                 >
                     Sign up

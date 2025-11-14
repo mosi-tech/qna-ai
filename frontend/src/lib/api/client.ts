@@ -281,10 +281,13 @@ export class APIClient {
       if (jwt) {
         headers['Authorization'] = `Bearer ${jwt}`;
         if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
-          console.log('[APIClient] DEV: Adding JWT Authorization header');
+          console.log('[APIClient] DEV: ✅ Adding JWT Authorization header');
         }
       } else {
-        console.warn('[APIClient] DEV: No JWT token available');
+        if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
+          console.warn('[APIClient] DEV: ⚠️ No JWT token available, request may fail');
+        }
+        // Still try the request - backend might have fallback auth
       }
     } else {
       // PROD: Rely on HttpOnly cookies (automatic)
@@ -307,18 +310,26 @@ export class APIClient {
     try {
       const { account } = await import('../appwrite');
       
+      // First check if user is authenticated
+      try {
+        await account.get();
+      } catch (authError) {
+        if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
+          console.warn('[APIClient] User not authenticated, cannot create JWT:', authError);
+        }
+        return null;
+      }
+      
       // Create JWT token from current session
       const jwt = await account.createJWT();
       
       if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
-        console.log('[APIClient] Created JWT token for dev authentication');
+        console.log('[APIClient] ✅ Created JWT token for dev authentication');
       }
       
       return jwt.jwt;
     } catch (error) {
-      if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
-        console.log('[APIClient] No active session for JWT creation:', error);
-      }
+      console.error('[APIClient] ❌ JWT token creation failed:', error);
       return null;
     }
   }
