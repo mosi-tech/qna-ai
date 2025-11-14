@@ -13,6 +13,7 @@ import AnalysisPanel from '@/components/chat/AnalysisPanel';
 import ProgressPanel from '@/components/progress/ProgressPanel';
 import CustomizationForm from '@/components/chat/CustomizationForm';
 import SessionList from '@/components/chat/SessionList';
+import UserMenu from '@/components/auth/UserMenu';
 import { ParameterValues } from '@/types/modules';
 import { ProgressManager } from '@/lib/progress/ProgressManager';
 import { withAuth } from '@/lib/context/AuthContext';
@@ -733,19 +734,30 @@ function ChatPageContent() {
 
   if (viewMode === 'single') {
     return (
-      <div className="h-screen bg-gray-50 flex overflow-hidden">
-        {showSessionHistory && user_id && (
-          <div className="w-96 border-r border-gray-200 flex flex-col">
-            <SessionList
-              userId={user_id}
-              currentSessionId={session_id || undefined}
-              onSelectSession={handleSelectSession}
-              isOpen={showSessionHistory}
-              onClose={() => setShowSessionHistory(false)}
-            />
+      <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
+        {/* Top Header with Logout */}
+        <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <h1 className="text-xl font-bold text-gray-900">Financial Analysis Chat</h1>
+            <span className="text-sm text-gray-500">Session: {session_id?.slice(0, 8)}...</span>
           </div>
-        )}
-        <div className="flex-1 flex flex-col">
+          <UserMenu />
+        </header>
+
+        {/* Main Content */}
+        <div className="flex-1 flex overflow-hidden">
+          {showSessionHistory && user_id && (
+            <div className="w-96 border-r border-gray-200 flex flex-col">
+              <SessionList
+                userId={user_id}
+                currentSessionId={session_id || undefined}
+                onSelectSession={handleSelectSession}
+                isOpen={showSessionHistory}
+                onClose={() => setShowSessionHistory(false)}
+              />
+            </div>
+          )}
+          <div className="flex-1 flex flex-col">
           {!showSessionHistory && (
             <div className="border-b border-gray-200 px-4 py-3 flex items-center gap-2">
               <button
@@ -793,67 +805,80 @@ function ChatPageContent() {
           />
         )}
 
-        {uiError && (
-          <div className="fixed bottom-4 right-4 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
-            {uiError}
-          </div>
-        )}
+          {uiError && (
+            <div className="fixed bottom-4 right-4 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
+              {uiError}
+            </div>
+          )}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen bg-gray-50 flex">
-      <div className="w-1/4 bg-white border-r border-gray-200 flex flex-col relative">
-        <div className="border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-          <h1 className="text-sm font-bold text-gray-900">Chat History</h1>
-          <button
-            onClick={() => setViewMode('single')}
-            className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-            title="Switch to single view"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
-            </svg>
-          </button>
+    <div className="h-screen bg-gray-50 flex flex-col">
+      {/* Top Header with Logout */}
+      <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <h1 className="text-xl font-bold text-gray-900">Financial Analysis Chat</h1>
+          <span className="text-sm text-gray-500">Session: {session_id?.slice(0, 8)}...</span>
         </div>
-        <SessionList
-          userId={user_id || ''}
-          currentSessionId={session_id || undefined}
-          onSelectSession={handleSelectSession}
-          isOpen={true}
-          onClose={() => { }}
-          hideHeader={true}
-        />
-      </div>
+        <UserMenu />
+      </header>
 
-      <div className="flex-1 flex flex-col">
-        <ChatInterface
-          messages={messages}
-          chatInput={chatInput}
-          setChatInput={setChatInput}
-          isProcessing={isProcessing || analysisLoading}
-          onSendMessage={handleSendMessage}
-          onClarificationResponse={handleClarificationResponse}
-          pendingClarificationId={lastClarificationMessageId}
-          onLoadOlder={handleLoadOlderMessages}
-          isLoadingOlder={isLoadingOlderMessages}
-          canLoadOlder={currentSessionMessages.hasOlder}
-          onExecutionUpdate={handleExecutionUpdate}
-        />
-      </div>
+      {/* Main Content Area */}
+      <div className="flex-1 flex">
+          <div className="w-1/4 bg-white border-r border-gray-200 flex flex-col relative">
+            <div className="border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+              <h1 className="text-sm font-bold text-gray-900">Chat History</h1>
+              <button
+                onClick={() => setViewMode('single')}
+                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Switch to single view"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                </svg>
+              </button>
+            </div>
+            <SessionList
+              userId={user_id || ''}
+              currentSessionId={session_id || undefined}
+              onSelectSession={handleSelectSession}
+              isOpen={true}
+              onClose={() => { }}
+              hideHeader={true}
+            />
+          </div>
 
-      <div className="w-1/4 bg-gray-900 border-r border-gray-700 flex flex-col">
-        <ProgressPanel
-          logs={progressLogs}
-          isConnected={isConnected}
-          isProcessing={isProcessing || analysisLoading}
-          onClear={clearLogs}
-        />
-      </div>
+          <div className="flex-1 flex flex-col">
+            <ChatInterface
+              messages={messages}
+              chatInput={chatInput}
+              setChatInput={setChatInput}
+              isProcessing={isProcessing || analysisLoading}
+              onSendMessage={handleSendMessage}
+              onClarificationResponse={handleClarificationResponse}
+              pendingClarificationId={lastClarificationMessageId}
+              onLoadOlder={handleLoadOlderMessages}
+              isLoadingOlder={isLoadingOlderMessages}
+              canLoadOlder={currentSessionMessages.hasOlder}
+              onExecutionUpdate={handleExecutionUpdate}
+            />
+          </div>
 
-      <div className="w-1/2 flex flex-col">
-        <AnalysisPanel currentAnalysis={currentAnalysis} />
+          <div className="w-1/4 bg-gray-900 border-r border-gray-700 flex flex-col">
+            <ProgressPanel
+              logs={progressLogs}
+              isConnected={isConnected}
+              isProcessing={isProcessing || analysisLoading}
+              onClear={clearLogs}
+            />
+          </div>
+
+          <div className="w-1/2 flex flex-col">
+            <AnalysisPanel currentAnalysis={currentAnalysis} />
+          </div>
       </div>
 
       {showCustomization && (

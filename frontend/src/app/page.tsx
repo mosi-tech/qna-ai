@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useSession } from '@/lib/context/SessionContext';
 import { useConversation } from '@/lib/context/ConversationContext';
 import { useUI } from '@/lib/context/UIContext';
+import { withAuth } from '@/lib/context/AuthContext';
 import { useAnalysis } from '@/lib/hooks/useAnalysis';
 import { useSessionManager } from '@/lib/hooks/useSessionManager';
 import { ProgressProvider, useProgress } from '@/lib/context/ProgressContext';
@@ -12,6 +13,7 @@ import AnalysisPanel from '@/components/chat/AnalysisPanel';
 import ProgressPanel from '@/components/progress/ProgressPanel';
 import CustomizationForm from '@/components/chat/CustomizationForm';
 import SessionList from '@/components/chat/SessionList';
+import UserMenu from '@/components/auth/UserMenu';
 import { ParameterValues } from '@/types/modules';
 import { ProgressManager } from '@/lib/progress/ProgressManager';
 import { api } from '@/lib/api';
@@ -567,7 +569,7 @@ function HomeContent() {
               <p className="text-gray-600 text-xs mt-1">Ask questions about trading & investing</p>
             </div>
 
-            <div className="w-9"></div>
+            <UserMenu />
           </div>
         </header>
 
@@ -640,6 +642,8 @@ function HomeContent() {
             <div className="text-center flex-1">
               <h1 className="text-sm font-bold text-gray-900">Chat</h1>
             </div>
+
+            <UserMenu />
           </div>
         </header>
 
@@ -700,7 +704,7 @@ function HomeContent() {
   );
 }
 
-export default function Home() {
+function Home() {
   const { session_id } = useSession();
   
   return (
@@ -709,3 +713,5 @@ export default function Home() {
     </ProgressProvider>
   );
 }
+
+export default withAuth(Home);

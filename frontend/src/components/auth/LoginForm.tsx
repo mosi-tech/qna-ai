@@ -171,7 +171,7 @@ export default function LoginForm({ redirectTo }: LoginFormProps) {
                     <div className="text-center">
                         <span className="text-sm text-gray-600">
                             Don't have an account?{' '}
-                            <Link href="/auth/register" className="font-medium text-blue-600 hover:text-blue-500">
+                            <Link href="/auth/signup" className="font-medium text-blue-600 hover:text-blue-500">
                                 Sign up
                             </Link>
                         </span>
