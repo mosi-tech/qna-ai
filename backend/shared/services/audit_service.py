@@ -124,11 +124,7 @@ class AuditService:
     ) -> List[ExecutionModel]:
         """Get execution history for user"""
         try:
-            executions = await self.repo.db.db.executions.find(
-                {"userId": user_id}
-            ).sort("startedAt", -1).limit(limit).to_list(limit)
-            
-            result = [ExecutionModel(**doc) for doc in executions]
+            result = await self.execution_repo.get_user_execution_history(user_id, limit)
             self.logger.info(f"✓ Retrieved {len(result)} executions for user")
             return result
         except Exception as e:

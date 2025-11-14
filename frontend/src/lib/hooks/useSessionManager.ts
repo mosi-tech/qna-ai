@@ -1,5 +1,5 @@
 import { useCallback, useState, useEffect } from 'react';
-import { api } from '@/lib/api';
+import { apiClient } from '@/lib/api/client';
 
 export interface SessionMetadata {
   session_id: string;
@@ -43,25 +43,22 @@ export const useSessionManager = () => {
       setIsLoadingSessions(true);
       setError(null);
       try {
-        const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-        const url = new URL(`/api/sessions/user/${userId}`, backendUrl);
-        url.searchParams.append('skip', '0');
-        url.searchParams.append('limit', '50');
-        if (search) url.searchParams.append('search', search);
-        if (archived !== undefined) url.searchParams.append('archived', String(archived));
+        const params = new URLSearchParams();
+        params.append('limit', '50');
+        if (search) params.append('search', search);
+        if (archived !== undefined) params.append('archived', String(archived));
 
-        console.log(`[useSessionManager] Fetching from: ${url.toString()}`);
-        
-        const response = await fetch(url.toString(), { method: 'GET' });
+        console.log(`[useSessionManager] Fetching user sessions`);
 
-        if (!response.ok) {
-          throw new Error(`Failed to load sessions: ${response.statusText}`);
+        const response = await apiClient.get<SessionMetadata[]>(`/api/sessions/list?${params.toString()}`);
+
+        if (!response.success || !response.data) {
+          throw new Error('Failed to load sessions');
         }
 
-        const data = await response.json();
-        setSessions(data);
-        console.log(`[useSessionManager] Loaded ${data.length} sessions`);
-        return data;
+        setSessions(response.data);
+        console.log(`[useSessionManager] Loaded ${response.data.length} sessions`);
+        return response.data;
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : 'Failed to load sessions';
         setError(errorMsg);
@@ -77,28 +74,26 @@ export const useSessionManager = () => {
   const getSessionDetail = useCallback(
     async (sessionId: string, offset: number = 0, limit: number = 5): Promise<SessionDetail | null> => {
       try {
-        const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-        const url = new URL(`${backendUrl}/api/sessions/${sessionId}`);
-        url.searchParams.append('offset', String(offset));
-        url.searchParams.append('limit', String(limit));
-        
-        console.log(`[useSessionManager] Fetching session from: ${url.toString()}`);
-        
-        const response = await fetch(url.toString());
+        const params = new URLSearchParams();
+        params.append('offset', String(offset));
+        params.append('limit', String(limit));
 
-        if (!response.ok) {
-          if (response.status === 404) {
-            return null;
-          }
-          throw new Error(`Failed to load session: ${response.statusText}`);
+        console.log(`[useSessionManager] Fetching session ${sessionId}`);
+
+        const response = await apiClient.get<SessionDetail>(`/api/sessions/${sessionId}?${params.toString()}`);
+
+        if (!response.success || !response.data) {
+          return null;
         }
 
-        const data = await response.json();
         console.log(
-          `[useSessionManager] Loaded session ${sessionId} with ${data.messages?.length || 0} messages (has_older: ${data.has_older})`
+          `[useSessionManager] Loaded session ${sessionId} with ${response.data.messages?.length || 0} messages (has_older: ${response.data.has_older})`
         );
-        return data;
-      } catch (err) {
+        return response.data;
+      } catch (err: any) {
+        if (err.status === 404 || err.message?.includes('404')) {
+          return null;
+        }
         console.error('[useSessionManager] Error loading session:', err);
         throw err;
       }
@@ -109,17 +104,13 @@ export const useSessionManager = () => {
   const updateSession = useCallback(
     async (sessionId: string, title?: string, isArchived?: boolean) => {
       try {
-        const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-        const url = `${backendUrl}/api/sessions/${sessionId}`;
-        
-        const response = await fetch(url, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title, is_archived: isArchived }),
+        const response = await apiClient.put(`/api/sessions/${sessionId}`, {
+          title,
+          is_archived: isArchived,
         });
 
-        if (!response.ok) {
-          throw new Error(`Failed to update session: ${response.statusText}`);
+        if (!response.success) {
+          throw new Error('Failed to update session');
         }
 
         console.log(`[useSessionManager] Updated session ${sessionId}`);
@@ -142,15 +133,10 @@ export const useSessionManager = () => {
 
   const deleteSession = useCallback(async (sessionId: string) => {
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-      const url = `${backendUrl}/api/sessions/${sessionId}`;
-      
-      const response = await fetch(url, {
-        method: 'DELETE',
-      });
+      const response = await apiClient.delete(`/api/sessions/${sessionId}`);
 
-      if (!response.ok) {
-        throw new Error(`Failed to delete session: ${response.statusText}`);
+      if (!response.success) {
+        throw new Error('Failed to delete session');
       }
 
       console.log(`[useSessionManager] Deleted session ${sessionId}`);

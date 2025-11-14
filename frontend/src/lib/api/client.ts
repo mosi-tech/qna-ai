@@ -164,7 +164,7 @@ export class APIClient {
   }): Promise<APIResponse<T>> {
     const { method, path, data, timeout } = config;
     const url = this.buildURL(path);
-    const headers = this.buildHeaders();
+    const headers = await this.buildHeaders();
 
     try {
       const controller = new AbortController();
@@ -174,6 +174,7 @@ export class APIClient {
         method,
         headers,
         signal: controller.signal,
+        credentials: 'include', // Include cookies in cross-origin requests
       };
 
       if (data && (method === 'POST' || method === 'PUT')) {
@@ -201,10 +202,17 @@ export class APIClient {
 
       // Check if response is successful
       if (!response.ok) {
-        throw parseAPIError({
+        const apiError = parseAPIError({
           status: response.status,
           data: typeof responseData === 'object' ? responseData : { error: responseData },
         });
+        
+        // Handle 401 Unauthorized - redirect to login
+        if (response.status === 401) {
+          this.handleUnauthorized();
+        }
+        
+        throw apiError;
       }
 
       // Ensure response has correct format
@@ -258,35 +266,102 @@ export class APIClient {
   }
 
   /**
-   * Build request headers
+   * Build request headers with environment-aware authentication
    */
-  private buildHeaders(): Record<string, string> {
+  private async buildHeaders(): Promise<Record<string, string>> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     };
 
-    // Add authorization token if available
-    const token = this.getAuthToken();
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+    // Environment-aware authentication
+    if (process.env.NEXT_PUBLIC_AUTH_MODE === 'jwt') {
+      // DEV: Use JWT tokens for cross-domain authentication
+      const jwt = await this.getJWTToken();
+      if (jwt) {
+        headers['Authorization'] = `Bearer ${jwt}`;
+        if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
+          console.log('[APIClient] DEV: Adding JWT Authorization header');
+        }
+      } else {
+        console.warn('[APIClient] DEV: No JWT token available');
+      }
+    } else {
+      // PROD: Rely on HttpOnly cookies (automatic)
+      if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
+        console.log('[APIClient] PROD: Using automatic cookie authentication');
+      }
     }
 
     return headers;
   }
 
   /**
-   * Get authorization token (placeholder for future auth implementation)
+   * Get JWT token from Appwrite for development
    */
-  private getAuthToken(): string | null {
+  private async getJWTToken(): Promise<string | null> {
     if (typeof window === 'undefined') {
       return null;
     }
 
     try {
-      return localStorage.getItem('auth_token');
-    } catch {
+      const { account } = await import('../appwrite');
+      
+      // Create JWT token from current session
+      const jwt = await account.createJWT();
+      
+      if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
+        console.log('[APIClient] Created JWT token for dev authentication');
+      }
+      
+      return jwt.jwt;
+    } catch (error) {
+      if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
+        console.log('[APIClient] No active session for JWT creation:', error);
+      }
       return null;
+    }
+  }
+
+  /**
+   * Handle unauthorized responses (401) by redirecting to login
+   */
+  private handleUnauthorized(): void {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    console.warn('[APIClient] 401 Unauthorized - redirecting to login');
+    
+    // Clear any stored auth tokens
+    try {
+      localStorage.removeItem('auth_token');
+      // Clear Appwrite session cookies by setting them to expire
+      const cookies = document.cookie.split(';');
+      cookies.forEach(cookie => {
+        const cookieName = cookie.split('=')[0].trim();
+        if (cookieName.startsWith('a_session_')) {
+          document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+        }
+      });
+    } catch {
+      // Ignore localStorage/cookie errors
+    }
+    
+    // Redirect to login page
+    const currentPath = window.location.pathname;
+    const loginUrl = '/auth/login';
+    
+    // Avoid redirect loops
+    if (currentPath !== loginUrl && !currentPath.startsWith('/auth/')) {
+      // Store the current path to redirect back after login
+      try {
+        localStorage.setItem('redirect_after_login', currentPath);
+      } catch {
+        // Ignore localStorage errors
+      }
+      
+      window.location.href = loginUrl;
     }
   }
 

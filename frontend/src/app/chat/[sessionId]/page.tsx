@@ -15,6 +15,8 @@ import CustomizationForm from '@/components/chat/CustomizationForm';
 import SessionList from '@/components/chat/SessionList';
 import { ParameterValues } from '@/types/modules';
 import { ProgressManager } from '@/lib/progress/ProgressManager';
+import { withAuth } from '@/lib/context/AuthContext';
+import { apiClient } from '@/lib/api/client';
 
 function ChatPageContent() {
   const { session_id, user_id, resumeSession, updateSessionMetadata, startNewSession } = useSession();
@@ -32,12 +34,11 @@ function ChatPageContent() {
     }
 
     try {
-      const response = await fetch(`/api/chat/${session_id}/${messageId}`);
-      if (response.ok) {
-        const messageData = await response.json();
-        return messageData;
+      const response = await apiClient.get(`/api/sessions/${session_id}/messages/${messageId}`);
+      if (response.success && response.data) {
+        return response.data;
       } else {
-        console.warn(`Failed to fetch updated message ${messageId}:`, response.statusText);
+        console.warn(`Failed to fetch updated message ${messageId}`);
         return null;
       }
     } catch (error) {
@@ -687,7 +688,7 @@ function ChatPageContent() {
       setIsProcessing(true);
       // Call startNewSession to create a new session server-side
       // This will create the session and navigate to the new session URL
-      await startNewSession(user_id || undefined);
+      await startNewSession();
       setSessionNotFound(false);
       setMessages([]);
     } catch (err) {
@@ -884,12 +885,54 @@ function ChatPageContent() {
   );
 }
 
-export default function ChatPage() {
-  const { session_id } = useSession();
+interface ChatPageProps {
+  params: {
+    sessionId: string;
+  };
+}
+
+function ChatPage({ params }: ChatPageProps) {
+  const { sessionId } = params;
 
   return (
-    <ProgressProvider sessionId={session_id}>
-      <ChatPageContent />
+    <ProgressProvider sessionId={sessionId}>
+      <ChatPageWithSession sessionId={sessionId} />
     </ProgressProvider>
   );
+}
+
+// Export with authentication protection
+export default withAuth(ChatPage);
+
+function ChatPageWithSession({ sessionId }: { sessionId: string }) {
+  const { session_id, resumeSession, isLoading } = useSession();
+  const [initializing, setInitializing] = useState(true);
+
+  // Initialize session when component mounts
+  useEffect(() => {
+    const initializeSession = async () => {
+      if (sessionId && sessionId !== session_id) {
+        try {
+          await resumeSession(sessionId);
+        } catch (error) {
+          console.error('Failed to initialize session:', error);
+        }
+      }
+      setInitializing(false);
+    };
+
+    initializeSession();
+  }, [sessionId, session_id, resumeSession]);
+
+  // Show loading while initializing or session is loading
+  if (initializing || isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <span className="ml-2">Loading session...</span>
+      </div>
+    );
+  }
+
+  return <ChatPageContent />;
 }

@@ -44,7 +44,7 @@ class AnalysisPersistenceService:
     async def get_analysis(self, analysis_id: str) -> Optional[AnalysisModel]:
         """Get analysis by ID"""
         try:
-            analysis = await self.repo.db.get_analysis(analysis_id)
+            analysis = await self.analysis_repo.get_analysis(analysis_id)
             return analysis
         except Exception as e:
             self.logger.error(f"✗ Failed to get analysis: {e}")
@@ -109,7 +109,7 @@ class AnalysisPersistenceService:
     ) -> List[AnalysisModel]:
         """Search analyses by title/description"""
         try:
-            analyses = await self.repo.db.search_analyses(
+            analyses = await self.analysis_repo.search_analyses(
                 user_id=user_id,
                 search_text=search_text,
                 limit=limit
@@ -123,7 +123,7 @@ class AnalysisPersistenceService:
     async def mark_analysis_used(self, analysis_id: str) -> bool:
         """Update last_used_at timestamp"""
         try:
-            result = await self.repo.db.mark_analysis_used(analysis_id)
+            result = await self.analysis_repo.mark_analysis_used(analysis_id)
             self.logger.info(f"✓ Marked analysis as used: {analysis_id}")
             return result
         except Exception as e:

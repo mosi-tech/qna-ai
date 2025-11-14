@@ -15,11 +15,10 @@ session_id = await chat_service.start_session(user_id, title)
 
 ---
 
-### 2. Get Chat History
-**Endpoint:** `GET /chat/{session_id}/history`
-**Purpose:** Retrieve all messages in a conversation session
-**Parameters:**
-- `session_id` (path): Session identifier
+### 2. Get Chat History ❌ **REMOVED**
+**Endpoint:** ~~`GET /chat/{session_id}/history`~~ - removed due to security issues
+**Purpose:** ~~Retrieve all messages in a conversation session~~
+**Note:** Use `/api/sessions/{session_id}` instead (authenticated & secure)
 **Returns:**
 ```json
 {
@@ -67,11 +66,10 @@ session_id = await chat_service.start_session(user_id, title)
 
 ---
 
-### 4. Get Session Context
-**Endpoint:** `GET /conversation/{session_id}/context`
-**Purpose:** Get full session context including recent messages and analyses
-**Parameters:**
-- `session_id` (path): Session identifier
+### 4. Get Session Context ❌ **REMOVED**
+**Endpoint:** ~~`GET /conversation/{session_id}/context`~~ - unused legacy endpoint
+**Purpose:** ~~Get full session context including recent messages and analyses~~
+**Note:** Use `/api/sessions/{session_id}` instead for session data
 **Returns:**
 ```json
 {

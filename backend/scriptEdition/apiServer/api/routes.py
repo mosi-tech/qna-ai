@@ -12,6 +12,7 @@ from fastapi import HTTPException
 from typing import Dict, Any, Optional, List
 
 from api.models import QuestionRequest, AnalysisResponse
+from api.auth import UserContext, require_premium
 from shared.services.chat_service import ChatHistoryService
 from shared.services.cache_service import CacheService
 from shared.services.execution_queue_service import execution_queue_service

@@ -47,7 +47,6 @@ logger = logging.getLogger("api-server")
 
 
 class SessionRequest(BaseModel):
-    user_id: str
     title: Optional[str] = None
 
 
@@ -194,20 +193,27 @@ def create_app() -> FastAPI:
     
     # Session Management Routes (integrated with backend SessionManager)
     @app.post("/session/start", response_model=SessionResponse)
-    async def start_session(request: SessionRequest):
+    async def start_session(
+        request: SessionRequest,
+        user_context: UserContext = Depends(require_authenticated_user)
+    ):
         """Start a new session using backend SessionManager"""
         try:
+            # Use authenticated user's ID instead of request user_id
             session_id = await app.state.session_manager.create_session(
-                user_id=request.user_id,
+                user_id=user_context.user_id,
                 title=request.title
             )
-            return SessionResponse(session_id=session_id, user_id=request.user_id)
+            return SessionResponse(session_id=session_id, user_id=user_context.user_id)
         except Exception as e:
             logger.error(f"Failed to create session: {e}")
             raise HTTPException(status_code=500, detail="Failed to create session")
     
     @app.get("/session/{session_id}")
-    async def get_session(session_id: str):
+    async def get_session(
+        session_id: str,
+        user_context: UserContext = Depends(require_authenticated_user)
+    ):
         """Get session details from backend"""
         try:
             store = await app.state.session_manager.get_session(session_id)
@@ -234,8 +240,13 @@ def create_app() -> FastAPI:
             }
     
     @app.post("/analyze", response_model=AnalysisResponse)
-    async def analyze_question(request: QuestionRequest):
+    async def analyze_question(
+        request: QuestionRequest,
+        user_context: UserContext = Depends(require_authenticated_user)
+    ):
         """Analyze a financial question and generate tool calls without execution"""
+        # Add user context to the request for logging and audit
+        request.user_id = user_context.user_id
         return await app.state.api_routes.analyze_question(request)
     
     @app.post("/analyze-simple", response_model=AnalysisResponse)
@@ -243,8 +254,12 @@ def create_app() -> FastAPI:
         """SIMPLE VERSION - Analyze question without session locking for debugging"""
         return await app.state.api_routes.analyze_question_simple(request)
     
-    @app.post("/chat", response_model=AnalysisResponse)
-    async def chat_with_analysis(request: QuestionRequest):
+    @app.post("/sessions/{session_id}/chat", response_model=AnalysisResponse)
+    async def chat_with_analysis(
+        session_id: str,
+        request: QuestionRequest,
+        user_context: UserContext = Depends(require_authenticated_user)
+    ):
         """
         Hybrid chat + analysis endpoint (GitHub Issue #122)
         
@@ -253,6 +268,10 @@ def create_app() -> FastAPI:
         - Analysis suggestions and confirmations  
         - Direct analysis execution when needed
         """
+        # Add user context to the request for personalization and audit
+        request.user_id = user_context.user_id
+        # Set session_id from URL path (more RESTful than request body)
+        request.session_id = session_id
         return await app.state.api_routes.chat_with_analysis(request)
     
     @app.post("/test-immediate")
@@ -337,11 +356,6 @@ def create_app() -> FastAPI:
         """Get all executions for a specific session (user must own the executions)"""
         return await app.state.execution_routes.get_session_executions(session_id, user_context, limit=limit, status_filter=status)
     
-    @app.post("/conversation/confirm")
-    async def confirm_expansion(session_id: str, confirmed: bool):
-        """Handle user confirmation for query expansion"""
-        return await app.state.api_routes.confirm_expansion(session_id, confirmed)
-    
     @app.post("/clarification/{session_id}")
     async def handle_clarification_response(session_id: str, 
                                            user_response: str,
@@ -355,35 +369,30 @@ def create_app() -> FastAPI:
             expanded_query=expanded_query
         )
     
-    @app.get("/conversation/{session_id}/context")
-    async def get_session_context(session_id: str):
-        """Get conversation context for debugging"""
-        return await app.state.api_routes.get_session_context(session_id)
     
-    @app.get("/conversation/sessions")
-    async def list_sessions():
-        """List active conversation sessions"""
-        return await app.state.api_routes.list_sessions()
+    @app.get("/user/sessions")
+    async def get_user_sessions(
+        limit: int = 50,
+        user_context: UserContext = Depends(require_authenticated_user)
+    ):
+        """Get all sessions for the authenticated user"""
+        return await app.state.api_routes.get_user_sessions(user_context.user_id, limit=limit)
     
-    @app.get("/chat/{session_id}/history")
-    async def get_chat_history(session_id: str):
-        """Get chat history for a session"""
-        return await app.state.api_routes.get_chat_history(session_id)
+    @app.get("/user/analyses")
+    async def get_reusable_analyses(
+        user_context: UserContext = Depends(require_authenticated_user)
+    ):
+        """Get all reusable analyses for the authenticated user"""
+        return await app.state.api_routes.get_reusable_analyses(user_context.user_id)
     
-    @app.get("/user/{user_id}/sessions")
-    async def get_user_sessions(user_id: str, limit: int = 50):
-        """Get all sessions for a user"""
-        return await app.state.api_routes.get_user_sessions(user_id, limit=limit)
-    
-    @app.get("/user/{user_id}/analyses")
-    async def get_reusable_analyses(user_id: str):
-        """Get all reusable analyses for a user"""
-        return await app.state.api_routes.get_reusable_analyses(user_id)
-    
-    @app.get("/user/{user_id}/analyses/search")
-    async def search_analyses(user_id: str, q: str, limit: int = 50):
-        """Search analyses by title/description"""
-        return await app.state.api_routes.search_analyses(user_id, q, limit=limit)
+    @app.get("/user/analyses/search")
+    async def search_analyses(
+        q: str, 
+        limit: int = 50,
+        user_context: UserContext = Depends(require_authenticated_user)
+    ):
+        """Search analyses by title/description for the authenticated user"""
+        return await app.state.api_routes.search_analyses(user_context.user_id, q, limit=limit)
     
     @app.get("/session/{session_id}/executions")
     async def get_execution_history(session_id: str, limit: int = 100):
@@ -391,9 +400,13 @@ def create_app() -> FastAPI:
         return await app.state.api_routes.get_execution_history(session_id, limit=limit)
     
     @app.post("/execute/{analysis_id}")
-    async def execute_analysis(analysis_id: str, user_id: str, session_id: Optional[str] = None):
+    async def execute_analysis(
+        analysis_id: str, 
+        session_id: Optional[str] = None,
+        user_context: UserContext = Depends(require_authenticated_user)
+    ):
         """Execute an analysis script and populate results"""
-        return await app.state.api_routes.execute_analysis(analysis_id, user_id, session_id)
+        return await app.state.api_routes.execute_analysis(analysis_id, user_context.user_id, session_id)
     
     return app
 
@@ -443,8 +456,6 @@ if __name__ == "__main__":
     print("   • Contextual queries (references previous questions)")
     print("   • Session management with auto-cleanup")
     print("   • Query expansion with confidence scoring")
-    print("   • GET /conversation/sessions - list active sessions")
-    print("   • GET /conversation/{session_id}/context - debug session")
     
     if provider == "anthropic":
         anthropic_model = os.getenv("ANTHROPIC_MODEL", "claude-3-5-haiku-20241022")

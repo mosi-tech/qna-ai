@@ -251,6 +251,79 @@ class MongoDBClient:
         ).sort("createdAt", -1).limit(limit).to_list(limit)
         return [ChatSessionModel(**doc) for doc in docs]
     
+    async def find_user_sessions(
+        self, 
+        user_id: str, 
+        skip: int = 0, 
+        limit: int = 10, 
+        search_text: Optional[str] = None, 
+        archived: Optional[bool] = None,
+        include_last_message: bool = False
+    ) -> List[ChatSessionModel]:
+        """Find user sessions with filters and pagination, optionally include last message via aggregation"""
+        if not include_last_message:
+            # Simple query - just get sessions
+            query = {"userId": user_id}
+            
+            if archived is not None:
+                query["isArchived"] = archived
+            
+            if search_text:
+                query["title"] = {"$regex": search_text, "$options": "i"}
+            
+            docs = await self.db.chat_sessions.find(query)\
+                .sort("updatedAt", -1)\
+                .skip(skip)\
+                .limit(limit)\
+                .to_list(limit)
+            
+            return [ChatSessionModel(**doc) for doc in docs]
+        
+        else:
+            # Optimized aggregation to get sessions with last message in single query
+            match_stage = {"userId": user_id}
+            if archived is not None:
+                match_stage["isArchived"] = archived
+            if search_text:
+                match_stage["title"] = {"$regex": search_text, "$options": "i"}
+            
+            pipeline = [
+                {"$match": match_stage},
+                {"$sort": {"updatedAt": -1}},
+                {"$skip": skip},
+                {"$limit": limit},
+                # Lookup last message for each session
+                {
+                    "$lookup": {
+                        "from": "chat_messages",
+                        "let": {"sessionId": "$sessionId"},
+                        "pipeline": [
+                            {"$match": {"$expr": {"$eq": ["$sessionId", "$$sessionId"]}}},
+                            {"$sort": {"createdAt": -1}},
+                            {"$limit": 1},
+                            {"$project": {"content": 1}}
+                        ],
+                        "as": "lastMessage"
+                    }
+                },
+                # Add last message content to session
+                {
+                    "$addFields": {
+                        "lastMessageContent": {
+                            "$cond": {
+                                "if": {"$gt": [{"$size": "$lastMessage"}, 0]},
+                                "then": {"$substr": [{"$arrayElemAt": ["$lastMessage.content", 0]}, 0, 100]},
+                                "else": null
+                            }
+                        }
+                    }
+                },
+                {"$unset": "lastMessage"}  # Remove the temporary field
+            ]
+            
+            docs = await self.db.chat_sessions.aggregate(pipeline).to_list(limit)
+            return [ChatSessionModel(**doc) for doc in docs]
+    
     async def update_session(self, session_id: str, updates: Dict[str, Any]) -> bool:
         """Update chat session"""
         camel_case_updates = convert_to_camel_case(updates)
@@ -264,6 +337,24 @@ class MongoDBClient:
     async def archive_session(self, session_id: str) -> bool:
         """Archive chat session"""
         return await self.update_session(session_id, {"is_archived": True})
+    
+    async def delete_session(self, session_id: str) -> bool:
+        """Delete chat session"""
+        result = await self.db.chat_sessions.delete_one({"sessionId": session_id})
+        return result.deleted_count > 0
+    
+    async def insert_session(self, session_doc: Dict[str, Any]) -> str:
+        """Insert a new session document"""
+        result = await self.db.chat_sessions.insert_one(session_doc)
+        return session_doc.get("sessionId")
+    
+    async def add_analysis_to_session(self, session_id: str, analysis_id: str) -> bool:
+        """Add analysis ID to session's analysis_ids array"""
+        result = await self.db.chat_sessions.update_one(
+            {"sessionId": session_id},
+            {"$push": {"analysis_ids": analysis_id}}
+        )
+        return result.modified_count > 0
     
     # ========================================================================
     # CHAT MESSAGE OPERATIONS
@@ -306,6 +397,45 @@ class MongoDBClient:
             sort=[("created_at", -1)]
         )
         return ChatMessageModel(**doc) if doc else None
+    
+    async def count_session_messages(self, session_id: str) -> int:
+        """Count messages in a session"""
+        return await self.db.chat_messages.count_documents({"sessionId": session_id})
+    
+    async def update_message(self, message_id: str, updates: Dict[str, Any]) -> bool:
+        """Update a chat message"""
+        result = await self.db.chat_messages.update_one(
+            {"messageId": message_id},
+            {"$set": updates}
+        )
+        return result.modified_count > 0
+    
+    async def update_message_with_query(self, query: Dict[str, Any], update_operations: Dict[str, Any]) -> bool:
+        """Update message with custom query and update operations"""
+        result = await self.db.chat_messages.update_one(query, update_operations)
+        return result.modified_count > 0
+    
+    async def find_message(self, query: Dict[str, Any], projection: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
+        """Find a single message with optional projection"""
+        return await self.db.chat_messages.find_one(query, projection)
+    
+    async def aggregate_messages(self, pipeline: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Execute aggregation pipeline on messages"""
+        cursor = self.db.chat_messages.aggregate(pipeline)
+        return await cursor.to_list(None)
+    
+    async def delete_session_messages(self, session_id: str) -> int:
+        """Delete all messages in a session"""
+        result = await self.db.chat_messages.delete_many({"sessionId": session_id})
+        return result.deleted_count
+    
+    async def update_session_messages_count(self, session_id: str, count: int) -> bool:
+        """Update message count for a session"""
+        result = await self.db.chat_sessions.update_one(
+            {"sessionId": session_id},
+            {"$set": {"messageCount": count}}
+        )
+        return result.modified_count > 0
     
     # ========================================================================
     # ANALYSIS OPERATIONS
@@ -355,6 +485,11 @@ class MongoDBClient:
         """Update last_used_at timestamp"""
         return await self.update_analysis(analysis_id, {"lastUsedAt": datetime.utcnow()})
     
+    async def find_analyses(self, query: Dict[str, Any]) -> List[AnalysisModel]:
+        """Find analyses with query"""
+        docs = await self.db.analyses.find(query).to_list(None)
+        return [AnalysisModel(**doc) for doc in docs]
+    
     # ========================================================================
     # EXECUTION OPERATIONS
     # ========================================================================
@@ -375,6 +510,13 @@ class MongoDBClient:
         """List executions in session"""
         docs = await self.db.executions.find(
             {"sessionId": session_id}
+        ).sort("startedAt", -1).limit(limit).to_list(limit)
+        return [ExecutionModel(**doc) for doc in docs]
+    
+    async def list_user_executions(self, user_id: str, limit: int = 100) -> List[ExecutionModel]:
+        """List executions for user"""
+        docs = await self.db.executions.find(
+            {"userId": user_id}
         ).sort("startedAt", -1).limit(limit).to_list(limit)
         return [ExecutionModel(**doc) for doc in docs]
     
@@ -459,6 +601,11 @@ class MongoDBClient:
         
         result = await self.db.cache.insert_one(cache.dict(by_alias=True))
         return cache.cache_id  # Return the cache_id in snake_case for Python code
+    
+    async def delete_analysis_cache(self, analysis_id: str) -> int:
+        """Delete cache entries for an analysis"""
+        result = await self.db.cache.delete_many({"analysisId": analysis_id})
+        return result.deleted_count
     
     # ========================================================================
     # AUDIT LOGGING
