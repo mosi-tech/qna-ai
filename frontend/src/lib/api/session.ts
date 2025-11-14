@@ -23,18 +23,17 @@ export class SessionService {
    * Start a new session
    */
   async startSession(
-    user_id: string = 'anonymous',
     title?: string
   ): Promise<Session> {
     try {
       if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
-        console.log('[SessionService] Starting new session for user:', user_id);
+        console.log('[SessionService] Starting new session');
       }
 
-      const request: SessionRequest = {
-        user_id,
-        title,
-      };
+      const request: any = {};
+      if (title) {
+        request.title = title;
+      }
 
       const response = await this.client.post<Session>('/session/start', request);
 
@@ -44,7 +43,7 @@ export class SessionService {
 
       return response.data;
     } catch (error) {
-      logError('[SessionService] startSession failed', error, { user_id });
+      logError('[SessionService] startSession failed', error);
       throw error;
     }
   }

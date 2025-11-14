@@ -17,7 +17,6 @@ export interface AnalysisRequest {
 }
 
 export interface SessionRequest {
-  user_id?: string;
   title?: string;
 }
 

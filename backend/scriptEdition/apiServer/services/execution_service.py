@@ -62,7 +62,7 @@ class ExecutionService:
             # Step 1: Fetch analysis
             self.logger.info(f"📦 Fetching analysis: {analysis_id}")
             
-            analysis = await self.repo.db.get_analysis(analysis_id)
+            analysis = await self.analysis_repo.get_analysis(analysis_id)
             
             if not analysis:
                 if session_id:

@@ -22,6 +22,40 @@ from .schemas import (
 logger = logging.getLogger("repositories")
 
 
+class SessionRepository:
+    """Repository for session operations on chat_sessions collection"""
+    
+    def __init__(self, db: MongoDBClient):
+        self.db = db
+    
+    async def get_session_metadata(self, session_id: str) -> Optional[ChatSessionModel]:
+        """Get session metadata (uses encapsulated MongoDB client method)"""
+        return await self.db.get_session(session_id)
+    
+    async def create_session(self, session: ChatSessionModel) -> str:
+        """Create new chat session"""
+        return await self.db.create_session(session)
+    
+    async def update_session(self, session_id: str, updates: Dict[str, Any]) -> bool:
+        """Update session metadata"""
+        return await self.db.update_session(session_id, updates)
+    
+    async def delete_session(self, session_id: str) -> bool:
+        """Delete a session"""
+        return await self.db.delete_session(session_id)
+    
+    async def find_user_sessions(
+        self,
+        user_id: str,
+        skip: int = 0,
+        limit: int = 10,
+        search_text: Optional[str] = None,
+        archived: Optional[bool] = None,
+    ) -> List[ChatSessionModel]:
+        """Find user sessions with filters (uses encapsulated MongoDB client)"""
+        return await self.db.find_user_sessions(user_id, skip, limit, search_text, archived)
+
+
 class ChatRepository:
     """Repository for chat operations"""
     
@@ -30,18 +64,20 @@ class ChatRepository:
         
         
     async def start_session(self, user_id: str, title: Optional[str] = None) -> str:
-        """Create new chat session"""
+        """Create new chat session - delegates to SessionRepository"""
         session = ChatSessionModel(
             user_id=user_id,
             title=title or "New Conversation",
         )
-        return await self.db.create_session(session)
+        # Use SessionRepository for session operations
+        session_repo = SessionRepository(self.db)
+        return await session_repo.create_session(session)
     
     async def add_user_message(self, session_id: str, user_id: str, 
                                question: str, message_id: Optional[str] = None, query_type: QueryType = QueryType.COMPLETE) -> str:
         """Add user message to conversation"""
-        # Get message count to set message_index
-        message_count = await self.db.db.chat_messages.count_documents({"sessionId": session_id})
+        # ✅ FIXED: Get message count using encapsulated method
+        message_count = await self.db.count_session_messages(session_id)
         
         # Build message data, only include message_id if provided
         message_data = {
@@ -141,9 +177,8 @@ class ChatRepository:
                 }
             ]
             
-            # Execute aggregation and get first (and only) result
-            cursor = self.db.db.chat_messages.aggregate(pipeline)
-            messages = await cursor.to_list(1)  # Limit to 1 since we're getting a specific message
+            # ✅ FIXED: Execute aggregation using encapsulated method
+            messages = await self.db.aggregate_messages(pipeline)
             
             return messages[0] if messages else None
             
@@ -167,8 +202,8 @@ class ChatRepository:
         # First save the analysis
         analysis_id = await self.db.create_analysis(analysis)
         
-        # Get message count to set message_index
-        message_count = await self.db.db.chat_messages.count_documents({"sessionId": session_id})
+        # ✅ FIXED: Get message count using encapsulated method
+        message_count = await self.db.count_session_messages(session_id)
         
         # Then create message with reference to analysis (no embedding)
         # Note: Execution details accessible via analysisId → Analysis.executionId
@@ -183,11 +218,8 @@ class ChatRepository:
         
         message_id = await self.db.create_message(message)
         
-        # Update session with analysis reference
-        await self.db.db.chat_sessions.update_one(
-            {"sessionId": session_id},
-            {"$push": {"analysis_ids": analysis_id}}
-        )
+        # ✅ FIXED: Update session with analysis reference using encapsulated method
+        await self.db.add_analysis_to_session(session_id, analysis_id)
         
         return message_id
     
@@ -202,8 +234,8 @@ class ChatRepository:
         metadata: Dict[str, Any] = None,
     ) -> str:
         """Add regular assistant message (with optional analysis, execution references, and metadata)"""
-        # Get message count to set message_index
-        message_count = await self.db.db.chat_messages.count_documents({"sessionId": session_id})
+        # ✅ FIXED: Get message count using encapsulated method
+        message_count = await self.db.count_session_messages(session_id)
         
         # Build message data, only include message_id if provided
         message_data = {
@@ -253,7 +285,8 @@ class ChatRepository:
         if metadata is not None:
             # Use MongoDB $mergeObjects to merge metadata fields
             # First check if message exists and get current metadata
-            existing_message = await self.db.db.chat_messages.find_one(query, {"metadata": 1})
+            # ✅ FIXED: Find message using encapsulated method
+            existing_message = await self.db.find_message(query, {"metadata": 1})
             
             if existing_message:
                 existing_metadata = existing_message.get("metadata", {})
@@ -264,10 +297,8 @@ class ChatRepository:
                 # Message doesn't exist or no existing metadata, just use new metadata
                 update_data["metadata"] = metadata
             
-        result = await self.db.db.chat_messages.update_one(
-            query,
-            update_operations
-        )
+        # ✅ FIXED: Update message using encapsulated method
+        result = await self.db.update_message_with_query(query, update_operations)
         
         return result.modified_count > 0
     
@@ -332,39 +363,27 @@ class ChatRepository:
         search_text: Optional[str] = None,
         archived: Optional[bool] = None,
     ) -> List[Dict[str, Any]]:
-        """Get user sessions with metadata for list view"""
-        query = {"userId": user_id}
-        
-        if archived is not None:
-            query["is_archived"] = archived
-        
-        if search_text:
-            query["title"] = {"$regex": search_text, "$options": "i"}
-        
-        sessions = await self.db.db.chat_sessions.find(query)\
-            .sort("updated_at", -1)\
-            .skip(skip)\
-            .limit(limit)\
-            .to_list(limit)
+        """Get user sessions with metadata for list view - FIXED: Uses proper encapsulation"""
+        # ✅ FIXED: Use SessionRepository for session operations  
+        session_repo = SessionRepository(self.db)
+        sessions = await session_repo.find_user_sessions(user_id, skip, limit, search_text, archived)
         
         result = []
         for session in sessions:
-            # Get last message
-            last_msg = await self.db.db.chat_messages.find_one(
-                {"sessionId": session.get("sessionId")},
-                sort=[("created_at", -1)]
-            )
+            # ✅ FIXED: Get last message using encapsulated method
+            last_msg = await self.db.get_last_message(session.session_id)
+            
+            # ✅ FIXED: Count messages using encapsulated method
+            message_count = await self.db.count_session_messages(session.session_id)
             
             result.append({
-                "session_id": session.get("sessionId"),
-                "title": session.get("title"),
-                "created_at": session.get("created_at", datetime.now()).isoformat(),
-                "updated_at": session.get("updated_at", datetime.now()).isoformat(),
-                "message_count": await self.db.db.chat_messages.count_documents(
-                    {"sessionId": session.get("sessionId")}
-                ),
-                "last_message": last_msg.get("content", "")[:100] if last_msg else None,
-                "is_archived": session.get("is_archived", False),
+                "session_id": session.session_id,
+                "title": session.title,
+                "created_at": session.created_at.isoformat() if session.created_at else datetime.now().isoformat(),
+                "updated_at": session.updated_at.isoformat() if session.updated_at else datetime.now().isoformat(),
+                "message_count": message_count,
+                "last_message": last_msg.content[:100] if last_msg else None,
+                "is_archived": getattr(session, 'is_archived', False),
             })
         
         return result
@@ -372,12 +391,14 @@ class ChatRepository:
     async def get_session_with_messages(self, session_id: str, limit: int = 5, offset: int = 0) -> Optional[Dict[str, Any]]:
         """Get session with paginated messages for resume using efficient aggregation"""
         # Get session document
-        session = await self.db.db.chat_sessions.find_one({"sessionId": session_id})
+        # ✅ FIXED: Get session using encapsulated method
+        session_model = await self.db.get_session(session_id)
+        session = session_model.dict(by_alias=True) if session_model else None
         
         # If session doesn't exist but messages do, create it
         if not session:
-            # Check if messages exist for this session
-            message_count = await self.db.db.chat_messages.count_documents({"sessionId": session_id})
+            # ✅ FIXED: Check if messages exist using encapsulated method
+            message_count = await self.db.count_session_messages(session_id)
             if message_count == 0:
                 return None
             
@@ -391,11 +412,12 @@ class ChatRepository:
                 "is_archived": False,
                 "message_count": message_count,
             }
-            await self.db.db.chat_sessions.insert_one(session_doc)
+            # ✅ FIXED: Insert session using encapsulated method
+            await self.db.insert_session(session_doc)
             session = session_doc
         
-        # Get total message count
-        total_messages = await self.db.db.chat_messages.count_documents({"sessionId": session_id})
+        # ✅ FIXED: Get total message count using encapsulated method
+        total_messages = await self.db.count_session_messages(session_id)
         
         # Use aggregation pipeline to join messages with execution and analysis data in single query
         pipeline = [
@@ -481,8 +503,8 @@ class ChatRepository:
         ]
         
         # Execute aggregation
-        messages_cursor = self.db.db.chat_messages.aggregate(pipeline)
-        messages = await messages_cursor.to_list(limit)
+        # ✅ FIXED: Use encapsulated aggregation method
+        messages = await self.db.aggregate_messages(pipeline)
         
         # Debug: Log the message ordering
         if messages:
@@ -527,23 +549,23 @@ class ChatRepository:
     
     async def clear_session_messages(self, session_id: str) -> int:
         """Clear all messages from a session but keep the session"""
-        result = await self.db.db.chat_messages.delete_many({"sessionId": session_id})
+        # ✅ FIXED: Delete messages using encapsulated method
+        deleted_count = await self.db.delete_session_messages(session_id)
         
-        # Update session message count to 0
-        await self.db.db.chat_sessions.update_one(
-            {"sessionId": session_id},
-            {"$set": {"message_count": 0, "updated_at": datetime.now()}}
-        )
+        # ✅ FIXED: Update session message count using encapsulated method
+        await self.db.update_session_messages_count(session_id, 0)
         
-        return result.deleted_count
+        return deleted_count
     
     async def delete_session(self, session_id: str) -> bool:
         """Delete session and all its messages"""
         # Delete messages
-        await self.db.db.chat_messages.delete_many({"sessionId": session_id})
+        # ✅ FIXED: Delete messages using encapsulated method
+        deleted_count = await self.db.delete_session_messages(session_id)
         # Delete session
-        result = await self.db.db.chat_sessions.delete_one({"sessionId": session_id})
-        return result.deleted_count > 0
+        # ✅ FIXED: Delete session using encapsulated method
+        success = await self.db.delete_session(session_id)
+        return success
 
 
 class AnalysisRepository:
@@ -579,11 +601,12 @@ class AnalysisRepository:
     
     async def get_reusable_analyses(self, user_id: str) -> List[AnalysisModel]:
         """Get all analyses that can be reused as templates"""
-        docs = await self.db.db.analyses.find({
+        # ✅ FIXED: Find analyses using encapsulated method
+        analyses = await self.db.find_analyses({
             "userId": user_id
-        }).sort("last_used_at", -1).to_list(100)
+        })
         
-        return [AnalysisModel(**doc) for doc in docs]
+        return analyses  # Already returns AnalysisModel objects
     
     async def can_reuse_analysis(self, analysis_id: str, new_question: str) -> bool:
         """Check if analysis can be reused for new question"""
@@ -682,6 +705,10 @@ class ExecutionRepository:
     async def get_execution_history(self, session_id: str) -> List[ExecutionModel]:
         """Get execution history for session"""
         return await self.db.list_executions(session_id)
+    
+    async def get_user_execution_history(self, user_id: str, limit: int = 100) -> List[ExecutionModel]:
+        """Get execution history for user"""
+        return await self.db.list_user_executions(user_id, limit)
 
 
 class CacheRepository:
@@ -718,14 +745,16 @@ class CacheRepository:
     
     async def invalidate_analysis_cache(self, analysis_id: str) -> None:
         """Invalidate cache for specific analysis"""
-        await self.db.db.cache.delete_many({"analysisId": analysis_id})
+        # ✅ FIXED: Delete cache using encapsulated method
+        await self.db.delete_analysis_cache(analysis_id)
 
 
 class RepositoryManager:
     """Unified repository access point"""
     
     def __init__(self, db: MongoDBClient):
-        self.db = db
+        self.db_client = db
+        self.session = SessionRepository(db)
         self.chat = ChatRepository(db)
         self.analysis = AnalysisRepository(db)
         self.execution = ExecutionRepository(db)
@@ -733,10 +762,10 @@ class RepositoryManager:
     
     async def initialize(self) -> None:
         """Initialize all repositories"""
-        await self.db.connect()
+        await self.db_client.connect()
         logger.info("✅ Repository manager initialized")
     
     async def shutdown(self) -> None:
         """Shutdown all repositories"""
-        await self.db.disconnect()
+        await self.db_client.disconnect()
         logger.info("✅ Repository manager shutdown")

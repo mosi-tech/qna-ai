@@ -23,9 +23,21 @@ export class AnalysisService {
    */
   async sendChatMessage(request: AnalysisRequest): Promise<AnalysisResponse> {
     try {
+      // Validate session_id is required for the new RESTful endpoint
+      if (!request.session_id) {
+        throw new Error('Session ID is required for chat requests');
+      }
+
       const response = await this.client.post<AnalysisResponse['data']>(
-        '/chat',  // Hybrid chat endpoint
-        request,
+        `/sessions/${request.session_id}/chat`,  // New RESTful chat endpoint
+        {
+          // Remove session_id from body since it's now in the URL path
+          question: request.question,
+          user_id: request.user_id,
+          enable_caching: request.enable_caching,
+          auto_expand: request.auto_expand,
+          model: request.model,
+        },
         {
           retries: 0,
         }

@@ -24,15 +24,34 @@ class ChatHistoryService:
     
     def __init__(self, repo_manager: RepositoryManager):
         self.repo = repo_manager
+        self.session_repo = repo_manager.session  # ✅ Direct access to SessionRepository
         self.chat_repo = repo_manager.chat
         self.logger = logger
         self.data_transformer = DataTransformer(self.chat_repo.db)
+    
+    async def validate_session_ownership(self, session_id: str, user_id: str) -> bool:
+        """Validate that a user owns a specific session"""
+        try:
+            # Use the dedicated session repository for chat_sessions collection
+            session_metadata = await self.session_repo.get_session_metadata(session_id)
+            
+            if not session_metadata:
+                return False
+            
+            return session_metadata.user_id == user_id
+            
+        except Exception as e:
+            logger.warning(f"Failed to validate session ownership for {session_id}: {e}")
+            return False
     
     
     async def start_session(self, user_id: str, title: Optional[str] = None) -> str:
         """Start a new chat session"""
         try:
-            session_id = await self.chat_repo.start_session(user_id, title)
+            # ✅ Use SessionRepository for session operations
+            from ..db.schemas import ChatSessionModel
+            session = ChatSessionModel(user_id=user_id, title=title or "New Conversation")
+            session_id = await self.session_repo.create_session(session)
             self.logger.info(f"✓ Started session: {session_id}")
             return session_id
         except Exception as e:
@@ -59,18 +78,16 @@ class ChatHistoryService:
                 query_type=query_type,
             )
             
-            # Update with expansion if provided
+            # ✅ FIXED: Update with expansion if provided using encapsulated method
             if expanded_question:
-                await self.repo.db.db.chat_messages.update_one(
-                    {"messageId": msg_id},
+                await self.repo.db_client.update_message(
+                    msg_id,
                     {
-                        "$set": {
-                            "metadata": {
-                                "original_question": question,
-                                "expanded_question": expanded_question,
-                                "expansion_confidence": expansion_confidence,
-                                "query_type": query_type.value if query_type else None,
-                            }
+                        "metadata": {
+                            "original_question": question,
+                            "expanded_question": expanded_question,
+                            "expansion_confidence": expansion_confidence,
+                            "query_type": query_type.value if query_type else None,
                         }
                     }
                 )
@@ -187,7 +204,7 @@ class ChatHistoryService:
     async def get_session(self, session_id: str) -> Optional[ChatSessionModel]:
         """Get session by ID"""
         try:
-            session = await self.repo.db.get_session(session_id)
+            session = await self.session_repo.get_session_metadata(session_id)
             return session
         except Exception as e:
             self.logger.error(f"✗ Failed to get session: {e}")
@@ -196,7 +213,7 @@ class ChatHistoryService:
     async def list_sessions(self, user_id: str, limit: int = 50) -> List[ChatSessionModel]:
         """Get user's chat sessions"""
         try:
-            sessions = await self.repo.db.list_sessions(user_id, limit=limit)
+            sessions = await self.session_repo.find_user_sessions(user_id, limit=limit)
             self.logger.info(f"✓ Retrieved {len(sessions)} sessions for user: {user_id}")
             return sessions
         except Exception as e:
@@ -206,7 +223,7 @@ class ChatHistoryService:
     async def archive_session(self, session_id: str) -> bool:
         """Archive a session"""
         try:
-            result = await self.repo.db.archive_session(session_id)
+            result = await self.session_repo.update_session(session_id, {"is_archived": True})
             self.logger.info(f"✓ Archived session: {session_id}")
             return result
         except Exception as e:
@@ -221,17 +238,32 @@ class ChatHistoryService:
         search_text: Optional[str] = None,
         archived: Optional[bool] = None,
     ) -> List[Dict[str, Any]]:
-        """Get user sessions with metadata for list view"""
+        """Get user sessions with metadata for list view - FIXED: Uses proper separation"""
         try:
-            sessions = await self.chat_repo.get_user_sessions(
+            # ✅ FIXED: Use SessionRepository directly for session operations
+            sessions = await self.session_repo.find_user_sessions(
                 user_id=user_id,
                 skip=skip,
                 limit=limit,
                 search_text=search_text,
                 archived=archived,
             )
-            self.logger.info(f"✓ Retrieved {len(sessions)} sessions for user: {user_id}")
-            return sessions
+            
+            # ✅ FIXED: Transform to dict format - use existing session fields, no extra DB calls!
+            session_list = []
+            for session in sessions:
+                session_list.append({
+                    "session_id": session.session_id,
+                    "title": session.title,
+                    "created_at": session.created_at.isoformat() if session.created_at else "",
+                    "updated_at": session.updated_at.isoformat() if session.updated_at else "",
+                    "message_count": session.message_count,  # ✅ Already available in session model!
+                    "last_message": None,  # ✅ Remove expensive per-session query
+                    "is_archived": getattr(session, 'is_archived', False),
+                })
+            
+            self.logger.info(f"✓ Retrieved {len(session_list)} sessions for user: {user_id}")
+            return session_list
         except Exception as e:
             self.logger.error(f"✗ Failed to get user sessions: {e}")
             raise
@@ -272,7 +304,8 @@ class ChatHistoryService:
             if is_archived is not None:
                 update_data['is_archived'] = is_archived
             
-            result = await self.chat_repo.update_session(session_id, update_data)
+            # ✅ FIXED: Use SessionRepository for session operations
+            result = await self.session_repo.update_session(session_id, update_data)
             if result:
                 self.logger.info(f"✓ Updated session: {session_id}")
             return result
@@ -283,7 +316,8 @@ class ChatHistoryService:
     async def delete_session(self, session_id: str) -> bool:
         """Delete a session and all its messages"""
         try:
-            result = await self.chat_repo.delete_session(session_id)
+            # ✅ FIXED: Use SessionRepository for session operations
+            result = await self.session_repo.delete_session(session_id)
             if result:
                 self.logger.info(f"✓ Deleted session: {session_id}")
             return result

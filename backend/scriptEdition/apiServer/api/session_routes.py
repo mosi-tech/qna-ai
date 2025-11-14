@@ -4,18 +4,16 @@ Session Management Routes - Handle chat history and session management
 
 import logging
 from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, HTTPException, Query, Request, Depends
 from pydantic import BaseModel
+
+# Import auth components
+from .auth import UserContext, require_authenticated_user
 
 
 logger = logging.getLogger("session-routes")
 
-
-
 router = APIRouter(prefix="/api/sessions", tags=["sessions"])
-
-
-
 
 class SessionMetadata(BaseModel):
     """Session metadata for list view"""
@@ -45,17 +43,17 @@ class UpdateSessionRequest(BaseModel):
     is_archived: Optional[bool] = None
 
 
-@router.get("/user/{user_id}", response_model=List[SessionMetadata])
+@router.get("/list", response_model=List[SessionMetadata])
 async def list_user_sessions(
     request: Request,
-    user_id: str,
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1, le=100),
     search: Optional[str] = Query(None),
     archived: Optional[bool] = Query(None),
+    user_context: UserContext = Depends(require_authenticated_user)
 ):
     """
-    List all sessions for a user with optional filtering
+    List all sessions for the authenticated user with optional filtering
     """
     try:
         chat_history_service = request.app.state.chat_history_service
@@ -63,14 +61,14 @@ async def list_user_sessions(
             raise HTTPException(status_code=500, detail="Chat service not available")
         
         sessions = await chat_history_service.get_user_sessions(
-            user_id=user_id,
+            user_id=user_context.user_id,
             skip=skip,
             limit=limit,
             search_text=search,
             archived=archived,
         )
         
-        logger.info(f"✓ Retrieved {len(sessions)} sessions for user {user_id}")
+        logger.info(f"✓ Retrieved {len(sessions)} sessions for user {user_context.user_id}")
         return sessions
     except Exception as e:
         logger.error(f"✗ Failed to list sessions: {e}")
@@ -83,16 +81,24 @@ async def get_session_detail(
     session_id: str,
     offset: int = Query(0, ge=0),
     limit: int = Query(5, ge=1, le=50),
+    user_context: UserContext = Depends(require_authenticated_user)
 ):
     """
-    Get session details with paginated messages
+    Get session details with paginated messages (user must own the session)
     offset: number of newest messages to skip (for loading older messages)
     limit: number of messages to return (default 5)
     """
     try:
+        # First verify user owns this session using ChatHistoryService (before expensive DB call)
         chat_history_service = request.app.state.chat_history_service
         if not chat_history_service:
             raise HTTPException(status_code=500, detail="Chat service not available")
+        
+        is_owner = await chat_history_service.validate_session_ownership(session_id, user_context.user_id)
+        if not is_owner:
+            raise HTTPException(status_code=403, detail="Access denied: Session not found or belongs to different user")
+        
+        # Now get the session data (we know user owns it)
         
         session = await chat_history_service.get_session_with_messages(
             session_id=session_id,
@@ -103,7 +109,7 @@ async def get_session_detail(
         if not session:
             raise HTTPException(status_code=404, detail="Session not found")
         
-        logger.info(f"✓ Retrieved session {session_id} with {len(session.get('messages', []))} messages")
+        logger.info(f"✓ Retrieved session {session_id} with {len(session.get('messages', []))} messages for user {user_context.user_id}")
         return session
     except HTTPException:
         raise
@@ -113,14 +119,24 @@ async def get_session_detail(
 
 
 @router.put("/{session_id}")
-async def update_session(request: Request, session_id: str, update_req: UpdateSessionRequest):
+async def update_session(
+    request: Request, 
+    session_id: str, 
+    update_req: UpdateSessionRequest,
+    user_context: UserContext = Depends(require_authenticated_user)
+):
     """
-    Update session metadata (title, archive status)
+    Update session metadata (title, archive status) - user must own the session
     """
     try:
+        # Verify user owns this session using ChatHistoryService
         chat_history_service = request.app.state.chat_history_service
         if not chat_history_service:
             raise HTTPException(status_code=500, detail="Chat service not available")
+        
+        is_owner = await chat_history_service.validate_session_ownership(session_id, user_context.user_id)
+        if not is_owner:
+            raise HTTPException(status_code=403, detail="Access denied: Session not found or belongs to different user")
         
         updated = await chat_history_service.update_session(
             session_id=session_id,
@@ -141,14 +157,23 @@ async def update_session(request: Request, session_id: str, update_req: UpdateSe
 
 
 @router.delete("/{session_id}")
-async def delete_session(request: Request, session_id: str):
+async def delete_session(
+    request: Request, 
+    session_id: str,
+    user_context: UserContext = Depends(require_authenticated_user)
+):
     """
-    Delete a session and all its messages
+    Delete a session and all its messages - user must own the session
     """
     try:
+        # Verify user owns this session using ChatHistoryService
         chat_history_service = request.app.state.chat_history_service
         if not chat_history_service:
             raise HTTPException(status_code=500, detail="Chat service not available")
+        
+        is_owner = await chat_history_service.validate_session_ownership(session_id, user_context.user_id)
+        if not is_owner:
+            raise HTTPException(status_code=403, detail="Access denied: Session not found or belongs to different user")
         
         deleted = await chat_history_service.delete_session(
             session_id=session_id
@@ -171,23 +196,29 @@ async def get_session_message(
     request: Request,
     session_id: str,
     message_id: str,
+    user_context: UserContext = Depends(require_authenticated_user)
 ) -> Dict[str, Any]:
     """
-    Get a specific message from a session with UI transformation
+    Get a specific message from a session with UI transformation - user must own the session
     
     Args:
         request: FastAPI request object
         session_id: Chat session identifier  
         message_id: Message identifier
+        user_context: Authenticated user context
     
     Returns:
         UI-transformed message data
     """
     try:
-        # Use the same chat service pattern as other endpoints
+        # First verify user owns this session using ChatHistoryService
         chat_history_service = request.app.state.chat_history_service
         if not chat_history_service:
             raise HTTPException(status_code=500, detail="Chat service not available")
+        
+        is_owner = await chat_history_service.validate_session_ownership(session_id, user_context.user_id)
+        if not is_owner:
+            raise HTTPException(status_code=403, detail="Access denied: Session not found or belongs to different user")
         
         logger.info(f"📨 Fetching message {message_id} from session {session_id}")
         

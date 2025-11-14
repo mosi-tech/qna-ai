@@ -43,10 +43,6 @@ class SessionManager:
     
     async def create_session(self, user_id: str = None, title: str = None) -> str:
         """Create new session in MongoDB via ChatHistoryService"""
-        if not self.chat_history_service:
-            # Fallback: create session_id locally
-            return str(uuid.uuid4())
-        
         try:
             session_id = await self.chat_history_service.start_session(user_id, title)
             logger.info(f"✓ Created new session: {session_id}")

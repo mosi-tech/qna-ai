@@ -132,11 +132,10 @@ Can we reuse? → YES: Return cached analysis directly
 
 ### Analysis & Conversation
 - `POST /analyze` - Analyze financial question (main endpoint)
-- `GET /conversation/sessions` - List active sessions
-- `GET /conversation/{session_id}/context` - Get session context
+- `POST /sessions/{session_id}/chat` - Send message to session (authenticated)
 
 ### Chat History (NEW)
-- `GET /chat/{session_id}/history` - Get all messages in session
+- Use `/api/sessions/{session_id}` instead for authenticated session access
 - `GET /user/{user_id}/sessions` - List all user sessions
 - `GET /session/{session_id}/executions` - Get execution history
 
@@ -234,7 +233,7 @@ curl -X POST http://localhost:8010/analyze \
 
 ### 4. Check chat history
 ```bash
-curl http://localhost:8010/chat/session-456/history
+curl http://localhost:8010/api/sessions/session-456
 ```
 
 ### 5. Get user sessions
