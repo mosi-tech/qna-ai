@@ -38,6 +38,7 @@ from api.execution_routes import ExecutionRoutes
 from api.auth import UserContext, require_authenticated_user, get_optional_user
 from api.progress_routes import router as progress_router
 from api.session_routes import router as session_router
+from api.analysis_routes import router as analysis_router
 from shared.db import MongoDBClient, RepositoryManager
 from shared.services.session_manager import SessionManager
 from shared.locking import initialize_session_lock
@@ -190,6 +191,9 @@ def create_app() -> FastAPI:
     
     # Include session routes
     app.include_router(session_router)
+    
+    # Include analysis routes
+    app.include_router(analysis_router)
     
     # Session Management Routes (integrated with backend SessionManager)
     @app.post("/session/start", response_model=SessionResponse)

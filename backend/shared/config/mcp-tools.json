@@ -65,6 +65,9 @@
     "result-formatter": {
       "enabled": false
     },
+    "schema-formatter": {
+      "enabled": false
+    },
     "none": {
       "enabled": false,
       "servers": [],

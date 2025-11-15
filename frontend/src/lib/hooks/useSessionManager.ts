@@ -81,6 +81,13 @@ export const useSessionManager = () => {
         console.log(`[useSessionManager] Fetching session ${sessionId}`);
 
         const response = await apiClient.get<SessionDetail>(`/api/sessions/${sessionId}?${params.toString()}`);
+        
+        console.log(`[useSessionManager] API response:`, { 
+          success: response.success, 
+          status: (response as any)?.status,
+          error: response.error,
+          dataExists: !!response.data 
+        });
 
         if (!response.success || !response.data) {
           return null;

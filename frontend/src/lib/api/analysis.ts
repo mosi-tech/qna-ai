@@ -301,6 +301,295 @@ export class AnalysisService {
       throw error;
     }
   }
+
+  /**
+   * Get analysis details from new analysis API
+   */
+  async getAnalysisById(analysisId: string): Promise<any> {
+    try {
+      if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
+        console.log('[AnalysisService] Getting analysis by ID:', analysisId);
+      }
+
+      const response = await this.client.get(`/api/analysis/${analysisId}`);
+
+      if (!response.success) {
+        throw new Error(response.data?.error || 'Failed to fetch analysis');
+      }
+
+      return response.data;
+    } catch (error) {
+      logError('[AnalysisService] getAnalysisById failed', error, { analysisId });
+      throw error;
+    }
+  }
+
+  /**
+   * Get analysis associated with a specific message
+   */
+  async getAnalysisByMessageId(messageId: string): Promise<any> {
+    try {
+      if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
+        console.log('[AnalysisService] Getting analysis by message ID:', messageId);
+      }
+
+      const response = await this.client.get(`/api/analysis/messages/${messageId}/analysis`);
+
+      if (!response.success) {
+        throw new Error(response.data?.error || 'Failed to fetch message analysis');
+      }
+
+      return response.data;
+    } catch (error) {
+      logError('[AnalysisService] getAnalysisByMessageId failed', error, { messageId });
+      throw error;
+    }
+  }
+
+  /**
+   * Get execution history for specific analysis
+   */
+  async getAnalysisExecutions(analysisId: string, limit: number = 50, executionType?: 'primary' | 'user_rerun' | 'all'): Promise<any[]> {
+    try {
+      if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
+        console.log('[AnalysisService] Getting analysis executions:', analysisId, executionType);
+      }
+
+      const params = new URLSearchParams({ limit: limit.toString() });
+      if (executionType) {
+        params.append('execution_type', executionType);
+      }
+
+      const response = await this.client.get(`/api/analysis/${analysisId}/executions?${params.toString()}`);
+
+      if (!response.success) {
+        throw new Error(response.data?.error || 'Failed to fetch analysis executions');
+      }
+
+      return response.data || [];
+    } catch (error) {
+      logError('[AnalysisService] getAnalysisExecutions failed', error, { analysisId, limit, executionType });
+      return [];
+    }
+  }
+
+  /**
+   * Get the primary (original) execution for an analysis
+   */
+  async getPrimaryExecution(analysisId: string): Promise<any | null> {
+    try {
+      const executions = await this.getAnalysisExecutions(analysisId, 1, 'primary');
+      return executions.length > 0 ? executions[0] : null;
+    } catch (error) {
+      logError('[AnalysisService] getPrimaryExecution failed', error, { analysisId });
+      return null;
+    }
+  }
+
+  /**
+   * Get user-initiated re-runs for an analysis (workspace history)
+   */
+  async getUserReruns(analysisId: string, limit: number = 50): Promise<any[]> {
+    try {
+      return await this.getAnalysisExecutions(analysisId, limit, 'user_rerun');
+    } catch (error) {
+      logError('[AnalysisService] getUserReruns failed', error, { analysisId, limit });
+      return [];
+    }
+  }
+
+  /**
+   * Get execution result associated with a specific message (what's shown in chat)
+   */
+  async getMessageExecution(messageId: string): Promise<any | null> {
+    try {
+      if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
+        console.log('[AnalysisService] Getting message execution:', messageId);
+      }
+
+      const response = await this.client.get(`/api/analysis/messages/${messageId}/execution`);
+
+      if (!response.success) {
+        throw new Error(response.data?.error || 'Failed to fetch message execution');
+      }
+
+      return response.data;
+    } catch (error) {
+      logError('[AnalysisService] getMessageExecution failed', error, { messageId });
+      return null;
+    }
+  }
+
+  /**
+   * Execute an analysis with given parameters using new analysis API
+   */
+  async executeAnalysisNew(analysisId: string, parameters?: any, sessionId?: string): Promise<any> {
+    try {
+      if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
+        console.log('[AnalysisService] Executing analysis (new API):', analysisId, parameters);
+      }
+
+      const response = await this.client.post(`/api/analysis/${analysisId}/execute`, {
+        parameters: parameters || {},
+        sessionId
+      });
+
+      if (!response.success) {
+        throw new Error(response.data?.error || 'Analysis execution failed');
+      }
+
+      return response.data;
+    } catch (error) {
+      logError('[AnalysisService] executeAnalysisNew failed', error, { analysisId });
+      throw error;
+    }
+  }
+
+  /**
+   * Execute an analysis with given parameters (legacy)
+   */
+  async executeAnalysis(analysisId: string, parameters?: any, sessionId?: string): Promise<any> {
+    try {
+      if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
+        console.log('[AnalysisService] Executing analysis:', analysisId, parameters);
+      }
+
+      const response = await this.client.post(`/execute/${analysisId}`, {
+        parameters,
+        session_id: sessionId
+      });
+
+      if (!response.success) {
+        throw new Error(response.data?.error || 'Analysis execution failed');
+      }
+
+      return response.data;
+    } catch (error) {
+      logError('[AnalysisService] executeAnalysis failed', error, { analysisId });
+      throw error;
+    }
+  }
+
+  /**
+   * Get execution status and results
+   */
+  async getExecutionStatus(executionId: string): Promise<any> {
+    try {
+      const response = await this.client.get(`/execution/${executionId}/status`);
+      
+      if (!response.success) {
+        throw new Error(response.data?.error || 'Failed to fetch execution status');
+      }
+
+      return response.data;
+    } catch (error) {
+      logError('[AnalysisService] getExecutionStatus failed', error, { executionId });
+      throw error;
+    }
+  }
+
+  /**
+   * Get execution logs
+   */
+  async getExecutionLogs(executionId: string): Promise<string[]> {
+    try {
+      const response = await this.client.get(`/execution/${executionId}/logs`);
+      
+      if (!response.success) {
+        throw new Error(response.data?.error || 'Failed to fetch execution logs');
+      }
+
+      return response.data?.logs || [];
+    } catch (error) {
+      logError('[AnalysisService] getExecutionLogs failed', error, { executionId });
+      return [];
+    }
+  }
+
+  /**
+   * Get user's analyses
+   */
+  async getUserAnalyses(limit: number = 50): Promise<any[]> {
+    try {
+      const response = await this.client.get(`/user/analyses?limit=${limit}`);
+      
+      if (!response.success) {
+        throw new Error(response.data?.error || 'Failed to fetch user analyses');
+      }
+
+      return response.data?.analyses || [];
+    } catch (error) {
+      logError('[AnalysisService] getUserAnalyses failed', error, { limit });
+      return [];
+    }
+  }
+
+  /**
+   * Get analysis execution history for a session
+   */
+  async getExecutionHistory(sessionId: string, limit: number = 100): Promise<any[]> {
+    try {
+      const response = await this.client.get(`/session/${sessionId}/executions?limit=${limit}`);
+      
+      if (!response.success) {
+        throw new Error(response.data?.error || 'Failed to fetch execution history');
+      }
+
+      return response.data?.executions || [];
+    } catch (error) {
+      logError('[AnalysisService] getExecutionHistory failed', error, { sessionId, limit });
+      return [];
+    }
+  }
+
+  /**
+   * Poll execution status until completion
+   */
+  async pollExecutionStatus(
+    executionId: string, 
+    onProgress?: (status: any) => void,
+    timeout: number = 300000 // 5 minutes
+  ): Promise<any> {
+    const startTime = Date.now();
+    const pollInterval = 2000; // Poll every 2 seconds
+
+    return new Promise((resolve, reject) => {
+      const poll = async () => {
+        try {
+          const status = await this.getExecutionStatus(executionId);
+          
+          // Call progress callback if provided
+          if (onProgress) {
+            onProgress(status);
+          }
+
+          // Check if execution is complete
+          if (status.status === 'completed' || status.status === 'failed') {
+            resolve(status);
+            return;
+          }
+
+          // Check timeout
+          if (Date.now() - startTime > timeout) {
+            reject(new Error('Execution timeout'));
+            return;
+          }
+
+          // Continue polling if still running
+          if (status.status === 'running') {
+            setTimeout(poll, pollInterval);
+          } else {
+            reject(new Error(`Unexpected execution status: ${status.status}`));
+          }
+
+        } catch (error) {
+          reject(error);
+        }
+      };
+
+      poll();
+    });
+  }
 }
 
 /**

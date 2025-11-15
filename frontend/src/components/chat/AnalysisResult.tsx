@@ -15,17 +15,29 @@ export default function AnalysisResult({
   // Simplified data access - expect flattened structure
   const messageId = message.id
   const markdown = message?.results?.markdown;
-  const analysisId = message?.analysisId;
-  const executionId = message?.executionId;
   const canRerun = message?.canRerun;
   const canExport = message?.canExport;
 
   const openWorkspace = () => {
-    const params = new URLSearchParams();
-    if (analysisId) params.set('analysisId', analysisId);
-    if (executionId) params.set('executionId', executionId);
+    if (!messageId) {
+      console.error('Cannot open workspace: messageId is required');
+      return;
+    }
 
-    const analysisUrl = `/analysis/${messageId}?${params.toString()}`;
+    // Get sessionId from current URL or context - we need this for the new route structure
+    const currentPath = window.location.pathname;
+    const sessionIdMatch = currentPath.match(/\/chat\/([^\/]+)/);
+    
+    if (!sessionIdMatch) {
+      console.error('Cannot determine sessionId from current URL:', currentPath);
+      return;
+    }
+    
+    const sessionId = sessionIdMatch[1];
+    
+    // Use new nested route structure: /analysis/{sessionId}/{messageId}
+    const analysisUrl = `/analysis/${sessionId}/${messageId}`;
+    console.log('Opening workspace with new URL structure:', analysisUrl);
     router.push(analysisUrl);
   };
 

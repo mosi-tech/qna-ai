@@ -34,6 +34,14 @@ class ExecutionStatus(str, Enum):
     TIMEOUT = "timeout"
 
 
+class ExecutionType(str, Enum):
+    """Execution type classification"""
+    PRIMARY = "primary"       # Original execution from chat message
+    USER_RERUN = "user_rerun" # User-initiated re-run with different parameters
+    SCHEDULED = "scheduled"   # System-scheduled execution
+    API = "api"              # Direct API execution
+
+
 class RoleType(str, Enum):
     """Chat message roles"""
     USER = "user"
@@ -106,9 +114,13 @@ class AnalysisModel(BaseMongoModel):
     # Question that generated this analysis
     question: str
     
+    # Top-level extracted fields for easier access (promoted from llmResponse)
+    description: Optional[str] = Field(None)  # Extracted from llmResponse.analysis_description
+    parameters: Optional[Dict[str, Any]] = Field(None)  # Extracted from llmResponse.execution.parameters
+    parameter_schema: Optional[List[Dict[str, Any]]] = Field(None, alias='parameterSchema')  # Generated parameter form schema
+    
     # Script storage reference (after /analyze saves to S3/file)
     script_url: str = Field(..., alias='scriptUrl')  # S3 path or local file path
-    script_size_bytes: int = Field(0, alias='scriptSizeBytes')
     
     # Link back to the chat message that created this analysis
     created_message_id: Optional[str] = Field(None, alias='createdMessageId')
@@ -121,6 +133,10 @@ class AnalysisModel(BaseMongoModel):
     # Tags for organization
     tags: List[str] = Field(default_factory=list)
     
+    # Sharing and reusability
+    is_public: bool = Field(False, alias='isPublic')  # Can other users access this analysis?
+    usage_count: int = Field(0, alias='usageCount')   # How many times this analysis has been reused
+    
     # Metadata
     metadata: Dict[str, Any] = Field(default_factory=dict)
     
@@ -131,6 +147,8 @@ class AnalysisModel(BaseMongoModel):
             {"fields": [("question", "text")]},
             {"fields": [("tags", 1)]},
             {"fields": [("createdMessageId", 1)]},
+            {"fields": [("isPublic", 1)]},
+            {"fields": [("isPublic", 1), ("usageCount", -1)]},  # Find popular public analyses
         ]
 
 
@@ -258,10 +276,14 @@ class ExecutionModel(BaseMongoModel):
     parameters: Dict[str, Any] = Field(default_factory=dict)
     
     # Execution details
+    execution_type: ExecutionType = Field(ExecutionType.PRIMARY, alias='executionType')
     status: ExecutionStatus
     started_at: datetime = Field(default_factory=datetime.utcnow, alias='startedAt')
     completed_at: Optional[datetime] = Field(None, alias='completedAt')
     execution_time_ms: int = Field(0, alias='executionTimeMs')
+    
+    # Parent execution reference (for re-runs)
+    parent_execution_id: Optional[str] = Field(None, alias='parentExecutionId')
     
     # Output
     result: Optional[Dict[str, Any]] = None
@@ -291,6 +313,9 @@ class ExecutionModel(BaseMongoModel):
             {"fields": [("sessionId", 1)]},
             {"fields": [("createdMessageId", 1)]},
             {"fields": [("status", 1)]},
+            {"fields": [("executionType", 1)]},
+            {"fields": [("parentExecutionId", 1)]},
+            {"fields": [("analysisId", 1), ("executionType", 1)]},
             {"fields": [("startedAt", -1)]},
         ]
 

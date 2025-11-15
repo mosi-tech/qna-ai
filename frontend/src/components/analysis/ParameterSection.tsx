@@ -7,7 +7,6 @@ interface ParameterSectionProps {
   schema: ParameterDefinition[];
   values: ParameterSet;
   onChange: (parameterId: string, value: any) => void;
-  onRerun: () => void;
   hasChanges: boolean;
   isRunning: boolean;
 }
@@ -16,7 +15,6 @@ export default function ParameterSection({
   schema,
   values,
   onChange,
-  onRerun,
   hasChanges,
   isRunning
 }: ParameterSectionProps) {
@@ -42,7 +40,7 @@ export default function ParameterSection({
       if (param.type === 'text' && typeof value === 'string' && validation.pattern) {
         const regex = new RegExp(validation.pattern);
         if (!regex.test(value)) {
-          return validation.errorMessage || 'Invalid format';
+          return validation.message || validation.errorMessage || 'Invalid format';
         }
       }
     }
@@ -103,12 +101,37 @@ export default function ParameterSection({
               error ? 'border-red-300' : 'border-gray-300'
             }`}
           >
-            {param.validation?.options?.map(option => (
+            {(param.options || param.validation?.options)?.map(option => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>
             ))}
           </select>
+        );
+
+      case 'multiselect':
+        const selectedValues = value || [];
+        const availableOptions = param.options || param.validation?.options || [];
+        
+        return (
+          <div className="space-y-2">
+            {availableOptions.map(option => (
+              <label key={option.value} className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selectedValues.includes(option.value)}
+                  onChange={(e) => {
+                    const newValues = e.target.checked
+                      ? [...selectedValues, option.value]
+                      : selectedValues.filter((v: any) => v !== option.value);
+                    handleInputChange(param, newValues);
+                  }}
+                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">{option.label}</span>
+              </label>
+            ))}
+          </div>
         );
 
       case 'boolean':
@@ -132,15 +155,7 @@ export default function ParameterSection({
   const isValid = schema.every(param => !validationErrors[param.id]);
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
-      <div className="flex items-center gap-2 mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">Parameters</h2>
-        {hasChanges && (
-          <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-            Modified
-          </span>
-        )}
-      </div>
+    <div className="px-6 py-4">
 
       <div className="space-y-4">
         {schema.map(param => (
@@ -165,33 +180,6 @@ export default function ParameterSection({
             )}
           </div>
         ))}
-      </div>
-
-      <div className="mt-6 pt-4 border-t border-gray-200">
-        <button
-          onClick={onRerun}
-          disabled={!hasChanges || !isValid || isRunning}
-          className={`w-full px-4 py-2 rounded-lg font-medium transition-colors ${
-            hasChanges && isValid && !isRunning
-              ? 'bg-blue-600 text-white hover:bg-blue-700'
-              : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-          }`}
-        >
-          {isRunning ? (
-            <div className="flex items-center justify-center gap-2">
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              Running Analysis...
-            </div>
-          ) : (
-            '🔄 Re-run Analysis'
-          )}
-        </button>
-        
-        {hasChanges && isValid && !isRunning && (
-          <p className="mt-2 text-sm text-blue-600 text-center">
-            Parameters have been modified. Click to run analysis with new settings.
-          </p>
-        )}
       </div>
     </div>
   );

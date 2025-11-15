@@ -44,6 +44,23 @@ class ChatHistoryService:
             logger.warning(f"Failed to validate session ownership for {session_id}: {e}")
             return False
     
+    async def validate_message_ownership(self, message_id: str, user_id: str) -> bool:
+        """Validate that a user owns a specific message"""
+        try:
+            # Get raw message to check ownership
+            message = await self.chat_repo.get_raw_message_by_id(message_id)
+            
+            if not message:
+                return False
+            
+            # Check userId field (handle both userId and user_id variants)
+            message_user_id = message.get('userId') or message.get('user_id')
+            return message_user_id == user_id
+            
+        except Exception as e:
+            logger.warning(f"Failed to validate message ownership for {message_id}: {e}")
+            return False
+    
     
     async def start_session(self, user_id: str, title: Optional[str] = None) -> str:
         """Start a new chat session"""
