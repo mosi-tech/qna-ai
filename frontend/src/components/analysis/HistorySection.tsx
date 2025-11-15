@@ -1,14 +1,44 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { AnalysisRun } from '@/types/parameters';
+import { api } from '@/lib/api';
 
 interface HistorySectionProps {
   runs: AnalysisRun[];
   activeRunId?: string;
   onSelectRun: (runId: string) => void;
+  analysisId?: string;
+  sessionId?: string;
 }
 
-export default function HistorySection({ runs, activeRunId, onSelectRun }: HistorySectionProps) {
+export default function HistorySection({ runs, activeRunId, onSelectRun, analysisId, sessionId }: HistorySectionProps) {
+  const [backendExecutions, setBackendExecutions] = useState<any[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  
+  // Load execution history from backend (all executions for workspace)
+  useEffect(() => {
+    const loadBackendExecutions = async () => {
+      if (!analysisId) return;
+      
+      setIsLoadingHistory(true);
+      try {
+        console.log('Loading all execution history for analysis:', analysisId);
+        // Get all executions for the workspace (primary + user re-runs)
+        const executions = await api.analysis.getAnalysisExecutions(analysisId, 10, 'all');
+        console.log('Loaded all executions:', executions);
+        setBackendExecutions(executions || []);
+      } catch (error) {
+        console.error('Failed to load execution history:', error);
+        setBackendExecutions([]);
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    };
+    
+    loadBackendExecutions();
+  }, [analysisId]);
+
   const formatTimeAgo = (date: Date): string => {
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
@@ -37,14 +67,16 @@ export default function HistorySection({ runs, activeRunId, onSelectRun }: Histo
   const exportHistory = () => {
     const historyData = {
       exported_at: new Date().toISOString(),
-      total_runs: runs.length,
-      runs: runs.map(run => ({
-        id: run.id,
-        parameters: run.parameters,
-        results: run.results,
-        status: run.status,
-        duration: run.duration,
-        created_at: run.createdAt.toISOString()
+      total_executions: totalExecutions,
+      executions: allExecutions.map(execution => ({
+        executionId: execution.executionId,
+        parameters: execution.parameters,
+        results: execution.results,
+        status: execution.status,
+        duration: execution.duration,
+        created_at: execution.createdAt,
+        source: execution.source,
+        error: execution.error
       }))
     };
     
@@ -60,18 +92,46 @@ export default function HistorySection({ runs, activeRunId, onSelectRun }: Histo
     URL.revokeObjectURL(url);
   };
 
+  // Combine and sort all executions
+  const allExecutions = [
+    // Convert local runs to execution format
+    ...runs.map(run => ({
+      executionId: run.id,
+      parameters: run.parameters,
+      status: run.status,
+      results: run.results,
+      createdAt: run.createdAt.toISOString(),
+      duration: run.duration,
+      error: run.error,
+      source: 'local' as const
+    })),
+    // Add backend executions
+    ...backendExecutions.map(exec => ({
+      ...exec,
+      createdAt: exec.createdAt || exec.created_at,
+      source: 'backend' as const
+    }))
+  ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  const totalExecutions = allExecutions.length;
+
   return (
     <div className="bg-white rounded-lg border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold text-gray-900">History</h2>
-        {runs.length > 0 && (
-          <span className="text-sm text-gray-500">
-            {runs.length} run{runs.length !== 1 ? 's' : ''}
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {isLoadingHistory && (
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+          )}
+          {totalExecutions > 0 && (
+            <span className="text-sm text-gray-500">
+              {totalExecutions} execution{totalExecutions !== 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
       </div>
 
-      {runs.length === 0 ? (
+      {totalExecutions === 0 && !isLoadingHistory ? (
         <div className="flex flex-col items-center justify-center py-8 text-gray-500">
           <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
             <span className="text-xl">📋</span>
@@ -81,14 +141,15 @@ export default function HistorySection({ runs, activeRunId, onSelectRun }: Histo
         </div>
       ) : (
         <div className="space-y-3">
-          {runs.slice().reverse().map((run, index) => {
-            const isActive = run.id === activeRunId;
-            const runNumber = runs.length - index;
+          {allExecutions.map((execution, index) => {
+            const isActive = execution.executionId === activeRunId;
+            const executionNumber = index + 1;
+            const createdAt = new Date(execution.createdAt);
             
             return (
               <div
-                key={run.id}
-                onClick={() => onSelectRun(run.id)}
+                key={execution.executionId}
+                onClick={() => onSelectRun(execution.executionId)}
                 className={`p-3 rounded-lg border cursor-pointer transition-colors ${
                   isActive 
                     ? 'bg-blue-50 border-blue-200 ring-1 ring-blue-500' 
@@ -101,35 +162,40 @@ export default function HistorySection({ runs, activeRunId, onSelectRun }: Histo
                       isActive ? 'bg-blue-500' : 'bg-gray-400'
                     }`} />
                     <span className="font-medium text-sm">
-                      Run #{runNumber}
-                      {index === 0 && ' (Current)'}
+                      Execution #{executionNumber}
+                      {index === 0 && ' (Latest)'}
                     </span>
                     <div className={`px-2 py-1 rounded-full text-xs ${
-                      run.status === 'completed' ? 'bg-green-100 text-green-800' :
-                      run.status === 'failed' ? 'bg-red-100 text-red-800' :
+                      execution.status === 'completed' || execution.status === 'success' ? 'bg-green-100 text-green-800' :
+                      execution.status === 'failed' || execution.status === 'error' ? 'bg-red-100 text-red-800' :
                       'bg-yellow-100 text-yellow-800'
                     }`}>
-                      {run.status}
+                      {execution.status}
                     </div>
+                    {execution.source === 'backend' && (
+                      <div className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                        Historical
+                      </div>
+                    )}
                   </div>
                   <span className="text-xs text-gray-500">
-                    {formatTimeAgo(run.createdAt)}
+                    {formatTimeAgo(createdAt)}
                   </span>
                 </div>
                 
                 <p className="text-sm text-gray-600 mt-1">
-                  {getParameterSummary(run.parameters)}
+                  {getParameterSummary(execution.parameters)}
                 </p>
                 
-                {run.duration && (
+                {execution.duration && (
                   <p className="text-xs text-gray-500 mt-1">
-                    Completed in {(run.duration / 1000).toFixed(1)}s
+                    Completed in {(execution.duration / 1000).toFixed(1)}s
                   </p>
                 )}
                 
-                {run.error && (
+                {execution.error && (
                   <p className="text-xs text-red-600 mt-1">
-                    Error: {run.error}
+                    Error: {execution.error}
                   </p>
                 )}
               </div>
@@ -138,7 +204,7 @@ export default function HistorySection({ runs, activeRunId, onSelectRun }: Histo
         </div>
       )}
 
-      {runs.length > 0 && (
+      {totalExecutions > 0 && (
         <div className="mt-4 pt-4 border-t border-gray-200 flex gap-2">
           <button 
             onClick={exportHistory}

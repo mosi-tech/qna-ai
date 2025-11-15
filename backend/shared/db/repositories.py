@@ -100,6 +100,21 @@ class ChatRepository:
         message = ChatMessageModel(**message_data)
         return await self.db.create_message(message)
     
+    async def get_raw_message_by_id(self, message_id: str) -> Optional[Dict[str, Any]]:
+        """Get a specific message by its ID without transformations (includes userId)"""
+        try:
+            # Use encapsulated MongoDB client method
+            message = await self.db.find_message({"messageId": message_id})
+            if message:
+                # Convert ObjectId to string for JSON serialization if present
+                if '_id' in message:
+                    del message['_id']
+                return message
+            return None
+        except Exception as e:
+            logger.error(f"✗ Failed to get raw message {message_id}: {e}")
+            return None
+
     async def get_message_by_id(self, message_id: str) -> Optional[Dict[str, Any]]:
         """Get a specific message by its ID with execution and analysis data populated"""
         try:
@@ -585,15 +600,54 @@ class AnalysisRepository:
         Analysis is a template that can be executed multiple times.
         Execution results are tracked separately in ExecutionModel.
         """
+        
+        # Extract and promote fields for easier access
+        description = self._extract_description(llm_response)
+        parameters = self._extract_parameters(llm_response)
 
         analysis = AnalysisModel(
             user_id=user_id,
             question=question,  
             llm_response=llm_response,
             script_url=script,
+            description=description,
+            parameters=parameters,
         )
         
         return await self.db.create_analysis(analysis)
+    
+    def _extract_description(self, llm_response: Dict[str, Any]) -> Optional[str]:
+        """Extract analysis description from llmResponse"""
+        # Try different possible paths for description
+        description = llm_response.get('analysis_description')
+        if not description:
+            description = llm_response.get('description')
+        if not description:
+            description = llm_response.get('analysis', {}).get('description')
+        if not description:
+            # Try to get from summary or other fields
+            description = llm_response.get('summary')
+        
+        return description if description else None
+    
+    def _extract_parameters(self, llm_response: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Extract parameters from llmResponse.execution.parameters"""
+        # Try different possible paths for parameters
+        parameters = None
+        
+        # Path 1: llmResponse.execution.parameters
+        if 'execution' in llm_response and 'parameters' in llm_response['execution']:
+            parameters = llm_response['execution']['parameters']
+        
+        # Path 2: llmResponse.parameters
+        elif 'parameters' in llm_response:
+            parameters = llm_response['parameters']
+        
+        # Path 3: llmResponse.script_generation.parameters
+        elif 'script_generation' in llm_response and 'parameters' in llm_response['script_generation']:
+            parameters = llm_response['script_generation']['parameters']
+        
+        return parameters if parameters else None
     
     async def get_similar_analyses(self, user_id: str, category: str, limit: int = 10) -> List[AnalysisModel]:
         """Get similar analyses in same category"""
@@ -618,6 +672,14 @@ class AnalysisRepository:
         # Execution state is tracked separately in ExecutionModel
         await self.db.mark_analysis_used(analysis_id)
         return True
+    
+    async def get_analysis_by_id(self, analysis_id: str) -> Optional[Dict[str, Any]]:
+        """Get analysis details by ID"""
+        analysis = await self.db.get_analysis(analysis_id)
+        if analysis:
+            # Convert to dict format for API response
+            return analysis.dict(by_alias=True) if hasattr(analysis, 'dict') else analysis
+        return None
 
 
 class ExecutionRepository:
@@ -709,6 +771,64 @@ class ExecutionRepository:
     async def get_user_execution_history(self, user_id: str, limit: int = 100) -> List[ExecutionModel]:
         """Get execution history for user"""
         return await self.db.list_user_executions(user_id, limit)
+    
+    async def get_executions_by_analysis_id(self, analysis_id: str, limit: int = 50) -> List[Dict[str, Any]]:
+        """Get all executions for a specific analysis"""
+        executions = await self.db.find_executions({
+            "analysisId": analysis_id
+        }, limit=limit, sort=[("createdAt", -1)])  # Sort by newest first
+        
+        # Convert to dict format for API response
+        result = []
+        for execution in executions:
+            if hasattr(execution, 'dict'):
+                result.append(execution.dict(by_alias=True))
+            else:
+                result.append(execution)
+        return result
+    
+    async def get_primary_execution_by_analysis_id(self, analysis_id: str) -> Optional[Dict[str, Any]]:
+        """Get the primary (original) execution for an analysis"""
+        executions = await self.db.find_executions({
+            "analysisId": analysis_id,
+            "executionType": "primary"
+        }, limit=1, sort=[("createdAt", 1)])  # Get the earliest primary execution
+        
+        if executions:
+            execution = executions[0]
+            if hasattr(execution, 'dict'):
+                return execution.dict(by_alias=True)
+            return execution
+        return None
+    
+    async def get_user_reruns_by_analysis_id(self, analysis_id: str, limit: int = 50) -> List[Dict[str, Any]]:
+        """Get user-initiated re-runs for a specific analysis (excluding primary)"""
+        executions = await self.db.find_executions({
+            "analysisId": analysis_id,
+            "executionType": {"$ne": "primary"}  # Exclude primary executions
+        }, limit=limit, sort=[("createdAt", -1)])  # Sort by newest first
+        
+        # Convert to dict format for API response
+        result = []
+        for execution in executions:
+            if hasattr(execution, 'dict'):
+                result.append(execution.dict(by_alias=True))
+            else:
+                result.append(execution)
+        return result
+    
+    async def get_execution_by_message_id(self, message_id: str) -> Optional[Dict[str, Any]]:
+        """Get the execution associated with a specific message"""
+        executions = await self.db.find_executions({
+            "createdMessageId": message_id
+        }, limit=1)
+        
+        if executions:
+            execution = executions[0]
+            if hasattr(execution, 'dict'):
+                return execution.dict(by_alias=True)
+            return execution
+        return None
 
 
 class CacheRepository:

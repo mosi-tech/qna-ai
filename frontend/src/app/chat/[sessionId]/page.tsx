@@ -19,8 +19,18 @@ import { ProgressManager } from '@/lib/progress/ProgressManager';
 import { withAuth } from '@/lib/context/AuthContext';
 import { apiClient } from '@/lib/api/client';
 
-function ChatPageContent() {
-  const { session_id, user_id, resumeSession, updateSessionMetadata, startNewSession } = useSession();
+function ChatPageContent({ overrideSessionId }: { overrideSessionId?: string | null }) {
+  const { session_id: contextSessionId, user_id, resumeSession, updateSessionMetadata, startNewSession } = useSession();
+  
+  // Use override session ID if provided, otherwise use context session ID
+  const session_id = overrideSessionId || contextSessionId;
+  
+  console.log('[ChatPageContent] Authentication status:', { 
+    user_id, 
+    session_id, 
+    overrideSessionId,
+    contextSessionId 
+  });
   const { messages, addMessage, updateMessage, setMessages } = useConversation();
   const { viewMode, setViewMode, isProcessing, setIsProcessing, error: uiError, setError: setUIError } = useUI();
   const { sendChatMessage, isLoading: analysisLoading } = useAnalysis();
@@ -70,15 +80,34 @@ function ChatPageContent() {
   const loadedSessionIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!session_id || loadedSessionIdRef.current === session_id) return;
+    console.log('[ChatPageContent] useEffect triggered:', { 
+      session_id, 
+      loadedSessionIdRef: loadedSessionIdRef.current,
+      condition: !session_id || loadedSessionIdRef.current === session_id
+    });
+    
+    if (!session_id) {
+      console.log('[ChatPageContent] No session_id, skipping message load');
+      return;
+    }
+    
+    if (loadedSessionIdRef.current === session_id) {
+      console.log('[ChatPageContent] Session already loaded, skipping');
+      return;
+    }
 
+    console.log('[ChatPageContent] Loading messages for session:', session_id);
     loadedSessionIdRef.current = session_id;
     setSessionNotFound(false);  // Reset 404 state when session changes
 
     const loadInitialMessages = async () => {
       try {
+        console.log('[ChatPageContent] Calling getSessionDetail for:', session_id);
         const sessionDetail = await getSessionDetail(session_id, 0, 10);  // Load 10 messages initially
+        console.log('[ChatPageContent] getSessionDetail result:', sessionDetail);
+        
         if (!sessionDetail) {
+          console.log('[ChatPageContent] No session detail returned, setting sessionNotFound');
           setSessionNotFound(true);
           return;
         }
@@ -92,7 +121,10 @@ function ChatPageContent() {
           };
         });
 
+        console.log('[ChatPageContent] Processed messages:', loadedMessages);
+        
         if (loadedMessages.length > 0) {
+          console.log('[ChatPageContent] Setting messages in state:', loadedMessages.length);
           setMessages(loadedMessages);
           setCurrentSessionMessages({
             offset: sessionDetail.offset || 0,
@@ -100,6 +132,8 @@ function ChatPageContent() {
             total: sessionDetail.total_messages || 0,
             hasOlder: sessionDetail.has_older || false,
           });
+        } else {
+          console.log('[ChatPageContent] No messages to load, sessionDetail.messages:', sessionDetail.messages);
         }
       } catch (err) {
         console.warn('Failed to load initial session messages:', err);
@@ -932,6 +966,7 @@ export default withAuth(ChatPage);
 function ChatPageWithSession({ sessionId }: { sessionId: string }) {
   const { session_id, resumeSession, isLoading } = useSession();
   const [initializing, setInitializing] = useState(true);
+  const [forceSessionId, setForceSessionId] = useState<string | null>(null);
 
   // Initialize session when component mounts
   useEffect(() => {
@@ -940,7 +975,10 @@ function ChatPageWithSession({ sessionId }: { sessionId: string }) {
         try {
           await resumeSession(sessionId);
         } catch (error) {
-          console.error('Failed to initialize session:', error);
+          console.error('Failed to initialize session via resumeSession:', error);
+          // If resumeSession fails, force the sessionId for the chat interface
+          console.log('Using fallback: setting session_id directly from URL parameter:', sessionId);
+          setForceSessionId(sessionId);
         }
       }
       setInitializing(false);
@@ -959,5 +997,8 @@ function ChatPageWithSession({ sessionId }: { sessionId: string }) {
     );
   }
 
-  return <ChatPageContent />;
+  // Pass the effective session ID (from context or fallback)
+  const effectiveSessionId = session_id || forceSessionId;
+  
+  return <ChatPageContent overrideSessionId={effectiveSessionId} />;
 }

@@ -14,6 +14,7 @@ from shared.services.progress_service import (
     send_progress_error,
     send_progress_event,
 )
+from shared.storage import get_storage
 # Import shared services
 import sys
 import os
@@ -62,7 +63,7 @@ class ExecutionService:
             # Step 1: Fetch analysis
             self.logger.info(f"📦 Fetching analysis: {analysis_id}")
             
-            analysis = await self.analysis_repo.get_analysis(analysis_id)
+            analysis = await self.analysis_repo.get_analysis_by_id(analysis_id)
             
             if not analysis:
                 if session_id:
@@ -74,7 +75,7 @@ class ExecutionService:
             
             # Step 2: Get execution parameters
             self.logger.info("📋 Extracting execution parameters")
-            llm_response = analysis.llm_response
+            llm_response = analysis.get("llm_response") or analysis.get("llmResponse")
             
             if llm_response.get("status") != "success":
                 if session_id:
@@ -85,21 +86,22 @@ class ExecutionService:
                 }
             
             execution_config = llm_response.get("execution", {})
-            script_name = execution_config.get("script_name", "analysis.py")
+            script_filename = execution_config.get("script_name", "analysis.py")
             parameters = execution_config.get("parameters", {})
             
-            self.logger.info(f"📝 Script: {script_name}, Parameters: {parameters}")
+            self.logger.info(f"📝 Script: {script_filename}, Parameters: {parameters}")
             
             # Step 3: Get script content
-            self.logger.info(f"📥 Loading script from: {analysis.script_url}")
-            script_content = await self._load_script(analysis.script_url)
+            script_name = analysis.get("script_url") or analysis.get("scriptUrl")
+            self.logger.info(f"📥 Loading script from storage: {script_name}")
+            script_content = await self._load_script(script_name)
             
             if not script_content:
                 if session_id:
                     await send_progress_error(session_id, "Execution failed")
                 return {
                     "success": False,
-                    "error": f"Failed to load script from {analysis.script_url}"
+                    "error": f"Failed to load script from storage: {script_name}"
                 }
             
             # Step 4: Running script
@@ -139,7 +141,8 @@ class ExecutionService:
             result_data = execution_result.get("result", {})
             
             # Step 6: Generate markdown summary from results using original question
-            markdown_summary = await self._generate_markdown_summary(result_data, analysis.question)
+            user_question = analysis.get("question")
+            markdown_summary = await self._generate_markdown_summary(result_data, user_question)
             
             # Add markdown to result_data
             if markdown_summary:
@@ -176,21 +179,19 @@ class ExecutionService:
                 "error": f"Execution error: {str(e)}"
             }
     
-    async def _load_script(self, script_url: str) -> Optional[str]:
-        """Load script content from URL or file path"""
+    async def _load_script(self, script_name: str) -> Optional[str]:
+        """Load script content from storage"""
         try:
-            if script_url.startswith("s3://"):
-                # TODO: Implement S3 loading
-                self.logger.warning("S3 loading not yet implemented")
-                return None
+            storage = get_storage()
+            content = await storage.read_script(script_name)
+            if content:
+                self.logger.info(f"✅ Loaded script from storage: {len(content)} bytes")
+                return content
             else:
-                # Load from local file
-                with open(script_url, 'r') as f:
-                    content = f.read()
-                    self.logger.info(f"✅ Loaded script: {len(content)} bytes")
-                    return content
+                self.logger.error(f"❌ Script not found in storage: {script_name}")
+                return None
         except Exception as e:
-            self.logger.error(f"❌ Failed to load script: {e}")
+            self.logger.error(f"❌ Failed to load script from storage: {e}")
             return None
     
     async def _execute_script(

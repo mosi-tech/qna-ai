@@ -1,19 +1,22 @@
 export interface ParameterDefinition {
   id: string;
   name: string;
-  type: 'text' | 'number' | 'select' | 'boolean';
+  type: 'text' | 'number' | 'select' | 'multiselect' | 'boolean';
   required?: boolean;
   description?: string;
   validation?: ParameterValidation;
   defaultValue?: any;
+  options?: Array<{ label: string; value: any }>; // For select and multiselect
 }
 
 export interface ParameterValidation {
   min?: number;
   max?: number;
+  step?: number;
   pattern?: string;
   options?: Array<{ label: string; value: any }>;
   errorMessage?: string;
+  message?: string; // Alternative field name for validation message
 }
 
 export interface ParameterValue {
@@ -59,4 +62,7 @@ export interface AnalysisWorkspaceProps {
   sessionId: string;
   initialQuestion?: string;
   initialResults?: any;
+  analysisId?: string;
+  executionId?: string;
+  messageId?: string;
 }
