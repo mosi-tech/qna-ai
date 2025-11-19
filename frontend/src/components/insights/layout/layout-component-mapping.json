@@ -1,0 +1,373 @@
+{
+  "sub_layout_positions": {
+    "halfWidthTopRight": {
+      "description": "Half width, top row - limited height",
+      "space_type": "half_width",
+      "max_rows": 2,
+      "component_limits": {
+        "StatGroup": { "max_items": 4, "preferred_variant": "compact" },
+        "KeyValueTable": { "max_items": 3, "preferred_variant": "compact" }
+      }
+    },
+    "halfWidthMiddleCenter": {
+      "description": "Half width, middle row - more height available", 
+      "space_type": "half_width",
+      "max_rows": 3,
+      "component_limits": {
+        "StatGroup": { "max_items": 6, "preferred_variant": "compact" }
+      }
+    },
+    "quarterWidthMiddleLeft": {
+      "description": "Quarter width, middle left",
+      "space_type": "quarter_width", 
+      "component_limits": {
+        "StatGroup": { "max_items": 4, "preferred_variant": "compact" }
+      }
+    },
+    "quarterWidthMiddleRight": {
+      "description": "Quarter width, middle right",
+      "space_type": "quarter_width",
+      "component_limits": {
+        "StatGroup": { "max_items": 4, "preferred_variant": "compact" }
+      }
+    },
+    "fullWidthBottom": {
+      "description": "Full width bottom space",
+      "space_type": "full_width",
+      "unsuitable_components": ["ActionList", "ComparisonTable"]
+    }
+  },
+  
+  "sub_layout_spaces": {
+    "quarter_width": {
+      "description": "Small square spaces - limited width and height",
+      "examples": ["QuarterWidthChart", "QuadrantTopLeft", "FifthWidthChart"],
+      "suitable_components": [
+        "StatCard",
+        "ExecutiveSummary", 
+        "ChangeIndicator",
+        "ThresholdIndicator",
+        "StatWithConfidence",
+        "SignalStrengthGauge",
+        "DecisionBlock",
+        "CalloutNote"
+      ],
+      "unsuitable_components": [
+        "ComparisonTable",
+        "MatrixTable", 
+        "SummaryConclusion",
+        "TimelineList",
+        "RankedList",
+        "ActionList"
+      ]
+    },
+    "half_width": {
+      "description": "Medium rectangular spaces - good width, limited height",
+      "examples": ["HalfWidthBottomLeft", "QuadrantTopRight", "HalfWidthTopRight"],
+      "suitable_components": [
+        "StatGroup",
+        "ExecutiveSummary",
+        "ComparisonTable",
+        "KeyValueTable",
+        "BulletList",
+        "BadgeList",
+        "Checklist",
+        "DistributionSummary",
+        "HeatmapText",
+        "OptionComparison"
+      ],
+      "unsuitable_components": [
+        "SummaryConclusion",
+        "MatrixTable",
+        "TimelineList",
+        "LimitationsNote",
+        "MethodologyBlock"
+      ]
+    },
+    "two_thirds_width": {
+      "description": "Wide rectangular spaces - generous width, medium height", 
+      "examples": ["TwoThirdsWidthBottom", "HalfWidthCenter4x3"],
+      "suitable_components": [
+        "ComparisonTable",
+        "MatrixTable",
+        "StatGroup", 
+        "Section",
+        "RankedList",
+        "TimelineList",
+        "ActionList",
+        "PeriodComparisonTable",
+        "TimeSeriesBreakdown"
+      ],
+      "unsuitable_components": [
+        "SummaryConclusion"
+      ]
+    },
+    "full_width": {
+      "description": "Maximum width spaces - excellent for comprehensive content",
+      "examples": ["FullWidthTopRow", "FullWidthBottom", "FullWidthTop2x3"],
+      "suitable_components": [
+        "SummaryConclusion",
+        "ComparisonTable", 
+        "MatrixTable",
+        "StatGroup",
+        "Section",
+        "BulletList",
+        "ActionList",
+        "TimelineList",
+        "RankedList",
+        "Accordion",
+        "Tabs",
+        "MethodologyBlock",
+        "LimitationsNote",
+        "PeriodComparisonTable",
+        "EventImpactBlock"
+      ],
+      "unsuitable_components": ["ActionList", "ComparisonTable"]
+    },
+    "tall_spaces": {
+      "description": "Vertical spaces spanning multiple rows",
+      "examples": ["FifthWidthTallChart", "QuarterWidthMiddleLeft + QuarterWidthBottomLeft"],
+      "suitable_components": [
+        "Section",
+        "TimelineList", 
+        "RankedList",
+        "ActionList",
+        "Checklist",
+        "BulletList",
+        "Accordion",
+        "StatGroup"
+      ],
+      "unsuitable_components": [
+        "MatrixTable",
+        "ComparisonTable",
+        "SummaryConclusion"
+      ]
+    }
+  },
+  
+  "component_variants": {
+    "StatGroup": {
+      "default": {
+        "description": "Standard 3-column grid layout",
+        "best_spaces": ["two_thirds_width", "full_width"],
+        "max_items": 6
+      },
+      "compact": {
+        "description": "2-column grid for smaller spaces", 
+        "best_spaces": ["quarter_width", "half_width"],
+        "modifications": "Reduce font size, tighter spacing, 2-column layout",
+        "max_items": 6
+      },
+      "horizontal": {
+        "description": "Single row horizontal layout",
+        "best_spaces": ["full_width"],
+        "modifications": "4-6 column horizontal layout, larger font size",
+        "max_items": 8
+      },
+      "vertical": {
+        "description": "Single column vertical layout",
+        "best_spaces": ["tall_spaces"],
+        "modifications": "Stack stats vertically with larger spacing",
+        "max_items": 8
+      }
+    },
+    
+    "Section": {
+      "default": {
+        "description": "Standard section with title and content",
+        "best_spaces": ["half_width", "two_thirds_width", "full_width"]
+      },
+      "compact": {
+        "description": "Minimal spacing and smaller fonts",
+        "best_spaces": ["quarter_width"],
+        "modifications": "Smaller title font, reduced padding, compact content"
+      },
+      "wide": {
+        "description": "Larger fonts and generous spacing",
+        "best_spaces": ["full_width"],
+        "modifications": "Larger title, more padding, enhanced typography"
+      }
+    },
+
+    "ExecutiveSummary": {
+      "default": {
+        "description": "Standard executive summary with balanced content",
+        "best_spaces": ["half_width", "two_thirds_width"]
+      },
+      "compact": {
+        "description": "Condensed summary for smaller spaces",
+        "best_spaces": ["quarter_width", "half_width"],
+        "modifications": "Smaller fonts, tighter spacing, brief content"
+      },
+      "detailed": {
+        "description": "Enhanced summary with more context",
+        "best_spaces": ["full_width"],
+        "modifications": "Larger fonts, more spacing, detailed content"
+      }
+    },
+
+    "KeyValueTable": {
+      "default": {
+        "description": "Standard table with balanced sizing",
+        "best_spaces": ["half_width", "two_thirds_width", "full_width"],
+        "max_items": 6
+      },
+      "compact": {
+        "description": "Condensed table for smaller spaces", 
+        "best_spaces": ["quarter_width", "half_width"],
+        "modifications": "Smaller fonts, tighter padding, reduced spacing",
+        "max_items": 3
+      },
+      "detailed": {
+        "description": "Enhanced table with more spacing",
+        "best_spaces": ["full_width"],
+        "modifications": "Larger fonts, more padding, generous spacing",
+        "max_items": 8
+      }
+    },
+
+    "ComparisonTable": {
+      "default": {
+        "description": "Standard table with all columns",
+        "best_spaces": ["full_width", "two_thirds_width"],
+        "max_entities": 6,
+        "max_columns": 5
+      },
+      "narrow": {
+        "description": "Reduced columns for smaller spaces",
+        "best_spaces": ["half_width"],
+        "modifications": "Show only 2-3 most important columns, smaller font",
+        "max_entities": 4,
+        "max_columns": 3
+      },
+      "wide": {
+        "description": "Enhanced table with more details",
+        "best_spaces": ["full_width"],
+        "modifications": "Show additional columns, larger fonts, more spacing",
+        "max_entities": 10,
+        "max_columns": 8
+      }
+    },
+
+    "SummaryConclusion": {
+      "default": {
+        "description": "Full summary with all sections",
+        "best_spaces": ["full_width"]
+      },
+      "compact": {
+        "description": "Condensed version for smaller spaces",
+        "best_spaces": ["two_thirds_width"],
+        "modifications": "Fewer key findings, shorter conclusion, minimal next steps"
+      }
+    },
+
+    "MatrixTable": {
+      "default": {
+        "description": "Standard matrix layout",
+        "best_spaces": ["half_width", "two_thirds_width", "full_width"]
+      },
+      "minimal": {
+        "description": "Smaller matrix for tight spaces",
+        "best_spaces": ["quarter_width", "half_width"],
+        "modifications": "3x3 max, smaller cells, condensed labels"
+      }
+    },
+
+    "ActionList": {
+      "default": {
+        "description": "Standard action items with descriptions",
+        "best_spaces": ["half_width", "full_width"],
+        "max_items": 5
+      },
+      "compact": {
+        "description": "Brief action items only",
+        "best_spaces": ["quarter_width", "half_width"],
+        "modifications": "Show only action titles, remove descriptions",
+        "max_items": 3
+      },
+      "detailed": {
+        "description": "Enhanced actions with priorities and deadlines",
+        "best_spaces": ["full_width", "tall_spaces"],
+        "modifications": "Add priority indicators, deadlines, responsible parties",
+        "max_items": 8
+      }
+    },
+
+    "BulletList": {
+      "default": {
+        "description": "Standard bullet list",
+        "best_spaces": ["half_width", "full_width"],
+        "max_items": 5
+      },
+      "compact": {
+        "description": "Condensed list with smaller text",
+        "best_spaces": ["quarter_width", "half_width"],
+        "modifications": "Smaller font, tighter line spacing, limit to 3-4 items",
+        "max_items": 3
+      },
+      "expanded": {
+        "description": "Detailed list with descriptions",
+        "best_spaces": ["full_width"],
+        "modifications": "Add sub-bullet details, larger font, more spacing",
+        "max_items": 8
+      }
+    },
+
+    "TimelineList": {
+      "default": {
+        "description": "Standard timeline with dates and events",
+        "best_spaces": ["half_width", "two_thirds_width", "full_width"]
+      },
+      "minimal": {
+        "description": "Compact timeline for small spaces",
+        "best_spaces": ["quarter_width", "tall_spaces"],
+        "modifications": "Show only dates and brief titles, vertical layout"
+      },
+      "detailed": {
+        "description": "Rich timeline with descriptions and context",
+        "best_spaces": ["full_width"],
+        "modifications": "Add event descriptions, context, impact indicators"
+      }
+    },
+
+    "RankedList": {
+      "default": {
+        "description": "Standard ranked list with numbers and items",
+        "best_spaces": ["half_width", "two_thirds_width"],
+        "max_items": 5
+      },
+      "top3": {
+        "description": "Show only top 3 items",
+        "best_spaces": ["quarter_width", "half_width"],
+        "modifications": "Limit to 3 items, larger ranking numbers, bold text",
+        "max_items": 3
+      },
+      "top10": {
+        "description": "Extended list with details",
+        "best_spaces": ["full_width", "tall_spaces"],
+        "modifications": "Show up to 10 items with descriptions and metrics",
+        "max_items": 10
+      }
+    },
+
+    "CalloutList": {
+      "default": {
+        "description": "Standard callout list with items",
+        "best_spaces": ["half_width", "full_width"],
+        "max_items": 4
+      },
+      "compact": {
+        "description": "Condensed callouts for small spaces",
+        "best_spaces": ["quarter_width", "half_width"],
+        "modifications": "Smaller font, tighter spacing, brief content",
+        "max_items": 3
+      },
+      "detailed": {
+        "description": "Enhanced callouts with more information",
+        "best_spaces": ["full_width", "tall_spaces"],
+        "modifications": "Larger content areas, more descriptive text",
+        "max_items": 6
+      }
+    }
+  }
+}

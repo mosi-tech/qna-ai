@@ -1,0 +1,651 @@
+{
+  "metadata": {
+    "title": "Financial Components Library - 100 Components",
+    "description": "LLM-friendly financial visualization components with simple APIs",
+    "version": "1.0.0",
+    "totalComponents": 100,
+    "categories": 5
+  },
+  "categories": {
+    "performance": {
+      "name": "Performance Metrics",
+      "description": "Components for displaying portfolio and investment performance",
+      "count": 25,
+      "components": [
+        {
+          "name": "AnnualizedReturnsCard",
+          "description": "Display annualized returns with benchmark comparison and target progress",
+          "props": "returns: number, benchmark?: number, target?: number, period?: string",
+          "example": "<AnnualizedReturnsCard returns={12.4} benchmark={10.2} target={15.0} />"
+        },
+        {
+          "name": "TotalReturnCard", 
+          "description": "Cumulative total return since inception with dollar gains",
+          "props": "totalReturn: number, dollarGain: number, inception: string",
+          "example": "<TotalReturnCard totalReturn={24.7} dollarGain={125000} inception=\"2021\" />"
+        },
+        {
+          "name": "PeriodReturnsGrid",
+          "description": "Multi-period returns in grid format (YTD, 1Y, 3Y, 5Y)",
+          "props": "returns: object, benchmark?: object",
+          "example": "<PeriodReturnsGrid returns={{ytd: 8.4, '1y': 12.7}} benchmark={{ytd: 6.1, '1y': 10.2}} />"
+        },
+        {
+          "name": "RollingReturnsChart",
+          "description": "Rolling period performance visualization",
+          "props": "data: array, period: number, title?: string",
+          "example": "<RollingReturnsChart data={returns} period={36} title=\"3-Year Rolling Returns\" />"
+        },
+        {
+          "name": "ExcessReturnsCard",
+          "description": "Active return vs benchmark with tracking metrics",
+          "props": "excess: number, trackingError: number, informationRatio: number",
+          "example": "<ExcessReturnsCard excess={2.3} trackingError={1.8} informationRatio={1.28} />"
+        },
+        {
+          "name": "RiskAdjustedReturnsCard",
+          "description": "Risk-adjusted performance metrics comparison",
+          "props": "sharpe: number, sortino: number, calmar: number",
+          "example": "<RiskAdjustedReturnsCard sharpe={1.45} sortino={1.67} calmar={1.89} />"
+        },
+        {
+          "name": "BenchmarkComparisonTable",
+          "description": "Side-by-side performance comparison with multiple benchmarks",
+          "props": "portfolio: object, benchmarks: array",
+          "example": "<BenchmarkComparisonTable portfolio={data} benchmarks={[spy, qqq, bonds]} />"
+        },
+        {
+          "name": "PerformanceAttribution",
+          "description": "Factor-based performance attribution breakdown",
+          "props": "factors: array, totalAlpha: number",
+          "example": "<PerformanceAttribution factors={[{name: 'Quality', contribution: 1.2}]} totalAlpha={2.4} />"
+        },
+        {
+          "name": "PeerPerformanceRanking",
+          "description": "Performance ranking vs peer group with percentile",
+          "props": "rank: number, percentile: number, peerGroup: string",
+          "example": "<PeerPerformanceRanking rank={12} percentile={85} peerGroup=\"Large Cap Growth\" />"
+        },
+        {
+          "name": "ConsistencyMetrics",
+          "description": "Performance consistency indicators",
+          "props": "upMonths: number, downMonths: number, maxWin: number, maxLoss: number",
+          "example": "<ConsistencyMetrics upMonths={18} downMonths={6} maxWin={12.4} maxLoss={-8.2} />"
+        },
+        {
+          "name": "ReturnsDistribution",
+          "description": "Histogram of monthly returns distribution",
+          "props": "returns: array, bins?: number",
+          "example": "<ReturnsDistribution returns={monthlyReturns} bins={20} />"
+        },
+        {
+          "name": "PerformanceStreaks",
+          "description": "Winning and losing streak analysis",
+          "props": "currentStreak: number, longestWin: number, longestLoss: number",
+          "example": "<PerformanceStreaks currentStreak={6} longestWin={12} longestLoss={-4} />"
+        },
+        {
+          "name": "MonthlyPerformanceHeatmap",
+          "description": "Calendar heatmap of monthly returns",
+          "props": "data: array, years?: number",
+          "example": "<MonthlyPerformanceHeatmap data={monthlyData} years={3} />"
+        },
+        {
+          "name": "PerformanceWaterfall",
+          "description": "Waterfall chart showing performance drivers",
+          "props": "components: array, total: number",
+          "example": "<PerformanceWaterfall components={[{name: 'Stock Selection', value: 2.1}]} total={5.8} />"
+        },
+        {
+          "name": "DividendYieldCard",
+          "description": "Dividend yield metrics with growth rate",
+          "props": "currentYield: number, growthRate: number, payoutRatio: number",
+          "example": "<DividendYieldCard currentYield={2.8} growthRate={8.5} payoutRatio={65} />"
+        },
+        {
+          "name": "PerformanceRegimes",
+          "description": "Performance across different market regimes",
+          "props": "regimes: array",
+          "example": "<PerformanceRegimes regimes={[{name: 'Bull Market', return: 18.2, duration: 24}]} />"
+        },
+        {
+          "name": "ActiveShareCard",
+          "description": "Active share percentage with tracking metrics",
+          "props": "activeShare: number, trackingError: number",
+          "example": "<ActiveShareCard activeShare={78.5} trackingError={3.2} />"
+        },
+        {
+          "name": "CaptureBetaRatios",
+          "description": "Upside and downside capture ratios",
+          "props": "upsideCapture: number, downsideCapture: number",
+          "example": "<CaptureBetaRatios upsideCapture={105.2} downsideCapture={87.3} />"
+        },
+        {
+          "name": "BestWorstPeriods",
+          "description": "Best and worst performing periods analysis",
+          "props": "best: object, worst: object, period: string",
+          "example": "<BestWorstPeriods best={{return: 15.2, date: '2023-Q1'}} worst={{return: -8.1, date: '2022-Q2'}} period=\"quarterly\" />"
+        },
+        {
+          "name": "VolatilityAdjustedReturns",
+          "description": "Return per unit of volatility metrics",
+          "props": "returnVolRatio: number, riskPremium: number",
+          "example": "<VolatilityAdjustedReturns returnVolRatio={0.78} riskPremium={6.2} />"
+        },
+        {
+          "name": "PerformanceDeciles",
+          "description": "Performance distribution across deciles",
+          "props": "decileData: array, currentDecile: number",
+          "example": "<PerformanceDeciles decileData={deciles} currentDecile={7} />"
+        },
+        {
+          "name": "RollingCorrelation",
+          "description": "Rolling correlation with benchmark over time",
+          "props": "correlations: array, period: number",
+          "example": "<RollingCorrelation correlations={corrData} period={36} />"
+        },
+        {
+          "name": "PerformanceFunnelChart",
+          "description": "Performance funnel from gross to net returns",
+          "props": "stages: array",
+          "example": "<PerformanceFunnelChart stages={[{name: 'Gross Return', value: 12.8}, {name: 'Fees', value: -0.8}]} />"
+        },
+        {
+          "name": "AlphaGenerationCard",
+          "description": "Alpha generation consistency and magnitude",
+          "props": "alpha: number, tStat: number, consistency: number",
+          "example": "<AlphaGenerationCard alpha={2.4} tStat={2.1} consistency={78} />"
+        },
+        {
+          "name": "PerformanceGoalsTracker",
+          "description": "Progress toward performance goals and targets",
+          "props": "goals: array, current: number",
+          "example": "<PerformanceGoalsTracker goals={[{target: 15, label: 'Annual Target'}]} current={12.4} />"
+        }
+      ]
+    },
+    "risk": {
+      "name": "Risk Analytics",
+      "description": "Components for risk assessment and risk-adjusted metrics",
+      "count": 25,
+      "components": [
+        {
+          "name": "MaxDrawdownDisplay",
+          "description": "Maximum drawdown with recovery analysis and duration",
+          "props": "value: number, date?: string, recoveryDate?: string, duration?: number",
+          "example": "<MaxDrawdownDisplay value={-8.2} date=\"2022-06-15\" recoveryDate=\"2022-11-08\" duration={146} />"
+        },
+        {
+          "name": "SharpeRatioDisplay",
+          "description": "Sharpe ratio with quality assessment and historical context",
+          "props": "value: number, benchmark?: number, historicalRange?: object, riskFreeRate?: number",
+          "example": "<SharpeRatioDisplay value={1.45} benchmark={1.12} riskFreeRate={2.0} />"
+        },
+        {
+          "name": "VolatilityAnalysisCard",
+          "description": "Volatility metrics with regime analysis",
+          "props": "volatility: number, regime: string, percentile: number",
+          "example": "<VolatilityAnalysisCard volatility={18.5} regime=\"elevated\" percentile={75} />"
+        },
+        {
+          "name": "ValueAtRiskDisplay",
+          "description": "VaR at multiple confidence levels with backtesting",
+          "props": "var95: number, var99: number, expectedShortfall: number",
+          "example": "<ValueAtRiskDisplay var95={-2.1} var99={-3.8} expectedShortfall={-4.2} />"
+        },
+        {
+          "name": "BetaAnalysisCard",
+          "description": "Beta with up/down market analysis",
+          "props": "beta: number, upBeta: number, downBeta: number, rSquared: number",
+          "example": "<BetaAnalysisCard beta={1.08} upBeta={1.15} downBeta={0.98} rSquared={0.89} />"
+        },
+        {
+          "name": "VolatilityCone",
+          "description": "Volatility cone chart with current level",
+          "props": "historical: array, current: number, periods: array",
+          "example": "<VolatilityCone historical={volData} current={18.5} periods={[30, 60, 90]} />"
+        },
+        {
+          "name": "CorrelationMatrix",
+          "description": "Asset correlation matrix heatmap",
+          "props": "correlations: array, assets: array",
+          "example": "<CorrelationMatrix correlations={corrMatrix} assets={['SPY', 'QQQ', 'Bonds']} />"
+        },
+        {
+          "name": "RiskBudgetChart",
+          "description": "Risk contribution by asset or factor",
+          "props": "riskContributions: array, totalRisk: number",
+          "example": "<RiskBudgetChart riskContributions={[{asset: 'Equity', contribution: 85.2}]} totalRisk={18.5} />"
+        },
+        {
+          "name": "DownsideDeviationCard",
+          "description": "Downside deviation and downside capture metrics",
+          "props": "downsideDeviation: number, downsideCapture: number, sortinoRatio: number",
+          "example": "<DownsideDeviationCard downsideDeviation={12.3} downsideCapture={87.5} sortinoRatio={1.67} />"
+        },
+        {
+          "name": "ConditionalVaRCard", 
+          "description": "Expected shortfall (CVaR) analysis",
+          "props": "cvar: number, confidenceLevel: number, timeHorizon: number",
+          "example": "<ConditionalVaRCard cvar={-4.2} confidenceLevel={95} timeHorizon={1} />"
+        },
+        {
+          "name": "StressTestResults",
+          "description": "Portfolio performance under stress scenarios",
+          "props": "scenarios: array, worstCase: number",
+          "example": "<StressTestResults scenarios={[{name: '2008 Crisis', impact: -22.1}]} worstCase={-25.8} />"
+        },
+        {
+          "name": "RiskReturnScatter",
+          "description": "Risk vs return scatter plot with efficient frontier",
+          "props": "assets: array, efficientFrontier?: array",
+          "example": "<RiskReturnScatter assets={assetData} efficientFrontier={frontierData} />"
+        },
+        {
+          "name": "ConcentrationRiskCard",
+          "description": "Portfolio concentration risk metrics",
+          "props": "top10Weight: number, herfindahlIndex: number, effectiveStocks: number",
+          "example": "<ConcentrationRiskCard top10Weight={45.2} herfindahlIndex={0.12} effectiveStocks={38} />"
+        },
+        {
+          "name": "TailRiskAnalysis",
+          "description": "Fat tail and extreme event risk assessment",
+          "props": "skewness: number, kurtosis: number, tailRatio: number",
+          "example": "<TailRiskAnalysis skewness={-0.45} kurtosis={4.2} tailRatio={0.78} />"
+        },
+        {
+          "name": "LiquidityRiskCard",
+          "description": "Portfolio liquidity assessment and time to liquidate",
+          "props": "liquidityScore: number, daysToLiquidate: number, bidAskSpread: number",
+          "example": "<LiquidityRiskCard liquidityScore={85} daysToLiquidate={3.2} bidAskSpread={0.08} />"
+        },
+        {
+          "name": "RollingVolatilityChart",
+          "description": "Rolling volatility over time with regimes",
+          "props": "volatilities: array, period: number, regimes?: array",
+          "example": "<RollingVolatilityChart volatilities={volData} period={60} regimes={regimeData} />"
+        },
+        {
+          "name": "TrackingErrorAnalysis",
+          "description": "Tracking error with trend and forecast",
+          "props": "current: number, trend: string, forecast: number",
+          "example": "<TrackingErrorAnalysis current={3.2} trend=\"increasing\" forecast={3.8} />"
+        },
+        {
+          "name": "RiskParity",
+          "description": "Risk parity analysis and optimal weights",
+          "props": "currentWeights: array, riskParityWeights: array",
+          "example": "<RiskParity currentWeights={weights} riskParityWeights={rpWeights} />"
+        },
+        {
+          "name": "MarginalVaRCard",
+          "description": "Marginal VaR for portfolio components",
+          "props": "components: array, portfolioVaR: number",
+          "example": "<MarginalVaRCard components={[{asset: 'Tech', mvar: 0.15}]} portfolioVaR={2.1} />"
+        },
+        {
+          "name": "RiskDecomposition",
+          "description": "Risk decomposition by factor or asset",
+          "props": "decomposition: array, method: string",
+          "example": "<RiskDecomposition decomposition={riskData} method=\"factor\" />"
+        },
+        {
+          "name": "VolatilityRegimes",
+          "description": "Volatility regime identification and duration",
+          "props": "regimes: array, current: string",
+          "example": "<VolatilityRegimes regimes={[{name: 'Low Vol', duration: 180}]} current=\"moderate\" />"
+        },
+        {
+          "name": "RiskAdjustedMetrics",
+          "description": "Comprehensive risk-adjusted performance metrics",
+          "props": "metrics: object",
+          "example": "<RiskAdjustedMetrics metrics={{sharpe: 1.45, treynor: 0.089, jensen: 2.1}} />"
+        },
+        {
+          "name": "DrawdownAnalysisChart",
+          "description": "Detailed drawdown analysis with recovery patterns",
+          "props": "drawdowns: array, recoveryTimes: array",
+          "example": "<DrawdownAnalysisChart drawdowns={ddData} recoveryTimes={recoveryData} />"
+        },
+        {
+          "name": "RiskBudgetOptimization",
+          "description": "Optimal risk budget allocation suggestions",
+          "props": "current: array, optimal: array, constraints: object",
+          "example": "<RiskBudgetOptimization current={currentRisk} optimal={optimalRisk} constraints={limits} />"
+        },
+        {
+          "name": "FactorRiskExposure",
+          "description": "Factor risk exposure analysis and attribution",
+          "props": "factors: array, totalRisk: number",
+          "example": "<FactorRiskExposure factors={[{name: 'Market', exposure: 0.85, risk: 12.1}]} totalRisk={18.5} />"
+        }
+      ]
+    },
+    "portfolio": {
+      "name": "Portfolio Analysis",
+      "description": "Components for portfolio composition and allocation analysis",
+      "count": 20,
+      "components": [
+        {
+          "name": "AssetAllocationPie",
+          "description": "Interactive asset allocation pie chart with drift analysis",
+          "props": "allocations: array, target?: array, showDrift?: boolean",
+          "example": "<AssetAllocationPie allocations={[{name: 'Stocks', value: 65.2}]} target={targetAllocation} />"
+        },
+        {
+          "name": "SectorExposureChart",
+          "description": "Sector breakdown with benchmark comparison",
+          "props": "sectors: array, benchmark?: array, overUnderWeight?: boolean",
+          "example": "<SectorExposureChart sectors={sectorData} benchmark={benchmarkSectors} overUnderWeight={true} />"
+        },
+        {
+          "name": "TopHoldingsTable",
+          "description": "Top portfolio holdings with performance contribution",
+          "props": "holdings: array, count?: number, showContribution?: boolean",
+          "example": "<TopHoldingsTable holdings={holdingsData} count={10} showContribution={true} />"
+        },
+        {
+          "name": "GeographicAllocation",
+          "description": "Geographic/regional allocation breakdown",
+          "props": "regions: array, showMap?: boolean",
+          "example": "<GeographicAllocation regions={[{name: 'US', weight: 65.8}]} showMap={true} />"
+        },
+        {
+          "name": "MarketCapBreakdown",
+          "description": "Market capitalization exposure breakdown",
+          "props": "breakdown: object, style?: string",
+          "example": "<MarketCapBreakdown breakdown={{large: 65.2, mid: 25.1, small: 9.7}} style=\"pie\" />"
+        },
+        {
+          "name": "StyleBoxAnalysis",
+          "description": "Investment style box (growth/value, large/small)",
+          "props": "styleWeights: object, benchmark?: object",
+          "example": "<StyleBoxAnalysis styleWeights={{largeGrowth: 35.2}} benchmark={benchmarkStyle} />"
+        },
+        {
+          "name": "PortfolioCharacteristics",
+          "description": "Portfolio fundamental characteristics summary",
+          "props": "characteristics: object",
+          "example": "<PortfolioCharacteristics characteristics={{pe: 18.5, pb: 2.1, dividend: 2.8}} />"
+        },
+        {
+          "name": "AllocationDriftChart",
+          "description": "Asset allocation drift from target over time",
+          "props": "historical: array, targets: array",
+          "example": "<AllocationDriftChart historical={driftData} targets={targetAllocation} />"
+        },
+        {
+          "name": "RebalancingHistory",
+          "description": "Portfolio rebalancing history and frequency",
+          "props": "rebalances: array, frequency: string",
+          "example": "<RebalancingHistory rebalances={rebalanceData} frequency=\"quarterly\" />"
+        },
+        {
+          "name": "HoldingsConcentration",
+          "description": "Portfolio concentration metrics and analysis",
+          "props": "concentration: object, threshold?: number",
+          "example": "<HoldingsConcentration concentration={{top5: 35.2, top10: 52.8}} threshold={5} />"
+        },
+        {
+          "name": "CashFlowAnalysis",
+          "description": "Portfolio cash flows in/out analysis",
+          "props": "cashFlows: array, period: string",
+          "example": "<CashFlowAnalysis cashFlows={flowData} period=\"monthly\" />"
+        },
+        {
+          "name": "TurnoverAnalysis",
+          "description": "Portfolio turnover metrics and cost impact",
+          "props": "turnover: number, cost: number, frequency: string",
+          "example": "<TurnoverAnalysis turnover={45.2} cost={0.15} frequency=\"annual\" />"
+        },
+        {
+          "name": "FactorExposureChart",
+          "description": "Factor exposure analysis (quality, momentum, etc.)",
+          "props": "factors: array, benchmark?: array",
+          "example": "<FactorExposureChart factors={[{name: 'Quality', exposure: 0.65}]} benchmark={benchFactors} />"
+        },
+        {
+          "name": "ESGScoreBreakdown",
+          "description": "ESG scoring breakdown and components",
+          "props": "scores: object, components: array",
+          "example": "<ESGScoreBreakdown scores={{overall: 8.2, environmental: 7.8}} components={esgData} />"
+        },
+        {
+          "name": "ExpenseAnalysisCard",
+          "description": "Portfolio expense ratio analysis and breakdown",
+          "props": "expenses: object, comparison?: array",
+          "example": "<ExpenseAnalysisCard expenses={{management: 0.75, other: 0.15}} comparison={peerExpenses} />"
+        },
+        {
+          "name": "DiversificationMetrics",
+          "description": "Portfolio diversification effectiveness metrics",
+          "props": "metrics: object",
+          "example": "<DiversificationMetrics metrics={{effectiveStocks: 45, diversificationRatio: 0.78}} />"
+        },
+        {
+          "name": "AllocationEfficiency",
+          "description": "Portfolio allocation efficiency vs optimal",
+          "props": "current: array, optimal: array, efficiency: number",
+          "example": "<AllocationEfficiency current={currentAlloc} optimal={optimalAlloc} efficiency={0.85} />"
+        },
+        {
+          "name": "HoldingsOverlap",
+          "description": "Holdings overlap analysis between funds/strategies",
+          "props": "portfolios: array, overlapMatrix: array",
+          "example": "<HoldingsOverlap portfolios={['Fund A', 'Fund B']} overlapMatrix={overlapData} />"
+        },
+        {
+          "name": "PortfolioEvolution",
+          "description": "Portfolio composition changes over time",
+          "props": "evolution: array, assets: array",
+          "example": "<PortfolioEvolution evolution={evolutionData} assets={['Stocks', 'Bonds', 'REITs']} />"
+        },
+        {
+          "name": "OptimalAllocationSuggestion",
+          "description": "Suggested allocation changes for optimization",
+          "props": "suggestions: array, rationale: string",
+          "example": "<OptimalAllocationSuggestion suggestions={optimizationSuggestions} rationale=\"risk-return\" />"
+        }
+      ]
+    },
+    "timeseries": {
+      "name": "Time Series Charts",
+      "description": "Components for time-based financial data visualization",
+      "count": 20,
+      "components": [
+        {
+          "name": "CumulativeReturnsChart",
+          "description": "Cumulative returns over time with benchmark comparison",
+          "props": "portfolio: array, benchmark?: array, title?: string",
+          "example": "<CumulativeReturnsChart portfolio={returnsData} benchmark={spyData} title=\"Performance\" />"
+        },
+        {
+          "name": "PriceChart",
+          "description": "Price movement chart with volume and indicators",
+          "props": "prices: array, volume?: array, indicators?: array",
+          "example": "<PriceChart prices={priceData} volume={volumeData} indicators={['SMA20', 'SMA50']} />"
+        },
+        {
+          "name": "DrawdownTimelineChart",
+          "description": "Drawdown periods visualization over time",
+          "props": "drawdowns: array, underwater?: boolean",
+          "example": "<DrawdownTimelineChart drawdowns={ddData} underwater={true} />"
+        },
+        {
+          "name": "VolatilityTimeSeriesChart",
+          "description": "Volatility evolution over time with regimes",
+          "props": "volatility: array, regimes?: array, benchmark?: array",
+          "example": "<VolatilityTimeSeriesChart volatility={volData} regimes={regimeData} />"
+        },
+        {
+          "name": "RollingMetricsChart",
+          "description": "Rolling performance metrics over time",
+          "props": "metrics: array, period: number, metric: string",
+          "example": "<RollingMetricsChart metrics={rollingData} period={36} metric=\"sharpe\" />"
+        },
+        {
+          "name": "RelativePerformanceChart",
+          "description": "Relative performance vs benchmark over time",
+          "props": "relative: array, alpha?: array, benchmark: string",
+          "example": "<RelativePerformanceChart relative={relativeData} alpha={alphaData} benchmark=\"SPY\" />"
+        },
+        {
+          "name": "NAVChart",
+          "description": "Net asset value evolution with distributions",
+          "props": "nav: array, distributions?: array, splits?: array",
+          "example": "<NAVChart nav={navData} distributions={distData} splits={splitData} />"
+        },
+        {
+          "name": "BenchmarkComparisonChart",
+          "description": "Multi-benchmark comparison over time",
+          "props": "data: array, benchmarks: array, relative?: boolean",
+          "example": "<BenchmarkComparisonChart data={perfData} benchmarks={['SPY', 'QQQ']} relative={true} />"
+        },
+        {
+          "name": "PerformanceCalendarChart",
+          "description": "Calendar view of daily/monthly performance",
+          "props": "returns: array, period: string, heatmap?: boolean",
+          "example": "<PerformanceCalendarChart returns={dailyReturns} period=\"monthly\" heatmap={true} />"
+        },
+        {
+          "name": "SeasonalityChart",
+          "description": "Seasonal performance patterns analysis",
+          "props": "data: array, pattern: string, years?: number",
+          "example": "<SeasonalityChart data={seasonalData} pattern=\"monthly\" years={5} />"
+        },
+        {
+          "name": "CashFlowTimelineChart",
+          "description": "Cash flows in and out over time",
+          "props": "cashFlows: array, cumulative?: boolean",
+          "example": "<CashFlowTimelineChart cashFlows={flowData} cumulative={true} />"
+        },
+        {
+          "name": "AllocationTimeSeriesChart",
+          "description": "Asset allocation changes over time",
+          "props": "allocations: array, assets: array, stacked?: boolean",
+          "example": "<AllocationTimeSeriesChart allocations={allocData} assets={assetList} stacked={true} />"
+        },
+        {
+          "name": "CorrelationTimeSeriesChart",
+          "description": "Rolling correlation evolution over time",
+          "props": "correlations: array, assets: array, period: number",
+          "example": "<CorrelationTimeSeriesChart correlations={corrData} assets={['SPY', 'Bonds']} period={60} />"
+        },
+        {
+          "name": "DividendTimelineChart",
+          "description": "Dividend payments and yield over time",
+          "props": "dividends: array, yield?: array, frequency: string",
+          "example": "<DividendTimelineChart dividends={divData} yield={yieldData} frequency=\"quarterly\" />"
+        },
+        {
+          "name": "RiskTimeSeriesChart",
+          "description": "Risk metrics evolution over time",
+          "props": "risk: array, metric: string, benchmark?: array",
+          "example": "<RiskTimeSeriesChart risk={riskData} metric=\"var\" benchmark={benchRisk} />"
+        },
+        {
+          "name": "PerformanceStreaksChart",
+          "description": "Winning and losing streaks visualization",
+          "props": "streaks: array, threshold?: number",
+          "example": "<PerformanceStreaksChart streaks={streakData} threshold={0} />"
+        },
+        {
+          "name": "ReturnsSeriesChart",
+          "description": "Daily/monthly returns time series",
+          "props": "returns: array, frequency: string, distribution?: boolean",
+          "example": "<ReturnsSeriesChart returns={returnData} frequency=\"daily\" distribution={true} />"
+        },
+        {
+          "name": "FactorTimeSeriesChart",
+          "description": "Factor exposures evolution over time",
+          "props": "factors: array, names: array, benchmark?: array",
+          "example": "<FactorTimeSeriesChart factors={factorData} names={['Quality', 'Growth']} />"
+        },
+        {
+          "name": "TrendAnalysisChart",
+          "description": "Trend identification and momentum analysis",
+          "props": "data: array, trends: array, signals?: array",
+          "example": "<TrendAnalysisChart data={priceData} trends={trendData} signals={signalData} />"
+        },
+        {
+          "name": "PerformanceRegressionChart",
+          "description": "Performance regression analysis over time",
+          "props": "data: array, regression: object, rSquared: number",
+          "example": "<PerformanceRegressionChart data={perfData} regression={regData} rSquared={0.89} />"
+        }
+      ]
+    },
+    "comparative": {
+      "name": "Comparative Analysis", 
+      "description": "Components for comparing investments, funds, and strategies",
+      "count": 10,
+      "components": [
+        {
+          "name": "PeerComparisonTable",
+          "description": "Comprehensive peer group comparison table",
+          "props": "peers: array, metrics: array, highlight?: string",
+          "example": "<PeerComparisonTable peers={peerData} metrics={['return', 'sharpe', 'maxDD']} highlight=\"current\" />"
+        },
+        {
+          "name": "RankingChart",
+          "description": "Performance ranking visualization",
+          "props": "rankings: array, metric: string, periods: array",
+          "example": "<RankingChart rankings={rankData} metric=\"return\" periods={['1Y', '3Y', '5Y']} />"
+        },
+        {
+          "name": "QuartileAnalysisChart",
+          "description": "Quartile performance analysis over time",
+          "props": "quartiles: array, position: array, benchmark: string",
+          "example": "<QuartileAnalysisChart quartiles={quartileData} position={positionData} benchmark=\"Large Cap\" />"
+        },
+        {
+          "name": "EfficientFrontierChart",
+          "description": "Mean-variance efficient frontier with portfolio position",
+          "props": "frontier: array, portfolios: array, optimal?: object",
+          "example": "<EfficientFrontierChart frontier={frontierData} portfolios={portfolioPoints} optimal={optimalPoint} />"
+        },
+        {
+          "name": "OutperformanceFrequencyChart",
+          "description": "Frequency of outperformance vs benchmark/peers",
+          "props": "frequency: object, periods: array, confidence?: number",
+          "example": "<OutperformanceFrequencyChart frequency={{monthly: 65, annual: 78}} periods={periodsData} />"
+        },
+        {
+          "name": "StyleDriftAnalysisChart",
+          "description": "Investment style drift analysis vs benchmark",
+          "props": "drift: array, benchmark: array, tolerance?: number",
+          "example": "<StyleDriftAnalysisChart drift={driftData} benchmark={benchStyle} tolerance={5} />"
+        },
+        {
+          "name": "PerformanceLeaderboard",
+          "description": "Dynamic leaderboard with multiple metrics",
+          "props": "funds: array, sortBy: string, showScores?: boolean",
+          "example": "<PerformanceLeaderboard funds={fundData} sortBy=\"sharpe\" showScores={true} />"
+        },
+        {
+          "name": "CostBenefitAnalysisChart",
+          "description": "Cost vs performance benefit analysis",
+          "props": "data: array, costMetric: string, benefitMetric: string",
+          "example": "<CostBenefitAnalysisChart data={cbData} costMetric=\"expense\" benefitMetric=\"alpha\" />"
+        },
+        {
+          "name": "RelativeStrengthChart",
+          "description": "Relative strength vs benchmark and peers",
+          "props": "strength: array, benchmark: array, peers?: array",
+          "example": "<RelativeStrengthChart strength={rsData} benchmark={benchRS} peers={peerRS} />"
+        },
+        {
+          "name": "MultiPeriodComparisonChart",
+          "description": "Performance comparison across multiple time periods",
+          "props": "data: array, periods: array, entities: array",
+          "example": "<MultiPeriodComparisonChart data={compData} periods={['YTD', '1Y', '3Y']} entities={['Fund A', 'Fund B']} />"
+        }
+      ]
+    }
+  },
+  "usage": {
+    "llmInstructions": "Use these components to create professional financial visualizations. Each component has a simple, descriptive name and minimal required props. Combine multiple components to build comprehensive financial dashboards.",
+    "example": "For portfolio analysis, combine <PortfolioPerformanceDashboard>, <AssetAllocationPie>, <TopHoldingsTable>, and <RiskMetricsCard> for a complete view.",
+    "naming": "All component names are self-descriptive and follow FinancialConceptType pattern (e.g., SharpeRatioCard, MaxDrawdownDisplay)"
+  }
+}
