@@ -129,32 +129,40 @@ export default function BarChart({
   const barColor = colorSchemes[color];
 
   // Value formatting with compact mode for narrow containers
-  const formatValue = (value: number, compact = false) => {
+  const formatValue = (value: number | string, compact = false) => {
+    // Convert to number if it's a string
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    
+    // Return original value if conversion failed
+    if (isNaN(numValue)) {
+      return String(value);
+    }
+    
     if (compact && width < 200) {
       // Very compact formatting for narrow containers
       switch (format) {
         case 'percentage':
-          return `${value.toFixed(0)}%`;
+          return `${numValue.toFixed(0)}%`;
         case 'currency':
-          if (value >= 1000000) return `$${(value / 1000000).toFixed(0)}M`;
-          if (value >= 1000) return `$${(value / 1000).toFixed(0)}K`;
-          return `$${Math.round(value)}`;
+          if (numValue >= 1000000) return `$${(numValue / 1000000).toFixed(0)}M`;
+          if (numValue >= 1000) return `$${(numValue / 1000).toFixed(0)}K`;
+          return `$${Math.round(numValue)}`;
         case 'number':
         default:
-          if (value >= 1000000) return `${(value / 1000000).toFixed(0)}M`;
-          if (value >= 1000) return `${(value / 1000).toFixed(0)}K`;
-          return Math.round(value).toString();
+          if (numValue >= 1000000) return `${(numValue / 1000000).toFixed(0)}M`;
+          if (numValue >= 1000) return `${(numValue / 1000).toFixed(0)}K`;
+          return Math.round(numValue).toString();
       }
     } else {
       // Normal formatting
       switch (format) {
         case 'percentage':
-          return `${value.toFixed(1)}%`;
+          return `${numValue.toFixed(1)}%`;
         case 'currency':
-          return `$${value.toLocaleString()}`;
+          return `$${numValue.toLocaleString()}`;
         case 'number':
         default:
-          return value.toLocaleString();
+          return numValue.toLocaleString();
       }
     }
   };

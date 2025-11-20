@@ -45,7 +45,9 @@ class MCPClient:
                 logger.info(f"Connected to MCP server {server_name}: {init_result}")
                 
                 # List tools
+                logger.info(f"Attempting to list tools from {server_name}")
                 tools_result = await session.list_tools()
+                logger.info(f"Successfully got tools result from {server_name}: {type(tools_result)}")
                 
                 for tool in tools_result.tools:
                     # Create unique tool name by prefixing with server name
@@ -64,6 +66,8 @@ class MCPClient:
                 
         except Exception as e:
             logger.error(f"Failed to discover tools from {server_name}: {e}")
+            logger.error(f"Exception type: {type(e).__name__}")
+            logger.error(f"Exception args: {e.args}")
             logger.exception(e)
         
         return tools

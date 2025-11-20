@@ -86,3 +86,4 @@ backend/scripts/batch_processor.log
 .serena
 .vscode
 /backend/shared/analyze/code_gen
+/bruno

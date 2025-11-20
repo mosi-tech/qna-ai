@@ -1,5 +1,7 @@
 'use client';
 
+import UIConfigurationRenderer from '../insights/UIConfigurationRenderer';
+
 interface AnalysisResultSectionProps {
   results: any;
   isRunning: boolean;
@@ -16,7 +18,25 @@ export default function AnalysisResultSection({
   const renderAnalysisContent = () => {
     if (!results) return null;
 
-    // Extract the main analysis content similar to chat interface
+    // Check if results contain UI configuration (new dynamic UI approach)
+    const uiConfig = results.ui_config || results.llmResponse?.ui_config;
+    if (uiConfig && uiConfig.ui_config?.selected_components) {
+      return (
+        <div className="space-y-4">
+          <div className="bg-green-50 rounded-lg p-3 border-l-4 border-green-500">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span className="text-sm font-medium text-green-700">Dynamic Dashboard Generated</span>
+            </div>
+          </div>
+          <UIConfigurationRenderer 
+            uiConfig={uiConfig}
+          />
+        </div>
+      );
+    }
+
+    // Fallback to traditional content rendering
     const content = results.llmResponse?.analysis_result || 
                    results.analysis_result || 
                    results.response_data?.analysis_result ||

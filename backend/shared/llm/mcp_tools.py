@@ -164,7 +164,7 @@ class SimplifiedMCPLoader:
         for tool_name, tool_schema in mcp_client.available_tools.items():
             # Apply server filtering (if specified)
             if allowed_servers and not self._tool_matches_servers(tool_name, allowed_servers):
-                logger.debug(f"🚫 Tool {tool_name} not from allowed servers")
+                logger.info(f"🚫 Tool {tool_name} not from allowed servers")
                 continue
                 
             # Apply exclusion filter
@@ -194,16 +194,9 @@ class SimplifiedMCPLoader:
     
     def _tool_matches_servers(self, tool_name: str, servers: List[str]) -> bool:
         """Check if tool belongs to allowed servers"""
-        # Simple heuristic: tool name prefixes match server names
+        # MCP tools are prefixed with server_name__tool_name
         for server in servers:
-            server_prefix = server.replace("-", "_").replace("server", "").replace("analysis", "").replace("engine", "")
-            if any(prefix in tool_name.lower() for prefix in [
-                server.replace("-", "_"), 
-                server_prefix,
-                "financial" if "financial" in server else "",
-                "analytics" if "analytics" in server else "",
-                "validation" if "validation" in server else ""
-            ] if prefix):
+            if tool_name.startswith(f"{server}__"):
                 return True
         return False
     

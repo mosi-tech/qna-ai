@@ -1,0 +1,16 @@
+# React Components MCP Server Requirements
+
+# Core MCP dependencies
+mcp>=1.0.0
+
+# JSON schema validation
+jsonschema>=4.17.0
+
+# Date/time handling  
+python-dateutil>=2.8.2
+
+# Async support
+asyncio
+
+# Logging
+structlog>=23.1.0
