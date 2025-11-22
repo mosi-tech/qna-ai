@@ -1,10 +1,10 @@
 'use client';
 
-import Headline from '@/components/insights/Headline';
-import ComparisonCard from '@/components/insights/ComparisonCard';
-import OptionComparison from '@/components/insights/OptionComparison';
-import ScenarioBlock from '@/components/insights/ScenarioBlock';
-import DecisionBlock from '@/components/insights/DecisionBlock';
+// import Headline from '@/components/insights/Headline';
+// import ComparisonCard from '@/components/insights/ComparisonCard';
+// import OptionComparison from '@/components/insights/OptionComparison';
+// import ScenarioBlock from '@/components/insights/ScenarioBlock';
+// import DecisionBlock from '@/components/insights/DecisionBlock';
 
 export default function StrategyComparison() {
   const handleApprove = (component: string) => {

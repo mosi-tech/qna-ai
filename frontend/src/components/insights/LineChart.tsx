@@ -28,6 +28,7 @@ import { useTooltip, useTooltipInPortal, defaultStyles } from '@visx/tooltip';
 import { localPoint } from '@visx/event';
 import { bisector } from 'd3-array';
 import { insightStyles, cn } from './shared/styles';
+import Container from './Container';
 
 interface ChartDataPoint {
   label: string;
@@ -237,14 +238,8 @@ export default function LineChart({
   };
 
   return (
-    <div ref={containerRef} className={cn("bg-white rounded-lg overflow-hidden", insightStyles.spacing.component)}>
-      {title && (
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className={insightStyles.typography.h3}>{title}</h3>
-        </div>
-      )}
-
-      <div className="p-4">
+    <Container title={title} onApprove={onApprove} onDisapprove={onDisapprove}>
+      <div ref={containerRef} className="p-4">
         <div className="flex justify-center">
           <svg width={width} height={height} ref={tooltipContainerRef}>
             <Group left={margin.left} top={margin.top}>
@@ -392,28 +387,6 @@ export default function LineChart({
         </div>
       )}
 
-      {/* Action buttons */}
-      {(onApprove || onDisapprove) && (
-        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex gap-2">
-          {onApprove && (
-            <button
-              onClick={onApprove}
-              className={insightStyles.button.approve.base}
-            >
-              Approve
-            </button>
-          )}
-          {onDisapprove && (
-            <button
-              onClick={onDisapprove}
-              className={insightStyles.button.disapprove.base}
-            >
-              Disapprove
-            </button>
-          )}
-        </div>
-      )}
-
       {/* Tooltip */}
       {tooltipOpen && tooltipData && (
         <TooltipInPortal
@@ -435,6 +408,6 @@ export default function LineChart({
           </div>
         </TooltipInPortal>
       )}
-    </div>
+    </Container>
   );
 }

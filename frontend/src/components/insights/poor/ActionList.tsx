@@ -42,46 +42,9 @@ export default function ActionList({
   groupByPriority = false,
   onApprove,
   onDisapprove,
-  variant = 'default'
+  
 }: ActionListProps) {
 
-  const getVariantConfig = () => {
-    switch (variant) {
-      case 'compact':
-        return {
-          containerPadding: 'p-3 sm:p-4',
-          spacing: 'space-y-2',
-          groupSpacing: 'space-y-3',
-          itemPadding: 'p-2 sm:p-3',
-          titleSize: 'text-sm sm:text-base',
-          actionTitleSize: 'text-sm',
-          contentSize: 'text-xs sm:text-sm',
-          badgeSize: 'text-xs px-1.5 py-0.5'
-        };
-      case 'detailed':
-        return {
-          containerPadding: 'p-4 sm:p-6 lg:p-8',
-          spacing: 'space-y-4',
-          groupSpacing: 'space-y-6',
-          itemPadding: 'p-4 sm:p-5 lg:p-6',
-          titleSize: 'text-lg sm:text-xl',
-          actionTitleSize: 'text-base sm:text-lg',
-          contentSize: 'text-sm sm:text-base',
-          badgeSize: 'text-xs sm:text-sm px-2 py-1'
-        };
-      default:
-        return {
-          containerPadding: 'p-3 sm:p-4 lg:p-6',
-          spacing: 'space-y-3',
-          groupSpacing: 'space-y-4 sm:space-y-6',
-          itemPadding: 'p-3 sm:p-4',
-          titleSize: 'text-base sm:text-lg',
-          actionTitleSize: 'text-sm sm:text-md',
-          contentSize: 'text-xs sm:text-sm',
-          badgeSize: 'text-xs px-2 py-1'
-        };
-    }
-  };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -130,7 +93,6 @@ export default function ActionList({
     low: actions.filter(a => a.priority === 'low')
   } : null;
 
-  const config = getVariantConfig();
 
   const renderActionItem = (action: Action, index: number) => (
     <div key={action.id} className={` rounded-lg ${config.itemPadding} hover:border-gray-300 transition-colors hover:shadow-sm`}>

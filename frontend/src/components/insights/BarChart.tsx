@@ -25,6 +25,7 @@ import { scaleBand, scaleLinear } from '@visx/scale';
 import { useTooltip, useTooltipInPortal, defaultStyles } from '@visx/tooltip';
 import { localPoint } from '@visx/event';
 import { insightStyles, cn } from './shared/styles';
+import Container from './Container';
 
 interface ChartDataPoint {
   label: string;
@@ -63,15 +64,15 @@ export default function BarChart({
       if (containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect();
         const containerWidth = rect.width;
-        
+
         // Use nearly all available width (very aggressive)
         const padding = 16; // Minimal padding
         const availableWidth = containerWidth - padding;
-        
+
         // Force the chart to fit the container
         const width = Math.max(100, availableWidth); // Absolute minimum 100px
         const height = Math.max(120, Math.min(300, width * 0.7)); // Responsive height
-        
+
         console.log('BarChart container:', containerWidth, 'chart:', width, 'available:', availableWidth);
         setDimensions({ width, height });
       }
@@ -82,9 +83,9 @@ export default function BarChart({
     if (containerRef.current) {
       resizeObserver.observe(containerRef.current);
     }
-    
+
     updateDimensions();
-    
+
     return () => {
       resizeObserver.disconnect();
     };
@@ -96,7 +97,7 @@ export default function BarChart({
     if (width < 150) {
       return { top: 5, right: 5, bottom: 20, left: 20 }; // Ultra-minimal for very narrow
     } else if (width < 200) {
-      return { top: 8, right: 8, bottom: 25, left: 25 }; 
+      return { top: 8, right: 8, bottom: 25, left: 25 };
     } else if (width < 300) {
       return { top: 10, right: 10, bottom: 30, left: 35 };
     } else if (width < 400) {
@@ -132,12 +133,12 @@ export default function BarChart({
   const formatValue = (value: number | string, compact = false) => {
     // Convert to number if it's a string
     const numValue = typeof value === 'string' ? parseFloat(value) : value;
-    
+
     // Return original value if conversion failed
     if (isNaN(numValue)) {
       return String(value);
     }
-    
+
     if (compact && width < 200) {
       // Very compact formatting for narrow containers
       switch (format) {
@@ -167,16 +168,19 @@ export default function BarChart({
     }
   };
 
+  // Fallback for empty or invalid data
+  const validData = Array.isArray(data) && data.length > 0 ? data : [];
+
   // Scales with responsive padding - ensure bars always fit
   const xScale = scaleBand({
-    domain: data.map(d => d.label),
+    domain: validData.map(d => d.label),
     range: [0, innerWidth],
     padding: width < 150 ? 0.02 : width < 200 ? 0.05 : width < 300 ? 0.1 : 0.2, // Even tighter padding for narrow containers
     round: true, // Round to pixel boundaries
   });
 
   const yScale = scaleLinear({
-    domain: [0, Math.max(...data.map(d => d.value)) * 1.1],
+    domain: [0, validData.length > 0 ? Math.max(...validData.map(d => d.value)) * 1.1 : 100],
     range: [innerHeight, 0],
   });
 
@@ -196,27 +200,24 @@ export default function BarChart({
   });
 
   const handleTooltip = (event: React.MouseEvent, datum: ChartDataPoint) => {
-    const coords = localPoint(event.target.ownerSVGElement, event);
-    showTooltip({
-      tooltipData: datum,
-      tooltipLeft: coords?.x,
-      tooltipTop: coords?.y,
-    });
+    const svgElement = (event.target as SVGElement).ownerSVGElement;
+    if (svgElement) {
+      const coords = localPoint(svgElement, event);
+      showTooltip({
+        tooltipData: datum,
+        tooltipLeft: coords?.x,
+        tooltipTop: coords?.y,
+      });
+    }
   };
 
   return (
-    <div ref={containerRef} className={cn("bg-white rounded-lg overflow-hidden", insightStyles.spacing.component)}>
-      {title && (
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className={insightStyles.typography.h3}>{title}</h3>
-        </div>
-      )}
-
-      <div className="p-4 overflow-visible">
+    <Container title={title} onApprove={onApprove} onDisapprove={onDisapprove}>
+      <div ref={containerRef} className="p-4 overflow-visible">
         <div className="flex justify-center overflow-visible">
           <svg width={width} height={height} ref={tooltipContainerRef} className="overflow-visible">
             <Group left={margin.left} top={margin.top}>
-              {data.map((d, i) => {
+              {validData.map((d, i) => {
                 const barWidth = xScale.bandwidth();
                 const barHeight = innerHeight - yScale(d.value);
                 const x = xScale(d.label);
@@ -225,16 +226,6 @@ export default function BarChart({
                 // Clamp bar width and position to ensure it fits in container
                 const clampedX = Math.max(0, Math.min(x || 0, innerWidth - barWidth));
                 const clampedWidth = Math.min(barWidth, innerWidth - (x || 0));
-
-                console.log(`Bar ${i} (${d.label}):`, {
-                  x: x,
-                  clampedX,
-                  barWidth,
-                  clampedWidth,
-                  innerWidth,
-                  rightEdge: (x || 0) + barWidth,
-                  fitsInContainer: ((x || 0) + barWidth) <= innerWidth
-                });
 
                 return (
                   <Group key={d.label}>
@@ -295,52 +286,6 @@ export default function BarChart({
         </div>
       </div>
 
-      {/* Summary stats for larger charts */}
-      {width > 500 && (
-        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50">
-          <div className="grid grid-cols-3 gap-4 text-sm">
-            <div>
-              <div className="text-gray-600">Max Value</div>
-              <div className="font-semibold text-gray-900">
-                {formatValue(Math.max(...data.map(d => d.value)))}
-              </div>
-            </div>
-            <div>
-              <div className="text-gray-600">Average</div>
-              <div className="font-semibold text-gray-900">
-                {formatValue(data.reduce((sum, d) => sum + d.value, 0) / data.length)}
-              </div>
-            </div>
-            <div>
-              <div className="text-gray-600">Total Items</div>
-              <div className="font-semibold text-gray-900">{data.length}</div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Action buttons */}
-      {(onApprove || onDisapprove) && (
-        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex gap-2">
-          {onApprove && (
-            <button
-              onClick={onApprove}
-              className={insightStyles.button.approve.base}
-            >
-              Approve
-            </button>
-          )}
-          {onDisapprove && (
-            <button
-              onClick={onDisapprove}
-              className={insightStyles.button.disapprove.base}
-            >
-              Disapprove
-            </button>
-          )}
-        </div>
-      )}
-
       {/* Tooltip */}
       {tooltipOpen && tooltipData && (
         <TooltipInPortal
@@ -354,11 +299,11 @@ export default function BarChart({
           }}
         >
           <div className="text-sm">
-            <div className="font-semibold">{tooltipData.label}</div>
-            <div>{formatValue(tooltipData.value)}</div>
+            <div className="font-semibold">{(tooltipData as ChartDataPoint).label}</div>
+            <div>{formatValue((tooltipData as ChartDataPoint).value)}</div>
           </div>
         </TooltipInPortal>
       )}
-    </div>
+    </Container>
   );
 }

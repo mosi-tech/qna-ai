@@ -220,16 +220,11 @@ class UIResultFormatter(BaseService):
                     self.logger.warning(f"Component {i} must be a dict")
                     return False
                 
-                required_fields = ["component_name", "role", "props", "layout"]
+                required_fields = ["component_name", "props", "layout"]
                 for field in required_fields:
                     if field not in comp:
                         self.logger.warning(f"Component {i} missing required field: {field}")
                         return False
-                
-                # Validate role
-                if comp["role"] not in ["primary", "supporting", "summary"]:
-                    self.logger.warning(f"Component {i} has invalid role: {comp['role']}")
-                    return False
                 
                 # Validate layout
                 layout = comp["layout"]

@@ -14,24 +14,27 @@
 
 'use client';
 
+import Container from './Container';
 import StatCard from './helper/StatCard';
 import { insightStyles, cn } from './shared/styles';
 
 interface Stat {
   value: string | number;
   label: string;
+  subtitle?: string;
   change?: string | number;
   changeType?: 'positive' | 'negative' | 'neutral';
+  color?: 'green' | 'red' | 'blue' | 'yellow' | 'purple' | 'indigo';
+  trend?: 'up' | 'down' | 'neutral';
   format?: 'text' | 'number' | 'percentage' | 'currency';
 }
 
 interface StatGroupProps {
   stats: Stat[];
   title?: string;
-  columns?: 2 | 3 | 4;
+  columns?: 1 | 2 | 3 | 4 | 5 | 6;
   onApprove?: () => void;
   onDisapprove?: () => void;
-  variant?: 'default' | 'compact' | 'horizontal' | 'vertical';
 }
 
 export default function StatGroup({ 
@@ -39,109 +42,45 @@ export default function StatGroup({
   title,
   columns = 3,
   onApprove, 
-  onDisapprove,
-  variant = 'default' 
+  onDisapprove
 }: StatGroupProps) {
   
-  const getVariantConfig = () => {
-    switch (variant) {
-      case 'compact':
-        return {
-          columns: 2,
-          spacing: 'gap-1.5 sm:gap-2',
-          titleSize: 'text-xs sm:text-sm',
-          containerPadding: 'p-2 sm:p-2.5'
-        };
-      case 'horizontal':
-        return {
-          columns: Math.min(stats.length, 6),
-          spacing: 'gap-2 sm:gap-3 lg:gap-4',
-          titleSize: 'text-base sm:text-lg', 
-          containerPadding: 'p-3 sm:p-4'
-        };
-      case 'vertical':
-        return {
-          columns: 1,
-          spacing: 'gap-2 sm:gap-3',
-          titleSize: 'text-sm sm:text-base',
-          containerPadding: 'p-3 sm:p-4'
-        };
-      default:
-        return {
-          columns: columns || 3,
-          spacing: insightStyles.spacing.gap,
-          titleSize: insightStyles.typography.h3,
-          containerPadding: insightStyles.spacing.component
-        };
-    }
-  };
-
-  const config = getVariantConfig();
+  const limitedColumns = Math.min(columns, 3);
   
   const getGridClasses = () => {
-    const baseGrid = 'grid';
+    const baseGrid = 'grid gap-3';
     
-    // Enhanced responsive grid classes for better overflow handling
-    switch (config.columns) {
+    switch (limitedColumns) {
       case 1:
-        return cn(baseGrid, 'grid-cols-1', config.spacing);
+        return cn(baseGrid, 'grid-cols-1');
       case 2:
-        return cn(baseGrid, 'grid-cols-1 sm:grid-cols-2', config.spacing);
+        return cn(baseGrid, 'grid-cols-1 md:grid-cols-2');
       case 3:
-        return cn(baseGrid, 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3', config.spacing);
-      case 4:
-        return cn(baseGrid, 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4', config.spacing);
-      case 5:
-        return cn(baseGrid, 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5', config.spacing);
-      case 6:
-        return cn(baseGrid, 'grid-cols-2 sm:grid-cols-4 lg:grid-cols-6', config.spacing);
+        return cn(baseGrid, 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3');
       default:
-        return cn(baseGrid, 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3', config.spacing);
+        return cn(baseGrid, 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3');
     }
   };
   
   return (
-    <div className={config.containerPadding}>
-      {title && (
-        <div className={variant === 'compact' ? 'mb-2 sm:mb-3' : insightStyles.spacing.margin}>
-          <h3 className={config.titleSize}>{title}</h3>
+    <Container title={title} onApprove={onApprove} onDisapprove={onDisapprove}>
+      <div className="p-4">
+        <div className={getGridClasses()}>
+          {stats.map((stat, index) => (
+            <StatCard
+              key={index}
+              value={stat.value}
+              label={stat.label}
+              subtitle={stat.subtitle}
+              change={stat.change}
+              changeType={stat.changeType}
+              color={stat.color}
+              trend={stat.trend}
+              format={stat.format}
+            />
+          ))}
         </div>
-      )}
-      
-      <div className={getGridClasses()}>
-        {stats.map((stat, index) => (
-          <StatCard
-            key={index}
-            value={stat.value}
-            label={stat.label}
-            change={stat.change}
-            changeType={stat.changeType}
-            format={stat.format}
-            variant={variant}
-          />
-        ))}
       </div>
-      
-      {(onApprove || onDisapprove) && (
-        <div className={cn("flex gap-2 mt-6 pt-4", insightStyles.border.divider)}>
-          {onApprove && (
-            <button
-              onClick={onApprove}
-              className={insightStyles.button.approve.base}
-            >
-              Approve Group
-            </button>
-          )}
-          {onDisapprove && (
-            <button
-              onClick={onDisapprove}
-              className={insightStyles.button.disapprove.base}
-            >
-              Disapprove Group
-            </button>
-          )}
-        </div>
-      )}
-    </div>
+    </Container>
   );
 }

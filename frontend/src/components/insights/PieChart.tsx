@@ -23,11 +23,18 @@ import { Group } from '@visx/group';
 import { useTooltip, useTooltipInPortal, defaultStyles } from '@visx/tooltip';
 import { localPoint } from '@visx/event';
 import { insightStyles, cn } from './shared/styles';
+import Container from './Container';
 
 interface ChartDataPoint {
   label: string;
   value: number;
   color?: string;
+}
+
+interface PieChartTooltipData {
+  label: string;
+  value: number;
+  percentage: number;
 }
 
 interface PieChartProps {
@@ -131,23 +138,20 @@ export default function PieChart({
   });
 
   const handleTooltip = (event: React.MouseEvent, datum: any) => {
-    const coords = localPoint(event.target.ownerSVGElement, event);
-    showTooltip({
-      tooltipData: datum,
-      tooltipLeft: coords?.x,
-      tooltipTop: coords?.y,
-    });
+    const svgElement = (event.target as SVGElement).ownerSVGElement;
+    if (svgElement) {
+      const coords = localPoint(svgElement, event);
+      showTooltip({
+        tooltipData: datum,
+        tooltipLeft: coords?.x,
+        tooltipTop: coords?.y,
+      });
+    }
   };
 
   return (
-    <div ref={containerRef} className={cn("bg-white rounded-lg overflow-hidden", insightStyles.spacing.component)}>
-      {title && (
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className={insightStyles.typography.h3}>{title}</h3>
-        </div>
-      )}
-
-      <div className={cn("p-4", showLegend && containerWidth > 450 ? "grid grid-cols-2 gap-4" : "")}>
+    <Container title={title} onApprove={onApprove} onDisapprove={onDisapprove}>
+      <div ref={containerRef} className="p-4 flex flex-col">
         {/* Chart */}
         <div className="flex justify-center">
           <svg width={width} height={height} ref={tooltipContainerRef}>
@@ -196,51 +200,24 @@ export default function PieChart({
           </svg>
         </div>
 
-        {/* Legend - Smart responsive positioning */}
+        {/* Legend - Always below */}
         {showLegend && containerWidth > 250 && (
-          <div className={containerWidth > 450 ? "" : "mt-3"}>
-            {containerWidth > 450 ? (
-              // Side-by-side legend for medium+ containers
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium text-gray-900 mb-2">Breakdown</h4>
-                <div className="space-y-1.5">
-                  {dataWithPercentages.map((item, index) => (
-                    <div key={item.label} className="flex items-center justify-between text-sm">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div 
-                          className="w-3 h-3 rounded-full flex-shrink-0"
-                          style={{ backgroundColor: item.color }}
-                        />
-                        <span className="text-gray-700 truncate">{item.label}</span>
-                      </div>
-                      <div className="text-right ml-2 flex-shrink-0">
-                        <div className="text-gray-900 font-medium">{formatValue(item.value)}</div>
-                        <div className="text-gray-500 text-xs">{item.percentage.toFixed(1)}%</div>
-                      </div>
-                    </div>
-                  ))}
+          <div className="mt-3">
+            <h4 className="text-xs font-medium text-gray-900 mb-2">Breakdown</h4>
+            <div className="flex flex-wrap gap-x-3 gap-y-1">
+              {dataWithPercentages.map((item, index) => (
+                <div key={item.label} className="flex items-center gap-1.5 text-xs">
+                  <div 
+                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <span className="text-gray-700 truncate">
+                    {item.label.length > 12 ? item.label.slice(0, 12) + '...' : item.label}
+                  </span>
+                  <span className="text-gray-600 font-medium">{item.percentage.toFixed(0)}%</span>
                 </div>
-              </div>
-            ) : (
-              // Compact horizontal legend below for narrow containers
-              <div className="space-y-1">
-                <h4 className="text-xs font-medium text-gray-900">Breakdown</h4>
-                <div className="flex flex-wrap gap-x-3 gap-y-1">
-                  {dataWithPercentages.map((item, index) => (
-                    <div key={item.label} className="flex items-center gap-1.5 text-xs">
-                      <div 
-                        className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                        style={{ backgroundColor: item.color }}
-                      />
-                      <span className="text-gray-700 truncate max-w-16">
-                        {item.label.length > 8 ? item.label.slice(0, 8) + '...' : item.label}
-                      </span>
-                      <span className="text-gray-600 font-medium">{item.percentage.toFixed(0)}%</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -267,28 +244,6 @@ export default function PieChart({
         </div>
       )}
 
-      {/* Action buttons */}
-      {(onApprove || onDisapprove) && (
-        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex gap-2">
-          {onApprove && (
-            <button
-              onClick={onApprove}
-              className={insightStyles.button.approve.base}
-            >
-              Approve
-            </button>
-          )}
-          {onDisapprove && (
-            <button
-              onClick={onDisapprove}
-              className={insightStyles.button.disapprove.base}
-            >
-              Disapprove
-            </button>
-          )}
-        </div>
-      )}
-
       {/* Tooltip */}
       {tooltipOpen && tooltipData && (
         <TooltipInPortal
@@ -302,12 +257,12 @@ export default function PieChart({
           }}
         >
           <div className="text-sm">
-            <div className="font-semibold">{tooltipData.label}</div>
-            <div>{formatValue(tooltipData.value)}</div>
-            <div className="text-xs text-gray-300">{tooltipData.percentage.toFixed(1)}%</div>
+            <div className="font-semibold">{(tooltipData as PieChartTooltipData).label}</div>
+            <div>{formatValue((tooltipData as PieChartTooltipData).value)}</div>
+            <div className="text-xs text-gray-300">{(tooltipData as PieChartTooltipData).percentage.toFixed(1)}%</div>
           </div>
         </TooltipInPortal>
       )}
-    </div>
+    </Container>
   );
 }

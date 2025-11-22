@@ -14,6 +14,8 @@
 
 'use client';
 
+import Container from './Container';
+
 interface RankedItem {
   id: string;
   name: string;
@@ -30,7 +32,6 @@ interface RankedListProps {
   maxItems?: number;
   onApprove?: () => void;
   onDisapprove?: () => void;
-  variant?: 'default' | 'compact' | 'detailed';
 }
 
 export default function RankedList({
@@ -40,7 +41,7 @@ export default function RankedList({
   maxItems,
   onApprove,
   onDisapprove,
-  variant = 'default'
+  
 }: RankedListProps) {
 
   const displayItems = maxItems ? items.slice(0, maxItems) : items;
@@ -65,12 +66,9 @@ export default function RankedList({
   };
 
   return (
-    <div className="bg-white  rounded-lg p-6">
-      {title && (
-        <h3 className="text-lg font-medium text-gray-900 mb-4">{title}</h3>
-      )}
-
-      <div className="space-y-3">
+    <Container title={title} onApprove={onApprove} onDisapprove={onDisapprove}>
+      <div className="p-4">
+        <div className="space-y-3">
         {displayItems.map((item, index) => (
           <div key={item.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
             <div className="flex items-center space-x-3">
@@ -100,36 +98,16 @@ export default function RankedList({
             )}
           </div>
         ))}
+        </div>
+
+        {maxItems && items.length > maxItems && (
+          <div className="mt-4 text-center">
+            <span className="text-sm text-gray-500">
+              Showing top {maxItems} of {items.length} items
+            </span>
+          </div>
+        )}
       </div>
-
-      {maxItems && items.length > maxItems && (
-        <div className="mt-4 text-center">
-          <span className="text-sm text-gray-500">
-            Showing top {maxItems} of {items.length} items
-          </span>
-        </div>
-      )}
-
-      {(onApprove || onDisapprove) && (
-        <div className="flex gap-2 mt-6 pt-4 border-t border-gray-100">
-          {onApprove && (
-            <button
-              onClick={onApprove}
-              className="px-4 py-2 bg-green-50 text-green-700 rounded-md hover:bg-green-100 transition-colors text-sm font-medium"
-            >
-              Approve
-            </button>
-          )}
-          {onDisapprove && (
-            <button
-              onClick={onDisapprove}
-              className="px-4 py-2 bg-red-50 text-red-700 rounded-md hover:bg-red-100 transition-colors text-sm font-medium"
-            >
-              Disapprove
-            </button>
-          )}
-        </div>
-      )}
-    </div>
+    </Container>
   );
 }

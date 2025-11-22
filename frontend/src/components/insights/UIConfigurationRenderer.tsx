@@ -51,7 +51,6 @@ const COMPONENT_REGISTRY = {
 
 interface ComponentConfig {
   component_name: string;
-  role: 'summary' | 'primary' | 'supporting';
   props: Record<string, any>;
   layout: {
     size: 'third' | 'half' | 'full';
@@ -115,27 +114,6 @@ function getNestedValue(obj: any, path: string): any {
   return path.split('.').reduce((current, key) => current?.[key], obj);
 }
 
-/**
- * Get grid classes based on layout size and height
- */
-function getLayoutClasses(size: string, height: string): string {
-  const sizeClasses = {
-    third: 'col-span-1',
-    half: 'col-span-2', 
-    full: 'col-span-3'
-  };
-  
-  const heightClasses = {
-    short: 'row-span-1',
-    medium: 'row-span-2',
-    tall: 'row-span-3'
-  };
-  
-  return cn(
-    sizeClasses[size as keyof typeof sizeClasses] || 'col-span-1',
-    heightClasses[height as keyof typeof heightClasses] || 'row-span-1'
-  );
-}
 
 /**
  * Render individual component based on configuration
@@ -146,12 +124,14 @@ function renderComponent(config: ComponentConfig, analysisData: any, key: number
   if (!Component) {
     console.warn(`Unknown component: ${config.component_name}`);
     return (
-      <div key={key} className={cn("p-4 border-2 border-red-200 bg-red-50 rounded-lg", getLayoutClasses(config.layout.size, config.layout.height))}>
-        <div className="text-red-600 text-sm font-medium">
-          Unknown component: {config.component_name}
-        </div>
-        <div className="text-red-500 text-xs mt-1">
-          Role: {config.role} | Size: {config.layout.size} | Height: {config.layout.height}
+      <div key={key} className="min-h-[250px] bg-white rounded-lg shadow-lg border-t border-slate-100 overflow-hidden flex flex-col">
+        <div className="p-4">
+          <div className="text-red-600 text-sm font-medium">
+            Unknown component: {config.component_name}
+          </div>
+          <div className="text-red-500 text-xs mt-1">
+            Size: {config.layout.size} | Height: {config.layout.height}
+          </div>
         </div>
       </div>
     );
@@ -161,7 +141,7 @@ function renderComponent(config: ComponentConfig, analysisData: any, key: number
   const transformedProps = transformDataReferences(config.props, analysisData);
   
   return (
-    <div key={key} className={getLayoutClasses(config.layout.size, config.layout.height)}>
+    <div key={key} className="min-h-[250px] bg-white rounded-lg shadow-lg border-t border-slate-100 overflow-hidden flex flex-col">
       <Component {...transformedProps} />
     </div>
   );
@@ -203,8 +183,8 @@ export default function UIConfigurationRenderer({
         </div>
       )}
       
-      {/* Dynamic component grid */}
-      <div className="grid grid-cols-3 gap-4 auto-rows-min">
+      {/* 2-column fixed grid layout */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 w-full auto-rows-max">
         {selected_components.map((config, index) => 
           renderComponent(config, analysis_data, index)
         )}

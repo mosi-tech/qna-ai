@@ -313,9 +313,9 @@ class ChatRepository:
                 update_data["metadata"] = metadata
             
         # ✅ FIXED: Update message using encapsulated method
-        result = await self.db.update_message_with_query(query, update_operations)
+        success = await self.db.update_message_with_query(query, update_operations)
         
-        return result.modified_count > 0
+        return success
     
     async def get_conversation_history(self, session_id: str, include_metadata: bool = False) -> List[Dict[str, Any]]:
         """Get conversation for LLM context

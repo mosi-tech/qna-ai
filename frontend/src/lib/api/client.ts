@@ -102,8 +102,9 @@ export class APIClient {
   ): Promise<APIResponse<T>> {
     const { method, path, data, timeout = this.timeout, retries = this.retries } = config;
 
-    // Check cache for GET requests
-    if (method === 'GET' && this.enableCaching) {
+    // Check cache for GET requests (skip caching for session/message endpoints)
+    const skipCache = path.includes('/sessions/') || path.includes('/messages/');
+    if (method === 'GET' && this.enableCaching && !skipCache) {
       const cached = this.cache.get<APIResponse<T>>(path);
       if (cached) {
         if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
@@ -120,8 +121,8 @@ export class APIClient {
         timeout,
       });
 
-      // Cache successful GET responses
-      if (method === 'GET' && this.enableCaching && response.success) {
+      // Cache successful GET responses (skip caching for session/message endpoints)
+      if (method === 'GET' && this.enableCaching && !skipCache && response.success) {
         this.cache.set(path, response, 'both');
       }
 
@@ -382,6 +383,24 @@ export class APIClient {
   clearCache(): void {
     this.cache.clear();
     if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
+      console.log('[APIClient] Cache cleared');
+    }
+  }
+
+  /**
+   * Clear session-specific caches
+   */
+  clearSessionCache(sessionId?: string): void {
+    if (sessionId) {
+      // Clear specific session caches
+      this.cache.delete(`/api/sessions/${sessionId}`);
+      this.cache.delete(`/sessions/${sessionId}`);
+    } else {
+      // Clear all session-related caches using pattern matching
+      this.cache.clearPattern(/\/(sessions|messages)\//);
+    }
+    if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
+      console.log(`[APIClient] Session cache cleared ${sessionId ? `for ${sessionId}` : '(all)'}`);
     }
   }
 
@@ -415,3 +434,8 @@ export function createAPIClient(overrides?: Partial<APIClientConfig>): APIClient
  * Global API client instance
  */
 export const apiClient = createAPIClient();
+
+// Clear session caches on module load to ensure fresh data
+if (typeof window !== 'undefined') {
+  apiClient.clearSessionCache();
+}

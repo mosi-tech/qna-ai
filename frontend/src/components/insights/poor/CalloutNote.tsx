@@ -29,40 +29,9 @@ export default function CalloutNote({
   title,
   onApprove, 
   onDisapprove,
-  variant = 'default' 
+  
 }: CalloutNoteProps) {
   
-  const getVariantConfig = () => {
-    switch (variant) {
-      case 'compact':
-        return {
-          padding: 'p-4 sm:p-5',
-          spacing: 'space-x-2 sm:space-x-3',
-          iconSize: 'text-sm',
-          titleSize: 'text-sm sm:text-base font-medium',
-          contentSize: 'text-xs sm:text-sm leading-relaxed',
-          buttonMargin: 'mt-3 ml-6'
-        };
-      case 'detailed':
-        return {
-          padding: 'p-4 sm:p-6',
-          spacing: 'space-x-4',
-          iconSize: 'text-xl',
-          titleSize: 'text-base sm:text-lg font-semibold',
-          contentSize: 'text-sm sm:text-base leading-relaxed',
-          buttonMargin: 'mt-4 ml-10'
-        };
-      default:
-        return {
-          padding: 'p-3 sm:p-4',
-          spacing: 'space-x-2 sm:space-x-3',
-          iconSize: 'text-base sm:text-lg',
-          titleSize: 'text-sm sm:text-base font-medium',
-          contentSize: 'text-xs sm:text-sm leading-relaxed',
-          buttonMargin: 'mt-3 ml-6 sm:ml-8'
-        };
-    }
-  };
 
   const getStyleClasses = () => {
     switch (type) {
@@ -133,7 +102,6 @@ export default function CalloutNote({
   };
 
   const buttonClasses = getButtonClasses();
-  const config = getVariantConfig();
   
   return (
     <div className={`border rounded-lg ${config.padding} ${getStyleClasses()}`}>

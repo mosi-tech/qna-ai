@@ -16,6 +16,8 @@
 
 'use client';
 
+import Container from './Container';
+
 interface ComparisonMetric {
   id: string;
   name: string;
@@ -40,7 +42,6 @@ interface ComparisonTableProps {
   highlightBest?: boolean;
   onApprove?: () => void;
   onDisapprove?: () => void;
-  variant?: 'default' | 'compact' | 'detailed';
 }
 
 export default function ComparisonTable({
@@ -51,8 +52,7 @@ export default function ComparisonTable({
   showChange = true,
   highlightBest = false,
   onApprove,
-  onDisapprove,
-  variant = 'default'
+  onDisapprove
 }: ComparisonTableProps) {
 
   const formatValue = (value: number, metric: ComparisonMetric) => {
@@ -107,14 +107,8 @@ export default function ComparisonTable({
   };
 
   return (
-    <div className="bg-white  rounded-lg overflow-hidden">
-      {title && (
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">{title}</h3>
-        </div>
-      )}
-
-      <div className="overflow-x-auto">
+    <Container title={title} onApprove={onApprove} onDisapprove={onDisapprove}>
+      <div className="p-4 overflow-x-auto">
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
@@ -128,7 +122,7 @@ export default function ComparisonTable({
                 >
                   <div>
                     <div>{entity.shortName || entity.name}</div>
-                    {variant === 'detailed' && entity.description && (
+                    {entity.description && (
                       <div className="text-xs text-gray-400 normal-case font-normal mt-1">
                         {entity.description}
                       </div>
@@ -198,9 +192,7 @@ export default function ComparisonTable({
         </table>
       </div>
 
-      {/* Summary statistics */}
-      {variant === 'detailed' && (
-        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50">
+        <div className="px-4 py-3 border-t border-gray-100 bg-gray-50">
           <h4 className="text-sm font-medium text-gray-900 mb-3">Comparison Summary</h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
             <div>
@@ -219,28 +211,6 @@ export default function ComparisonTable({
             </div>
           </div>
         </div>
-      )}
-
-      {(onApprove || onDisapprove) && (
-        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex gap-2">
-          {onApprove && (
-            <button
-              onClick={onApprove}
-              className="px-4 py-2 bg-green-50 text-green-700 rounded-md hover:bg-green-100 transition-colors text-sm font-medium"
-            >
-              Approve
-            </button>
-          )}
-          {onDisapprove && (
-            <button
-              onClick={onDisapprove}
-              className="px-4 py-2 bg-red-50 text-red-700 rounded-md hover:bg-red-100 transition-colors text-sm font-medium"
-            >
-              Disapprove
-            </button>
-          )}
-        </div>
-      )}
-    </div>
+    </Container>
   );
 }

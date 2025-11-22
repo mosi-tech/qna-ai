@@ -1,62 +1,62 @@
 'use client';
 
 // Tier 1 - Core Insight Components
-import Headline from '@/components/insights/Headline';
-import Subheadline from '@/components/insights/Subheadline';
-import NarrativeParagraph from '@/components/insights/NarrativeParagraph';
+// import Headline from '@/components/insights/Headline';
+// import Subheadline from '@/components/insights/Subheadline';
+// import NarrativeParagraph from '@/components/insights/NarrativeParagraph';
 import BulletList from '@/components/insights/BulletList';
-import KeyValueTable from '@/components/insights/KeyValueTable';
+// import KeyValueTable from '@/components/insights/KeyValueTable';
 import ComparisonTable from '@/components/insights/ComparisonTable';
-import BadgeList from '@/components/insights/BadgeList';
-import StatCard from '@/components/insights/StatCard';
+// import BadgeList from '@/components/insights/BadgeList';
+import StatCard from '@/components/insights/helper/StatCard';
 import StatGroup from '@/components/insights/StatGroup';
-import CalloutNote from '@/components/insights/CalloutNote';
+// import CalloutNote from '@/components/insights/CalloutNote';
 
 // Tier 2 - Structural Layout Components
-import Section from '@/components/insights/Section';
-import Subsection from '@/components/insights/Subsection';
-import Grid from '@/components/insights/Grid';
-import Divider from '@/components/insights/Divider';
-import Accordion from '@/components/insights/Accordion';
-import Tabs from '@/components/insights/Tabs';
+// import Section from '@/components/insights/Section';
+// import Subsection from '@/components/insights/Subsection';
+// import Grid from '@/components/insights/Grid';
+// import Divider from '@/components/insights/Divider';
+// import Accordion from '@/components/insights/Accordion';
+// import Tabs from '@/components/insights/Tabs';
 
 // Tier 3 - Data & Insight Visualization
 import RankedList from '@/components/insights/RankedList';
-import TrendDescription from '@/components/insights/TrendDescription';
-import DistributionSummary from '@/components/insights/DistributionSummary';
-import ChangeIndicator from '@/components/insights/ChangeIndicator';
-import MatrixTable from '@/components/insights/MatrixTable';
-import TimelineList from '@/components/insights/TimelineList';
-import ThresholdIndicator from '@/components/insights/ThresholdIndicator';
-import HeatmapText from '@/components/insights/HeatmapText';
+// import TrendDescription from '@/components/insights/TrendDescription';
+// import DistributionSummary from '@/components/insights/DistributionSummary';
+// import ChangeIndicator from '@/components/insights/ChangeIndicator';
+// import MatrixTable from '@/components/insights/MatrixTable';
+// import TimelineList from '@/components/insights/TimelineList';
+// import ThresholdIndicator from '@/components/insights/ThresholdIndicator';
+// import HeatmapText from '@/components/insights/HeatmapText';
 
 // Tier 6 - Advanced Analytics Components  
-import TimeProgressIndicator from '@/components/insights/TimeProgressIndicator';
-import ComparisonCard from '@/components/insights/ComparisonCard';
-import EventImpactBlock from '@/components/insights/EventImpactBlock';
-import VelocityIndicator from '@/components/insights/VelocityIndicator';
-import PeriodComparisonTable from '@/components/insights/PeriodComparisonTable';
-import SignificanceIndicator from '@/components/insights/SignificanceIndicator';
-import TimeSeriesBreakdown from '@/components/insights/TimeSeriesBreakdown';
-import ConfirmationIndicator from '@/components/insights/ConfirmationIndicator';
-import StatWithConfidence from '@/components/insights/StatWithConfidence';
-import SignalStrengthGauge from '@/components/insights/SignalStrengthGauge';
+// import TimeProgressIndicator from '@/components/insights/TimeProgressIndicator';
+// import ComparisonCard from '@/components/insights/ComparisonCard';
+// import EventImpactBlock from '@/components/insights/EventImpactBlock';
+// import VelocityIndicator from '@/components/insights/VelocityIndicator';
+// import PeriodComparisonTable from '@/components/insights/PeriodComparisonTable';
+// import SignificanceIndicator from '@/components/insights/SignificanceIndicator';
+// import TimeSeriesBreakdown from '@/components/insights/TimeSeriesBreakdown';
+// import ConfirmationIndicator from '@/components/insights/ConfirmationIndicator';
+// import StatWithConfidence from '@/components/insights/StatWithConfidence';
+// import SignalStrengthGauge from '@/components/insights/SignalStrengthGauge';
 
 // Tier 4 - Action & Decision Support
-import ActionList from '@/components/insights/ActionList';
-import DecisionBlock from '@/components/insights/DecisionBlock';
-import OptionComparison from '@/components/insights/OptionComparison';
-import ScenarioBlock from '@/components/insights/ScenarioBlock';
-import Checklist from '@/components/insights/Checklist';
+// import ActionList from '@/components/insights/ActionList';
+// import DecisionBlock from '@/components/insights/DecisionBlock';
+// import OptionComparison from '@/components/insights/OptionComparison';
+// import ScenarioBlock from '@/components/insights/ScenarioBlock';
+// import Checklist from '@/components/insights/Checklist';
 import SummaryConclusion from '@/components/insights/SummaryConclusion';
 
 // Tier 5 - Metadata, Context, and Queries
-import QueryRestatement from '@/components/insights/QueryRestatement';
-import AssumptionList from '@/components/insights/AssumptionList';
-import LimitationsNote from '@/components/insights/LimitationsNote';
-import MethodologyBlock from '@/components/insights/MethodologyBlock';
+// import QueryRestatement from '@/components/insights/QueryRestatement';
+// import AssumptionList from '@/components/insights/AssumptionList';
+// import LimitationsNote from '@/components/insights/LimitationsNote';
+// import MethodologyBlock from '@/components/insights/MethodologyBlock';
 import SectionedInsightCard from '@/components/insights/SectionedInsightCard';
-import MultiMetricComparisonCard from '@/components/insights/MultiMetricComparisonCard';
+// import MultiMetricComparisonCard from '@/components/insights/MultiMetricComparisonCard';
 
 export default function ComponentShowcase() {
   const handleApprove = (componentName: string) => {

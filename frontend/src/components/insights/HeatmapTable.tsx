@@ -17,6 +17,8 @@
 
 'use client';
 
+import Container from './Container';
+
 interface CellConfig {
   format?: 'number' | 'percentage' | 'currency' | 'text' | 'custom';
   decimals?: number;
@@ -42,7 +44,6 @@ interface HeatmapTableProps {
   legend?: LegendItem[];
   onApprove?: () => void;
   onDisapprove?: () => void;
-  variant?: 'default' | 'compact' | 'detailed';
 }
 
 export default function HeatmapTable({
@@ -54,7 +55,7 @@ export default function HeatmapTable({
   legend,
   onApprove,
   onDisapprove,
-  variant = 'default'
+  
 }: HeatmapTableProps) {
 
   const {
@@ -131,14 +132,8 @@ export default function HeatmapTable({
   };
 
   return (
-    <div className="bg-white  rounded-lg overflow-hidden">
-      {title && (
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">{title}</h3>
-        </div>
-      )}
-
-      <div className="overflow-x-auto">
+    <Container title={title} onApprove={onApprove} onDisapprove={onDisapprove}>
+      <div className="p-4 overflow-x-auto">
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
@@ -184,7 +179,7 @@ export default function HeatmapTable({
       </div>
 
       {legend && legend.length > 0 && (
-        <div className="px-6 py-3 border-t border-gray-100 bg-gray-50">
+        <div className="px-4 py-3 border-t border-gray-100 bg-gray-50">
           <div className="flex items-center justify-center text-xs text-gray-600">
             <div className="flex items-center gap-4 flex-wrap">
               {legend.map((item, index) => (
@@ -197,27 +192,6 @@ export default function HeatmapTable({
           </div>
         </div>
       )}
-
-      {(onApprove || onDisapprove) && (
-        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex gap-2">
-          {onApprove && (
-            <button
-              onClick={onApprove}
-              className="px-4 py-2 bg-green-50 text-green-700 rounded-md hover:bg-green-100 transition-colors text-sm font-medium"
-            >
-              Approve
-            </button>
-          )}
-          {onDisapprove && (
-            <button
-              onClick={onDisapprove}
-              className="px-4 py-2 bg-red-50 text-red-700 rounded-md hover:bg-red-100 transition-colors text-sm font-medium"
-            >
-              Disapprove
-            </button>
-          )}
-        </div>
-      )}
-    </div>
+    </Container>
   );
 }

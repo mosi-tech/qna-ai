@@ -1,19 +1,3 @@
-/**
- * StatCard
- * 
- * Description: Single statistic display with value, label, and optional change indicator
- * Use Cases: KPIs, financial metrics, performance indicators
- * Data Format: Value, label, and optional change/trend data
- * 
- * @param value - The main statistic value
- * @param label - Descriptive label for the statistic
- * @param change - Optional change value (number or string)
- * @param changeType - Type of change for styling
- * @param format - Value formatting type
- * @param onApprove - Callback for approve action
- * @param onDisapprove - Callback for disapprove action
- */
-
 'use client';
 
 import { insightStyles, cn } from '../shared/styles';
@@ -21,53 +5,28 @@ import { insightStyles, cn } from '../shared/styles';
 interface StatCardProps {
   value: string | number;
   label: string;
+  subtitle?: string;
   change?: string | number;
   changeType?: 'positive' | 'negative' | 'neutral';
+  color?: 'green' | 'red' | 'blue' | 'yellow' | 'purple' | 'indigo';
+  trend?: 'up' | 'down' | 'neutral';
   format?: 'text' | 'number' | 'percentage' | 'currency';
   onApprove?: () => void;
   onDisapprove?: () => void;
-  variant?: 'default' | 'compact' | 'detailed';
 }
 
 export default function StatCard({
   value,
   label,
+  subtitle,
   change,
   changeType = 'neutral',
+  color = 'blue',
+  trend = 'neutral',
   format = 'text',
   onApprove,
-  onDisapprove,
-  variant = 'default'
+  onDisapprove
 }: StatCardProps) {
-
-  const getVariantConfig = () => {
-    switch (variant) {
-      case 'compact':
-        return {
-          padding: 'p-3 sm:p-3.5',
-          spacing: 'space-y-1',
-          labelSize: 'text-sm',
-          valueSize: 'text-base sm:text-lg font-bold',
-          changeSize: 'text-sm'
-        };
-      case 'detailed':
-        return {
-          padding: 'p-4 sm:p-6',
-          spacing: 'space-y-3',
-          labelSize: 'text-sm font-medium',
-          valueSize: 'text-2xl sm:text-3xl font-bold',
-          changeSize: 'text-sm'
-        };
-      default:
-        return {
-          padding: 'p-3 sm:p-4',
-          spacing: 'space-y-2',
-          labelSize: 'text-xs sm:text-sm font-medium',
-          valueSize: 'text-xl sm:text-2xl font-bold',
-          changeSize: 'text-xs sm:text-sm'
-        };
-    }
-  };
 
   const formatValue = (val: string | number, fmt: string) => {
     if (typeof val === 'string') return val;
@@ -84,6 +43,18 @@ export default function StatCard({
     }
   };
 
+  const getColorClasses = (colorName: string) => {
+    const colorMap = {
+      green: 'text-green-600',
+      red: 'text-red-600',
+      blue: 'text-blue-600',
+      yellow: 'text-yellow-600',
+      purple: 'text-purple-600',
+      indigo: 'text-indigo-600'
+    };
+    return colorMap[colorName as keyof typeof colorMap] || 'text-blue-600';
+  };
+
   const getChangeClasses = (type: string) => {
     switch (type) {
       case 'positive':
@@ -96,11 +67,11 @@ export default function StatCard({
     }
   };
 
-  const getChangeSymbol = (type: string) => {
-    switch (type) {
-      case 'positive':
+  const getChangeSymbol = (trendType: string) => {
+    switch (trendType) {
+      case 'up':
         return '↑';
-      case 'negative':
+      case 'down':
         return '↓';
       case 'neutral':
       default:
@@ -108,60 +79,35 @@ export default function StatCard({
     }
   };
 
-  const config = getVariantConfig();
-
   const getCardClasses = () => {
-    if (variant === 'compact') {
-      return cn('bg-gray-50  rounded-lg', config.padding); // Balanced styling for compact
-    }
-    return cn(insightStyles.card.base, config.padding);
+    return cn('bg-white shadow-sm rounded-lg p-3 sm:p-4 w-full');
   };
+
+  const valueTextColor = 'text-gray-900';
+  const labelTextColor = 'text-gray-700';
+  const subtitleTextColor = 'text-gray-500';
+  const changeTextColor = getChangeClasses(changeType);
 
   return (
     <div className={getCardClasses()}>
-      <div className={config.spacing}>
-        <div className={cn(config.labelSize, 'uppercase tracking-wide truncate', insightStyles.text.tertiary)}>
+      <div className="space-y-2">
+        <div className={cn('text-xs sm:text-sm font-medium uppercase tracking-wide truncate', labelTextColor)}>
           {label}
         </div>
-        <div className={cn(config.valueSize, 'text-gray-900 truncate')}>
+        <div className={cn('text-xl sm:text-2xl font-bold truncate', valueTextColor)}>
           {formatValue(value, format)}
-          {change && variant === 'compact' && (
-            <span className={cn('ml-2 text-xs', getChangeClasses(changeType))}>
-              {getChangeSymbol(changeType)}{typeof change === 'number' ? change.toFixed(1) : change}
+          {change && (
+            <span className={cn('ml-2 text-xs', changeTextColor)}>
+              {getChangeSymbol(trend)}{typeof change === 'number' ? change.toFixed(1) : change}
             </span>
           )}
         </div>
-        {change && variant !== 'compact' && (
-          <div className={cn(config.changeSize, 'font-medium flex items-center truncate', getChangeClasses(changeType))}>
-            <span className="mr-1 flex-shrink-0">{getChangeSymbol(changeType)}</span>
-            <span className="truncate">
-              {typeof change === 'number' ? change.toFixed(1) : change}
-              {typeof change === 'number' && format === 'percentage' && '%'}
-            </span>
+        {subtitle && (
+          <div className={cn('text-xs', subtitleTextColor, 'truncate')}>
+            {subtitle}
           </div>
         )}
       </div>
-
-      {(onApprove || onDisapprove) && (
-        <div className={cn('flex gap-1 mt-4 pt-4', insightStyles.border.divider)}>
-          {onApprove && (
-            <button
-              onClick={onApprove}
-              className={cn('flex-1 text-xs', insightStyles.button.approve.compact)}
-            >
-              ✓
-            </button>
-          )}
-          {onDisapprove && (
-            <button
-              onClick={onDisapprove}
-              className={cn('flex-1 text-xs', insightStyles.button.disapprove.compact)}
-            >
-              ✗
-            </button>
-          )}
-        </div>
-      )}
     </div>
   );
 }

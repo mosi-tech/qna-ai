@@ -44,7 +44,7 @@ export default function ComparisonTable({
   title,
   onApprove,
   onDisapprove,
-  variant = 'default'
+  
 }: ComparisonTableProps) {
 
   const formatValue = (value: any, format: string = 'text') => {
@@ -66,39 +66,7 @@ export default function ComparisonTable({
     return data[entityId]?.[metricId] ?? data[metricId]?.[entityId] ?? '-';
   };
 
-  const getVariantConfig = () => {
-    switch (variant) {
-      case 'narrow':
-        return {
-          displayEntities: entities.slice(0, 3), // Show only first 3 entities
-          displayMetrics: metrics.slice(0, 3),   // Show only first 3 metrics
-          cellPadding: 'px-2 py-1.5 sm:px-3 sm:py-2',
-          titleSize: 'text-sm sm:text-base',
-          fontSize: 'text-xs sm:text-sm',
-          headerPadding: 'px-2 py-2 sm:px-4 sm:py-3'
-        };
-      case 'wide':
-        return {
-          displayEntities: entities,
-          displayMetrics: metrics,
-          cellPadding: 'px-4 py-3 sm:px-6 sm:py-4 lg:px-8 lg:py-4',
-          titleSize: 'text-lg sm:text-xl',
-          fontSize: 'text-sm sm:text-base',
-          headerPadding: 'px-4 py-3 sm:px-6 sm:py-4'
-        };
-      default:
-        return {
-          displayEntities: entities,
-          displayMetrics: metrics,
-          cellPadding: 'px-3 py-2 sm:px-4 sm:py-2.5 lg:px-6 lg:py-3',
-          titleSize: 'text-base sm:text-lg',
-          fontSize: 'text-xs sm:text-sm',
-          headerPadding: 'px-3 py-3 sm:px-4 sm:py-3 lg:px-6 lg:py-4'
-        };
-    }
-  };
 
-  const config = getVariantConfig();
 
   return (
     <div className="bg-white  rounded-lg overflow-hidden">

@@ -15,6 +15,7 @@
 
 'use client';
 
+import Container from './Container';
 import { insightStyles, cn } from './shared/styles';
 
 interface SectionData {
@@ -27,7 +28,6 @@ interface SectionedInsightCardProps {
   title: string;
   description?: string;
   sections: SectionData[];
-  variant?: 'default' | 'compact' | 'detailed';
   onApprove?: () => void;
   onDisapprove?: () => void;
 }
@@ -36,7 +36,6 @@ export default function SectionedInsightCard({
   title,
   description,
   sections,
-  variant = 'default',
   onApprove,
   onDisapprove
 }: SectionedInsightCardProps) {
@@ -70,20 +69,15 @@ export default function SectionedInsightCard({
   };
 
   return (
-    <div className={cn(insightStyles.card.base, insightStyles.spacing.component)}>
-      {/* Header */}
-      <div className="mb-6">
-        <h2 className={cn(insightStyles.typography.heading, 'mb-3')}>
-          {title}
-        </h2>
+    <Container title={title} onApprove={onApprove} onDisapprove={onDisapprove}>
+      <div className="p-4">
         {description && (
-          <p className={cn(insightStyles.text.secondary, 'text-sm leading-relaxed')}>
+          <p className={cn(insightStyles.text.secondary, 'text-sm leading-relaxed mb-4')}>
             {description}
           </p>
         )}
-      </div>
 
-      {/* Sections Grid */}
+        {/* Sections Grid */}
       <div className={cn(
         'grid gap-4',
         sections.length <= 2 ? 'grid-cols-1 md:grid-cols-2' : 
@@ -120,28 +114,7 @@ export default function SectionedInsightCard({
           </div>
         ))}
       </div>
-
-      {/* Action Buttons */}
-      {(onApprove || onDisapprove) && (
-        <div className={cn('flex gap-2 mt-6 pt-4', insightStyles.border.divider)}>
-          {onApprove && (
-            <button
-              onClick={onApprove}
-              className={insightStyles.button.approve.default}
-            >
-              Approve
-            </button>
-          )}
-          {onDisapprove && (
-            <button
-              onClick={onDisapprove}
-              className={insightStyles.button.disapprove.default}
-            >
-              Disapprove
-            </button>
-          )}
-        </div>
-      )}
-    </div>
+      </div>
+    </Container>
   );
 }

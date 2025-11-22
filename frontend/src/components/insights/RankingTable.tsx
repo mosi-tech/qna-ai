@@ -15,6 +15,8 @@
 
 'use client';
 
+import Container from './Container';
+
 interface RankingColumn {
   id: string;
   name: string;
@@ -37,7 +39,6 @@ interface RankingTableProps {
   title?: string;
   onApprove?: () => void;
   onDisapprove?: () => void;
-  variant?: 'default' | 'compact' | 'detailed';
 }
 
 export default function RankingTable({
@@ -47,7 +48,7 @@ export default function RankingTable({
   title,
   onApprove,
   onDisapprove,
-  variant = 'default'
+  
 }: RankingTableProps) {
 
   const formatValue = (value: any, column: RankingColumn) => {
@@ -82,15 +83,8 @@ export default function RankingTable({
   };
 
   return (
-    <div className="bg-white  rounded-lg overflow-hidden">
-      {title && (
-        <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
-          <div className="text-sm text-gray-500">{data.length} items</div>
-        </div>
-      )}
-
-      <div className="overflow-x-auto">
+    <Container title={title} onApprove={onApprove} onDisapprove={onDisapprove}>
+      <div className="p-4 overflow-x-auto">
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
@@ -161,27 +155,6 @@ export default function RankingTable({
           </tbody>
         </table>
       </div>
-
-      {(onApprove || onDisapprove) && (
-        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex gap-2">
-          {onApprove && (
-            <button
-              onClick={onApprove}
-              className="px-4 py-2 bg-green-50 text-green-700 rounded-md hover:bg-green-100 transition-colors text-sm font-medium"
-            >
-              Approve
-            </button>
-          )}
-          {onDisapprove && (
-            <button
-              onClick={onDisapprove}
-              className="px-4 py-2 bg-red-50 text-red-700 rounded-md hover:bg-red-100 transition-colors text-sm font-medium"
-            >
-              Disapprove
-            </button>
-          )}
-        </div>
-      )}
-    </div>
+    </Container>
   );
 }

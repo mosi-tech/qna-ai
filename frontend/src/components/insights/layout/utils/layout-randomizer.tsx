@@ -6,10 +6,9 @@ import ExecutiveSummary from '../../ExecutiveSummary';
 import ComparisonTable from '../../ComparisonTable';
 import SummaryConclusion from '../../SummaryConclusion';
 import BulletList from '../../BulletList';
-import ActionList from '../../ActionList';
-import MatrixTable from '../../MatrixTable';
-import CalloutNote from '../../CalloutNote';
-import KeyValueTable from '../../KeyValueTable';
+import ActionList from '../../poor/ActionList';
+import CalloutNote from '../../poor/CalloutNote';
+import KeyValueTable from '../../poor/KeyValueTable';
 import RankedList from '../../RankedList';
 
 // Import our mapping configuration

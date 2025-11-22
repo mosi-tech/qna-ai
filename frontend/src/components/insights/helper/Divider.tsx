@@ -1,16 +1,3 @@
-/**
- * Divider
- * 
- * Description: Visual separator between sections and content blocks
- * Use Cases: Section breaks, content separation, visual organization
- * Data Format: Optional label or simple divider line
- * 
- * @param label - Optional text label for the divider
- * @param variant - Visual style variant
- * @param onApprove - Callback for approve action
- * @param onDisapprove - Callback for disapprove action
- */
-
 'use client';
 
 interface DividerProps {
@@ -50,54 +37,9 @@ export default function Divider({
             {label}
           </span>
         </div>
-        
-        {(onApprove || onDisapprove) && (
-          <div className="flex gap-1 justify-center mt-2">
-            {onApprove && (
-              <button
-                onClick={onApprove}
-                className="px-2 py-1 bg-green-50 text-green-700 rounded text-xs hover:bg-green-100 transition-colors"
-              >
-                ✓
-              </button>
-            )}
-            {onDisapprove && (
-              <button
-                onClick={onDisapprove}
-                className="px-2 py-1 bg-red-50 text-red-700 rounded text-xs hover:bg-red-100 transition-colors"
-              >
-                ✗
-              </button>
-            )}
-          </div>
-        )}
       </div>
     );
   }
 
-  return (
-    <div className="py-2">
-      {renderDivider()}
-      {(onApprove || onDisapprove) && (
-        <div className="flex gap-1 justify-center mt-2">
-          {onApprove && (
-            <button
-              onClick={onApprove}
-              className="px-2 py-1 bg-green-50 text-green-700 rounded text-xs hover:bg-green-100 transition-colors"
-            >
-              ✓
-            </button>
-          )}
-          {onDisapprove && (
-            <button
-              onClick={onDisapprove}
-              className="px-2 py-1 bg-red-50 text-red-700 rounded text-xs hover:bg-red-100 transition-colors"
-            >
-              ✗
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-  );
+  return renderDivider();
 }

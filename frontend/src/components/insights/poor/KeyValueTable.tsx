@@ -36,7 +36,7 @@ export default function KeyValueTable({
   title,
   onApprove, 
   onDisapprove,
-  variant = 'default' 
+  
 }: KeyValueTableProps) {
   
   const formatValue = (value: any, format: string = 'text') => {
@@ -65,39 +65,7 @@ export default function KeyValueTable({
     }
   };
 
-  const getVariantConfig = () => {
-    switch (variant) {
-      case 'compact':
-        return {
-          headerPadding: 'px-3 py-2',
-          cellPadding: 'px-3 py-1.5',
-          titleSize: 'text-sm font-medium',
-          headerTextSize: 'text-xs font-medium',
-          cellTextSize: 'text-sm',
-          actionPadding: 'px-3 py-2'
-        };
-      case 'detailed':
-        return {
-          headerPadding: 'px-8 py-5',
-          cellPadding: 'px-8 py-5',
-          titleSize: 'text-xl font-semibold',
-          headerTextSize: 'text-sm',
-          cellTextSize: 'text-base',
-          actionPadding: 'px-8 py-5'
-        };
-      default:
-        return {
-          headerPadding: 'px-6 py-4',
-          cellPadding: 'px-6 py-4',
-          titleSize: 'text-lg font-medium',
-          headerTextSize: 'text-xs',
-          cellTextSize: 'text-sm',
-          actionPadding: 'px-6 py-4'
-        };
-    }
-  };
 
-  const config = getVariantConfig();
   
   return (
     <div className="bg-white rounded-lg overflow-hidden">
