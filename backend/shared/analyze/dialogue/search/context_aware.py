@@ -119,7 +119,7 @@ class ContextAwareSearch:
                 )
 
             expanded_query = expansion.get("expanded_query", query)
-            expansion_confidence = expansion.get("confidence", 0.9)
+            expansion_confidence = expansion.get("confidence", 0.4)
             logger.info(f"Expanded query: {expanded_query[:100]}... (confidence: {expansion_confidence})")
 
             # If low confidence on expansion, ask for clarification
