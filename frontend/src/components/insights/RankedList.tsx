@@ -66,7 +66,7 @@ export default function RankedList({
   };
 
   return (
-    <Container title={title} onApprove={onApprove} onDisapprove={onDisapprove}>
+    <Container title={title}>
       <div className="p-4">
         <div className="space-y-3">
         {displayItems.map((item, index) => (

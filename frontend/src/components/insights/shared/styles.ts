@@ -9,9 +9,9 @@ export const insightStyles = {
   // Base surfaces - using slate for more modern, professional feel
   surface: {
     primary: 'bg-white',
-    secondary: 'bg-slate-50', 
+    secondary: 'bg-gradient-to-br from-slate-50 to-slate-100/50', 
     tertiary: 'bg-slate-100',
-    elevated: 'bg-white border border-slate-200 shadow-sm'
+    elevated: 'bg-white shadow-lg shadow-slate-200/50 rounded-lg border border-slate-100/50'
   },
   
   // Borders - consistent slate palette
@@ -84,16 +84,16 @@ export const insightStyles = {
   button: {
     // Standard approve/disapprove buttons
     approve: {
-      base: 'px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg hover:bg-emerald-100 transition-colors text-sm font-medium',
-      compact: 'px-3 py-1.5 bg-emerald-50 text-emerald-700 rounded-md hover:bg-emerald-100 transition-colors text-sm'
+      base: 'px-4 py-2 bg-gradient-to-r from-emerald-50 to-emerald-100 text-emerald-700 rounded-lg hover:from-emerald-100 hover:to-emerald-200 transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md',
+      compact: 'px-3 py-1.5 bg-gradient-to-r from-emerald-50 to-emerald-100 text-emerald-700 rounded-md hover:from-emerald-100 hover:to-emerald-200 transition-all duration-200 text-sm shadow-sm'
     },
     disapprove: {
-      base: 'px-4 py-2 bg-rose-50 text-rose-700 rounded-lg hover:bg-rose-100 transition-colors text-sm font-medium',
-      compact: 'px-3 py-1.5 bg-rose-50 text-rose-700 rounded-md hover:bg-rose-100 transition-colors text-sm'
+      base: 'px-4 py-2 bg-gradient-to-r from-rose-50 to-rose-100 text-rose-700 rounded-lg hover:from-rose-100 hover:to-rose-200 transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md',
+      compact: 'px-3 py-1.5 bg-gradient-to-r from-rose-50 to-rose-100 text-rose-700 rounded-md hover:from-rose-100 hover:to-rose-200 transition-all duration-200 text-sm shadow-sm'
     },
     // Primary action buttons
-    primary: 'px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium',
-    secondary: 'px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors text-sm font-medium'
+    primary: 'px-4 py-2 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white rounded-lg hover:from-indigo-700 hover:to-indigo-800 transition-all duration-200 text-sm font-medium shadow-md hover:shadow-lg',
+    secondary: 'px-4 py-2 bg-gradient-to-r from-slate-100 to-slate-200 text-slate-700 rounded-lg hover:from-slate-200 hover:to-slate-300 transition-all duration-200 text-sm font-medium shadow-sm'
   },
   
   // Responsive typography
@@ -135,10 +135,10 @@ export const insightStyles = {
     cols6: 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-6'
   },
   
-  // Common component patterns
+  // Common component patterns - with premium look
   card: {
-    base: 'bg-white border border-slate-200 rounded-lg shadow-sm',
-    elevated: 'bg-white border border-slate-200 rounded-lg shadow-md',
+    base: 'bg-white rounded-xl shadow-md shadow-slate-200/40 border border-slate-100/50 hover:shadow-lg hover:shadow-slate-200/60 transition-all duration-300',
+    elevated: 'bg-white rounded-xl shadow-lg shadow-slate-300/50 border border-slate-100/50 hover:shadow-xl transition-all duration-300',
     padding: 'p-4 md:p-6'
   },
   

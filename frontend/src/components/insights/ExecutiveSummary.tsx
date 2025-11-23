@@ -38,7 +38,7 @@ export default function ExecutiveSummary({
   };
   
   return (
-    <Container title={title} onApprove={onApprove} onDisapprove={onDisapprove}>
+    <Container title={title}>
       <div className="p-4 space-y-3">
         {items.map((item, index) => (
           <div key={index}>

@@ -50,8 +50,6 @@ interface ScatterChartProps {
   showTrendLine?: boolean;
   pointSize?: number;
   colors?: 'default' | 'business' | 'tech' | 'finance' | string[];
-  onApprove?: () => void;
-  onDisapprove?: () => void;
 }
 
 export default function ScatterChart({
@@ -61,9 +59,7 @@ export default function ScatterChart({
   yAxis,
   showTrendLine = false,
   pointSize = 4,
-  colors = 'default',
-  onApprove,
-  onDisapprove
+  colors = 'default'
 }: ScatterChartProps) {
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -238,7 +234,7 @@ export default function ScatterChart({
   };
 
   return (
-    <Container title={title} onApprove={onApprove} onDisapprove={onDisapprove}>
+    <Container title={title}>
       <div ref={containerRef} className="p-4">
         <div className="flex justify-center">
           <svg width={width} height={height} ref={tooltipContainerRef}>
@@ -369,11 +365,11 @@ export default function ScatterChart({
             </div>
             <div>
               <div className="text-gray-600">Correlation</div>
-              <div className={cn("font-semibold", {
-                'text-green-600': Math.abs(correlation) > 0.7,
-                'text-yellow-600': Math.abs(correlation) > 0.3,
-                'text-gray-600': Math.abs(correlation) <= 0.3
-              })}>
+              <div className={cn("font-semibold", 
+                Math.abs(correlation) > 0.7 ? 'text-green-600' :
+                Math.abs(correlation) > 0.3 ? 'text-yellow-600' :
+                'text-gray-600'
+              )}>
                 {correlation.toFixed(3)}
               </div>
             </div>

@@ -132,7 +132,8 @@ if __name__ == "__main__":
         benchmark_symbol=args.benchmark_symbol
         analysis_period_days=args.analysis_period_days,
     )
-    print(json.dumps(result, indent=2, default=str))
+    print(json.dumps(result, indent=2, default=json_serializer))
+    
     
 ```
 

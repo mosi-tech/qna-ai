@@ -15,7 +15,7 @@ def clean_json_comments(json_string: str) -> str:
     Clean JSON comments and markdown code blocks from a string before parsing.
     
     Handles:
-    - Markdown code blocks: ```json ... ``` or ```...```
+    - Markdown code blocks: ```json ... ``` or ```...``` (with text before/after)
     - Line comments: // comment
     - Trailing commas in objects and arrays
     - Multiple whitespace characters
@@ -32,9 +32,14 @@ def clean_json_comments(json_string: str) -> str:
         >>> '{"key": "value", "num": 42}'
     """
     try:
-        # Remove markdown code blocks (```json...``` or ```...```)
-        # This pattern matches triple backticks, optional language, content, and closing backticks
-        cleaned = re.sub(r'```(?:json)?\s*\n?(.*?)\n?```', r'\1', json_string, flags=re.DOTALL)
+        cleaned = json_string
+        
+        # First, try to extract content from markdown code blocks
+        # This handles text before/after ```json ... ```
+        json_match = re.search(r'```(?:json)?\s*\n?(.*?)\n?```', cleaned, flags=re.DOTALL)
+        if json_match:
+            cleaned = json_match.group(1)
+            logger.debug("Extracted JSON from markdown code block")
         
         # Remove line comments (// ...)
         # This pattern matches // followed by any characters until end of line
@@ -44,8 +49,9 @@ def clean_json_comments(json_string: str) -> str:
         # Match comma followed by optional whitespace and closing brace/bracket
         cleaned = re.sub(r',(\s*[}\]])', r'\1', cleaned)
         
-        # Clean up excessive whitespace
-        cleaned = re.sub(r'\s+', ' ', cleaned)
+        # Clean up excessive whitespace (but preserve newlines initially for readability)
+        cleaned = re.sub(r'[ \t]+', ' ', cleaned)  # Remove excessive spaces/tabs
+        cleaned = re.sub(r'\n\s*\n', '\n', cleaned)  # Remove excessive newlines
         
         # Remove any remaining whitespace around braces and brackets
         cleaned = cleaned.strip()

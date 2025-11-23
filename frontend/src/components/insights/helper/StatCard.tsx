@@ -79,8 +79,12 @@ export default function StatCard({
     }
   };
 
+  const toTitleCase = (str: string) => {
+    return str.replace(/\b\w/g, char => char.toUpperCase());
+  };
+
   const getCardClasses = () => {
-    return cn('bg-white shadow-sm rounded-lg p-3 sm:p-4 w-full');
+    return cn('bg-white shadow-sm rounded-lg p-3 sm:p-4 min-h-[100px] min-w-[160px] flex flex-col justify-center');
   };
 
   const valueTextColor = 'text-gray-900';
@@ -90,20 +94,20 @@ export default function StatCard({
 
   return (
     <div className={getCardClasses()}>
-      <div className="space-y-2">
-        <div className={cn('text-xs sm:text-sm font-medium uppercase tracking-wide truncate', labelTextColor)}>
-          {label}
+      <div className="space-y-1">
+        <div className={cn('text-xs sm:text-sm font-medium tracking-wide break-words opacity-70', labelTextColor)}>
+          {toTitleCase(label)}
         </div>
-        <div className={cn('text-xl sm:text-2xl font-bold truncate', valueTextColor)}>
+        <div className={cn('text-sm sm:text-base md:text-lg font-semibold break-words', valueTextColor)}>
           {formatValue(value, format)}
           {change && (
-            <span className={cn('ml-2 text-xs', changeTextColor)}>
+            <span className={cn('ml-1 text-xs sm:text-sm', changeTextColor)}>
               {getChangeSymbol(trend)}{typeof change === 'number' ? change.toFixed(1) : change}
             </span>
           )}
         </div>
         {subtitle && (
-          <div className={cn('text-xs', subtitleTextColor, 'truncate')}>
+          <div className={cn('text-xs', subtitleTextColor, 'break-words opacity-60')}>
             {subtitle}
           </div>
         )}

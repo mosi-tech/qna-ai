@@ -69,7 +69,7 @@ export default function SectionedInsightCard({
   };
 
   return (
-    <Container title={title} onApprove={onApprove} onDisapprove={onDisapprove}>
+    <Container title={title}>
       <div className="p-4">
         {description && (
           <p className={cn(insightStyles.text.secondary, 'text-sm leading-relaxed mb-4')}>

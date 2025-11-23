@@ -13,8 +13,6 @@
  * @param showDots - Whether to show data point dots
  * @param showArea - Whether to fill area under line
  * @param colors - Color scheme or array of colors for multiple series
- * @param onApprove - Callback for approve action
- * @param onDisapprove - Callback for disapprove action
  */
 
 'use client';
@@ -51,8 +49,6 @@ interface LineChartProps {
   showDots?: boolean;
   showArea?: boolean;
   colors?: 'default' | 'business' | 'tech' | 'finance' | string[];
-  onApprove?: () => void;
-  onDisapprove?: () => void;
 }
 
 export default function LineChart({
@@ -64,8 +60,6 @@ export default function LineChart({
   showDots = true,
   showArea = false,
   colors = 'default',
-  onApprove,
-  onDisapprove
 }: LineChartProps) {
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -238,7 +232,7 @@ export default function LineChart({
   };
 
   return (
-    <Container title={title} onApprove={onApprove} onDisapprove={onDisapprove}>
+    <Container title={title}>
       <div ref={containerRef} className="p-4">
         <div className="flex justify-center">
           <svg width={width} height={height} ref={tooltipContainerRef}>
@@ -341,27 +335,26 @@ export default function LineChart({
                 })}
                 label={yAxisLabel}
               />
-            </Group>
-          </svg>
-        </div>
-
-        {/* Legend for multiple series */}
-        {series.length > 1 && width > 300 && (
-          <div className="flex justify-center mt-4">
-            <div className="flex gap-4">
-              {series.map((s, i) => (
-                <div key={s.name} className="flex items-center gap-2 text-sm">
-                  <div 
-                    className="w-3 h-3 rounded-full"
-                    style={{ backgroundColor: s.color || chartColors[i % chartColors.length] }}
-                  />
-                  <span className="text-gray-700">{s.name}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+          </Group>
+        </svg>
       </div>
+
+      {/* Legend for multiple series */}
+      {series.length > 1 && width > 300 && (
+        <div className="flex justify-center mt-4">
+          <div className="flex gap-4">
+            {series.map((s, i) => (
+              <div key={s.name} className="flex items-center gap-2 text-sm">
+                <div 
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: s.color || chartColors[i % chartColors.length] }}
+                />
+                <span className="text-gray-700">{s.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Summary stats for larger charts */}
       {width > 500 && (
@@ -400,14 +393,15 @@ export default function LineChart({
           }}
         >
           <div className="text-sm">
-            {tooltipData.seriesName && series.length > 1 && (
-              <div className="font-semibold">{tooltipData.seriesName}</div>
+            {(tooltipData as any).seriesName && series.length > 1 && (
+              <div className="font-semibold">{(tooltipData as any).seriesName}</div>
             )}
-            <div>{tooltipData.label}</div>
-            <div className="text-blue-300">{formatValue(tooltipData.value)}</div>
+            <div>{(tooltipData as any).label}</div>
+            <div className="text-blue-300">{formatValue((tooltipData as any).value)}</div>
           </div>
         </TooltipInPortal>
       )}
+    </div>
     </Container>
   );
 }

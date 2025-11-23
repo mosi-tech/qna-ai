@@ -60,8 +60,7 @@ COMPONENT_REGISTRY = {
             },
             "required": ["data"]
         },
-        "layout_hints": ["third", "half", "full"],
-        "height_hints": ["medium", "tall"],
+        "span_hint":["normal","full"],
         "best_for_data_types": ["numerical", "categorical", "rankings", "comparisons"]
     },
     
@@ -94,8 +93,7 @@ COMPONENT_REGISTRY = {
             },
             "required": ["data"]
         },
-        "layout_hints": ["half", "full"],
-        "height_hints": ["medium", "tall"],
+        "span_hint":["normal","full"],
         "best_for_data_types": ["proportional", "categorical", "distributions", "allocations"]
     },
     
@@ -130,8 +128,7 @@ COMPONENT_REGISTRY = {
             },
             "required": ["data"]
         },
-        "layout_hints": ["half", "full"],
-        "height_hints": ["medium", "tall"],
+        "span_hint":["normal","full"],
         "best_for_data_types": ["time_series", "trends", "historical", "sequential"]
     },
     
@@ -181,8 +178,7 @@ COMPONENT_REGISTRY = {
             },
             "required": ["data", "xAxis", "yAxis"]
         },
-        "layout_hints": ["half", "full"],
-        "height_hints": ["medium", "tall"],
+        "span_hint":["normal","full"],
         "best_for_data_types": ["correlation", "scatter", "relationships", "two_variable"]
     },
     
@@ -218,8 +214,7 @@ COMPONENT_REGISTRY = {
             },
             "required": ["data", "columns"]
         },
-        "layout_hints": ["half", "full"],
-        "height_hints": ["medium", "tall"],
+        "span_hint":["normal","full"],
         "best_for_data_types": ["rankings", "tabular", "comparisons", "multi_column"]
     },
     
@@ -264,8 +259,7 @@ COMPONENT_REGISTRY = {
             },
             "required": ["entities", "metrics", "data"]
         },
-        "layout_hints": ["half", "full"],
-        "height_hints": ["medium", "tall"],
+        "span_hint":["normal","full"],
         "best_for_data_types": ["comparisons", "cross_tabulated", "multi_entity", "metrics"]
     },
     
@@ -305,8 +299,7 @@ COMPONENT_REGISTRY = {
             },
             "required": ["data", "rowLabels", "columnLabels"]
         },
-        "layout_hints": ["half", "full"],
-        "height_hints": ["medium", "tall"],
+        "span_hint":["normal","full"],
         "best_for_data_types": ["matrix", "correlation", "heatmap", "grid"]
     },
     
@@ -336,8 +329,7 @@ COMPONENT_REGISTRY = {
             },
             "required": ["items"]
         },
-        "layout_hints": ["half", "full"],
-        "height_hints": ["short", "medium"],
+        "span_hint":["normal","full"],
         "best_for_data_types": ["summary", "insights", "findings", "textual"]
     },
     
@@ -358,8 +350,7 @@ COMPONENT_REGISTRY = {
             },
             "required": ["items"]
         },
-        "layout_hints": ["third", "half"],
-        "height_hints": ["short", "medium"],
+        "span_hint":["normal","full"],
         "best_for_data_types": ["simple_list", "textual", "insights"]
     },
     
@@ -390,8 +381,7 @@ COMPONENT_REGISTRY = {
             },
             "required": ["items"]
         },
-        "layout_hints": ["third", "half"],
-        "height_hints": ["medium"],
+        "span_hint":["normal","full"],
         "best_for_data_types": ["rankings", "ordered", "performance"]
     },
     
@@ -421,8 +411,7 @@ COMPONENT_REGISTRY = {
             },
             "required": ["items"]
         },
-        "layout_hints": ["third", "half", "full"],
-        "height_hints": ["medium"],
+        "span_hint":["normal","full"],
         "best_for_data_types": ["alerts", "callouts", "important_info"]
     },
     
@@ -453,8 +442,7 @@ COMPONENT_REGISTRY = {
             },
             "required": ["stats"]
         },
-        "layout_hints": ["third", "half", "full"],
-        "height_hints": ["short"],
+        "span_hint":["normal","full"],
         "best_for_data_types": ["statistics", "kpis", "metrics", "numerical"]
     },
     
@@ -487,8 +475,7 @@ COMPONENT_REGISTRY = {
             },
             "required": ["sections"]
         },
-        "layout_hints": ["half", "full"],
-        "height_hints": ["medium", "tall"],
+        "span_hint":["normal","full"],
         "best_for_data_types": ["sectioned", "comprehensive", "multi_part"]
     },
     
@@ -517,8 +504,7 @@ COMPONENT_REGISTRY = {
             },
             "required": ["keyFindings", "conclusion"]
         },
-        "layout_hints": ["half", "full"],
-        "height_hints": ["medium", "tall"],
+        "span_hint":["normal","full"],
         "best_for_data_types": ["conclusion", "summary", "recommendations", "textual"]
     }
 }
@@ -767,9 +753,8 @@ async def _list_available_components(args: Dict[str, Any]) -> CallToolResult:
             "description": comp_meta["description"],
             "use_cases": comp_meta["use_cases"],
             "data_format": comp_meta["data_format"],
-            "layout_hints": comp_meta["layout_hints"],
-            "height_hints": comp_meta["height_hints"],
-            "best_for_data_types": comp_meta["best_for_data_types"]
+            "span_hint":["normal","full"],
+        "best_for_data_types": comp_meta["best_for_data_types"]
         })
     
     result = {

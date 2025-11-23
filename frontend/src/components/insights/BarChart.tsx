@@ -11,8 +11,6 @@
  * @param format - Value formatting type
  * @param color - Bar color scheme
  * @param showValues - Whether to show values on bars
- * @param onApprove - Callback for approve action
- * @param onDisapprove - Callback for disapprove action
  */
 
 'use client';
@@ -40,8 +38,6 @@ interface BarChartProps {
   format?: 'number' | 'percentage' | 'currency';
   color?: 'blue' | 'green' | 'purple' | 'orange';
   showValues?: boolean;
-  onApprove?: () => void;
-  onDisapprove?: () => void;
 }
 
 export default function BarChart({
@@ -51,8 +47,6 @@ export default function BarChart({
   format = 'number',
   color = 'blue',
   showValues = true,
-  onApprove,
-  onDisapprove
 }: BarChartProps) {
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -212,78 +206,76 @@ export default function BarChart({
   };
 
   return (
-    <Container title={title} onApprove={onApprove} onDisapprove={onDisapprove}>
-      <div ref={containerRef} className="p-4 overflow-visible">
-        <div className="flex justify-center overflow-visible">
-          <svg width={width} height={height} ref={tooltipContainerRef} className="overflow-visible">
-            <Group left={margin.left} top={margin.top}>
-              {validData.map((d, i) => {
-                const barWidth = xScale.bandwidth();
-                const barHeight = innerHeight - yScale(d.value);
-                const x = xScale(d.label);
-                const y = yScale(d.value);
+    <div ref={containerRef} className="p-4 overflow-visible">
+      <div className="flex justify-center overflow-visible">
+        <svg width={width} height={height} ref={tooltipContainerRef} className="overflow-visible">
+          <Group left={margin.left} top={margin.top}>
+            {validData.map((d, i) => {
+              const barWidth = xScale.bandwidth();
+              const barHeight = innerHeight - yScale(d.value);
+              const x = xScale(d.label);
+              const y = yScale(d.value);
 
-                // Clamp bar width and position to ensure it fits in container
-                const clampedX = Math.max(0, Math.min(x || 0, innerWidth - barWidth));
-                const clampedWidth = Math.min(barWidth, innerWidth - (x || 0));
+              // Clamp bar width and position to ensure it fits in container
+              const clampedX = Math.max(0, Math.min(x || 0, innerWidth - barWidth));
+              const clampedWidth = Math.min(barWidth, innerWidth - (x || 0));
 
-                return (
-                  <Group key={d.label}>
-                    <rect
-                      x={clampedX}
-                      y={y}
-                      width={clampedWidth}
-                      height={barHeight}
-                      fill={d.color || barColor}
-                      className="hover:opacity-80 transition-opacity cursor-pointer"
-                      onMouseEnter={(event) => handleTooltip(event, d)}
-                      onMouseLeave={hideTooltip}
-                    />
-                    {showValues && width > 250 && (
-                      <text
-                        x={clampedX + clampedWidth / 2}
-                        y={(y || 0) - 3}
-                        textAnchor="middle"
-                        className={cn("fill-gray-700", width < 300 ? "text-xs" : "text-xs")}
-                        fontSize={width < 300 ? 10 : 12}
-                      >
-                        {formatValue(d.value)}
-                      </text>
-                    )}
-                  </Group>
-                );
+              return (
+                <Group key={d.label}>
+                  <rect
+                    x={clampedX}
+                    y={y}
+                    width={clampedWidth}
+                    height={barHeight}
+                    fill={d.color || barColor}
+                    className="hover:opacity-80 transition-opacity cursor-pointer"
+                    onMouseEnter={(event) => handleTooltip(event, d)}
+                    onMouseLeave={hideTooltip}
+                  />
+                  {showValues && width > 250 && (
+                    <text
+                      x={clampedX + clampedWidth / 2}
+                      y={(y || 0) - 3}
+                      textAnchor="middle"
+                      className={cn("fill-gray-700", width < 300 ? "text-xs" : "text-xs")}
+                      fontSize={width < 300 ? 10 : 12}
+                    >
+                      {formatValue(d.value)}
+                    </text>
+                  )}
+                </Group>
+              );
+            })}
+
+            {/* X Axis */}
+            <AxisBottom
+              top={innerHeight}
+              scale={xScale}
+              stroke="#E5E7EB"
+              tickStroke="#E5E7EB"
+              tickLabelProps={() => ({
+                fill: '#6B7280',
+                fontSize: width < 200 ? 8 : width < 300 ? 10 : 12,
+                textAnchor: 'middle',
               })}
+            />
 
-              {/* X Axis */}
-              <AxisBottom
-                top={innerHeight}
-                scale={xScale}
-                stroke="#E5E7EB"
-                tickStroke="#E5E7EB"
-                tickLabelProps={() => ({
-                  fill: '#6B7280',
-                  fontSize: width < 200 ? 8 : width < 300 ? 10 : 12,
-                  textAnchor: 'middle',
-                })}
-              />
-
-              {/* Y Axis */}
-              <AxisLeft
-                scale={yScale}
-                stroke="#E5E7EB"
-                tickStroke="#E5E7EB"
-                numTicks={width < 200 ? 3 : width < 300 ? 4 : 5}
-                tickFormat={(value) => formatValue(Number(value), true)}
-                tickLabelProps={() => ({
-                  fill: '#6B7280',
-                  fontSize: width < 200 ? 8 : width < 300 ? 10 : 12,
-                  textAnchor: 'end',
-                  dy: '0.33em',
-                })}
-              />
-            </Group>
-          </svg>
-        </div>
+            {/* Y Axis */}
+            <AxisLeft
+              scale={yScale}
+              stroke="#E5E7EB"
+              tickStroke="#E5E7EB"
+              numTicks={width < 200 ? 3 : width < 300 ? 4 : 5}
+              tickFormat={(value) => formatValue(Number(value), true)}
+              tickLabelProps={() => ({
+                fill: '#6B7280',
+                fontSize: width < 200 ? 8 : width < 300 ? 10 : 12,
+                textAnchor: 'end',
+                dy: '0.33em',
+              })}
+            />
+          </Group>
+        </svg>
       </div>
 
       {/* Tooltip */}
@@ -304,6 +296,6 @@ export default function BarChart({
           </div>
         </TooltipInPortal>
       )}
-    </Container>
+    </div>
   );
 }

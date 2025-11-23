@@ -23,7 +23,7 @@ export default function SummaryConclusion({
 }: SummaryConclusionProps) {
 
   return (
-    <Container title={title} onApprove={onApprove} onDisapprove={onDisapprove}>
+    <Container title={title}>
       <div className="p-4 space-y-4">
         <div>
           <h4 className="text-md font-medium text-gray-900 mb-2">Key Findings</h4>

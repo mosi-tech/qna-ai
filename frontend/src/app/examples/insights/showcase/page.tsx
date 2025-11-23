@@ -112,6 +112,7 @@ export default function ComponentShowcase() {
             
             <BulletList 
               title="Key Features"
+              subtitle="Comprehensive design system for analysis components"
               items={[
                 "Professional financial styling with subtle colors",
                 { text: "Interactive approve/disapprove buttons on every component", emphasis: "strong" },

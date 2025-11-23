@@ -16,7 +16,6 @@
 
 import Container from './Container';
 import StatCard from './helper/StatCard';
-import { insightStyles, cn } from './shared/styles';
 
 interface Stat {
   value: string | number;
@@ -33,51 +32,33 @@ interface StatGroupProps {
   stats: Stat[];
   title?: string;
   columns?: 1 | 2 | 3 | 4 | 5 | 6;
-  onApprove?: () => void;
-  onDisapprove?: () => void;
 }
 
 export default function StatGroup({ 
   stats,
   title,
-  columns = 3,
-  onApprove, 
-  onDisapprove
+  columns = 3
 }: StatGroupProps) {
-  
-  const limitedColumns = Math.min(columns, 3);
-  
-  const getGridClasses = () => {
-    const baseGrid = 'grid gap-3';
-    
-    switch (limitedColumns) {
-      case 1:
-        return cn(baseGrid, 'grid-cols-1');
-      case 2:
-        return cn(baseGrid, 'grid-cols-1 md:grid-cols-2');
-      case 3:
-        return cn(baseGrid, 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3');
-      default:
-        return cn(baseGrid, 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3');
-    }
-  };
-  
   return (
-    <Container title={title} onApprove={onApprove} onDisapprove={onDisapprove}>
+    <Container title={title}>
       <div className="p-4">
-        <div className={getGridClasses()}>
+        <div 
+          className="gap-4 md:gap-5 w-full auto-rows-max"
+          style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))' }}
+        >
           {stats.map((stat, index) => (
-            <StatCard
-              key={index}
-              value={stat.value}
-              label={stat.label}
-              subtitle={stat.subtitle}
-              change={stat.change}
-              changeType={stat.changeType}
-              color={stat.color}
-              trend={stat.trend}
-              format={stat.format}
-            />
+            <div key={index} className="min-w-0">
+              <StatCard
+                value={stat.value}
+                label={stat.label}
+                subtitle={stat.subtitle}
+                change={stat.change}
+                changeType={stat.changeType}
+                color={stat.color}
+                trend={stat.trend}
+                format={stat.format}
+              />
+            </div>
           ))}
         </div>
       </div>

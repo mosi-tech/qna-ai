@@ -53,8 +53,7 @@ interface ComponentConfig {
   component_name: string;
   props: Record<string, any>;
   layout: {
-    size: 'third' | 'half' | 'full';
-    height: 'short' | 'medium' | 'tall';
+    span: 'normal' | 'full';
   };
   reasoning?: string;
 }
@@ -120,17 +119,21 @@ function getNestedValue(obj: any, path: string): any {
  */
 function renderComponent(config: ComponentConfig, analysisData: any, key: number) {
   const Component = COMPONENT_REGISTRY[config.component_name as keyof typeof COMPONENT_REGISTRY];
+  const span = config.layout?.span || 'normal';
+  
+  // Apply span class - 'full' spans both columns, 'normal' is one column
+  const spanClass = span === 'full' ? 'col-span-1 sm:col-span-2' : 'col-span-1';
   
   if (!Component) {
     console.warn(`Unknown component: ${config.component_name}`);
     return (
-      <div key={key} className="min-h-[250px] bg-white rounded-lg shadow-lg border-t border-slate-100 overflow-hidden flex flex-col">
+      <div key={key} className={cn('min-h-[250px] bg-white rounded-lg shadow-lg border-t border-slate-100 overflow-hidden flex flex-col', spanClass)}>
         <div className="p-4">
           <div className="text-red-600 text-sm font-medium">
             Unknown component: {config.component_name}
           </div>
           <div className="text-red-500 text-xs mt-1">
-            Size: {config.layout.size} | Height: {config.layout.height}
+            Span: {span}
           </div>
         </div>
       </div>
@@ -141,7 +144,7 @@ function renderComponent(config: ComponentConfig, analysisData: any, key: number
   const transformedProps = transformDataReferences(config.props, analysisData);
   
   return (
-    <div key={key} className="min-h-[250px] bg-white rounded-lg shadow-lg border-t border-slate-100 overflow-hidden flex flex-col">
+    <div key={key} className={cn('min-h-[250px] bg-white rounded-xl shadow-md shadow-slate-200/40 border border-slate-100/50 hover:shadow-lg hover:shadow-slate-200/60 transition-all duration-300 overflow-hidden flex flex-col', spanClass)}>
       <Component {...transformedProps} />
     </div>
   );

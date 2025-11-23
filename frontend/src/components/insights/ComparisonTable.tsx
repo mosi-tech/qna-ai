@@ -107,7 +107,7 @@ export default function ComparisonTable({
   };
 
   return (
-    <Container title={title} onApprove={onApprove} onDisapprove={onDisapprove}>
+    <Container title={title}>
       <div className="p-4 overflow-x-auto">
         <table className="w-full">
           <thead className="bg-gray-50">

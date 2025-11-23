@@ -23,6 +23,7 @@ interface BulletItem {
 interface BulletListProps {
   items: (string | BulletItem)[];
   title?: string;
+  subtitle?: string;
   onApprove?: () => void;
   onDisapprove?: () => void;
 }
@@ -30,6 +31,7 @@ interface BulletListProps {
 export default function BulletList({
   items,
   title,
+  subtitle,
   onApprove,
   onDisapprove
 }: BulletListProps) {
@@ -47,7 +49,7 @@ export default function BulletList({
   };
 
   return (
-    <Container title={title} onApprove={onApprove} onDisapprove={onDisapprove}>
+    <Container title={title} subtitle={subtitle}>
       <div className="p-4">
         <ul className="space-y-3">
           {items.map((item, index) => {

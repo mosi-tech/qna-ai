@@ -4,45 +4,28 @@ import { cn } from './shared/styles';
 
 interface ContainerProps {
   title?: string;
+  subtitle?: string;
   children: React.ReactNode;
-  onApprove?: () => void;
-  onDisapprove?: () => void;
 }
 
 export default function Container({
   title,
-  children,
-  onApprove,
-  onDisapprove
+  subtitle,
+  children
 }: ContainerProps) {
-  const titleClass = 'text-base font-semibold text-slate-900';
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Header */}
+    <div className="flex flex-col h-full bg-white rounded-xl shadow-md shadow-slate-200/40 border border-slate-100/50 hover:shadow-lg hover:shadow-slate-300/50 transition-all duration-300 overflow-hidden">
+      {/* Header with gradient background */}
       {title && (
-        <div className="px-4 py-3 border-b border-slate-100">
-          <div className="flex justify-between items-start">
-            <h3 className={titleClass}>{title}</h3>
-            {(onApprove || onDisapprove) && (
-              <div className="flex gap-1">
-                {onApprove && (
-                  <button
-                    onClick={onApprove}
-                    className="px-2 py-1 bg-emerald-50 text-emerald-700 rounded text-xs hover:bg-emerald-100 transition-colors"
-                  >
-                    ✓
-                  </button>
-                )}
-                {onDisapprove && (
-                  <button
-                    onClick={onDisapprove}
-                    className="px-2 py-1 bg-rose-50 text-rose-700 rounded text-xs hover:bg-rose-100 transition-colors"
-                  >
-                    ✗
-                  </button>
-                )}
-              </div>
+        <div className="relative bg-gradient-to-r from-slate-50 to-slate-100/50 px-4 py-4">
+          {/* Subtle bottom divider */}
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-slate-200 via-slate-200/50 to-transparent"></div>
+          
+          <div className="flex-1">
+            <h3 className="text-base font-medium text-slate-900">{title}</h3>
+            {subtitle && (
+              <p className="text-sm text-slate-600 mt-1">{subtitle}</p>
             )}
           </div>
         </div>

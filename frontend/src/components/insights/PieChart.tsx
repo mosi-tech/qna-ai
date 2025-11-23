@@ -150,7 +150,7 @@ export default function PieChart({
   };
 
   return (
-    <Container title={title} onApprove={onApprove} onDisapprove={onDisapprove}>
+    <Container title={title}>
       <div ref={containerRef} className="p-4 flex flex-col">
         {/* Chart */}
         <div className="flex justify-center">

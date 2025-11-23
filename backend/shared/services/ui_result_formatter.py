@@ -12,6 +12,7 @@ from typing import Dict, Any, Optional, List
 
 from .base_service import BaseService
 from ..llm import LLMService, create_ui_formatter_llm
+from ..utils.json_utils import safe_json_loads
 # MCP tools are auto-loaded by the LLM service
 
 logger = logging.getLogger("shared-ui-result-formatter")
@@ -138,7 +139,7 @@ class UIResultFormatter(BaseService):
         Returns:
             Formatted user message string
         """
-        # Convert results to readable JSON string
+        # Convert results to readable JSON string, handling pandas/numpy objects
         results_json = json.dumps(analysis_results, indent=2, default=str)
         
         # Build context message
@@ -184,8 +185,10 @@ class UIResultFormatter(BaseService):
             if response and response.get("success"):
                 content = response.get("content", "").strip()
                 
-                # Extract JSON from response
-                ui_config = self._extract_json_from_content(content)
+                # Extract JSON from response using safe_json_loads
+                ui_config = safe_json_loads(content, default=None)
+                
+                print(ui_config)
                 
                 if ui_config and self._validate_ui_config(ui_config):
                     self.logger.info("✅ Successfully generated UI config with multi-message approach")
@@ -228,13 +231,15 @@ class UIResultFormatter(BaseService):
                 
                 # Validate layout
                 layout = comp["layout"]
-                if not isinstance(layout, dict) or "size" not in layout:
-                    self.logger.warning(f"Component {i} has invalid layout structure")
+                if not isinstance(layout, dict):
+                    self.logger.warning(f"Component {i} has invalid layout structure (not a dict)")
                     return False
                 
-                if layout["size"] not in ["third", "half", "full"]:
-                    self.logger.warning(f"Component {i} has invalid layout size: {layout['size']}")
-                    return False
+                # Validate span if provided (optional, defaults to "normal")
+                if "span" in layout:
+                    if layout["span"] not in ["normal", "full"]:
+                        self.logger.warning(f"Component {i} has invalid layout span: {layout['span']}")
+                        return False
             
             return True
             
@@ -270,7 +275,8 @@ class UIResultFormatter(BaseService):
                     "required": ["data"]
                 },
                 "layout_hints": ["third", "half", "full"],
-                "best_for_data_types": ["numerical", "categorical", "rankings", "comparisons"]
+                "span_hint":["normal","full"],
+        "best_for_data_types": ["numerical", "categorical", "rankings", "comparisons"]
             },
             "PieChart": {
                 "id": "PieChart",
@@ -288,7 +294,8 @@ class UIResultFormatter(BaseService):
                     "required": ["data"]
                 },
                 "layout_hints": ["half", "full"],
-                "best_for_data_types": ["proportional", "categorical", "distributions", "allocations"]
+                "span_hint":["normal","full"],
+        "best_for_data_types": ["proportional", "categorical", "distributions", "allocations"]
             },
             "LineChart": {
                 "id": "LineChart",
@@ -305,7 +312,8 @@ class UIResultFormatter(BaseService):
                     "required": ["data"]
                 },
                 "layout_hints": ["half", "full"],
-                "best_for_data_types": ["time_series", "trends", "historical", "sequential"]
+                "span_hint":["normal","full"],
+        "best_for_data_types": ["time_series", "trends", "historical", "sequential"]
             },
             "RankingTable": {
                 "id": "RankingTable",
@@ -322,7 +330,8 @@ class UIResultFormatter(BaseService):
                     "required": ["data", "columns"]
                 },
                 "layout_hints": ["half", "full"],
-                "best_for_data_types": ["rankings", "tabular", "comparisons", "multi_column"]
+                "span_hint":["normal","full"],
+        "best_for_data_types": ["rankings", "tabular", "comparisons", "multi_column"]
             },
             "StatGroup": {
                 "id": "StatGroup",
@@ -338,7 +347,8 @@ class UIResultFormatter(BaseService):
                     "required": ["stats"]
                 },
                 "layout_hints": ["third", "half", "full"],
-                "best_for_data_types": ["statistics", "kpis", "metrics", "numerical"]
+                "span_hint":["normal","full"],
+        "best_for_data_types": ["statistics", "kpis", "metrics", "numerical"]
             },
             "ExecutiveSummary": {
                 "id": "ExecutiveSummary",
@@ -354,7 +364,8 @@ class UIResultFormatter(BaseService):
                     "required": ["items"]
                 },
                 "layout_hints": ["half", "full"],
-                "best_for_data_types": ["summary", "insights", "findings", "textual"]
+                "span_hint":["normal","full"],
+        "best_for_data_types": ["summary", "insights", "findings", "textual"]
             },
             "SummaryConclusion": {
                 "id": "SummaryConclusion",
@@ -372,7 +383,8 @@ class UIResultFormatter(BaseService):
                     "required": ["keyFindings", "conclusion"]
                 },
                 "layout_hints": ["half", "full"],
-                "best_for_data_types": ["conclusion", "summary", "recommendations", "textual"]
+                "span_hint":["normal","full"],
+        "best_for_data_types": ["conclusion", "summary", "recommendations", "textual"]
             }
         }
         
@@ -408,26 +420,6 @@ class UIResultFormatter(BaseService):
         
         return messages
     
-    def _extract_json_from_content(self, content: str) -> Optional[Dict[str, Any]]:
-        """Extract JSON from LLM response content"""
-        try:
-            # Remove markdown code blocks if present
-            if "```json" in content:
-                start = content.find("```json") + 7
-                end = content.find("```", start)
-                if end != -1:
-                    content = content[start:end].strip()
-            elif "```" in content:
-                start = content.find("```") + 3
-                end = content.find("```", start)
-                if end != -1:
-                    content = content[start:end].strip()
-            
-            return json.loads(content)
-        except json.JSONDecodeError:
-            return None
-    
-
 
 # Factory function for easy initialization
 def create_ui_result_formatter(llm_service=None) -> UIResultFormatter:

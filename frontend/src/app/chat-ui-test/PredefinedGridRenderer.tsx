@@ -110,9 +110,11 @@ export default function PredefinedGridRenderer({
               className={`
                 min-h-[250px]
                 bg-white
-                rounded-lg
-                shadow-lg
-                border-t border-slate-100
+                rounded-xl
+                shadow-md shadow-slate-200/40
+                border border-slate-100/50
+                hover:shadow-lg hover:shadow-slate-200/60
+                transition-all duration-300
                 overflow-hidden
                 flex flex-col
                 ${slot.span === 'full' ? 'sm:col-span-2' : ''}
