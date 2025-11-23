@@ -446,3 +446,9 @@ def create_result_formatter_llm() -> LLMService:
     config = LLMConfig.for_task("RESULT_FORMATTER")
     config.service_name = "result-formatter"
     return LLMService(config)
+
+def create_ui_formatter_llm() -> LLMService:
+    """Create LLM service optimized for result formatting tasks"""
+    config = LLMConfig.for_task("UI_FORMATTER")
+    config.service_name = "ui-result-formatter"
+    return LLMService(config)

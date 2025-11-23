@@ -64,9 +64,9 @@ class DataTransformer:
             # Get execution results - aggregation already extracts execution.result into "results"
             if execution_data.get("results"):
                 # aggregation pipeline puts execution.result into execution_data["results"]
-                markdown = execution_data["results"].get("markdown")
-                if markdown:
-                    ui_data["results"]["markdown"] = markdown
+                ui_config = execution_data["results"].get("ui_config")
+                if ui_config:
+                    ui_data["results"]["ui_config"] = ui_config
             
             # Get parameters from execution  
             ui_data["results"]["parameters"] = execution_data.get("parameters", {})
@@ -173,9 +173,11 @@ class DataTransformer:
             "response_type": response_type, 
         }
         
-        if response_type == "script_generation":
+        execution_data = msg.get("execution")  
+        # Handle cases where   response_type in empty and execution was successful
+        if response_type == "script_generation" or (execution_data and execution_data.get("status", "unknonw") == "success"):
             # For analysis: Use the improved transform_analysis_data_to_ui for complete status handling
-            execution_data = msg.get("execution")
+            
             analysis_data = msg.get("analysis") 
             
             # Get complete UI data with combined status from both metadata and execution

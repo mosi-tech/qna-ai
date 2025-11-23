@@ -5,8 +5,32 @@ import AnalysisResult from './AnalysisResult';
 import ClarificationPrompt from './ClarificationPrompt';
 import ClarificationSummary from './ClarificationSummary';
 import StepProgressDisplay from '@/components/progress/StepProgressDisplay';
+import UIConfigurationRenderer from '@/components/insights/UIConfigurationRenderer';
 import { useProgress } from '@/lib/context/ProgressContext';
 import { renderMarkdown } from '@/lib/utils/markdown';
+
+// Helper function to detect if a message has UI configuration data
+const hasUIConfig = (message: any): boolean => {
+  // Check the main location where UI config is stored by data transformer
+  const uiConfig = message.results?.ui_config || 
+                   message.data?.results?.ui_config || 
+                   message.data?.ui_config;
+  
+  return Boolean(
+    uiConfig && 
+    uiConfig.ui_config?.selected_components && 
+    Array.isArray(uiConfig.ui_config.selected_components) && 
+    uiConfig.ui_config.selected_components.length > 0
+  );
+};
+
+// Helper function to extract UI configuration data from message
+const getUIConfig = (message: any) => {
+  // Check the main location where UI config is stored by data transformer
+  return message.results?.ui_config || 
+         message.data?.results?.ui_config || 
+         message.data?.ui_config;
+};
 
 interface ChatMessageProps {
   message: {
@@ -171,8 +195,31 @@ export default function ChatMessage({
 
   // Handle completed states based on response_type
   if (message.status === 'completed') {
-    if (message.response_type === 'script_generation') {
-      // Show full AnalysisResult for script generation
+    // Check if message has UI configuration data first (regardless of response_type)
+    if (hasUIConfig(message)) {
+      const uiConfig = getUIConfig(message);
+      return (
+        <div className="flex gap-3 w-full">
+          <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+            <span className="text-green-600 text-sm">🎨</span>
+          </div>
+          <div className="flex-1 max-w-4xl">
+            <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-1 mb-4">
+              <div className="bg-white rounded-lg p-3 shadow-sm">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-sm font-medium text-green-700">Dynamic Analysis Dashboard</span>
+                  <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                    Interactive
+                  </span>
+                </div>
+                <UIConfigurationRenderer uiConfig={uiConfig} />
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    } else if (message.response_type === 'script_generation') {
+      // Fallback to existing AnalysisResult for script_generation without UI config
       return (
         <div className="flex gap-3 w-full">
           <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">

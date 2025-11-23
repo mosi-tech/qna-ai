@@ -1,6 +1,6 @@
 'use client';
 
-import MockOutput from '@/components/MockOutput';
+import UIConfigurationRenderer from '@/components/insights/UIConfigurationRenderer';
 
 interface AnalysisPanelProps {
   currentAnalysis: {
@@ -28,8 +28,8 @@ export default function AnalysisPanel({ currentAnalysis }: AnalysisPanelProps) {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto bg-white">
-      <header className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0">
+    <div className="flex-1 overflow-y-auto bg-gray-50">
+      <header className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-10">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-gray-900">Analysis Results</h1>
@@ -46,7 +46,7 @@ export default function AnalysisPanel({ currentAnalysis }: AnalysisPanelProps) {
       </header>
 
       <div className="p-6">
-        <MockOutput moduleKey={currentAnalysis.data.query_type || 'default'} />
+        <UIConfigurationRenderer uiConfig={currentAnalysis.data as any} />
       </div>
     </div>
   );

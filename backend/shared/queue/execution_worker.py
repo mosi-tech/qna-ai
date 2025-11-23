@@ -15,7 +15,7 @@ from .base_queue import ExecutionQueueInterface
 from .base_worker import BaseQueueWorker
 from ..execution import execute_script
 from ..storage import get_storage
-from ..services.result_formatter import create_shared_result_formatter
+from ..services.ui_result_formatter import create_ui_result_formatter
 from ..services.progress_service import send_progress_event, send_execution_running, send_execution_completed, send_execution_failed, send_analysis_error
 from ..queue.worker_context import set_context, get_session_id
 
@@ -46,7 +46,7 @@ class ExecutionQueueWorker(BaseQueueWorker):
             worker_type="execution_worker"
         )
         self.audit_service = None
-        self.result_formatter = None
+        self.ui_result_formatter = None
     
     async def _initialize_services(self):
         """Initialize execution worker services"""
@@ -61,13 +61,13 @@ class ExecutionQueueWorker(BaseQueueWorker):
             logger.warning(f"⚠️ Failed to initialize AuditService: {e}")
             self.audit_service = None
         
-        # Initialize result formatter
+        # Initialize UI result formatter
         try:
-            self.result_formatter = create_shared_result_formatter()
-            logger.info("✅ ResultFormatter initialized for markdown generation")
+            self.ui_result_formatter = create_ui_result_formatter()
+            logger.info("✅ UIResultFormatter initialized for dynamic UI generation")
         except Exception as e:
-            logger.warning(f"⚠️ Failed to initialize ResultFormatter: {e}")
-            self.result_formatter = None
+            logger.warning(f"⚠️ Failed to initialize UIResultFormatter: {e}")
+            self.ui_result_formatter = None
         
         # Progress communication now uses queue-based messaging via send_progress_event
         logger.info("✅ Progress communication will use queue-based messaging")
@@ -120,32 +120,32 @@ class ExecutionQueueWorker(BaseQueueWorker):
             execution_time_ms = int((result.get("execution_time", 0)) * 1000)  # Convert to milliseconds
             
             if success:
-                # Step 1: Generate markdown from results if possible
+                # Step 1: Generate UI configuration from results if possible
                 result_output = result.get("output", {})
                 
-                # Try to generate markdown if formatter is available
-                if self.result_formatter and result_output.get("results"):
+                # Try to generate UI configuration if formatter is available
+                if self.ui_result_formatter and result_output.get("results"):
                     try:
-                        logger.info(f"🤖 Generating markdown for execution: {execution_id}")
+                        logger.info(f"🤖 Generating UI configuration for execution: {execution_id}")
                         
                         # Try to get original question from execution context
                         user_question = execution.get("user_question")  # May not be available
                         
-                        markdown = await self.result_formatter.format_execution_result(
+                        ui_config = await self.ui_result_formatter.format_execution_result_to_ui(
                             result_output, 
                             user_question
                         )
                         
-                        if markdown:
-                            # Add markdown to result output
-                            result_output["markdown"] = markdown
-                            logger.info(f"✅ Generated markdown for execution: {execution_id}")
+                        if ui_config:
+                            # Add UI configuration to result output
+                            result_output["ui_config"] = ui_config
+                            logger.info(f"✅ Generated UI configuration for execution: {execution_id}")
                         else:
-                            logger.info(f"⚠️ No markdown generated for execution: {execution_id}")
+                            logger.info(f"⚠️ No UI configuration generated for execution: {execution_id}")
                             
-                    except Exception as markdown_error:
-                        logger.warning(f"⚠️ Failed to generate markdown for {execution_id}: {markdown_error}")
-                        # Continue without markdown - don't fail the execution
+                    except Exception as ui_config_error:
+                        logger.warning(f"⚠️ Failed to generate UI configuration for {execution_id}: {ui_config_error}")
+                        # Continue without UI config - don't fail the execution
                 
                 # Step 2: CRITICAL: Update audit service execution document FIRST
                 audit_success = False
@@ -153,7 +153,7 @@ class ExecutionQueueWorker(BaseQueueWorker):
                     try:
                         await self.audit_service.log_execution_complete(
                             execution_id=execution_id,
-                            result=result_output,  # Now includes markdown if generated
+                            result=result_output,  # Now includes UI configuration if generated
                             execution_time_ms=execution_time_ms,
                             success=True
                         )

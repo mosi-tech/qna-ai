@@ -1,0 +1,288 @@
+{
+  "presentationFormats": [
+    {
+      "formatName": "LeaderboardFormat",
+      "description": "Present analysis as ranked performance leaderboard with winners and losers",
+      "useCase": "Best for 'which performed best/worst', 'top performers', 'ranking' questions",
+      "componentStructure": {
+        "HeroWinner": "Large card with #1 position, performance metric, and achievement badge",
+        "RunnerUpCards": "2-3 smaller cards for positions #2-4 with key metrics",
+        "PerformanceGapBar": "Visual showing performance gap between winner and others",
+        "LeaderboardTable": "Full rankings table with sortable performance columns",
+        "KeyInsights": "3-4 bullet points explaining what makes winners special"
+      },
+      "dataFormat": {
+        "winner": "{symbol: string, metric: number, achievement: string, badge: string}",
+        "runnerUps": "array[{rank: number, symbol: string, metric: number, gap: string}]",
+        "fullRankings": "array[{rank: number, symbol: string, primaryMetric: number, secondaryMetrics: object}]",
+        "insights": "array[string]"
+      }
+    },
+    {
+      "formatName": "HeadToHeadFormat",
+      "description": "Present analysis as direct A vs B investment comparison with clear winner",
+      "useCase": "Best for 'X vs Y', 'compare stocks', 'during period A vs B' questions",
+      "componentStructure": {
+        "ComparisonCards": "Two large side-by-side cards with vs symbol in middle",
+        "VictoryBanner": "Clear winner declaration with performance margin",
+        "MetricBreakdown": "Table comparing all relevant financial metrics side-by-side",
+        "ContextBox": "Background info on why this comparison matters for investors",
+        "InvestmentImplications": "What this means for portfolio decisions"
+      },
+      "dataFormat": {
+        "competitor1": "{name: string, metrics: object, performance: string, strengths: array}",
+        "competitor2": "{name: string, metrics: object, performance: string, strengths: array}",
+        "winner": "{name: string, margin: string, reason: string}",
+        "context": "string",
+        "implications": "array[string]"
+      }
+    },
+    {
+      "formatName": "TrendStoryFormat",
+      "description": "Present analysis as evolving investment story over time with narrative arc",
+      "useCase": "Best for 'over time', 'trend analysis', 'this quarter/year' questions",
+      "componentStructure": {
+        "StoryHeader": "Title with timeframe and overall trend direction",
+        "ThreeActStructure": "Beginning/Middle/Now sections with key market events",
+        "TrendStrengthMeter": "Visual indicator of trend strength and sustainability",
+        "InflectionPoints": "Timeline showing key turning points and catalysts",
+        "NextChapterPreview": "Forward-looking investment implications and catalysts to watch"
+      },
+      "dataFormat": {
+        "timeframe": "string",
+        "overallTrend": "{direction: string, strength: number, description: string}",
+        "threeActs": "{beginning: string, middle: string, current: string}",
+        "inflectionPoints": "array[{date: string, event: string, impact: string}]",
+        "nextChapter": "{outlook: string, keyCatalysts: array, timeframe: string}"
+      }
+    },
+    {
+      "formatName": "VolatilityWeatherFormat",
+      "description": "Present volatility analysis using weather metaphors and market conditions",
+      "useCase": "Best for volatility, risk, market conditions, VIX analysis questions",
+      "componentStructure": {
+        "CurrentConditions": "Today's volatility weather with VIX temperature and conditions",
+        "VolatilityMap": "Visual showing different risk conditions across portfolio sectors",
+        "StormWatch": "Alerts for potential volatility spikes or major moves",
+        "RiskPatterns": "Seasonal volatility trends and cyclical behaviors",
+        "VolatilityOutlook": "Longer-term risk forecast and what could change it"
+      },
+      "dataFormat": {
+        "current": "{condition: string, vixLevel: number, description: string, riskLevel: string}",
+        "sectorForecast": "array[{sector: string, condition: string, probability: number, description: string}]",
+        "alerts": "array[{type: 'volatility-spike'|'calm'|'regime-change', severity: string, description: string, timing: string}]",
+        "patterns": "{seasonal: array, cyclical: array, anomalies: array}",
+        "outlook": "{trend: string, confidence: number, changingFactors: array}"
+      }
+    },
+    {
+      "formatName": "OutlierSpotlightFormat",
+      "description": "Present analysis by highlighting the most unusual/extreme investment cases",
+      "useCase": "Best for 'most/least', 'highest/lowest', 'unusual behavior' questions",
+      "componentStructure": {
+        "SpotlightCard": "Hero card featuring the extreme outlier with dramatic performance styling",
+        "WhyItMatters": "Explanation of what makes this investment case so unusual",
+        "SupportingCast": "Secondary outliers that also deserve attention",
+        "NormalRange": "Context showing what 'typical' performance looks like",
+        "InvestmentAlert": "Warning or opportunity flag based on outlier behavior"
+      },
+      "dataFormat": {
+        "outlier": "{symbol: string, metric: number, extremeLevel: string, description: string}",
+        "whyExtreme": "string",
+        "supportingCast": "array[{symbol: string, metric: number, note: string}]",
+        "normalRange": "{min: number, max: number, average: number}",
+        "implications": "{type: 'warning'|'opportunity', message: string, actionItems: array}"
+      }
+    },
+    {
+      "formatName": "MarketRegimeFormat",
+      "description": "Present analysis by breaking down investment behavior in different market conditions",
+      "useCase": "Best for 'during bull/bear markets', 'when rates rise', 'regime analysis' questions",
+      "componentStructure": {
+        "RegimeCards": "Cards for each market condition showing asset behaviors",
+        "CurrentRegime": "Highlighted card showing current market state",
+        "TransitionIndicators": "Signals that show regime changes",
+        "PerformanceMatrix": "Table showing how assets perform in each regime",
+        "PortfolioImplications": "What the current regime means for asset allocation"
+      },
+      "dataFormat": {
+        "regimes": "array[{name: string, description: string, characteristics: array, performance: object}]",
+        "currentRegime": "{name: string, confidence: number, duration: string, signals: array}",
+        "transitions": "array[{from: string, to: string, triggers: array, frequency: string}]",
+        "performanceMatrix": "object",
+        "implications": "{positioning: array, risks: array, opportunities: array}"
+      }
+    },
+    {
+      "formatName": "FactorAnalysisFormat",
+      "description": "Present analysis as factor discovery with statistical evidence and investment confidence",
+      "useCase": "Best for 'correlation', 'factor exposure', 'what drives performance' questions",
+      "componentStructure": {
+        "FactorStatement": "Clear statement of the discovered factor with confidence level",
+        "EvidenceBoard": "Visual collection of statistical evidence with R-squared and significance",
+        "FactorExceptions": "Cases where the factor didn't explain performance and why",
+        "StatisticalStrength": "Overall confidence score with statistical backing",
+        "InvestmentApplication": "How to use this factor for portfolio construction"
+      },
+      "dataFormat": {
+        "factor": "{statement: string, confidence: number, rSquared: number, significance: string}",
+        "evidence": "array[{type: string, description: string, strength: number, examples: array}]",
+        "exceptions": "array[{case: string, reason: string, frequency: number}]",
+        "statistics": "{rSquared: number, pValue: number, sampleSize: number, timeframe: string}",
+        "application": "{signals: array, thresholds: object, portfolioUse: array}"
+      }
+    },
+    {
+      "formatName": "EarningsReportFormat",
+      "description": "Present analysis in earnings release style with key financial highlights",
+      "useCase": "Best for fundamental analysis, earnings, financial metrics questions",
+      "componentStructure": {
+        "EarningsHeader": "Bold headline with key financial result and beat/miss status",
+        "KeyMetrics": "Dashboard of most important financial numbers",
+        "ManagementCommentary": "Key insights and forward guidance",
+        "AnalystReaction": "Street response and estimate revisions",
+        "InvestorTakeaways": "What investors should focus on going forward"
+      },
+      "dataFormat": {
+        "headline": "string",
+        "keyResults": "array[{metric: string, actual: number, estimate: number, surprise: string}]",
+        "commentary": "array[string]",
+        "analystReaction": "{upgrades: number, downgrades: number, priceTargetChange: number}",
+        "takeaways": "array[{insight: string, importance: 'high'|'medium'|'low'}]"
+      }
+    },
+    {
+      "formatName": "TradingDeskFormat",
+      "description": "Present analysis as trading desk commentary with actionable trading insights",
+      "useCase": "Best for short-term moves, technical analysis, momentum questions",
+      "componentStructure": {
+        "MarketPulse": "Current market sentiment and key levels",
+        "TradingLevels": "Support/resistance and key technical levels",
+        "MomentumGauge": "Strength of current move and sustainability",
+        "RiskManagement": "Stop levels and position sizing considerations",
+        "TradingOutlook": "Near-term catalysts and levels to watch"
+      },
+      "dataFormat": {
+        "pulse": "{sentiment: string, strength: number, keyLevels: array}",
+        "technicals": "{support: number, resistance: number, trend: string, momentum: string}",
+        "momentum": "{strength: number, sustainability: string, catalysts: array}",
+        "risk": "{stopLevel: number, positionSize: string, maxRisk: string}",
+        "outlook": "{timeframe: string, catalysts: array, levelsToWatch: array}"
+      }
+    },
+    {
+      "formatName": "PortfolioReviewFormat",
+      "description": "Present analysis in professional portfolio review style for decision makers",
+      "useCase": "Best for complex multi-asset questions requiring synthesis and allocation decisions",
+      "componentStructure": {
+        "ExecutiveSummary": "3-sentence overview of key portfolio findings",
+        "PerformanceMetrics": "Dashboard of most important risk-adjusted returns",
+        "AllocationAnalysis": "Current vs optimal allocation with recommendations",
+        "RiskAssessment": "Potential portfolio risks and mitigating factors",
+        "ActionItems": "Specific rebalancing steps and timeline"
+      },
+      "dataFormat": {
+        "summary": "string",
+        "performance": "array[{metric: string, value: string, benchmark: string, trend: 'outperforming'|'underperforming'|'inline'}]",
+        "allocation": "{current: object, optimal: object, recommendations: array}",
+        "risks": "array[{risk: string, probability: string, impact: string, mitigation: string}]",
+        "actions": "array[{action: string, priority: 'high'|'medium'|'low', timeframe: string}]"
+      }
+    },
+    {
+      "formatName": "SportsTradingFormat",
+      "description": "Present analysis with sports-style commentary focusing on market momentum and performance",
+      "useCase": "Best for momentum, streaks, winning/losing performance questions",
+      "componentStructure": {
+        "GameRecap": "Overview of the trading 'game' with performance score",
+        "MVPStocks": "Top performing stocks with stats and highlights",
+        "KeyMoves": "Crucial market moments that determined outcomes",
+        "MarketStandings": "League table showing overall performance rankings",
+        "NextTrading": "Preview of upcoming market events and opportunities"
+      },
+      "dataFormat": {
+        "gameRecap": "{title: string, finalScore: string, winner: string, summary: string}",
+        "mvpStocks": "array[{symbol: string, stats: object, highlights: array, performance: string}]",
+        "keyMoves": "array[{moment: string, impact: string, description: string}]",
+        "standings": "array[{rank: number, symbol: string, record: string, streak: string}]",
+        "preview": "{nextEvent: string, keyCatalysts: array, predictions: string}"
+      }
+    },
+    {
+      "formatName": "RiskDashboardFormat",
+      "description": "Present analysis as comprehensive risk monitoring dashboard",
+      "useCase": "Best for risk analysis, VaR, drawdown, portfolio health questions",
+      "componentStructure": {
+        "RiskGauge": "Overall portfolio risk level with traffic light indicators",
+        "ExposureBreakdown": "Risk exposure across sectors, factors, and geographies",
+        "DownsideScenarios": "Stress test results and potential drawdown scenarios",
+        "RiskTrends": "How risk metrics have evolved over time",
+        "AlertsPanel": "Risk warnings and recommended risk management actions"
+      },
+      "dataFormat": {
+        "overallRisk": "{level: string, score: number, trend: string, description: string}",
+        "exposures": "array[{category: string, exposure: number, limit: number, status: 'safe'|'caution'|'breach'}]",
+        "scenarios": "array[{scenario: string, probability: number, impact: string, drawdown: number}]",
+        "trends": "array[{metric: string, current: number, previous: number, direction: string}]",
+        "alerts": "array[{priority: 'high'|'medium'|'low', message: string, action: string, deadline: string}]"
+      }
+    },
+    {
+      "formatName": "SectorRotationFormat",
+      "description": "Present analysis as sector rotation story with winners and losers",
+      "useCase": "Best for sector performance, rotation, style analysis questions",
+      "componentStructure": {
+        "RotationMap": "Visual showing money flow between sectors",
+        "HotSectors": "Leading sectors with performance and catalysts",
+        "ColdSectors": "Lagging sectors with reasons for underperformance",
+        "RotationDrivers": "Economic and market factors driving rotation",
+        "TacticalView": "Where to position for next rotation phase"
+      },
+      "dataFormat": {
+        "rotationTheme": "string",
+        "hotSectors": "array[{sector: string, performance: number, catalysts: array, momentum: string}]",
+        "coldSectors": "array[{sector: string, performance: number, headwinds: array, outlook: string}]",
+        "drivers": "array[{driver: string, impact: string, timeframe: string}]",
+        "tactical": "{overweight: array, underweight: array, neutral: array, reasoning: string}"
+      }
+    },
+    {
+      "formatName": "ValuationStoryFormat",
+      "description": "Present analysis as valuation narrative with fair value assessment",
+      "useCase": "Best for valuation, intrinsic value, cheap/expensive questions",
+      "componentStructure": {
+        "ValuationVerdict": "Clear overvalued/undervalued/fair assessment with target price",
+        "MetricsComparison": "Key valuation metrics vs peers and historical averages",
+        "ValuationBridge": "What's driving current valuation vs fair value",
+        "ScenarioAnalysis": "Bull/base/bear case valuations",
+        "InvestmentCase": "Risk/reward assessment and investment recommendation"
+      },
+      "dataFormat": {
+        "verdict": "{assessment: string, currentPrice: number, targetPrice: number, upside: string}",
+        "metrics": "array[{metric: string, current: number, peer: number, historical: number, assessment: string}]",
+        "bridge": "array[{factor: string, impact: number, reasoning: string}]",
+        "scenarios": "{bull: number, base: number, bear: number, probabilities: array}",
+        "investment": "{recommendation: string, riskReward: string, catalysts: array, risks: array}"
+      }
+    },
+    {
+      "formatName": "CatalystTimelineFormat",
+      "description": "Present analysis as chronological sequence of investment catalysts and events",
+      "useCase": "Best for 'when', catalyst analysis, event-driven questions",
+      "componentStructure": {
+        "TimelineVisualization": "Interactive timeline with key catalysts marked",
+        "MajorCatalysts": "Significant events with detailed impact descriptions",
+        "CatalystAnalysis": "How each catalyst affects investment thesis",
+        "CurrentPhase": "Where we are now in the catalyst timeline",
+        "UpcomingCatalysts": "Future events and expected timing with impact assessment"
+      },
+      "dataFormat": {
+        "timeline": "array[{date: string, catalyst: string, importance: 'high'|'medium'|'low', description: string}]",
+        "majorCatalysts": "array[{date: string, catalyst: string, impact: string, priceEffect: number}]",
+        "analysis": "array[{catalyst: string, effect: string, probability: number, timeframe: string}]",
+        "currentPhase": "{phase: string, progress: number, timeRemaining: string, keyFactors: array}",
+        "upcoming": "array[{catalyst: string, expectedDate: string, probability: number, impact: string}]"
+      }
+    }
+  ]
+}
