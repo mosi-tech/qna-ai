@@ -166,9 +166,16 @@ class ContextAwareSearch:
                 }
             logger.info(f"🔹 Query is not meaningless, proceeding to validation")
 
-        # Step 3: VALIDATE - Check if query is complete
+        # Step 3: VALIDATE - Check if query is complete (and enhance standalone queries)
         await send_progress_info(session_id, "Checking question for completeness...")
         validation = await self.validator.validate(expanded_query)
+        
+        # 🎯 Initialize enhancement metadata early (available for all paths)
+        enhancement_metadata = {
+            "enhanced_query": validation.get("enhanced_query", None),
+            "is_terse": validation.get("is_terse", False),
+            "enhancements_applied": validation.get("enhancements_applied", [])
+        }
         
         if not validation["success"]:
             return self._error_response(
@@ -188,6 +195,12 @@ class ContextAwareSearch:
                 query_type="contextual" if is_contextual else "standalone",
                 reason=f"Missing information: {missing}"
             )
+        
+        # 🎯 Use enhanced_query from validator if available (for standalone queries with defaults added)
+        if validation.get("enhanced_query"):
+            enhanced_query = validation["enhanced_query"]
+            logger.info(f"✨ Using validator-enhanced query: '{expanded_query[:80]}...' → '{enhanced_query[:80]}...'")
+            expanded_query = enhanced_query
 
         # Step 4: SEARCH - Query is ready
         # logger.info(f"Query validated, proceeding with search: {expanded_query[:100]}...")
@@ -214,6 +227,7 @@ class ContextAwareSearch:
             "query_type": "contextual" if is_contextual else "standalone",
             "original_query": query,
             "expanded_query": expanded_query,
+            "enhancement_metadata": enhancement_metadata,
             "search_results": search_result.get("analyses", []),
             "found_similar": search_result.get("found_similar", False)
         }

@@ -65,38 +65,79 @@ class CompletenessValidator:
         return await self._validate_with_llm(query)
 
     async def _validate_with_llm(self, query: str) -> Optional[Dict[str, Any]]:
-        """Single LLM validation attempt"""
-        """Use LLM to validate query completeness"""
+        """Validate query completeness and expand standalone queries with sensible defaults"""
         
-        validation_prompt = f"""You are a financial analysis validator. Your job is to determine if a user's question contains enough information to perform a meaningful financial analysis.
-
-Analyze this question: "{query}"
+        system_prompt = """You are a financial analysis validator and enhancer. Your job is to:
+1. Determine if a user's question contains enough information for a meaningful financial analysis
+2. If complete but terse/sparse, COMPREHENSIVELY enhance it with detailed financial context and multiple analysis dimensions
 
 A complete financial analysis question should specify:
 1. What securities/assets to analyze (specific stocks, ETFs, portfolios, etc.)
 2. What type of analysis to perform (correlation, volatility, returns, comparison, etc.)
 
-Examples of INCOMPLETE questions:
-- "Can you run ETF analysis" (missing: which ETF?)
-- "Analyze correlation" (missing: between what assets?)
-- "Show me volatility" (missing: of what security?)
+Examples of INCOMPLETE questions (missing core info):
+- "Can you run ETF analysis" → missing: which ETF?
+- "Analyze correlation" → missing: between what assets?
+- "Show me volatility" → missing: of what security?
 
-Examples of COMPLETE questions:
-- "Analyze AAPL vs MSFT correlation over the past 30 days"
-- "What's the volatility of SPY ETF?"
-- "Compare returns between Tesla and Apple stock"
+Examples of COMPLETE but TERSE questions (have core info but lack details):
+- "Volatility of SPY" → complete, but NEEDS COMPREHENSIVE expansion
+- "AAPL vs MSFT correlation" → complete, but NEEDS COMPREHENSIVE expansion
+- "Portfolio return analysis" → complete, but NEEDS COMPREHENSIVE expansion
+
+COMPREHENSIVE ENHANCEMENT RULES (expand terse queries substantially):
+
+FOR TIME PERIOD:
+- Always include TRIPLE period analysis for complete perspective:
+  - SHORT-TERM: Past 1 year (252 trading days) for current trends and recent volatility
+  - MEDIUM-TERM: Past 10 years for structural trends and multiple market cycles
+  - OVERALL/HISTORICAL: Inception-to-date or maximum available history for complete story
+- Add comparison periods: 3-month, YTD, quarterly comparisons where relevant
+- When requesting metrics, specify all 3 periods for consistency (e.g., "volatility over 1-year, 10-year, and inception-to-date")
+
+FOR METRICS (add key ones, not exhaustive list):
+- RISK: volatility (annualized), max drawdown, Sharpe ratio
+- RETURN: total return, annualized return, cumulative return
+- CORRELATION: Pearson correlation with S&P 500 benchmark
+- Optional: Add 1-2 additional metrics based on query context (e.g., beta if comparing assets, win rate if strategy-focused)
+
+FOR ANALYSIS SCOPE:
+- Add benchmark comparison (S&P 500 or relevant index)
+- Include period-over-period comparison (current vs historical performance)
+- Request trend analysis (momentum, volatility changes) where relevant
+
+FOR CONTEXT:
+- Specify analysis focus (risk analysis, return analysis, comparative, etc.)
+- Request actionable insights (performance relative to baseline, trend direction)
+
+ENHANCEMENT APPROACH:
+- Start with the terse query
+- Add time periods: 1-year (current) + 10-year (structural) + inception-to-date (historical full context)
+- Add 2-3 key metric dimensions: risk + return + benchmark comparison (add 1 more if relevant to query)
+- For each metric, request the 3 periods for consistency
+- Include comparative analysis: current vs historical (trend, direction, context)
+- Make expanded query 1.5-2x longer with clearer structure
+- Keep it focused but comprehensive: enough for deep insight without overwhelming detail"""
+
+        user_message = f"""Validate and enhance this question:
+
+"{query}"
 
 Respond ONLY with a JSON object:
 {{
     "complete": true/false,
-    "missing": ["list", "of", "missing", "elements"],
-    "reason": "Brief explanation of what's missing or why it's complete"
+    "missing": ["list", "of", "missing", "core", "elements"],
+    "is_terse": true/false,
+    "enhanced_query": "expanded version of query with sensible defaults if terse, otherwise same as input",
+    "enhancements_applied": ["list", "of", "enhancements"],
+    "reason": "Brief explanation"
 }}"""
 
         try:
             response = await self.llm_service.simple_completion(
-                prompt=validation_prompt,
-                max_tokens=1000
+                prompt=user_message,
+                system_prompt=system_prompt,
+                max_tokens=1500
             )
             
             # Handle both dict and object response formats
@@ -117,11 +158,25 @@ Respond ONLY with a JSON object:
                     
                     # Validate the response structure
                     if "complete" in result and "missing" in result and "reason" in result:
+                        # Extract enhanced query if provided and query was terse
+                        enhanced_query = result.get("enhanced_query", None)
+                        is_terse = result.get("is_terse", False)
+                        enhancements = result.get("enhancements_applied", [])
+                        
+                        # Log enhancements for transparency
+                        if enhanced_query and enhanced_query != query:
+                            logger.info(f"✨ Query enhanced: '{query[:80]}...' → '{enhanced_query[:80]}...'")
+                            if enhancements:
+                                logger.info(f"   Enhancements: {', '.join(enhancements)}")
+                        
                         return {
                             "success": True,
                             "complete": result["complete"],
                             "missing": result["missing"],
-                            "reason": result["reason"]
+                            "reason": result["reason"],
+                            "is_terse": is_terse,
+                            "enhanced_query": enhanced_query if enhanced_query != query else None,
+                            "enhancements_applied": enhancements
                         }
                     else:
                         logger.warning(f"LLM response missing required fields: {result}")
