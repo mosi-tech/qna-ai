@@ -177,22 +177,6 @@ class AnalysisPipelineService:
                 
                 if step_name == "context_search":
                     response, context_result = await step_function(request)
-                    
-                    # 🎯 Early metadata capture: Add expanded question info as soon as we have it
-                    if not response and message_id:
-                        expanded_query = context_result.get("expanded_query", request.question)
-                        try:
-                            await self.chat_history_service.update_assistant_message(
-                                message_id=message_id,
-                                metadata={
-                                    MetadataConstants.ANALYSIS_QUESTION: request.question,
-                                    MetadataConstants.EXPANDED_QUESTION: expanded_query if expanded_query != request.question else None,
-                                }
-                            )
-                            self.logger.debug(f"✓ Added analysis metadata: original={request.question[:50]}, expanded={expanded_query[:50] if expanded_query != request.question else 'same'}")
-                        except Exception as metadata_error:
-                            self.logger.warning(f"⚠️ Failed to add metadata after context search: {metadata_error}")
-                            
                 elif step_name == "confirmation":
                     response = await step_function(request, context_result)
                 elif step_name == "reuse_evaluation":
@@ -406,13 +390,12 @@ class AnalysisPipelineService:
         
         if context_result.get("needs_confirmation") or context_result.get("needs_clarification"):
             response_type = "needs_clarification" if context_result.get("needs_clarification") else "needs_confirmation"
-            expanded_query = context_result.get("expanded_query")
             return await self._create_analysis_response(
                 response_type=response_type,
                 message_content=context_result.get("message", "Please confirm if this interpretation is correct."),
                 metadata={
                     "original_query": request.question,
-                    "expanded_query": expanded_query,
+                    "expanded_query": context_result.get("expanded_query"),
                     "confidence": context_result.get("expansion_confidence", 0.0),
                     "needs_confirmation": context_result.get("needs_confirmation", False),
                     "needs_clarification": context_result.get("needs_clarification", False),
