@@ -178,20 +178,37 @@ class AnalysisPipelineService:
                 if step_name == "context_search":
                     response, context_result = await step_function(request)
                     
-                    # 🎯 Early metadata capture: Add expanded question info as soon as we have it
-                    if not response and message_id:
+                    # 🎯 IMMEDIATELY save metadata from context_search
+                    if message_id:
                         expanded_query = context_result.get("expanded_query", request.question)
+                        enhancement_metadata = context_result.get("enhancement_metadata", {})
+                        enhanced_query = enhancement_metadata.get("enhanced_query", None)
                         try:
+                            metadata_to_save = {
+                                MetadataConstants.ANALYSIS_QUESTION: request.question,
+                            }
+                            # Track expanded_query (after context expansion for contextual queries)
+                            if expanded_query != request.question:
+                                metadata_to_save[MetadataConstants.EXPANDED_QUESTION] = expanded_query
+                            
+                            # Track enhanced_query separately (after validator enhancement for terse queries)
+                            if enhanced_query and enhanced_query != expanded_query:
+                                metadata_to_save["enhanced_query"] = enhanced_query
+                            
+                            # Add enhancement details if available (from validator)
+                            if enhancement_metadata.get("enhancements_applied"):
+                                metadata_to_save["enhancements_applied"] = enhancement_metadata["enhancements_applied"]
+                            if enhancement_metadata.get("is_terse"):
+                                metadata_to_save["was_terse"] = enhancement_metadata["is_terse"]
+                            
                             await self.chat_history_service.update_assistant_message(
                                 message_id=message_id,
-                                metadata={
-                                    MetadataConstants.ANALYSIS_QUESTION: request.question,
-                                    MetadataConstants.EXPANDED_QUESTION: expanded_query if expanded_query != request.question else None,
-                                }
+                                content="",  # Empty since we're only updating metadata
+                                metadata=metadata_to_save
                             )
-                            self.logger.debug(f"✓ Added analysis metadata: original={request.question[:50]}, expanded={expanded_query[:50] if expanded_query != request.question else 'same'}")
+                            self.logger.info(f"✓ Saved metadata: original→expanded→enhanced: {request.question[:40]} → {expanded_query[:40] if expanded_query != request.question else 'same'} → {enhanced_query[:40] if enhanced_query else 'none'}")
                         except Exception as metadata_error:
-                            self.logger.warning(f"⚠️ Failed to add metadata after context search: {metadata_error}")
+                            self.logger.warning(f"⚠️ Failed to save metadata: {metadata_error}")
                             
                 elif step_name == "confirmation":
                     response = await step_function(request, context_result)
