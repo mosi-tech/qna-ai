@@ -22,7 +22,6 @@ class MetadataConstants:
     # Analysis-related keys
     ANALYSIS_TRIGGERED = "analysis_triggered"
     ANALYSIS_QUESTION = "analysis_question"
-    EXPANDED_QUESTION = "expanded_question"  # The expanded/refined question used for actual analysis
     HAS_ANALYSIS_SUGGESTION = "has_analysis_suggestion"
     SUGGESTED_ANALYSIS = "suggested_analysis"
     ANALYSIS_SUGGESTION = "analysis_suggestion"

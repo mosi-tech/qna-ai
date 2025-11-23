@@ -423,13 +423,12 @@ class AnalysisPipelineService:
         
         if context_result.get("needs_confirmation") or context_result.get("needs_clarification"):
             response_type = "needs_clarification" if context_result.get("needs_clarification") else "needs_confirmation"
-            expanded_query = context_result.get("expanded_query")
             return await self._create_analysis_response(
                 response_type=response_type,
                 message_content=context_result.get("message", "Please confirm if this interpretation is correct."),
                 metadata={
                     "original_query": request.question,
-                    "expanded_query": expanded_query,
+                    "expanded_query": context_result.get("expanded_query"),
                     "confidence": context_result.get("expansion_confidence", 0.0),
                     "needs_confirmation": context_result.get("needs_confirmation", False),
                     "needs_clarification": context_result.get("needs_clarification", False),
