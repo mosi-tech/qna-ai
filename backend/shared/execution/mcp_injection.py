@@ -25,39 +25,6 @@ import json
 import logging
 from typing import Any
 
-def json_serializer(obj: Any) -> Any:
-    """
-    Custom JSON serializer to handle pandas and other non-standard types.
-    Converts pandas Series/DataFrames to dicts/lists, numpy types to Python types, etc.
-    """
-    # Handle pandas Series
-    if hasattr(obj, 'to_dict') and hasattr(obj, 'index'):
-        try:
-            return obj.to_dict()
-        except Exception:
-            pass
-    
-    # Handle pandas DataFrame
-    if hasattr(obj, 'to_dict') and callable(obj.to_dict):
-        try:
-            return obj.to_dict(orient='records')
-        except Exception:
-            pass
-    
-    # Handle numpy arrays and types
-    if hasattr(obj, 'tolist'):
-        return obj.tolist()
-    
-    # Handle numpy generic types
-    if hasattr(obj, 'item') and callable(obj.item):
-        try:
-            return obj.item()
-        except Exception:
-            pass
-    
-    # Fallback to string representation
-    return str(obj)
-
 def convert_for_json(obj):
     """
     Convert nested objects with pandas/numpy types to JSON-serializable format
@@ -88,6 +55,9 @@ def convert_for_json(obj):
         return convert_for_json(obj.__dict__)
     else:
         return str(obj)  # Fallback to string representation
+
+# Alias for backward compatibility
+json_serializer = convert_for_json
 
 
 # Add MCP server directory to Python path

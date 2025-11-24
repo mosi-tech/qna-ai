@@ -83,7 +83,11 @@ def analyze_question(
                 "benchmark_symbol": benchmark_symbol,
                 "analysis_period_days": analysis_period_days
             },
-            "results": {},
+            "results": {
+                # ALL analysis data goes here - analysis metrics, calculations, comparisons, etc.
+                # Example: period_analysis, trend_analysis, insights, risk_metrics, etc.
+                # CRITICAL: Do NOT add top-level keys outside of results{}
+            },
             "metadata": {
                 "timestamp": datetime.now().isoformat(),
                 "data_source": "MCP Servers"
@@ -139,6 +143,9 @@ if __name__ == "__main__":
 
 **🚨 CRITICAL REQUIREMENTS:**
 
+✅ **OUTPUT FORMAT ENFORCEMENT**: ALL analysis data MUST be nested inside "results" key
+  ❌ WRONG: return {"period_analysis": {...}, "trend_analysis": {...}, "insights": [...]}
+  ✅ CORRECT: return {"question": "...", "analysis_completed": True, "results": {"period_analysis": {...}, "trend_analysis": {...}, "insights": [...]}, "metadata": {...}}
 ✅ **PARAMETERIZATION**: Extract ALL configurable values as function parameters
 ✅ **KWARGS HANDLING**: main() function MUST extract parameters from kwargs for HTTP execution
 ✅ USE UNDERSCORE based argument names (consistent with function arguments)
