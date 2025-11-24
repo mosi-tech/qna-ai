@@ -100,6 +100,18 @@ class HybridMessageHandler:
             
             logger.info(f"⏱️ Intent classification: {intent_duration:.3f}s, Intent: {intent_result.intent.value}")
             
+            # Step 1.5: Safety check - reject dangerous queries early
+            if not intent_result.is_safe:
+                logger.error(f"🚨 SECURITY: Blocking unsafe query - {intent_result.safety_reason}")
+                return await self._create_safety_error_response(
+                    safety_reason=intent_result.safety_reason,
+                    detected_risks=intent_result.detected_risks,
+                    session_id=session_id,
+                    user_id=user_id,
+                    user_message_obj=user_message_obj,
+                    start_time=intent_start_time
+                )
+            
             # Step 2: Generate analyst response
             start_time = time.time()
             analyst_response = await self.financial_analyst.generate_response(
@@ -326,6 +338,59 @@ class HybridMessageHandler:
                     MetadataConstants.INTERNAL_ERROR: internal_error or "Unknown error",
                     MetadataConstants.PROCESSING_TIME: (time.time() - start_time) if start_time else None,
                     MetadataConstants.FAILED_AT: datetime.now().isoformat()
+                }
+            )
+    
+    async def _create_safety_error_response(self,
+                                          safety_reason: str,
+                                          detected_risks: List[str],
+                                          session_id: str,
+                                          user_id: str,
+                                          user_message_obj,
+                                          start_time: float = None) -> HybridResponse:
+        """Create security error response for blocked queries"""
+        try:
+            error_message = "Sorry, I can't help you with that. Please ask a legitimate financial analysis question."
+            
+            # Add blocked message to chat history
+            error_message_id = await self.chat_history_service.add_hybrid_message(
+                session_id=session_id,
+                user_id=user_id,
+                content=error_message,
+                message_type=MetadataConstants.MESSAGE_TYPE_ERROR,
+                intent=MetadataConstants.INTENT_ERROR
+            )
+            
+            return HybridResponse(
+                response_type=MetadataConstants.RESPONSE_TYPE_ERROR,
+                content=error_message,
+                message_id=error_message_id,
+                user_message_id=user_message_obj.id,
+                session_id=session_id,
+                metadata={
+                    MetadataConstants.RESPONSE_STATUS: MetadataConstants.STATUS_BLOCKED,
+                    MetadataConstants.RESPONSE_ERROR: error_message,
+                    MetadataConstants.SECURITY_REASON: safety_reason,
+                    MetadataConstants.DETECTED_RISKS: detected_risks,
+                    MetadataConstants.PROCESSING_TIME: (time.time() - start_time) if start_time else None,
+                    MetadataConstants.BLOCKED_AT: datetime.now().isoformat()
+                }
+            )
+        except Exception as e:
+            logger.error(f"Failed to create safety error response: {e}")
+            error_message = "Sorry, I can't help you with that. Please ask a legitimate financial analysis question."
+            return HybridResponse(
+                response_type=MetadataConstants.RESPONSE_TYPE_ERROR,
+                content=error_message,
+                message_id="blocked",
+                user_message_id=user_message_obj.id if user_message_obj else "unknown",
+                session_id=session_id,
+                metadata={
+                    MetadataConstants.RESPONSE_STATUS: MetadataConstants.STATUS_BLOCKED,
+                    MetadataConstants.SECURITY_REASON: safety_reason,
+                    MetadataConstants.DETECTED_RISKS: detected_risks,
+                    MetadataConstants.PROCESSING_TIME: (time.time() - start_time) if start_time else None,
+                    MetadataConstants.BLOCKED_AT: datetime.now().isoformat()
                 }
             )
     
