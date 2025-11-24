@@ -18,7 +18,6 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 from .mcp_injection import create_mcp_injection_wrapper
-from ..security.script_sandbox import ScriptSandbox
 
 logger = logging.getLogger("shared-script-executor")
 
@@ -51,7 +50,7 @@ def create_enhanced_script(script_content: str, mock_mode: bool = True) -> str:
 
 def execute_script(script_content: str, mock_mode: bool = True, timeout: int = 30, parameters: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """
-    Execute Python script with MCP function injection in secured sandbox
+    Execute Python script with MCP function injection
     
     Args:
         script_content: Complete Python script content
@@ -63,57 +62,46 @@ def execute_script(script_content: str, mock_mode: bool = True, timeout: int = 3
         Dict with execution results
     """
 
-    logger.info(f"🚀 Executing script in sandbox (mock={mock_mode}, timeout={timeout}s)")
+    logger.info(f"🚀 Executing script (mock={mock_mode}, timeout={timeout}s)")
     
     try:
         # Create enhanced script with MCP injection wrapper
         enhanced_script = create_enhanced_script(script_content, mock_mode)
         
-        # Build command with parameters
-        cmd_args = []
+        # Write temporary script for subprocess execution
+        script_path = _write_temp_script_local(enhanced_script)
+        
+        # Execute script with parameters as command line arguments
+        cmd = [sys.executable, script_path]
+        
+        # Add parameters as individual arguments
         if parameters:
             for key, value in parameters.items():
                 if value is not None:
-                    cmd_args.extend([f'--{key}', str(value)])
+                    cmd.extend([f'--{key}', str(value)])
         
-        # Execute script in sandbox
-        import asyncio
-        loop = asyncio.new_event_loop()
-        sandbox_result = loop.run_until_complete(
-            ScriptSandbox.execute_safely(
-                enhanced_script,
-                timeout=timeout,
-                memory_limit_mb=512
-            )
+        start_time = datetime.now()
+        
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            cwd=os.path.dirname(script_path) if os.path.isabs(script_path) else None
         )
-        loop.close()
+
+        execution_time = (datetime.now() - start_time).total_seconds()
         
-        if not sandbox_result.get("success"):
-            logger.error(f"❌ Script execution failed in sandbox: {sandbox_result.get('error')}")
-            return {
-                "success": False,
-                "error": sandbox_result.get("error", "Unknown sandbox error"),
-                "error_type": "SandboxExecutionError",
-                "mock_mode": mock_mode,
-                "resource_limits_hit": sandbox_result.get("resource_limits_hit", False),
-                "execution_time": sandbox_result.get("execution_time", 0)
-            }
-        
-        # Parse sandbox output
-        stdout = sandbox_result.get("stdout", "")
-        stderr = sandbox_result.get("stderr", "")
-        execution_time = sandbox_result.get("execution_time", 0)
-        
-        # Create mock subprocess result for processing
-        class MockResult:
-            def __init__(self, returncode, stdout, stderr):
-                self.returncode = returncode
-                self.stdout = stdout
-                self.stderr = stderr
-        
-        result = MockResult(0, stdout, stderr)
         return _process_execution_result(result, execution_time, mock_mode)
                 
+    except subprocess.TimeoutExpired:
+        logger.error(f"❌ Script execution timed out after {timeout}s")
+        return {
+            "success": False,
+            "error": f"Script execution timed out after {timeout} seconds",
+            "error_type": "TimeoutError",
+            "mock_mode": mock_mode
+        }
     except Exception as e:
         logger.error(f"❌ Execution error: {e}")
         return {

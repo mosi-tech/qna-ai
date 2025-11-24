@@ -243,4 +243,3 @@ async def get_session_message(
         logger.error(f"❌ Error fetching message {message_id}: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
-

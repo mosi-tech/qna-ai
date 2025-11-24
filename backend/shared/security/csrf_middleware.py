@@ -26,13 +26,14 @@ class CSRFMiddleware(BaseHTTPMiddleware):
     # Methods that require CSRF protection
     PROTECTED_METHODS = {"POST", "PUT", "DELETE", "PATCH"}
 
-    # Routes to exempt from CSRF (e.g., login, logout)
+    # Routes to exempt from CSRF (e.g., login, logout, token generation)
     EXEMPT_ROUTES = {
         "/api/auth/login",
         "/api/auth/logout",
         "/api/auth/signup",
         "/api/auth/verify-email",
         "/api/health",
+        "/csrf-token",  # CSRF token generation endpoint
     }
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:

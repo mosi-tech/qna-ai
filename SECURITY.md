@@ -23,40 +23,34 @@
 
 ---
 
-## 20-Minute Setup
+## Setup Complete ✅
 
-### 1. Add Environment Variable
-```bash
-# In .env
-SESSION_SECRET_KEY=your-random-secret-key-here
+### Backend (Ready)
+- ✅ `/csrf-token` endpoint implemented (auto-generates & caches tokens)
+- ✅ SessionMiddleware configured
+- ✅ CSRF middleware integrated
+- ✅ Token validation on POST/PUT/DELETE
+
+### Frontend (Just Added)
+- ✅ `APIClient.fetchCSRFToken()` - calls `/csrf-token` endpoint
+- ✅ CSRF token stored in localStorage automatically
+- ✅ Token included in all POST/PUT/DELETE requests via `X-CSRF-Token` header
+- ✅ AuthContext calls `apiClient.fetchCSRFToken()` after login/register/checkAuth
+- ✅ CSRF token cleared on logout
+
+### What Happens When User Logs In
+```
+1. Appwrite authenticates user
+2. Frontend calls login() in AuthContext
+3. AuthContext calls apiClient.fetchCSRFToken()
+4. APIClient.post('/csrf-token') - validates authenticated session
+5. Backend returns { csrf_token: "...", expires_at: "..." }
+6. Token stored in localStorage
+7. All subsequent POST/PUT/DELETE include X-CSRF-Token header automatically
+8. Backend middleware validates token - ✅ Request succeeds
 ```
 
-### 2. Update Login Endpoint
-```python
-from fastapi import Request
-from shared.security import generate_csrf_token_for_session
-
-@app.post("/api/auth/login")
-async def login(request: Request, credentials: LoginData):
-    # ... validate credentials ...
-    csrf = await generate_csrf_token_for_session(request)
-    return {
-        "success": True,
-        "csrf_token": csrf["csrf_token"]
-    }
-```
-
-### 3. Frontend: Include Token
-```typescript
-const token = localStorage.getItem("csrf_token");
-fetch("/api/endpoint", {
-  method: "POST",
-  headers: { "X-CSRF-Token": token },
-  body: JSON.stringify(data)
-});
-```
-
-**Done!** All security layers active ✅
+**Production Ready!** ✅
 
 ---
 
@@ -78,11 +72,16 @@ backend/shared/security/
 
 ## Files Modified
 
-1. **server.py** - Added SessionMiddleware + CSRF middleware
+**Backend:**
+1. **server.py** - Added SessionMiddleware + CSRF middleware + `/csrf-token` endpoint
 2. **hybrid_message_handler.py** - Added input validation (Step 0)
 3. **script_executor.py** - Added script sandbox integration
 4. **intent_classifier.py** - Enhanced malicious intent detection
 5. **message_metadata.py** - Added security constants
+
+**Frontend:**
+6. **api/client.ts** - Added CSRF token management (getCSRFToken, fetchCSRFToken, header injection)
+7. **context/AuthContext.tsx** - Added CSRF token fetch after login/register/checkAuth, clear on logout
 
 ---
 

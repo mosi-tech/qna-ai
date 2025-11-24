@@ -2,12 +2,10 @@
 Security module - Defensive security layers for the application
 
 Provides:
-- Script sandboxing
 - Input validation
 - CSRF protection
 """
 
-from .script_sandbox import ScriptSandbox
 from .input_validator import (
     SafeStringInput,
     QueryInput,
@@ -25,7 +23,6 @@ from .csrf_helpers import (
 )
 
 __all__ = [
-    "ScriptSandbox",
     "SafeStringInput",
     "QueryInput",
     "SessionIdInput",

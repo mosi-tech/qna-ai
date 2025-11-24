@@ -367,7 +367,7 @@ class ExecutionQueueWorker(BaseQueueWorker):
             # TODO: Change it to False when ready
             result = execute_script(
                 script_content=script_content,
-                mock_mode=True,  #a Production mode for queue executions
+                mock_mode=True,  # Production mode for queue executions
                 timeout=timeout_seconds,
                 parameters=parameters
             )
