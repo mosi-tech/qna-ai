@@ -88,36 +88,44 @@ Examples of COMPLETE but TERSE questions (have core info but lack details):
 COMPREHENSIVE ENHANCEMENT RULES (expand terse queries substantially):
 
 FOR TIME PERIOD:
-- Always include TRIPLE period analysis for complete perspective:
-  - SHORT-TERM: Past 1 year (252 trading days) for current trends and recent volatility
-  - MEDIUM-TERM: Past 10 years for structural trends and multiple market cycles
-  - OVERALL/HISTORICAL: Inception-to-date or maximum available history for complete story
-- Add comparison periods: 3-month, YTD, quarterly comparisons where relevant
-- When requesting metrics, specify all 3 periods for consistency (e.g., "volatility over 1-year, 10-year, and inception-to-date")
+- Choose appropriate time periods based on analysis type (detect from query):
+  - Stock/ETF price analysis: SHORT-TERM (1 year), MEDIUM-TERM (5 years), LONG-TERM (10 years)
+  - Fundamental analysis: Most recent results, trailing year comparison, and year-over-year trends
+  - Economic/macro data: Recent period (month/quarter), recent year, and multi-year trends
+  - Other: Select 2-3 relevant time windows without forcing stock analysis periods
+- When specifying periods, ensure consistency across all requested metrics
 
 FOR METRICS (add key ones, not exhaustive list):
-- RISK: volatility (annualized), max drawdown, Sharpe ratio
-- RETURN: total return, annualized return, cumulative return
-- CORRELATION: Pearson correlation with S&P 500 benchmark
-- Optional: Add 1-2 additional metrics based on query context (e.g., beta if comparing assets, win rate if strategy-focused)
+- Detect query type and select relevant metrics:
+  * Price/Performance: return metrics, volatility, drawdown, Sharpe ratio, comparisons to relevant benchmark
+  * Fundamental: key financial ratios, growth metrics, profitability measures, comparisons to sector/peers
+  * Macro/Economic: growth rates, change metrics, relative to historical averages or peer regions
+  * Strategy: win rate, drawdown, return, risk-adjusted returns, trade frequency
+- Do NOT force stock analysis metrics on non-stock queries
 
 FOR ANALYSIS SCOPE:
-- Add benchmark comparison (S&P 500 or relevant index)
-- Include period-over-period comparison (current vs historical performance)
-- Request trend analysis (momentum, volatility changes) where relevant
+- Add relevant comparisons based on query type:
+  * For securities: appropriate benchmark (S&P 500, sector index, peer group, etc.)
+  * For fundamental: peer comparison, sector comparison, or historical trends
+  * For macro: regional comparison, peer economy comparison, or historical patterns
+- Include period-over-period comparison where relevant
+- Request trend analysis appropriate to the query type
 
 FOR CONTEXT:
 - Specify analysis focus (risk analysis, return analysis, comparative, etc.)
 - Request actionable insights (performance relative to baseline, trend direction)
 
 ENHANCEMENT APPROACH:
-- Start with the terse query
-- Add time periods: 1-year (current) + 10-year (structural) + inception-to-date (historical full context)
-- Add 2-3 key metric dimensions: risk + return + benchmark comparison (add 1 more if relevant to query)
-- For each metric, request the 3 periods for consistency
-- Include comparative analysis: current vs historical (trend, direction, context)
+- Analyze query type to determine appropriate defaults (stock analysis, fundamental analysis, macro analysis, etc.)
+- Select appropriate time periods based on query context:
+  * For price/performance/technical analysis: 1-year (current) + 5-year (structural) + 10-year (extended history)
+  * For fundamental analysis: focus on most recent quarter + trailing year + 5-year comparisons
+  * For macro/economic data: recent month + trailing year + 5-year trends
+  * For other analysis types: choose reasonable defaults without forcing irrelevant periods
+- Add 2-3 key metric dimensions relevant to the query type (remove ambiguity without being explicit about defaults)
+- Include comparative analysis where applicable (current vs historical, or trend direction, or relevant context)
 - Make expanded query 1.5-2x longer with clearer structure
-- Keep it focused but comprehensive: enough for deep insight without overwhelming detail"""
+- Keep it focused but comprehensive: enough for deep insight without overwhelming data requirements"""
 
         user_message = f"""Validate and enhance this question:
 

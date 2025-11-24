@@ -146,6 +146,16 @@ class ExecutionQueueWorker(BaseQueueWorker):
                     except Exception as ui_config_error:
                         logger.warning(f"⚠️ Failed to generate UI configuration for {execution_id}: {ui_config_error}")
                         # Continue without UI config - don't fail the execution
+                else:
+                    # Log why UI generation was skipped
+                    if not self.ui_result_formatter:
+                        logger.warning(f"⚠️ Skipping UI generation for {execution_id}: UIResultFormatter not available")
+                    elif not result_output.get("results"):
+                        logger.warning(f"⚠️ Skipping UI generation for {execution_id}: No 'results' key in output")
+                        logger.debug(f"   Available keys in result_output: {list(result_output.keys())}")
+                        logger.debug(f"   Result output type: {type(result_output)}")
+                        if isinstance(result_output, dict):
+                            logger.debug(f"   Result output content (first 500 chars): {str(result_output)[:500]}")
                 
                 # Step 2: CRITICAL: Update audit service execution document FIRST
                 audit_success = False
