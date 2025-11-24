@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 from typing import Optional
 from fastapi import FastAPI, HTTPException, Depends, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.sessions import SessionMiddleware
         
 from dotenv import load_dotenv
 
@@ -178,6 +179,13 @@ def create_app() -> FastAPI:
         lifespan=lifespan
     )
     
+    # Add session middleware (required for CSRF)
+    app.add_middleware(
+        SessionMiddleware,
+        secret_key=os.getenv("SESSION_SECRET_KEY", "your-secret-key-change-in-production"),
+        max_age=3600,  # 1 hour
+    )
+    
     # Add CORS middleware
     app.add_middleware(
         CORSMiddleware,
@@ -186,6 +194,14 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+    
+    # Add CSRF protection middleware
+    try:
+        from shared.security import add_csrf_middleware
+        add_csrf_middleware(app)
+        logger.info("✅ CSRF protection middleware enabled")
+    except Exception as e:
+        logger.warning(f"⚠️ Failed to initialize CSRF middleware: {e}")
     
     # Include progress streaming routes
     app.include_router(progress_router)

@@ -22,6 +22,7 @@ from .financial_analyst_chat_service import FinancialAnalystChatService, Analyst
 from shared.services.chat_service import ChatHistoryService
 from shared.services.session_manager import SessionManager
 from shared.constants import MetadataConstants, MessageIntent
+from shared.security.input_validator import InputValidator
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +83,30 @@ class HybridMessageHandler:
         try:
             logger.info(f"🔀 Hybrid handler V2 processing: {user_message[:100]}...")
             
-            # Step 0: Save user message immediately (independent of assistant response)
+            # Step 0: Input validation - reject malformed/dangerous input early
+            is_safe, validation_error = InputValidator.is_safe(user_message)
+            if not is_safe:
+                logger.error(f"🛡️ Input validation failed: {validation_error}")
+                return await self._create_error_response(
+                    error_message="Invalid input. Please check your message and try again.",
+                    session_id=session_id,
+                    user_id=user_id,
+                    internal_error=validation_error,
+                    start_time=start_time
+                )
+            
+            # Validate session ID and user ID format
+            if not InputValidator.validate_session_id(session_id):
+                logger.error(f"🛡️ Invalid session ID format")
+                return await self._create_error_response(
+                    error_message="Invalid session ID. Please try again.",
+                    session_id=session_id,
+                    user_id=user_id,
+                    internal_error="Invalid session ID format",
+                    start_time=start_time
+                )
+            
+            # Step 0.5: Save user message immediately (independent of assistant response)
             conversation = await self.session_manager.get_session(session_id)
             user_message_obj = await conversation.add_user_message(
                 content=user_message,
