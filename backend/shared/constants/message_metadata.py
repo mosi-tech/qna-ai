@@ -64,11 +64,17 @@ class MetadataConstants:
     STATUS_PENDING = "pending"
     STATUS_COMPLETED = "completed"
     STATUS_FAILED = "failed"
+    STATUS_BLOCKED = "blocked"
     
     # Error and timing keys
     INTERNAL_ERROR = "internal_error"
     PROCESSING_TIME = "processing_time"
     FAILED_AT = "failed_at"
+    BLOCKED_AT = "blocked_at"
+    
+    # Security keys
+    SECURITY_REASON = "security_reason"
+    DETECTED_RISKS = "detected_risks"
     
     # Other keys
     ERROR = "error"
