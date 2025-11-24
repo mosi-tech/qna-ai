@@ -6,8 +6,9 @@ import logging
 import uvicorn
 from contextlib import asynccontextmanager
 from typing import Optional
-from fastapi import FastAPI, HTTPException, Depends, Response
+from fastapi import FastAPI, HTTPException, Depends, Response, Request
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
         
 from dotenv import load_dotenv
 
@@ -178,13 +179,28 @@ def create_app() -> FastAPI:
         lifespan=lifespan
     )
     
-    # Add CORS middleware
+    # Add CSRF protection middleware FIRST (will be applied last due to reverse order)
+    try:
+        from shared.security import add_csrf_middleware
+        add_csrf_middleware(app)
+        logger.info("✅ CSRF protection middleware enabled")
+    except Exception as e:
+        logger.warning(f"⚠️ Failed to initialize CSRF middleware: {e}")
+    
+    # Add CORS middleware (applied before session)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
+    )
+    
+    # Add session middleware LAST (will be applied first due to reverse order)
+    app.add_middleware(
+        SessionMiddleware,
+        secret_key=os.getenv("SESSION_SECRET_KEY", "your-secret-key-change-in-production"),
+        max_age=3600,  # 1 hour
     )
     
     # Include progress streaming routes
@@ -216,6 +232,42 @@ def create_app() -> FastAPI:
         except Exception as e:
             logger.error(f"Failed to create session: {e}")
             raise HTTPException(status_code=500, detail="Failed to create session")
+    
+    @app.post("/csrf-token")
+    async def get_csrf_token(
+        request: Request,
+        user_context: UserContext = Depends(require_authenticated_user)
+    ):
+        """Generate and return CSRF token for authenticated users (cached in session)"""
+        try:
+            from shared.security import CSRFProtection
+            from datetime import datetime, timezone
+            
+            # Check if valid token already exists in session
+            if hasattr(request, "session") and "csrf_token" in request.session:
+                existing = request.session["csrf_token"]
+                if existing.get("expires_at") and existing.get("expires_at") > datetime.now(timezone.utc).isoformat():
+                    logger.debug(f"♻️ Returning cached CSRF token for user {user_context.user_id}")
+                    return {
+                        "csrf_token": existing["token"],
+                        "expires_at": existing["expires_at"]
+                    }
+            
+            # Generate new token
+            token_meta = CSRFProtection.generate_token_with_metadata()
+            
+            # Store in session
+            if hasattr(request, "session"):
+                request.session["csrf_token"] = token_meta
+                logger.debug(f"✅ CSRF token generated for user {user_context.user_id}")
+            
+            return {
+                "csrf_token": token_meta["token"],
+                "expires_at": token_meta["expires_at"]
+            }
+        except Exception as e:
+            logger.error(f"Failed to generate CSRF token: {e}")
+            raise HTTPException(status_code=500, detail="Failed to generate CSRF token")
     
     @app.get("/session/{session_id}")
     async def get_session(
