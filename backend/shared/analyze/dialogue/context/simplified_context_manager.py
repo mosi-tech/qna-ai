@@ -63,7 +63,8 @@ class SimplifiedFinancialContextManager:
     async def get_conversation_messages_for_llm(self, 
                                               conversation: ConversationStore, 
                                               context_type: ContextType,
-                                              current_query: str) -> List[Dict[str, str]]:
+                                              current_query: str,
+                                              include_analysis_metadata: bool = False) -> List[Dict[str, str]]:
         """
         Revolutionary approach: Format conversation as native LLM messages array
         
@@ -75,6 +76,7 @@ class SimplifiedFinancialContextManager:
             conversation: ConversationStore with message history
             context_type: Type of context needed
             current_query: Current user query
+            include_analysis_metadata: If True, add system message listing available analysis/execution IDs
             
         Returns:
             List of messages in LLM format: [{"role": "user/assistant", "content": "..."}]
@@ -94,8 +96,17 @@ class SimplifiedFinancialContextManager:
             # Phase 1: Smart context window sizing
             recent_window = self._get_smart_context_window(all_messages, context_type)
             
-            # Phase 2: Get historical summary if needed (for very long conversations)
+            # Phase 1.5: Extract available analysis/execution IDs if requested
             messages = []
+            if include_analysis_metadata:
+                analysis_metadata = await self._extract_available_ids(recent_window)
+                if analysis_metadata:
+                    messages.append({
+                        "role": "system",
+                        "content": analysis_metadata
+                    })
+            
+            # Phase 2: Get historical summary if needed (for very long conversations)
             if len(all_messages) > len(recent_window):
                 historical_summary = await self._get_cached_summary_if_needed(
                     conversation.session_id, all_messages, len(recent_window)
@@ -112,6 +123,31 @@ class SimplifiedFinancialContextManager:
                 if isinstance(message, AssistantMessage):
                     # Use rich formatted content with all metadata
                     content = message.to_context_string()
+                    
+                    # Add analysis context if available (for follow-up questions)
+                    metadata = message.metadata or {}
+                    if metadata.get("analysisId") or metadata.get("analysis_id"):
+                        context_parts = []
+                        context_parts.append("=== Analysis Context ===")
+                        
+                        analysis_id = metadata.get("analysisId") or metadata.get("analysis_id")
+                        execution_id = metadata.get("executionId") or metadata.get("execution_id")
+                        if analysis_id:
+                            context_parts.append(f"Analysis: {analysis_id}")
+                        if execution_id:
+                            context_parts.append(f"Execution: {execution_id}")
+                        
+                        if "script_name" in metadata:
+                            context_parts.append(f"Script: {metadata['script_name']}")
+                        
+                        if "execution" in metadata:
+                            params = str(metadata["execution"])[:200]
+                            context_parts.append(f"Parameters: {params}")
+                        
+                        context_parts.append("Reference this context for follow-up questions.")
+                        
+                        context_str = "\n".join(context_parts)
+                        content = f"{content}\n\n{context_str}"
                 else:
                     # User messages are just content
                     content = message.content
@@ -135,6 +171,47 @@ class SimplifiedFinancialContextManager:
             logger.error(f"❌ LLM message formatting failed: {e}", exc_info=True)
             # Safe fallback
             return [{"role": "user", "content": current_query}]
+    
+    async def _extract_available_ids(self, messages: List[Message]) -> Optional[str]:
+        """
+        Extract available analysis and execution IDs from recent messages.
+        Returns formatted system message listing all available IDs for LLM tool calling.
+        """
+        try:
+            available_ids = {}
+            
+            for msg in messages:
+                metadata = msg.metadata or {}
+                analysis_id = metadata.get("analysisId") or metadata.get("analysis_id")
+                execution_id = metadata.get("executionId") or metadata.get("execution_id")
+                
+                if analysis_id or execution_id:
+                    key = f"{analysis_id}_{execution_id}" if (analysis_id and execution_id) else (analysis_id or execution_id)
+                    if key not in available_ids:
+                        available_ids[key] = {
+                            "analysis_id": analysis_id,
+                            "execution_id": execution_id
+                        }
+            
+            if not available_ids:
+                return None
+            
+            parts = ["Available analysis contexts in this conversation:"]
+            for info in available_ids.values():
+                if info["analysis_id"] and info["execution_id"]:
+                    parts.append(f"• Analysis: {info['analysis_id']}, Execution: {info['execution_id']}")
+                elif info["analysis_id"]:
+                    parts.append(f"• Analysis: {info['analysis_id']}")
+                elif info["execution_id"]:
+                    parts.append(f"• Execution: {info['execution_id']}")
+            
+            parts.append("\nYou can use the available MCP tools to fetch details about these analyses and executions.")
+            
+            return "\n".join(parts)
+            
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to extract available IDs: {e}")
+            return None
     
     # ========== PHASE 1: Smart Context Window Sizing ==========
     

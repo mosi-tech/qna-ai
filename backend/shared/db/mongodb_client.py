@@ -383,11 +383,17 @@ class MongoDBClient:
         doc = await self.db.chat_messages.find_one({"messageId": message_id})
         return ChatMessageModel(**doc) if doc else None
     
-    async def get_session_messages(self, session_id: str, limit: int = 100) -> List[ChatMessageModel]:
-        """Get all messages in session"""
+    async def get_session_messages(self, session_id: str, limit: int = 100, sort_order: int = 1) -> List[ChatMessageModel]:
+        """Get all messages in session
+        
+        Args:
+            session_id: Session ID to fetch messages for
+            limit: Maximum number of messages to return (default: 100)
+            sort_order: 1 for ascending (oldest first), -1 for descending (newest first)
+        """
         docs = await self.db.chat_messages.find(
             {"sessionId": session_id}
-        ).sort("created_at", 1).limit(limit).to_list(limit)
+        ).sort("created_at", sort_order).limit(limit).to_list(limit)
         return [ChatMessageModel(**doc) for doc in docs]
     
     async def get_last_message(self, session_id: str) -> Optional[ChatMessageModel]:

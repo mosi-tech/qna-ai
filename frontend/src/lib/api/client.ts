@@ -103,7 +103,7 @@ export class APIClient {
     const { method, path, data, timeout = this.timeout, retries = this.retries, skipCache: skipCacheConfig } = config;
 
     // Check cache for GET requests (skip caching for session/message endpoints)
-    const skipCache = skipCacheConfig || path.includes('/sessions/') || path.includes('/messages/') || path.includes('/csrf-token');
+    const skipCache = skipCacheConfig || path.includes('/sessions/') || path.includes('/messages/');
     if (method === 'GET' && this.enableCaching && !skipCache) {
       const cached = this.cache.get<APIResponse<T>>(path);
       if (cached) {
@@ -297,56 +297,12 @@ export class APIClient {
       }
     }
 
-    // Add CSRF token for state-changing requests (POST, PUT, DELETE)
-    if (method && ['POST', 'PUT', 'DELETE'].includes(method)) {
-      const csrfToken = this.getCSRFToken();
-      if (csrfToken) {
-        headers['X-CSRF-Token'] = csrfToken;
-        if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
-          console.log('[APIClient] ✅ Adding CSRF token header');
-        }
-      }
-    }
+    // CSRF protection is handled by SameSite=Strict cookies on the server
+    // No need to manually add CSRF tokens
 
     return headers;
   }
 
-  /**
-   * Get CSRF token from localStorage
-   */
-  private getCSRFToken(): string | null {
-    if (typeof window === 'undefined') {
-      return null;
-    }
-
-    try {
-      return localStorage.getItem('csrf_token');
-    } catch {
-      return null;
-    }
-  }
-
-  /**
-   * Fetch and store CSRF token from backend
-   */
-  async fetchCSRFToken(): Promise<void> {
-    try {
-      const response = await this.post<{ csrf_token: string; expires_at: string }>('/csrf-token', {}, { 
-        skipCache: true 
-      });
-      
-      if (response.success && response.data?.csrf_token) {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('csrf_token', response.data.csrf_token);
-          if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
-            console.log('[APIClient] ✅ CSRF token fetched and stored');
-          }
-        }
-      }
-    } catch (error) {
-      console.warn('[APIClient] Failed to fetch CSRF token:', error);
-    }
-  }
 
   /**
    * Get JWT token from Appwrite for development

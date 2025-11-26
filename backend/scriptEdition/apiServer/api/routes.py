@@ -62,7 +62,8 @@ class APIRoutes:
             self.hybrid_handler = HybridMessageHandler(
                 chat_history_service=chat_history_service,
                 analyze_question_callable=self.analyze_question,  # Pass existing analyze_question method
-                redis_client=redis_client
+                redis_client=redis_client,
+                audit_service=audit_service  # Pass audit service for tool-based follow-ups
             )
         
         # Initialize data transformer for clean transformation operations

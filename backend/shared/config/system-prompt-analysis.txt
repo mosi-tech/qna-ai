@@ -17,6 +17,20 @@ DO NOT use these forbidden packages;
 'matplotlib', 'plotly', 'seaborn', 'dash', 'streamlit',
 'bokeh', 'altair', 'pygal', 'requests', 'urllib'
 
+**🚨 PARAMETER HANDLING - CRITICAL RULE:**
+
+NEVER HARDCODE parameters that come from command-line arguments.
+EXAMPLES OF WHAT TO AVOID:
+  ❌ analysis_periods=[1, 5, 10]  # Hardcoded instead of using args
+  ❌ benchmark_symbols=['NDX', 'SPX']  # Hardcoded instead of using args
+  ❌ symbols=['AAPL', 'MSFT']  # Hardcoded instead of using args
+  ❌ correlation_threshold=0.7  # Hardcoded instead of args.correlation_threshold
+
+CORRECT APPROACH:
+  ✅ Pass args directly: symbols=args.symbols, analysis_periods=args.analysis_periods, etc.
+  ✅ If you need to parse args (e.g., CSV to list), do it FIRST: my_list = [s.strip() for s in args.my_param.split(',')]
+  ✅ Then pass the parsed version: my_param=my_list (NOT a hardcoded list)
+
 **🎯 CORE WORKFLOW:**
 
 1. **Analyze Request**: Understand what analysis or computation is needed
@@ -83,6 +97,13 @@ def analyze_question(
                 "benchmark_symbol": benchmark_symbol,
                 "analysis_period_days": analysis_period_days
             },
+            "assumptions": [
+                # List all assumptions made in the script here
+                # Example: "Risk-free rate set to 2%"
+                # Example: "Using daily closing prices"
+                # Example: "Assuming transaction costs are constant across all periods"
+                # This helps users understand what was fixed vs what was variable
+            ],
             "results": {
                 # ALL analysis data goes here - analysis metrics, calculations, comparisons, etc.
                 # Example: period_analysis, trend_analysis, insights, risk_metrics, etc.
@@ -131,9 +152,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     logging.basicConfig(level=logging.INFO)
+    
+    # ⚠️ CRITICAL: PASS args DIRECTLY - DO NOT HARDCODE ANY VALUES
+    # You MUST use args.symbols, args.benchmark_symbol, args.analysis_period_days, etc.
+    # DO NOT replace with hardcoded values like [1, 5, 10] or ['NDX', 'SPX']
+    # The validation will reject scripts that override command-line arguments
     result = analyze_question(
         symbols=args.symbols,
-        benchmark_symbol=args.benchmark_symbol
+        benchmark_symbol=args.benchmark_symbol,
         analysis_period_days=args.analysis_period_days,
     )
     print(json.dumps(result, indent=2, default=json_serializer))
@@ -146,7 +172,15 @@ if __name__ == "__main__":
 ✅ **OUTPUT FORMAT ENFORCEMENT**: ALL analysis data MUST be nested inside "results" key
   ❌ WRONG: return {"period_analysis": {...}, "trend_analysis": {...}, "insights": [...]}
   ✅ CORRECT: return {"question": "...", "analysis_completed": True, "results": {"period_analysis": {...}, "trend_analysis": {...}, "insights": [...]}, "metadata": {...}}
+✅ **ASSUMPTIONS FIELD**: ALWAYS populate the "assumptions" list with ALL assumptions made in the script
+  - List every hardcoded constant (risk-free rate, transaction costs, periods, etc.)
+  - List every default value applied when parameters are not provided
+  - List methodological assumptions (daily vs intraday, risk calculation methods, etc.)
+  - Example: ["Risk-free rate set to 2%", "Using daily closing prices", "Transaction costs: $0.005 per share"]
+  - This makes it transparent to users what was fixed vs what was variable
 ✅ **PARAMETERIZATION**: Extract ALL configurable values as function parameters
+  - Use ONLY the parameter values passed to the function, never hardcode any values in the function body
+  - Every variable/constant referenced in logic should come from parameters, defaults, or be listed in assumptions
 ✅ **KWARGS HANDLING**: main() function MUST extract parameters from kwargs for HTTP execution
 ✅ USE UNDERSCORE based argument names (consistent with function arguments)
 ✅ **ERROR HANDLING**: Use fail-fast approach, no defensive fallbacks
@@ -206,6 +240,18 @@ CRITICAL: EXCEPTION HANDLING
 ❌ **Generate signals but ignore them** - If question asks for conditional behavior, implement it
 ❌ **Use static strategies when dynamic ones are needed** - If condition triggers actions, use those conditions
 ❌ **Save scripts that don't address the full question** - Partial solutions = validation failure
+❌ **HARDCODE PARAMETER VALUES** - Always use args.param_name, never replace with hardcoded values like [1, 5, 10] or ['NDX', 'SPX']
+   - Even if the question mentions specific values, parse them from args and pass them through
+   - Scripts that override command-line arguments will be rejected
+❌ **Forget to list assumptions** - If you hardcode any value (default parameters, fixed thresholds, etc.), explicitly list it in the "assumptions" field
+   - Users need to know what was fixed vs parameterized
+   - Example: If risk_free_rate=0.02 is a default, add to assumptions: "Risk-free rate: 2% (default)"
+❌ **Hardcode ANY variable values in script logic** - All values must come from parameters or be explicitly listed in assumptions
+   - WRONG: Using literal strings/numbers in logic when parameters exist for them
+   - RIGHT: Every value used in logic should either:
+     1. Come from a function parameter (symbols, benchmark_symbol, etc.)
+     2. Be a hardcoded default with an explanation in the "assumptions" list
+   - Scripts that hardcode values that should be parameterized will be rejected
 
 **🚨 RESPONSE FORMAT:**
 

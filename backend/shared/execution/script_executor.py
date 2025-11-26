@@ -13,6 +13,7 @@ import sys
 import subprocess
 import tempfile
 import uuid
+import re
     
 from datetime import datetime
 from typing import Dict, Any, Optional
@@ -20,6 +21,61 @@ from typing import Dict, Any, Optional
 from .mcp_injection import create_mcp_injection_wrapper
 
 logger = logging.getLogger("shared-script-executor")
+
+
+def check_for_hardcoded_parameters(script_content: str, parameters: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """
+    Check if script contains hardcoded parameter values instead of using args.
+    
+    Args:
+        script_content: Python script content to check
+        parameters: Dictionary of parameters that should be passed via command-line
+        
+    Returns:
+        Dict with 'valid': bool and 'issues': list of detected problems
+    """
+    if not parameters:
+        return {"valid": True, "issues": []}
+    
+    issues = []
+    
+    # Extract the __main__ block
+    main_match = re.search(r'if __name__ == "__main__":(.*?)(?=\n(?:^|\n)(?![\s])|\Z)', script_content, re.DOTALL)
+    if not main_match:
+        return {"valid": True, "issues": []}
+    
+    main_block = main_match.group(1)
+    
+    for param_name, param_value in parameters.items():
+        if param_value is None:
+            continue
+        
+        param_value_str = str(param_value)
+        
+        # Check for direct hardcoded value assignment (e.g., analysis_periods=[1, 5, 10])
+        hardcoded_patterns = [
+            # List/array hardcoding: param_name=[...]
+            param_name + r'\s*=\s*\[',
+            # String hardcoding: param_name=['...'] or param_name="..."
+            param_name + r'\s*=\s*["\']',
+            # Numeric hardcoding: param_name=123 or param_name=0.5
+            param_name + r'\s*=\s*\d',
+        ]
+        
+        for pattern in hardcoded_patterns:
+            if re.search(pattern, main_block):
+                # More specific check: is this actually overriding the arg?
+                # Check if param_name= is used WITHOUT args.param_name
+                if f'args.{param_name}' not in main_block or param_name in main_block.split('args.')[0]:
+                    issues.append(
+                        f"Parameter '{param_name}' appears to be hardcoded instead of using args.{param_name}"
+                    )
+                    break
+    
+    return {
+        "valid": len(issues) == 0,
+        "issues": issues
+    }
 
 
 def create_enhanced_script(script_content: str, mock_mode: bool = True) -> str:
@@ -65,6 +121,20 @@ def execute_script(script_content: str, mock_mode: bool = True, timeout: int = 3
     logger.info(f"🚀 Executing script (mock={mock_mode}, timeout={timeout}s)")
     
     try:
+        # Check for hardcoded parameters before execution
+        if parameters:
+            param_check = check_for_hardcoded_parameters(script_content, parameters)
+            if not param_check["valid"]:
+                error_msg = f"Script contains hardcoded parameter values: {'; '.join(param_check['issues'])}"
+                logger.error(f"❌ {error_msg}")
+                return {
+                    "success": False,
+                    "error": error_msg,
+                    "error_type": "HardcodedParametersError",
+                    "issues": param_check["issues"],
+                    "mock_mode": mock_mode
+                }
+        
         # Create enhanced script with MCP injection wrapper
         enhanced_script = create_enhanced_script(script_content, mock_mode)
         

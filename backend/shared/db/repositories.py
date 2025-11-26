@@ -317,14 +317,15 @@ class ChatRepository:
         
         return success
     
-    async def get_conversation_history(self, session_id: str, include_metadata: bool = False) -> List[Dict[str, Any]]:
+    async def get_conversation_history(self, session_id: str, include_metadata: bool = False, sort_order: int = 1) -> List[Dict[str, Any]]:
         """Get conversation for LLM context
         
         Args:
             session_id: Session ID to get messages for
             include_metadata: If True, includes full message metadata (needed for ConversationStore reconstruction)
+            sort_order: 1 for ascending (oldest first), -1 for descending (newest first)
         """
-        messages = await self.db.get_session_messages(session_id)
+        messages = await self.db.get_session_messages(session_id, sort_order=sort_order)
         
         history = []
         for msg in messages:

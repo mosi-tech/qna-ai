@@ -19,6 +19,7 @@ from dataclasses import dataclass
 
 from .intent_classifier import IntentClassifierService, IntentResult
 from .financial_analyst_chat_service import FinancialAnalystChatService, AnalystResponse, AnalysisSuggestion
+from .followup_chat_agent import FollowUpChatAgent, FollowUpResponse
 from shared.services.chat_service import ChatHistoryService
 from shared.services.session_manager import SessionManager
 from shared.constants import MetadataConstants, MessageIntent
@@ -48,9 +49,11 @@ class HybridMessageHandler:
     def __init__(self, 
                  chat_history_service: ChatHistoryService,
                  analyze_question_callable=None,
-                 redis_client=None):
+                 redis_client=None,
+                 audit_service=None):
         self.chat_history_service = chat_history_service
         self.analyze_question_callable = analyze_question_callable
+        self.audit_service = audit_service
         
         # Create SessionManager for ConversationStore integration (consistent with existing approach)
         self.session_manager = SessionManager(
@@ -61,6 +64,7 @@ class HybridMessageHandler:
         # Initialize proper services with session manager dependency
         self.intent_classifier = IntentClassifierService(session_manager=self.session_manager)
         self.financial_analyst = FinancialAnalystChatService()
+        self.followup_chat_agent = FollowUpChatAgent(audit_service=audit_service)
         
         # Track session state for pending analysis suggestions
         self.session_states = {}  # session_id -> state info
@@ -136,7 +140,18 @@ class HybridMessageHandler:
                     start_time=intent_start_time
                 )
             
-            # Step 2: Generate analyst response
+            # Step 2: Handle FOLLOW_UP_CHAT with dedicated agent
+            if intent_result.intent == MessageIntent.FOLLOW_UP_CHAT:
+                logger.info("🤖 Using FollowUpChatAgent for follow-up question")
+                return await self._handle_followup_chat(
+                    user_message=user_message,
+                    conversation=conversation,
+                    session_id=session_id,
+                    user_id=user_id,
+                    user_message_obj=user_message_obj
+                )
+            
+            # Step 3: Generate analyst response for other intents
             start_time = time.time()
             analyst_response = await self.financial_analyst.generate_response(
                 user_message=user_message,
@@ -148,7 +163,7 @@ class HybridMessageHandler:
             
             logger.info(f"⏱️ Analyst response: {analyst_duration:.3f}s")
             
-            # Step 3: Route based on intent and persist ONLY via ConversationStore
+            # Step 4: Route based on intent and persist ONLY via ConversationStore
             return await self._route_and_persist(
                 intent_result=intent_result,
                 analyst_response=analyst_response,
@@ -259,6 +274,63 @@ class HybridMessageHandler:
             analysis_question=analysis_question
         )
 
+    
+    async def _handle_followup_chat(self,
+                                   user_message: str,
+                                   conversation,
+                                   session_id: str,
+                                   user_id: str,
+                                   user_message_obj) -> HybridResponse:
+        """Handle follow-up chat using FollowUpChatAgent"""
+        try:
+            start_time = time.time()
+            
+            # Use the agent to generate response
+            agent_response = await self.followup_chat_agent.execute(
+                user_message=user_message,
+                conversation=conversation,
+                session_id=session_id,
+                audit_service=self.audit_service
+            )
+            
+            duration = time.time() - start_time
+            logger.info(f"⏱️ Follow-up chat response: {duration:.3f}s")
+            
+            # Save assistant message
+            conversation = await self.session_manager.get_session(session_id)
+            assistant_message_obj = await conversation.add_assistant_message(
+                content=agent_response.content,
+                user_id=user_id,
+                message_type=MetadataConstants.RESPONSE_TYPE_CHAT,
+                intent=MetadataConstants.INTENT_FOLLOW_UP_CHAT,
+                used_tools=agent_response.used_tools
+            )
+            
+            return HybridResponse(
+                response_type=MetadataConstants.RESPONSE_TYPE_CHAT,
+                content=agent_response.content,
+                message_id=assistant_message_obj.id,
+                user_message_id=user_message_obj.id,
+                session_id=session_id,
+                metadata={
+                    MetadataConstants.INTENT: MetadataConstants.INTENT_FOLLOW_UP_CHAT,
+                    MetadataConstants.RESPONSE_TYPE: MetadataConstants.RESPONSE_TYPE_CHAT,
+                    MetadataConstants.ANALYSIS_TRIGGERED: False,
+                    MetadataConstants.RESPONSE_STATUS: MetadataConstants.STATUS_COMPLETED,
+                    MetadataConstants.PROCESSING_TIME: duration,
+                    "used_tools": agent_response.used_tools or []
+                }
+            )
+            
+        except Exception as e:
+            logger.error(f"❌ Follow-up chat handling failed: {e}")
+            return await self._create_error_response(
+                error_message="Failed to process follow-up question. Please try again.",
+                session_id=session_id,
+                user_id=user_id,
+                internal_error=str(e),
+                start_time=start_time
+            )
     
     async def _get_session_context(self, session_id: str) -> Dict[str, Any]:
         """Get session context including recent analysis results"""

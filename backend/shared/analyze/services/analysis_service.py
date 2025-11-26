@@ -38,7 +38,7 @@ class AnalysisService(BaseService):
         self.mcp_integration = MCPIntegration()
         
         # Max attempts for write_and_validate (checked in message filter)
-        self.max_write_and_validate_attempts = 4
+        self.max_write_and_validate_attempts = 10
     
     def _create_default_llm(self) -> LLMService:
         """Create default LLM service for analysis"""

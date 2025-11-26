@@ -36,6 +36,15 @@
       "env": {
         "PYTHONPATH": "/Users/shivc/Documents/Workspace/JS/qna-ai-admin"
       }
+    },
+    "analysis-details": {
+      "command": "python",
+      "args": [
+        "/Users/shivc/Documents/Workspace/JS/qna-ai-admin/backend/mcp-server/analysis_details_server.py"
+      ],
+      "env": {
+        "PYTHONPATH": "/Users/shivc/Documents/Workspace/JS/qna-ai-admin"
+      }
     }
   },
   "serviceConfigs": {
@@ -87,6 +96,14 @@
       "enabled": false,
       "servers": [],
       "exclude_tools": []
+    },
+    "followup-chat-agent": {
+      "enabled": true,
+      "servers": [
+        "analysis-details"
+      ],
+      "exclude_tools": [],
+      "description": "Tools for answering follow-up questions about previous analyses"
     }
   },
   "defaultConfig": {

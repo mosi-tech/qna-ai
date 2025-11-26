@@ -38,7 +38,11 @@ class CSRFMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """
-        Process request and validate CSRF token if needed.
+        Process request with CSRF protection via SameSite=Strict cookies.
+        
+        With SameSite=Strict cookies, CSRF tokens are NOT required.
+        The browser prevents cross-site cookie inclusion automatically.
+        This middleware is kept for backward compatibility but no longer validates tokens.
 
         Args:
             request: Incoming request
@@ -47,23 +51,9 @@ class CSRFMiddleware(BaseHTTPMiddleware):
         Returns:
             Response (either error or from next handler)
         """
-        # Skip CSRF check for exempt routes
-        if request.url.path in self.EXEMPT_ROUTES:
-            logger.debug(f"CSRF check skipped for exempt route: {request.url.path}")
-            return await call_next(request)
-
-        # Only validate for protected methods
-        if request.method not in self.PROTECTED_METHODS:
-            logger.debug(f"CSRF check skipped for {request.method} request")
-            return await call_next(request)
-
-        # Validate CSRF token
-        is_valid, error = await self._validate_csrf_token(request)
-        if not is_valid:
-            logger.warning(f"🚨 CSRF validation failed: {error}")
-            raise HTTPException(status_code=403, detail=f"CSRF validation failed: {error}")
-
-        logger.debug("✅ CSRF token validated successfully")
+        # SameSite=Strict provides CSRF protection without needing tokens
+        # Skip all CSRF validation - browser security handles it
+        logger.debug(f"CSRF check skipped - using SameSite=Strict cookie protection")
         return await call_next(request)
 
     async def _validate_csrf_token(self, request: Request) -> tuple[bool, str]:

@@ -232,11 +232,14 @@ class ConversationStore:
                 store.redis_loaded = False
         
         # Always load from DB first to ensure we have the latest data
+        # Use descending order (newest first) so we naturally get the latest messages
+        # This is more efficient: we get newest messages first and trim naturally
         if chat_history_service:
             try:
                 db_messages = await chat_history_service.get_conversation_history(
                     session_id=session_id,
-                    include_metadata=True
+                    include_metadata=True,
+                    sort_order=-1  # Descending: newest first
                 )
                 
                 if db_messages:
@@ -260,21 +263,29 @@ class ConversationStore:
         return store
     
     async def _populate_from_db_messages(self, db_messages: List[Dict[str, Any]]) -> None:
-        """Populate Redis from DB messages"""
+        """Populate Redis from DB messages and trim to context window
+        
+        DB messages come in descending order (newest first).
+        We populate in reverse order (oldest first in Redis list) for proper chronological order.
+        """
         if not db_messages or not self.redis_client:
             return
         
         # Clear existing Redis data
         await self.redis_client.delete(self._redis_key)
         
-        # Populate Redis from DB messages
-        for db_msg in db_messages:
+        # Populate Redis from DB messages in reverse order (oldest first)
+        # This way the Redis list has newest on the left (via lpush) for natural ordering
+        for db_msg in reversed(db_messages):  # Reverse descending to get ascending
             role = db_msg.get("role", "user")
             if role == "user":
                 message = UserMessage.from_dict(db_msg)
             else:
                 message = AssistantMessage.from_dict(db_msg)
             await self._add_message_to_redis(message)
+        
+        # Trim to context window size after populating
+        await self._trim_messages()
         
     
     
@@ -407,11 +418,18 @@ class ConversationStore:
                 
                 db_messages = await self.chat_history_service.get_conversation_history(
                     session_id=self.session_id,
-                    include_metadata=True
+                    include_metadata=True,
+                    sort_order=-1  # Descending: newest first
                 )
                 
-                # Convert DB messages to Message objects
-                for db_msg in db_messages:
+                # Get only the first 20 messages (since DB returns newest first)
+                latest_messages = db_messages[:self._context_window_size]
+                
+                # Reverse to chronological order (oldest first) for LLM context
+                latest_messages.reverse()
+                
+                # Convert DB messages to Message objects in chronological order
+                for db_msg in latest_messages:
                     role_val = db_msg.get("role", "user")
                     if role_val == "user":
                         message = UserMessage.from_dict(db_msg)
@@ -517,14 +535,18 @@ class ConversationStore:
             self.redis_loaded = False
     
     async def _get_messages_from_redis(self) -> List[Message]:
-        """Get all messages from Redis with health tracking"""
+        """Get all messages from Redis with health tracking
+        
+        Redis stores messages in lpush order (newest on left).
+        We reverse to get chronological order (oldest first).
+        """
         if not self.redis_client:
             return []
             
         try:
             messages_json = await self.redis_client.lrange(self._redis_key, 0, -1)
             messages = []
-            for msg_json in reversed(messages_json):  # Redis stores in reverse order (newest first)
+            for msg_json in reversed(messages_json):  # Reverse lpush order to get chronological
                 msg_dict = json.loads(msg_json)
                 message = BaseMessage.from_dict(msg_dict)
                 messages.append(message)

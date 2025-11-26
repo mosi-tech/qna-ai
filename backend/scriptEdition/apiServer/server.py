@@ -197,10 +197,13 @@ def create_app() -> FastAPI:
     )
     
     # Add session middleware LAST (will be applied first due to reverse order)
+    # Using SameSite=Strict provides built-in CSRF protection without needing tokens
     app.add_middleware(
         SessionMiddleware,
         secret_key=os.getenv("SESSION_SECRET_KEY", "your-secret-key-change-in-production"),
         max_age=3600,  # 1 hour
+        same_site="strict",  # Prevent CSRF attacks without token overhead
+        https_only=True,  # Only send over HTTPS
     )
     
     # Include progress streaming routes
