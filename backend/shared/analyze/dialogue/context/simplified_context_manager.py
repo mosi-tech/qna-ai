@@ -213,6 +213,108 @@ class SimplifiedFinancialContextManager:
             logger.warning(f"⚠️ Failed to extract available IDs: {e}")
             return None
     
+    async def _extract_recent_analyses(self, conversation: ConversationStore, max_items: int = 5) -> Optional[str]:
+        """
+        Extract rich metadata about recent analyses and executions from Redis cache.
+        Returns formatted context about recent work separately from conversation messages.
+        Merges both analyses and executions (they're independent) for complete picture.
+        
+        Args:
+            conversation: ConversationStore with Redis cache
+            max_items: Maximum number of combined items to include (analyses + executions)
+            
+        Returns:
+            Formatted string with recent analyses/executions metadata, or None if none found
+        """
+        try:
+            # Get both recent analyses and executions from Redis cache
+            recent_analyses = await conversation.get_recent_analyses()
+            recent_executions = await conversation.get_recent_executions()
+            
+            if not recent_analyses and not recent_executions:
+                return None
+            
+            # Merge and sort by timestamp (newest first) for chronological grouping
+            all_items = []
+            
+            for analysis in recent_analyses:
+                timestamp = analysis.get("timestamp", "")
+                all_items.append({
+                    "type": "analysis",
+                    "timestamp": timestamp,
+                    "data": analysis
+                })
+            
+            for execution in recent_executions:
+                timestamp = execution.get("timestamp", "")
+                all_items.append({
+                    "type": "execution",
+                    "timestamp": timestamp,
+                    "data": execution
+                })
+            
+            # Sort by timestamp descending (newest first)
+            all_items.sort(key=lambda x: x["timestamp"], reverse=True)
+            
+            # Limit to max_items
+            all_items = all_items[:max_items]
+            
+            if not all_items:
+                return None
+            
+            parts = [f"📊 Recent analyses and executions (last {len(all_items)}):"]
+            for i, item in enumerate(all_items, 1):
+                item_type = item["type"]
+                data = item["data"]
+                timestamp_val = data.get("timestamp", "")
+                
+                if isinstance(timestamp_val, str):
+                    timestamp_str = timestamp_val.split(".")[0]  # Remove microseconds
+                else:
+                    timestamp_str = str(timestamp_val)
+                
+                parts.append(f"\n{i}. [{timestamp_str}] {item_type.upper()}")
+                
+                # Common fields for both
+                question = data.get("question", "")
+                if question:
+                    parts.append(f"   Question: {question[:100]}")
+                
+                if item_type == "analysis":
+                    analysis_type = data.get("analysis_type", "")
+                    if analysis_type:
+                        parts.append(f"   Type: {analysis_type}")
+                    
+                    analysis_id = data.get("analysis_id", "")
+                    if analysis_id:
+                        parts.append(f"   Analysis ID: {analysis_id}")
+                
+                elif item_type == "execution":
+                    status = data.get("status", "")
+                    if status:
+                        parts.append(f"   Status: {status}")
+                    
+                    script_name = data.get("script_name", "")
+                    if script_name:
+                        parts.append(f"   Script: {script_name}")
+                    
+                    execution_id = data.get("execution_id", "")
+                    if execution_id:
+                        parts.append(f"   Execution ID: {execution_id}")
+                    
+                    # Link to analysis if exists
+                    analysis_id = data.get("analysis_id", "")
+                    if analysis_id:
+                        parts.append(f"   Analysis ID: {analysis_id}")
+            
+            parts.append("\nUse these IDs to fetch detailed results using available MCP tools.")
+            
+            return "\n".join(parts)
+            
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to extract recent analyses/executions: {e}")
+            return None
+    
     # ========== PHASE 1: Smart Context Window Sizing ==========
     
     def _get_smart_context_window(self, messages: List[Message], 

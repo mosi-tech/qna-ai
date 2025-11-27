@@ -122,18 +122,18 @@ def execute_script(script_content: str, mock_mode: bool = True, timeout: int = 3
     
     try:
         # Check for hardcoded parameters before execution
-        if parameters:
-            param_check = check_for_hardcoded_parameters(script_content, parameters)
-            if not param_check["valid"]:
-                error_msg = f"Script contains hardcoded parameter values: {'; '.join(param_check['issues'])}"
-                logger.error(f"❌ {error_msg}")
-                return {
-                    "success": False,
-                    "error": error_msg,
-                    "error_type": "HardcodedParametersError",
-                    "issues": param_check["issues"],
-                    "mock_mode": mock_mode
-                }
+        # if parameters:
+        #     param_check = check_for_hardcoded_parameters(script_content, parameters)
+        #     if not param_check["valid"]:
+        #         error_msg = f"Script contains hardcoded parameter values: {'; '.join(param_check['issues'])}"
+        #         logger.error(f"❌ {error_msg}")
+        #         return {
+        #             "success": False,
+        #             "error": error_msg,
+        #             "error_type": "HardcodedParametersError",
+        #             "issues": param_check["issues"],
+        #             "mock_mode": mock_mode
+        #         }
         
         # Create enhanced script with MCP injection wrapper
         enhanced_script = create_enhanced_script(script_content, mock_mode)

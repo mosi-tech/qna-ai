@@ -190,7 +190,11 @@ class ConversationStore:
         self.session_id = session_id
         self.redis_client = redis_client
         self._redis_key = f"conversation:{session_id}"
+        self._redis_analyses_key = f"analyses:{session_id}"  # Cache for recent analyses
+        self._redis_executions_key = f"executions:{session_id}"  # Cache for recent executions
         self._context_window_size = 20  # Keep last 20 messages (10 exchanges)
+        self._max_recent_analyses = 5  # Keep last 5 analyses for context
+        self._max_recent_executions = 5  # Keep last 5 executions for context
         self.chat_history_service = chat_history_service
         
         # Redis health tracking to prevent stale data issues
@@ -248,6 +252,9 @@ class ConversationStore:
                         await store._populate_from_db_messages(db_messages)
                         store.redis_loaded = True
                         logger.debug(f"✅ Loaded {len(db_messages)} messages from DB and synced to Redis")
+                        
+                        # Extract and cache analyses/executions from messages
+                        await store._extract_and_cache_analyses_executions()
                     else:
                         logger.debug(f"✅ Loaded {len(db_messages)} messages from DB (Redis unavailable)")
                 else:
@@ -286,6 +293,64 @@ class ConversationStore:
         
         # Trim to context window size after populating
         await self._trim_messages()
+    
+    async def _extract_and_cache_analyses_executions(self) -> None:
+        """Cache latest analyses and executions for session independently
+        
+        Fetches the latest 5 analyses and 5 executions for the session
+        directly from the database repositories, not from messages.
+        """
+        if not self.chat_history_service or not self.chat_history_service.repo:
+            return
+        
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            repo = self.chat_history_service.repo
+            
+            # Fetch latest executions for this session (already sorted by createdAt descending)
+            executions = await repo.execution.get_execution_history(
+                session_id=self.session_id
+            )
+            
+            # Limit to max_recent_executions
+            executions = executions[:self._max_recent_executions]
+            
+            # Cache executions
+            for execution in executions:
+                execution_data = {
+                    "execution_id": execution.execution_id,
+                    "analysis_id": execution.analysis_id,  # May be None for independent executions
+                    "timestamp": execution.created_at.isoformat() if hasattr(execution.created_at, 'isoformat') else str(execution.created_at),
+                    "status": execution.status.value if hasattr(execution.status, 'value') else str(execution.status),
+                    "question": execution.question or "",
+                    "script_name": getattr(execution, 'generated_script', "")[:50] if getattr(execution, 'generated_script', None) else ""
+                }
+                await self.add_recent_execution(execution_data)
+            
+            # TODO: Fetch and cache analyses once analysis model includes session_id
+            # analyses = await repo.analysis.get_session_analyses(
+            #     session_id=self.session_id,
+            #     limit=self._max_recent_analyses
+            # )
+            # 
+            # Cache analyses
+            # for analysis in analyses:
+            #     analysis_data = {
+            #         "analysis_id": analysis.analysis_id,
+            #         "timestamp": analysis.created_at.isoformat() if hasattr(analysis.created_at, 'isoformat') else str(analysis.created_at),
+            #         "question": analysis.question or "",
+            #         "analysis_type": "unknown"
+            #     }
+            #     await self.add_recent_analysis(analysis_data)
+            
+            logger.debug(f"✅ Cached {len(executions)} executions for session {self.session_id[:8]}")
+            
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"❌ Failed to cache analyses/executions for session {self.session_id[:8]}: {e}")
         
     
     
@@ -320,14 +385,22 @@ class ConversationStore:
     
     async def add_assistant_message(self, content: str, user_id: str = "anonymous", **metadata) -> AssistantMessage:
         """Add assistant message - independent of user message"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        logger.debug(f"📝 add_assistant_message called - redis_client={bool(self.redis_client)}, redis_loaded={self.redis_loaded}")
         message = AssistantMessage.create(content, **metadata)
+        logger.debug(f"📝 Created AssistantMessage: {message.id}")
         
         # 1. Add to Redis immediately
+        logger.debug(f"📝 Adding to Redis...")
         await self._add_message_to_redis(message)
+        logger.debug(f"✅ Added to Redis (redis_loaded={self.redis_loaded})")
         
         # 2. Persist to database
         if self.chat_history_service:
             try:
+                logger.debug(f"📝 Persisting to database...")
                 await self.chat_history_service.add_assistant_message(
                     session_id=self.session_id,
                     user_id=user_id,
@@ -335,14 +408,14 @@ class ConversationStore:
                     message_id=message.id,  # Pass the local ID to ensure consistency
                     metadata=metadata
                 )
+                logger.debug(f"✅ Persisted to database")
             except Exception as e:
-                import logging
-                logger = logging.getLogger(__name__)
                 logger.error(f"❌ Failed to persist assistant message: {e}")
                 # Continue - message preserved in Redis
         
         # 3. Trim context window
         await self._trim_messages()
+        logger.info(f"✅ Added assistant message to conversation: {message.id}")
         
         return message
     
@@ -519,7 +592,11 @@ class ConversationStore:
     
     async def _add_message_to_redis(self, message: Message) -> None:
         """Add message to Redis list with health tracking"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
         if not self.redis_client:
+            logger.warning(f"⚠️ Redis client is None - cannot add message {message.id}")
             return
             
         try:
@@ -527,10 +604,9 @@ class ConversationStore:
             await self.redis_client.lpush(self._redis_key, message_json)
             # Redis operation successful - we can trust Redis again
             self.redis_loaded = True
+            logger.debug(f"✅ Message added to Redis: {message.id}")
         except Exception as e:
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.error(f"❌ Failed to add message to Redis: {e}")
+            logger.error(f"❌ Failed to add message to Redis: {e}", exc_info=True)
             # Redis failed - mark as unreliable
             self.redis_loaded = False
     
@@ -566,14 +642,21 @@ class ConversationStore:
                                      analysis_id: str = None, execution_id: str = None, 
                                      **metadata) -> bool:
         """Update specific message in Redis"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
         if not self.redis_client:
+            logger.warning(f"⚠️ Redis client is None - cannot update message {message_id}")
             return False
             
         try:
             messages_json = await self.redis_client.lrange(self._redis_key, 0, -1)
+            logger.debug(f"🔍 Looking for message {message_id} in {len(messages_json)} messages in Redis")
+            
             for i, msg_json in enumerate(messages_json):
                 msg_dict = json.loads(msg_json)
                 if msg_dict.get('id') == message_id:
+                    logger.info(f"✅ Found message {message_id} at index {i}")
                     # Update message content and metadata
                     if content is not None:
                         msg_dict['content'] = content
@@ -597,10 +680,121 @@ class ConversationStore:
                     # Replace message in Redis
                     updated_json = json.dumps(msg_dict)
                     await self.redis_client.lset(self._redis_key, i, updated_json)
+                    logger.info(f"✅ Updated message {message_id} in Redis")
                     return True
+            
+            logger.warning(f"❌ Message {message_id} not found in Redis (searched {len(messages_json)} messages)")
             return False
+        except Exception as e:
+            logger.error(f"❌ Failed to update message in Redis: {e}", exc_info=True)
+            return False
+    
+    # ========== RECENT ANALYSES/EXECUTIONS CACHING ==========
+    
+    async def add_recent_analysis(self, analysis_data: Dict[str, Any]) -> None:
+        """Add analysis/execution to recent analyses cache in Redis
+        
+        Args:
+            analysis_data: Dictionary with analysis_id, execution_id, timestamp, question, analysis_type
+        """
+        if not self.redis_client:
+            return
+        
+        try:
+            analysis_json = json.dumps(analysis_data, default=str)
+            # lpush adds to the left (newest first)
+            await self.redis_client.lpush(self._redis_analyses_key, analysis_json)
+            # Trim to keep only max_recent_analyses
+            await self.redis_client.ltrim(self._redis_analyses_key, 0, self._max_recent_analyses - 1)
         except Exception as e:
             import logging
             logger = logging.getLogger(__name__)
-            logger.error(f"❌ Failed to update message in Redis: {e}")
-            return False
+            logger.error(f"❌ Failed to add recent analysis: {e}")
+    
+    async def get_recent_analyses(self) -> List[Dict[str, Any]]:
+        """Get recent analyses from Redis cache
+        
+        Returns:
+            List of analysis dictionaries in chronological order (oldest first)
+        """
+        if not self.redis_client:
+            return []
+        
+        try:
+            analyses_json = await self.redis_client.lrange(self._redis_analyses_key, 0, -1)
+            analyses = []
+            for analysis_json in reversed(analyses_json):  # Reverse to get chronological order
+                analysis_dict = json.loads(analysis_json)
+                analyses.append(analysis_dict)
+            return analyses
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"❌ Failed to get recent analyses: {e}")
+            return []
+    
+    async def clear_recent_analyses_cache(self) -> None:
+        """Clear the recent analyses cache (useful when reloading from DB)"""
+        if not self.redis_client:
+            return
+        
+        try:
+            await self.redis_client.delete(self._redis_analyses_key)
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"❌ Failed to clear recent analyses cache: {e}")
+    
+    async def add_recent_execution(self, execution_data: Dict[str, Any]) -> None:
+        """Add execution to recent executions cache in Redis
+        
+        Args:
+            execution_data: Dictionary with execution_id, analysis_id, timestamp, status, question, script_name
+        """
+        if not self.redis_client:
+            return
+        
+        try:
+            execution_json = json.dumps(execution_data, default=str)
+            # lpush adds to the left (newest first)
+            await self.redis_client.lpush(self._redis_executions_key, execution_json)
+            # Trim to keep only max_recent_executions
+            await self.redis_client.ltrim(self._redis_executions_key, 0, self._max_recent_executions - 1)
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"❌ Failed to add recent execution: {e}")
+    
+    async def get_recent_executions(self) -> List[Dict[str, Any]]:
+        """Get recent executions from Redis cache
+        
+        Returns:
+            List of execution dictionaries in chronological order (oldest first)
+        """
+        if not self.redis_client:
+            return []
+        
+        try:
+            executions_json = await self.redis_client.lrange(self._redis_executions_key, 0, -1)
+            executions = []
+            for execution_json in reversed(executions_json):  # Reverse to get chronological order
+                execution_dict = json.loads(execution_json)
+                executions.append(execution_dict)
+            return executions
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"❌ Failed to get recent executions: {e}")
+            return []
+    
+    async def clear_recent_executions_cache(self) -> None:
+        """Clear the recent executions cache (useful when reloading from DB)"""
+        if not self.redis_client:
+            return
+        
+        try:
+            await self.redis_client.delete(self._redis_executions_key)
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"❌ Failed to clear recent executions cache: {e}")

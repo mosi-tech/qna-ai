@@ -835,6 +835,43 @@ class AnalysisPipelineService:
             )
             if success:
                 self.logger.info(f"✓ Updated {response_type} message via conversation store: {message_id}")
+                
+                # Update Redis caches if this is an analysis/execution
+                if conversation and (analysis_id or execution_id):
+                    self.logger.info(f"🔄 Caching analysis/execution - analysis_id={analysis_id}, execution_id={execution_id}")
+                    try:
+                        from datetime import datetime
+                        timestamp = datetime.now().isoformat()
+                        question = metadata.get("question", "") if metadata else ""
+                        
+                        # Cache analysis if present
+                        if analysis_id:
+                            analysis_data = {
+                                "analysis_id": analysis_id,
+                                "execution_id": execution_id,
+                                "timestamp": timestamp,
+                                "question": question,
+                                "analysis_type": metadata.get("analysis_type", "") if metadata else "",
+                            }
+                            await conversation.add_recent_analysis(analysis_data)
+                            self.logger.info(f"✅ Cached recent analysis: {analysis_id}")
+                        
+                        # Cache execution if present (execution can exist independently of analysis)
+                        if execution_id:
+                            execution_data = {
+                                "execution_id": execution_id,
+                                "analysis_id": analysis_id,  # May be None for standalone executions
+                                "timestamp": timestamp,
+                                "question": question,
+                                "status": "completed",
+                                "script_name": metadata.get("script_name", "") if metadata else "",
+                            }
+                            await conversation.add_recent_execution(execution_data)
+                            self.logger.info(f"✅ Cached recent execution: {execution_id}")
+                    except Exception as cache_error:
+                        self.logger.error(f"❌ Failed to cache analysis/execution: {cache_error}", exc_info=True)
+                else:
+                    self.logger.warning(f"⚠️ Skipping cache: conversation={bool(conversation)}, analysis_id={analysis_id}, execution_id={execution_id}")
             else:
                 raise RuntimeError(f"Failed to update message {message_id} - conversation store update failed")
         else:

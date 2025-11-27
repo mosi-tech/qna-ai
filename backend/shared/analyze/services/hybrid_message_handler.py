@@ -64,7 +64,7 @@ class HybridMessageHandler:
         # Initialize proper services with session manager dependency
         self.intent_classifier = IntentClassifierService(session_manager=self.session_manager)
         self.financial_analyst = FinancialAnalystChatService()
-        self.followup_chat_agent = FollowUpChatAgent(audit_service=audit_service)
+        self.followup_chat_agent = FollowUpChatAgent()
         
         # Track session state for pending analysis suggestions
         self.session_states = {}  # session_id -> state info
@@ -87,7 +87,18 @@ class HybridMessageHandler:
         try:
             logger.info(f"🔀 Hybrid handler V2 processing: {user_message[:100]}...")
             
-            # Step 0: Input validation - reject malformed/dangerous input early
+            # Step 0: Validate session ID and user ID format FIRST (before safety checks)
+            if not InputValidator.validate_session_id(session_id):
+                logger.error(f"🛡️ Invalid session ID format")
+                return await self._create_error_response(
+                    error_message="Invalid session ID. Please try again.",
+                    session_id=session_id,
+                    user_id=user_id,
+                    internal_error="Invalid session ID format",
+                    start_time=start_time
+                )
+            
+            # Step 0.5: Input validation - reject malformed/dangerous input early
             is_safe, validation_error = InputValidator.is_safe(user_message)
             if not is_safe:
                 logger.error(f"🛡️ Input validation failed: {validation_error}")
@@ -99,17 +110,6 @@ class HybridMessageHandler:
                     start_time=start_time
                 )
             
-            # Validate session ID and user ID format
-            if not InputValidator.validate_session_id(session_id):
-                logger.error(f"🛡️ Invalid session ID format")
-                return await self._create_error_response(
-                    error_message="Invalid session ID. Please try again.",
-                    session_id=session_id,
-                    user_id=user_id,
-                    internal_error="Invalid session ID format",
-                    start_time=start_time
-                )
-            
             # Step 0.5: Save user message immediately (independent of assistant response)
             conversation = await self.session_manager.get_session(session_id)
             user_message_obj = await conversation.add_user_message(
@@ -117,6 +117,7 @@ class HybridMessageHandler:
                 user_id=user_id
             )
             logger.debug(f"✅ User message saved immediately: {user_message_obj.id}")
+            user_message_id = user_message_obj.id
             
             # Step 1: Classify intent
             intent_start_time = time.time()
@@ -136,7 +137,7 @@ class HybridMessageHandler:
                     detected_risks=intent_result.detected_risks,
                     session_id=session_id,
                     user_id=user_id,
-                    user_message_obj=user_message_obj,
+                    user_message_id=user_message_id,
                     start_time=intent_start_time
                 )
             
@@ -148,7 +149,7 @@ class HybridMessageHandler:
                     conversation=conversation,
                     session_id=session_id,
                     user_id=user_id,
-                    user_message_obj=user_message_obj
+                    user_message_id=user_message_id
                 )
             
             # Step 3: Generate analyst response for other intents
@@ -257,11 +258,24 @@ class HybridMessageHandler:
         
         # Save assistant message with complete metadata
         conversation = await self.session_manager.get_session(session_id)
+        logger.debug(f"🔍 Got conversation from session_manager: {conversation is not None}")
+        if not conversation:
+            logger.error(f"❌ Conversation is None for session {session_id}")
+            return await self._create_error_response(
+                error_message="Failed to save message to conversation store",
+                session_id=session_id,
+                user_id=user_id,
+                user_message_id=user_message_obj.id,
+                internal_error="Conversation store returned None",
+                start_time=start_time
+            )
+        
         assistant_message_obj = await conversation.add_assistant_message(
             content=analyst_response.content,
             user_id=user_id,
             **metadata
         )
+        logger.info(f"✅ Added assistant message to conversation: {assistant_message_obj.id}")
         
         return HybridResponse(
             response_type=response_type,
@@ -280,7 +294,7 @@ class HybridMessageHandler:
                                    conversation,
                                    session_id: str,
                                    user_id: str,
-                                   user_message_obj) -> HybridResponse:
+                                   user_message_id: str) -> HybridResponse:
         """Handle follow-up chat using FollowUpChatAgent"""
         try:
             start_time = time.time()
@@ -289,8 +303,7 @@ class HybridMessageHandler:
             agent_response = await self.followup_chat_agent.execute(
                 user_message=user_message,
                 conversation=conversation,
-                session_id=session_id,
-                audit_service=self.audit_service
+                session_id=session_id
             )
             
             duration = time.time() - start_time
@@ -298,6 +311,17 @@ class HybridMessageHandler:
             
             # Save assistant message
             conversation = await self.session_manager.get_session(session_id)
+            if not conversation:
+                logger.error(f"❌ Conversation is None for follow-up chat session {session_id}")
+                return await self._create_error_response(
+                    error_message="Failed to save follow-up response",
+                    session_id=session_id,
+                    user_id=user_id,
+                    user_message_id=user_message_id,
+                    internal_error="Conversation store returned None",
+                    start_time=start_time
+                )
+            
             assistant_message_obj = await conversation.add_assistant_message(
                 content=agent_response.content,
                 user_id=user_id,
@@ -305,12 +329,13 @@ class HybridMessageHandler:
                 intent=MetadataConstants.INTENT_FOLLOW_UP_CHAT,
                 used_tools=agent_response.used_tools
             )
+            logger.info(f"✅ Added follow-up chat message to conversation: {assistant_message_obj.id}")
             
             return HybridResponse(
                 response_type=MetadataConstants.RESPONSE_TYPE_CHAT,
                 content=agent_response.content,
                 message_id=assistant_message_obj.id,
-                user_message_id=user_message_obj.id,
+                user_message_id=user_message_id,
                 session_id=session_id,
                 metadata={
                     MetadataConstants.INTENT: MetadataConstants.INTENT_FOLLOW_UP_CHAT,
@@ -394,6 +419,7 @@ class HybridMessageHandler:
                                    error_message: str, 
                                    session_id: str,
                                    user_id: str,
+                                   user_message_id: str = None,
                                    internal_error: str = None,
                                    start_time: float = None) -> HybridResponse:
         """Create error response"""
@@ -411,6 +437,7 @@ class HybridMessageHandler:
                 response_type=MetadataConstants.RESPONSE_TYPE_ERROR,
                 content=error_message,
                 message_id=error_message_id,
+                user_message_id=user_message_id or "unknown",
                 session_id=session_id,
                 metadata={
                     MetadataConstants.RESPONSE_STATUS: MetadataConstants.STATUS_FAILED,
@@ -427,6 +454,7 @@ class HybridMessageHandler:
                 response_type=MetadataConstants.RESPONSE_TYPE_ERROR,
                 content=error_message,
                 message_id="error",
+                user_message_id=user_message_id or "unknown",
                 session_id=session_id,
                 metadata={
                     MetadataConstants.RESPONSE_STATUS: MetadataConstants.STATUS_FAILED,
@@ -442,7 +470,7 @@ class HybridMessageHandler:
                                           detected_risks: List[str],
                                           session_id: str,
                                           user_id: str,
-                                          user_message_obj,
+                                          user_message_id: str,
                                           start_time: float = None) -> HybridResponse:
         """Create security error response for blocked queries"""
         try:
@@ -461,7 +489,7 @@ class HybridMessageHandler:
                 response_type=MetadataConstants.RESPONSE_TYPE_ERROR,
                 content=error_message,
                 message_id=error_message_id,
-                user_message_id=user_message_obj.id,
+                user_message_id=user_message_id,
                 session_id=session_id,
                 metadata={
                     MetadataConstants.RESPONSE_STATUS: MetadataConstants.STATUS_BLOCKED,
@@ -479,7 +507,7 @@ class HybridMessageHandler:
                 response_type=MetadataConstants.RESPONSE_TYPE_ERROR,
                 content=error_message,
                 message_id="blocked",
-                user_message_id=user_message_obj.id if user_message_obj else "unknown",
+                user_message_id=user_message_id,
                 session_id=session_id,
                 metadata={
                     MetadataConstants.RESPONSE_STATUS: MetadataConstants.STATUS_BLOCKED,

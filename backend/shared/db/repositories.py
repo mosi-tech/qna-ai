@@ -681,6 +681,22 @@ class AnalysisRepository:
             # Convert to dict format for API response
             return analysis.dict(by_alias=True) if hasattr(analysis, 'dict') else analysis
         return None
+    
+    async def get_session_analyses(self, session_id: str, limit: int = 5) -> List[AnalysisModel]:
+        """Get latest analyses for a session, sorted by newest first"""
+        analyses = await self.db.find_analyses({
+            "sessionId": session_id
+        })
+        
+        # Sort by created_at descending (newest first)
+        if analyses:
+            analyses.sort(
+                key=lambda a: a.created_at if hasattr(a.created_at, 'timestamp') else a.created_at,
+                reverse=True
+            )
+            analyses = analyses[:limit]
+        
+        return analyses
 
 
 class ExecutionRepository:
