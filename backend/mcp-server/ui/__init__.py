@@ -1,1 +1,0 @@
-# UI Components MCP Server Package

@@ -1,0 +1,127 @@
+2025-10-01T11:17:23: /Users/shivc/Documents/Workspace/JS/qna-ai-admin/ollama-server/scriptEdition/executionServer/http_script_execution_server.py:216: DeprecationWarning: 
+2025-10-01T11:17:23:         on_event is deprecated, use lifespan event handlers instead.
+2025-10-01T11:17:23: 
+2025-10-01T11:17:23:         Read more about it in the
+2025-10-01T11:17:23:         [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+2025-10-01T11:17:23:         
+2025-10-01T11:17:23:   @app.on_event("startup")
+2025-10-01T11:17:23: INFO:http-script-execution:🚀 Starting HTTP Script Execution Server on port 8007...
+2025-10-01T11:17:23: INFO:     Started server process [47198]
+2025-10-01T11:17:23: INFO:     Waiting for application startup.
+2025-10-01T11:17:23: INFO:http-script-execution:🚀 HTTP Script Execution Server started on port 8007
+2025-10-01T11:17:23: INFO:     Application startup complete.
+2025-10-01T11:17:23: INFO:     Uvicorn running on http://0.0.0.0:8007 (Press CTRL+C to quit)
+2025-10-01T11:20:35: INFO:     Shutting down
+2025-10-01T11:20:35: INFO:     Waiting for application shutdown.
+2025-10-01T11:20:35: INFO:     Application shutdown complete.
+2025-10-01T11:20:35: INFO:     Finished server process [47198]
+2025-10-01T11:20:35: ❌ Failed to import financial functions: No module named 'financial'
+2025-10-01T11:20:35: ❌ Failed to import analytics functions: No module named 'analytics'
+2025-10-01T11:20:35: /Users/shivc/Documents/Workspace/JS/qna-ai-admin/ollama-server/scriptEdition/executionServer/http_script_execution_server.py:216: DeprecationWarning: 
+2025-10-01T11:20:35:         on_event is deprecated, use lifespan event handlers instead.
+2025-10-01T11:20:35: 
+2025-10-01T11:20:35:         Read more about it in the
+2025-10-01T11:20:35:         [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+2025-10-01T11:20:35:         
+2025-10-01T11:20:35:   @app.on_event("startup")
+2025-10-01T11:20:35: INFO:http-script-execution:🚀 Starting HTTP Script Execution Server on port 8013...
+2025-10-01T11:20:35: INFO:     Started server process [50597]
+2025-10-01T11:20:35: INFO:     Waiting for application startup.
+2025-10-01T11:20:35: INFO:http-script-execution:🚀 HTTP Script Execution Server started on port 8013
+2025-10-01T11:20:35: INFO:     Application startup complete.
+2025-10-01T11:20:35: INFO:     Uvicorn running on http://0.0.0.0:8013 (Press CTRL+C to quit)
+2025-10-01T11:20:39: ❌ Failed to import financial functions: No module named 'financial'
+2025-10-01T11:20:39: ❌ Failed to import analytics functions: No module named 'analytics'
+2025-10-01T11:20:39: INFO:     127.0.0.1:62343 - "GET /health HTTP/1.1" 200 OK
+2025-10-01T11:34:57: INFO:     Shutting down
+2025-10-01T11:34:57: INFO:     Waiting for application shutdown.
+2025-10-01T11:34:57: INFO:     Application shutdown complete.
+2025-10-01T11:34:57: INFO:     Finished server process [50597]
+2025-10-01T11:34:57: /Users/shivc/Documents/Workspace/JS/qna-ai-admin/ollama-server/scriptEdition/executionServer/http_script_execution_server.py:216: DeprecationWarning: 
+2025-10-01T11:34:57:         on_event is deprecated, use lifespan event handlers instead.
+2025-10-01T11:34:57: 
+2025-10-01T11:34:57:         Read more about it in the
+2025-10-01T11:34:57:         [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+2025-10-01T11:34:57:         
+2025-10-01T11:34:57:   @app.on_event("startup")
+2025-10-01T11:34:57: INFO:http-script-execution:🚀 Starting HTTP Script Execution Server on port 8013...
+2025-10-01T11:34:57: INFO:     Started server process [69246]
+2025-10-01T11:34:57: INFO:     Waiting for application startup.
+2025-10-01T11:34:57: INFO:http-script-execution:🚀 HTTP Script Execution Server started on port 8013
+2025-10-01T11:34:57: INFO:     Application startup complete.
+2025-10-01T11:34:57: INFO:     Uvicorn running on http://0.0.0.0:8013 (Press CTRL+C to quit)
+2025-10-01T11:51:22: INFO:     Shutting down
+2025-10-01T11:51:22: INFO:     Waiting for application shutdown.
+2025-10-01T11:51:22: INFO:     Application shutdown complete.
+2025-10-01T11:51:22: INFO:     Finished server process [69246]
+2025-10-01T11:51:22: ❌ Failed to import financial functions: No module named 'financial'
+2025-10-01T11:51:22: ❌ Failed to import analytics functions: No module named 'analytics'
+2025-10-01T11:51:22: /Users/shivc/Documents/Workspace/JS/qna-ai-admin/ollama-server/scriptEdition/executionServer/http_script_execution_server.py:216: DeprecationWarning: 
+2025-10-01T11:51:22:         on_event is deprecated, use lifespan event handlers instead.
+2025-10-01T11:51:22: 
+2025-10-01T11:51:22:         Read more about it in the
+2025-10-01T11:51:22:         [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+2025-10-01T11:51:22:         
+2025-10-01T11:51:22:   @app.on_event("startup")
+2025-10-01T11:51:22: INFO:http-script-execution:🚀 Starting HTTP Script Execution Server on port 8013...
+2025-10-01T11:51:22: INFO:     Started server process [90883]
+2025-10-01T11:51:22: INFO:     Waiting for application startup.
+2025-10-01T11:51:22: INFO:http-script-execution:🚀 HTTP Script Execution Server started on port 8013
+2025-10-01T11:51:22: INFO:     Application startup complete.
+2025-10-01T11:51:22: INFO:     Uvicorn running on http://0.0.0.0:8013 (Press CTRL+C to quit)
+2025-10-01T16:08:03: ❌ Failed to import financial functions: No module named 'financial'
+2025-10-01T16:08:03: ❌ Failed to import analytics functions: No module named 'analytics'
+2025-10-01T16:08:03: INFO:     127.0.0.1:57602 - "POST /execute HTTP/1.1" 404 Not Found
+2025-10-01T16:08:07: INFO:     127.0.0.1:57624 - "GET / HTTP/1.1" 404 Not Found
+2025-10-01T16:08:19: INFO:http-script-execution:🚀 Executing script: volatility_analysis_20251001_160631.py
+2025-10-01T16:08:19: INFO:shared-script-executor:🚀 Executing script (mock=False, timeout=300s)
+2025-10-01T16:08:20: WARNING:shared-script-executor:❌ Script execution failed: Traceback (most recent call last):
+2025-10-01T16:08:20:   File "/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server/temp/temp_validation_script_20251001_160819.py", line 78, in <module>
+2025-10-01T16:08:20:     main()
+2025-10-01T16:08:20:   File "/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server/temp/temp_validation_script_20251001_160819.py", line 75, in main
+2025-10-01T16:08:20:     return analyze_portfolio_correlations(symbols, benchmark_symbol)
+2025-10-01T16:08:20:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-10-01T16:08:20:   File "/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server/temp/temp_validation_script_20251001_160819.py", line 65, in analyze_portfolio_correlations
+2025-10-01T16:08:20:     "timestamp": datetime.now().isoformat(),
+2025-10-01T16:08:20:                  ^^^^^^^^
+2025-10-01T16:08:20: NameError: name 'datetime' is not defined. Did you forget to import 'datetime'?
+2025-10-01T16:08:20: ERROR:http-script-execution:❌ Script execution failed: Traceback (most recent call last):
+2025-10-01T16:08:20:   File "/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server/temp/temp_validation_script_20251001_160819.py", line 78, in <module>
+2025-10-01T16:08:20:     main()
+2025-10-01T16:08:20:   File "/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server/temp/temp_validation_script_20251001_160819.py", line 75, in main
+2025-10-01T16:08:20:     return analyze_portfolio_correlations(symbols, benchmark_symbol)
+2025-10-01T16:08:20:            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-10-01T16:08:20:   File "/Users/shivc/Documents/Workspace/JS/qna-ai-admin/mcp-server/temp/temp_validation_script_20251001_160819.py", line 65, in analyze_portfolio_correlations
+2025-10-01T16:08:20:     "timestamp": datetime.now().isoformat(),
+2025-10-01T16:08:20:                  ^^^^^^^^
+2025-10-01T16:08:20: NameError: name 'datetime' is not defined. Did you forget to import 'datetime'?
+2025-10-01T16:08:20: INFO:     127.0.0.1:57652 - "POST /execute-script HTTP/1.1" 200 OK
+2025-10-01T16:57:20: INFO:     Shutting down
+2025-10-01T16:57:20: INFO:     Waiting for application shutdown.
+2025-10-01T16:57:20: INFO:     Application shutdown complete.
+2025-10-01T16:57:20: INFO:     Finished server process [90883]
+2025-10-01T16:57:20: /Users/shivc/Documents/Workspace/JS/qna-ai-admin/ollama-server/scriptEdition/executionServer/http_script_execution_server.py:216: DeprecationWarning: 
+2025-10-01T16:57:20:         on_event is deprecated, use lifespan event handlers instead.
+2025-10-01T16:57:20: 
+2025-10-01T16:57:20:         Read more about it in the
+2025-10-01T16:57:20:         [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+2025-10-01T16:57:20:         
+2025-10-01T16:57:20:   @app.on_event("startup")
+2025-10-01T16:57:20: INFO:http-script-execution:🚀 Starting HTTP Script Execution Server on port 8013...
+2025-10-01T16:57:20: INFO:     Started server process [17599]
+2025-10-01T16:57:20: INFO:     Waiting for application startup.
+2025-10-01T16:57:20: INFO:http-script-execution:🚀 HTTP Script Execution Server started on port 8013
+2025-10-01T16:57:20: INFO:     Application startup complete.
+2025-10-01T16:57:20: INFO:     Uvicorn running on http://0.0.0.0:8013 (Press CTRL+C to quit)
+2025-10-01T17:27:25: INFO:http-script-execution:🚀 Executing script: volatility_analysis_20251001_170608.py
+2025-10-01T17:27:25: INFO:shared-script-executor:🚀 Executing script (mock=False, timeout=300s)
+2025-10-01T17:27:25: ERROR:shared-script-executor:❌ Execution error: [Errno 2] No such file or directory: '/Users/shivc/Documents/Workspace/JS/qna-ai-admin/ollama-server/scriptEdition/temp/temp_validation_script_20251001_172725.py'
+2025-10-01T17:27:25: ERROR:http-script-execution:❌ Script execution failed: [Errno 2] No such file or directory: '/Users/shivc/Documents/Workspace/JS/qna-ai-admin/ollama-server/scriptEdition/temp/temp_validation_script_20251001_172725.py'
+2025-10-01T17:27:25: ❌ Failed to import financial functions: No module named 'financial'
+2025-10-01T17:27:25: ❌ Failed to import analytics functions: No module named 'analytics'
+2025-10-01T17:27:25: INFO:     127.0.0.1:60719 - "POST /execute-script HTTP/1.1" 200 OK
+2025-10-01T17:36:28: INFO:http-script-execution:🚀 Executing script: volatility_analysis_20251001_173614.py
+2025-10-01T17:36:28: INFO:shared-script-executor:🚀 Executing script (mock=False, timeout=300s)
+2025-10-01T17:36:28: ERROR:shared-script-executor:❌ Execution error: [Errno 2] No such file or directory: '/Users/shivc/Documents/Workspace/JS/qna-ai-admin/ollama-server/scriptEdition/temp/temp_validation_script_20251001_173628.py'
+2025-10-01T17:36:28: ERROR:http-script-execution:❌ Script execution failed: [Errno 2] No such file or directory: '/Users/shivc/Documents/Workspace/JS/qna-ai-admin/ollama-server/scriptEdition/temp/temp_validation_script_20251001_173628.py'
+2025-10-01T17:36:28: INFO:     127.0.0.1:61474 - "POST /execute-script HTTP/1.1" 200 OK
