@@ -11,6 +11,7 @@ import logging
 import os
 from datetime import datetime
 from typing import Dict, Any, Optional
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -27,7 +28,16 @@ from shared.storage import get_storage
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("http-script-execution")
 
-app = FastAPI(title="HTTP Script Execution Server")
+# Lifespan event handler
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup event
+    logger.info("🚀 Starting HTTP Script Execution Server on port 8013...")
+    yield
+    # Shutdown event (cleanup if needed)
+    logger.info("🛑 HTTP Script Execution Server shutting down...")
+
+app = FastAPI(title="HTTP Script Execution Server", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -238,11 +248,6 @@ async def health_check():
         "timestamp": datetime.now().isoformat(),
         "server_mode": "production_execution"
     }
-
-@app.on_event("startup")
-async def startup_event():
-    """Initialize server on startup"""
-    logger.info("🚀 HTTP Script Execution Server started on port 8013")
 
 if __name__ == "__main__":
     logger.info("🚀 Starting HTTP Script Execution Server on port 8013...")

@@ -131,7 +131,7 @@ export class APIClient {
       // Check if error is retryable
       if (isRetryableError(error) && attempt < retries) {
         const delay = this.retryDelay * Math.pow(2, attempt - 1); // Exponential backoff
-        
+
         if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
           console.log(
             `[APIClient] Retrying request (attempt ${attempt + 1}/${retries}) after ${delay}ms:`,
@@ -182,14 +182,14 @@ export class APIClient {
         fetchConfig.body = JSON.stringify(data);
       }
 
-      
-      
+
+
       const startTime = Date.now();
-      
+
       const response = await fetch(url, fetchConfig);
       const endTime = Date.now();
       clearTimeout(timeoutId);
-      
+
 
       // Parse response
       let responseData: any;
@@ -207,12 +207,12 @@ export class APIClient {
           status: response.status,
           data: typeof responseData === 'object' ? responseData : { error: responseData },
         });
-        
+
         // Handle 401 Unauthorized - redirect to login
         if (response.status === 401) {
           this.handleUnauthorized();
         }
-        
+
         throw apiError;
       }
 
@@ -236,7 +236,7 @@ export class APIClient {
         timeout,
         stack: error instanceof Error ? error.stack : undefined
       });
-      
+
       if (error instanceof TypeError) {
         // Network error
         throw new NetworkError(`Failed to connect to ${url}`);
@@ -303,7 +303,11 @@ export class APIClient {
       if (csrfToken) {
         headers['X-CSRF-Token'] = csrfToken;
         if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
-          console.log('[APIClient] ✅ Adding CSRF token header');
+          console.log('[APIClient] ✅ Adding CSRF token header (length: ' + csrfToken.length + ')');
+        }
+      } else {
+        if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
+          console.warn('[APIClient] ⚠️ No CSRF token in localStorage for', method, 'request');
         }
       }
     }
@@ -320,8 +324,15 @@ export class APIClient {
     }
 
     try {
-      return localStorage.getItem('csrf_token');
-    } catch {
+      const token = localStorage.getItem('csrf_token');
+      if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
+        console.log('[APIClient] getCSRFToken:', token ? `✅ Found (length: ${token.length}) ` : '❌ Not found');
+      }
+      return token;
+    } catch (error) {
+      if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
+        console.warn('[APIClient] Failed to read CSRF token from localStorage:', error);
+      }
       return null;
     }
   }
@@ -331,10 +342,10 @@ export class APIClient {
    */
   async fetchCSRFToken(): Promise<void> {
     try {
-      const response = await this.post<{ csrf_token: string; expires_at: string }>('/csrf-token', {}, { 
-        skipCache: true 
+      const response = await this.post<{ csrf_token: string; expires_at: string }>('/csrf-token', {}, {
+        skipCache: true
       });
-      
+
       if (response.success && response.data?.csrf_token) {
         if (typeof window !== 'undefined') {
           localStorage.setItem('csrf_token', response.data.csrf_token);
@@ -358,7 +369,7 @@ export class APIClient {
 
     try {
       const { account } = await import('../appwrite');
-      
+
       // First check if user is authenticated
       try {
         await account.get();
@@ -368,14 +379,14 @@ export class APIClient {
         }
         return null;
       }
-      
+
       // Create JWT token from current session
       const jwt = await account.createJWT();
-      
+
       if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
         console.log('[APIClient] ✅ Created JWT token for dev authentication');
       }
-      
+
       return jwt.jwt;
     } catch (error) {
       console.error('[APIClient] ❌ JWT token creation failed:', error);
@@ -392,7 +403,7 @@ export class APIClient {
     }
 
     console.warn('[APIClient] 401 Unauthorized - redirecting to login');
-    
+
     // Clear any stored auth tokens
     try {
       localStorage.removeItem('auth_token');
@@ -407,11 +418,11 @@ export class APIClient {
     } catch {
       // Ignore localStorage/cookie errors
     }
-    
+
     // Redirect to login page
     const currentPath = window.location.pathname;
     const loginUrl = '/auth/login';
-    
+
     // Avoid redirect loops
     if (currentPath !== loginUrl && !currentPath.startsWith('/auth/')) {
       // Store the current path to redirect back after login
@@ -420,7 +431,7 @@ export class APIClient {
       } catch {
         // Ignore localStorage errors
       }
-      
+
       window.location.href = loginUrl;
     }
   }

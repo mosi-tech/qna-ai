@@ -44,6 +44,8 @@ from shared.db import MongoDBClient, RepositoryManager
 from shared.services.session_manager import SessionManager
 from shared.locking import initialize_session_lock
 from shared.queue.analysis_queue import initialize_analysis_queue
+from shared.health.health_checker import HealthChecker
+from api.health_routes import router as health_router, initialize_health_checker
 
 logger = logging.getLogger("api-server")
 
@@ -140,6 +142,34 @@ async def lifespan(app: FastAPI):
         execution_routes = ExecutionRoutes()
         logger.info("✅ API routes initialized successfully")
         
+        # 6. Run comprehensive health checks (non-blocking - warns but doesn't fail startup)
+        logger.info("🏥 Running comprehensive health checks...")
+        try:
+            health_config = {
+                "mongo_url": os.getenv("MONGO_URL", "mongodb://localhost:27017"),
+                "mongo_db_name": os.getenv("MONGO_DB_NAME", "qna_ai_admin"),
+                "redis_url": os.getenv("REDIS_URL", "redis://localhost:6379"),
+                "chromadb_url": os.getenv("CHROMADB_URL", "http://localhost:8050"),
+                "llm_base_url": os.getenv("OPENAI_BASE_URL", "http://localhost:11434/v1"),
+                "llm_model": os.getenv("OPENAI_MODEL", "llama3.2"),
+            }
+            health_checker = await initialize_health_checker(health_config)
+            app.state.health_checker = health_checker
+            
+            if health_checker.is_ready():
+                logger.info("✅ All critical services ready - API accepting requests")
+            else:
+                unhealthy = [
+                    s.name for s in health_checker.services.values() 
+                    if s.required and s.status.value != "healthy"
+                ]
+                logger.error(f"⚠️ CRITICAL: These required services are unavailable: {', '.join(unhealthy)}")
+                logger.error("⚠️ API will start but may fail on feature requests that depend on these services")
+                logger.error("⚠️ Check /health/status for details")
+        except Exception as e:
+            logger.error(f"❌ Health check failed: {e}")
+            # Don't block startup - health checks are informational
+        
         # Store all in app state
         app.state.repo_manager = repo_manager
         app.state.chat_history_service = chat_history_service
@@ -202,6 +232,9 @@ def create_app() -> FastAPI:
         max_age=3600,  # 1 hour
     )
     
+    # Include health check routes (MUST be before other routes)
+    app.include_router(health_router)
+    
     # Include progress streaming routes
     app.include_router(progress_router)
     
@@ -237,32 +270,33 @@ def create_app() -> FastAPI:
         request: Request,
         user_context: UserContext = Depends(require_authenticated_user)
     ):
-        """Generate and return CSRF token for authenticated users (cached in session)"""
+        """Generate and return CSRF token for authenticated users (stored in Redis)"""
         try:
             from shared.security import CSRFProtection
             from datetime import datetime, timezone
             
-            # Check if valid token already exists in session
-            if hasattr(request, "session") and "csrf_token" in request.session:
-                existing = request.session["csrf_token"]
-                if existing.get("expires_at") and existing.get("expires_at") > datetime.now(timezone.utc).isoformat():
-                    logger.debug(f"♻️ Returning cached CSRF token for user {user_context.user_id}")
-                    return {
-                        "csrf_token": existing["token"],
-                        "expires_at": existing["expires_at"]
-                    }
-            
-            # Generate new token
+            # Generate new token with metadata
             token_meta = CSRFProtection.generate_token_with_metadata()
             
-            # Store in session
-            if hasattr(request, "session"):
-                request.session["csrf_token"] = token_meta
-                logger.debug(f"✅ CSRF token generated for user {user_context.user_id}")
+            # Store in Redis for cross-origin support
+            stored = await CSRFProtection.store_token_in_redis_async(
+                token_meta["token"],
+                token_meta,
+                user_context.user_id
+            )
+            
+            if not stored:
+                logger.warning(f"Failed to store CSRF token in Redis for user {user_context.user_id}")
+                # Continue anyway - token will still work for basic validation
+            
+            logger.debug(f"✅ CSRF token generated for user {user_context.user_id}")
             
             return {
-                "csrf_token": token_meta["token"],
-                "expires_at": token_meta["expires_at"]
+                "success": True,
+                "data": {
+                    "csrf_token": token_meta["token"],
+                    "expires_at": token_meta["expires_at"]
+                }
             }
         except Exception as e:
             logger.error(f"Failed to generate CSRF token: {e}")

@@ -18,8 +18,8 @@ import sys
 from typing import Optional
 from pathlib import Path
 
-# Add shared module path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+# Add shared module path - need to go up one level to backend directory
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from shared.queue import QueueFactory, ExecutionQueueWorker
 from shared.queue.analysis_worker import AnalysisQueueWorker
 from shared.queue.analysis_queue import initialize_analysis_queue, get_analysis_queue

@@ -459,21 +459,19 @@ class APIRoutes:
             # if not await self.chat_history_service.session_exists(session_id):
             #     raise HTTPException(404, "Session not found. Please start a new conversation.")
             
-            # Step 2: TEMPORARILY BYPASS LOCK LOGIC FOR DEBUGGING
-            # TODO: Re-enable after fixing database hanging issue
-            logger.info(f"⚠️ BYPASSING session lock for debugging: {session_id}")
-            # lock_acquired = await session_lock.acquire_lock_or_takeover(
-            #     session_id, 
-            #     "temp_analysis_lock",  # Temporary placeholder - will update after message creation
-            #     ttl_seconds=1800, 
-            #     max_wait_seconds=5  # Reduced from 30 to 5 seconds for better UX
-            # )
-            # 
-            # if not lock_acquired:
-            #     logger.warning(f"⚠️ Cannot acquire session lock - analysis still active: {session_id}")
-            #     raise HTTPException(409, "Session is currently processing another analysis. Please wait and try again.")
-            # 
-            # logger.info(f"🔒 Session lock acquired for new analysis: {session_id}")
+            # Step 2: Acquire session lock for this analysis
+            lock_acquired = await session_lock.acquire_lock_or_takeover(
+                session_id, 
+                "temp_analysis_lock",  # Temporary placeholder - will update after message creation
+                ttl_seconds=1800, 
+                max_wait_seconds=5  # Reduced from 30 to 5 seconds for better UX
+            )
+            
+            if not lock_acquired:
+                logger.warning(f"⚠️ Cannot acquire session lock - analysis still active: {session_id}")
+                raise HTTPException(409, "Session is currently processing another analysis. Please wait and try again.")
+            
+            logger.info(f"🔒 Session lock acquired for new analysis: {session_id}")
             
             # Step 3: Create user message (now protected by lock)
             # Skip user message creation if this is a background analysis from hybrid handler
@@ -516,17 +514,15 @@ class APIRoutes:
                 )
                 logger.info(f"✓ Created analysis message: {analysis_message_id}")
             
-            # Step 5: TEMPORARILY BYPASS LOCK UPDATE FOR DEBUGGING
-            # TODO: Re-enable after fixing database hanging issue
-            logger.info(f"⚠️ BYPASSING lock update for debugging: {session_id} → {analysis_message_id}")
-            # await session_lock.release_lock(session_id)
-            # final_lock_acquired = await session_lock.acquire_lock(session_id, analysis_message_id, ttl_seconds=1800)
-            # 
-            # if not final_lock_acquired:
-            #     logger.error(f"❌ Failed to re-acquire session lock with message ID: {analysis_message_id}")
-            #     raise HTTPException(500, "Failed to finalize session lock for analysis")
-            # 
-            # logger.info(f"🔒 Session lock updated with message ID: {session_id} → {analysis_message_id}")
+            # Step 5: Update session lock with the actual message ID
+            await session_lock.release_lock(session_id)
+            final_lock_acquired = await session_lock.acquire_lock(session_id, analysis_message_id, ttl_seconds=1800)
+            
+            if not final_lock_acquired:
+                logger.error(f"❌ Failed to re-acquire session lock with message ID: {analysis_message_id}")
+                raise HTTPException(500, "Failed to finalize session lock for analysis")
+            
+            logger.info(f"🔒 Session lock updated with message ID: {session_id} → {analysis_message_id}")
             
             # Step 6: Log initial progress to message
             # TODO: We have confusing progress_info (one is memory SSE and other is queue based SSE)
