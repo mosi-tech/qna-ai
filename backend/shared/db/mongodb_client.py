@@ -154,8 +154,9 @@ class MongoDBClient:
             ],
             "chat_messages": [
                 ([("messageId", ASCENDING)], {"unique": True}),
-                ([("sessionId", ASCENDING), ("created_at", ASCENDING)], {}),
-                ([("userId", ASCENDING), ("created_at", DESCENDING)], {}),
+                # camelCase matches actual document field names stored by the app
+                ([("sessionId", ASCENDING), ("createdAt", DESCENDING)], {}),
+                ([("userId", ASCENDING), ("createdAt", DESCENDING)], {}),
                 ([("role", ASCENDING)], {}),
                 ([("analysisId", ASCENDING)], {}),
             ],

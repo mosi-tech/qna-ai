@@ -103,7 +103,7 @@ export class APIClient {
     const { method, path, data, timeout = this.timeout, retries = this.retries, skipCache: skipCacheConfig } = config;
 
     // Check cache for GET requests (skip caching for session/message endpoints)
-    const skipCache = skipCacheConfig || path.includes('/sessions/') || path.includes('/messages/') || path.includes('/csrf-token');
+    const skipCache = skipCacheConfig || path.includes('/sessions/') || path.includes('/messages/');
     if (method === 'GET' && this.enableCaching && !skipCache) {
       const cached = this.cache.get<APIResponse<T>>(path);
       if (cached) {
@@ -208,11 +208,9 @@ export class APIClient {
           data: typeof responseData === 'object' ? responseData : { error: responseData },
         });
 
-        // Handle 401 Unauthorized - redirect to login
-        if (response.status === 401) {
-          this.handleUnauthorized();
-        }
-
+        // Do NOT auto-redirect on 401 here — withAuth already handles
+        // unauthenticated state by redirecting to login. Calling handleUnauthorized
+        // here causes spurious redirects when the JWT just hasn't been refreshed yet.
         throw apiError;
       }
 
@@ -297,101 +295,80 @@ export class APIClient {
       }
     }
 
-    // Add CSRF token for state-changing requests (POST, PUT, DELETE)
-    if (method && ['POST', 'PUT', 'DELETE'].includes(method)) {
-      const csrfToken = this.getCSRFToken();
-      if (csrfToken) {
-        headers['X-CSRF-Token'] = csrfToken;
-        if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
-          console.log('[APIClient] ✅ Adding CSRF token header (length: ' + csrfToken.length + ')');
-        }
-      } else {
-        if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
-          console.warn('[APIClient] ⚠️ No CSRF token in localStorage for', method, 'request');
-        }
-      }
-    }
-
     return headers;
   }
 
-  /**
-   * Get CSRF token from localStorage
-   */
-  private getCSRFToken(): string | null {
-    if (typeof window === 'undefined') {
-      return null;
-    }
+  // Cache JWT to avoid a double Appwrite round-trip on every API call.
+  // Appwrite JWTs expire in 15 min; we refresh 60 s before expiry.
+  private _jwtCache: { token: string; expiresAt: number } | null = null;
+  // Holds an in-progress createJWT promise so concurrent callers share one network request.
+  private _jwtInflight: Promise<string | null> | null = null;
 
+  private static readonly JWT_STORAGE_KEY = '_api_jwt';
+
+  private readJWTFromStorage(): { token: string; expiresAt: number } | null {
     try {
-      const token = localStorage.getItem('csrf_token');
-      if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
-        console.log('[APIClient] getCSRFToken:', token ? `✅ Found (length: ${token.length}) ` : '❌ Not found');
-      }
-      return token;
-    } catch (error) {
-      if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
-        console.warn('[APIClient] Failed to read CSRF token from localStorage:', error);
-      }
+      const raw = sessionStorage.getItem(APIClient.JWT_STORAGE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as { token: string; expiresAt: number };
+      return parsed;
+    } catch {
       return null;
     }
   }
 
-  /**
-   * Fetch and store CSRF token from backend
-   */
-  async fetchCSRFToken(): Promise<void> {
+  private writeJWTToStorage(token: string, expiresAt: number): void {
     try {
-      const response = await this.post<{ csrf_token: string; expires_at: string }>('/csrf-token', {}, {
-        skipCache: true
-      });
-
-      if (response.success && response.data?.csrf_token) {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('csrf_token', response.data.csrf_token);
-          if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
-            console.log('[APIClient] ✅ CSRF token fetched and stored');
-          }
-        }
-      }
-    } catch (error) {
-      console.warn('[APIClient] Failed to fetch CSRF token:', error);
+      sessionStorage.setItem(APIClient.JWT_STORAGE_KEY, JSON.stringify({ token, expiresAt }));
+    } catch {
+      // sessionStorage unavailable — in-memory cache only
     }
   }
 
+  private clearJWTStorage(): void {
+    try { sessionStorage.removeItem(APIClient.JWT_STORAGE_KEY); } catch { /* ignore */ }
+  }
+
   /**
-   * Get JWT token from Appwrite for development
+   * Get JWT token from Appwrite.
+   * Checks sessionStorage first (survives page refresh), then in-memory cache.
+   * Concurrent callers share one in-flight createJWT() request.
    */
   private async getJWTToken(): Promise<string | null> {
-    if (typeof window === 'undefined') {
-      return null;
+    if (typeof window === 'undefined') return null;
+
+    // 1. In-memory cache (fastest)
+    if (this._jwtCache && Date.now() < this._jwtCache.expiresAt - 60_000) {
+      return this._jwtCache.token;
     }
 
-    try {
-      const { account } = await import('../appwrite');
+    // 2. sessionStorage (survives page refresh — no network needed)
+    const stored = this.readJWTFromStorage();
+    if (stored && Date.now() < stored.expiresAt - 60_000) {
+      this._jwtCache = stored; // promote to in-memory
+      return stored.token;
+    }
 
-      // First check if user is authenticated
+    // 3. Deduplicate concurrent callers — only one createJWT() at a time
+    if (this._jwtInflight) return this._jwtInflight;
+
+    this._jwtInflight = (async () => {
       try {
-        await account.get();
-      } catch (authError) {
-        if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
-          console.warn('[APIClient] User not authenticated, cannot create JWT:', authError);
-        }
+        const { account } = await import('../appwrite');
+        const jwt = await account.createJWT();
+        const expiresAt = Date.now() + 15 * 60 * 1000; // Appwrite JWTs last 15 min
+        this._jwtCache = { token: jwt.jwt, expiresAt };
+        this.writeJWTToStorage(jwt.jwt, expiresAt);
+        return jwt.jwt;
+      } catch {
+        this._jwtCache = null;
         return null;
+      } finally {
+        this._jwtInflight = null;
       }
+    })();
 
-      // Create JWT token from current session
-      const jwt = await account.createJWT();
-
-      if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
-        console.log('[APIClient] ✅ Created JWT token for dev authentication');
-      }
-
-      return jwt.jwt;
-    } catch (error) {
-      console.error('[APIClient] ❌ JWT token creation failed:', error);
-      return null;
-    }
+    return this._jwtInflight;
   }
 
   /**
@@ -402,7 +379,10 @@ export class APIClient {
       return;
     }
 
-    console.warn('[APIClient] 401 Unauthorized - redirecting to login');
+    // Clear JWT cache so the next session gets a fresh token.
+    this._jwtCache = null;
+    this._jwtInflight = null;
+    this.clearJWTStorage();
 
     // Clear any stored auth tokens
     try {
@@ -444,6 +424,16 @@ export class APIClient {
     if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
       console.log('[APIClient] Cache cleared');
     }
+  }
+
+  /**
+   * Pre-warm the JWT cache so the first API call after login doesn't block
+   * on a separate account.createJWT() round-trip. Call this once after auth
+   * resolves, before rendering children that will fire immediate API requests.
+   */
+  async warmJWTCache(): Promise<void> {
+    // fire-and-forget — caller must NOT await this (AuthContext calls it without await)
+    if (!this._jwtInflight) this.getJWTToken();
   }
 
   /**

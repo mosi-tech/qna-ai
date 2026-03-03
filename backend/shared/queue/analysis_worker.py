@@ -11,6 +11,7 @@ import logging
 import uuid
 import sys
 import os
+from shared.queue.worker_context import set_context
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 
@@ -281,7 +282,11 @@ class AnalysisQueueWorker(BaseQueueWorker):
                 "log_to_message": True if message_id else False
             })
             logger.info(f"🤖 Running analysis pipeline for: {user_question[:100]}...")
-            
+
+            # Set worker context so pipeline step events (send_analysis_progress)
+            # can resolve session_id and message_id without being passed explicitly.
+            set_context(session_id=session_id, message_id=message_id)
+
             pipeline_result = await self.analysis_pipeline.analyze_question(request_data)
             
             # Check if analysis succeeded
@@ -299,14 +304,12 @@ class AnalysisQueueWorker(BaseQueueWorker):
                     "error": error_msg,
                     "internal_error": internal_error
                 })
-                # Canonical terminal event (Fix #11 — Phase 3)
+                # Knock: tell frontend the message is ready to fetch
                 await send_progress_event(session_id, {
-                    "type": "analysis_complete",
-                    "job_id": job_id,
+                    "type": "message_ready",
                     "message_id": message_id,
                     "status": "failed",
-                    "message": f"Analysis failed: {error_msg}",
-                    "level": "error",
+                    "response_type": None,
                     "error": error_msg,
                 })
                 raise ValueError(f"{error_msg}: {internal_error}")
@@ -337,22 +340,19 @@ class AnalysisQueueWorker(BaseQueueWorker):
                 "type": "analysis_progress",
                 "job_id": job_id,
                 "message_id": message_id,
-                "status": actual_status,  # Use actual status based on pipeline result
+                "status": actual_status,
                 "message": "Analysis completed successfully",
                 "level": "success",
                 "log_to_message": True if message_id else False,
-                "response_type": response_type,  # Use actual response type from pipeline
+                "response_type": response_type,
                 "analysis_id": result.get("analysis_id"),
                 "execution_id": result.get("execution_id")
             })
-            # Canonical terminal event (Fix #11 — Phase 3)
+            # Knock: tell frontend the message is ready to fetch from DB
             await send_progress_event(session_id, {
-                "type": "analysis_complete",
-                "job_id": job_id,
+                "type": "message_ready",
                 "message_id": message_id,
                 "status": "completed",
-                "message": "Analysis completed successfully",
-                "level": "success",
                 "response_type": response_type,
                 "analysis_id": result.get("analysis_id"),
                 "execution_id": result.get("execution_id"),
@@ -364,7 +364,7 @@ class AnalysisQueueWorker(BaseQueueWorker):
         except Exception as e:
             logger.error(f"❌ Error processing analysis {job_id}: {e}")
             await send_progress_event(session_id, {
-                "type": "analysis_status",
+                "type": "analysis_progress",
                 "job_id": job_id,
                 "message_id": message_id,
                 "status": "failed",
@@ -373,14 +373,12 @@ class AnalysisQueueWorker(BaseQueueWorker):
                 "log_to_message": True if message_id else False,
                 "error": str(e)
             })
-            # Canonical terminal event (Fix #11 — Phase 3)
+            # Knock: tell frontend the message is ready to fetch from DB
             await send_progress_event(session_id, {
-                "type": "analysis_complete",
-                "job_id": job_id,
+                "type": "message_ready",
                 "message_id": message_id,
                 "status": "failed",
-                "message": f"Analysis failed: {str(e)}",
-                "level": "error",
+                "response_type": None,
                 "error": str(e),
             })
 

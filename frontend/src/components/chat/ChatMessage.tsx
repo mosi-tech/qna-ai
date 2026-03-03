@@ -12,14 +12,14 @@ import { renderMarkdown } from '@/lib/utils/markdown';
 // Helper function to detect if a message has UI configuration data
 const hasUIConfig = (message: any): boolean => {
   // Check the main location where UI config is stored by data transformer
-  const uiConfig = message.results?.ui_config || 
-                   message.data?.results?.ui_config || 
-                   message.data?.ui_config;
-  
+  const uiConfig = message.results?.ui_config ||
+    message.data?.results?.ui_config ||
+    message.data?.ui_config;
+
   return Boolean(
-    uiConfig && 
-    uiConfig.ui_config?.selected_components && 
-    Array.isArray(uiConfig.ui_config.selected_components) && 
+    uiConfig &&
+    uiConfig.ui_config?.selected_components &&
+    Array.isArray(uiConfig.ui_config.selected_components) &&
     uiConfig.ui_config.selected_components.length > 0
   );
 };
@@ -27,9 +27,9 @@ const hasUIConfig = (message: any): boolean => {
 // Helper function to extract UI configuration data from message
 const getUIConfig = (message: any) => {
   // Check the main location where UI config is stored by data transformer
-  return message.results?.ui_config || 
-         message.data?.results?.ui_config || 
-         message.data?.ui_config;
+  return message.results?.ui_config ||
+    message.data?.results?.ui_config ||
+    message.data?.ui_config;
 };
 
 interface ChatMessageProps {
@@ -57,6 +57,29 @@ export default function ChatMessage({
   onExecutionUpdate
 }: ChatMessageProps) {
   const { logs: progressLogs } = useProgress();
+
+  // Typing / thinking indicator while API call is in flight
+  if (message.type === 'thinking') {
+    const latestLog = progressLogs.length > 0 ? progressLogs[progressLogs.length - 1] : null;
+    const statusText = latestLog?.message || message.content || null;
+    return (
+      <div className="flex gap-3 w-full">
+        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+          <span className="text-blue-600 text-sm">AI</span>
+        </div>
+        <div className="flex items-center gap-3 bg-white border border-gray-200 rounded-lg px-4 py-3">
+          <span className="flex gap-1 items-center flex-shrink-0">
+            <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+            <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+            <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+          </span>
+          {statusText && (
+            <span className="text-sm text-gray-500 italic">{statusText}</span>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   // Handle user messages
   if (message.role === 'user' || message.type === 'user') {
@@ -150,7 +173,7 @@ export default function ChatMessage({
           </div>
           <div className="flex-1 max-w-4xl">
             <ClarificationSummary
-              originalQuery=""
+              message={message.content || 'Clarification needed'}
               expandedQuery={undefined}
               status="pending"
             />

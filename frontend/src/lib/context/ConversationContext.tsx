@@ -7,6 +7,7 @@ interface ConversationContextType {
   messages: ChatMessage[];
   addMessage: (message: Omit<ChatMessage, 'id' | 'timestamp'>) => ChatMessage;
   updateMessage: (id: string, updates: Partial<ChatMessage>) => void;
+  removeMessage: (id: string) => void;
   clearMessages: () => void;
   getMessageById: (id: string) => ChatMessage | undefined;
   setMessages: (messages: ChatMessage[]) => void;

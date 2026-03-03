@@ -9,63 +9,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { account, AppwriteUser, AuthSession, UserRole, USER_ROLES } from '../appwrite';
 import { AppwriteException, Models } from 'appwrite';
-
-/**
- * Fetch and store CSRF token after successful authentication
- */
-async function initializeCSRFToken(): Promise<void> {
-    try {
-        const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8010';
-
-        if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
-            console.log('[AuthContext] Fetching CSRF token from:', backendUrl + '/csrf-token');
-        }
-
-        const response = await fetch(`${backendUrl}/csrf-token`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            credentials: 'include', // Send cookies with request
-        });
-
-        if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
-            console.log('[AuthContext] CSRF token response status:', response.status);
-        }
-
-        if (response.ok) {
-            const data = await response.json();
-
-            if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
-                console.log('[AuthContext] CSRF token response data:', {
-                    success: data.success,
-                    hasData: !!data.data,
-                    hasCsrfToken: !!(data.csrf_token || (data.data && data.data.csrf_token))
-                });
-            }
-
-            // Backend returns either { csrf_token: "...", expires_at: "..." } or { success: true, data: { csrf_token: "...", ... } }
-            const token = data.csrf_token || (data.data && data.data.csrf_token);
-            if (token) {
-                if (typeof window !== 'undefined') {
-                    localStorage.setItem('csrf_token', token);
-                    if (process.env.NEXT_PUBLIC_DEBUG === 'true') {
-                        console.log('[AuthContext] ✅ CSRF token fetched and stored in localStorage');
-                        console.log('[AuthContext] Token length:', token.length);
-                        console.log('[AuthContext] Token preview:', token.substring(0, 10) + '...');
-                    }
-                }
-            } else {
-                console.warn('[AuthContext] ⚠️ Response OK but no CSRF token found in response:', data);
-            }
-        } else {
-            console.warn('[AuthContext] ⚠️ Failed to fetch CSRF token:', response.status, await response.text());
-        }
-    } catch (error) {
-        console.warn('[AuthContext] ⚠️ Failed to initialize CSRF token:', error);
-        // Continue even if CSRF token fetch fails - app might not need it
-    }
-}
+import { apiClient } from '../api';
 
 interface AuthContextType {
     user: AppwriteUser | null;
@@ -105,8 +49,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
             console.log('✅ User authenticated:', currentUser.email);
 
-            // Fetch and initialize CSRF token after successful authentication
-            await initializeCSRFToken();
+            // Pre-warm JWT cache in the background — don't block setLoading(false).
+            // warmJWTCache() stores the in-flight Promise so the first API call
+            // (loadInitialMessages) will await it rather than start a second
+            // createJWT round-trip to Appwrite.
+            apiClient.warmJWTCache();
         } catch (error) {
             console.log('❌ Authentication check failed:', error);
             setUser(null);
@@ -129,9 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     setSession(existingSession as AuthSession);
                     const user = await account.get();
                     setUser(user as AppwriteUser);
-
-                    // Fetch and initialize CSRF token for already-signed-in user
-                    await initializeCSRFToken();
+                    apiClient.warmJWTCache();
                     return;
                 }
             } catch {
@@ -148,9 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setUser(user as AppwriteUser);
 
             console.log('✅ Login successful:', user.email);
-
-            // Fetch and initialize CSRF token after successful login
-            await initializeCSRFToken();
+            apiClient.warmJWTCache();
         } catch (error) {
             console.error('❌ Login failed:', error);
             throw error;

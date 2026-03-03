@@ -209,7 +209,7 @@ class DataTransformer:
                         clean_logs.append(clean_log)
                     clean_msg["logs"] = clean_logs
             
-        elif response_type == "clarification":
+        elif response_type in ("clarification", "needs_clarification", "needs_confirmation"):
             # For clarification: different structure with original/expanded queries
             clean_msg.update({
                 "response_type": "clarification",
@@ -222,9 +222,12 @@ class DataTransformer:
         
         else:
             # For regular messages (user or assistant): just content
+            # Include status so the frontend can detect failed/pending states
+            # even when response_type is null/unknown.
             clean_msg.update({
                 "content": msg.get("content", ""),
                 "response_type": response_type,
+                "status": metadata.get("status"),
             })
         
         return clean_msg

@@ -411,10 +411,11 @@ class ChatRepository:
         session = session_model.dict(by_alias=True) if session_model else None
         
         # If session doesn't exist but messages do, create it
+        cached_message_count: Optional[int] = None
         if not session:
             # ✅ FIXED: Check if messages exist using encapsulated method
-            message_count = await self.db.count_session_messages(session_id)
-            if message_count == 0:
+            cached_message_count = await self.db.count_session_messages(session_id)
+            if cached_message_count == 0:
                 return None
             
             # Create implicit session document
@@ -425,15 +426,15 @@ class ChatRepository:
                 "created_at": datetime.now(),
                 "updated_at": datetime.now(),
                 "is_archived": False,
-                "message_count": message_count,
+                "message_count": cached_message_count,
             }
             # ✅ FIXED: Insert session using encapsulated method
             await self.db.insert_session(session_doc)
             session = session_doc
         
-        # ✅ FIXED: Get total message count using encapsulated method
-        total_messages = await self.db.count_session_messages(session_id)
-        
+        # Reuse the count fetched above for implicit sessions; fetch it once for normal sessions.
+        total_messages = cached_message_count if cached_message_count is not None else await self.db.count_session_messages(session_id)
+
         # Use aggregation pipeline to join messages with execution and analysis data in single query
         pipeline = [
             # Match messages for this session
@@ -531,9 +532,9 @@ class ChatRepository:
             "session_id": session.get("sessionId"),
             "user_id": session.get("userId"),
             "title": session.get("title"),
-            "created_at": session.get("created_at", datetime.now()).isoformat() if hasattr(session.get("created_at"), 'isoformat') else str(session.get("created_at")),
-            "updated_at": session.get("updated_at", datetime.now()).isoformat() if hasattr(session.get("updated_at"), 'isoformat') else str(session.get("updated_at")),
-            "is_archived": session.get("is_archived", False),
+            "created_at": (session.get("createdAt") or session.get("created_at") or datetime.now()).isoformat() if hasattr(session.get("createdAt") or session.get("created_at"), 'isoformat') else str(session.get("createdAt") or session.get("created_at")),
+            "updated_at": (session.get("updatedAt") or session.get("updated_at") or datetime.now()).isoformat() if hasattr(session.get("updatedAt") or session.get("updated_at"), 'isoformat') else str(session.get("updatedAt") or session.get("updated_at")),
+            "is_archived": session.get("is_archived", session.get("isArchived", False)),
             "total_messages": total_messages,
             "offset": offset,
             "limit": limit,
@@ -543,7 +544,7 @@ class ChatRepository:
                     "messageId": msg.get("messageId"),
                     "role": msg.get("role"),
                     "content": msg.get("content"),
-                    "timestamp": msg.get("created_at", "").isoformat() if hasattr(msg.get("created_at"), 'isoformat') else str(msg.get("created_at")),
+                    "timestamp": msg.get("createdAt", "").isoformat() if hasattr(msg.get("createdAt"), 'isoformat') else str(msg.get("createdAt")),
                     "analysisId": msg.get("analysisId"),
                     "executionId": msg.get("executionId"),
                     "metadata": msg.get("metadata", {}),

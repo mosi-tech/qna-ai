@@ -4,7 +4,9 @@ Appwrite Authentication Integration for Backend
 Handles session validation and user authorization
 """
 
+import asyncio
 import os
+import time
 import logging
 from typing import Optional, Dict, Any, List
 from fastapi import HTTPException, Request
@@ -26,6 +28,12 @@ USER_ROLES = {
     'PREMIUM': 'premium',      # Full analysis access  
     'ADMIN': 'admin'          # System management
 }
+
+# JWT validation cache — avoids a blocking Appwrite round-trip on every request.
+# Key: JWT token string  Value: (user_info dict, expires_at float)
+_JWT_CACHE_TTL = 300  # 5 minutes
+_jwt_cache: Dict[str, tuple] = {}
+
 
 class AppwriteAuth:
     """Handles Appwrite authentication for the backend"""
@@ -101,13 +109,25 @@ class AppwriteAuth:
             else:
                 raise ValueError(f"Unknown auth type: {auth_type}")
             
-            # Validate by getting user account
+            # Check the in-process cache before hitting Appwrite.
+            # Cache key is the raw token — safe because JWTs are signed and short-lived.
+            cached = _jwt_cache.get(auth_token)
+            if cached:
+                user_info_cached, expires_at = cached
+                if time.time() < expires_at:
+                    logger.debug(f"✅ JWT cache hit for {auth_type} token")
+                    return user_info_cached
+                else:
+                    del _jwt_cache[auth_token]  # Expired — remove stale entry
+
+            # account.get() is synchronous (Appwrite Python SDK uses requests, not aiohttp).
+            # Run it in the default thread-pool executor so it never blocks the event loop.
             account = Account(client)
-            user = account.get()
-            
+            user = await asyncio.get_event_loop().run_in_executor(None, account.get)
+
             logger.info(f"✅ Valid {auth_type} authentication for user: {user['email']}")
-            
-            return {
+
+            user_info = {
                 'user_id': user['$id'],
                 'email': user['email'],
                 'name': user['name'],
@@ -117,9 +137,15 @@ class AppwriteAuth:
                 'auth_token': auth_token,
                 'auth_type': auth_type
             }
+
+            # Cache the validated result so subsequent requests skip the Appwrite round-trip.
+            _jwt_cache[auth_token] = (user_info, time.time() + _JWT_CACHE_TTL)
+
+            return user_info
             
         except AppwriteException as e:
             logger.warning(f"❌ Invalid session: {e}")
+            _jwt_cache.pop(auth_token, None)  # Evict stale/revoked token from cache
             
             if e.code == 401:
                 raise HTTPException(

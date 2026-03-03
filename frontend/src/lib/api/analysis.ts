@@ -40,6 +40,7 @@ export class AnalysisService {
         },
         {
           retries: 0,
+          timeout: 90000, // Classification LLM call can be slow; match useChatAnalysis
         }
       );
 
@@ -476,7 +477,7 @@ export class AnalysisService {
   async getExecutionStatus(executionId: string): Promise<any> {
     try {
       const response = await this.client.get(`/execution/${executionId}/status`);
-      
+
       if (!response.success) {
         throw new Error(response.data?.error || 'Failed to fetch execution status');
       }
@@ -494,7 +495,7 @@ export class AnalysisService {
   async getExecutionLogs(executionId: string): Promise<string[]> {
     try {
       const response = await this.client.get(`/execution/${executionId}/logs`);
-      
+
       if (!response.success) {
         throw new Error(response.data?.error || 'Failed to fetch execution logs');
       }
@@ -512,7 +513,7 @@ export class AnalysisService {
   async getUserAnalyses(limit: number = 50): Promise<any[]> {
     try {
       const response = await this.client.get(`/user/analyses?limit=${limit}`);
-      
+
       if (!response.success) {
         throw new Error(response.data?.error || 'Failed to fetch user analyses');
       }
@@ -530,7 +531,7 @@ export class AnalysisService {
   async getExecutionHistory(sessionId: string, limit: number = 100): Promise<any[]> {
     try {
       const response = await this.client.get(`/session/${sessionId}/executions?limit=${limit}`);
-      
+
       if (!response.success) {
         throw new Error(response.data?.error || 'Failed to fetch execution history');
       }
@@ -546,7 +547,7 @@ export class AnalysisService {
    * Poll execution status until completion
    */
   async pollExecutionStatus(
-    executionId: string, 
+    executionId: string,
     onProgress?: (status: any) => void,
     timeout: number = 300000 // 5 minutes
   ): Promise<any> {
@@ -557,7 +558,7 @@ export class AnalysisService {
       const poll = async () => {
         try {
           const status = await this.getExecutionStatus(executionId);
-          
+
           // Call progress callback if provided
           if (onProgress) {
             onProgress(status);

@@ -122,6 +122,23 @@ async def clear_progress(session_id: str):
     return {"success": True, "session_id": session_id, "message": "Progress cleared"}
 
 
+@router.get("/{session_id}/lock-status")
+async def get_session_lock_status(session_id: str, request: Request):
+    """
+    Return whether this session currently holds an active processing lock.
+    Used by the frontend on refresh to detect an in-flight job whose AI
+    placeholder message may not yet exist in the DB (race condition).
+    """
+    try:
+        from shared.locking import get_session_lock
+        session_lock = get_session_lock()
+        locked = await session_lock.is_session_locked(session_id)
+        return {"session_id": session_id, "locked": locked}
+    except Exception as e:
+        logger.error(f"❌ Failed to check lock status for {session_id}: {e}")
+        return {"session_id": session_id, "locked": False}
+
+
 @router.get("/{session_id}/messages/{message_id}/status")
 async def get_message_status(
     session_id: str,
@@ -154,10 +171,16 @@ async def get_message_status(
             else getattr(metadata, "status", None)
         ) or "unknown"
 
+        response_type = (
+            metadata.get("response_type") if isinstance(metadata, dict)
+            else getattr(metadata, "response_type", None)
+        )
+
         return {
             "message_id": message_id,
             "session_id": session_id,
             "status": status,
+            "response_type": response_type,
         }
     except HTTPException:
         raise

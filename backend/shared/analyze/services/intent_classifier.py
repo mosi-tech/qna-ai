@@ -169,7 +169,47 @@ Be precise with follow_up classifications and strict with safety validation. Cat
             messages = await context_manager.get_conversation_messages_for_llm(
                 conversation, ContextType.INTENT_CLASSIFICATION, user_message
             )
-            
+
+            # Inject ground-truth pending-suggestion status so the LLM cannot
+            # misclassify a conversational "Yes" as analysis_confirmation when
+            # no formal suggestion actually exists in the ConversationStore.
+            # This is inserted as an assistant turn just before the current user
+            # message so the LLM treats it as authoritative context.
+            pending_suggestion = None
+            if conversation:
+                try:
+                    pending_suggestion = await conversation.get_pending_analysis_suggestion()
+                except Exception:
+                    pass  # conservative: leave pending_suggestion = None
+
+            if pending_suggestion:
+                topic = pending_suggestion.get("topic", "financial analysis")
+                suggested_q = pending_suggestion.get("suggested_question") or ""
+                context_note = (
+                    f"[SYSTEM CONTEXT] A formal analysis suggestion IS currently pending for this session. "
+                    f"Topic: «{topic}». "
+                    + (f"Suggested question: «{suggested_q}». " if suggested_q else "")
+                    + "A short confirming reply ('Yes', 'Sure', 'Go ahead', etc.) SHOULD be classified as analysis_confirmation."
+                )
+            else:
+                context_note = (
+                    "[SYSTEM CONTEXT] There is NO pending analysis suggestion stored for this session. "
+                    "Do NOT classify any message as analysis_confirmation regardless of phrasing. "
+                    "A short 'Yes'-like reply to a casual assistant question should be classified as "
+                    "analysis_request (if there is financial topic context) or pure_chat."
+                )
+
+            # Insert the context note as the second-to-last message (just before the current user turn)
+            if messages and messages[-1].get("role") == "user":
+                messages.insert(len(messages) - 1, {"role": "assistant", "content": context_note})
+            else:
+                messages.append({"role": "assistant", "content": context_note})
+
+            logger.debug(
+                "ℹ️ Pending suggestion injected into classifier context: %s",
+                "YES" if pending_suggestion else "NO"
+            )
+
             # Get LLM classification
             start_time = time.time()
             
@@ -211,8 +251,23 @@ Be precise with follow_up classifications and strict with safety validation. Cat
             parsed = safe_json_loads(content, default={})
             
             if not parsed:
-                logger.error("Failed to parse classification response as JSON")
-                raise ValueError("Intent classification response could not be parsed as JSON")
+                # Ollama (and some local models) occasionally return plain narrative text
+                # instead of JSON.  Treat as a low-confidence pure_chat so the
+                # conversation can continue rather than crashing with an error.
+                logger.warning(
+                    "Intent classifier: LLM returned non-JSON response — "
+                    "falling back to pure_chat. Content preview: %s",
+                    content[:120] if content else "<empty>"
+                )
+                return IntentResult(
+                    intent=MessageIntent.PURE_CHAT,
+                    confidence=0.4,
+                    reasoning="LLM returned non-JSON; defaulting to chat",
+                    requires_analysis=False,
+                    is_safe=True,
+                    safety_reason="Default safe",
+                    detected_risks=[]
+                )
             
             # Extract classification data
             intent_str = parsed.get("intent", "pure_chat")

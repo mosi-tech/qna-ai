@@ -32,7 +32,14 @@ module.exports = {
 
         // Ollama settings (when LLM_PROVIDER=ollama - not yet implemented)
         OLLAMA_BASE_URL: process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
-        OLLAMA_MODEL: process.env.OLLAMA_MODEL || 'llama3.2'
+        OLLAMA_MODEL: process.env.OLLAMA_MODEL || 'llama3.2',
+
+        // Dev visibility: stream pre-queue steps (validation, intent, analyst)
+        // to the SSE progress panel. Set false to silence in prod.
+        PRE_QUEUE_PROGRESS_LOGS: process.env.PRE_QUEUE_PROGRESS_LOGS || 'true',
+
+        // Development auth bypass (allows X-User-ID header for auth)
+        ENV: process.env.ENV || 'development',
       },
       error_file: './logs/err.log',
       out_file: './logs/out.log',

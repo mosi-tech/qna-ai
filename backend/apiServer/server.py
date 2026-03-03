@@ -208,14 +208,6 @@ def create_app() -> FastAPI:
         lifespan=lifespan
     )
     
-    # Add CSRF protection middleware FIRST (will be applied last due to reverse order)
-    try:
-        from shared.security import add_csrf_middleware
-        add_csrf_middleware(app)
-        logger.info("✅ CSRF protection middleware enabled")
-    except Exception as e:
-        logger.warning(f"⚠️ Failed to initialize CSRF middleware: {e}")
-    
     # Add CORS middleware (applied before session)
     app.add_middleware(
         CORSMiddleware,
@@ -264,43 +256,6 @@ def create_app() -> FastAPI:
         except Exception as e:
             logger.error(f"Failed to create session: {e}")
             raise HTTPException(status_code=500, detail="Failed to create session")
-    
-    @app.post("/csrf-token")
-    async def get_csrf_token(
-        request: Request,
-        user_context: UserContext = Depends(require_authenticated_user)
-    ):
-        """Generate and return CSRF token for authenticated users (stored in Redis)"""
-        try:
-            from shared.security import CSRFProtection
-            from datetime import datetime, timezone
-            
-            # Generate new token with metadata
-            token_meta = CSRFProtection.generate_token_with_metadata()
-            
-            # Store in Redis for cross-origin support
-            stored = await CSRFProtection.store_token_in_redis_async(
-                token_meta["token"],
-                token_meta,
-                user_context.user_id
-            )
-            
-            if not stored:
-                logger.warning(f"Failed to store CSRF token in Redis for user {user_context.user_id}")
-                # Continue anyway - token will still work for basic validation
-            
-            logger.debug(f"✅ CSRF token generated for user {user_context.user_id}")
-            
-            return {
-                "success": True,
-                "data": {
-                    "csrf_token": token_meta["token"],
-                    "expires_at": token_meta["expires_at"]
-                }
-            }
-        except Exception as e:
-            logger.error(f"Failed to generate CSRF token: {e}")
-            raise HTTPException(status_code=500, detail="Failed to generate CSRF token")
     
     @app.get("/session/{session_id}")
     async def get_session(

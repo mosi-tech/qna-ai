@@ -701,6 +701,22 @@ class APIRoutes:
                     message_for_transform["metadata"]["analysis_error"] = str(background_error)
             
             
+            # For non-analysis responses (e.g. pure_chat) there is no analysis_worker
+            # that emits a message_ready SSE knock.  Emit it here so any page that
+            # refreshed mid-request and is waiting in the catch-up path can resolve
+            # its thinking bubble immediately instead of hitting the 30 s orphan timeout.
+            if not hybrid_response.should_trigger_analysis:
+                try:
+                    await send_progress_event(session_id, {
+                        "type": "message_ready",
+                        "message_id": hybrid_response.message_id,
+                        "status": "completed",
+                        "response_type": hybrid_response.response_type,
+                    })
+                    logger.debug(f"📡 message_ready SSE emitted for non-analysis message {hybrid_response.message_id}")
+                except Exception as sse_err:
+                    logger.warning(f"⚠️ Failed to emit message_ready SSE for {hybrid_response.message_id}: {sse_err}")
+
             clean_msg = await self.data_transformer.transform_message_to_ui_data(message_for_transform)
             
             # Always return chat response immediately (KEY CHANGE)

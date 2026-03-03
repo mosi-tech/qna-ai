@@ -2,7 +2,10 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { ProgressLog, ProgressManager } from '@/lib/progress/ProgressManager';
 import { api } from '@/lib/api';
 
-export const useProgressStream = (sessionId: string | null, messageId?: string, onAnalysisComplete?: (status: 'completed' | 'failed', data?: any) => void) => {
+export const useProgressStream = (
+  sessionId: string | null,
+  onMessageReady?: (messageId: string, status: string, responseType: string | null) => void,
+) => {
   const [logs, setLogs] = useState<ProgressLog[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -10,7 +13,6 @@ export const useProgressStream = (sessionId: string | null, messageId?: string, 
   const heartbeatTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const reconnectAttemptsRef = useRef(0);
-  const pollFallbackRef = useRef<NodeJS.Timeout | null>(null);
 
   const resetHeartbeatTimer = useCallback(() => {
     if (heartbeatTimeoutRef.current) {
@@ -71,6 +73,13 @@ export const useProgressStream = (sessionId: string | null, messageId?: string, 
         try {
           const data = JSON.parse(event.data);
 
+          // Normalize type: progress events carry type inside data.details
+          // (because ProgressEvent.to_dict() wraps extra fields under 'details').
+          // Hoist it so all downstream checks use data.type uniformly.
+          if (!data.type && data.details?.type) {
+            data.type = data.details.type;
+          }
+
           if (data.type === 'connected') {
             console.log('[useProgressStream] Backend confirmed connection for session:', sessionId);
             console.log('%c🔗 SSE Connected!', 'color: green; font-weight: bold');
@@ -104,18 +113,20 @@ export const useProgressStream = (sessionId: string | null, messageId?: string, 
             console.log(`%c[SSE] No Type - Raw Event:`, 'color: orange; font-weight: bold;', data);
           }
 
-          // Canonical completion handler (Fix #11 — Phase 3).
-          // The backend emits { type: "analysis_complete", status: "completed"|"failed", ... }
-          // as the single definitive terminal event. All previous multi-condition
-          // completion detection has been replaced with this one check.
-          if (data.type === 'analysis_complete') {
-            const style = data.status === 'completed'
-              ? 'color: green; font-size: 14px; font-weight: bold;'
-              : 'color: red; font-size: 14px; font-weight: bold; background: yellow;';
-            console.log(`%c[SSE] ANALYSIS COMPLETE (${data.status})`, style, data);
-            if (onAnalysisComplete) {
-              onAnalysisComplete(data.status === 'completed' ? 'completed' : 'failed', data);
+          // Knock handler: backend emits message_ready when work is done.
+          // The frontend fetches the full message from DB — SSE carries no result data.
+          if (data.type === 'message_ready') {
+            const messageId = data.details?.message_id || data.message_id;
+            const status = data.details?.status || data.status;
+            const responseType = data.details?.response_type ?? data.response_type ?? null;
+            console.log(`%c[SSE] MESSAGE READY knock: ${messageId} (${status})`,
+              status === 'failed' ? 'color: red; font-weight: bold;' : 'color: green; font-weight: bold;',
+              data);
+            if (onMessageReady && messageId) {
+              onMessageReady(messageId, status, responseType);
             }
+            // Knock is signal-only — don't add to visible log
+            return;
           }
 
           let timestamp = Date.now();
@@ -178,7 +189,7 @@ export const useProgressStream = (sessionId: string | null, messageId?: string, 
       setIsConnected(false);
       console.error('[useProgressStream] Failed to create EventSource:', err);
     }
-  }, [sessionId, onAnalysisComplete, resetHeartbeatTimer]);
+  }, [sessionId, onMessageReady, resetHeartbeatTimer]);
 
   const clearLogs = useCallback(() => {
     setLogs([]);
@@ -234,51 +245,6 @@ export const useProgressStream = (sessionId: string | null, messageId?: string, 
       setIsConnected(false);
     };
   }, [sessionId]);
-
-  // Poll fallback when SSE is disconnected (Fix #6 — Phase 3).
-  // When the browser cannot hold an SSE connection, poll message status every
-  // 3 seconds so the UI can still detect completion without hanging forever.
-  useEffect(() => {
-    if (isConnected || !sessionId || !messageId) {
-      if (pollFallbackRef.current) {
-        clearInterval(pollFallbackRef.current);
-        pollFallbackRef.current = null;
-      }
-      return;
-    }
-
-    console.log('[useProgressStream] SSE disconnected — starting status poll fallback');
-    pollFallbackRef.current = setInterval(async () => {
-      try {
-        const response = await api.client.get<{ status: string; message_id: string }>(
-          `/api/progress/${sessionId}/messages/${messageId}/status`
-        );
-        if (response.success && response.data) {
-          const { status } = response.data;
-          if (status === 'completed' || status === 'failed') {
-            console.log(`[useProgressStream] Poll detected terminal status: ${status}`);
-            if (onAnalysisComplete) {
-              onAnalysisComplete(
-                status === 'completed' ? 'completed' : 'failed',
-                { type: 'analysis_complete', status, message_id: messageId, source: 'poll' }
-              );
-            }
-            clearInterval(pollFallbackRef.current!);
-            pollFallbackRef.current = null;
-          }
-        }
-      } catch {
-        // Poll failures are non-fatal — SSE reconnect will handle recovery
-      }
-    }, 3000);
-
-    return () => {
-      if (pollFallbackRef.current) {
-        clearInterval(pollFallbackRef.current);
-        pollFallbackRef.current = null;
-      }
-    };
-  }, [isConnected, sessionId, messageId, onAnalysisComplete]);
 
   return {
     logs,

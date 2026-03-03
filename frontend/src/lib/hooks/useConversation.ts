@@ -22,6 +22,7 @@ interface UseConversationReturn {
   messages: ChatMessage[];
   addMessage: (message: Omit<ChatMessage, 'id' | 'timestamp'>) => ChatMessage;
   updateMessage: (id: string, updates: Partial<ChatMessage>) => void;
+  removeMessage: (id: string) => void;
   clearMessages: () => void;
   getMessageById: (id: string) => ChatMessage | undefined;
   setMessages: (messages: ChatMessage[]) => void;
@@ -67,6 +68,10 @@ export function useConversation(): UseConversationReturn {
         msg.id === id ? { ...msg, ...updates } : msg
       )
     );
+  };
+
+  const removeMessage = (id: string) => {
+    setMessages(prev => prev.filter(msg => msg.id !== id));
   };
 
   const clearMessages = () => {
@@ -127,6 +132,8 @@ export function useConversation(): UseConversationReturn {
           data: msg.uiData || msg.metadata, // Prefer uiData over raw metadata
           analysisId: msg.analysisId,
           executionId: msg.executionId,
+          status: msg.status,              // surface DB status for pending-poll detection
+          response_type: msg.response_type, // surface for type-based routing on reload
         };
       });
 
@@ -151,6 +158,7 @@ export function useConversation(): UseConversationReturn {
     messages,
     addMessage,
     updateMessage,
+    removeMessage,
     clearMessages,
     getMessageById,
     setMessages: setMessagesHandler,

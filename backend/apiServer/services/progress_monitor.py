@@ -118,6 +118,9 @@ class ProgressMonitorService:
 
             if event_type == "execution_status":
                 await self._handle_execution_status(session_id, event)
+            elif event_type == "message_ready":
+                # Passthrough knock — frontend fetches from DB on receipt
+                await self._handle_passthrough(session_id, event)
             else:
                 await self._handle_generic_progress(session_id, event)
 
@@ -153,14 +156,32 @@ class ProgressMonitorService:
         
         # Extract only the actual business data for SSE details
         # Exclude all SSE-level fields (id, timestamp, level, message) and MongoDB metadata
+        # NOTE: 'type' is intentionally NOT excluded — frontend needs data.details.type.
         sse_details = {k: v for k, v in event.items() if k not in [
-            "_id", "session_id", "timestamp", "processed", "type", 
+            "_id", "session_id", "timestamp", "processed", 
             "level", "message", "id", "event_id"  # Don't pass event structure fields
         ]}
         
         await _sse_progress_info(session_id, message, **sse_details)
         logger.info(f"✅ Broadcast execution status {status} for {execution_id}")
             
+    async def _handle_passthrough(self, session_id: str, event: dict):
+        """Emit typed machine events verbatim — no field stripping or wrapping.
+
+        Used for knock events (e.g. message_ready) that the frontend handles
+        by matching on data.details.type.  All fields pass through as-is.
+        """
+        clean = {k: v for k, v in event.items()
+                 if k not in ["_id", "_sse_id", "processed", "session_id", "timestamp"]}
+        level = ProgressLevel.ERROR if event.get("status") == "failed" else ProgressLevel.SUCCESS
+        await progress_sse_manager.emit(
+            session_id=session_id,
+            level=level,
+            message=f"message_ready:{clean.get('message_id', '')}",
+            details=clean,  # type + all fields land in data.details on wire
+        )
+        logger.info(f"✅ Passthrough knock emitted for session {session_id}: {clean}")
+
     async def _handle_generic_progress(self, session_id: str, event: dict):
         """Handle generic progress events"""
         level_str = event.get("level", "info")
@@ -173,8 +194,10 @@ class ProgressMonitorService:
             level = ProgressLevel.INFO
             
         # Extract optional fields
+        # NOTE: 'type' is intentionally NOT excluded here — the frontend needs
+        # data.details.type (e.g. 'analysis_complete') to fire the right handler.
         details = {k: v for k, v in event.items() if k not in [
-            "_id", "session_id", "timestamp", "processed", "type", "level", "message", "step", "total_steps"
+            "_id", "session_id", "timestamp", "processed", "level", "message", "step", "total_steps"
         ]}
         
         await progress_sse_manager.emit(
