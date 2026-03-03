@@ -9,10 +9,11 @@ Displays results server-side, never returns data to LLM.
 import json
 import logging
 import os
+import secrets
 from datetime import datetime
 from typing import Dict, Any, Optional
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
@@ -28,22 +29,43 @@ from shared.storage import get_storage
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("http-script-execution")
 
-# Lifespan event handler
+# ---------------------------------------------------------------------------
+# Auth: shared-secret token
+# Set EXECUTION_SERVER_TOKEN in the environment (infrastructure/.env).
+# If not set a random token is generated at startup — note it in the logs.
+# ---------------------------------------------------------------------------
+_EXECUTION_TOKEN: str = os.getenv("EXECUTION_SERVER_TOKEN", "")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup event
+    global _EXECUTION_TOKEN
+    if not _EXECUTION_TOKEN:
+        _EXECUTION_TOKEN = secrets.token_hex(32)
+        logger.warning("⚠️  EXECUTION_SERVER_TOKEN not set — generated ephemeral token:")
+        logger.warning(f"    EXECUTION_SERVER_TOKEN={_EXECUTION_TOKEN}")
+        logger.warning("    Add this to infrastructure/.env to keep it stable across restarts.")
+    else:
+        logger.info("✅ EXECUTION_SERVER_TOKEN loaded from environment")
     logger.info("🚀 Starting HTTP Script Execution Server on port 8013...")
     yield
-    # Shutdown event (cleanup if needed)
     logger.info("🛑 HTTP Script Execution Server shutting down...")
 
+
+def verify_token(x_execution_token: str = Header(..., alias="X-Execution-Token")):
+    """FastAPI dependency — validates the shared execution secret."""
+    if x_execution_token != _EXECUTION_TOKEN:
+        raise HTTPException(status_code=401, detail="Invalid or missing X-Execution-Token")
+
+
 app = FastAPI(title="HTTP Script Execution Server", lifespan=lifespan)
+# Restrict CORS: this server is internal-only (bound to 127.0.0.1)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:8010", "http://127.0.0.1:8010"],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"]
+    allow_methods=["POST", "GET"],
+    allow_headers=["*"],
 )
 
 class ScriptExecutionRequest(BaseModel):
@@ -63,7 +85,7 @@ class ExecutionResult(BaseModel):
     error: Optional[str] = None
 
 
-@app.post("/execute-script")
+@app.post("/execute-script", dependencies=[Depends(verify_token)])
 async def execute_script_endpoint(request: ScriptExecutionRequest) -> ExecutionResult:
     """Execute validated script in production mode"""
     
@@ -157,7 +179,7 @@ def display_results_server_side(response: dict, script_name: str):
     
     print("="*100 + "\n")
 
-@app.post("/save-script")
+@app.post("/save-script", dependencies=[Depends(verify_token)])
 async def save_script(request: ScriptContentRequest):
     """Save validated script for execution"""
     
@@ -204,7 +226,7 @@ Status: Ready for production execution
         "execute_command": f"curl -X POST http://localhost:8013/execute-script -H 'Content-Type: application/json' -d '{{\"script_name\": \"{request.script_name}\"}}'"
     }
 
-@app.get("/scripts")
+@app.get("/scripts", dependencies=[Depends(verify_token)])
 async def list_scripts():
     """List available scripts for execution"""
     
@@ -250,5 +272,7 @@ async def health_check():
     }
 
 if __name__ == "__main__":
-    logger.info("🚀 Starting HTTP Script Execution Server on port 8013...")
-    uvicorn.run(app, host="0.0.0.0", port=8013)
+    logger.info("🚀 Starting HTTP Script Execution Server on port 8013 (127.0.0.1 only)...")
+    # Bind to loopback only — this server is not meant to be reachable from
+    # outside the local machine.
+    uvicorn.run(app, host="127.0.0.1", port=8013)
