@@ -1,9 +1,12 @@
 #!/bin/bash
 
-echo "🚀 Starting Ollama Script Generation Server with PM2..."
-echo "Port: 8010 (Script Server) + 8013 (Execution Server)"
+echo "🚀 Starting Financial Analysis Server with PM2..."
+echo "Port: 8010 (API Server) + 8013 (Execution Server)"
 echo "Purpose: Generate and execute Python scripts for financial analysis"
 echo ""
+
+# Navigate to infrastructure directory
+cd "$(dirname "$0")"
 
 # Check if PM2 is installed
 if ! command -v pm2 &> /dev/null; then
@@ -11,30 +14,16 @@ if ! command -v pm2 &> /dev/null; then
     npm install -g pm2
 fi
 
-# Check if Ollama is running
-if ! curl -s http://localhost:11434/api/tags > /dev/null; then
-    echo "❌ Ollama is not running. Please start it first:"
-    echo "   ollama serve"
-    exit 1
-fi
-
-# Check if required model exists
-if ! ollama list | grep -q "gpt-oss:20b\|llama3.2"; then
-    echo "⚠️  Recommended model not found. Available models:"
-    ollama list
-    echo ""
-fi
-
 # Check if required Python packages are installed
-echo "📦 Checking requirements..."
+echo "📦 Checking Python requirements..."
 if ! python3 -c "import fastapi, uvicorn, httpx" 2>/dev/null; then
     echo "❌ Missing required packages. Installing..."
-    pip3 install -r requirements-ollama.txt
+    pip3 install fastapi uvicorn httpx
 fi
 
 # Create logs directory
-mkdir -p logs
-mkdir -p executionServer/logs
+mkdir -p ../apiServer/logs
+mkdir -p ../executionServer/logs
 
 # Stop existing PM2 processes if running
 echo "🔄 Stopping existing servers..."

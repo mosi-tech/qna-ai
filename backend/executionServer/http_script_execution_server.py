@@ -19,7 +19,7 @@ import uvicorn
 # Import shared execution logic
 import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from shared.execution import execute_script
 from shared.storage import get_storage
 
