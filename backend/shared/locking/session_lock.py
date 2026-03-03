@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 class SessionLockModel:
     """MongoDB document structure for session locks"""
     
-    def __init__(self, session_id: str, message_id: str, ttl_seconds: int = 1800):
+    def __init__(self, session_id: str, message_id: str, ttl_seconds: int = 300):
         self.session_id = session_id
         self.message_id = message_id
         self.locked_at = datetime.utcnow()
@@ -58,14 +58,14 @@ class DistributedSessionLock:
         except Exception as e:
             logger.warning(f"⚠️ Failed to create session lock indexes: {e}")
     
-    async def acquire_lock(self, session_id: str, message_id: str, ttl_seconds: int = 1800) -> bool:
+    async def acquire_lock(self, session_id: str, message_id: str, ttl_seconds: int = 300) -> bool:
         """
         Acquire a distributed lock for a session.
         
         Args:
             session_id: Session to lock
             message_id: Analysis message ID
-            ttl_seconds: Lock expiration time (default 30 minutes)
+            ttl_seconds: Lock expiration time (default 5 minutes)
         
         Returns:
             True if lock acquired, False if session already locked

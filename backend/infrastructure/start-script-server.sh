@@ -15,10 +15,10 @@ if ! command -v pm2 &> /dev/null; then
 fi
 
 # Check if required Python packages are installed
-echo "📦 Checking Python requirements..."
+echo "📦 Checking requirements..."
 if ! python3 -c "import fastapi, uvicorn, httpx" 2>/dev/null; then
     echo "❌ Missing required packages. Installing..."
-    pip3 install fastapi uvicorn httpx
+    pip3 install -r requirements-ollama.txt
 fi
 
 # Create logs directory

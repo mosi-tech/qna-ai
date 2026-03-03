@@ -22,8 +22,7 @@ from shared.constants import MessageStatus
 from services.execution_service import ExecutionService
 from shared.services.progress_service import (
     send_progress_info,
-    send_execution_queued,
-    send_execution_failed,
+    send_progress_event,
 )
 
 
@@ -127,13 +126,14 @@ class APIRoutes:
         Returns:
             AnalysisResponse where data contains the message itself
         """
-        msg_id = None
+        # CRITICAL: Build message metadata
+        msg_metadata = {"response_type": response_type}
+        if metadata:
+            msg_metadata.update(metadata)
+
+        # CRITICAL: Create the message in DB — a null msg_id would propagate as message_id: null
+        # to the UI and break SSE correlation, leaving the spinner stuck forever.
         try:
-            # Create message with response_type and essential metadata only
-            msg_metadata = {"response_type": response_type}
-            if metadata:
-                msg_metadata.update(metadata)
-            
             msg_id = await self.chat_history_service.add_assistant_message(
                 session_id=session_id,
                 user_id=user_id,
@@ -143,38 +143,37 @@ class APIRoutes:
                 metadata=msg_metadata,
             )
             logger.info(f"✓ Created {response_type} message in chat history: {msg_id}")
-            
-            # Cache the assistant message for future reuse (NON-CRITICAL)
-            if self.cache_service and analysis_id and execution_id and cache_output:
-                try:
-                    message_cache_data = {
-                        "content": message_content,
-                        "analysis_id": analysis_id,
-                        "execution_id": execution_id,
-                        "response_data": metadata.get("response_data", {}) if metadata else {},
-                    }
-                    await self.cache_service.cache_assistant_message(
-                        question=metadata.get("original_query", "") if metadata else "",
-                        user_id=user_id,
-                        message_data=message_cache_data,
-                        ttl_hours=24
-                    )
-                    logger.info(f"✓ Cached {response_type} message")
-                except Exception as cache_error:
-                    logger.warning(f"⚠️ Failed to cache {response_type} message: {cache_error}")
-            
-            # Link execution to the message it created (NON-CRITICAL - bidirectional link for convenience)
-            # The critical link is message→execution (embedded in message), this is just execution→message
-            if execution_id and self.audit_service and msg_id:
-                try:
-                    await self.audit_service.link_execution_to_message(execution_id, msg_id)
-                    logger.info(f"✓ Linked execution {execution_id} to message {msg_id}")
-                except Exception as link_error:
-                    logger.warning(f"⚠️ Failed to link execution to message: {link_error}")
-            
         except Exception as e:
-            logger.warning(f"⚠️ Failed to create {response_type} message: {e}")
-            # Continue anyway - don't fail response if message creation fails
+            logger.error(f"❌ CRITICAL: Failed to create {response_type} message in DB: {e}")
+            raise HTTPException(status_code=500, detail="Failed to persist response message. Please try again.")
+
+        # NON-CRITICAL: Cache the assistant message for future reuse
+        if self.cache_service and analysis_id and execution_id and cache_output:
+            try:
+                message_cache_data = {
+                    "content": message_content,
+                    "analysis_id": analysis_id,
+                    "execution_id": execution_id,
+                    "response_data": metadata.get("response_data", {}) if metadata else {},
+                }
+                await self.cache_service.cache_assistant_message(
+                    question=metadata.get("original_query", "") if metadata else "",
+                    user_id=user_id,
+                    message_data=message_cache_data,
+                    ttl_hours=24
+                )
+                logger.info(f"✓ Cached {response_type} message")
+            except Exception as cache_error:
+                logger.warning(f"⚠️ Failed to cache {response_type} message: {cache_error}")
+
+        # NON-CRITICAL: Link execution to the message it created (bidirectional link for convenience)
+        # The critical link is message→execution (embedded in message), this is just execution→message
+        if execution_id and self.audit_service and msg_id:
+            try:
+                await self.audit_service.link_execution_to_message(execution_id, msg_id)
+                logger.info(f"✓ Linked execution {execution_id} to message {msg_id}")
+            except Exception as link_error:
+                logger.warning(f"⚠️ Failed to link execution to message: {link_error}")
         
         # Return clean UI message data instead of raw metadata
         # This ensures UI never sees internal database fields
@@ -271,18 +270,39 @@ class APIRoutes:
                 
                 if queue_success:
                     logger.info(f"✓ Enqueued execution for processing: {execution_id}")
-                    # Send execution queued status update via SSE
-                    await send_execution_queued()
+                    # Send execution queued status update via SSE (explicit session_id — context var is empty here)
+                    await send_progress_event(session_id, {
+                        "type": "execution_status",
+                        "status": "queued",
+                        "level": "info",
+                        "message": "Analysis queued for execution",
+                        "execution_id": execution_id,
+                        "analysis_id": analysis_id,
+                    })
                 else:
                     logger.warning(f"⚠️ Failed to enqueue execution: {execution_id}")
-                    # Send execution failed status update via SSE
-                    await send_execution_failed("Failed to enqueue execution")
-                    
+                    # Send execution failed status update via SSE (explicit session_id)
+                    await send_progress_event(session_id, {
+                        "type": "execution_status",
+                        "status": "failed",
+                        "level": "error",
+                        "message": "Failed to enqueue execution",
+                        "execution_id": execution_id,
+                        "analysis_id": analysis_id,
+                    })
+
             except Exception as queue_error:
                 # Don't fail the whole process if queue enqueue fails
                 logger.warning(f"⚠️ Failed to enqueue execution {execution_id}: {queue_error}")
-                # Send execution failed status update via SSE
-                await send_execution_failed(f"Queue error: {queue_error}")
+                # Send execution failed status update via SSE (explicit session_id)
+                await send_progress_event(session_id, {
+                    "type": "execution_status",
+                    "status": "failed",
+                    "level": "error",
+                    "message": f"Queue error: {queue_error}",
+                    "execution_id": execution_id,
+                    "analysis_id": analysis_id,
+                })
             
             return execution_id
             
