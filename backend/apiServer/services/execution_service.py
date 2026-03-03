@@ -1,0 +1,282 @@
+"""
+Execution Service - Orchestrates script execution via execution server
+"""
+
+import logging
+import os
+import httpx
+from typing import Optional, Dict, Any
+from datetime import datetime, timezone
+
+
+from shared.services.progress_service import (
+    send_progress_info,
+    send_progress_error,
+    send_progress_event,
+)
+from shared.storage import get_storage
+# Import shared services
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+from shared.services.result_formatter import create_shared_result_formatter
+from shared.db.repositories import RepositoryManager
+
+logger = logging.getLogger("execution-service")
+
+
+class ExecutionService:
+    """Service for executing analysis scripts and managing results"""
+    
+    def __init__(self, repo_manager: RepositoryManager):
+        self.repo = repo_manager
+        self.analysis_repo = repo_manager.analysis
+        self.audit_repo = repo_manager.execution
+        self.logger = logger
+        
+        # Initialize shared result formatter
+        self.result_formatter = create_shared_result_formatter()
+    
+    async def execute_analysis(
+        self,
+        analysis_id: str,
+        user_id: str,
+        session_id: Optional[str] = None,
+        execution_id: Optional[str] = None,
+        timeout_seconds: int = 300
+    ) -> Dict[str, Any]:
+        """
+        Execute an analysis script and populate results
+        
+        Flow:
+        1. Fetch AnalysisModel by ID
+        2. Download script from script_url
+        3. Execute with parameters
+        4. Collect execution results
+        5. Update AnalysisModel with results
+        6. Log execution in audit trail
+        """
+        start_time = datetime.now(timezone.utc)
+        execution_start_ms = int(start_time.timestamp() * 1000)
+        
+        try:
+            # Step 1: Fetch analysis
+            self.logger.info(f"📦 Fetching analysis: {analysis_id}")
+            
+            analysis = await self.analysis_repo.get_analysis_by_id(analysis_id)
+            
+            if not analysis:
+                if session_id:
+                    await send_progress_error(session_id, "Execution failed")
+                return {
+                    "success": False,
+                    "error": f"Analysis not found: {analysis_id}"
+                }
+            
+            # Step 2: Get execution parameters
+            self.logger.info("📋 Extracting execution parameters")
+            llm_response = analysis.get("llm_response") or analysis.get("llmResponse")
+            
+            if llm_response.get("status") != "success":
+                if session_id:
+                    await send_progress_error(session_id, "Execution failed")
+                return {
+                    "success": False,
+                    "error": f"Cannot execute failed analysis: {llm_response.get('error')}"
+                }
+            
+            execution_config = llm_response.get("execution", {})
+            script_filename = execution_config.get("script_name", "analysis.py")
+            parameters = execution_config.get("parameters", {})
+            
+            self.logger.info(f"📝 Script: {script_filename}, Parameters: {parameters}")
+            
+            # Step 3: Get script content
+            script_name = analysis.get("script_url") or analysis.get("scriptUrl")
+            self.logger.info(f"📥 Loading script from storage: {script_name}")
+            script_content = await self._load_script(script_name)
+            
+            if not script_content:
+                if session_id:
+                    await send_progress_error(session_id, "Execution failed")
+                return {
+                    "success": False,
+                    "error": f"Failed to load script from storage: {script_name}"
+                }
+            
+            # Step 4: Running script
+            self.logger.info("⚙️ Executing script...")
+            if session_id:
+                await send_progress_info(session_id, "Running script")
+                # Send execution running status update via SSE
+                if execution_id:
+                    await send_progress_event(session_id, {"type": "execution_status", "execution_id": execution_id, "analysis_id": analysis_id, "status": "running", "level": "info", "message": "Analysis execution in progress"})
+            
+            execution_result = await self._execute_script(
+                script_content=script_content,
+                parameters=parameters,
+                timeout_seconds=timeout_seconds
+            )
+            
+            execution_time_ms = int((datetime.now(timezone.utc).timestamp() * 1000) - execution_start_ms)
+            
+            if not execution_result["success"]:
+                # Execution failed
+                self.logger.error(f"❌ Execution failed: {execution_result.get('error')}")
+                if session_id:
+                    await send_progress_error(session_id, "Execution failed")
+                    # Send execution failed status update via SSE
+                    if execution_id:
+                        await send_progress_event(session_id, {"type": "execution_status", "execution_id": execution_id, "analysis_id": analysis_id, "status": "failed", "level": "error", "message": f"Analysis execution failed: {execution_result.get('error')}"})
+                
+                return {
+                    "success": False,
+                    "error": execution_result.get("error"),
+                    "execution_time_ms": execution_time_ms
+                }
+            
+            # Step 5: Execution completed successfully
+            self.logger.info("💾 Execution complete")
+            
+            result_data = execution_result.get("result", {})
+            
+            # Step 6: Generate markdown summary from results using original question
+            user_question = analysis.get("question")
+            markdown_summary = await self._generate_markdown_summary(result_data, user_question)
+            
+            # Add markdown to result_data
+            if markdown_summary:
+                result_data["markdown"] = markdown_summary
+                self.logger.info("✅ Generated markdown summary")
+            
+            if session_id:
+                await send_progress_event(session_id, {"type": "progress", "level": "success", "message": "Analysis complete"})
+                # Send execution completed status update via SSE
+                if execution_id:
+                    await send_progress_event(session_id, {"type": "execution_status", "execution_id": execution_id, "analysis_id": analysis_id, "status": "completed", "level": "success", "message": "Analysis execution completed"})
+            
+            self.logger.info(f"✅ Execution completed successfully in {execution_time_ms}ms")
+            
+            return {
+                "success": True,
+                "analysis_id": analysis_id,
+                "result": result_data,
+                "execution_time_ms": execution_time_ms,
+                "executed_at": start_time.isoformat()
+            }
+            
+        except Exception as e:
+            self.logger.error(f"❌ Execution service error: {e}")
+            if session_id:
+                await send_progress_event(session_id, f"Execution error: {str(e)}")
+                # Send execution failed status update via SSE
+                if execution_id:
+                    await send_progress_event(session_id, {"type": "execution_status", "execution_id": execution_id, "analysis_id": analysis_id, "status": "failed", "level": "error", "message": f"Service error: {str(e)}"})
+            import traceback
+            traceback.print_exc()
+            return {
+                "success": False,
+                "error": f"Execution error: {str(e)}"
+            }
+    
+    async def _load_script(self, script_name: str) -> Optional[str]:
+        """Load script content from storage"""
+        try:
+            storage = get_storage()
+            content = await storage.read_script(script_name)
+            if content:
+                self.logger.info(f"✅ Loaded script from storage: {len(content)} bytes")
+                return content
+            else:
+                self.logger.error(f"❌ Script not found in storage: {script_name}")
+                return None
+        except Exception as e:
+            self.logger.error(f"❌ Failed to load script from storage: {e}")
+            return None
+    
+    async def _execute_script(
+        self,
+        script_content: str,
+        parameters: Dict[str, Any],
+        timeout_seconds: int = 300
+    ) -> Dict[str, Any]:
+        """
+        Call execution server to execute script with parameters
+        """
+        try:
+            self.logger.info(f"🚀 Calling execution server (timeout: {timeout_seconds}s)")
+            
+            # Get execution server URL from environment
+            exec_server_url = os.getenv("EXECUTION_SERVER_URL", "http://localhost:8011")
+            
+            # Prepare request payload
+            payload = {
+                "script": script_content,
+                "parameters": parameters,
+                "timeout_seconds": timeout_seconds
+            }
+            
+            # Call execution server
+            async with httpx.AsyncClient(timeout=timeout_seconds + 10) as client:
+                response = await client.post(
+                    f"{exec_server_url}/execute",
+                    json=payload
+                )
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    
+                    if result.get("success"):
+                        self.logger.info("✅ Execution server returned success")
+                        return {
+                            "success": True,
+                            "result": result.get("data", {})
+                        }
+                    else:
+                        self.logger.error(f"❌ Execution server error: {result.get('error')}")
+                        return {
+                            "success": False,
+                            "error": result.get("error", "Execution server returned error")
+                        }
+                else:
+                    self.logger.error(f"❌ Execution server HTTP {response.status_code}")
+                    return {
+                        "success": False,
+                        "error": f"Execution server error: HTTP {response.status_code}"
+                    }
+            
+        except httpx.TimeoutException:
+            return {
+                "success": False,
+                "error": f"Script execution timeout after {timeout_seconds}s"
+            }
+        except httpx.ConnectError:
+            return {
+                "success": False,
+                "error": f"Failed to connect to execution server at {os.getenv('EXECUTION_SERVER_URL', 'http://localhost:8011')}"
+            }
+        except Exception as e:
+            self.logger.error(f"❌ Execution service error: {e}")
+            return {
+                "success": False,
+                "error": f"Execution error: {str(e)}"
+            }
+    
+    async def _generate_markdown_summary(self, result_data: Dict[str, Any], user_question: Optional[str] = None) -> Optional[str]:
+        """Generate markdown summary from execution results using LLM"""
+        try:
+            # Check if we have results to process
+            results = result_data.get("results", {})
+            if not results:
+                return None
+            
+            self.logger.info("🤖 Generating markdown summary from results using LLM")
+            
+            # Use the shared result formatter to generate markdown with user question context
+            markdown = await self.result_formatter.format_execution_result(result_data, user_question)
+            
+            return markdown
+            
+        except Exception as e:
+            self.logger.warning(f"⚠️ Failed to generate markdown summary: {e}")
+            return None

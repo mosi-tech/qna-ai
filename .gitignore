@@ -87,3 +87,7 @@ backend/scripts/batch_processor.log
 .vscode
 /backend/shared/analyze/code_gen
 /bruno
+/backend/apiServer/logs
+/backend/executionServer/logs
+/backend/executionServer/logs
+*.log

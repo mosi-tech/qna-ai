@@ -1,0 +1,234 @@
+{
+  "name": "Alpaca Trading API",
+  "description": "Account management and trading operations",
+  "endpoints": [
+    {
+      "name": "get_account_activities",
+      "description": "Account activities (trades, fills, transactions)",
+      "parameters": [
+        "activity_type",
+        "date",
+        "until",
+        "after",
+        "direction",
+        "page_size"
+      ]
+    },
+    {
+      "name": "get_account_configurations",
+      "description": "Account trading configurations",
+      "parameters": []
+    },
+    {
+      "name": "get_corporate_actions_announcements",
+      "description": "Corporate action announcements",
+      "parameters": [
+        "ca_types",
+        "since",
+        "until",
+        "symbol",
+        "cusip"
+      ]
+    },
+    {
+      "name": "get_options_contracts",
+      "description": "Available options contracts",
+      "parameters": [
+        "underlying_symbol",
+        "status",
+        "expiration_date",
+        "expiration_date_gte",
+        "expiration_date_lte",
+        "root_symbol",
+        "type",
+        "strike_price_gte",
+        "strike_price_lte"
+      ]
+    },
+    {
+      "name": "get_wallets",
+      "description": "Crypto wallets information",
+      "parameters": []
+    },
+    {
+      "name": "get_wallets_transfers",
+      "description": "Crypto wallet transfers",
+      "parameters": [
+        "asset",
+        "status",
+        "transfer_type"
+      ]
+    },
+    {
+      "name": "get_clock",
+      "description": "Market clock status",
+      "parameters": []
+    },
+    {
+      "name": "get_account",
+      "description": "Get account information including buying power, equity, cash balance",
+      "parameters": []
+    },
+    {
+      "name": "get_positions",
+      "description": "Get all open positions with P&L, market values, quantities",
+      "parameters": []
+    },
+    {
+      "name": "get_positions_symbol",
+      "description": "Get specific position details for one symbol",
+      "parameters": [
+        "symbol"
+      ]
+    },
+    {
+      "name": "get_orders",
+      "description": "Get order history and status (filled, open, canceled)",
+      "parameters": [
+        "status",
+        "limit",
+        "after",
+        "until",
+        "direction",
+        "nested"
+      ]
+    },
+    {
+      "name": "get_portfolio_history",
+      "description": "Portfolio performance history showing value changes over time",
+      "parameters": [
+        "period",
+        "timeframe",
+        "end_date",
+        "extended_hours"
+      ]
+    },
+    {
+      "name": "get_watchlists",
+      "description": "Get user's watchlists with symbols",
+      "parameters": []
+    },
+    {
+      "name": "get_watchlists_id",
+      "description": "Get specific watchlist by ID",
+      "parameters": [
+        "id"
+      ]
+    },
+    {
+      "name": "get_assets",
+      "description": "Get tradeable assets/instruments",
+      "parameters": [
+        "status",
+        "asset_class"
+      ]
+    },
+    {
+      "name": "get_calendar",
+      "description": "Market calendar with open/close times and holidays",
+      "parameters": [
+        "start",
+        "end"
+      ]
+    },
+    {
+      "name": "get_orders_order_id",
+      "description": "Get, replace, or cancel specific order by ID",
+      "parameters": [
+        "order_id"
+      ]
+    },
+    {
+      "name": "get_positions_symbol_or_asset_id_exercise",
+      "description": "Exercise options position",
+      "parameters": [
+        "symbol_or_asset_id"
+      ]
+    },
+    {
+      "name": "get_account_portfolio_history",
+      "description": "Portfolio performance history (alias for /v2/portfolio/history)",
+      "parameters": [
+        "period",
+        "timeframe",
+        "end_date",
+        "extended_hours"
+      ]
+    },
+    {
+      "name": "get_watchlists_by_name",
+      "description": "Get watchlist by name",
+      "parameters": [
+        "name"
+      ]
+    },
+    {
+      "name": "get_watchlists_watchlist_id_symbol",
+      "description": "Add or remove symbol from watchlist",
+      "parameters": [
+        "watchlist_id",
+        "symbol"
+      ]
+    },
+    {
+      "name": "get_account_activities_activity_type",
+      "description": "Get specific activity type (FILL, TRANS, MISC, etc.)",
+      "parameters": [
+        "activity_type",
+        "date",
+        "until",
+        "after",
+        "direction",
+        "page_size"
+      ]
+    },
+    {
+      "name": "get_assets_symbol_or_asset_id",
+      "description": "Get specific asset information by symbol or asset ID",
+      "parameters": [
+        "symbol_or_asset_id"
+      ]
+    },
+    {
+      "name": "get_options_contracts_symbol_or_id",
+      "description": "Get specific options contract details",
+      "parameters": [
+        "symbol_or_id"
+      ]
+    },
+    {
+      "name": "get_corporate_actions_announcements_id",
+      "description": "Get specific corporate action announcement by ID",
+      "parameters": [
+        "id"
+      ]
+    },
+    {
+      "name": "get_wallets_transfers_transfer_id",
+      "description": "Get specific crypto wallet transfer details",
+      "parameters": [
+        "transfer_id"
+      ]
+    },
+    {
+      "name": "get_wallets_whitelists",
+      "description": "Get crypto wallet whitelisted addresses",
+      "parameters": []
+    },
+    {
+      "name": "get_wallets_whitelists_whitelisted_address_id",
+      "description": "Get specific whitelisted address details",
+      "parameters": [
+        "whitelisted_address_id"
+      ]
+    },
+    {
+      "name": "get_wallets_fees_estimate",
+      "description": "Estimate crypto transaction fees",
+      "parameters": [
+        "currency",
+        "transfer_type"
+      ]
+    }
+  ]
+}
