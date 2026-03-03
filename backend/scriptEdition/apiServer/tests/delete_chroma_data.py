@@ -5,9 +5,13 @@ Delete all ChromaDB data
 
 import os
 import sys
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from search.library import AnalysisLibrary
+# Add backend directory to path for imports
+backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
+if backend_dir not in sys.path:
+    sys.path.insert(0, backend_dir)
+
+from shared.analyze.search.library import AnalysisLibrary
 
 def delete_all_chroma_data():
     """Delete all documents from ChromaDB collection"""
@@ -74,9 +78,9 @@ def delete_by_document_id(document_ids):
         print(f"📊 Found {len(existing_ids)} documents to delete:")
         for i, doc_id in enumerate(existing_ids):
             metadata = existing_results['metadatas'][i] if existing_results['metadatas'] else {}
-            analysis_type = metadata.get('analysis_type', 'Unknown')
+            response_type = metadata.get('response_type', 'Unknown')
             question = metadata.get('original_question', 'No question')[:60]
-            print(f"  • {doc_id}: {analysis_type} - {question}...")
+            print(f"  • {doc_id}: {response_type} - {question}...")
         
         # Delete the documents
         collection.delete(ids=existing_ids)
@@ -120,12 +124,12 @@ def list_documents(limit=10):
         
         for i, doc_id in enumerate(results['ids']):
             metadata = results['metadatas'][i] if results['metadatas'] else {}
-            analysis_type = metadata.get('analysis_type', 'Unknown')
+            response_type = metadata.get('response_type', 'Unknown')
             question = metadata.get('original_question', 'No question')[:60]
             timestamp = metadata.get('timestamp', 'No timestamp')
             
             print(f"  {i+1}. ID: {doc_id}")
-            print(f"     Type: {analysis_type}")
+            print(f"     Type: {response_type}")
             print(f"     Question: {question}...")
             print(f"     Created: {timestamp}")
             print()
