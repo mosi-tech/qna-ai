@@ -299,6 +299,16 @@ class AnalysisQueueWorker(BaseQueueWorker):
                     "error": error_msg,
                     "internal_error": internal_error
                 })
+                # Canonical terminal event (Fix #11 — Phase 3)
+                await send_progress_event(session_id, {
+                    "type": "analysis_complete",
+                    "job_id": job_id,
+                    "message_id": message_id,
+                    "status": "failed",
+                    "message": f"Analysis failed: {error_msg}",
+                    "level": "error",
+                    "error": error_msg,
+                })
                 raise ValueError(f"{error_msg}: {internal_error}")
             
             # Extract results from pipeline response
@@ -335,7 +345,19 @@ class AnalysisQueueWorker(BaseQueueWorker):
                 "analysis_id": result.get("analysis_id"),
                 "execution_id": result.get("execution_id")
             })
-            
+            # Canonical terminal event (Fix #11 — Phase 3)
+            await send_progress_event(session_id, {
+                "type": "analysis_complete",
+                "job_id": job_id,
+                "message_id": message_id,
+                "status": "completed",
+                "message": "Analysis completed successfully",
+                "level": "success",
+                "response_type": response_type,
+                "analysis_id": result.get("analysis_id"),
+                "execution_id": result.get("execution_id"),
+            })
+
             await self.queue.ack_analysis(job_id, result)
             logger.info(f"✅ Completed analysis: {job_id} (type: {response_type})")
             
@@ -351,7 +373,17 @@ class AnalysisQueueWorker(BaseQueueWorker):
                 "log_to_message": True if message_id else False,
                 "error": str(e)
             })
-            
+            # Canonical terminal event (Fix #11 — Phase 3)
+            await send_progress_event(session_id, {
+                "type": "analysis_complete",
+                "job_id": job_id,
+                "message_id": message_id,
+                "status": "failed",
+                "message": f"Analysis failed: {str(e)}",
+                "level": "error",
+                "error": str(e),
+            })
+
             # Use configurable retry logic
             should_retry = hasattr(self, 'max_retries') and self.max_retries > 0
             await self.queue.nack_analysis(job_id, str(e), retry=should_retry)

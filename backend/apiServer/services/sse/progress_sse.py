@@ -57,12 +57,20 @@ class ProgressEvent:
         }
 
     def to_sse(self) -> str:
-        """Convert to Server-Sent Event format"""
+        """Convert to Server-Sent Event format.
+
+        Emits the SSE `id:` field using the MongoDB document timestamp injected
+        as `_sse_id` in the details dict by ProgressMonitor.  Browsers
+        automatically send this back as `Last-Event-ID` on reconnect, enabling
+        missed-event replay (Fix #1 / Phase 3).
+        """
         try:
             import orjson
             data_dict = self.to_dict()
+            # Pop the private replay-id key so it is not included in the JSON payload
+            sse_id = data_dict.get("details", {}).pop("_sse_id", None) or self.timestamp
             json_bytes = orjson.dumps(data_dict, option=orjson.OPT_SERIALIZE_DATACLASS)
-            return f"data: {json_bytes.decode()}\n\n"
+            return f"id: {sse_id}\ndata: {json_bytes.decode()}\n\n"
         except Exception as e:
             logger.error(f"❌ SSE serialization error: {e}")
             return f'data: {{"error": "Serialization failed", "message": "{str(e)}"}}\n\n'

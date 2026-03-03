@@ -110,6 +110,12 @@ class ProgressMonitorService:
                 logger.warning(f"Progress event missing session_id: {event}")
                 return
 
+            # Inject the MongoDB document timestamp as the SSE event id so that
+            # ProgressEvent.to_sse() can emit it as `id:` — browsers send it back
+            # as Last-Event-ID on reconnect, enabling missed-event replay (Fix #1).
+            raw_ts = event.get("timestamp")
+            event["_sse_id"] = raw_ts.isoformat() if isinstance(raw_ts, datetime) else str(raw_ts or "")
+
             if event_type == "execution_status":
                 await self._handle_execution_status(session_id, event)
             else:
