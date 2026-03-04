@@ -21,6 +21,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 from shared.services.result_formatter import create_shared_result_formatter
 from shared.db.repositories import RepositoryManager
+from shared.db.schemas import BlockStatus
 
 logger = logging.getLogger("execution-service")
 
@@ -72,7 +73,12 @@ class ExecutionService:
                     "success": False,
                     "error": f"Analysis not found: {analysis_id}"
                 }
-            
+
+            # ── Dashboard context (set by DashboardOrchestrator when applicable) ────
+            _meta        = analysis.get("metadata", {})
+            dashboard_id = _meta.get("dashboard_id")
+            block_id     = _meta.get("block_id")
+
             # Step 2: Get execution parameters
             self.logger.info("📋 Extracting execution parameters")
             llm_response = analysis.get("llm_response") or analysis.get("llmResponse")
@@ -128,7 +134,24 @@ class ExecutionService:
                     # Send execution failed status update via SSE
                     if execution_id:
                         await send_progress_event(session_id, {"type": "execution_status", "execution_id": execution_id, "analysis_id": analysis_id, "status": "failed", "level": "error", "message": f"Analysis execution failed: {execution_result.get('error')}"})
-                
+
+                # ── Dashboard block failure hookback ────────────────────────────────────
+                if dashboard_id and block_id:
+                    await self.repo.dashboard.update_block_status(
+                        dashboard_id, block_id,
+                        status=BlockStatus.FAILED,
+                        execution_id=execution_id,
+                        error=execution_result.get("error", "Execution failed"),
+                    )
+                    if session_id:
+                        await send_progress_event(session_id, {
+                            "type":         "block_update",
+                            "dashboard_id": dashboard_id,
+                            "block_id":     block_id,
+                            "status":       "failed",
+                        })
+                    self.logger.info(f"❌ Block failure emitted: dashboard={dashboard_id} block={block_id}")
+
                 return {
                     "success": False,
                     "error": execution_result.get("error"),
@@ -156,7 +179,25 @@ class ExecutionService:
                     await send_progress_event(session_id, {"type": "execution_status", "execution_id": execution_id, "analysis_id": analysis_id, "status": "completed", "level": "success", "message": "Analysis execution completed"})
             
             self.logger.info(f"✅ Execution completed successfully in {execution_time_ms}ms")
-            
+
+            # ── Dashboard block success hookback ─────────────────────────────────────
+            if dashboard_id and block_id:
+                await self.repo.dashboard.update_block_status(
+                    dashboard_id, block_id,
+                    status=BlockStatus.COMPLETE,
+                    result_data=result_data,
+                    execution_id=execution_id,
+                )
+                if session_id:
+                    await send_progress_event(session_id, {
+                        "type":         "block_update",
+                        "dashboard_id": dashboard_id,
+                        "block_id":     block_id,
+                        "status":       "complete",
+                        "result_data":  result_data,
+                    })
+                self.logger.info(f"✅ Block update emitted: dashboard={dashboard_id} block={block_id}")
+
             return {
                 "success": True,
                 "analysis_id": analysis_id,
