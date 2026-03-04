@@ -6,6 +6,7 @@ import ClarificationPrompt from './ClarificationPrompt';
 import ClarificationSummary from './ClarificationSummary';
 import StepProgressDisplay from '@/components/progress/StepProgressDisplay';
 import UIConfigurationRenderer from '@/components/insights/UIConfigurationRenderer';
+import DashboardResultSection from '@/components/dashboard/DashboardResultSection';
 import { useProgress } from '@/lib/context/ProgressContext';
 import { renderMarkdown } from '@/lib/utils/markdown';
 
@@ -218,6 +219,23 @@ export default function ChatMessage({
 
   // Handle completed states based on response_type
   if (message.status === 'completed') {
+    // Phase 8: Dashboard result — render progressive DashboardCanvas
+    if (message.data?.dashboard_id) {
+      return (
+        <div className="flex gap-3 w-full">
+          <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
+            <span className="text-indigo-600 text-sm">📊</span>
+          </div>
+          <div className="flex-1 max-w-6xl">
+            <DashboardResultSection
+              dashboardId={message.data.dashboard_id}
+              initialPlan={message.data}
+            />
+          </div>
+        </div>
+      );
+    }
+
     // Check if message has UI configuration data first (regardless of response_type)
     if (hasUIConfig(message)) {
       const uiConfig = getUIConfig(message);

@@ -85,6 +85,42 @@ function HomeContent() {
         content: userMessage,
       });
 
+      // Phase 8: Try the dashboard pipeline first.
+      // POST /api/dashboard/create returns the full initial plan (<2 s).
+      // Cached blocks include result_data immediately; pending blocks arrive
+      // progressively via `block_update` SSE events handled by DashboardResultSection.
+      // If the endpoint is unavailable (e.g. orchestrator not yet wired) the
+      // catch block falls through to the existing analyzeQuestion path.
+      try {
+        const dashMessageId = `msg-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+        const dashResponse = await api.client.post<{ success: boolean; data: any }>(
+          '/api/dashboard/create',
+          {
+            question: userMessage,
+            sessionId: session_id,
+            messageId: dashMessageId,
+          }
+        );
+
+        if (dashResponse.success && dashResponse.data?.dashboard_id) {
+          const plan = dashResponse.data;
+          addMessage({
+            type: 'results',
+            content: plan.title || userMessage,
+            status: 'completed',
+            data: plan,
+          });
+          ProgressManager.addLog(session_id, {
+            level: 'success',
+            message: `Dashboard created: ${plan.dashboard_id} (${plan.blocks?.length ?? 0} blocks)`,
+          });
+          return; // skip existing analyzeQuestion path
+        }
+      } catch (_dashErr) {
+        // Dashboard endpoint unavailable — fall through to existing analysis path.
+        console.warn('[Home] Dashboard create failed, falling back to analyzeQuestion:', _dashErr);
+      }
+
       ProgressManager.addLog(session_id, {
         level: 'info',
         message: 'Sending analysis request to server...',
@@ -95,7 +131,7 @@ function HomeContent() {
         session_id: session_id,
         enable_caching: true,
       });
-      
+
       console.log('[Home] About to call analyzeQuestion with:', {
         question: userMessage,
         session_id: session_id,
@@ -107,7 +143,7 @@ function HomeContent() {
         session_id: session_id,
         enable_caching: true,
       });
-      
+
       console.log('[Home] Received response from analyzeQuestion:', response);
 
       if (response.success && response.data) {
@@ -130,10 +166,10 @@ function HomeContent() {
           });
         } else {
           // Check if needs_clarification is in context_result or directly in data
-          const needsClarification = response.data.needs_clarification || 
+          const needsClarification = response.data.needs_clarification ||
             (response.data.context_result && response.data.context_result.needs_clarification);
           const clarificationData = response.data.context_result || response.data;
-          
+
           if (needsClarification) {
             ProgressManager.addLog(session_id, {
               level: 'info',
@@ -161,8 +197,8 @@ function HomeContent() {
               data: response.data,
               originalQuestion: userMessage,
             });
-          } else if (response.data.needs_confirmation || 
-                     (response.data.context_result && response.data.context_result.needs_confirmation)) {
+          } else if (response.data.needs_confirmation ||
+            (response.data.context_result && response.data.context_result.needs_confirmation)) {
             ProgressManager.addLog(session_id, {
               level: 'info',
               message: 'Analysis requires user confirmation',
@@ -212,7 +248,7 @@ function HomeContent() {
                 analysisId: response.data.analysis_id,
                 executionId: response.data.execution_id,
               });
-              
+
               // Override the frontend message ID with backend message ID for SSE matching
               pendingMsg.id = response.data.message_id;
 
@@ -454,7 +490,7 @@ function HomeContent() {
         total: sessionDetail.total_messages || 0,
         hasOlder: sessionDetail.has_older || false,
       });
-      
+
       console.log(`[Home] Resumed session ${selectedSessionId} with ${loadedMessages.length} messages`);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to resume session';
@@ -471,7 +507,7 @@ function HomeContent() {
     try {
       setIsLoadingOlderMessages(true);
       const newOffset = currentSessionMessages.offset + currentSessionMessages.limit;
-      
+
       const sessionDetail = await getSessionDetail(session_id, newOffset, currentSessionMessages.limit);
       if (!sessionDetail) {
         setUIError('Failed to load older messages');
@@ -483,8 +519,8 @@ function HomeContent() {
         if (msg.role === 'assistant') {
           // Check if this assistant message contains analysis results
           if (msg.metadata && (
-            msg.metadata.query_type || 
-            msg.metadata.analysis_type || 
+            msg.metadata.query_type ||
+            msg.metadata.analysis_type ||
             msg.metadata.best_day ||
             msg.metadata.response_type === 'analysis' ||
             (msg.metadata.response_data && msg.metadata.response_data.analysis_result)
@@ -706,7 +742,7 @@ function HomeContent() {
 
 function Home() {
   const { session_id } = useSession();
-  
+
   return (
     <ProgressProvider sessionId={session_id}>
       <HomeContent />

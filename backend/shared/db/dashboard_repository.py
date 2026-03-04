@@ -79,6 +79,21 @@ class DashboardRepository:
         )
         return await cursor.to_list(length=limit)
 
+    async def list_by_session(
+        self,
+        session_id: str,
+        skip: int = 0,
+        limit: int = 20,
+    ) -> List[Dict[str, Any]]:
+        """Return recent dashboard plans for a session (newest first)."""
+        cursor = (
+            self._col.find({"sessionId": session_id}, {"_id": 0})
+            .sort("createdAt", -1)
+            .skip(skip)
+            .limit(limit)
+        )
+        return await cursor.to_list(length=limit)
+
     # ------------------------------------------------------------------
     # Block status updates
     # ------------------------------------------------------------------

@@ -40,6 +40,7 @@ from api.progress_routes import router as progress_router
 from api.session_routes import router as session_router
 from api.analysis_routes import router as analysis_router
 from api.test_ui_routes import router as test_ui_router
+from api.dashboard_routes import router as dashboard_router
 from shared.db import MongoDBClient, RepositoryManager
 from shared.services.session_manager import SessionManager
 from shared.locking import initialize_session_lock
@@ -102,6 +103,28 @@ async def lifespan(app: FastAPI):
         logger.info("🔧 Initializing analysis queue...")
         initialize_analysis_queue(db_client.db)
         logger.info("✅ Analysis queue initialized")
+
+        # Dashboard orchestrator (Phase 7)
+        logger.info("🔧 Initializing dashboard orchestrator...")
+        try:
+            from shared.queue.analysis_queue import get_analysis_queue
+            from shared.services.ui_planner import create_ui_planner
+            from shared.services.block_cache_service import create_block_cache_service
+            from shared.services.dashboard_orchestrator import create_dashboard_orchestrator
+
+            _ui_planner  = create_ui_planner()
+            _block_cache = create_block_cache_service(repo_manager.dashboard)
+            _dash_orch   = create_dashboard_orchestrator(
+                repo_manager=repo_manager,
+                analysis_queue=get_analysis_queue(),
+                ui_planner=_ui_planner,
+                block_cache=_block_cache,
+            )
+            app.state.dashboard_orch = _dash_orch
+            logger.info("✅ Dashboard orchestrator initialized")
+        except Exception as _orch_err:
+            logger.warning("⚠️ Dashboard orchestrator failed to initialize: %s", _orch_err)
+            app.state.dashboard_orch = None
         
         # 3. Redis client for ConversationStore
         logger.info("🔧 Initializing Redis client...")
@@ -235,7 +258,10 @@ def create_app() -> FastAPI:
     
     # Include analysis routes
     app.include_router(analysis_router)
-    
+
+    # Include dashboard routes (Phase 7)
+    app.include_router(dashboard_router)
+
     # Include test UI routes
     app.include_router(test_ui_router)
     

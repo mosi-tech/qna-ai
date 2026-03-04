@@ -80,6 +80,11 @@ export const useProgressStream = (
             data.type = data.details.type;
           }
 
+          // Phase 8: broadcast every SSE event on the window event bus so that
+          // useBlockUpdates (and any other subscriber) can listen without opening
+          // a second EventSource connection.
+          window.dispatchEvent(new CustomEvent('sse_event', { detail: data }));
+
           if (data.type === 'connected') {
             console.log('[useProgressStream] Backend confirmed connection for session:', sessionId);
             console.log('%c🔗 SSE Connected!', 'color: green; font-weight: bold');
