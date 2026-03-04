@@ -6,6 +6,7 @@ import asyncio
 import functools
 import json
 import logging
+import os
 from typing import Dict, Any, List, Tuple, Optional
 import ollama
 import requests
@@ -23,6 +24,10 @@ class OllamaProvider(LLMProvider):
         
         if ollama is None:
             raise ImportError("ollama library not installed. Install with: pip install ollama")
+        
+        # Request timeout — large cloud models (e.g. qwen3-coder:480b) can take
+        # several minutes; default to 300s, overridable via OLLAMA_TIMEOUT.
+        self.request_timeout = int(os.getenv("OLLAMA_TIMEOUT", "300"))
         
         # Determine if this is Ollama Cloud or local
         self.is_cloud = "ollama.com" in base_url or api_key != ""
@@ -157,7 +162,7 @@ class OllamaProvider(LLMProvider):
             loop = asyncio.get_event_loop()
             response = await loop.run_in_executor(
                 None,
-                functools.partial(requests.post, url, headers=headers, json=request_data, timeout=60)
+                functools.partial(requests.post, url, headers=headers, json=request_data, timeout=self.request_timeout)
             )
             response.raise_for_status()
             

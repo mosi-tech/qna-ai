@@ -170,8 +170,19 @@ function ChatPageContent({ overrideSessionId }: { overrideSessionId?: string | n
           );
           console.log('[catch-up] pending count:', pending.length, pending.map((m: any) => ({ id: m.id, status: m.status, type: m.type })));
           if (pending.length > 0) {
+            // Only the most-recent in-flight message can legitimately still be running.
+            // Everything before it is a stale orphan from an earlier request — fail it out
+            // immediately so we never show multiple bubbles simultaneously.
+            const latestPendingId = pending[pending.length - 1]?.id;
+            for (const stale of pending.slice(0, -1)) {
+              const staleId = stale.id as string | undefined;
+              if (staleId) {
+                console.log('[catch-up] failing orphaned stale message:', staleId);
+                updateMessage(staleId, { status: 'failed' as any, type: 'ai' });
+              }
+            }
             const stillPending: typeof pending = [];
-            for (const message of pending) {
+            for (const message of pending.filter((m: any) => m.id === latestPendingId)) {
               const messageId = message.id as string | undefined;
               if (!messageId) continue;
               try {

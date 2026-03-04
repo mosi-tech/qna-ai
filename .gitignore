@@ -84,6 +84,7 @@ backend/scriptEdition/apiServer/search/data/*
 backend/scriptEdition/apiServer/data/*
 backend/scripts/batch_results
 backend/scripts/batch_processor.log
+backend/data/analysis_library_db/chroma.sqlite3
 /serena
 /backend/scriptEdition/apiServer/code_gen
 .serena
