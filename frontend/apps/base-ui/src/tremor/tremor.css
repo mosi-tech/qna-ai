@@ -1,0 +1,82 @@
+/* Tremor Theme Styles */
+
+/* Chart colors and styling */
+.tremor-chart {
+    font-family: inherit;
+}
+
+/* Line chart styling */
+.recharts-surface {
+    font-family: inherit;
+}
+
+.recharts-text {
+    font-size: 12px;
+    fill: currentColor;
+}
+
+.recharts-cartesian-axis-tick text {
+    font-size: 12px;
+}
+
+/* Legend */
+.recharts-legend {
+    padding-top: 16px;
+}
+
+.recharts-legend-item {
+    margin-right: 16px;
+    margin-bottom: 8px;
+}
+
+.recharts-legend-item-text {
+    font-size: 14px;
+    color: currentColor;
+}
+
+/* Tooltip */
+.recharts-tooltip {
+    outline: none !important;
+}
+
+.recharts-default-tooltip {
+    background-color: white;
+    border-radius: 0.375rem;
+    padding: 12px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.recharts-default-tooltip label {
+    color: #6b7280;
+    font-size: 12px;
+}
+
+.recharts-tooltip-item {
+    color: #374151;
+    font-size: 13px;
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+    .recharts-default-tooltip {
+        background-color: #1f2937;
+        border-color: #374151;
+    }
+
+    .recharts-text {
+        fill: #d1d5db;
+    }
+
+    .recharts-legend-item-text {
+        color: #d1d5db;
+    }
+
+    .recharts-default-tooltip label {
+        color: #9ca3af;
+    }
+
+    .recharts-tooltip-item {
+        color: #f3f4f6;
+    }
+}

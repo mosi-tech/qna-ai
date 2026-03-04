@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Geist Sans from Google Fonts or local — falls back to system sans */
+@import url('https://fonts.googleapis.com/css2?family=Geist+Sans:wght@300;400;500;600;700&display=swap');
+
+/* Animation used by BlockShell */
+@layer utilities {
+    .animate-fadeIn {
+        animation: fadeIn 300ms ease-out both;
+    }
+}
