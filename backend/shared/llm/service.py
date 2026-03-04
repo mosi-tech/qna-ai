@@ -452,3 +452,9 @@ def create_ui_formatter_llm() -> LLMService:
     config = LLMConfig.for_task("UI_FORMATTER")
     config.service_name = "ui-result-formatter"
     return LLMService(config)
+
+def create_ui_planner_llm() -> LLMService:
+    """Create fast/cheap LLM for UIPlanner — planning only, not execution analysis"""
+    config = LLMConfig.for_task("UI_PLANNER")
+    config.service_name = "ui-planner"
+    return LLMService(config)
