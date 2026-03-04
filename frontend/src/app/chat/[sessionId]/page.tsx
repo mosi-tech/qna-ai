@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, use } from 'react';
 import { useSession } from '@/lib/context/SessionContext';
 import { useConversation } from '@/lib/context/ConversationContext';
 import { ChatMessage } from '@/lib/hooks/useConversation';
@@ -19,23 +19,35 @@ import { ProgressManager } from '@/lib/progress/ProgressManager';
 import { withAuth } from '@/lib/context/AuthContext';
 import { apiClient } from '@/lib/api/client';
 
+/** Normalize backend MessageStatus variants to the ChatMessage status union. */
+function normalizeStatus(status: string): 'completed' | 'failed' | 'pending' | 'running' | undefined {
+  if (['completed', 'analysis_completed', 'execution_completed'].includes(status)) return 'completed';
+  if (['failed', 'analysis_failed', 'execution_failed'].includes(status)) return 'failed';
+  if (status === 'pending') return 'pending';
+  if (status === 'running' || status === 'execution_running') return 'running';
+  return undefined;
+}
+
 function ChatPageContent({ overrideSessionId }: { overrideSessionId?: string | null }) {
   const { session_id: contextSessionId, user_id, resumeSession, updateSessionMetadata, startNewSession } = useSession();
-  
+
   // Use override session ID if provided, otherwise use context session ID
   const session_id = overrideSessionId || contextSessionId;
-  
-  console.log('[ChatPageContent] Authentication status:', { 
-    user_id, 
-    session_id, 
+
+  console.log('[ChatPageContent] Authentication status:', {
+    user_id,
+    session_id,
     overrideSessionId,
-    contextSessionId 
+    contextSessionId
   });
-  const { messages, addMessage, updateMessage, setMessages } = useConversation();
+  const { messages, addMessage, updateMessage, removeMessage, setMessages } = useConversation();
   const { viewMode, setViewMode, isProcessing, setIsProcessing, error: uiError, setError: setUIError } = useUI();
   const { sendChatMessage, isLoading: analysisLoading } = useAnalysis();
-  const { logs: progressLogs, isConnected, clearLogs, registerAnalysisCompleteCallback } = useProgress();
+  const { logs: progressLogs, isConnected, clearLogs, setMessageReadyHandler } = useProgress();
   const { getSessionDetail } = useSessionManager();
+
+  // Ref tracking the temporary thinking-bubble message ID during an in-flight request.
+  const thinkingMsgIdRef = useRef<string | null>(null);
 
   // Function to fetch updated message content from API
   const fetchUpdatedMessage = useCallback(async (messageId: string) => {
@@ -80,17 +92,17 @@ function ChatPageContent({ overrideSessionId }: { overrideSessionId?: string | n
   const loadedSessionIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    console.log('[ChatPageContent] useEffect triggered:', { 
-      session_id, 
+    console.log('[ChatPageContent] useEffect triggered:', {
+      session_id,
       loadedSessionIdRef: loadedSessionIdRef.current,
       condition: !session_id || loadedSessionIdRef.current === session_id
     });
-    
+
     if (!session_id) {
       console.log('[ChatPageContent] No session_id, skipping message load');
       return;
     }
-    
+
     if (loadedSessionIdRef.current === session_id) {
       console.log('[ChatPageContent] Session already loaded, skipping');
       return;
@@ -105,26 +117,29 @@ function ChatPageContent({ overrideSessionId }: { overrideSessionId?: string | n
         console.log('[ChatPageContent] Calling getSessionDetail for:', session_id);
         const sessionDetail = await getSessionDetail(session_id, 0, 10);  // Load 10 messages initially
         console.log('[ChatPageContent] getSessionDetail result:', sessionDetail);
-        
+
         if (!sessionDetail) {
           console.log('[ChatPageContent] No session detail returned, setting sessionNotFound');
           setSessionNotFound(true);
           return;
         }
         const loadedMessages = (sessionDetail.messages || []).map((msg: any, idx: number) => {
-          console.log(`[DEBUG] Loading message ${idx}:`, msg);
+          // The session GET transforms messages via data_transformer, which puts
+          // status at the TOP LEVEL (not nested in metadata). We also check
+          // metadata.status as a fallback for raw/un-transformed messages.
+          const metaStatus = msg.metadata?.status || msg.status;
           return {
-            id: msg.id || `${session_id}-${idx}-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
+            // Use the real DB id (messageId), falling back to a generated one.
+            id: msg.messageId || msg.id || `${session_id}-${idx}-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
             type: (msg.role === 'user' ? 'user' : 'ai') as ChatMessage['type'],
-            ...msg,  // Flatten all message properties directly
+            ...msg,
+            // Explicit status takes precedence over spread to avoid losing the value.
+            status: metaStatus || undefined,
             timestamp: new Date(msg.timestamp || Date.now()),
           };
         });
 
-        console.log('[ChatPageContent] Processed messages:', loadedMessages);
-        
         if (loadedMessages.length > 0) {
-          console.log('[ChatPageContent] Setting messages in state:', loadedMessages.length);
           setMessages(loadedMessages);
           setCurrentSessionMessages({
             offset: sessionDetail.offset || 0,
@@ -132,6 +147,215 @@ function ChatPageContent({ overrideSessionId }: { overrideSessionId?: string | n
             total: sessionDetail.total_messages || 0,
             hasOlder: sessionDetail.has_older || false,
           });
+
+          // Catch-up: resolve any pending/running messages.
+          // status is now top-level (promoted from metadata above).
+          // Must match ALL non-terminal backend MessageStatus values:
+          //   pending, analysis_started, execution_queued, execution_running
+          const IN_FLIGHT_STATUSES = new Set([
+            'pending', 'running',
+            'analysis_started',
+            'execution_queued',
+            'execution_running',
+          ]);
+          console.log('[catch-up] all loaded messages:', loadedMessages.map((m: any) => ({
+            id: m.id,
+            role: m.role,
+            type: m.type,
+            status: m.status,
+            metaStatus: m.metadata?.status,
+          })));
+          const pending = loadedMessages.filter(
+            (m: any) => IN_FLIGHT_STATUSES.has(m.status) || m.type === 'thinking'
+          );
+          console.log('[catch-up] pending count:', pending.length, pending.map((m: any) => ({ id: m.id, status: m.status, type: m.type })));
+          if (pending.length > 0) {
+            // Only the most-recent in-flight message can legitimately still be running.
+            // Everything before it is a stale orphan from an earlier request — fail it out
+            // immediately so we never show multiple bubbles simultaneously.
+            const latestPendingId = pending[pending.length - 1]?.id;
+            for (const stale of pending.slice(0, -1)) {
+              const staleId = stale.id as string | undefined;
+              if (staleId) {
+                console.log('[catch-up] failing orphaned stale message:', staleId);
+                updateMessage(staleId, { status: 'failed' as any, type: 'ai' });
+              }
+            }
+            const stillPending: typeof pending = [];
+            for (const message of pending.filter((m: any) => m.id === latestPendingId)) {
+              const messageId = message.id as string | undefined;
+              if (!messageId) continue;
+              try {
+                const resp = await apiClient.get<{ status: string; response_type?: string }>(
+                  `/api/progress/${session_id}/messages/${messageId}/status`
+                );
+                console.log('[catch-up] status resp for', messageId, resp);
+                if (!resp.success || !resp.data) {
+                  // Can't reach status — treat as orphaned.
+                  updateMessage(messageId, { status: 'failed' as any, type: 'ai' });
+                  continue;
+                }
+                const { status } = resp.data;
+                console.log('[catch-up] message', messageId, 'status =', status);
+                // Terminal = any backend "completed" or "failed" state.
+                const isTerminal = [
+                  'completed', 'failed',
+                  'analysis_completed', 'analysis_failed',
+                  'execution_completed', 'execution_failed',
+                ].includes(status);
+                if (!isTerminal) {
+                  // Job still in-flight — render as animated bubble while SSE knock resolves it.
+                  updateMessage(messageId, { type: 'thinking' });
+                  stillPending.push(message);
+                  continue;
+                }
+                clearLogs();
+                const updated = await fetchUpdatedMessage(messageId);
+                if (updated) {
+                  const isClarification = ['needs_clarification', 'needs_confirmation', 'clarification']
+                    .includes(updated.response_type);
+                  updateMessage(messageId, {
+                    ...updated,
+                    type: (isClarification ? 'clarification' : 'ai') as ChatMessage['type'],
+                    status: normalizeStatus(status),
+                  });
+                } else {
+                  updateMessage(messageId, { type: 'ai' as ChatMessage['type'], status: normalizeStatus(status) });
+                }
+              } catch {
+                // Status API unreachable — remove the bubble.
+                updateMessage(messageId, { status: 'failed' as any, type: 'ai' });
+              }
+            }
+            // For anything still in-flight, register SSE knock so it resolves when the job completes.
+            // resolvedBySSE guards the 30s timeout so a completed message is never overwritten.
+            if (stillPending.length > 0) {
+              const resolvedBySSE = new Set<string>();
+              setMessageReadyHandler(async (messageId: string, status: string) => {
+                resolvedBySSE.add(messageId);
+                clearLogs();
+                const updated = await fetchUpdatedMessage(messageId);
+                if (updated) {
+                  const isClarification = ['needs_clarification', 'needs_confirmation', 'clarification']
+                    .includes(updated.response_type);
+                  updateMessage(messageId, {
+                    ...updated,
+                    type: (isClarification ? 'clarification' : 'ai') as ChatMessage['type'],
+                    status: normalizeStatus(status),
+                  });
+                } else {
+                  updateMessage(messageId, { type: 'ai' as ChatMessage['type'], status: normalizeStatus(status) });
+                }
+              });
+              // Orphan fallback: if SSE never fires after 30s, do one final status poll
+              // before giving up — catches pure_chat messages where SSE may be missed.
+              for (const m of stillPending) {
+                const mid = m.id as string;
+                setTimeout(async () => {
+                  if (resolvedBySSE.has(mid)) return;
+                  try {
+                    const finalResp = await apiClient.get<{ status: string; response_type?: string }>(
+                      `/api/progress/${session_id}/messages/${mid}/status`
+                    );
+                    const finalStatus = finalResp.success ? finalResp.data?.status ?? 'unknown' : 'unknown';
+                    const isFinallyDone = [
+                      'completed', 'analysis_completed', 'execution_completed',
+                    ].includes(finalStatus);
+                    if (isFinallyDone) {
+                      resolvedBySSE.add(mid); // prevent double-resolve
+                      clearLogs();
+                      const updated = await fetchUpdatedMessage(mid);
+                      if (updated) {
+                        const isClarification = ['needs_clarification', 'needs_confirmation', 'clarification']
+                          .includes(updated.response_type);
+                        updateMessage(mid, {
+                          ...updated,
+                          type: (isClarification ? 'clarification' : 'ai') as ChatMessage['type'],
+                          status: normalizeStatus(finalStatus),
+                        });
+                      } else {
+                        updateMessage(mid, { type: 'ai' as ChatMessage['type'], status: normalizeStatus(finalStatus) });
+                      }
+                      return;
+                    }
+                  } catch {
+                    // Status check failed — fall through to error
+                  }
+                  updateMessage(mid, { status: 'failed' as any, type: 'ai' });
+                }, 30_000);
+              }
+            }
+          }
+
+          // Catch-up case 2: Race condition — page refreshed before the AI placeholder
+          // was visible in the DB. On submit we store the AI message ID in sessionStorage;
+          // read it back here to check status and show a thinking bubble.
+          if (pending.length === 0) {
+            const storedMsgId = sessionStorage.getItem(`pending_ai_message_${session_id}`);
+            console.log('[catch-up case 2] storedMsgId:', storedMsgId, 'session_id:', session_id);
+            if (storedMsgId) {
+              try {
+                const resp = await apiClient.get<{ status: string; response_type?: string }>(
+                  `/api/progress/${session_id}/messages/${storedMsgId}/status`
+                );
+                console.log('[catch-up case 2] status resp:', resp);
+                const status = resp.success ? resp.data?.status ?? 'unknown' : 'unknown';
+                const isTerminal = [
+                  'completed', 'failed',
+                  'analysis_completed', 'analysis_failed',
+                  'execution_completed', 'execution_failed',
+                ].includes(status);
+
+                if (!isTerminal && status !== 'unknown') {
+                  // Job still running — show thinking bubble, resolve via SSE.
+                  const synthetic = addMessage({ type: 'thinking', content: '' });
+                  const syntheticId = synthetic.id;
+                  const resolved = { done: false };
+                  setMessageReadyHandler(async (messageId: string, sse_status: string) => {
+                    resolved.done = true;
+                    sessionStorage.removeItem(`pending_ai_message_${session_id}`);
+                    clearLogs();
+                    const updated = await fetchUpdatedMessage(messageId);
+                    if (updated) {
+                      const isClarification = ['needs_clarification', 'needs_confirmation', 'clarification']
+                        .includes(updated.response_type);
+                      updateMessage(syntheticId, {
+                        id: messageId,
+                        ...updated,
+                        type: (isClarification ? 'clarification' : 'ai') as ChatMessage['type'],
+                        status: normalizeStatus(sse_status),
+                      });
+                    } else {
+                      removeMessage(syntheticId);
+                    }
+                  });
+                  setTimeout(() => {
+                    if (!resolved.done) removeMessage(syntheticId);
+                  }, 30_000);
+                } else if (isTerminal) {
+                  // Job already finished while we were refreshed — fetch final message.
+                  sessionStorage.removeItem(`pending_ai_message_${session_id}`);
+                  clearLogs();
+                  const updated = await fetchUpdatedMessage(storedMsgId);
+                  if (updated) {
+                    const isClarification = ['needs_clarification', 'needs_confirmation', 'clarification']
+                      .includes(updated.response_type);
+                    addMessage({
+                      id: storedMsgId,
+                      ...updated,
+                      status: normalizeStatus(status),
+                      ...(isClarification ? { type: 'clarification' } : {}),
+                    });
+                  }
+                } else {
+                  // Status unknown (message not in DB yet) — clear storage, don't show bubble.
+                  sessionStorage.removeItem(`pending_ai_message_${session_id}`);
+                }
+              } catch {
+                sessionStorage.removeItem(`pending_ai_message_${session_id}`);
+              }
+            }
+          }
         } else {
           console.log('[ChatPageContent] No messages to load, sessionDetail.messages:', sessionDetail.messages);
         }
@@ -143,7 +367,6 @@ function ChatPageContent({ overrideSessionId }: { overrideSessionId?: string | n
 
     loadInitialMessages();
   }, [session_id, getSessionDetail, setMessages]);
-
 
   // Helper functions for handleSendMessage
   const setupAnalysisRequest = (userMessage: string) => {
@@ -173,16 +396,14 @@ function ChatPageContent({ overrideSessionId }: { overrideSessionId?: string | n
       type: 'user',
       content: userMessage,
     });
+
+    // Show an animated typing indicator while we await the API response.
+    const thinkingMsg = addMessage({ type: 'thinking', content: '' });
+    thinkingMsgIdRef.current = thinkingMsg.id;
   };
 
   const handleMeaninglessResponse = (response: any) => {
-    if (session_id) {
-      ProgressManager.addLog(session_id, {
-        level: 'warning',
-        message: 'Query was not specific enough. Requesting clarification.',
-      });
-    }
-
+    clearLogs();
     const errorMsg = response.data.content || 'I need more details to help you. Please tell me what you\'d like to analyze.';
     addMessage({
       type: 'ai',
@@ -191,21 +412,12 @@ function ChatPageContent({ overrideSessionId }: { overrideSessionId?: string | n
   };
 
   const handleClarificationResponse = (response: any, userMessage: string) => {
+    clearLogs(); // Clarification replaces the analysis flow — hide the progress panel.
     const clarificationData = {
       message_id: response.data.id,
       content: response.data.content,
       ...response.data.metadata,
     };
-
-    if (session_id) {
-      ProgressManager.addLog(session_id, {
-        level: 'info',
-        message: 'Analysis requires user clarification',
-        details: {
-          confidence: response.data.expansion_confidence || response.data.metadata?.confidence,
-        },
-      });
-    }
 
     const clarificationMsg = addMessage({
       type: 'clarification',
@@ -222,18 +434,12 @@ function ChatPageContent({ overrideSessionId }: { overrideSessionId?: string | n
   };
 
   const handleConfirmationResponse = (response: any, userMessage: string) => {
+    clearLogs(); // Confirmation replaces the analysis flow — hide the progress panel.
     const clarificationData = {
       message_id: response.data.id,
       content: response.data.content,
       ...response.data.metadata,
     };
-
-    if (session_id) {
-      ProgressManager.addLog(session_id, {
-        level: 'info',
-        message: 'Analysis requires user confirmation',
-      });
-    }
 
     const confirmMsg = addMessage({
       type: 'clarification',
@@ -249,12 +455,10 @@ function ChatPageContent({ overrideSessionId }: { overrideSessionId?: string | n
   };
 
   const handleChatResponse = (response: any) => {
-    if (session_id) {
-      ProgressManager.addLog(session_id, {
-        level: 'success',
-        message: 'Chat response ready',
-      });
-    }
+    // NOTE: intentionally NOT calling clearLogs() here.
+    // Pre-queue SSE logs (intent classification, analyst response) are useful
+    // context — they show WHY the response was chat vs analysis.
+    // Logs are cleared at the start of the NEXT message by setupAnalysisRequest.
 
     // Simple chat message - no analysis or execution tracking
     addMessage({
@@ -286,31 +490,30 @@ function ChatPageContent({ overrideSessionId }: { overrideSessionId?: string | n
     const backendMessageId = response.data.id;
 
     if (backendMessageId) {
-      registerAnalysisCompleteCallback(backendMessageId, async (completionStatus: 'completed' | 'failed', data?: any) => {
-        // For completed status, fetch updated message content from API instead of relying on SSE data
-        if (completionStatus === 'completed') {
-          const updatedMessage = await fetchUpdatedMessage(backendMessageId);
-          if (updatedMessage) {
-            updateMessage(backendMessageId, {
-              ...updatedMessage,
-              content: updatedMessage.content,
-              status: 'completed',
-              response_type: updatedMessage.response_type,
-            });
-            return;
-          }
+      // Persist so a page refresh can find this in-flight message directly.
+      if (session_id) {
+        sessionStorage.setItem(`pending_ai_message_${session_id}`, backendMessageId);
+        console.log('[pending] stored AI message id:', backendMessageId, 'for session:', session_id);
+      }
+
+      // Register the knock handler — fires when SSE message_ready arrives for any message.
+      // Frontend fetches the full result from DB; SSE carries only the wake-up signal.
+      setMessageReadyHandler(async (messageId: string, status: string, responseType: string | null) => {
+        if (session_id) sessionStorage.removeItem(`pending_ai_message_${session_id}`);
+        clearLogs();
+        const updatedMessage = await fetchUpdatedMessage(messageId);
+        if (updatedMessage) {
+          const isClarification = ['needs_clarification', 'needs_confirmation', 'clarification']
+            .includes(updatedMessage.response_type);
+          updateMessage(messageId, {
+            ...updatedMessage,
+            status: status as any,
+            ...(isClarification ? { type: 'clarification' } : {}),
+          });
+        } else {
+          updateMessage(messageId, { status: status as any });
         }
-
-        // Fallback to SSE data for failed status or if fetch fails
-        updateMessage(backendMessageId, {
-          content: data?.message,
-          status: completionStatus,
-          error: data?.error,
-          ...(data?.details || {}),
-        });
       });
-
-      console.log(`[SSE] Registered callback for message: ${backendMessageId}`);
     } else {
       console.error('[SSE] No backend message ID found or analysis not triggered!', response.data);
     }
@@ -323,12 +526,6 @@ function ChatPageContent({ overrideSessionId }: { overrideSessionId?: string | n
   };
 
   const handleAnalysisResponse = (response: any, userMessage: string) => {
-    if (session_id) {
-      ProgressManager.addLog(session_id, {
-        level: 'success',
-        message: 'Analysis results ready for display',
-      });
-    }
 
     const resultMsg = addMessage({
       type: 'results',
@@ -341,33 +538,32 @@ function ChatPageContent({ overrideSessionId }: { overrideSessionId?: string | n
     const backendMessageId = response.data.id;
 
     if (backendMessageId) {
-      registerAnalysisCompleteCallback(backendMessageId, async (completionStatus: 'completed' | 'failed', data?: any) => {
-        // For completed status, fetch updated message content from API instead of relying on SSE data
-        if (completionStatus === 'completed') {
-          const updatedMessage = await fetchUpdatedMessage(backendMessageId);
-          if (updatedMessage) {
-            updateMessage(backendMessageId, {
-              ...updatedMessage,
-              content: updatedMessage.content,
-              status: 'completed',
-              response_type: updatedMessage.response_type,
-            });
-            return;
-          }
+      // Persist so a page refresh can find this in-flight message directly.
+      if (session_id) {
+        sessionStorage.setItem(`pending_ai_message_${session_id}`, backendMessageId);
+        console.log('[pending] stored AI message id:', backendMessageId, 'for session:', session_id);
+      }
+
+      // Register the knock handler — fires when SSE message_ready arrives.
+      // Identical to handleAnalysisTriggerResponse: one handler covers both paths.
+      setMessageReadyHandler(async (messageId: string, status: string, responseType: string | null) => {
+        if (session_id) sessionStorage.removeItem(`pending_ai_message_${session_id}`);
+        clearLogs();
+        const updatedMessage = await fetchUpdatedMessage(messageId);
+        if (updatedMessage) {
+          const isClarification = ['needs_clarification', 'needs_confirmation', 'clarification']
+            .includes(updatedMessage.response_type);
+          updateMessage(messageId, {
+            ...updatedMessage,
+            status: status as any,
+            ...(isClarification ? { type: 'clarification' } : {}),
+          });
+        } else {
+          updateMessage(messageId, { status: status as any });
         }
-
-        // Fallback to SSE data for failed status or if fetch fails
-        updateMessage(backendMessageId, {
-          content: data?.message,
-          status: completionStatus,
-          error: data?.error,
-          ...(data?.details || {}),
-        });
       });
-
-      console.log(`[SSE] Registered callback for message: ${backendMessageId}`);
     } else {
-      console.error('[SSE] No backend message ID found - callback not registered!', response.data);
+      console.error('[SSE] No backend message ID found - handler not registered!', response.data);
     }
 
     setCurrentAnalysis({
@@ -420,6 +616,7 @@ function ChatPageContent({ overrideSessionId }: { overrideSessionId?: string | n
         }
 
         const responseType = response.data.response_type;
+        console.log('[handleSendMessage] responseType:', responseType, 'id:', response.data.id, 'data keys:', Object.keys(response.data));
 
         if (responseType === 'meaningless') {
           handleMeaninglessResponse(response);
@@ -427,9 +624,16 @@ function ChatPageContent({ overrideSessionId }: { overrideSessionId?: string | n
           handleClarificationResponse(response, userMessage);
         } else if (responseType === 'needs_confirmation') {
           handleConfirmationResponse(response, userMessage);
-        } else if (responseType === 'chat_response' || responseType === 'educational') {
-          // Handle pure chat responses
-          handleChatResponse(response);
+        } else if (responseType === 'chat_response' || responseType === 'chat' || responseType === 'educational' || responseType === 'analysis_confirmation') {
+          // Handle pure chat responses.
+          // "chat" is the backend's MetadataConstants.RESPONSE_TYPE_CHAT value.
+          // "analysis_confirmation" with no analysis_triggered is also a chat response.
+          const analysisTriggered = response.data?.metadata?.analysis_triggered;
+          if ((responseType === 'analysis_confirmation') && analysisTriggered) {
+            handleAnalysisTriggerResponse(response, userMessage);
+          } else {
+            handleChatResponse(response);
+          }
         } else if (responseType === 'script_generation') {
           // Handle analysis trigger responses (thinking state)
           handleAnalysisTriggerResponse(response, userMessage);
@@ -456,6 +660,11 @@ function ChatPageContent({ overrideSessionId }: { overrideSessionId?: string | n
       setUIError(errorMsg);
       console.error('Message send error:', err);
     } finally {
+      // Always remove the thinking bubble when the request finishes.
+      if (thinkingMsgIdRef.current) {
+        removeMessage(thinkingMsgIdRef.current);
+        thinkingMsgIdRef.current = null;
+      }
       setIsProcessing(false);
     }
   };
@@ -558,65 +767,6 @@ function ChatPageContent({ overrideSessionId }: { overrideSessionId?: string | n
 
     updateMessage(messageId, messageUpdate);
   }, [updateMessage]);
-
-  // Re-register SSE callbacks for pending messages on page refresh
-  useEffect(() => {
-    console.log(`[DEBUG] Callback registration effect triggered: messages.length=${messages.length}, isConnected=${isConnected}`);
-
-    if (!messages.length || !isConnected) {
-      console.log(`[DEBUG] Skipping callback registration - messages=${messages.length}, connected=${isConnected}`);
-      return;
-    }
-
-    // Add a small delay to ensure SSE connection is fully established
-    const timeoutId = setTimeout(() => {
-      console.log(`[DEBUG] Starting callback registration after delay...`);
-
-      let registeredCount = 0;
-      messages.forEach((message: ChatMessage) => {
-        // Check if message is in pending status and has backend ID for callback registration
-        const isPending = message.status && ['pending', 'running', 'queued'].includes(message.status);
-        const backendMessageId = (message as any).id;
-
-        console.log(`[DEBUG] Message ${message.id}: status=${message.status}, isPending=${isPending}, backendId=${backendMessageId}`, message);
-
-        if (isPending && backendMessageId) {
-          console.log(`[SSE] Re-registering callback for pending message: ${backendMessageId}`);
-          registeredCount++;
-
-          registerAnalysisCompleteCallback(backendMessageId, async (completionStatus: 'completed' | 'failed', data?: any) => {
-            console.log(`[SSE] Callback triggered for message ${backendMessageId} with status: ${completionStatus}`);
-            
-            // For completed status, fetch updated message content from API instead of relying on SSE data
-            if (completionStatus === 'completed') {
-              const updatedMessage = await fetchUpdatedMessage(backendMessageId);
-              if (updatedMessage) {
-                updateMessage(backendMessageId, {
-                  ...updatedMessage,
-                  content: updatedMessage.content,
-                  status: 'completed',
-                  response_type: updatedMessage.response_type,
-                });
-                return;
-              }
-            }
-            
-            // Fallback to SSE data for failed status or if fetch fails
-            updateMessage(backendMessageId, {
-              content: data?.message,
-              status: completionStatus,
-              error: data?.error,
-              ...(data?.details || {}),
-            });
-          });
-        }
-      });
-
-      console.log(`[DEBUG] Registered ${registeredCount} callbacks`);
-    }, 500); // Wait 500ms for SSE connection to stabilize
-
-    return () => clearTimeout(timeoutId);
-  }, [messages, isConnected, registerAnalysisCompleteCallback, handleExecutionUpdate]);
 
   const handleSelectSession = useCallback(async (selectedSessionId: string) => {
     try {
@@ -792,52 +942,54 @@ function ChatPageContent({ overrideSessionId }: { overrideSessionId?: string | n
             </div>
           )}
           <div className="flex-1 flex flex-col">
-          {!showSessionHistory && (
-            <div className="border-b border-gray-200 px-4 py-3 flex items-center gap-2">
-              <button
-                onClick={() => setShowSessionHistory(!showSessionHistory)}
-                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                title={showSessionHistory ? "Close chat history" : "Open chat history"}
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={showSessionHistory ? "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" : "M4 6h16M4 12h16M4 18h16"} />
-                </svg>
-              </button>
-              <button
-                onClick={() => setViewMode('split')}
-                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                title="Switch to split view"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
-                </svg>
-              </button>
-            </div>
-          )}
-          <ChatInterface
-            messages={messages}
-            chatInput={chatInput}
-            setChatInput={setChatInput}
-            isProcessing={isProcessing || analysisLoading}
-            onSendMessage={handleSendMessage}
-            onClarificationResponse={handleClarificationResponse}
-            pendingClarificationId={lastClarificationMessageId}
-            onLoadOlder={handleLoadOlderMessages}
-            isLoadingOlder={isLoadingOlderMessages}
-            canLoadOlder={currentSessionMessages.hasOlder}
-            onExecutionUpdate={handleExecutionUpdate}
-          />
-        </div>
+            {!showSessionHistory && (
+              <div className="border-b border-gray-200 px-4 py-3 flex items-center gap-2">
+                <button
+                  onClick={() => setShowSessionHistory(!showSessionHistory)}
+                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                  title={showSessionHistory ? "Close chat history" : "Open chat history"}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={showSessionHistory ? "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" : "M4 6h16M4 12h16M4 18h16"} />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => setViewMode('split')}
+                  className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                  title="Switch to split view"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                  </svg>
+                </button>
+              </div>
+            )}
+            <ChatInterface
+              messages={messages}
+              chatInput={chatInput}
+              setChatInput={setChatInput}
+              isProcessing={isProcessing || analysisLoading}
+              onSendMessage={handleSendMessage}
+              onClarificationResponse={handleClarificationResponse}
+              pendingClarificationId={lastClarificationMessageId}
+              onLoadOlder={handleLoadOlderMessages}
+              isLoadingOlder={isLoadingOlderMessages}
+              canLoadOlder={currentSessionMessages.hasOlder}
+              onExecutionUpdate={handleExecutionUpdate}
+            />
+          </div>
 
-        {showCustomization && (
-          <CustomizationForm
-            selectedModule={selectedModule}
-            parameterValues={parameterValues}
-            setParameterValues={setParameterValues}
-            onClose={() => setShowCustomization(false)}
-            onSubmit={handleCustomizationSubmit}
-          />
-        )}
+
+
+          {showCustomization && (
+            <CustomizationForm
+              selectedModule={selectedModule}
+              parameterValues={parameterValues}
+              setParameterValues={setParameterValues}
+              onClose={() => setShowCustomization(false)}
+              onSubmit={handleCustomizationSubmit}
+            />
+          )}
 
           {uiError && (
             <div className="fixed bottom-4 right-4 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg">
@@ -862,57 +1014,57 @@ function ChatPageContent({ overrideSessionId }: { overrideSessionId?: string | n
 
       {/* Main Content Area */}
       <div className="flex-1 flex">
-          <div className="w-1/4 bg-white border-r border-gray-200 flex flex-col relative">
-            <div className="border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-              <h1 className="text-sm font-bold text-gray-900">Chat History</h1>
-              <button
-                onClick={() => setViewMode('single')}
-                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                title="Switch to single view"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
-                </svg>
-              </button>
-            </div>
-            <SessionList
-              userId={user_id || ''}
-              currentSessionId={session_id || undefined}
-              onSelectSession={handleSelectSession}
-              isOpen={true}
-              onClose={() => { }}
-              hideHeader={true}
-            />
+        <div className="w-1/4 bg-white border-r border-gray-200 flex flex-col relative">
+          <div className="border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+            <h1 className="text-sm font-bold text-gray-900">Chat History</h1>
+            <button
+              onClick={() => setViewMode('single')}
+              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              title="Switch to single view"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+              </svg>
+            </button>
           </div>
+          <SessionList
+            userId={user_id || ''}
+            currentSessionId={session_id || undefined}
+            onSelectSession={handleSelectSession}
+            isOpen={true}
+            onClose={() => { }}
+            hideHeader={true}
+          />
+        </div>
 
-          <div className="flex-1 flex flex-col">
-            <ChatInterface
-              messages={messages}
-              chatInput={chatInput}
-              setChatInput={setChatInput}
-              isProcessing={isProcessing || analysisLoading}
-              onSendMessage={handleSendMessage}
-              onClarificationResponse={handleClarificationResponse}
-              pendingClarificationId={lastClarificationMessageId}
-              onLoadOlder={handleLoadOlderMessages}
-              isLoadingOlder={isLoadingOlderMessages}
-              canLoadOlder={currentSessionMessages.hasOlder}
-              onExecutionUpdate={handleExecutionUpdate}
-            />
-          </div>
+        <div className="flex-1 flex flex-col">
+          <ChatInterface
+            messages={messages}
+            chatInput={chatInput}
+            setChatInput={setChatInput}
+            isProcessing={isProcessing || analysisLoading}
+            onSendMessage={handleSendMessage}
+            onClarificationResponse={handleClarificationResponse}
+            pendingClarificationId={lastClarificationMessageId}
+            onLoadOlder={handleLoadOlderMessages}
+            isLoadingOlder={isLoadingOlderMessages}
+            canLoadOlder={currentSessionMessages.hasOlder}
+            onExecutionUpdate={handleExecutionUpdate}
+          />
+        </div>
 
-          <div className="w-1/4 bg-gray-900 border-r border-gray-700 flex flex-col">
-            <ProgressPanel
-              logs={progressLogs}
-              isConnected={isConnected}
-              isProcessing={isProcessing || analysisLoading}
-              onClear={clearLogs}
-            />
-          </div>
+        <div className="w-1/4 bg-gray-900 border-r border-gray-700 flex flex-col">
+          <ProgressPanel
+            logs={progressLogs}
+            isConnected={isConnected}
+            isProcessing={isProcessing || analysisLoading}
+            onClear={clearLogs}
+          />
+        </div>
 
-          <div className="w-1/2 flex flex-col">
-            <AnalysisPanel currentAnalysis={currentAnalysis} />
-          </div>
+        <div className="w-1/2 flex flex-col">
+          <AnalysisPanel currentAnalysis={currentAnalysis} />
+        </div>
       </div>
 
       {showCustomization && (
@@ -945,60 +1097,31 @@ function ChatPageContent({ overrideSessionId }: { overrideSessionId?: string | n
 }
 
 interface ChatPageProps {
-  params: {
-    sessionId: string;
-  };
+  params: Promise<{ sessionId: string }>;
 }
 
+// withAuth wraps only the inner content, NOT ProgressProvider.
+// This lets the SSE connection start immediately on mount (no JWT needed for
+// the /api/progress endpoint), while auth protection still guards ChatPageContent.
+const AuthProtectedChatContent = withAuth(ChatPageWithSession);
+
 function ChatPage({ params }: ChatPageProps) {
-  const { sessionId } = params;
+  const { sessionId } = use(params);
 
   return (
+    // ProgressProvider mounts immediately — SSE fires before auth resolves.
     <ProgressProvider sessionId={sessionId}>
-      <ChatPageWithSession sessionId={sessionId} />
+      <AuthProtectedChatContent sessionId={sessionId} />
     </ProgressProvider>
   );
 }
 
-// Export with authentication protection
-export default withAuth(ChatPage);
+export default ChatPage;
 
 function ChatPageWithSession({ sessionId }: { sessionId: string }) {
-  const { session_id, resumeSession, isLoading } = useSession();
-  const [initializing, setInitializing] = useState(true);
-  const [forceSessionId, setForceSessionId] = useState<string | null>(null);
-
-  // Initialize session when component mounts
-  useEffect(() => {
-    const initializeSession = async () => {
-      if (sessionId && sessionId !== session_id) {
-        try {
-          await resumeSession(sessionId);
-        } catch (error) {
-          console.error('Failed to initialize session via resumeSession:', error);
-          // If resumeSession fails, force the sessionId for the chat interface
-          console.log('Using fallback: setting session_id directly from URL parameter:', sessionId);
-          setForceSessionId(sessionId);
-        }
-      }
-      setInitializing(false);
-    };
-
-    initializeSession();
-  }, [sessionId, session_id, resumeSession]);
-
-  // Show loading while initializing or session is loading
-  if (initializing || isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <span className="ml-2">Loading session...</span>
-      </div>
-    );
-  }
-
-  // Pass the effective session ID (from context or fallback)
-  const effectiveSessionId = session_id || forceSessionId;
-  
-  return <ChatPageContent overrideSessionId={effectiveSessionId} />;
+  // The session ID is already in the URL — pass it directly to ChatPageContent
+  // via overrideSessionId. ChatPageContent loads messages independently via its
+  // own API calls and doesn't need useSession to finish initializing first.
+  // This eliminates all spinner-stuck scenarios caused by auth/session timing races.
+  return <ChatPageContent overrideSessionId={sessionId} />;
 }

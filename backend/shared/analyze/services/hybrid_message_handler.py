@@ -12,10 +12,31 @@ Implements GitHub Issue #122 - Mix of LLM chat + analysis
 
 import asyncio
 import logging
+import os
 import time
 from datetime import datetime
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass
+
+from shared.services.progress_service import send_progress_event
+
+# Set PRE_QUEUE_PROGRESS_LOGS=true in the environment to stream pre-queue step
+# events to the SSE progress panel (useful in dev; off by default in prod).
+_PRE_QUEUE_LOGS = os.getenv("PRE_QUEUE_PROGRESS_LOGS", "false").lower() == "true"
+
+
+async def _dev_log(session_id: str, message: str, level: str = "info") -> None:
+    """Emit a progress event only when PRE_QUEUE_PROGRESS_LOGS is enabled."""
+    if not (_PRE_QUEUE_LOGS and session_id):
+        return
+    try:
+        await send_progress_event(session_id, {
+            "type": "progress",
+            "level": level,
+            "message": message,
+        })
+    except Exception:
+        pass  # never block the main flow
 
 from .intent_classifier import IntentClassifierService, IntentResult
 from .financial_analyst_chat_service import FinancialAnalystChatService, AnalystResponse, AnalysisSuggestion
@@ -32,8 +53,8 @@ class HybridResponse:
     response_type: str  # "chat", "educational_chat", "analysis_confirmation", "analysis_trigger"
     content: str
     message_id: str
-    user_message_id: str
     session_id: str
+    user_message_id: Optional[str] = None  # None for early-exit error responses (before user msg is saved)
     metadata: Optional[Dict[str, Any]] = None
     
     # Analysis triggering (NEW approach - calls existing analyze_question)
@@ -80,10 +101,12 @@ class HybridMessageHandler:
         5. Otherwise: return chat response only
         """
         start_time = time.time()
+        placeholder_id = None
         try:
             logger.info(f"🔀 Hybrid handler V2 processing: {user_message[:100]}...")
             
             # Step 0: Input validation - reject malformed/dangerous input early
+            await _dev_log(session_id, "Validating input...")
             is_safe, validation_error = InputValidator.is_safe(user_message)
             if not is_safe:
                 logger.error(f"🛡️ Input validation failed: {validation_error}")
@@ -107,21 +130,34 @@ class HybridMessageHandler:
                 )
             
             # Step 0.5: Save user message immediately (independent of assistant response)
+            await _dev_log(session_id, "Saving message to history...")
             conversation = await self.session_manager.get_session(session_id)
             user_message_obj = await conversation.add_user_message(
                 content=user_message,
                 user_id=user_id
             )
             logger.debug(f"✅ User message saved immediately: {user_message_obj.id}")
-            
+
+            # Step 0.75: Write an AI placeholder BEFORE any LLM calls so that a page
+            # refresh during classification/generation still finds a pending message.
+            placeholder_obj = await conversation.add_assistant_message(
+                content="",
+                user_id=user_id,
+                status=MetadataConstants.STATUS_PENDING,
+                response_type=MetadataConstants.RESPONSE_TYPE_ANALYSIS,
+            )
+            placeholder_id = placeholder_obj.id
+            logger.debug(f"✅ AI placeholder saved immediately: {placeholder_id}")
+
             # Step 1: Classify intent
+            await _dev_log(session_id, "Classifying intent...")
             intent_start_time = time.time()
             intent_result = await self.intent_classifier.classify_intent(
                 user_message=user_message,
                 session_id=session_id
             )
             intent_duration = time.time() - intent_start_time
-            
+            await _dev_log(session_id, f"Intent: {intent_result.intent.value} ({intent_duration:.1f}s)")
             logger.info(f"⏱️ Intent classification: {intent_duration:.3f}s, Intent: {intent_result.intent.value}")
             
             # Step 1.5: Safety check - reject dangerous queries early
@@ -137,6 +173,7 @@ class HybridMessageHandler:
                 )
             
             # Step 2: Generate analyst response
+            await _dev_log(session_id, "Generating analyst response...")
             start_time = time.time()
             analyst_response = await self.financial_analyst.generate_response(
                 user_message=user_message,
@@ -145,21 +182,44 @@ class HybridMessageHandler:
                 session_manager=self.session_manager
             )
             analyst_duration = time.time() - start_time
-            
+            await _dev_log(session_id, f"Response ready ({analyst_duration:.1f}s) — queuing analysis...")
             logger.info(f"⏱️ Analyst response: {analyst_duration:.3f}s")
             
-            # Step 3: Route based on intent and persist ONLY via ConversationStore
+            # Step 3: Route based on intent and update the placeholder with real content
             return await self._route_and_persist(
                 intent_result=intent_result,
                 analyst_response=analyst_response,
                 user_message=user_message,
                 session_id=session_id,
                 user_id=user_id,
-                user_message_obj=user_message_obj
+                user_message_obj=user_message_obj,
+                placeholder_id=placeholder_id,
             )
             
         except Exception as e:
             logger.error(f"❌ Hybrid handler V2 error: {e}")
+            # If a placeholder was already written to DB, update it to failed
+            # instead of orphaning it as perpetually-pending.
+            if placeholder_id:
+                try:
+                    conv = await self.session_manager.get_session(session_id)
+                    await conv.update_assistant_message(
+                        message_id=placeholder_id,
+                        content="I encountered an error processing your message. Please try again.",
+                        status=MetadataConstants.STATUS_FAILED,
+                    )
+                    return HybridResponse(
+                        response_type=MetadataConstants.RESPONSE_TYPE_CHAT,
+                        content="I encountered an error processing your message. Please try again.",
+                        message_id=placeholder_id,
+                        user_message_id=None,
+                        session_id=session_id,
+                        metadata={MetadataConstants.RESPONSE_STATUS: MetadataConstants.STATUS_FAILED},
+                        should_trigger_analysis=False,
+                        analysis_question=None,
+                    )
+                except Exception as inner_e:
+                    logger.error(f"❌ Failed to update placeholder to failed: {inner_e}")
             return await self._create_error_response(
                 error_message=f"I apologize, but I encountered an error processing your message. Please try again.",
                 session_id=session_id,
@@ -174,7 +234,8 @@ class HybridMessageHandler:
                                user_message: str,
                                session_id: str,
                                user_id: str,
-                               user_message_obj) -> HybridResponse:
+                               user_message_obj,
+                               placeholder_id: str = None) -> HybridResponse:
         """Route based on intent and persist ONLY via ConversationStore (no dual calls)"""
         
         # Use the intent directly from IntentResult (already a MessageIntent enum)
@@ -236,22 +297,52 @@ class HybridMessageHandler:
                     if pending:
                         analysis_question = pending.get(MetadataConstants.SUGGESTED_QUESTION, "Analysis in progress...")
                         metadata[MetadataConstants.ANALYSIS_QUESTION] = analysis_question
+
+                # Fallback: no stored suggestion (e.g. prior turn errored, page
+                # reload, or suggestion expired in Redis).  Try to recover the
+                # original question from recent message history so the user's
+                # confirmation still fires the analysis instead of being silently dropped.
+                if not analysis_question:
+                    analysis_question = await self._recover_analysis_question(session_id, user_message)
+                    if analysis_question:
+                        metadata[MetadataConstants.ANALYSIS_QUESTION] = analysis_question
+                        logger.warning(
+                            "⚠️ No pending suggestion found for session %s — "
+                            "recovered analysis question from history: %s",
+                            session_id, analysis_question[:80]
+                        )
+                    else:
+                        logger.error(
+                            "❌ analysis_confirmation but could not determine analysis question "
+                            "(no pending suggestion, no substantive prior message). "
+                            "Dropping analysis trigger for session %s.", session_id
+                        )
         else:
             # For non-analysis responses, mark as completed
             metadata[MetadataConstants.RESPONSE_STATUS] = MetadataConstants.STATUS_COMPLETED
         
-        # Save assistant message with complete metadata
+        # Update the pre-written placeholder with real content + metadata.
+        # If no placeholder (e.g. called from error recovery path), create fresh.
         conversation = await self.session_manager.get_session(session_id)
-        assistant_message_obj = await conversation.add_assistant_message(
-            content=analyst_response.content,
-            user_id=user_id,
-            **metadata
-        )
-        
+        if placeholder_id:
+            await conversation.update_assistant_message(
+                message_id=placeholder_id,
+                content=analyst_response.content,
+                **metadata
+            )
+            final_message_id = placeholder_id
+        else:
+            assistant_message_obj = await conversation.add_assistant_message(
+                content=analyst_response.content,
+                user_id=user_id,
+                **metadata
+            )
+            final_message_id = assistant_message_obj.id
+
         return HybridResponse(
             response_type=response_type,
             content=analyst_response.content,
-            message_id=assistant_message_obj.id,
+            message_id=final_message_id,
             user_message_id=user_message_obj.id,
             session_id=session_id,
             metadata=metadata,
@@ -325,8 +416,15 @@ class HybridMessageHandler:
                                    internal_error: str = None,
                                    start_time: float = None) -> HybridResponse:
         """Create error response"""
+        error_metadata = {
+            MetadataConstants.RESPONSE_STATUS: MetadataConstants.STATUS_FAILED,
+            MetadataConstants.RESPONSE_ERROR: error_message,
+            MetadataConstants.INTERNAL_ERROR: internal_error or "Unknown error",
+            MetadataConstants.PROCESSING_TIME: (time.time() - start_time) if start_time else None,
+            MetadataConstants.FAILED_AT: datetime.now().isoformat()
+        }
         try:
-            # Add error message to chat history
+            # Insert a fresh error message.
             error_message_id = await self.chat_history_service.add_hybrid_message(
                 session_id=session_id,
                 user_id=user_id,
@@ -334,23 +432,15 @@ class HybridMessageHandler:
                 message_type=MetadataConstants.MESSAGE_TYPE_ERROR,
                 intent=MetadataConstants.INTENT_ERROR
             )
-            
             return HybridResponse(
                 response_type=MetadataConstants.RESPONSE_TYPE_ERROR,
                 content=error_message,
                 message_id=error_message_id,
                 session_id=session_id,
-                metadata={
-                    MetadataConstants.RESPONSE_STATUS: MetadataConstants.STATUS_FAILED,
-                    MetadataConstants.RESPONSE_ERROR: error_message,
-                    MetadataConstants.INTERNAL_ERROR: internal_error or "Unknown error",
-                    MetadataConstants.PROCESSING_TIME: (time.time() - start_time) if start_time else None,
-                    MetadataConstants.FAILED_AT: datetime.now().isoformat()
-                }
+                metadata=error_metadata
             )
         except Exception as e:
             logger.error(f"Failed to create error response: {e}")
-            # Fallback response without chat history
             return HybridResponse(
                 response_type=MetadataConstants.RESPONSE_TYPE_ERROR,
                 content=error_message,
@@ -372,11 +462,17 @@ class HybridMessageHandler:
                                           user_id: str,
                                           user_message_obj,
                                           start_time: float = None) -> HybridResponse:
-        """Create security error response for blocked queries"""
+        """Create security error response for blocked queries."""
+        error_message = "Sorry, I can't help you with that. Please ask a legitimate financial analysis question."
+        blocked_metadata = {
+            MetadataConstants.RESPONSE_STATUS: MetadataConstants.STATUS_BLOCKED,
+            MetadataConstants.RESPONSE_ERROR: error_message,
+            MetadataConstants.SECURITY_REASON: safety_reason,
+            MetadataConstants.DETECTED_RISKS: detected_risks,
+            MetadataConstants.PROCESSING_TIME: (time.time() - start_time) if start_time else None,
+            MetadataConstants.BLOCKED_AT: datetime.now().isoformat()
+        }
         try:
-            error_message = "Sorry, I can't help you with that. Please ask a legitimate financial analysis question."
-            
-            # Add blocked message to chat history
             error_message_id = await self.chat_history_service.add_hybrid_message(
                 session_id=session_id,
                 user_id=user_id,
@@ -384,25 +480,16 @@ class HybridMessageHandler:
                 message_type=MetadataConstants.MESSAGE_TYPE_ERROR,
                 intent=MetadataConstants.INTENT_ERROR
             )
-            
             return HybridResponse(
                 response_type=MetadataConstants.RESPONSE_TYPE_ERROR,
                 content=error_message,
                 message_id=error_message_id,
                 user_message_id=user_message_obj.id,
                 session_id=session_id,
-                metadata={
-                    MetadataConstants.RESPONSE_STATUS: MetadataConstants.STATUS_BLOCKED,
-                    MetadataConstants.RESPONSE_ERROR: error_message,
-                    MetadataConstants.SECURITY_REASON: safety_reason,
-                    MetadataConstants.DETECTED_RISKS: detected_risks,
-                    MetadataConstants.PROCESSING_TIME: (time.time() - start_time) if start_time else None,
-                    MetadataConstants.BLOCKED_AT: datetime.now().isoformat()
-                }
+                metadata=blocked_metadata
             )
         except Exception as e:
             logger.error(f"Failed to create safety error response: {e}")
-            error_message = "Sorry, I can't help you with that. Please ask a legitimate financial analysis question."
             return HybridResponse(
                 response_type=MetadataConstants.RESPONSE_TYPE_ERROR,
                 content=error_message,
@@ -418,6 +505,47 @@ class HybridMessageHandler:
                 }
             )
     
+    # Short affirmation words that are NOT standalone analysis questions.
+    # When the user says "Yes" / "OK" / "sure", we look *past* that message.
+    _AFFIRMATION_WORDS = frozenset([
+        "yes", "yeah", "yep", "yup", "sure", "ok", "okay", "go", "go ahead",
+        "run", "run it", "do it", "proceed", "start", "please", "now",
+        "great", "sounds good", "let's do it", "lets do it",
+    ])
+
+    async def _recover_analysis_question(self, session_id: str, current_message: str) -> Optional[str]:
+        """
+        Scan the last N MongoDB messages to find the most recent user message
+        that looks like a genuine analysis question (not a one-word confirmation).
+
+        Used as a fallback when `analysis_confirmation` fires but there is no
+        pending suggestion stored in the ConversationStore.
+        """
+        try:
+            if not self.chat_history_service:
+                return None
+
+            recent = await self.chat_history_service.get_messages(
+                session_id=session_id, limit=15
+            )
+
+            for msg in reversed(recent):
+                role = msg.get("role", "")
+                content = (msg.get("content") or "").strip()
+                if role != "user" or not content:
+                    continue
+                # Skip the current confirmation turn itself and pure affirmations
+                if content.lower().rstrip("!.") in self._AFFIRMATION_WORDS:
+                    continue
+                if content == current_message.strip():
+                    continue
+                # Minimum plausible question length
+                if len(content) >= 10:
+                    return content
+        except Exception as e:
+            logger.warning("Could not recover analysis question from history: %s", e)
+        return None
+
     async def _get_pending_analysis_from_conversation_store(self, session_id: str) -> Optional[Dict[str, Any]]:
         """
         Get pending analysis suggestion from ConversationStore (persistent across restarts)

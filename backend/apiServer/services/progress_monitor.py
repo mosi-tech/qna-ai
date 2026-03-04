@@ -7,6 +7,7 @@ This bridges the gap between queue-based worker communication and SSE client upd
 
 import asyncio
 import logging
+from datetime import datetime, timedelta
 from typing import Optional
 from motor.motor_asyncio import AsyncIOMotorDatabase, AsyncIOMotorCollection
 from services.sse import (
@@ -25,6 +26,11 @@ class ProgressMonitorService:
         self.progress_events_collection: AsyncIOMotorCollection = db["progress_events"]
         self.running = False
         self.monitor_task: Optional[asyncio.Task] = None
+        # Cursor for event streaming — events are NEVER marked processed.
+        # The MongoDB TTL index handles cleanup. This cursor advances so we
+        # never re-broadcast the same event, and events remain queryable for
+        # Phase 3 SSE replay (Fix #1).
+        self._cursor: Optional[datetime] = None
         
     async def start(self):
         """Start monitoring progress events"""
@@ -51,57 +57,78 @@ class ProgressMonitorService:
         """Main monitoring loop"""
         try:
             logger.info("🔄 Progress monitor loop started")
+            # On startup look back 60 seconds to catch events sent just before
+            # the API server (re)started. The cursor advances as events are seen
+            # so we never re-broadcast the same event.
+            self._cursor = datetime.utcnow() - timedelta(seconds=60)
+            logger.info(f"📡 Progress monitor cursor initialised to {self._cursor.isoformat()}")
+
             while self.running:
                 try:
-                    # Find unprocessed progress events
+                    # Fetch events newer than our cursor (events are NEVER marked
+                    # processed — TTL index handles cleanup; cursor prevents re-broadcast)
                     events = await self.progress_events_collection.find({
-                        "processed": False
+                        "timestamp": {"$gt": self._cursor}
                     }).sort("timestamp", 1).limit(50).to_list(50)
-                    
+
                     if events:
-                        logger.info(f"📊 Found {len(events)} unprocessed progress events")
-                    
+                        logger.info(f"📊 Found {len(events)} new progress events since cursor")
+
                     for event in events:
                         await self._process_event(event)
-                        
+                        # Advance cursor past this event
+                        event_ts = event.get("timestamp")
+                        if isinstance(event_ts, datetime) and event_ts > self._cursor:
+                            self._cursor = event_ts
+
                     # Sleep for a short interval before checking again
                     await asyncio.sleep(0.5)  # Check every 500ms
-                    
+
                 except Exception as e:
                     logger.error(f"❌ Error in progress monitor loop: {e}")
                     await asyncio.sleep(5)  # Wait longer on error
-                    
+
         except asyncio.CancelledError:
             logger.info("Progress monitor loop cancelled")
             raise
             
     async def _process_event(self, event: dict):
-        """Process a single progress event and broadcast via SSE"""
+        """Broadcast a single progress event via SSE.
+
+        NOTE: Events are intentionally NOT marked as processed here.
+        The cursor in _monitor_loop prevents re-broadcasting.
+        Events stay in MongoDB until the TTL index removes them, which
+        allows Phase 3 SSE replay (Fix #1) to query missed events.
+        """
         try:
             session_id = event.get("session_id")
             event_type = event.get("type")
-            
-            logger.info(f"🎯 Processing progress event: session={session_id}, type={event_type}, status={event.get('status')}")
-            
+
+            logger.info(f"🎯 Broadcasting progress event: session={session_id}, type={event_type}, status={event.get('status')}")
+
             if not session_id:
                 logger.warning(f"Progress event missing session_id: {event}")
-                await self._mark_processed(event["_id"])
                 return
-                
+
+            # Inject the MongoDB document timestamp as the SSE event id so that
+            # ProgressEvent.to_sse() can emit it as `id:` — browsers send it back
+            # as Last-Event-ID on reconnect, enabling missed-event replay (Fix #1).
+            raw_ts = event.get("timestamp")
+            event["_sse_id"] = raw_ts.isoformat() if isinstance(raw_ts, datetime) else str(raw_ts or "")
+
             if event_type == "execution_status":
                 await self._handle_execution_status(session_id, event)
+            elif event_type == "message_ready":
+                # Passthrough knock — frontend fetches from DB on receipt
+                await self._handle_passthrough(session_id, event)
             else:
-                # Generic progress event
                 await self._handle_generic_progress(session_id, event)
-                
-            # Mark event as processed
-            await self._mark_processed(event["_id"])
-            logger.info(f"✅ Successfully processed progress event for session {session_id}")
-            
+
+            logger.info(f"✅ Broadcast progress event for session {session_id}")
+
         except Exception as e:
-            logger.error(f"❌ Failed to process progress event: {e}")
-            # Still mark as processed to avoid infinite retry
-            await self._mark_processed(event["_id"])
+            logger.error(f"❌ Failed to broadcast progress event: {e}")
+            # Do NOT swallow cursor advancement — handled in _monitor_loop
             
     async def _handle_execution_status(self, session_id: str, event: dict):
         """Handle execution status update events - SIMPLIFIED to use _sse_progress_info"""
@@ -129,14 +156,32 @@ class ProgressMonitorService:
         
         # Extract only the actual business data for SSE details
         # Exclude all SSE-level fields (id, timestamp, level, message) and MongoDB metadata
+        # NOTE: 'type' is intentionally NOT excluded — frontend needs data.details.type.
         sse_details = {k: v for k, v in event.items() if k not in [
-            "_id", "session_id", "timestamp", "processed", "type", 
+            "_id", "session_id", "timestamp", "processed", 
             "level", "message", "id", "event_id"  # Don't pass event structure fields
         ]}
         
         await _sse_progress_info(session_id, message, **sse_details)
         logger.info(f"✅ Broadcast execution status {status} for {execution_id}")
             
+    async def _handle_passthrough(self, session_id: str, event: dict):
+        """Emit typed machine events verbatim — no field stripping or wrapping.
+
+        Used for knock events (e.g. message_ready) that the frontend handles
+        by matching on data.details.type.  All fields pass through as-is.
+        """
+        clean = {k: v for k, v in event.items()
+                 if k not in ["_id", "_sse_id", "processed", "session_id", "timestamp"]}
+        level = ProgressLevel.ERROR if event.get("status") == "failed" else ProgressLevel.SUCCESS
+        await progress_sse_manager.emit(
+            session_id=session_id,
+            level=level,
+            message=f"message_ready:{clean.get('message_id', '')}",
+            details=clean,  # type + all fields land in data.details on wire
+        )
+        logger.info(f"✅ Passthrough knock emitted for session {session_id}: {clean}")
+
     async def _handle_generic_progress(self, session_id: str, event: dict):
         """Handle generic progress events"""
         level_str = event.get("level", "info")
@@ -149,8 +194,10 @@ class ProgressMonitorService:
             level = ProgressLevel.INFO
             
         # Extract optional fields
+        # NOTE: 'type' is intentionally NOT excluded here — the frontend needs
+        # data.details.type (e.g. 'analysis_complete') to fire the right handler.
         details = {k: v for k, v in event.items() if k not in [
-            "_id", "session_id", "timestamp", "processed", "type", "level", "message", "step", "total_steps"
+            "_id", "session_id", "timestamp", "processed", "level", "message", "step", "total_steps"
         ]}
         
         await progress_sse_manager.emit(
@@ -160,17 +207,6 @@ class ProgressMonitorService:
             details=details
         )
         
-    async def _mark_processed(self, event_id):
-        """Mark event as processed"""
-        try:
-            await self.progress_events_collection.update_one(
-                {"_id": event_id},
-                {"$set": {"processed": True}}
-            )
-        except Exception as e:
-            logger.error(f"❌ Failed to mark event as processed: {e}")
-
-
 # Global instance
 _progress_monitor: Optional[ProgressMonitorService] = None
 

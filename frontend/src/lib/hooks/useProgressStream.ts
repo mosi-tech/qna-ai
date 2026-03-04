@@ -1,7 +1,11 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { ProgressLog, ProgressManager } from '@/lib/progress/ProgressManager';
+import { api } from '@/lib/api';
 
-export const useProgressStream = (sessionId: string | null, messageId?: string, onAnalysisComplete?: (status: 'completed' | 'failed', data?: any) => void) => {
+export const useProgressStream = (
+  sessionId: string | null,
+  onMessageReady?: (messageId: string, status: string, responseType: string | null) => void,
+) => {
   const [logs, setLogs] = useState<ProgressLog[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +48,7 @@ export const useProgressStream = (sessionId: string | null, messageId?: string, 
 
     // Use Next.js API route as proxy to backend SSE
     const progressUrl = `/api/progress/${sessionId}`;
-    
+
 
     try {
       // Close existing connection if any
@@ -65,9 +69,16 @@ export const useProgressStream = (sessionId: string | null, messageId?: string, 
 
       eventSourceRef.current.onmessage = (event) => {
         resetHeartbeatTimer();
-        
+
         try {
           const data = JSON.parse(event.data);
+
+          // Normalize type: progress events carry type inside data.details
+          // (because ProgressEvent.to_dict() wraps extra fields under 'details').
+          // Hoist it so all downstream checks use data.type uniformly.
+          if (!data.type && data.details?.type) {
+            data.type = data.details.type;
+          }
 
           if (data.type === 'connected') {
             console.log('[useProgressStream] Backend confirmed connection for session:', sessionId);
@@ -82,12 +93,12 @@ export const useProgressStream = (sessionId: string | null, messageId?: string, 
 
           // Enhanced SSE event logging with specific event type highlighting
           const eventTypeStyle = 'color: blue; font-weight: bold;';
-          const statusStyle = data.status === 'failed' ? 'color: red; font-weight: bold;' : 
-                             data.status === 'completed' ? 'color: green; font-weight: bold;' : 
-                             'color: orange; font-weight: bold;';
-          
+          const statusStyle = data.status === 'failed' ? 'color: red; font-weight: bold;' :
+            data.status === 'completed' ? 'color: green; font-weight: bold;' :
+              'color: orange; font-weight: bold;';
+
           console.log(`%c[SSE Event] ${data.type || 'unknown'}`, eventTypeStyle, data);
-          
+
           // Log specific event types with enhanced visibility
           if (data.type === 'execution_status') {
             console.log(`%c[SSE] Execution Status: ${data.status}`, statusStyle, data);
@@ -102,81 +113,20 @@ export const useProgressStream = (sessionId: string | null, messageId?: string, 
             console.log(`%c[SSE] No Type - Raw Event:`, 'color: orange; font-weight: bold;', data);
           }
 
-          // Handle analysis completion events
-          if (data.type === 'analysis_complete' || data.type === 'execution_complete') {
-            console.log('%c[SSE] ANALYSIS/EXECUTION COMPLETED!', 'color: red; font-size: 16px; font-weight: bold;', data);
-            if (onAnalysisComplete) {
-              onAnalysisComplete(data.status === 'success' ? 'completed' : 'failed', data);
+          // Knock handler: backend emits message_ready when work is done.
+          // The frontend fetches the full message from DB — SSE carries no result data.
+          if (data.type === 'message_ready') {
+            const messageId = data.details?.message_id || data.message_id;
+            const status = data.details?.status || data.status;
+            const responseType = data.details?.response_type ?? data.response_type ?? null;
+            console.log(`%c[SSE] MESSAGE READY knock: ${messageId} (${status})`,
+              status === 'failed' ? 'color: red; font-weight: bold;' : 'color: green; font-weight: bold;',
+              data);
+            if (onMessageReady && messageId) {
+              onMessageReady(messageId, status, responseType);
             }
-          }
-          
-          // Highlight and handle analysis error events (final failures)
-          // Check both data.status and data.details.status for completion
-          const analysisStatus = data.status || data.details?.status;
-          const isAnalysisProgress = data.type === 'analysis_progress';
-          
-          if (isAnalysisProgress && analysisStatus === 'failed') {
-            console.log('%c[SSE] FINAL ANALYSIS FAILURE!', 'color: red; font-size: 14px; font-weight: bold; background: yellow;', data);
-            // Trigger completion callback for final analysis failures
-            if (onAnalysisComplete) {
-              onAnalysisComplete('failed', data);
-            }
-          }
-          
-          // Handle successful analysis completion
-          if (isAnalysisProgress && analysisStatus === 'completed') {
-            console.log('%c[SSE] ANALYSIS COMPLETED SUCCESSFULLY!', 'color: green; font-size: 14px; font-weight: bold;', data);
-            if (onAnalysisComplete) {
-              onAnalysisComplete('completed', data);
-            }
-          }
-          
-          // Handle execution completion (which may also signal analysis completion)
-          if (data.type === 'execution_status' && data.status === 'completed') {
-            console.log('%c[SSE] EXECUTION COMPLETED!', 'color: green; font-size: 14px; font-weight: bold;', data);
-            // Note: execution completion doesn't necessarily mean analysis completion
-            // Analysis completion is signaled by analysis_progress events
-          }
-          
-          // CRITICAL: Universal completion detection
-          // Look for completion indicators in details (correct structure)
-          const eventStatus = data.details?.status;
-          const messageId = data.details?.message_id;
-          const isCompletionEvent = messageId && (eventStatus === 'failed' || eventStatus === 'completed');
-          
-          if (isCompletionEvent) {
-            console.log('%c[SSE] COMPLETION EVENT DETECTED:', 'color: purple; font-weight: bold;', {
-              eventStatus,
-              messageId,
-              level: data.level,
-              eventType: data.type || 'no-type'
-            });
-            
-            // Clean completion data - use the event as-is (no more flattening needed)
-            const completionData = {
-              ...data,
-              // Ensure critical fields are accessible at top level for compatibility
-              message_id: messageId,
-              status: eventStatus,
-              error: data.details?.error || (eventStatus === 'failed' ? data.message : undefined)
-            };
-            
-            if (eventStatus === 'failed') {
-              console.log('%c[SSE] ANALYSIS FAILURE!', 'color: red; font-size: 14px; font-weight: bold; background: yellow;', completionData);
-              if (onAnalysisComplete) {
-                onAnalysisComplete('failed', completionData);
-              }
-            } else if (eventStatus === 'completed') {
-              console.log('%c[SSE] ANALYSIS SUCCESS!', 'color: green; font-size: 14px; font-weight: bold;', completionData);
-              if (onAnalysisComplete) {
-                onAnalysisComplete('completed', completionData);
-              }
-            }
-          }
-          
-          // Highlight execution retries
-          if (data.type === 'execution_status' && data.status === 'failed') {
-            console.log('%c[SSE] Execution Failed (check if retry or final)', 'color: orange; font-weight: bold;', data);
+            // Knock is signal-only — don't add to visible log
+            return;
           }
 
           let timestamp = Date.now();
@@ -199,7 +149,7 @@ export const useProgressStream = (sessionId: string | null, messageId?: string, 
           };
 
           setLogs(prev => [...prev, progressLog]);
-          
+
           if (sessionId) {
             ProgressManager.addLog(sessionId, progressLog);
           }
@@ -211,13 +161,13 @@ export const useProgressStream = (sessionId: string | null, messageId?: string, 
       eventSourceRef.current.onerror = (event) => {
         console.error('[useProgressStream] SSE error:', event);
         setIsConnected(false);
-        
+
         if (eventSourceRef.current?.readyState === EventSource.CLOSED) {
           console.log('[useProgressStream] SSE connection closed');
           setError('Connection closed');
         } else {
           setError('Connection error');
-          
+
           // Auto-reconnect with exponential backoff (limited attempts)
           if (reconnectAttemptsRef.current < 3) {
             const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 8000);
@@ -239,7 +189,7 @@ export const useProgressStream = (sessionId: string | null, messageId?: string, 
       setIsConnected(false);
       console.error('[useProgressStream] Failed to create EventSource:', err);
     }
-  }, [sessionId, onAnalysisComplete, resetHeartbeatTimer]);
+  }, [sessionId, onMessageReady, resetHeartbeatTimer]);
 
   const clearLogs = useCallback(() => {
     setLogs([]);

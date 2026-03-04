@@ -89,26 +89,24 @@ async def get_session_detail(
     limit: number of messages to return (default 5)
     """
     try:
-        # First verify user owns this session using ChatHistoryService (before expensive DB call)
         chat_history_service = request.app.state.chat_history_service
         if not chat_history_service:
             raise HTTPException(status_code=500, detail="Chat service not available")
-        
-        is_owner = await chat_history_service.validate_session_ownership(session_id, user_context.user_id)
-        if not is_owner:
-            raise HTTPException(status_code=403, detail="Access denied: Session not found or belongs to different user")
-        
-        # Now get the session data (we know user owns it)
-        
+
+        # Single DB call: get session + messages together.
+        # Ownership is verified from the returned user_id — no separate round-trip needed.
         session = await chat_history_service.get_session_with_messages(
             session_id=session_id,
             limit=limit,
             offset=offset,
         )
-        
+
         if not session:
             raise HTTPException(status_code=404, detail="Session not found")
-        
+
+        if session.get("user_id") != user_context.user_id:
+            raise HTTPException(status_code=403, detail="Access denied: Session not found or belongs to different user")
+
         logger.info(f"✓ Retrieved session {session_id} with {len(session.get('messages', []))} messages for user {user_context.user_id}")
         return session
     except HTTPException:

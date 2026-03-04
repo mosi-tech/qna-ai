@@ -34,6 +34,7 @@ export default function ChatInterface({
 }: ChatInterfaceProps) {
   const router = useRouter();
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [isUserScrolling, setIsUserScrolling] = useState(false);
   const previousScrollHeightRef = useRef(0);
@@ -45,12 +46,12 @@ export default function ChatInterface({
   const loadOlderTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const debouncedLoadOlder = useCallback(() => {
     if (!onLoadOlder || isLoadingOlder || !canLoadOlder) return;
-    
+
     // Clear existing timeout
     if (loadOlderTimeoutRef.current) {
       clearTimeout(loadOlderTimeoutRef.current);
     }
-    
+
     // Set new timeout for debounced call
     loadOlderTimeoutRef.current = setTimeout(() => {
       if (onLoadOlder && !isLoadingOlder && canLoadOlder) {
@@ -101,15 +102,15 @@ export default function ChatInterface({
     const justFinishedLoadingOlder = wasLoadingOlderRef.current && !isLoadingOlder;
     const messageCountIncreased = messages.length > previousMessageCountRef.current;
     const heightIncreased = currentScrollHeight > previousScrollHeightRef.current;
-    
+
     if (justFinishedLoadingOlder && messageCountIncreased && heightIncreased && previousScrollHeightRef.current > 0) {
       // Maintain scroll position: calculate exactly where user was
       const heightDifference = currentScrollHeight - previousScrollHeightRef.current;
       const newScrollTop = savedScrollTopRef.current + heightDifference;
-      
+
       // Instantly set scroll position to maintain user's view (no animation)
       container.scrollTop = newScrollTop;
-      
+
       console.log('[ChatInterface] Maintained scroll position after loading older messages', {
         savedScrollTop: savedScrollTopRef.current,
         heightDifference,
@@ -118,12 +119,17 @@ export default function ChatInterface({
     }
     // Otherwise, scroll to bottom for new messages (if user hasn't scrolled away or initial load)
     else if (!isUserScrolling || isInitialLoad) {
-      setTimeout(() => {
-        container.scrollTop = container.scrollHeight;
-        // Scroll a bit more to ensure bottom message is fully visible
-        container.scrollTop += 50;
+      // Use requestAnimationFrame so the browser has computed final layout before we scroll.
+      // Falls back to scrollIntoView on the sentinel div for maximum reliability.
+      const doScroll = () => {
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({ behavior: 'instant' });
+        } else if (container) {
+          container.scrollTop = container.scrollHeight;
+        }
         setIsInitialLoad(false);
-      }, 0);
+      };
+      requestAnimationFrame(() => requestAnimationFrame(doScroll));
     }
 
     // Update previous values for next comparison
@@ -142,7 +148,7 @@ export default function ChatInterface({
   useEffect(() => {
     const container = messagesContainerRef.current;
     if (!container) return;
-    
+
     container.addEventListener('scroll', handleScroll);
     return () => container.removeEventListener('scroll', handleScroll);
   }, [canLoadOlder, isLoadingOlder, onLoadOlder]);
@@ -162,15 +168,23 @@ export default function ChatInterface({
             </div>
           )}
           {messages.map((message) => (
-            <ChatMessage
-              key={message.id}
-              message={message}
-              onClarificationResponse={onClarificationResponse}
-              pendingClarificationId={pendingClarificationId}
-              onExecutionUpdate={onExecutionUpdate}
-            />
+            // Key switches between 'th' and 'c' when the bubble resolves so React
+            // mounts fresh DOM and the fade-in animation fires cleanly.
+            <div
+              key={`${message.id}__${message.type === 'thinking' ? 'th' : 'c'}`}
+              className="animate-msg-reveal"
+            >
+              <ChatMessage
+                key={message.id}
+                message={message}
+                onClarificationResponse={onClarificationResponse}
+                pendingClarificationId={pendingClarificationId}
+                onExecutionUpdate={onExecutionUpdate}
+              />
+            </div>
           ))}
-
+          {/* Sentinel element at the bottom — scrollIntoView target */}
+          <div ref={messagesEndRef} style={{ height: 0, flexShrink: 0 }} />
         </div>
       </div>
 

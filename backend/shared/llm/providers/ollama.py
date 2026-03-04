@@ -2,8 +2,11 @@
 Ollama API provider implementation
 """
 
+import asyncio
+import functools
 import json
 import logging
+import os
 from typing import Dict, Any, List, Tuple, Optional
 import ollama
 import requests
@@ -21,6 +24,10 @@ class OllamaProvider(LLMProvider):
         
         if ollama is None:
             raise ImportError("ollama library not installed. Install with: pip install ollama")
+        
+        # Request timeout — large cloud models (e.g. qwen3-coder:480b) can take
+        # several minutes; default to 300s, overridable via OLLAMA_TIMEOUT.
+        self.request_timeout = int(os.getenv("OLLAMA_TIMEOUT", "300"))
         
         # Determine if this is Ollama Cloud or local
         self.is_cloud = "ollama.com" in base_url or api_key != ""
@@ -90,9 +97,13 @@ class OllamaProvider(LLMProvider):
             request_data["tools"] = tools
         
         try:
-            # Make API call using ollama library
-            response = self.client.chat(**request_data)
-            
+            # self.client.chat() is synchronous — run it in a thread so it
+            # doesn't block the asyncio event loop for other requests.
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(
+                None, functools.partial(self.client.chat, **request_data)
+            )
+
             return {
                 "success": True,
                 "data": response,
@@ -145,8 +156,14 @@ class OllamaProvider(LLMProvider):
             logger.info(f"🌐 Making request to: {url}")
             logger.debug(f"🔑 Headers: {headers}")
             logger.debug(f"📦 Request data: {request_data}")
-            
-            response = requests.post(url, headers=headers, json=request_data, timeout=60)
+
+            # requests.post() is synchronous — run it in a thread so it
+            # doesn't block the asyncio event loop for other requests.
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(
+                None,
+                functools.partial(requests.post, url, headers=headers, json=request_data, timeout=self.request_timeout)
+            )
             response.raise_for_status()
             
             response_data = response.json()

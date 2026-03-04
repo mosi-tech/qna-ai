@@ -5,8 +5,8 @@ module.exports = {
   apps: [
     {
       name: 'ollama-script-server',
-      script: 'python3',
-      args: 'server.py',
+      script: '../apiServer/start.sh',
+      interpreter: '/bin/bash',
       cwd: '../apiServer',
       instances: 1,
       autorestart: true,
@@ -32,27 +32,14 @@ module.exports = {
 
         // Ollama settings (when LLM_PROVIDER=ollama - not yet implemented)
         OLLAMA_BASE_URL: process.env.OLLAMA_BASE_URL || 'http://localhost:11434',
-        OLLAMA_MODEL: process.env.OLLAMA_MODEL || 'llama3.2'
-      },
-      error_file: './logs/err.log',
-      out_file: './logs/out.log',
-      log_file: './logs/combined.log',
-      time: true,
-      merge_logs: true,
-      log_date_format: 'YYYY-MM-DD HH:mm:ss Z'
-    },
-    {
-      name: 'script-execution-server',
-      script: 'python3',
-      args: 'http_script_execution_server.py',
-      cwd: '../executionServer',
-      instances: 1,
-      autorestart: true,
-      watch: false,
-      max_memory_restart: '1G',
-      env: {
-        NODE_ENV: 'development',
-        PORT: 8013
+        OLLAMA_MODEL: process.env.OLLAMA_MODEL || 'llama3.2',
+
+        // Dev visibility: stream pre-queue steps (validation, intent, analyst)
+        // to the SSE progress panel. Set false to silence in prod.
+        PRE_QUEUE_PROGRESS_LOGS: process.env.PRE_QUEUE_PROGRESS_LOGS || 'true',
+
+        // Development auth bypass (allows X-User-ID header for auth)
+        ENV: process.env.ENV || 'development',
       },
       error_file: './logs/err.log',
       out_file: './logs/out.log',
@@ -63,19 +50,32 @@ module.exports = {
     },
     {
       name: 'analysis-queue-worker',
-      script: 'python3',
-      args: 'queue_worker.py --type analysis --poll-interval 2',
+      script: '../executionServer/start-analysis-worker.sh',
+      interpreter: '/bin/bash',
       cwd: '../executionServer',
       instances: 1,
       autorestart: true,
       watch: false,
       max_memory_restart: '1G',
-      env: {
-        NODE_ENV: 'development'
-      },
-      error_file: './logs/err.log',
-      out_file: './logs/out.log',
-      log_file: './logs/combined.log',
+      error_file: './logs/analysis-worker/err.log',
+      out_file: './logs/analysis-worker/out.log',
+      log_file: './logs/analysis-worker/combined.log',
+      time: true,
+      merge_logs: true,
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z'
+    },
+    {
+      name: 'execution-queue-worker',
+      script: '../executionServer/start-execution-worker.sh',
+      interpreter: '/bin/bash',
+      cwd: '../executionServer',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '1G',
+      error_file: './logs/execution-worker/err.log',
+      out_file: './logs/execution-worker/out.log',
+      log_file: './logs/execution-worker/combined.log',
       time: true,
       merge_logs: true,
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z'

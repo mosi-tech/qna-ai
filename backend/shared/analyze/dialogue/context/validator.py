@@ -159,10 +159,11 @@ Respond ONLY with a JSON object:
                 error_msg = getattr(response, "error", "Unknown error")
             
             if success and content:
-                import json
-                # Try to parse JSON response
+                from shared.utils.json_utils import safe_json_loads
+                # Try to parse JSON response (safe_json_loads strips markdown
+                # code fences that Ollama sometimes wraps responses in)
                 try:
-                    result = json.loads(content.strip())
+                    result = safe_json_loads(content.strip())
                     
                     # Validate the response structure
                     if "complete" in result and "missing" in result and "reason" in result:
@@ -189,8 +190,8 @@ Respond ONLY with a JSON object:
                     else:
                         logger.warning(f"LLM response missing required fields: {result}")
                         
-                except json.JSONDecodeError as e:
-                    logger.warning(f"Failed to parse LLM response as JSON: {content}")
+                except (ValueError, Exception) as e:
+                    logger.warning(f"Failed to parse LLM response as JSON: {content[:200]}")
             else:
                 logger.warning(f"LLM validation failed: {error_msg}")
                 

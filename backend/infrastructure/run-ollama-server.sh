@@ -18,9 +18,10 @@ fi
 # Set default environment variables (can be overridden by .env)
 export NODE_ENV=${NODE_ENV:-development}
 export PORT=${PORT:-8010}
-export LLM_PROVIDER=${LLM_PROVIDER:-openai}
-export OPENAI_MODEL=${OPENAI_MODEL:-gpt-4}
-export OPENAI_API_KEY=${OPENAI_API_KEY:-}
+export LLM_PROVIDER=${LLM_PROVIDER:-anthropic}
+export ANTHROPIC_MODEL=${ANTHROPIC_MODEL:-claude-3-5-haiku-20241022}
+export OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://localhost:11434}
+export OLLAMA_MODEL=${OLLAMA_MODEL:-qwen3:0.6b}
 
 # Check if required API key is set based on provider
 if [ "$LLM_PROVIDER" = "anthropic" ] && [ -z "$ANTHROPIC_API_KEY" ]; then
@@ -33,14 +34,16 @@ elif [ "$LLM_PROVIDER" = "openai" ] && [ -z "$OPENAI_API_KEY" ]; then
     exit 1
 fi
 
+echo "🔧 Provider: $ANTHROPIC_API_KEY"
+
 echo "🚀 Starting Financial Analysis Server..."
 echo "🔧 Provider: $LLM_PROVIDER"
 if [ "$LLM_PROVIDER" = "anthropic" ]; then
-    echo "🔧 Model: ${ANTHROPIC_MODEL:-claude-3-5-haiku-20241022}"
+    echo "🔧 Model: $ANTHROPIC_MODEL"
 elif [ "$LLM_PROVIDER" = "openai" ]; then
-    echo "🔧 Model: ${OPENAI_MODEL:-gpt-4}"
+    echo "🔧 Model: ${OPENAI_MODEL:-gpt-4-turbo-preview}"
 else
-    echo "🔧 Model: ${OLLAMA_MODEL:-llama3.2}"
+    echo "🔧 Model: $OLLAMA_MODEL"
 fi
 echo "🔧 Port: $PORT"
 

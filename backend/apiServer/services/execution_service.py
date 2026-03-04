@@ -216,11 +216,13 @@ class ExecutionService:
                 "timeout_seconds": timeout_seconds
             }
             
-            # Call execution server
+            # Call execution server with shared-secret auth token
+            exec_token = os.getenv("EXECUTION_SERVER_TOKEN", "")
             async with httpx.AsyncClient(timeout=timeout_seconds + 10) as client:
                 response = await client.post(
                     f"{exec_server_url}/execute",
-                    json=payload
+                    json=payload,
+                    headers={"X-Execution-Token": exec_token} if exec_token else {}
                 )
                 
                 if response.status_code == 200:
