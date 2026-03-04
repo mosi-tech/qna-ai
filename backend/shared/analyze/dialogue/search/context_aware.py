@@ -69,15 +69,11 @@ class ContextAwareSearch:
 
         similarity_threshold = similarity_threshold or self.default_similarity_threshold
 
-        # Verify session_id is provided (REQUIRED)
+        # When session_id is absent (e.g. dashboard sub-questions, headless runs),
+        # treat the query as standalone with an empty conversation history.
         if not session_id:
-            return self._error_response(
-                message="Session ID is required for context-aware search",
-                original_query=query
-            )
-
-        # Get conversation from session
-        if self.session_manager:
+            conversation = ConversationStore(session_id="__standalone__")
+        elif self.session_manager:
             conversation = await self.session_manager.get_session(session_id)
             if not conversation:
                 return self._error_response(
@@ -178,11 +174,13 @@ class ContextAwareSearch:
         }
         
         if not validation["success"]:
-            return self._error_response(
-                message="Unable to run validation",
-                session_id=session_id,
-                original_query=query
+            # Validator failed (e.g. LLM returned malformed JSON).
+            # For dashboard sub-questions treat this as a non-blocking warning:
+            # proceed as if the query is complete rather than killing the block.
+            logger.warning(
+                f"⚠️ Validation failed (LLM parse error) — treating query as complete: {query[:80]}"
             )
+            validation = {"success": True, "complete": True, "missing": []}
 
         if not validation["complete"]:
             missing = ", ".join(validation["missing"])

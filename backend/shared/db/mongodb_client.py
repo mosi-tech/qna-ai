@@ -529,6 +529,22 @@ class MongoDBClient:
             {"$set": camel_case_updates}
         )
         return result.modified_count > 0
+
+    async def find_executions(
+        self,
+        query: Dict[str, Any],
+        limit: int = 100,
+        sort: Optional[list] = None,
+    ) -> List[Dict[str, Any]]:
+        """Find executions with an arbitrary query dict.
+
+        Returns raw dicts (not ExecutionModel) so callers can use by_alias names.
+        """
+        cursor = self.db.executions.find(query)
+        if sort:
+            cursor = cursor.sort(sort)
+        docs = await cursor.limit(limit).to_list(limit)
+        return docs
     
     # ========================================================================
     # SAVED ANALYSIS OPERATIONS (Reusable Templates)

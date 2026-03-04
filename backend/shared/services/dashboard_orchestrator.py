@@ -22,7 +22,7 @@ analysis back to its originating block.
 import logging
 from typing import Any, Dict, List, Optional
 
-from ..db.schemas import BlockPlanModel, BlockStatus, DashboardPlanModel
+from ..db.schemas import BlockPlanModel, BlockStatus, DashboardPlanModel, ExecutionStatus
 from ..db.dashboard_repository import DashboardRepository
 
 logger = logging.getLogger("dashboard-orchestrator")
@@ -54,6 +54,7 @@ class DashboardOrchestrator:
         block_cache: Any,
     ) -> None:
         self.dashboard_repo: DashboardRepository = repo_manager.dashboard
+        self.execution_repo = repo_manager.execution
         self.analysis_queue = analysis_queue
         self.ui_planner = ui_planner
         self.block_cache = block_cache
@@ -194,6 +195,107 @@ class DashboardOrchestrator:
             "layout": plan_output["layout"],
             "blocks": block_summaries,
         }
+
+    # ------------------------------------------------------------------
+    # Reconciliation
+    # ------------------------------------------------------------------
+
+    async def reconcile_pending_blocks(self, dashboard_id: str) -> int:
+        """
+        Poll MongoDB for completed executions and flip any pending blocks
+        to ``complete`` or ``failed``.
+
+        This is the Phase-6 hookback mechanism for head-less and queue-based
+        runs where the execution_worker cannot call execution_service.py
+        directly.
+
+        Returns the number of blocks whose status was updated.
+        """
+        dashboard = await self.dashboard_repo.get_by_id(dashboard_id)
+        if not dashboard:
+            return 0
+
+        reconciled = 0
+        for block in dashboard.get("blocks", []):
+            if block.get("status") not in ("pending", "running"):
+                continue
+
+            job_id = block.get("analysisId") or block.get("analysis_id")
+            if not job_id:
+                continue
+
+            # Step 1: look up the analysis-queue job to get the AnalysisModel ID
+            job_doc = await self.analysis_queue.collection.find_one({"job_id": job_id})
+            if not job_doc:
+                continue
+
+            jstatus = job_doc.get("status")
+
+            # Handle permanently failed analysis jobs
+            if jstatus == "failed":
+                await self.dashboard_repo.update_block_status(
+                    dashboard_id=dashboard_id,
+                    block_id=block["block_id"],
+                    status=BlockStatus.FAILED,
+                    error=job_doc.get("error", "Analysis job failed"),
+                )
+                logger.info(f"❌ Reconciled block {block['block_id']} → failed (analysis job failed)")
+                reconciled += 1
+                continue
+
+            job_result = job_doc.get("result")
+            if not job_result:
+                continue  # analysis not yet acked
+
+            result_analysis_id = job_result.get("analysis_id")
+            if not result_analysis_id:
+                continue
+
+            # Step 2: find the completed execution for this analysis
+            executions = await self.execution_repo.get_executions_by_analysis_id(
+                result_analysis_id, limit=1
+            )
+            if not executions:
+                continue
+
+            exec_doc = executions[0]
+            if isinstance(exec_doc, dict):
+                exec_status = exec_doc.get("status")
+                result_data = exec_doc.get("result") or {}
+                execution_id = exec_doc.get("executionId") or exec_doc.get("execution_id")
+                error_msg    = exec_doc.get("error")
+            else:
+                exec_status = getattr(exec_doc, "status", None)
+                result_data = getattr(exec_doc, "result", {}) or {}
+                execution_id = getattr(exec_doc, "execution_id", None)
+                error_msg    = getattr(exec_doc, "error", None)
+
+            # Step 3: update block status based on execution outcome
+            if exec_status in (ExecutionStatus.SUCCESS, "success", "completed"):
+                await self.dashboard_repo.update_block_status(
+                    dashboard_id=dashboard_id,
+                    block_id=block["block_id"],
+                    status=BlockStatus.COMPLETE,
+                    result_data=result_data,
+                    execution_id=execution_id,
+                )
+                logger.info(
+                    f"✅ Reconciled block {block['block_id']} → complete "
+                    f"(execution={execution_id})"
+                )
+                reconciled += 1
+
+            elif exec_status in (ExecutionStatus.FAILED, "failed"):
+                await self.dashboard_repo.update_block_status(
+                    dashboard_id=dashboard_id,
+                    block_id=block["block_id"],
+                    status=BlockStatus.FAILED,
+                    error=error_msg or "Execution failed",
+                )
+                logger.info(f"❌ Reconciled block {block['block_id']} → failed")
+                reconciled += 1
+
+        return reconciled
 
     # ------------------------------------------------------------------
     # Private helpers

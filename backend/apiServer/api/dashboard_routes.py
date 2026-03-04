@@ -1,13 +1,15 @@
 """
-Dashboard API Routes — Phase 7
+Dashboard API Routes — Phase 7 + Phase 11
 
 POST   /api/dashboard/create
+POST   /api/dashboard/run-headless
 GET    /api/dashboard/session/{session_id}
 GET    /api/dashboard/{dashboard_id}
 GET    /api/dashboard/{dashboard_id}/blocks/{block_id}
 POST   /api/dashboard/{dashboard_id}/blocks/{block_id}/refresh
 """
 
+import asyncio
 import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -32,6 +34,11 @@ class CreateDashboardRequest(BaseModel):
     sessionId: str
     messageId: str
     forceRefresh: bool = False
+
+
+class HeadlessRunRequest(BaseModel):
+    question: str
+    timeout_seconds: int = 120
 
 
 class DashboardResponse(BaseModel):
@@ -108,6 +115,67 @@ async def create_dashboard(
     except Exception as exc:
         logger.exception("Error creating dashboard: %s", exc)
         raise HTTPException(status_code=500, detail=str(exc))
+
+
+# ---------------------------------------------------------------------------
+# POST /api/dashboard/run-headless  — must come before /{dashboard_id} routes
+# ---------------------------------------------------------------------------
+
+
+@router.post("/run-headless")
+async def run_headless(
+    body: HeadlessRunRequest,
+    request: Request,
+    user_context: UserContext = Depends(require_authenticated_user),
+):
+    """
+    Run the full dashboard pipeline synchronously.
+    Waits for all blocks to complete (or timeout) before returning.
+    Useful for smoke-tests, CI, and debugging without a browser.
+    """
+    orch = _get_orchestrator(request)
+    repo = _get_dashboard_repo(request)
+
+    timeout = body.timeout_seconds
+    try:
+        plan = await orch.create_dashboard(
+            question=body.question,
+            user_id=user_context.user_id,
+            session_id="",        # no SSE session needed for headless
+            message_id="headless",
+            force_refresh=False,
+        )
+    except Exception as exc:
+        logger.exception("Error planning headless dashboard: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))
+
+    dashboard_id = plan["dashboard_id"]
+    logger.info(
+        "[headless] Dashboard created: %s (%d blocks)",
+        dashboard_id,
+        len(plan.get("blocks", [])),
+    )
+
+    loop = asyncio.get_event_loop()
+    deadline = loop.time() + timeout
+    current = plan
+
+    while loop.time() < deadline:
+        statuses = {b["status"] for b in current.get("blocks", [])}
+        if statuses.issubset({"complete", "cached", "failed"}):
+            logger.info("[headless] All blocks settled for dashboard %s", dashboard_id)
+            return _ok(current)
+        await asyncio.sleep(1)
+        try:
+            current = await repo.get_by_id(dashboard_id)
+        except Exception as exc:
+            logger.exception("[headless] Error polling dashboard %s: %s", dashboard_id, exc)
+            raise HTTPException(status_code=500, detail=str(exc))
+
+    logger.warning(
+        "[headless] Timeout after %ds for dashboard %s", timeout, dashboard_id
+    )
+    return {"success": False, "error": "timeout", "data": current, "timestamp": datetime.utcnow().isoformat()}
 
 
 # ---------------------------------------------------------------------------

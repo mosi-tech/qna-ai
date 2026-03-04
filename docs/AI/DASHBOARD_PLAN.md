@@ -64,6 +64,7 @@ Phase 7  — New API routes: /api/dashboard/*                      [Backend, add
 Phase 8  — qna-ai: DashboardResultSection + useBlockUpdates      [Frontend, new only]
 Phase 9  — qna-ai: retire UIConfigurationRenderer + insights     [Frontend, cleanup]
 Phase 10 — ai-builder: wire real data (optional upgrade)         [Frontend, opt-in]
+Phase 11 — Headless pipeline runner (no UI, full e2e via API)     [Backend, additive]
 ```
 
 ---
@@ -808,6 +809,182 @@ const fetchFn = process.env.NEXT_PUBLIC_REAL_DATA === 'true' ? fetchRealData : f
 
 ---
 
+## Phase 11 — Headless Pipeline Runner
+
+**Goal:** Run the complete dashboard pipeline — UIPlanner → DashboardOrchestrator → block
+execution → final state — via a single API call or CLI script, with no browser or SSE
+listener required. Primary use cases: backend smoke-tests, CI verification, debugging
+UIPlanner output, and performance profiling.
+
+### 11.1 — New route: `POST /api/dashboard/run-headless`
+
+Accepts `{ question, user_id?, timeout_seconds? }`. Internally:
+1. Calls `DashboardOrchestrator.create_dashboard(question)` — returns a `DashboardPlanModel`
+2. Polls `DashboardRepository.get_plan(dashboard_id)` every second until all blocks reach
+   `complete` or `failed` (or `timeout_seconds` is exceeded, default 120 s)
+3. Returns the fully-populated `DashboardPlanModel` as JSON — every block's `result_data`,
+   `status`, `execution_id`, and `cache_key` included
+
+```python
+# backend/apiServer/api/dashboard_routes.py  (addition to existing file)
+
+@dashboard_router.post("/run-headless")
+async def run_headless(
+    body: HeadlessRunRequest,
+    request: Request,
+    user=Depends(require_authenticated_user),
+):
+    """
+    Run the full dashboard pipeline synchronously.
+    Waits for all blocks to complete before returning.
+    Useful for smoke-tests, CI, and debugging without a browser.
+    """
+    orchestrator: DashboardOrchestrator = request.app.state.dashboard_orchestrator
+    repo: RepositoryManager = request.app.state.repo_manager
+
+    timeout = body.timeout_seconds or 120
+    plan = await orchestrator.create_dashboard(
+        question=body.question,
+        user_id=user["user_id"],
+        session_id=None,       # no SSE session needed
+    )
+    dashboard_id = plan["dashboard_id"]
+
+    deadline = asyncio.get_event_loop().time() + timeout
+    while asyncio.get_event_loop().time() < deadline:
+        current = await repo.dashboard.get_plan(dashboard_id)
+        statuses = {b["status"] for b in current["blocks"]}
+        if statuses.issubset({"complete", "cached", "failed"}):
+            return {"success": True, "data": current, "timestamp": utc_now()}
+        await asyncio.sleep(1)
+
+    return {"success": False, "error": "timeout", "data": current, "timestamp": utc_now()}
+```
+
+### 11.2 — `HeadlessRunRequest` Pydantic model
+
+```python
+class HeadlessRunRequest(BaseModel):
+    question: str
+    timeout_seconds: int = 120
+```
+
+Add this to `dashboard_routes.py` alongside the existing request models.
+
+### 11.3 — CLI convenience script: `backend/apiServer/scripts/run_dashboard_headless.py`
+
+A standalone Python script for local use without needing an HTTP client:
+
+```python
+#!/usr/bin/env python3
+"""
+Headless dashboard runner — no browser required.
+
+Usage:
+    python run_dashboard_headless.py "How is QQQ performing over the last 6 months?"
+    python run_dashboard_headless.py "Compare VOO vs QQQ" --timeout 180 --pretty
+"""
+import argparse, asyncio, json, sys, os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
+
+from shared.db.mongodb_client import create_mongo_client
+from shared.db.repositories import RepositoryManager
+from shared.services.dashboard_orchestrator import create_dashboard_orchestrator
+
+async def run(question: str, timeout: int, pretty: bool):
+    client = create_mongo_client()
+    repo = RepositoryManager(client)
+    orchestrator = create_dashboard_orchestrator(repo)
+
+    print(f"[headless] Planning dashboard for: {question!r}", flush=True)
+    plan = await orchestrator.create_dashboard(question=question, user_id="headless", session_id=None)
+    dashboard_id = plan["dashboard_id"]
+    print(f"[headless] Dashboard created: {dashboard_id} ({len(plan['blocks'])} blocks)", flush=True)
+
+    import time
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        current = await repo.dashboard.get_plan(dashboard_id)
+        statuses = {b["status"] for b in current["blocks"]}
+        pending = [b["block_id"] for b in current["blocks"] if b["status"] not in ("complete","cached","failed")]
+        print(f"[headless] Waiting... pending={pending}", flush=True)
+        if not pending:
+            break
+        await asyncio.sleep(2)
+    else:
+        print("[headless] TIMEOUT — returning partial results", flush=True)
+
+    indent = 2 if pretty else None
+    print(json.dumps(current, indent=indent, default=str))
+
+if __name__ == "__main__":
+    p = argparse.ArgumentParser()
+    p.add_argument("question")
+    p.add_argument("--timeout", type=int, default=120)
+    p.add_argument("--pretty", action="store_true")
+    args = p.parse_args()
+    asyncio.run(run(args.question, args.timeout, args.pretty))
+```
+
+### 11.4 — Quick smoke-test curl command
+
+```bash
+# Requires a valid session token (copy from browser DevTools → Application → Cookies)
+curl -s -X POST http://localhost:8010/api/dashboard/run-headless \
+  -H "Content-Type: application/json" \
+  -H "Cookie: session=<YOUR_SESSION_TOKEN>" \
+  -d '{"question": "How is QQQ performing over the last 6 months?", "timeout_seconds": 120}' \
+  | python3 -m json.tool
+```
+
+Or with the CLI script (no auth token needed, talks directly to MongoDB + queue):
+
+```bash
+cd backend
+python apiServer/scripts/run_dashboard_headless.py "How is QQQ doing?" --pretty
+```
+
+### What the output looks like
+
+```json
+{
+  "success": true,
+  "data": {
+    "dashboard_id": "550e8400-e29b-41d4-a716-446655440000",
+    "title": "QQQ 6-Month Performance Overview",
+    "question": "How is QQQ performing over the last 6 months?",
+    "status": "complete",
+    "blocks": [
+      {
+        "block_id": "b0",
+        "title": "Current Price",
+        "blockId": "kpi-card-01",
+        "sub_question": "What is QQQ's current price and 1-day change?",
+        "status": "complete",
+        "cache_key": "a3f1b2c4d5e6f7a8",
+        "result_data": { "value": 512.34, "change": 1.23, "changePercent": 0.24 }
+      },
+      {
+        "block_id": "b1",
+        "title": "6-Month Price Chart",
+        "blockId": "line-chart-01",
+        "sub_question": "What has QQQ's price been over the last 6 months?",
+        "status": "cached",
+        "cache_key": "b8c9d0e1f2a3b4c5",
+        "result_data": { "series": [{ "date": "2025-09", "value": 478.12 }, "..."] }
+      }
+    ]
+  },
+  "timestamp": "2026-03-04T12:34:56Z"
+}
+```
+
+**Risk:** Low — purely additive. The new route reuses all existing services with no modifications.
+The `session_id=None` path through `DashboardOrchestrator` is already supported (SSE events
+are silently skipped when `session_id` is absent).
+
+---
+
 ## Data Flow — End to End
 
 ```
@@ -869,6 +1046,7 @@ backend/shared/services/dashboard_orchestrator.py
 backend/shared/db/dashboard_repository.py
 backend/shared/config/system-prompt-ui-planner.txt
 backend/apiServer/api/dashboard_routes.py
+backend/apiServer/scripts/run_dashboard_headless.py  (Phase 11)
 ```
 
 ### Modified files (backend)
@@ -878,6 +1056,7 @@ backend/shared/db/repositories.py              (+DashboardRepository registratio
 backend/apiServer/services/execution_service.py (+15 lines hookback)
 backend/apiServer/api/routes.py                 (+dashboard_router)
 backend/apiServer/main.py                       (+orchestrator wiring)
+backend/apiServer/api/dashboard_routes.py       (+HeadlessRunRequest, +run_headless route — Phase 11)
 ```
 
 ### Deleted files (backend)
@@ -922,6 +1101,7 @@ apps/qna-ai/src/components/insights/           (entire directory — 16 files)
 | Execution failure mid-dashboard | Failed blocks show error state in `BlockShell`; rest of dashboard renders normally |
 | Phase 9 cleanup breaks existing sessions | Phase 9 runs after Phase 8 is confirmed; old sessions use `AnalysisResultSection` fallback |
 | ai-builder breakage | Phase 1 makes ai-builder import types from base-ui — verified at type-check step |
+| Headless runner hangs if workers are down | `timeout_seconds` cap + partial results returned; script prints per-block pending status so the stalled block is visible |
 
 ---
 
@@ -939,3 +1119,4 @@ apps/qna-ai/src/components/insights/           (entire directory — 16 files)
 | 8 | Dashboard renders skeleton immediately; cached blocks paint <100ms; executed blocks paint as SSE arrives |
 | 9 | Zero references to `UIConfigurationRenderer` or `insights/` in qna-ai; `UIResultFormatter` gone |
 | 10 | `NEXT_PUBLIC_REAL_DATA=true` in ai-builder uses real pipeline; mock path unchanged |
+| 11 | `POST /api/dashboard/run-headless` returns a fully-populated `DashboardPlanModel` (all blocks `complete`/`cached`) within timeout; CLI script produces identical JSON output; zero UI required |

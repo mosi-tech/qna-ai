@@ -98,3 +98,4 @@ backend/data/analysis_library_db/chroma.sqlite3
 /backend/executionServer/logs
 *.log
 /frontend/apps/base-ui/dist
+/backend/data/analysis_library_db

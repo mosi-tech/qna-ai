@@ -53,8 +53,11 @@ class AnalysisLibrary:
         # Setup Ollama embedding function for better similarity
         self.embedding_function = None
         try:
-            # Check if Ollama is available
-            ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+            # Embeddings must always use the local Ollama instance — the public
+            # ollama.com API does not expose /api/embed without auth.
+            # OLLAMA_EMBED_URL defaults to localhost:11434 regardless of
+            # OLLAMA_BASE_URL (which may point to a cloud proxy for completions).
+            ollama_url = os.getenv("OLLAMA_EMBED_URL", "http://localhost:11434")
             embedding_model = os.getenv("OLLAMA_EMBEDDING_MODEL", "qwen3-embedding")
             
             self.embedding_function = OllamaEmbeddingFunction(
@@ -72,14 +75,16 @@ class AnalysisLibrary:
         
         # Handle embedding function conflicts
         try:
-            # Try to get existing collection first
-            self.collection = self.client.get_collection(collection_name)
-            logger.info(f"✅ Using existing collection: {collection_name}")
-            
-            # Check if we need to migrate to Ollama embeddings
+            # Try to get existing collection first.
+            # Always pass our embedding_function so query calls use local Ollama
+            # regardless of what was configured when the collection was first created.
+            get_kwargs = {"name": collection_name}
             if self.embedding_function:
-                logger.info("🔄 Existing collection found with different embeddings - using as-is")
-                logger.info("💡 To use Ollama embeddings, delete collection first or use different name")
+                get_kwargs["embedding_function"] = self.embedding_function
+            self.collection = self.client.get_collection(**get_kwargs)
+            logger.info(f"✅ Using existing collection: {collection_name}")
+            if self.embedding_function:
+                logger.info("✅ Applied local Ollama embedding function to existing collection")
         
         except Exception:
             # Collection doesn't exist, create new one

@@ -838,7 +838,13 @@ class AnalysisPipelineService:
             else:
                 raise RuntimeError(f"Failed to update message {message_id} - conversation store update failed")
         else:
-            raise RuntimeError("No message_id in context - cannot persist conversation")
+            # No message_id — this is a dashboard sub-question or headless run.
+            # The result is stored in the ExecutionModel; Phase 6 handles updating
+            # the dashboard block. Skip chat-message persistence silently.
+            self.logger.debug(
+                f"⏭ No message_id in context — skipping chat-message persistence "
+                f"(dashboard block or headless run)"
+            )
         
         # Link execution to the message it created (NON-CRITICAL - bidirectional link for convenience)
         if execution_id and self.audit_service and message_id:
@@ -870,6 +876,7 @@ class AnalysisPipelineService:
             "session_id": session_id,
             "content": message_content,
             "analysisId": analysis_id,
+            "analysis_id": analysis_id,   # snake_case alias for analysis_worker compatibility
             "executionId": execution_id,
             "response_type": ui_analysis_type,
             "status": status,

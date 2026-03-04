@@ -40,6 +40,16 @@ def clean_json_comments(json_string: str) -> str:
         if json_match:
             cleaned = json_match.group(1)
             logger.debug("Extracted JSON from markdown code block")
+        elif '```' in cleaned:
+            # Closing fence is missing (truncated response) — strip the opening
+            # fence and extract everything from the first { or [ to the last } or ]
+            cleaned = re.sub(r'^```(?:json)?\s*\n?', '', cleaned, flags=re.MULTILINE).strip()
+            # Find the outermost JSON object/array boundaries
+            start = next((i for i, c in enumerate(cleaned) if c in '{['), -1)
+            end   = max(cleaned.rfind('}'), cleaned.rfind(']'))
+            if start != -1 and end != -1 and end > start:
+                cleaned = cleaned[start:end + 1]
+                logger.debug("Extracted JSON from truncated markdown code block")
         
         # Remove line comments (// ...)
         # This pattern matches // followed by any characters until end of line
