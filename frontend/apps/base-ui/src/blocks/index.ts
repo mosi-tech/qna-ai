@@ -18,3 +18,8 @@ export * from './tables';
 // Phase 2 — new chart categories
 export * from './treemaps';
 export * from './heatmaps';
+// Phase 1 — shared dashboard types + canvas
+export * from './types';
+export { default as DashboardCanvas } from './DashboardCanvas';
+export { default as BlockShell } from './BlockShell';
+export type { BlockShellProps } from './BlockShell';

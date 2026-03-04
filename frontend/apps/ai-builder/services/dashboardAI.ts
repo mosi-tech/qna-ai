@@ -5,47 +5,18 @@
  * Falls back to local mock specs when the proxy returns 503 (no key configured).
  */
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-export type BlockCategory =
-    | 'kpi-cards'
-    | 'line-charts'
-    | 'bar-charts'
-    | 'bar-lists'
-    | 'donut-charts'
-    | 'spark-charts'
-    | 'tables'
-    | 'status-monitoring';
-
-export type DataContractType =
-    | 'kpi'
-    | 'timeseries'
-    | 'categorical'
-    | 'ranked-list'
-    | 'table-rows'
-    | 'spark'
-    | 'tracker';
-
-export interface DataContract {
-    type: DataContractType;
-    description: string;
-    points?: number;
-    categories?: string[];
-}
-
-export interface BlockSpec {
-    blockId: string;
-    category: BlockCategory;
-    title: string;
-    dataContract: DataContract;
-}
-
-export interface DashboardSpec {
-    title: string;
-    subtitle: string;
-    layout: 'wide' | 'grid';
-    blocks: BlockSpec[];
-}
+// ─── Types (imported + re-exported from @ui-gen/base-ui — Phase 1) ──────────
+// Canonical definitions live in apps/base-ui/src/blocks/types.ts.
+import type {
+    BlockCategory,
+    DataContractType,
+    DataContract,
+    BlockSpec,
+    DashboardSpec,
+    BlockLoadState,
+    BlockState,
+} from '@ui-gen/base-ui';
+export type { BlockCategory, DataContractType, DataContract, BlockSpec, DashboardSpec, BlockLoadState, BlockState };
 
 // ─── System prompt ────────────────────────────────────────────────────────────
 

@@ -18,6 +18,7 @@
   ],
   "scripts": {
     "build": "tsc && tailwindcss -i ./src/global.css -o ./dist/base-ui.css",
+    "build:types": "tsc --declaration --emitDeclarationOnly --noEmitOnError false",
     "type-check": "tsc --noEmit"
   },
   "peerDependencies": {

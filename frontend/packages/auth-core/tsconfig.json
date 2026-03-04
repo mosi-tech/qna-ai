@@ -15,7 +15,7 @@
         "baseUrl": ".",
         "paths": {
             "@ui-gen/base-ui": [
-                "../../base-ui/dist/src/index.d.ts"
+                "../../apps/base-ui/dist/src/index.d.ts"
             ]
         },
         "skipLibCheck": true

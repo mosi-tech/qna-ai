@@ -10,6 +10,8 @@ __pycache__/
 build/
 develop-eggs/
 dist/
+# Allow base-ui dist to be committed — library package consumed by other apps
+!frontend/apps/base-ui/dist/
 downloads/
 eggs/
 .eggs/
@@ -95,3 +97,4 @@ backend/data/analysis_library_db/chroma.sqlite3
 /backend/executionServer/logs
 /backend/executionServer/logs
 *.log
+/frontend/apps/base-ui/dist

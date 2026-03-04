@@ -33,7 +33,9 @@
       "@/lib/*": [
         "tremor/lib/*",
         "lib/*"
-      ]
+      ],
+      "react": ["../../node_modules/@types/react/index.d.ts"],
+      "react/jsx-runtime": ["../../node_modules/react/jsx-runtime.js"]
     }
   },
   "include": [
