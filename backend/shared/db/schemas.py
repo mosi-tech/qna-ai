@@ -450,3 +450,64 @@ class CacheModel(BaseMongoModel):
             {"fields": [("expiresAt", 1)], "expireAfterSeconds": 0},
             # MongoDB TTL index - auto-delete expired docs
         ]
+
+
+# ============================================================================
+# DASHBOARD PLAN COLLECTION
+# ============================================================================
+
+class BlockStatus(str, Enum):
+    """Per-block execution status within a DashboardPlan"""
+    PENDING  = "pending"
+    RUNNING  = "running"
+    COMPLETE = "complete"
+    FAILED   = "failed"
+    CACHED   = "cached"      # result served from an existing execution
+
+
+class BlockPlanModel(BaseMongoModel):
+    """One block within a DashboardPlan"""
+    block_id:         str                    # "b1", "b2" ... stable within dashboard
+    sequence:         int                    # render order (0-indexed)
+    # --- BlockSpec fields (mirrors frontend types.ts) ---
+    block_spec_id:    str                    # matches BLOCK_CATALOG.json id, e.g. "kpi-card-01"
+    category:         str                    # "kpi-cards", "line-charts" ...
+    title:            str
+    data_contract:    Dict[str, Any] = Field(alias='dataContract')
+    # --- Sub-question & cache ---
+    sub_question:     str
+    canonical_params: Dict[str, str]
+    cache_key:        str                    # sha256[:16] of canonical_params
+    # --- Execution linkage ---
+    analysis_id:      Optional[str] = Field(None, alias='analysisId')
+    execution_id:     Optional[str] = Field(None, alias='executionId')
+    status:           BlockStatus = BlockStatus.PENDING
+    result_data:      Optional[Dict[str, Any]] = Field(None, alias='resultData')
+    error:            Optional[str] = None
+    updated_at:       datetime = Field(default_factory=datetime.utcnow, alias='updatedAt')
+
+
+class DashboardPlanModel(BaseMongoModel):
+    """Top-level dashboard plan — one per user question"""
+    dashboard_id:      str = Field(default_factory=lambda: str(uuid.uuid4()), alias='dashboardId')
+    user_id:           str = Field(..., alias='userId')
+    session_id:        Optional[str] = Field(None, alias='sessionId')
+    message_id:        Optional[str] = Field(None, alias='messageId')
+    original_question: str = Field(..., alias='originalQuestion')
+    title:             str
+    subtitle:          str
+    layout:            str                   # "grid" | "wide"
+    blocks:            List[BlockPlanModel]
+    status:            str = "planning"      # planning | running | complete | partial | failed
+    created_at:        datetime = Field(default_factory=datetime.utcnow, alias='createdAt')
+    updated_at:        datetime = Field(default_factory=datetime.utcnow, alias='updatedAt')
+
+    class Config:
+        collection = "dashboard_plans"
+        indexes = [
+            {"fields": [("userId", 1), ("createdAt", -1)]},
+            {"fields": [("messageId",  1)]},
+            {"fields": [("sessionId",  1)]},
+            {"fields": [("blocks.cache_key", 1)]},        # cache lookups
+            {"fields": [("blocks.status",    1)]},
+        ]

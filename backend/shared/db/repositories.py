@@ -18,6 +18,7 @@ from .schemas import (
     RoleType,
     QueryType,
 )
+from .dashboard_repository import DashboardRepository
 
 logger = logging.getLogger("repositories")
 
@@ -880,6 +881,7 @@ class RepositoryManager:
         self.analysis = AnalysisRepository(db)
         self.execution = ExecutionRepository(db)
         self.cache = CacheRepository(db)
+        self.dashboard = DashboardRepository(db)
     
     async def initialize(self) -> None:
         """Initialize all repositories"""
