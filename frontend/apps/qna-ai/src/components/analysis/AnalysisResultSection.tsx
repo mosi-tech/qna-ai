@@ -1,7 +1,5 @@
 'use client';
 
-import UIConfigurationRenderer from '../insights/UIConfigurationRenderer';
-
 interface AnalysisResultSectionProps {
   results: any;
   isRunning: boolean;
@@ -9,39 +7,21 @@ interface AnalysisResultSectionProps {
   hasParameterChanges: boolean;
 }
 
-export default function AnalysisResultSection({ 
-  results, 
-  isRunning, 
-  onConfigureParameters, 
-  hasParameterChanges 
+export default function AnalysisResultSection({
+  results,
+  isRunning,
+  onConfigureParameters,
+  hasParameterChanges
 }: AnalysisResultSectionProps) {
   const renderAnalysisContent = () => {
     if (!results) return null;
 
-    // Check if results contain UI configuration (new dynamic UI approach)
-    const uiConfig = results.ui_config || results.llmResponse?.ui_config;
-    if (uiConfig && uiConfig.ui_config?.selected_components) {
-      return (
-        <div className="space-y-4">
-          <div className="bg-green-50 rounded-lg p-3 border-l-4 border-green-500">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-sm font-medium text-green-700">Dynamic Dashboard Generated</span>
-            </div>
-          </div>
-          <UIConfigurationRenderer 
-            uiConfig={uiConfig}
-          />
-        </div>
-      );
-    }
-
     // Fallback to traditional content rendering
-    const content = results.llmResponse?.analysis_result || 
-                   results.analysis_result || 
-                   results.response_data?.analysis_result ||
-                   results.content ||
-                   results.description;
+    const content = results.llmResponse?.analysis_result ||
+      results.analysis_result ||
+      results.response_data?.analysis_result ||
+      results.content ||
+      results.description;
 
     if (!content) {
       return (

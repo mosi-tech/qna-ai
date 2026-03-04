@@ -15,11 +15,6 @@ from shared.services.progress_service import (
     send_progress_event,
 )
 from shared.storage import get_storage
-# Import shared services
-import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-from shared.services.result_formatter import create_shared_result_formatter
 from shared.db.repositories import RepositoryManager
 from shared.db.schemas import BlockStatus
 
@@ -34,9 +29,6 @@ class ExecutionService:
         self.analysis_repo = repo_manager.analysis
         self.audit_repo = repo_manager.execution
         self.logger = logger
-        
-        # Initialize shared result formatter
-        self.result_formatter = create_shared_result_formatter()
     
     async def execute_analysis(
         self,
@@ -162,15 +154,6 @@ class ExecutionService:
             self.logger.info("💾 Execution complete")
             
             result_data = execution_result.get("result", {})
-            
-            # Step 6: Generate markdown summary from results using original question
-            user_question = analysis.get("question")
-            markdown_summary = await self._generate_markdown_summary(result_data, user_question)
-            
-            # Add markdown to result_data
-            if markdown_summary:
-                result_data["markdown"] = markdown_summary
-                self.logger.info("✅ Generated markdown summary")
             
             if session_id:
                 await send_progress_event(session_id, {"type": "progress", "level": "success", "message": "Analysis complete"})
@@ -305,21 +288,4 @@ class ExecutionService:
                 "error": f"Execution error: {str(e)}"
             }
     
-    async def _generate_markdown_summary(self, result_data: Dict[str, Any], user_question: Optional[str] = None) -> Optional[str]:
-        """Generate markdown summary from execution results using LLM"""
-        try:
-            # Check if we have results to process
-            results = result_data.get("results", {})
-            if not results:
-                return None
-            
-            self.logger.info("🤖 Generating markdown summary from results using LLM")
-            
-            # Use the shared result formatter to generate markdown with user question context
-            markdown = await self.result_formatter.format_execution_result(result_data, user_question)
-            
-            return markdown
-            
-        except Exception as e:
-            self.logger.warning(f"⚠️ Failed to generate markdown summary: {e}")
-            return None
+

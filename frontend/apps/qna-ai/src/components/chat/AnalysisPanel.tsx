@@ -1,7 +1,5 @@
 'use client';
 
-import UIConfigurationRenderer from '@/components/insights/UIConfigurationRenderer';
-
 interface AnalysisPanelProps {
   currentAnalysis: {
     messageId: string;
@@ -46,7 +44,9 @@ export default function AnalysisPanel({ currentAnalysis }: AnalysisPanelProps) {
       </header>
 
       <div className="p-6">
-        <UIConfigurationRenderer uiConfig={currentAnalysis.data as any} />
+        <pre className="text-xs text-gray-600 bg-gray-100 rounded p-4 overflow-auto max-h-96 whitespace-pre-wrap">
+          {JSON.stringify(currentAnalysis.data, null, 2)}
+        </pre>
       </div>
     </div>
   );
