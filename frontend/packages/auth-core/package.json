@@ -1,0 +1,46 @@
+{
+    "name": "@ui-gen/auth-core",
+    "version": "0.1.0",
+    "private": true,
+    "type": "module",
+    "exports": {
+        "./db/schema": "./src/db/schema.ts",
+        "./db": "./src/db/index.ts",
+        "./supabase": "./src/supabase.ts",
+        "./entitlements": "./src/entitlements.ts",
+        "./stripe": "./src/stripe.ts",
+        "./novu": "./src/novu.ts",
+        "./middleware": "./src/middleware.ts",
+        "./auth/client": "./src/auth/client.ts",
+        "./auth/*": "./src/auth/*.ts",
+        "./handlers/*": "./src/handlers/*.ts",
+        "./pages/callback": "./src/pages/callback.ts",
+        "./pages/*": "./src/pages/*.tsx",
+        "./admin/*": "./src/admin/*.tsx",
+        ".": "./src/index.ts"
+    },
+    "dependencies": {
+        "@novu/api": "^3.14.0",
+        "@remixicon/react": "^4.9.0",
+        "@supabase/ssr": "^0.5.0",
+        "@supabase/supabase-js": "^2.47.0",
+        "@ui-gen/base-ui": "*",
+        "drizzle-orm": "^0.38.0",
+        "postgres": "^3.4.0",
+        "stripe": "^17.0.0",
+        "zod": "^3.23.0",
+        "next": "^15.1.0",
+        "react": "^18.3.0",
+        "react-dom": "^18.3.0"
+    },
+    "devDependencies": {
+        "@types/node": "^20",
+        "@types/react": "^18",
+        "@types/react-dom": "^18",
+        "typescript": "^5.4.0"
+    },
+    "peerDependencies": {
+        "next": ">=15",
+        "react": ">=18"
+    }
+}

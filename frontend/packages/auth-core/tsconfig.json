@@ -1,0 +1,30 @@
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "lib": [
+            "ES2022",
+            "DOM"
+        ],
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "preserve",
+        "strict": true,
+        "declaration": true,
+        "outDir": "./dist",
+        "rootDir": "./src",
+        "baseUrl": ".",
+        "paths": {
+            "@ui-gen/base-ui": [
+                "../../base-ui/dist/src/index.d.ts"
+            ]
+        },
+        "skipLibCheck": true
+    },
+    "include": [
+        "src/**/*"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist"
+    ]
+}

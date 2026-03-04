@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+    font-family: 'Geist Sans';
+    src: url('./assets/fonts/GeistVariableVF.woff2') format('woff2');
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+}
+
+/* Minimal Base Styles - Let Tremor shine */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    @apply bg-white dark:bg-gray-950;
+}
+
+/* Just ensure charts take full container space */
+.recharts-responsive-container {
+    @apply w-full h-full !important;
+}
