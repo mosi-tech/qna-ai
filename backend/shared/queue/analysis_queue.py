@@ -123,6 +123,8 @@ class MongoAnalysisQueue(AnalysisQueueInterface):
             "message_id": analysis_data.get("message_id"),
             "user_question": analysis_data.get("user_question"),
             "user_message_id": analysis_data.get("user_message_id"),
+            # Optional pass-through metadata (e.g. dashboard_id/block_id for dashboard blocks)
+            "metadata": analysis_data.get("metadata", {}),
             "status": MessageStatus.PENDING,
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow(),
@@ -305,6 +307,28 @@ class MongoAnalysisQueue(AnalysisQueueInterface):
                 
         except Exception as e:
             logger.warning(f"⚠️ Failed to cleanup expired jobs: {e}")
+
+    async def find_metadata_by_result_analysis_id(self, analysis_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Return the ``metadata`` dict stored in a queue job whose acked result
+        contains ``analysis_id``.
+
+        After the AnalysisWorker acks a job it stores the pipeline result under
+        the ``result`` field, which includes ``analysis_id``.  This lets callers
+        (e.g. Phase 6 hookback) retrieve ``dashboard_id`` / ``block_id`` that
+        were embedded in the job's metadata at enqueue time.
+
+        Returns ``None`` if no matching job is found.
+        """
+        try:
+            job = await self.collection.find_one(
+                {"result.analysis_id": analysis_id},
+                {"metadata": 1, "_id": 0},
+            )
+            return job.get("metadata") if job else None
+        except Exception as e:
+            logger.warning(f"⚠️ find_metadata_by_result_analysis_id failed for {analysis_id}: {e}")
+            return None
 
 
 # Global analysis queue instance
