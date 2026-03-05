@@ -1,22 +1,31 @@
 """
 DashboardOrchestrator — Phase 5
 
-Thin glue that wires UIPlanner → DB persistence → cache lookup →
+Thin glue that wires UIPlanner → DB persistence → script-cache check →
 analysis queue dispatch.
 
 Flow (per call to create_dashboard)
-────────────────────────────────────
-1. UIPlanner.plan(question)          → blocks + sub_questions + cache_keys
+──────────────────────────────────
+1. UIPlanner.plan(question)          → blocks + sub_questions + cache_key + script_key
 2. DashboardRepository.create()      → persist DashboardPlanModel
 3. Per block:
-     a. BlockCacheService.lookup()   → cache HIT  → mark CACHED, skip queue
-     b. analysis_queue.enqueue()     → cache MISS → mark PENDING, dispatch
+     • analysis_queue.enqueue()     → always enqueue; script_key + canonical_params
+                                       passed in job metadata so analysis pipeline
+                                       can reuse an existing script (same metric/period,
+                                       different ticker) without calling the LLM again.
 4. Return dashboard summary dict
 
-The AnalysisWorker + ExecutionWorker pipelines are never modified.
-The only change to the analysis queue is that the job document now carries
-an optional ``metadata`` dict (added in Phase 5) so Phase 6 can link an
-analysis back to its originating block.
+Script-cache design
+───────────────────
+- We do NOT cache execution output (result data).  Results are always fresh.
+- We DO cache generated scripts (AnalysisModel.scriptUrl) keyed by script_key.
+- script_key = sha256[:16](canonical_params without ticker).
+- When the reconciler sees a newly-complete block it calls
+  BlockCacheService.store_script() to tag the AnalysisModel with its script_key.
+- Future blocks with the same script_key pass the cached analysis_id as a hint
+  in the job metadata so the analysis pipeline can skip LLM generation.
+
+The AnalysisWorker + ExecutionWorker pipelines are never modified directly.
 """
 
 import logging
@@ -55,6 +64,7 @@ class DashboardOrchestrator:
     ) -> None:
         self.dashboard_repo: DashboardRepository = repo_manager.dashboard
         self.execution_repo = repo_manager.execution
+        self.analysis_repo  = repo_manager.analysis
         self.analysis_queue = analysis_queue
         self.ui_planner = ui_planner
         self.block_cache = block_cache
@@ -91,12 +101,9 @@ class DashboardOrchestrator:
         -------
         dict
             ``{ dashboard_id, title, subtitle, layout, blocks: [...] }``
-            where each block entry includes ``status`` ("cached" or "pending")
-            and ``result_data`` for cache-hit blocks.
+            where each block entry includes ``status`` (always "pending" on
+            creation) to be updated by the reconciler as blocks complete.
         """
-
-        # ── Step 1: Ask UIPlanner to decompose the question ───────────────────
-        logger.info(f"🗺  Planning dashboard for: {question[:80]}…")
         plan_output = await self.ui_planner.plan(question)
 
         # ── Step 2: Build and persist DashboardPlanModel ──────────────────────
@@ -111,6 +118,8 @@ class DashboardOrchestrator:
                 sub_question=b["sub_question"],
                 canonical_params=b.get("canonical_params", {}),
                 cache_key=b["cache_key"],
+                script_key=b.get("script_key"),
+                script_params=b.get("script_params"),
             )
             for i, b in enumerate(plan_output["blocks"])
         ]
@@ -133,60 +142,32 @@ class DashboardOrchestrator:
             f"({len(block_models)} blocks)"
         )
 
-        # ── Step 3: Cache check + dispatch per block ──────────────────────────
+        # ── Step 3: Dispatch per block (always enqueue — script reuse via metadata) ──
         block_summaries: List[Dict[str, Any]] = []
 
         for block in dashboard.blocks:
-            cached = (
-                None
-                if force_refresh
-                else await self.block_cache.lookup(block.cache_key)
+            job_id = await self._enqueue_block(
+                block=block,
+                dashboard_id=dashboard_id,
+                user_id=user_id,
+                session_id=session_id,
             )
-
-            if cached is not None:
-                # ── Cache HIT: mark complete immediately, skip queue ──────────
-                await self.dashboard_repo.update_block_status(
-                    dashboard_id,
-                    block.block_id,
-                    status=BlockStatus.CACHED,
-                    result_data=cached,
-                )
-                logger.info(
-                    f"⚡ Cache HIT  — block {block.block_id} "
-                    f"(key={block.cache_key})"
-                )
-                block_summaries.append(
-                    {
-                        **block.model_dump(by_alias=True),
-                        "status": "cached",
-                        "result_data": cached,
-                    }
-                )
-
-            else:
-                # ── Cache MISS: enqueue sub_question into analysis pipeline ────
-                job_id = await self._enqueue_block(
-                    block=block,
-                    dashboard_id=dashboard_id,
-                    user_id=user_id,
-                    session_id=session_id,
-                )
-                await self.dashboard_repo.update_block_status(
-                    dashboard_id,
-                    block.block_id,
-                    status=BlockStatus.PENDING,
-                    analysis_id=job_id,
-                )
-                logger.info(
-                    f"📥 Cache MISS — block {block.block_id} queued "
-                    f"(job={job_id}, key={block.cache_key})"
-                )
-                block_summaries.append(
-                    {
-                        **block.model_dump(by_alias=True),
-                        "status": "pending",
-                    }
-                )
+            await self.dashboard_repo.update_block_status(
+                dashboard_id,
+                block.block_id,
+                status=BlockStatus.PENDING,
+                analysis_id=job_id,
+            )
+            logger.info(
+                f"📥 Enqueued block {block.block_id} "
+                f"(job={job_id}, script_key={block.script_key or 'n/a'})"
+            )
+            block_summaries.append(
+                {
+                    **block.model_dump(by_alias=True),
+                    "status": "pending",
+                }
+            )
 
         return {
             "dashboard_id": dashboard_id,
@@ -247,7 +228,15 @@ class DashboardOrchestrator:
             if not job_result:
                 continue  # analysis not yet acked
 
-            result_analysis_id = job_result.get("analysis_id")
+            # The worker stores result["analysis_id"] using pipeline_data.get("analysis_id"),
+            # but pipeline_data keys are camelCase (analysisId / executionId).
+            # So result["analysis_id"] is always None — fall back to analysis_data.
+            result_analysis_id = (
+                job_result.get("analysis_id")
+                or job_result.get("analysisId")
+                or (job_result.get("analysis_data") or {}).get("analysisId")
+                or (job_result.get("analysis_data") or {}).get("analysis_id")
+            )
             if not result_analysis_id:
                 continue
 
@@ -283,6 +272,22 @@ class DashboardOrchestrator:
                     f"✅ Reconciled block {block['block_id']} → complete "
                     f"(execution={execution_id})"
                 )
+
+                # Tag the AnalysisModel with its script_key so future blocks
+                # with the same metric/period (but different ticker) can reuse
+                # this script without calling the LLM again.
+                job_meta = job_doc.get("metadata", {})
+                script_key = job_meta.get("script_key")
+                if script_key and result_analysis_id:
+                    try:
+                        await self.block_cache.store_script(
+                            script_key=script_key,
+                            analysis_id=result_analysis_id,
+                            analysis_repo=self.analysis_repo,
+                        )
+                    except Exception as sc_err:
+                        logger.warning(f"⚠️ store_script failed: {sc_err}")
+
                 reconciled += 1
 
             elif exec_status in (ExecutionStatus.FAILED, "failed"):
@@ -333,9 +338,14 @@ class DashboardOrchestrator:
                 "message_id": None,       # dashboard blocks have no chat message
                 "user_message_id": None,
                 "metadata": {
-                    "dashboard_id": dashboard_id,
-                    "block_id": block.block_id,
-                    "cache_key": block.cache_key,
+                    "dashboard_id":    dashboard_id,
+                    "block_id":        block.block_id,
+                    "cache_key":       block.cache_key,
+                    # script_key → which function/script to reuse
+                    # script_params → runtime arguments to inject into that script
+                    "script_key":      block.script_key or "",
+                    "script_params":   block.script_params or {},
+                    "canonical_params": block.canonical_params,
                 },
             }
         )

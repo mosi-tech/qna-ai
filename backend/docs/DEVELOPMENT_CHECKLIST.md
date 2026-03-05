@@ -70,7 +70,7 @@ Expected: ✅ ALL SYSTEMS READY
 ### Terminal 1: Backend Services
 ```bash
 cd backend/infrastructure
-pm2 start ecosystem.config.js
+pm2 start pm2.config.js
 ```
 
 Starts:
@@ -239,7 +239,7 @@ python backend/apiServer/scripts/debug_analysis_queue.py
 python backend/apiServer/scripts/preflight_check.py
 
 # Start all services
-cd backend/infrastructure && pm2 start ecosystem.config.js
+cd backend/infrastructure && pm2 start pm2.config.js
 
 # View service status
 pm2 status

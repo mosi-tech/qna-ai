@@ -105,7 +105,7 @@ cd backend/infrastructure
 ### Terminal 2: Start Backend Services
 ```bash
 cd backend/infrastructure
-pm2 start ecosystem.config.js
+pm2 start pm2.config.js
 ```
 
 ### Terminal 3: Start Frontend

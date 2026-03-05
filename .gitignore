@@ -99,3 +99,6 @@ backend/data/analysis_library_db/chroma.sqlite3
 *.log
 /frontend/apps/base-ui/dist
 /backend/data/analysis_library_db
+
+# Headless step output files
+/backend/headless/steps/output/

@@ -133,6 +133,11 @@ class AnalysisModel(BaseMongoModel):
     # Tags for organization
     tags: List[str] = Field(default_factory=list)
     
+    # Script-level cache key (ticker-agnostic, set by reconciler after first run)
+    # sha256[:16] of canonical_params with ticker/symbol stripped.
+    # Blocks with the same metric+period share this key regardless of ticker.
+    script_key: Optional[str] = Field(None, alias='scriptKey')
+
     # Sharing and reusability
     is_public: bool = Field(False, alias='isPublic')  # Can other users access this analysis?
     usage_count: int = Field(0, alias='usageCount')   # How many times this analysis has been reused
@@ -149,6 +154,7 @@ class AnalysisModel(BaseMongoModel):
             {"fields": [("createdMessageId", 1)]},
             {"fields": [("isPublic", 1)]},
             {"fields": [("isPublic", 1), ("usageCount", -1)]},  # Find popular public analyses
+            {"fields": [("scriptKey", 1)]},  # Script-cache lookup by ticker-agnostic key
         ]
 
 
@@ -476,8 +482,10 @@ class BlockPlanModel(BaseMongoModel):
     data_contract:    Dict[str, Any] = Field(alias='dataContract')
     # --- Sub-question & cache ---
     sub_question:     str
-    canonical_params: Dict[str, str]
-    cache_key:        str                    # sha256[:16] of canonical_params
+    canonical_params: Dict[str, str]         # full params (ticker + metric + period + …)
+    cache_key:        str                    # sha256[:16] of canonical_params (full, ticker-inclusive)
+    script_key:       Optional[str] = None  # sha256[:16] of canonical_params minus runtime args — script template key
+    script_params:    Optional[Dict[str, str]] = None  # runtime args only (ticker, period…) — args for cached script re-run
     # --- Execution linkage ---
     analysis_id:      Optional[str] = Field(None, alias='analysisId')
     execution_id:     Optional[str] = Field(None, alias='executionId')

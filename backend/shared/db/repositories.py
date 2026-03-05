@@ -651,6 +651,42 @@ class AnalysisRepository:
         
         return parameters if parameters else None
     
+    async def find_by_script_key(self, script_key: str) -> Optional[Dict[str, Any]]:
+        """
+        Return the most-recently-created AnalysisModel doc whose scriptKey
+        matches ``script_key``, or None on miss.
+
+        Used by BlockCacheService to locate a reusable script before calling
+        the LLM for a new ticker that shares the same metric/period pattern.
+        """
+        try:
+            col = self.db.db["analyses"]
+            doc = await col.find_one(
+                {"scriptKey": script_key},
+                sort=[("createdAt", -1)],
+            )
+            return doc
+        except Exception as e:
+            logger.warning("find_by_script_key failed for key=%s: %s", script_key, e)
+            return None
+
+    async def set_script_key(self, analysis_id: str, script_key: str) -> None:
+        """
+        Tag an existing AnalysisModel with its ticker-agnostic scriptKey.
+
+        Called by the reconciler after a block's analysis completes so that
+        future find_by_script_key() calls can find this script.
+        """
+        try:
+            col = self.db.db["analyses"]
+            await col.update_one(
+                {"analysisId": analysis_id},
+                {"$set": {"scriptKey": script_key}},
+            )
+            logger.info("Set scriptKey=%s on analysis_id=%s", script_key, analysis_id)
+        except Exception as e:
+            logger.warning("set_script_key failed for analysis_id=%s: %s", analysis_id, e)
+
     async def get_similar_analyses(self, user_id: str, category: str, limit: int = 10) -> List[AnalysisModel]:
         """Get similar analyses in same category"""
         return await self.db.list_analyses(user_id, category=category, limit=limit)

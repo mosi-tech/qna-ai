@@ -1,19 +1,19 @@
 # Headless Step Scripts — Plan
 
-> Location: `backend/infrastructure/headless/steps/`  
+> Location: `backend/headless/steps/`  
 > Purpose: Run and test each stage of the dashboard pipeline in **isolation**,
 > without needing the full pm2 stack, the FastAPI server, or a live browser.
 
 Each script is self-contained: bootstraps only the services it needs, runs one
-step, prints structured output, and exits.  They can be run in sequence to
-simulate a full pipeline, or individually to debug a specific stage.
+step, prints structured output, exits, and **saves its JSON result to the
+`output/` folder** for later inspection or piping into the next step.
 
 ---
 
 ## Directory Layout
 
 ```
-backend/infrastructure/headless/steps/
+backend/headless/steps/
   step1_plan.py          — Run UIPlanner for a question → print block plan
   step2_persist.py       — Persist a dashboard plan to MongoDB → print dashboard_id
   step3_cache.py         — Check / write BlockCache for given canonical_params
@@ -23,7 +23,18 @@ backend/infrastructure/headless/steps/
   step7_reconcile.py     — Run reconciler once for a dashboard_id → print block statuses
   run_all_steps.py       — Chain all steps end-to-end (replaces run_dashboard_headless.py logic)
   README.md              — Usage reference
+  output/                — Auto-created; each run saves stepN_<timestamp>.json here
 ```
+
+### Output folder convention
+
+Every script automatically saves its JSON result to:
+```
+backend/headless/steps/output/stepN_<YYYYMMDD_HHMMSS>.json
+```
+- The folder is created on first use (no manual setup needed).
+- The path of the saved file is printed to **stderr** so stdout stays clean JSON.
+- `output/` is git-ignored — add `backend/headless/steps/output/` to `.gitignore`.
 
 ---
 
@@ -39,8 +50,9 @@ python step1_plan.py "What is the current price of AAPL?" --pretty
 **Behaviour:**
 - Bootstraps: `LLMService`, `UIPlanner`
 - Calls `UIPlanner.plan(question)`
-- Prints JSON: `{ title, subtitle, layout, blocks[] }` with each block's
+- Prints JSON to **stdout**: `{ title, subtitle, layout, blocks[] }` with each block's
   `blockId`, `category`, `sub_question`, `canonical_params`, `cache_key`
+- Saves output to `output/step1_<timestamp>.json`
 - Exit 0 on success, non-zero on failure
 
 **What to check:**
@@ -58,13 +70,16 @@ python step1_plan.py "What is the current price of AAPL?" --pretty
 python step2_persist.py --plan '{"title":"...", "blocks":[...]}'
 # or pipe from step1:
 python step1_plan.py "QQQ current price" | python step2_persist.py --stdin
+# or load previous step1 output:
+python step2_persist.py --plan-file output/step1_20260304_120000.json
 ```
 **Behaviour:**
 - Bootstraps: `MongoDBClient`, `DashboardRepository`
-- Accepts plan JSON via `--plan` or `--stdin`
+- Accepts plan JSON via `--plan`, `--stdin`, or `--plan-file`
 - Calls `DashboardRepository.create(DashboardPlanModel(...))`
 - Reads back the created document and prints it
 - Prints: `dashboard_id`, block count, all block statuses (all should be `pending`)
+- Saves output to `output/step2_<timestamp>.json`
 
 **What to check:**
 - `dashboard_id` is a valid UUID
@@ -233,14 +248,14 @@ if __name__ == "__main__":
 
 | Script | Status |
 |--------|--------|
-| `step1_plan.py` | ⬜ not built |
-| `step2_persist.py` | ⬜ not built |
-| `step3_cache.py` | ⬜ not built |
-| `step4_enqueue.py` | ⬜ not built |
-| `step5_analysis.py` | ⬜ not built |
-| `step6_execution.py` | ⬜ not built |
-| `step7_reconcile.py` | ⬜ not built |
-| `run_all_steps.py` | ⬜ not built |
+| `step1_plan.py` | ✅ done |
+| `step2_persist.py` | ✅ done |
+| `step3_cache.py` | ✅ done |
+| `step4_enqueue.py` | ✅ done |
+| `step5_analysis.py` | ✅ done |
+| `step6_execution.py` | ✅ done |
+| `step7_reconcile.py` | ✅ done |
+| `run_all_steps.py` | ✅ done |
 | `README.md` | ⬜ not built |
 
 Use the **`headless_steps_builder`** agent to implement any of these.

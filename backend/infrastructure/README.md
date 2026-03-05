@@ -11,7 +11,7 @@ This folder contains all deployment, configuration, and infrastructure files for
 - **`package-lock.json`** - Dependency lock file
 
 ### Deployment Scripts
-- **`ecosystem.config.js`** - PM2 process manager configuration
+- **`pm2.config.js`** - PM2 process manager configuration
 - **`run-backend.sh`** - Shell script to start server with environment setup
 - **`restart-servers.sh`** - Restart all PM2 processes
 - **`start-script-server.sh`** - Start script server
@@ -41,7 +41,7 @@ pip install -r apiServer/requirements.txt
 ### 3. Production Deployment (PM2)
 ```bash
 # Start with PM2 from the scriptEdition directory
-pm2 start infrastructure/ecosystem.config.js
+pm2 start infrastructure/pm2.config.js
 
 # Monitor processes
 pm2 status
@@ -69,7 +69,7 @@ python apiServer/server.py
 - `OLLAMA_BASE_URL` - Ollama server URL (if using Ollama)
 - `OLLAMA_MODEL` - Ollama model to use
 
-### PM2 Configuration (ecosystem.config.js)
+### PM2 Configuration (pm2.config.js)
 - Automatically loads environment variables from `.env`
 - Configures logging to `../logs/` directory
 - Sets up auto-restart and memory limits
@@ -82,7 +82,7 @@ scriptEdition/
 ├── infrastructure/          # All deployment files
 │   ├── .env                # Environment variables (hidden)
 │   ├── .env.example        # Environment template (hidden)
-│   ├── ecosystem.config.js # PM2 configuration
+│   ├── pm2.config.js # PM2 configuration
 │   ├── package.json        # Node.js dependencies
 │   ├── node_modules/       # Node.js dependencies (installed here)
 │   ├── run-backend.sh # Development startup script

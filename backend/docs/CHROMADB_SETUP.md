@@ -154,7 +154,7 @@ cd backend/infrastructure
 
 # Terminal 2: Backend API & Services  
 cd backend/infrastructure
-pm2 start ecosystem.config.js
+pm2 start pm2.config.js
 
 # Terminal 3: Frontend
 cd frontend
@@ -186,7 +186,7 @@ After starting ChromaDB:
 2. Start API server:
    ```bash
    cd backend/infrastructure
-   pm2 start ecosystem.config.js
+   pm2 start pm2.config.js
    ```
 
 3. Verify all systems:

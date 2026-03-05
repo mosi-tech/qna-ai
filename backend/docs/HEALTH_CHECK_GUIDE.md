@@ -144,7 +144,7 @@ python scripts/preflight_check.py
 ```bash
 # Terminal 1: Process Manager
 cd backend/infrastructure
-pm2 start ecosystem.config.js
+pm2 start pm2.config.js
 
 # Or manually start each:
 cd backend/apiServer && python server.py          # API Server (port 8010)

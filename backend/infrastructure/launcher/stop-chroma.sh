@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # Stop ChromaDB Server
 
 echo "🛑 Stopping ChromaDB Server..."
@@ -7,7 +6,7 @@ echo ""
 
 # Get the project root
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 DATA_PATH="$PROJECT_ROOT/backend/data/analysis_library_db"
 
 # Try to get PID from .pid file first

@@ -5,9 +5,9 @@ module.exports = {
   apps: [
     {
       name: 'ollama-script-server',
-      script: '../apiServer/start.sh',
+      script: './launcher/run-ollama-server.sh',
       interpreter: '/bin/bash',
-      cwd: '../apiServer',
+      cwd: '.',
       instances: 1,
       autorestart: true,
       watch: false,
@@ -40,6 +40,9 @@ module.exports = {
 
         // Development auth bypass (allows X-User-ID header for auth)
         ENV: process.env.ENV || 'development',
+
+        // Call tracking (set TRACK_CALLS=true in infrastructure/.env to enable)
+        TRACK_CALLS: process.env.TRACK_CALLS || 'false',
       },
       error_file: './logs/err.log',
       out_file: './logs/out.log',
@@ -50,13 +53,16 @@ module.exports = {
     },
     {
       name: 'analysis-queue-worker',
-      script: '../executionServer/start-analysis-worker.sh',
+      script: './launcher/start-analysis-worker.sh',
       interpreter: '/bin/bash',
       cwd: '../executionServer',
       instances: 1,
       autorestart: true,
       watch: false,
       max_memory_restart: '1G',
+      env: {
+        TRACK_CALLS: process.env.TRACK_CALLS || 'false',
+      },
       error_file: './logs/analysis-worker/err.log',
       out_file: './logs/analysis-worker/out.log',
       log_file: './logs/analysis-worker/combined.log',
@@ -66,13 +72,16 @@ module.exports = {
     },
     {
       name: 'execution-queue-worker',
-      script: '../executionServer/start-execution-worker.sh',
+      script: './launcher/start-execution-worker.sh',
       interpreter: '/bin/bash',
       cwd: '../executionServer',
       instances: 1,
       autorestart: true,
       watch: false,
       max_memory_restart: '1G',
+      env: {
+        TRACK_CALLS: process.env.TRACK_CALLS || 'false',
+      },
       error_file: './logs/execution-worker/err.log',
       out_file: './logs/execution-worker/out.log',
       log_file: './logs/execution-worker/combined.log',

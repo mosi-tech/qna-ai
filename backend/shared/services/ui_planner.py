@@ -17,6 +17,7 @@ from typing import Any, Dict, List, Optional, TypedDict
 from .base_service import BaseService
 from ..llm import LLMService, create_ui_planner_llm
 from ..utils.json_utils import safe_json_loads
+from .block_cache_service import compute_script_key, extract_script_params
 
 logger = logging.getLogger("ui-planner")
 
@@ -37,8 +38,10 @@ class BlockPlanOutput(TypedDict, total=False):
     title: str
     dataContract: DataContract
     sub_question: str
-    canonical_params: Dict[str, str]
-    cache_key: str
+    canonical_params: Dict[str, str]  # full params (ticker + metric + period + …)
+    cache_key: str    # sha256[:16] of full canonical_params — block identity
+    script_key: str   # sha256[:16] of canonical_params minus runtime args — script/function identity
+    script_params: Dict[str, str]  # runtime args only (ticker, period, …) — injected when re-running cached script
 
 
 class DashboardPlanOutput(TypedDict, total=False):
@@ -224,7 +227,9 @@ class UIPlanner(BaseService):
                     continue
 
             canonical_params: Dict[str, str] = block.get("canonical_params") or {}
-            cache_key = self._compute_cache_key(canonical_params)
+            cache_key   = self._compute_cache_key(canonical_params)
+            script_key  = compute_script_key(canonical_params)
+            script_params = extract_script_params(canonical_params)
 
             enriched: BlockPlanOutput = {
                 "blockId":          block["blockId"],
@@ -234,6 +239,8 @@ class UIPlanner(BaseService):
                 "sub_question":     block["sub_question"],
                 "canonical_params": canonical_params,
                 "cache_key":        cache_key,
+                "script_key":       script_key,
+                "script_params":    script_params,
             }
             enriched_blocks.append(enriched)
 
