@@ -1,0 +1,1072 @@
+[
+  {
+    "question": "What is my current account equity and buying power?",
+    "layout": "grid",
+    "blocks": [
+      {
+        "blockId": "account-equity-buying-power",
+        "category": "kpi-cards",
+        "title": "Account Equity & Buying Power",
+        "dataContract": {
+          "type": "kpi-metrics",
+          "metrics": [
+            {"key": "account_equity", "label": "Account Equity", "format": "currency"},
+            {"key": "buying_power", "label": "Buying Power", "format": "currency"},
+            {"key": "cash_balance", "label": "Cash Balance", "format": "currency"}
+          ]
+        },
+        "sub_question": "What are the account equity, buying power, and cash balance values?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "equity-composition",
+        "category": "breakdown-chart",
+        "title": "Equity Composition",
+        "dataContract": {
+          "type": "categorical-breakdown",
+          "categories": ["cash", "positions_value", "pending_orders"]
+        },
+        "sub_question": "How is the account equity distributed between cash, positions, and pending orders?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "buying-power-breakdown",
+        "category": "comparison-bar",
+        "title": "Buying Power Types",
+        "dataContract": {
+          "type": "metric-comparison",
+          "metrics": [
+            {"key": "day_trading_buying_power", "label": "Day Trading Buying Power"},
+            {"key": "reg_t_buying_power", "label": "Reg T Buying Power"},
+            {"key": "cash_buying_power", "label": "Cash Buying Power"}
+          ]
+        },
+        "sub_question": "What are the different types of buying power available in the account?",
+        "canonical_params": {}
+      }
+    ]
+  },
+  {
+    "question": "How much cash is currently available to trade?",
+    "layout": "grid",
+    "blocks": [
+      {
+        "blockId": "available-cash",
+        "category": "kpi-cards",
+        "title": "Available Cash",
+        "dataContract": {
+          "type": "kpi-metrics",
+          "metrics": [
+            {"key": "cash_available", "label": "Cash Available", "format": "currency"},
+            {"key": "cash_withdrawable", "label": "Withdrawable Cash", "format": "currency"},
+            {"key": "pending_cash", "label": "Pending Cash", "format": "currency"}
+          ]
+        },
+        "sub_question": "What is the amount of cash available, withdrawable, and pending?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "cash-allocation",
+        "category": "breakdown-chart",
+        "title": "Cash Allocation",
+        "dataContract": {
+          "type": "categorical-breakdown",
+          "categories": ["settled_cash", "unsettled_cash", "margin_cash"]
+        },
+        "sub_question": "How is the cash allocated across settled, unsettled, and margin?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "cash-history",
+        "category": "time-series",
+        "title": "Cash Balance Trend",
+        "dataContract": {
+          "type": "historical-metrics",
+          "metrics": ["cash_balance"],
+          "period": "30d"
+        },
+        "sub_question": "How has the cash balance changed over the past 30 days?",
+        "canonical_params": {"period": "30d"}
+      }
+    ]
+  },
+  {
+    "question": "What is my day-trading buying power right now?",
+    "layout": "grid",
+    "blocks": [
+      {
+        "blockId": "day-trading-power",
+        "category": "kpi-cards",
+        "title": "Day Trading Power",
+        "dataContract": {
+          "type": "kpi-metrics",
+          "metrics": [
+            {"key": "day_trading_buying_power", "label": "Day Trading Buying Power", "format": "currency"},
+            {"key": "dtbp_multiplier", "label": "DTBP Multiplier", "format": "number"},
+            {"key": "day_trade_count", "label": "Day Trade Count", "format": "number"}
+          ]
+        },
+        "sub_question": "What is the day trading buying power, multiplier, and day trade count?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "trading-power-comparison",
+        "category": "comparison-bar",
+        "title": "Trading Power Comparison",
+        "dataContract": {
+          "type": "metric-comparison",
+          "metrics": [
+            {"key": "day_trading_buying_power", "label": "Day Trading BP"},
+            {"key": "reg_t_buying_power", "label": "Reg T BP"},
+            {"key": "cash_buying_power", "label": "Cash BP"}
+          ]
+        },
+        "sub_question": "How does day trading buying power compare to other buying power types?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "day-trading-remaining",
+        "category": "status-badge",
+        "title": "Day Trading Capacity",
+        "dataContract": {
+          "type": "capacity-status",
+          "metrics": ["trades_remaining", "dtbp_remaining"]
+        },
+        "sub_question": "How many day trades remain in the current period?",
+        "canonical_params": {}
+      }
+    ]
+  },
+  {
+    "question": "Is my account currently blocked from trading?",
+    "layout": "grid",
+    "blocks": [
+      {
+        "blockId": "trading-status",
+        "category": "status-badge",
+        "title": "Account Trading Status",
+        "dataContract": {
+          "type": "account-status",
+          "status": ["trading_blocked", "trading_enabled", "restricted"]
+        },
+        "sub_question": "Is the account currently blocked from trading?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "account-restrictions",
+        "category": "alert-list",
+        "title": "Account Restrictions",
+        "dataContract": {
+          "type": "restriction-list",
+          "restrictions": ["trading_restrictions", "deposit_restrictions", "withdrawal_restrictions"]
+        },
+        "sub_question": "What restrictions are currently applied to the account?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "account-details",
+        "category": "info-panel",
+        "title": "Account Status Details",
+        "dataContract": {
+          "type": "account-details",
+          "fields": ["account_status", "trading_status", "restriction_reason", "restriction_end_date"]
+        },
+        "sub_question": "What are the details of the current account status and any restrictions?",
+        "canonical_params": {}
+      }
+    ]
+  },
+  {
+    "question": "Has my account been flagged as a pattern day trader?",
+    "layout": "grid",
+    "blocks": [
+      {
+        "blockId": "pdt-status",
+        "category": "status-badge",
+        "title": "PDT Status",
+        "dataContract": {
+          "type": "pdt-status",
+          "status": ["flagged_as_pdt", "not_flagged", "pdt_restriction_active"]
+        },
+        "sub_question": "Is the account flagged as a pattern day trader?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "day-trade-summary",
+        "category": "kpi-cards",
+        "title": "Day Trading Activity",
+        "dataContract": {
+          "type": "kpi-metrics",
+          "metrics": [
+            {"key": "day_trades_5d", "label": "Day Trades (5 Days)", "format": "number"},
+            {"key": "day_trades_remaining", "label": "Trades Remaining", "format": "number"},
+            {"key": "days_until_reset", "label": "Days Until Reset", "format": "number"}
+          ]
+        },
+        "sub_question": "How many day trades were made in the last 5 days and how many remain?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "pdt-rules-info",
+        "category": "info-panel",
+        "title": "PDT Rules Summary",
+        "dataContract": {
+          "type": "pdt-rules",
+          "rules": ["pattern_day_trader_definition", "pdt_restrictions", "account_types_exemption"]
+        },
+        "sub_question": "What are the pattern day trader rules and account exemption types?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "day-trade-timeline",
+        "category": "timeline",
+        "title": "Day Trade History",
+        "dataContract": {
+          "type": "trade-history",
+          "period": "5d",
+          "trade_type": "day_trade"
+        },
+        "sub_question": "What day trades occurred in the last 5 days?",
+        "canonical_params": {"period": "5d"}
+      }
+    ]
+  },
+  {
+    "question": "What is my portfolio's total market value at this moment?",
+    "layout": "grid",
+    "blocks": [
+      {
+        "blockId": "total-market-value",
+        "category": "kpi-cards",
+        "title": "Total Market Value",
+        "dataContract": {
+          "type": "kpi-metrics",
+          "metrics": [
+            {"key": "portfolio_value", "label": "Portfolio Value", "format": "currency"},
+            {"key": "positions_count", "label": "Open Positions", "format": "number"},
+            {"key": "today_change", "label": "Today's Change", "format": "currency"}
+          ]
+        },
+        "sub_question": "What is the total portfolio market value, number of positions, and today's change?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "portfolio-distribution",
+        "category": "pie-chart",
+        "title": "Portfolio Distribution",
+        "dataContract": {
+          "type": "categorical-breakdown",
+          "categories": ["cash", "equity_positions", "option_positions"]
+        },
+        "sub_question": "How is the portfolio distributed between cash, equities, and options?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "top-holdings",
+        "category": "list",
+        "title": "Top Holdings by Value",
+        "dataContract": {
+          "type": "position-list",
+          "sort": "market_value",
+          "limit": 5
+        },
+        "sub_question": "Which are the top 5 holdings by market value?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "portfolio-performance",
+        "category": "sparkline",
+        "title": "Portfolio Performance",
+        "dataContract": {
+          "type": "historical-metrics",
+          "metrics": ["portfolio_value"],
+          "period": "1d"
+        },
+        "sub_question": "How has the portfolio value changed today?",
+        "canonical_params": {"period": "1d"}
+      }
+    ]
+  },
+  {
+    "question": "What is my total unrealized profit and loss across open positions?",
+    "layout": "grid",
+    "blocks": [
+      {
+        "blockId": "unrealized-pl",
+        "category": "kpi-cards",
+        "title": "Unrealized P/L",
+        "dataContract": {
+          "type": "kpi-metrics",
+          "metrics": [
+            {"key": "total_unrealized_pl", "label": "Total Unrealized P/L", "format": "currency"},
+            {"key": "unrealized_pl_percent", "label": "Unrealized P/L %", "format": "percentage"},
+            {"key": "positions_with_gain", "label": "Profitable Positions", "format": "number"}
+          ]
+        },
+        "sub_question": "What is the total unrealized profit and loss in dollars and percentage?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "pl-distribution",
+        "category": "comparison-bar",
+        "title": "P/L Distribution",
+        "dataContract": {
+          "type": "pl-breakdown",
+          "categories": ["total_gains", "total_losses", "breakeven"]
+        },
+        "sub_question": "What is the distribution of gains and losses across all positions?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "top-gainers",
+        "category": "list",
+        "title": "Top Gainers",
+        "dataContract": {
+          "type": "position-list",
+          "sort": "unrealized_gain",
+          "limit": 5
+        },
+        "sub_question": "Which positions have the highest unrealized gains?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "top-losers",
+        "category": "list",
+        "title": "Top Losers",
+        "dataContract": {
+          "type": "position-list",
+          "sort": "unrealized_loss",
+          "limit": 5
+        },
+        "sub_question": "Which positions have the largest unrealized losses?",
+        "canonical_params": {}
+      }
+    ]
+  },
+  {
+    "question": "What is my total realized profit and loss today?",
+    "layout": "grid",
+    "blocks": [
+      {
+        "blockId": "realized-pl",
+        "category": "kpi-cards",
+        "title": "Realized P/L Today",
+        "dataContract": {
+          "type": "kpi-metrics",
+          "metrics": [
+            {"key": "realized_pl_today", "label": "Realized P/L Today", "format": "currency"},
+            {"key": "trades_executed", "label": "Trades Executed", "format": "number"},
+            {"key": "winning_trades", "label": "Winning Trades", "format": "number"}
+          ]
+        },
+        "sub_question": "What is the total realized profit and loss for today?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "realized-by-ticker",
+        "category": "bar-chart",
+        "title": "Realized P/L by Symbol",
+        "dataContract": {
+          "type": "ticker-pl-breakdown",
+          "period": "1d"
+        },
+        "sub_question": "What is the realized profit and loss broken down by symbol for today?",
+        "canonical_params": {"period": "1d"}
+      },
+      {
+        "blockId": "trade-performance",
+        "category": "breakdown-chart",
+        "title": "Trade Performance",
+        "dataContract": {
+          "type": "trade-breakdown",
+          "categories": ["winning_trades", "losing_trades", "breakeven_trades"]
+        },
+        "sub_question": "How many trades were winners, losers, or breakeven today?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "realized-timeline",
+        "category": "time-series",
+        "title": "Realized P/L Timeline",
+        "dataContract": {
+          "type": "historical-pl",
+          "period": "1d"
+        },
+        "sub_question": "How did realized profit and loss accumulate throughout the trading day?",
+        "canonical_params": {"period": "1d"}
+      }
+    ]
+  },
+  {
+    "question": "How many open positions do I hold right now?",
+    "layout": "grid",
+    "blocks": [
+      {
+        "blockId": "positions-count",
+        "category": "kpi-cards",
+        "title": "Open Positions Count",
+        "dataContract": {
+          "type": "kpi-metrics",
+          "metrics": [
+            {"key": "total_positions", "label": "Total Positions", "format": "number"},
+            {"key": "long_positions", "label": "Long Positions", "format": "number"},
+            {"key": "short_positions", "label": "Short Positions", "format": "number"}
+          ]
+        },
+        "sub_question": "How many total, long, and short positions are currently open?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "positions-by-type",
+        "category": "breakdown-chart",
+        "title": "Positions by Type",
+        "dataContract": {
+          "type": "categorical-breakdown",
+          "categories": ["equity_long", "equity_short", "options"]
+        },
+        "sub_question": "How are positions distributed by type?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "all-positions-list",
+        "category": "list",
+        "title": "All Open Positions",
+        "dataContract": {
+          "type": "position-list",
+          "sort": "market_value"
+        },
+        "sub_question": "What are all the open positions in the account?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "positions-exposure",
+        "category": "comparison-bar",
+        "title": "Position Exposure",
+        "dataContract": {
+          "type": "exposure-comparison",
+          "metrics": ["long_exposure", "short_exposure"]
+        },
+        "sub_question": "What is the long versus short exposure across all positions?",
+        "canonical_params": {}
+      }
+    ]
+  },
+  {
+    "question": "Which open position has the largest market value?",
+    "layout": "grid",
+    "blocks": [
+      {
+        "blockId": "largest-position",
+        "category": "kpi-cards",
+        "title": "Largest Position",
+        "dataContract": {
+          "type": "kpi-metrics",
+          "metrics": [
+            {"key": "largest_position_ticker", "label": "Symbol", "format": "text"},
+            {"key": "largest_position_value", "label": "Market Value", "format": "currency"},
+            {"key": "largest_position_pl", "label": "Unrealized P/L", "format": "currency"}
+          ]
+        },
+        "sub_question": "Which position has the largest market value and what is its value and P/L?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "largest-position-details",
+        "category": "info-panel",
+        "title": "Position Details",
+        "dataContract": {
+          "type": "position-details",
+          "fields": ["symbol", "quantity", "avg_entry_price", "current_price", "cost_basis", "market_value", "unrealized_pl", "unrealized_pl_percent"]
+        },
+        "sub_question": "What are the detailed metrics for the largest position?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "position-value-ranking",
+        "category": "bar-chart",
+        "title": "Positions by Value",
+        "dataContract": {
+          "type": "position-ranking",
+          "metric": "market_value",
+          "limit": 10
+        },
+        "sub_question": "How do all positions rank by market value?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "largest-position-performance",
+        "category": "sparkline",
+        "title": "Position Performance",
+        "dataContract": {
+          "type": "historical-position",
+          "metric": "market_value",
+          "period": "30d"
+        },
+        "sub_question": "How has the largest position performed over the last 30 days?",
+        "canonical_params": {"period": "30d"}
+      }
+    ]
+  },
+  {
+    "question": "Which open position has the smallest market value?",
+    "layout": "grid",
+    "blocks": [
+      {
+        "blockId": "smallest-position",
+        "category": "kpi-cards",
+        "title": "Smallest Position",
+        "dataContract": {
+          "type": "kpi-metrics",
+          "metrics": [
+            {"key": "smallest_position_ticker", "label": "Symbol", "format": "text"},
+            {"key": "smallest_position_value", "label": "Market Value", "format": "currency"},
+            {"key": "smallest_position_pl", "label": "Unrealized P/L", "format": "currency"}
+          ]
+        },
+        "sub_question": "Which position has the smallest market value and what is its value and P/L?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "smallest-position-details",
+        "category": "info-panel",
+        "title": "Position Details",
+        "dataContract": {
+          "type": "position-details",
+          "fields": ["symbol", "quantity", "avg_entry_price", "current_price", "cost_basis", "market_value", "unrealized_pl", "unrealized_pl_percent"]
+        },
+        "sub_question": "What are the detailed metrics for the smallest position?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "position-value-reverse",
+        "category": "bar-chart",
+        "title": "Positions by Value",
+        "dataContract": {
+          "type": "position-ranking",
+          "metric": "market_value",
+          "sort": "asc",
+          "limit": 10
+        },
+        "sub_question": "How do all positions rank by market value in ascending order?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "small-positions-summary",
+        "category": "list",
+        "title": "Smallest Positions",
+        "dataContract": {
+          "type": "position-list",
+          "sort": "market_value_asc",
+          "limit": 5
+        },
+        "sub_question": "What are the 5 smallest positions by market value?",
+        "canonical_params": {}
+      }
+    ]
+  },
+  {
+    "question": "Which open position has the highest unrealized gain?",
+    "layout": "grid",
+    "blocks": [
+      {
+        "blockId": "highest-gain-position",
+        "category": "kpi-cards",
+        "title": "Highest Gain Position",
+        "dataContract": {
+          "type": "kpi-metrics",
+          "metrics": [
+            {"key": "highest_gain_ticker", "label": "Symbol", "format": "text"},
+            {"key": "highest_gain_amount", "label": "Unrealized Gain", "format": "currency"},
+            {"key": "highest_gain_percent", "label": "Gain Percentage", "format": "percentage"}
+          ]
+        },
+        "sub_question": "Which position has the highest unrealized gain in dollars and percentage?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "gain-position-details",
+        "category": "info-panel",
+        "title": "Position Details",
+        "dataContract": {
+          "type": "position-details",
+          "fields": ["symbol", "quantity", "avg_entry_price", "current_price", "cost_basis", "market_value", "unrealized_pl", "unrealized_pl_percent", "days_held"]
+        },
+        "sub_question": "What are the detailed metrics for the position with highest unrealized gain?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "all-gainers",
+        "category": "list",
+        "title": "All Profitable Positions",
+        "dataContract": {
+          "type": "position-list",
+          "filter": "gainers",
+          "sort": "unrealized_gain"
+        },
+        "sub_question": "What are all the positions with unrealized gains?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "gain-position-performance",
+        "category": "sparkline",
+        "title": "Position Performance",
+        "dataContract": {
+          "type": "historical-position",
+          "metric": "unrealized_pl",
+          "period": "30d"
+        },
+        "sub_question": "How has the unrealized gain of the top position evolved over 30 days?",
+        "canonical_params": {"period": "30d"}
+      }
+    ]
+  },
+  {
+    "question": "Which open position has the largest unrealized loss?",
+    "layout": "grid",
+    "blocks": [
+      {
+        "blockId": "largest-loss-position",
+        "category": "kpi-cards",
+        "title": "Largest Loss Position",
+        "dataContract": {
+          "type": "kpi-metrics",
+          "metrics": [
+            {"key": "largest_loss_ticker", "label": "Symbol", "format": "text"},
+            {"key": "largest_loss_amount", "label": "Unrealized Loss", "format": "currency"},
+            {"key": "largest_loss_percent", "label": "Loss Percentage", "format": "percentage"}
+          ]
+        },
+        "sub_question": "Which position has the largest unrealized loss in dollars and percentage?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "loss-position-details",
+        "category": "info-panel",
+        "title": "Position Details",
+        "dataContract": {
+          "type": "position-details",
+          "fields": ["symbol", "quantity", "avg_entry_price", "current_price", "cost_basis", "market_value", "unrealized_pl", "unrealized_pl_percent", "days_held"]
+        },
+        "sub_question": "What are the detailed metrics for the position with largest unrealized loss?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "all-losers",
+        "category": "list",
+        "title": "All Losing Positions",
+        "dataContract": {
+          "type": "position-list",
+          "filter": "losers",
+          "sort": "unrealized_loss"
+        },
+        "sub_question": "What are all the positions with unrealized losses?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "loss-position-performance",
+        "category": "sparkline",
+        "title": "Position Performance",
+        "dataContract": {
+          "type": "historical-position",
+          "metric": "unrealized_pl",
+          "period": "30d"
+        },
+        "sub_question": "How has the unrealized loss of the worst position evolved over 30 days?",
+        "canonical_params": {"period": "30d"}
+      }
+    ]
+  },
+  {
+    "question": "What is my net long versus short market value exposure?",
+    "layout": "grid",
+    "blocks": [
+      {
+        "blockId": "net-exposure",
+        "category": "kpi-cards",
+        "title": "Net Exposure",
+        "dataContract": {
+          "type": "kpi-metrics",
+          "metrics": [
+            {"key": "long_exposure", "label": "Long Exposure", "format": "currency"},
+            {"key": "short_exposure", "label": "Short Exposure", "format": "currency"},
+            {"key": "net_exposure", "label": "Net Exposure", "format": "currency"}
+          ]
+        },
+        "sub_question": "What are the total long exposure, short exposure, and net exposure?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "exposure-comparison",
+        "category": "comparison-bar",
+        "title": "Long vs Short Exposure",
+        "dataContract": {
+          "type": "exposure-comparison",
+          "metrics": ["long_exposure", "short_exposure"]
+        },
+        "sub_question": "How does long exposure compare to short exposure?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "exposure-by-ticker",
+        "category": "bar-chart",
+        "title": "Exposure by Symbol",
+        "dataContract": {
+          "type": "ticker-exposure",
+          "breakdown": ["long", "short"]
+        },
+        "sub_question": "What is the long and short exposure broken down by symbol?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "exposure-ratio",
+        "category": "gauge",
+        "title": "Exposure Ratio",
+        "dataContract": {
+          "type": "ratio-gauge",
+          "numerator": "long_exposure",
+          "denominator": "total_exposure"
+        },
+        "sub_question": "What percentage of total exposure is long versus short?",
+        "canonical_params": {}
+      }
+    ]
+  },
+  {
+    "question": "What percentage of my portfolio is currently in cash?",
+    "layout": "grid",
+    "blocks": [
+      {
+        "blockId": "cash-percentage",
+        "category": "kpi-cards",
+        "title": "Cash Percentage",
+        "dataContract": {
+          "type": "kpi-metrics",
+          "metrics": [
+            {"key": "cash_percentage", "label": "Cash Percentage", "format": "percentage"},
+            {"key": "cash_balance", "label": "Cash Balance", "format": "currency"},
+            {"key": "portfolio_value", "label": "Portfolio Value", "format": "currency"}
+          ]
+        },
+        "sub_question": "What percentage of the portfolio is in cash and what are the cash and portfolio values?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "portfolio-composition",
+        "category": "pie-chart",
+        "title": "Portfolio Composition",
+        "dataContract": {
+          "type": "categorical-breakdown",
+          "categories": ["cash", "equity_positions", "option_positions"]
+        },
+        "sub_question": "How is the portfolio distributed between cash, equities, and options?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "cash-breakdown",
+        "category": "breakdown-chart",
+        "title": "Cash Breakdown",
+        "dataContract": {
+          "type": "categorical-breakdown",
+          "categories": ["settled_cash", "unsettled_cash", "margin_cash"]
+        },
+        "sub_question": "How is the cash broken down into settled, unsettled, and margin?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "cash-history",
+        "category": "time-series",
+        "title": "Cash % Over Time",
+        "dataContract": {
+          "type": "historical-metrics",
+          "metrics": ["cash_percentage"],
+          "period": "90d"
+        },
+        "sub_question": "How has the cash percentage changed over the last 90 days?",
+        "canonical_params": {"period": "90d"}
+      }
+    ]
+  },
+  {
+    "question": "What is my margin multiplier and current margin usage?",
+    "layout": "grid",
+    "blocks": [
+      {
+        "blockId": "margin-summary",
+        "category": "kpi-cards",
+        "title": "Margin Summary",
+        "dataContract": {
+          "type": "kpi-metrics",
+          "metrics": [
+            {"key": "margin_multiplier", "label": "Margin Multiplier", "format": "number"},
+            {"key": "margin_used", "label": "Margin Used", "format": "currency"},
+            {"key": "margin_available", "label": "Margin Available", "format": "currency"}
+          ]
+        },
+        "sub_question": "What are the margin multiplier, margin used, and margin available?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "margin-usage",
+        "category": "gauge",
+        "title": "Margin Usage",
+        "dataContract": {
+          "type": "usage-gauge",
+          "used": "margin_used",
+          "total": "margin_total"
+        },
+        "sub_question": "What percentage of the margin is currently used?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "margin-details",
+        "category": "info-panel",
+        "title": "Margin Details",
+        "dataContract": {
+          "type": "margin-details",
+          "fields": ["account_type", "margin_multiplier", "initial_margin", "maintenance_margin", "margin_used", "margin_available", "day_trading_buying_power", "reg_t_buying_power"]
+        },
+        "sub_question": "What are the detailed margin account metrics?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "buying-power-breakdown",
+        "category": "comparison-bar",
+        "title": "Buying Power Types",
+        "dataContract": {
+          "type": "metric-comparison",
+          "metrics": [
+            {"key": "day_trading_buying_power", "label": "Day Trading BP"},
+            {"key": "reg_t_buying_power", "label": "Reg T BP"},
+            {"key": "cash_buying_power", "label": "Cash BP"}
+          ]
+        },
+        "sub_question": "What are the different types of buying power available?",
+        "canonical_params": {}
+      }
+    ]
+  },
+  {
+    "question": "List my open equity positions with quantities and average entry prices.",
+    "layout": "grid",
+    "blocks": [
+      {
+        "blockId": "equity-positions-summary",
+        "category": "kpi-cards",
+        "title": "Equity Positions",
+        "dataContract": {
+          "type": "kpi-metrics",
+          "metrics": [
+            {"key": "equity_positions_count", "label": "Equity Positions", "format": "number"},
+            {"key": "total_equity_value", "label": "Total Equity Value", "format": "currency"},
+            {"key": "equity_unrealized_pl", "label": "Equity P/L", "format": "currency"}
+          ]
+        },
+        "sub_question": "How many equity positions are open, what is their total value, and unrealized P/L?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "equity-positions-list",
+        "category": "list",
+        "title": "Open Equity Positions",
+        "dataContract": {
+          "type": "position-list",
+          "position_type": "equity",
+          "fields": ["symbol", "quantity", "avg_entry_price", "current_price", "market_value", "unrealized_pl"]
+        },
+        "sub_question": "What are all open equity positions with their quantities and average entry prices?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "equity-by-direction",
+        "category": "breakdown-chart",
+        "title": "Long vs Short",
+        "dataContract": {
+          "type": "categorical-breakdown",
+          "categories": ["equity_long", "equity_short"]
+        },
+        "sub_question": "How many equity positions are long versus short?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "top-equity-positions",
+        "category": "list",
+        "title": "Top Equity Positions",
+        "dataContract": {
+          "type": "position-list",
+          "position_type": "equity",
+          "sort": "market_value",
+          "limit": 5
+        },
+        "sub_question": "Which are the top 5 equity positions by market value?",
+        "canonical_params": {}
+      }
+    ]
+  },
+  {
+    "question": "For each open position, what is the cost basis and unrealized P/L?",
+    "layout": "grid",
+    "blocks": [
+      {
+        "blockId": "positions-pl-summary",
+        "category": "kpi-cards",
+        "title": "Cost Basis & P/L",
+        "dataContract": {
+          "type": "kpi-metrics",
+          "metrics": [
+            {"key": "total_cost_basis", "label": "Total Cost Basis", "format": "currency"},
+            {"key": "total_unrealized_pl", "label": "Total Unrealized P/L", "format": "currency"},
+            {"key": "unrealized_pl_percent", "label": "P/L Percentage", "format": "percentage"}
+          ]
+        },
+        "sub_question": "What is the total cost basis, unrealized P/L, and P/L percentage across all positions?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "all-positions-pl",
+        "category": "list",
+        "title": "Positions Cost & P/L",
+        "dataContract": {
+          "type": "position-list",
+          "fields": ["symbol", "quantity", "cost_basis", "market_value", "unrealized_pl", "unrealized_pl_percent"]
+        },
+        "sub_question": "What is the cost basis and unrealized P/L for each open position?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "pl-distribution",
+        "category": "comparison-bar",
+        "title": "P/L Distribution",
+        "dataContract": {
+          "type": "pl-breakdown",
+          "categories": ["total_gains", "total_losses", "breakeven"]
+        },
+        "sub_question": "How is the unrealized P/L distributed between gains and losses?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "positions-by-pl",
+        "category": "bar-chart",
+        "title": "P/L by Position",
+        "dataContract": {
+          "type": "position-pl-chart",
+          "metric": "unrealized_pl"
+        },
+        "sub_question": "What is the unrealized P/L for each position?",
+        "canonical_params": {}
+      }
+    ]
+  },
+  {
+    "question": "What is my total exposure by asset type within equities?",
+    "layout": "grid",
+    "blocks": [
+      {
+        "blockId": "equity-exposure-summary",
+        "category": "kpi-cards",
+        "title": "Equity Exposure",
+        "dataContract": {
+          "type": "kpi-metrics",
+          "metrics": [
+            {"key": "total_equity_exposure", "label": "Total Equity Exposure", "format": "currency"},
+            {"key": "equity_position_count", "label": "Equity Positions", "format": "number"},
+            {"key": "top_asset_type", "label": "Top Asset Type", "format": "text"}
+          ]
+        },
+        "sub_question": "What is the total equity exposure, number of equity positions, and top asset type?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "exposure-by-asset-type",
+        "category": "pie-chart",
+        "title": "Exposure by Asset Type",
+        "dataContract": {
+          "type": "categorical-breakdown",
+          "categories": ["common_stock", "etf", "adr", "preferred_stock"]
+        },
+        "sub_question": "How is equity exposure distributed across different asset types?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "top-asset-positions",
+        "category": "list",
+        "title": "Top Asset Positions",
+        "dataContract": {
+          "type": "position-list",
+          "group_by": "asset_type",
+          "sort": "market_value"
+        },
+        "sub_question": "What are the top positions within each asset type?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "asset-type-performance",
+        "category": "bar-chart",
+        "title": "Performance by Asset Type",
+        "dataContract": {
+          "type": "asset-type-performance",
+          "metric": "unrealized_pl_percent"
+        },
+        "sub_question": "What is the performance percentage for each asset type?",
+        "canonical_params": {}
+      }
+    ]
+  },
+  {
+    "question": "What is my current buying power after accounting for open orders?",
+    "layout": "grid",
+    "blocks": [
+      {
+        "blockId": "adjusted-buying-power",
+        "category": "kpi-cards",
+        "title": "Adjusted Buying Power",
+        "dataContract": {
+          "type": "kpi-metrics",
+          "metrics": [
+            {"key": "buying_power", "label": "Buying Power", "format": "currency"},
+            {"key": "open_orders_value", "label": "Open Orders Value", "format": "currency"},
+            {"key": "available_buying_power", "label": "Available Buying Power", "format": "currency"}
+          ]
+        },
+        "sub_question": "What is the buying power, open orders value, and available buying power?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "buying-power-breakdown",
+        "category": "breakdown-chart",
+        "title": "Buying Power Breakdown",
+        "dataContract": {
+          "type": "categorical-breakdown",
+          "categories": ["buying_power", "committed_to_orders"]
+        },
+        "sub_question": "How is the buying power split between available and committed to orders?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "open-orders-summary",
+        "category": "list",
+        "title": "Open Orders",
+        "dataContract": {
+          "type": "order-list",
+          "fields": ["symbol", "side", "quantity", "order_type", "limit_price", "order_value"]
+        },
+        "sub_question": "What are all the open orders and their values?",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "buying-power-comparison",
+        "category": "comparison-bar",
+        "title": "Buying Power Comparison",
+        "dataContract": {
+          "type": "metric-comparison",
+          "metrics": [
+            {"key": "buying_power", "label": "Total Buying Power"},
+            {"key": "available_buying_power", "label": "Available Buying Power"},
+            {"key": "open_orders_value", "label": "Open Orders Value"}
+          ]
+        },
+        "sub_question": "How does total buying power compare to available buying power and open orders value?",
+        "canonical_params": {}
+      }
+    ]
+  }
+]

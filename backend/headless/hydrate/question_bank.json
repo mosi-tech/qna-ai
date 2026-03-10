@@ -1,0 +1,162 @@
+[
+  {
+    "question": "Compare AAPL and MSFT on valuation (P/E, P/S, EV/EBITDA), growth (revenue, EPS), and profitability (margins, ROE) - which is the better value today?",
+    "timestamp": "2026-03-05T19:06:01.808553",
+    "metadata": {
+      "persona": "investor",
+      "category": "relative"
+    }
+  },
+  {
+    "question": "What's NVDA's current volatility regime compared to its historical average, and what does its 30-day implied volatility suggest about market expectations?",
+    "timestamp": "2026-03-05T19:06:01.808573",
+    "metadata": {
+      "persona": "options",
+      "category": "risk"
+    }
+  },
+  {
+    "question": "What's the correlation between QQQ and SPY over different time periods, and how has that correlation changed during market stress events?",
+    "timestamp": "2026-03-05T19:06:01.808578",
+    "metadata": {
+      "persona": "pm",
+      "category": "portfolio"
+    }
+  },
+  {
+    "question": "What's SPY's current advance/decline line and volume profile suggesting about market breadth and potential directional moves?",
+    "timestamp": "2026-03-05T19:06:01.808582",
+    "metadata": {
+      "persona": "trader",
+      "category": "technical"
+    }
+  },
+  {
+    "question": "What is QQQ's Value at Risk (VaR) at 95% confidence for a 1-day horizon, and how does that compare to its 10-day VaR?",
+    "timestamp": "2026-03-05T19:06:01.808585",
+    "metadata": {
+      "persona": "quant",
+      "category": "risk"
+    }
+  },
+  {
+    "question": "What's the put/call ratio for SPY, and how has that ratio historically predicted short-term market moves?",
+    "timestamp": "2026-03-05T19:06:01.808588",
+    "metadata": {
+      "persona": "trader",
+      "category": "volatility"
+    }
+  },
+  {
+    "question": "How has QQQ performed relative to SPY over the past 3 years on a risk-adjusted basis, and what sector exposures drove any outperformance?",
+    "timestamp": "2026-03-05T19:06:01.808591",
+    "metadata": {
+      "persona": "quant",
+      "category": "performance"
+    }
+  },
+  {
+    "question": "Compare AAPL and MSFT on valuation (P/E, P/S, EV/EBITDA), growth (revenue, EPS), and profitability (margins, ROE) - which is the better value today?",
+    "timestamp": "2026-03-05T19:06:01.808594",
+    "metadata": {
+      "persona": "investor",
+      "category": "relative"
+    }
+  },
+  {
+    "question": "How has market volatility (VIX) evolved over the past year, and what does the current VIX term structure suggest about near-term uncertainty?",
+    "timestamp": "2026-03-05T19:06:01.808597",
+    "metadata": {
+      "persona": "trader",
+      "category": "thematic"
+    }
+  },
+  {
+    "question": "Compare GLD and TLT on their inflation hedging properties - which has been more effective during different inflation regimes?",
+    "timestamp": "2026-03-05T19:06:01.808602",
+    "metadata": {
+      "persona": "investor",
+      "category": "relative"
+    }
+  },
+  {
+    "question": "What is QQQ's Value at Risk (VaR) at 95% confidence for a 1-day horizon, and how does that compare to its 10-day VaR?",
+    "timestamp": "2026-03-05T19:06:32.160744",
+    "metadata": {
+      "persona": "quant",
+      "category": "risk"
+    }
+  },
+  {
+    "question": "What's the correlation between QQQ and SPY over different time periods, and how has that correlation changed during market stress events?",
+    "timestamp": "2026-03-05T19:06:47.520026",
+    "metadata": {
+      "persona": "pm",
+      "category": "portfolio"
+    }
+  },
+  {
+    "question": "What's NVDA's current volatility regime compared to its historical average, and what does its 30-day implied volatility suggest about market expectations?",
+    "timestamp": "2026-03-05T19:06:59.603362",
+    "metadata": {
+      "persona": "options",
+      "category": "risk"
+    }
+  },
+  {
+    "question": "What's QQQ's current implied volatility term structure, and where does the 30-day IV rank sit relative to its 1-year history?",
+    "timestamp": "2026-03-05T19:07:25.901572",
+    "metadata": {
+      "persona": "options",
+      "category": "volatility"
+    }
+  },
+  {
+    "question": "What does the yield curve (2y-10y spread) suggest about recession risk, and how have cyclical vs defensive sectors performed historically in similar regimes?",
+    "timestamp": "2026-03-05T19:07:37.490624",
+    "metadata": {
+      "persona": "pm",
+      "category": "thematic"
+    }
+  },
+  {
+    "question": "What is QQQ's Value at Risk (VaR) at 95% confidence for a 1-day horizon, and how does that compare to its 10-day VaR?",
+    "timestamp": "2026-03-05T19:07:50.945388",
+    "metadata": {
+      "persona": "quant",
+      "category": "risk"
+    }
+  },
+  {
+    "question": "If I'm 60/40 stocks/bonds, how would adding a 10% allocation to QQQ affect my portfolio's expected return, volatility, and Sharpe ratio?",
+    "timestamp": "2026-03-05T19:08:01.862298",
+    "metadata": {
+      "persona": "pm",
+      "category": "portfolio"
+    }
+  },
+  {
+    "question": "Analyze TSLA's maximum drawdown characteristics over the past 5 years - what's the typical recovery time and what factors drove the worst drawdowns?",
+    "timestamp": "2026-03-05T19:08:14.540287",
+    "metadata": {
+      "persona": "trader",
+      "category": "risk"
+    }
+  },
+  {
+    "question": "Show NVDA's price relative to its 50-day and 200-day moving averages, along with Bollinger Band width - is it in a trending or mean-reverting regime?",
+    "timestamp": "2026-03-05T19:08:29.407922",
+    "metadata": {
+      "persona": "trader",
+      "category": "technical"
+    }
+  },
+  {
+    "question": "Compare META and GOOGL on ROIC, revenue growth, and earnings quality metrics - which company is generating better returns on capital?",
+    "timestamp": "2026-03-05T19:08:51.638712",
+    "metadata": {
+      "persona": "investor",
+      "category": "fundamental"
+    }
+  }
+]

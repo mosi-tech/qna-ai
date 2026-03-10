@@ -244,7 +244,258 @@ if __name__ == "__main__":
 
 ---
 
-## Implementation Status
+## Related: Cache Hydration Pipeline
+
+> See `backend/headless/hydrate/` for the cache hydration pipeline.
+
+The hydration pipeline discovers **generic question templates** for script caching:
+
+```
+Specific: "What is QQQ's current price?"
+    ↓ Genericize (block-aware)
+Generic: "What is {{ticker}}'s current price?"
+    ↓ Cache key
+hash(template + block_type) → cached script
+```
+
+**Key concept:** Same generic template → same cached script → any ticker.
+
+See `backend/headless/hydrate/README.md` for details.
+
+---
+
+## UI Performance Optimization — Fast Path Routing
+
+> Goal: Reduce 5-10s response time to <2s for 70%+ of questions
+> See `ARCHITECTURE.md` for detailed architecture
+
+### `step3_cache_enhanced.py` — LLM Classification + Cache + Routing
+**Purpose:** Classify questions into optimal response paths (direct_mcp, template, or script_generation), check cache, and route accordingly.
+**Usage:**
+```bash
+# Classify single question
+python step3_cache_enhanced.py --question "What is QQQ's current price?" --pretty
+
+# Process multiple sub-questions from JSON string
+python step3_cache_enhanced.py --sub-questions '[{"block_id": "1", "sub_question": "..."}]'
+
+# Process sub-questions from file
+python step3_cache_enhanced.py --sub-questions-file sub_questions.json
+```
+**Behaviour:**
+- Bootstraps: `LLMService` (if API key available), `QuestionClassifier`, `CacheService`
+- Classifies each question using:
+  1. LLM-based classification (if ANTHROPIC_API_KEY set)
+  2. Regex pattern fallback (if LLM unavailable)
+- Checks cache based on classification
+- Returns routing decisions: `path`, `target`, `mcp_server`, `confidence`, `params`, `route_to`
+- Saves output to `output/step3_routing_<timestamp>.json`
+
+**What to check:**
+- Classification accuracy (simple questions → direct_mcp)
+- Cache hit detection
+- Parameter extraction (symbols, limits, etc.)
+
+### `step5a_direct_function.py` — Direct MCP Calls (Fast Path)
+**Purpose:** Execute single MCP function calls without script generation.
+**Usage:**
+```bash
+# Call specific function
+python step5a_direct_function.py --function get_top_gainers --params '{"limit": 10}'
+
+# Process routing decisions from step3
+python step5a_direct_function.py --routing-file output/step3_routing.json
+```
+**Behaviour:**
+- Bootstraps: MCP servers (financial, analytics)
+- Calls the specified function directly (no script generation)
+- Executes and returns result
+- Caches result to memory cache
+- Saves output to `output/step5a_<timestamp>.json`
+
+**Supported Functions:**
+- `get_real_time_data`, `get_latest_quotes`, `get_latest_trades`
+- `get_top_gainers`, `get_top_losers`, `get_most_active_stocks`
+- `get_fundamentals`, `get_dividends`, `get_splits`
+- `get_account`, `get_positions`
+- `calculate_var`, `calculate_sma`, `calculate_rsi`, `calculate_macd`
+- `calculate_correlation`, `calculate_risk_metrics`
+- And more...
+
+### `test_routing.py` — Question Classification Test
+**Purpose:** Test question classification coverage on consolidated questions.
+**Usage:**
+```bash
+# Test with sample of questions
+python test_routing.py --questions /path/to/consolidated_questions.json --sample 100
+
+# Test with all questions
+python test_routing.py --questions /path/to/consolidated_questions.json
+
+# Save report to specific file
+python test_routing.py --questions /path/to/consolidated_questions.json --output report.json
+```
+**Behaviour:**
+- Loads questions from JSON file
+- Classifies each question using `QuestionClassifier`
+- Generates coverage report:
+  - Direct MCP (fast path) percentage
+  - Template (medium path) percentage
+  - Script generation (slow path) percentage
+  - Top identified MCP functions
+  - Sample questions by path
+  - Performance estimate (speedup)
+- Saves JSON report to `output/routing_test_<timestamp>.json`
+
+**Current Results (Regex Fallback, 1,813 questions):**
+- Direct MCP: 44.5%
+- Template: 7.9%
+- Script Generation: 47.5%
+- Estimated Speedup: 2.0x
+
+### `test_classification.py` — Classification Coverage Test
+**Purpose:** Test how questions are routed through the new architecture.
+**Usage:**
+```bash
+# Test with default consolidated questions
+python test_classification.py
+
+# Test with sample
+python test_classification.py --sample 50
+
+# Test with custom questions file
+python test_classification.py --questions-file /path/to/questions.json
+```
+
+---
+
+## Updated Implementation Status
+
+| Script | Status |
+|--------|--------|
+| `step1_plan.py` | ✅ done |
+| `step2_persist.py` | ✅ done |
+| `step3_cache.py` | ✅ done |
+| `step3_cache_enhanced.py` | ✅ done (LLM + regex classification) |
+| `step4_enqueue.py` | ✅ done |
+| `step5_analysis.py` | ✅ done |
+| `step5a_direct_function.py` | ✅ done (fast path) |
+| `step6_execution.py` | ✅ done |
+| `step7_reconcile.py` | ✅ done |
+| `run_all_steps.py` | ✅ done |
+| `test_routing.py` | ✅ done |
+| `test_classification.py` | ✅ done |
+| `README.md` | ⬜ not built |
+
+### `cache_coverage_pipeline.py` — Generic Question Discovery
+**Purpose:** Iteratively discover and warm generic question templates for high cache hit rates.
+**Usage:**
+```bash
+# Run with mock blocks (no UIPlanner needed)
+python cache_coverage_pipeline.py --target 0.95 --max-iterations 1000
+
+# Run with real UIPlanner
+python cache_coverage_pipeline.py --use-planner --target 0.95
+
+# Run and save report
+python cache_coverage_pipeline.py --output coverage_report.json
+```
+**Behaviour:**
+1. Generates diverse financial questions from templates
+2. Sends each to UIPlanner to get block decompositions
+3. Genericizes each sub-question (block-aware)
+4. Tracks cache hits/misses and unique generic questions
+5. Repeats until target hit rate (default 95%) or max iterations
+
+**Key Concepts:**
+
+#### Generic Questions
+Instead of caching specific questions like:
+- "What is QQQ's current price?"
+- "What is AAPL's current price?"
+- "What is SPY's current price?"
+
+We cache **parametric templates**:
+- `"What is {{ticker}}'s current price?"` (same cache key for all tickers)
+
+#### Block-Aware Genericization
+The generic question must fit the block that will render it:
+```
+Question: "What is QQQ's price trend?"
+Block: kpi-cards (expects scalar values)
+→ Generic: "What are {{ticker}}'s key price metrics?"
+
+Question: "What is QQQ's price trend?"
+Block: line-chart (expects time series)
+→ Generic: "What is {{ticker}}'s price history?"
+```
+
+#### Cache Key Derivation
+```python
+cache_key = hash(template + block_type)
+# Same template + same block = same cache key
+# Same template + different block = different cache key
+```
+
+**Output:**
+- JSON report with all discovered generic questions
+- Hit rate statistics
+- Coverage by block type
+- Top questions by hit count
+
+---
+
+### `test_cache_coverage.py` — Test Suite
+**Purpose:** Validate the cache coverage pipeline logic without LLM dependencies.
+**Usage:**
+```bash
+python test_cache_coverage.py
+```
+**Tests:**
+- Question bank generation
+- Cache simulator (hits/misses)
+- Cache key determinism
+- Pipeline dry run (mock mode)
+
+---
+
+## Architecture: Generic Question Flow
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ User Question: "How is QQQ performing?"                                     │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ UIPlanner.plan()                                                            │
+│   → Block 1: sub_question = "What is QQQ's current price?"                  │
+│              block_type = "kpi-cards"                                       │
+│              data_contract = {type: "kpi", points: 1}                       │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ GenericQuestionGenerator.genericize()                                       │
+│   Input: sub_question + block_type + data_contract                          │
+│   Output: generic_question = "What is {{ticker}}'s current price?"          │
+│           params = ["ticker"]                                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ Cache Lookup                                                                 │
+│   generic_key = hash("What is {{ticker}}'s current price?" + "kpi-cards")   │
+│                                                                             │
+│   cache.get(generic_key) → HIT?                                             │
+│     YES → return cached_script.render(ticker="QQQ")                         │
+│     NO  → Analysis LLM generates script, cache it, execute                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Updated Implementation Status
 
 | Script | Status |
 |--------|--------|
@@ -256,6 +507,6 @@ if __name__ == "__main__":
 | `step6_execution.py` | ✅ done |
 | `step7_reconcile.py` | ✅ done |
 | `run_all_steps.py` | ✅ done |
+| `cache_coverage_pipeline.py` | ✅ done |
+| `test_cache_coverage.py` | ✅ done |
 | `README.md` | ⬜ not built |
-
-Use the **`headless_steps_builder`** agent to implement any of these.

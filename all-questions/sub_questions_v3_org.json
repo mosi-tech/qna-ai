@@ -1,0 +1,590 @@
+{
+  "metadata": {
+    "version": "v3",
+    "created_at": "2026-03-07T00:00:00.000000",
+    "total_questions_processed": 20,
+    "rule_applied": "ALL sub-questions must directly address the original question - NO generic or irrelevant sub-questions"
+  },
+  "sub_questions": [
+    {
+      "original_question": "What is my current account equity and buying power?",
+      "blocks": [
+        {
+          "block_name": "Account Equity Details",
+          "sub_questions": [
+            "What is the total equity of my account right now?",
+            "What is the current cash balance in my account?",
+            "What is the market value of all my open positions combined?"
+          ]
+        },
+        {
+          "block_name": "Buying Power Breakdown",
+          "sub_questions": [
+            "What is my current buying power for trading?",
+            "What is my day-trading buying power?",
+            "What is my buying power after accounting for open orders?"
+          ]
+        },
+        {
+          "block_name": "Margin and Buying Power Context",
+          "sub_questions": [
+            "What is my margin multiplier?",
+            "What is my current margin usage?",
+            "How much buying power is available after margin is accounted for?"
+          ]
+        }
+      ]
+    },
+    {
+      "original_question": "How much cash is currently available to trade?",
+      "blocks": [
+        {
+          "block_name": "Current Cash Position",
+          "sub_questions": [
+            "What is my current cash balance?",
+            "How much settled cash do I have?",
+            "How much unsettled cash do I have?"
+          ]
+        },
+        {
+          "block_name": "Cash Constraints",
+          "sub_questions": [
+            "What portion of cash is reserved for open orders?",
+            "How much cash is allocated to pending trades?",
+            "What is my net available cash after all commitments?"
+          ]
+        },
+        {
+          "block_name": "Trading Liquidity",
+          "sub_questions": [
+            "Can I buy additional positions with current cash?",
+            "What is the maximum position size I can afford with cash?",
+            "How much cash would be freed if I closed all positions?"
+          ]
+        }
+      ]
+    },
+    {
+      "original_question": "List my open equity positions with quantities and average entry prices.",
+      "blocks": [
+        {
+          "block_name": "Position Inventory",
+          "sub_questions": [
+            "What positions do I currently hold?",
+            "What is the quantity of each open position?",
+            "What is the average entry price for each position?"
+          ]
+        },
+        {
+          "block_name": "Position Valuation",
+          "sub_questions": [
+            "What is the current market value of each position?",
+            "What is the total cost basis for each position?",
+            "What is the unrealized P/L for each position?"
+          ]
+        },
+        {
+          "block_name": "Position Summary",
+          "sub_questions": [
+            "How many total positions do I have?",
+            "What is the total quantity of shares across all positions?",
+            "What is the total market value of all positions combined?"
+          ]
+        }
+      ]
+    },
+    {
+      "original_question": "Which open position has the largest market value?",
+      "blocks": [
+        {
+          "block_name": "Position Values",
+          "sub_questions": [
+            "What is the current market value of each position?",
+            "Which position has the highest dollar value?",
+            "What is the dollar amount of the largest position?"
+          ]
+        },
+        {
+          "block_name": "Position Comparison",
+          "sub_questions": [
+            "How does the largest position compare to others?",
+            "What percentage of portfolio does the largest position represent?",
+            "What is the market value of the second largest position?"
+          ]
+        },
+        {
+          "block_name": "Position Context",
+          "sub_questions": [
+            "Which symbol is the largest position?",
+            "What quantity of shares is in the largest position?",
+            "What is the cost basis of the largest position?"
+          ]
+        }
+      ]
+    },
+    {
+      "original_question": "Which open position has the highest unrealized gain?",
+      "blocks": [
+        {
+          "block_name": "Gain Analysis",
+          "sub_questions": [
+            "What is the unrealized P/L for each position?",
+            "Which position has the highest unrealized gain?",
+            "What is the dollar amount of the highest unrealized gain?"
+          ]
+        },
+        {
+          "block_name": "Gain Percentage",
+          "sub_questions": [
+            "What is the unrealized gain percentage for each position?",
+            "Which position has the highest unrealized gain percentage?",
+            "What is the percentage gain of the best performer?"
+          ]
+        },
+        {
+          "block_name": "Performance Context",
+          "sub_questions": [
+            "How long have I held the position with the highest gain?",
+            "What was the entry price of the best performing position?",
+            "What is the current price of the best performing position?"
+          ]
+        }
+      ]
+    },
+    {
+      "original_question": "What is my sector allocation based on current holdings?",
+      "blocks": [
+        {
+          "block_name": "Sector Breakdown",
+          "sub_questions": [
+            "What sectors are represented in my portfolio?",
+            "What is the dollar value in each sector?",
+            "What percentage of my portfolio is allocated to each sector?"
+          ]
+        },
+        {
+          "block_name": "Sector Analysis",
+          "sub_questions": [
+            "Which sector has the largest allocation?",
+            "Which sector has the smallest allocation?",
+            "How many sectors are represented in my portfolio?"
+          ]
+        },
+        {
+          "block_name": "Sector Concentration",
+          "sub_questions": [
+            "How concentrated is my portfolio by sector?",
+            "What are the top 3 sectors by weight?",
+            "Are there any sectors with zero allocation?"
+          ]
+        }
+      ]
+    },
+    {
+      "original_question": "Which sectors have the largest weights in my portfolio?",
+      "blocks": [
+        {
+          "block_name": "Top Sectors",
+          "sub_questions": [
+            "Which sectors have the highest portfolio weights?",
+            "What percentage does each top sector represent?",
+            "How many sectors make up the majority of the portfolio?"
+          ]
+        },
+        {
+          "block_name": "Weight Comparison",
+          "sub_questions": [
+            "How do the top sector weights compare?",
+            "What is the weight difference between top sectors?",
+            "Is there a dominant sector or are weights balanced?"
+          ]
+        },
+        {
+          "block_name": "Sector Holdings",
+          "sub_questions": [
+            "Which positions contribute to the top sectors?",
+            "How many positions are in each top sector?",
+            "What is the total value of holdings in each top sector?"
+          ]
+        }
+      ]
+    },
+    {
+      "original_question": "What is the correlation matrix of my top five positions over the last 60 trading days?",
+      "blocks": [
+        {
+          "block_name": "Position Selection",
+          "sub_questions": [
+            "Which are my top five positions by market value?",
+            "What symbols are in the top five positions?",
+            "How much does each top position represent in the portfolio?"
+          ]
+        },
+        {
+          "block_name": "Correlation Data",
+          "sub_questions": [
+            "What is the correlation between each pair of top positions?",
+            "Which positions have the highest correlation?",
+            "Which positions have the lowest correlation?"
+          ]
+        },
+        {
+          "block_name": "Correlation Analysis",
+          "sub_questions": [
+            "Are the top positions highly correlated with each other?",
+            "What is the average correlation among top positions?",
+            "Does the portfolio have good diversification based on correlations?"
+          ]
+        }
+      ]
+    },
+    {
+      "original_question": "Which two positions are most positively correlated over the last 60 trading days?",
+      "blocks": [
+        {
+          "block_name": "Correlation Search",
+          "sub_questions": [
+            "Which position pair has the highest positive correlation?",
+            "What is the correlation coefficient of the top pair?",
+            "How close is the correlation to 1.0?"
+          ]
+        },
+        {
+          "block_name": "Pair Analysis",
+          "sub_questions": [
+            "Which two positions make up the most correlated pair?",
+            "What sectors or industries do these positions belong to?",
+            "Is the high correlation expected given the positions' characteristics?"
+          ]
+        },
+        {
+          "block_name": "Correlation Impact",
+          "sub_questions": [
+            "How does high correlation between these positions affect portfolio risk?",
+            "Would reducing one of these positions improve diversification?",
+            "What is the combined weight of the most correlated pair?"
+          ]
+        }
+      ]
+    },
+    {
+      "original_question": "What is my portfolio's Sharpe ratio year-to-date using daily data?",
+      "blocks": [
+        {
+          "block_name": "Returns Calculation",
+          "sub_questions": [
+            "What is my portfolio's daily return series YTD?",
+            "What is the average daily return YTD?",
+            "What is the standard deviation of daily returns YTD?"
+          ]
+        },
+        {
+          "block_name": "Risk-Adjusted Return",
+          "sub_questions": [
+            "What is the annualized return of my portfolio YTD?",
+            "What is the annualized volatility of my portfolio YTD?",
+            "What is the risk-free rate used for Sharpe calculation?"
+          ]
+        },
+        {
+          "block_name": "Sharpe Ratio Analysis",
+          "sub_questions": [
+            "What is the Sharpe ratio value?",
+            "Is the Sharpe ratio considered good or poor?",
+            "How does it compare to a benchmark Sharpe ratio?"
+          ]
+        }
+      ]
+    },
+    {
+      "original_question": "Which positions had the largest positive return today?",
+      "blocks": [
+        {
+          "block_name": "Today's Performance",
+          "sub_questions": [
+            "What is each position's return today?",
+            "Which position had the highest positive return today?",
+            "What was the percentage gain of the best performer today?"
+          ]
+        },
+        {
+          "block_name": "Performance Context",
+          "sub_questions": [
+            "Which other positions had positive returns today?",
+            "How many positions had positive returns vs negative?",
+            "What was the average return across all positions today?"
+          ]
+        },
+        {
+          "block_name": "Position Details",
+          "sub_questions": [
+            "Which symbol had the best performance today?",
+            "What was the opening and closing price of the best performer?",
+            "Did the best performer have any notable news or events today?"
+          ]
+        }
+      ]
+    },
+    {
+      "original_question": "Which positions have RSI above 70?",
+      "blocks": [
+        {
+          "block_name": "RSI Screening",
+          "sub_questions": [
+            "What is the 14-day RSI for each position?",
+            "Which positions have RSI above 70?",
+            "What are the specific RSI values for overbought positions?"
+          ]
+        },
+        {
+          "block_name": "Overbought Analysis",
+          "sub_questions": [
+            "How many positions are in overbought territory?",
+            "Which position has the highest RSI?",
+            "How far above 70 are the overbought positions?"
+          ]
+        },
+        {
+          "block_name": "RSI Implications",
+          "sub_questions": [
+            "What does RSI above 70 indicate for these positions?",
+            "Are these overbought positions at risk of pullback?",
+            "Should I consider taking profits on overbought positions?"
+          ]
+        }
+      ]
+    },
+    {
+      "original_question": "Which positions recently had a golden cross (50-day MA above 200-day MA)?",
+      "blocks": [
+        {
+          "block_name": "Golden Cross Detection",
+          "sub_questions": [
+            "Which positions have 50-day MA above 200-day MA?",
+            "Which positions recently crossed from below to above?",
+            "When did each golden cross occur?"
+          ]
+        },
+        {
+          "block_name": "Cross Analysis",
+          "sub_questions": [
+            "How many positions currently show golden cross signals?",
+            "Which positions have the most recent golden crosses?",
+            "What is the price performance since the golden cross for each position?"
+          ]
+        },
+        {
+          "block_name": "Trend Implications",
+          "sub_questions": [
+            "What does golden cross indicate about the trend?",
+            "Which symbols are showing bullish golden cross patterns?",
+            "Are the golden cross positions aligned with overall market trend?"
+          ]
+        }
+      ]
+    },
+    {
+      "original_question": "Which positions had the largest single-day gain in the last 30 trading days?",
+      "blocks": [
+        {
+          "block_name": "Gain Identification",
+          "sub_questions": [
+            "What was the largest single-day gain for each position in 30 days?",
+            "Which position had the biggest single-day gain overall?",
+            "What was the percentage of the largest gain?"
+          ]
+        },
+        {
+          "block_name": "Gain Timing",
+          "sub_questions": [
+            "On which date did the largest gain occur?",
+            "What was the price before and after the largest gain?",
+            "Was the gain due to earnings, news, or market movement?"
+          ]
+        },
+        {
+          "block_name": "Gain Context",
+          "sub_questions": [
+            "How does the largest gain compare to typical daily moves?",
+            "Which other positions had significant single-day gains?",
+            "Were there common factors driving large gains across positions?"
+          ]
+        }
+      ]
+    },
+    {
+      "original_question": "Which positions are up more than 20% over the last 3 months?",
+      "blocks": [
+        {
+          "block_name": "3-Month Performance",
+          "sub_questions": [
+            "What is each position's return over the last 3 months?",
+            "Which positions have gained more than 20%?",
+            "What are the specific 3-month returns for qualifying positions?"
+          ]
+        },
+        {
+          "block_name": "Outperformers",
+          "sub_questions": [
+            "How many positions are up more than 20%?",
+            "Which position has the highest 3-month return?",
+            "What is the average return of positions meeting the 20% threshold?"
+          ]
+        },
+        {
+          "block_name": "Performance Analysis",
+          "sub_questions": [
+            "Are the 3-month gains consistent with YTD performance?",
+            "Do the outperforming positions share sector or characteristics?",
+            "Which positions are underperforming the 20% benchmark?"
+          ]
+        }
+      ]
+    },
+    {
+      "original_question": "For a chosen symbol, what are the current bid, ask, and last trade price?",
+      "blocks": [
+        {
+          "block_name": "Current Prices",
+          "sub_questions": [
+            "What is the current bid price for the symbol?",
+            "What is the current ask price for the symbol?",
+            "What was the last trade price for the symbol?"
+          ]
+        },
+        {
+          "block_name": "Spread Analysis",
+          "sub_questions": [
+            "What is the bid-ask spread in dollars?",
+            "What is the bid-ask spread as a percentage?",
+            "Is the spread tight or wide compared to recent averages?"
+          ]
+        },
+        {
+          "block_name": "Price Context",
+          "sub_questions": [
+            "Where is the last price relative to bid and ask?",
+            "Is there significant buying or selling pressure?",
+            "How does current pricing compare to the day's open/high/low?"
+          ]
+        }
+      ]
+    },
+    {
+      "original_question": "For a chosen symbol, what are today's high, low, and cumulative volume so far?",
+      "blocks": [
+        {
+          "block_name": "Today's Range",
+          "sub_questions": [
+            "What is today's high price for the symbol?",
+            "What is today's low price for the symbol?",
+            "What is the intraday range in percentage terms?"
+          ]
+        },
+        {
+          "block_name": "Volume Analysis",
+          "sub_questions": [
+            "What is the cumulative trading volume today?",
+            "How does today's volume compare to average?",
+            "What is the volume trend throughout the day?"
+          ]
+        },
+        {
+          "block_name": "Trading Activity",
+          "sub_questions": [
+            "Where is the current price relative to today's range?",
+            "Is there unusual volume today?",
+            "What time of day has seen the highest volume?"
+          ]
+        }
+      ]
+    },
+    {
+      "original_question": "For a chosen symbol, what is the realized volatility over the last 30 trading days?",
+      "blocks": [
+        {
+          "block_name": "Volatility Calculation",
+          "sub_questions": [
+            "What is the standard deviation of daily returns over 30 days?",
+            "What is the annualized volatility for the symbol?",
+            "How is the volatility calculated from price data?"
+          ]
+        },
+        {
+          "block_name": "Volatility Context",
+          "sub_questions": [
+            "Is the current volatility high or low historically?",
+            "How does this volatility compare to the broader market?",
+            "What is the typical volatility range for this symbol?"
+          ]
+        },
+        {
+          "block_name": "Volatility Implications",
+          "sub_questions": [
+            "What does the current volatility level indicate?",
+            "Is the volatility trending up or down?",
+            "How does volatility affect risk for this position?"
+          ]
+        }
+      ]
+    },
+    {
+      "original_question": "For a chosen symbol, what is the 14-day RSI?",
+      "blocks": [
+        {
+          "block_name": "RSI Value",
+          "sub_questions": [
+            "What is the current 14-day RSI for the symbol?",
+            "Is the RSI rising or falling?",
+            "What was the RSI 5 and 10 days ago?"
+          ]
+        },
+        {
+          "block_name": "RSI Interpretation",
+          "sub_questions": [
+            "Is the RSI in overbought (above 70) or oversold (below 30) territory?",
+            "What is the RSI indicating about momentum?",
+            "Is there an RSI divergence with price action?"
+          ]
+        },
+        {
+          "block_name": "RSI Signal",
+          "sub_questions": [
+            "What trading signals does the current RSI suggest?",
+            "Has the RSI recently crossed key thresholds?",
+            "How reliable has RSI been for this symbol historically?"
+          ]
+        }
+      ]
+    },
+    {
+      "original_question": "For a chosen symbol, which day had the highest volume in the last 30 trading days?",
+      "blocks": [
+        {
+          "block_name": "Volume Peak",
+          "sub_questions": [
+            "Which day had the highest volume in the last 30 trading days?",
+            "What was the volume on the highest volume day?",
+            "How much higher was it than average volume?"
+          ]
+        },
+        {
+          "block_name": "Volume Context",
+          "sub_questions": [
+            "What was the price action on the highest volume day?",
+            "Was there significant price movement with high volume?",
+            "Did the high volume coincide with earnings or news?"
+          ]
+        },
+        {
+          "block_name": "Volume Significance",
+          "sub_questions": [
+            "Does the high volume day indicate institutional activity?",
+            "How did the stock perform after the high volume day?",
+            "Are there multiple high volume days in the 30-day period?"
+          ]
+        }
+      ]
+    }
+  ]
+}

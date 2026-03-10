@@ -1,0 +1,955 @@
+[
+  {
+    "question_id": 21,
+    "question": "Do I have any open orders at the moment?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Open Orders Summary",
+        "dataContract": {
+          "type": "kpi-card-01",
+          "description": "Open orders count, total notional value, and order types breakdown"
+        },
+        "sub_question": "What is the total count of open orders and associated total notional value?",
+        "canonical_params": {
+          "metric": "open_orders_count"
+        }
+      },
+      {
+        "blockId": "table-01",
+        "category": "tables",
+        "title": "All Open Orders",
+        "dataContract": {
+          "type": "table-01",
+          "description": "Table showing all open orders with ticker, side, quantity, price, order type, and status"
+        },
+        "sub_question": "List all open orders with associated details including ticker, side, quantity, price, order type, and status.",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "bar-chart-01",
+        "category": "bar-charts",
+        "title": "Open Orders by Order Type",
+        "dataContract": {
+          "type": "bar-chart-01",
+          "description": "Bar chart showing count of open orders by type: market, limit, stop, stop-limit, bracket"
+        },
+        "sub_question": "What is the count of open orders by order type?",
+        "canonical_params": {
+          "metric": "open_orders_by_type"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 22,
+    "question": "Which open orders are market orders and which are limit orders?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Market vs Limit Orders Summary",
+        "dataContract": {
+          "type": "kpi-card-01",
+          "description": "Count and notional value of market orders vs limit orders"
+        },
+        "sub_question": "What is the count and total notional value of market orders versus limit orders?",
+        "canonical_params": {
+          "metric": "market_vs_limit_orders"
+        }
+      },
+      {
+        "blockId": "table-01",
+        "category": "tables",
+        "title": "Market Orders",
+        "dataContract": {
+          "type": "table-01",
+          "description": "Table showing all market orders with details"
+        },
+        "sub_question": "List all market orders with associated details including ticker, side, quantity, price, and status.",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "table-01",
+        "category": "tables",
+        "title": "Limit Orders",
+        "dataContract": {
+          "type": "table-01",
+          "description": "Table showing all limit orders with details including limit price"
+        },
+        "sub_question": "List all limit orders with associated details including ticker, side, quantity, limit price, and status.",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "Open Orders by Type",
+        "dataContract": {
+          "type": "bar-list-01",
+          "description": "Bar list showing open orders count and value by order type"
+        },
+        "sub_question": "What is the count and notional value of open orders by order type?",
+        "canonical_params": {
+          "metric": "open_orders_by_type_value"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 23,
+    "question": "Which open orders are stop or stop-limit orders?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Stop Orders Summary",
+        "dataContract": {
+          "type": "kpi-card-01",
+          "description": "Count and notional value of stop orders and stop-limit orders"
+        },
+        "sub_question": "What is the count and total notional value of stop orders versus stop-limit orders?",
+        "canonical_params": {
+          "metric": "stop_orders_summary"
+        }
+      },
+      {
+        "blockId": "table-01",
+        "category": "tables",
+        "title": "Stop Orders",
+        "dataContract": {
+          "type": "table-01",
+          "description": "Table showing all stop orders with stop price and status"
+        },
+        "sub_question": "List all stop orders with associated details including ticker, side, quantity, stop price, and status.",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "table-01",
+        "category": "tables",
+        "title": "Stop-Limit Orders",
+        "dataContract": {
+          "type": "table-01",
+          "description": "Table showing all stop-limit orders with stop and limit prices"
+        },
+        "sub_question": "List all stop-limit orders with associated details including ticker, side, quantity, stop price, limit price, and status.",
+        "canonical_params": {}
+      }
+    ]
+  },
+  {
+    "question_id": 24,
+    "question": "Which open orders are bracket orders with attached stop and take-profit?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Bracket Orders Summary",
+        "dataContract": {
+          "type": "kpi-card-01",
+          "description": "Count and notional value of bracket orders"
+        },
+        "sub_question": "What is the count and total notional value of bracket orders?",
+        "canonical_params": {
+          "metric": "bracket_orders_count"
+        }
+      },
+      {
+        "blockId": "table-01",
+        "category": "tables",
+        "title": "Bracket Orders",
+        "dataContract": {
+          "type": "table-01",
+          "description": "Table showing all bracket orders with stop loss and take profit prices"
+        },
+        "sub_question": "List all bracket orders with associated details including ticker, side, quantity, stop loss price, take profit price, and status.",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "Bracket Orders by Ticker",
+        "dataContract": {
+          "type": "bar-list-01",
+          "description": "Bar list showing bracket orders by ticker with notional value"
+        },
+        "sub_question": "Which tickers have bracket orders and what is the associated notional value?",
+        "canonical_params": {
+          "metric": "bracket_orders_by_ticker"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 25,
+    "question": "Do I have open DAY orders that may expire today?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "DAY Orders Expiring Today",
+        "dataContract": {
+          "type": "kpi-card-01",
+          "description": "Count and notional value of DAY orders that expire today"
+        },
+        "sub_question": "What is the count and total notional value of DAY orders that expire today?",
+        "canonical_params": {
+          "metric": "day_orders_expiring_today"
+        }
+      },
+      {
+        "blockId": "table-01",
+        "category": "tables",
+        "title": "DAY Orders Expiring Today",
+        "dataContract": {
+          "type": "table-01",
+          "description": "Table showing DAY orders that expire today"
+        },
+        "sub_question": "List all DAY orders that expire today with associated details including ticker, side, quantity, price, order type, and time remaining.",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "DAY Orders by Ticker",
+        "dataContract": {
+          "type": "bar-list-01",
+          "description": "Bar list showing DAY orders expiring today by ticker"
+        },
+        "sub_question": "Which tickers have DAY orders expiring today and what is the notional value for each?",
+        "canonical_params": {
+          "metric": "day_orders_by_ticker"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 26,
+    "question": "Which open orders have been partially filled today?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Partially Filled Orders Today",
+        "dataContract": {
+          "type": "kpi-card-01",
+          "description": "Count and total notional value of orders partially filled today"
+        },
+        "sub_question": "What is the count and total notional value of orders partially filled today?",
+        "canonical_params": {
+          "metric": "partially_filled_orders_today"
+        }
+      },
+      {
+        "blockId": "table-01",
+        "category": "tables",
+        "title": "Partially Filled Orders",
+        "dataContract": {
+          "type": "table-01",
+          "description": "Table showing orders partially filled today with original and filled quantities"
+        },
+        "sub_question": "List all orders partially filled today with associated details including ticker, side, original quantity, filled quantity, remaining quantity, price, and fill percentage.",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "Partially Filled by Ticker",
+        "dataContract": {
+          "type": "bar-list-01",
+          "description": "Bar list showing partially filled orders by ticker with fill percentages"
+        },
+        "sub_question": "Which tickers have partially filled orders and what is the fill percentage for each?",
+        "canonical_params": {
+          "metric": "partially_filled_by_ticker"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 27,
+    "question": "Which orders were fully filled today?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Orders Filled Today Summary",
+        "dataContract": {
+          "type": "kpi-card-01",
+          "description": "Count and total notional value of orders fully filled today"
+        },
+        "sub_question": "What is the count and total notional value of orders fully filled today?",
+        "canonical_params": {
+          "metric": "orders_filled_today"
+        }
+      },
+      {
+        "blockId": "table-01",
+        "category": "tables",
+        "title": "Filled Orders Today",
+        "dataContract": {
+          "type": "table-01",
+          "description": "Table showing orders fully filled today"
+        },
+        "sub_question": "List all orders fully filled today with associated details including ticker, side, quantity, fill price, fill time, and notional value.",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "Filled Orders by Ticker",
+        "dataContract": {
+          "type": "bar-list-01",
+          "description": "Bar list showing filled orders by ticker with total notional value"
+        },
+        "sub_question": "Which tickers had orders filled today and what was the total notional value for each?",
+        "canonical_params": {
+          "metric": "filled_by_ticker"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 28,
+    "question": "Which orders were cancelled today?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Orders Cancelled Today",
+        "dataContract": {
+          "type": "kpi-card-01",
+          "description": "Count and original notional value of orders cancelled today"
+        },
+        "sub_question": "What is the count and original notional value of orders cancelled today?",
+        "canonical_params": {
+          "metric": "orders_cancelled_today"
+        }
+      },
+      {
+        "blockId": "table-01",
+        "category": "tables",
+        "title": "Cancelled Orders Today",
+        "dataContract": {
+          "type": "table-01",
+          "description": "Table showing orders cancelled today with cancellation reason"
+        },
+        "sub_question": "List all orders cancelled today with associated details including ticker, side, quantity, price, original notional value, cancellation reason, and cancellation time.",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "Cancelled Orders by Ticker",
+        "dataContract": {
+          "type": "bar-list-01",
+          "description": "Bar list showing cancelled orders by ticker with original notional value"
+        },
+        "sub_question": "Which tickers had orders cancelled today and what was the associated original notional value?",
+        "canonical_params": {
+          "metric": "cancelled_by_ticker"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 29,
+    "question": "What is the total notional value of open orders right now?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Open Orders Notional Value",
+        "dataContract": {
+          "type": "kpi-card-01",
+          "description": "Total notional value of all open orders and breakdown by order type"
+        },
+        "sub_question": "What is the total notional value of all open orders?",
+        "canonical_params": {
+          "metric": "open_orders_notional_value"
+        }
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "Notional Value by Ticker",
+        "dataContract": {
+          "type": "bar-list-01",
+          "description": "Bar list showing open orders notional value by ticker"
+        },
+        "sub_question": "What is the notional value of open orders by ticker?",
+        "canonical_params": {
+          "metric": "notional_by_ticker"
+        }
+      },
+      {
+        "blockId": "bar-chart-01",
+        "category": "bar-charts",
+        "title": "Notional Value by Order Type",
+        "dataContract": {
+          "type": "bar-chart-01",
+          "description": "Bar chart showing notional value distribution by order type"
+        },
+        "sub_question": "What is the notional value of open orders by order type?",
+        "canonical_params": {
+          "metric": "notional_by_order_type"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 30,
+    "question": "How many trades have I executed today?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Trades Executed Today",
+        "dataContract": {
+          "type": "kpi-card-01",
+          "description": "Total count of trades executed today with buys vs sells breakdown"
+        },
+        "sub_question": "What is the total count of trades executed today with breakdown by buy and sell?",
+        "canonical_params": {
+          "metric": "trades_executed_today"
+        }
+      },
+      {
+        "blockId": "bar-chart-01",
+        "category": "bar-charts",
+        "title": "Buy vs Sell Trades",
+        "dataContract": {
+          "type": "bar-chart-01",
+          "description": "Bar chart comparing count and notional value of buy vs sell trades"
+        },
+        "sub_question": "How many buy trades vs sell trades were executed today and what was the associated notional value?",
+        "canonical_params": {
+          "metric": "buy_vs_sell_trades"
+        }
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "Top Traded Tickers Today",
+        "dataContract": {
+          "type": "bar-list-01",
+          "description": "Bar list showing most traded tickers today by trade count"
+        },
+        "sub_question": "Which tickers had the most trades executed today?",
+        "canonical_params": {
+          "metric": "trades_by_ticker"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 31,
+    "question": "What is my day trade count over the last five trading days?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Day Trade Count Summary",
+        "dataContract": {
+          "type": "kpi-card-01",
+          "description": "Total day trades over last 5 days and current day trade limit status"
+        },
+        "sub_question": "What is the total count of day trades over the last five trading days?",
+        "canonical_params": {
+          "metric": "day_trades_last_5_days",
+          "period": "5d"
+        }
+      },
+      {
+        "blockId": "bar-chart-01",
+        "category": "bar-charts",
+        "title": "Day Trades by Day",
+        "dataContract": {
+          "type": "bar-chart-01",
+          "description": "Bar chart showing day trade count for each of the last 5 trading days"
+        },
+        "sub_question": "What is the day trade count for each of the last five trading days?",
+        "canonical_params": {
+          "metric": "day_trades_by_day",
+          "period": "5d"
+        }
+      },
+      {
+        "blockId": "line-chart-01",
+        "category": "line-charts",
+        "title": "Day Trade Trend",
+        "dataContract": {
+          "type": "line-chart-01",
+          "description": "Line chart showing day trade trend over last 5 trading days"
+        },
+        "sub_question": "What is the trend of day trade activity over the last five trading days?",
+        "canonical_params": {
+          "metric": "day_trade_trend",
+          "period": "5d"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 32,
+    "question": "What is my realized P/L from closed positions in the last 30 days?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Realized P/L Last 30 Days",
+        "dataContract": {
+          "type": "kpi-card-01",
+          "description": "Total realized P/L, winning trades count, losing trades count, and win rate"
+        },
+        "sub_question": "What is the total realized profit or loss from closed positions in the last 30 days?",
+        "canonical_params": {
+          "metric": "realized_pl_last_30_days",
+          "period": "30d"
+        }
+      },
+      {
+        "blockId": "bar-chart-01",
+        "category": "bar-charts",
+        "title": "Realized P/L by Day",
+        "dataContract": {
+          "type": "bar-chart-01",
+          "description": "Bar chart showing daily realized P/L over last 30 days"
+        },
+        "sub_question": "What was the realized profit or loss for each day in the last 30 days?",
+        "canonical_params": {
+          "metric": "daily_realized_pl",
+          "period": "30d"
+        }
+      },
+      {
+        "blockId": "line-chart-01",
+        "category": "line-charts",
+        "title": "Cumulative Realized P/L",
+        "dataContract": {
+          "type": "line-chart-01",
+          "description": "Line chart showing cumulative realized P/L over last 30 days"
+        },
+        "sub_question": "What is the cumulative realized profit or loss trend over the last 30 days?",
+        "canonical_params": {
+          "metric": "cumulative_realized_pl",
+          "period": "30d"
+        }
+      },
+      {
+        "blockId": "table-01",
+        "category": "tables",
+        "title": "Top Realized Gains",
+        "dataContract": {
+          "type": "table-01",
+          "description": "Table showing closed positions with largest realized gains in last 30 days"
+        },
+        "sub_question": "Which closed positions had the largest realized gains in the last 30 days?",
+        "canonical_params": {
+          "metric": "top_realized_gains",
+          "period": "30d"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 33,
+    "question": "List dividend payments received in the last 30 days with amounts.",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Dividend Income Summary",
+        "dataContract": {
+          "type": "kpi-card-01",
+          "description": "Total dividend income received in last 30 days and number of dividend payments"
+        },
+        "sub_question": "What is the total dividend income received in the last 30 days?",
+        "canonical_params": {
+          "metric": "dividend_income_last_30_days",
+          "period": "30d"
+        }
+      },
+      {
+        "blockId": "table-01",
+        "category": "tables",
+        "title": "Dividend Payments Last 30 Days",
+        "dataContract": {
+          "type": "table-01",
+          "description": "Table showing all dividend payments received in last 30 days"
+        },
+        "sub_question": "List all dividend payments received in the last 30 days with ticker, payment date, amount per share, shares held, and total amount.",
+        "canonical_params": {
+          "period": "30d"
+        }
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "Dividend Income by Ticker",
+        "dataContract": {
+          "type": "bar-list-01",
+          "description": "Bar list showing dividend income by ticker"
+        },
+        "sub_question": "What is the dividend income received from each ticker in the last 30 days?",
+        "canonical_params": {
+          "metric": "dividend_by_ticker",
+          "period": "30d"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 34,
+    "question": "What is my total dividend income received year-to-date?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Year-to-Date Dividend Income",
+        "dataContract": {
+          "type": "kpi-card-01",
+          "description": "Total dividend income received year-to-date and monthly average"
+        },
+        "sub_question": "What is the total dividend income received year-to-date?",
+        "canonical_params": {
+          "metric": "dividend_income_ytd"
+        }
+      },
+      {
+        "blockId": "bar-chart-01",
+        "category": "bar-charts",
+        "title": "Monthly Dividend Income YTD",
+        "dataContract": {
+          "type": "bar-chart-01",
+          "description": "Bar chart showing monthly dividend income year-to-date"
+        },
+        "sub_question": "What was the dividend income received for each month this year?",
+        "canonical_params": {
+          "metric": "monthly_dividend_income_ytd"
+        }
+      },
+      {
+        "blockId": "line-chart-01",
+        "category": "line-charts",
+        "title": "Cumulative Dividend Income YTD",
+        "dataContract": {
+          "type": "line-chart-01",
+          "description": "Line chart showing cumulative dividend income year-to-date"
+        },
+        "sub_question": "What is the cumulative dividend income trend throughout the year?",
+        "canonical_params": {
+          "metric": "cumulative_dividend_ytd"
+        }
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "Dividend Income by Ticker YTD",
+        "dataContract": {
+          "type": "bar-list-01",
+          "description": "Bar list showing dividend income by ticker year-to-date"
+        },
+        "sub_question": "What is the dividend income received from each ticker year-to-date?",
+        "canonical_params": {
+          "metric": "dividend_by_ticker_ytd"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 35,
+    "question": "List fees and commissions paid in the last 30 days.",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Fees and Commissions Summary",
+        "dataContract": {
+          "type": "kpi-card-01",
+          "description": "Total fees and commissions paid in last 30 days breakdown by type"
+        },
+        "sub_question": "What is the total amount of fees and commissions paid in the last 30 days?",
+        "canonical_params": {
+          "metric": "fees_commissions_last_30_days",
+          "period": "30d"
+        }
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "Fees by Type",
+        "dataContract": {
+          "type": "bar-list-01",
+          "description": "Bar list showing fees and commissions breakdown by type"
+        },
+        "sub_question": "What is the breakdown of fees and commissions by type in the last 30 days?",
+        "canonical_params": {
+          "metric": "fees_by_type",
+          "period": "30d"
+        }
+      },
+      {
+        "blockId": "bar-chart-01",
+        "category": "bar-charts",
+        "title": "Daily Fees Trend",
+        "dataContract": {
+          "type": "bar-chart-01",
+          "description": "Bar chart showing daily fees and commissions over last 30 days"
+        },
+        "sub_question": "What was the daily amount of fees and commissions paid over the last 30 days?",
+        "canonical_params": {
+          "metric": "daily_fees",
+          "period": "30d"
+        }
+      },
+      {
+        "blockId": "table-01",
+        "category": "tables",
+        "title": "Fee Transactions Last 30 Days",
+        "dataContract": {
+          "type": "table-01",
+          "description": "Table showing fee and commission transactions in last 30 days"
+        },
+        "sub_question": "List all fee and commission transactions in the last 30 days with date, type, description, and amount.",
+        "canonical_params": {
+          "period": "30d"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 36,
+    "question": "What is my net cash flow from activities in the last 30 days?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Net Cash Flow Summary",
+        "dataContract": {
+          "type": "kpi-card-01",
+          "description": "Net cash flow with breakdown of inflows and outflows"
+        },
+        "sub_question": "What is the net cash flow from all activities in the last 30 days?",
+        "canonical_params": {
+          "metric": "net_cash_flow_last_30_days",
+          "period": "30d"
+        }
+      },
+      {
+        "blockId": "bar-chart-01",
+        "category": "bar-charts",
+        "title": "Cash Inflows vs Outflows",
+        "dataContract": {
+          "type": "bar-chart-01",
+          "description": "Bar chart comparing cash inflows vs outflows over last 30 days"
+        },
+        "sub_question": "What is the comparison of cash inflows versus cash outflows in the last 30 days?",
+        "canonical_params": {
+          "metric": "cash_inflows_outflows",
+          "period": "30d"
+        }
+      },
+      {
+        "blockId": "line-chart-01",
+        "category": "line-charts",
+        "title": "Net Cash Flow Trend",
+        "dataContract": {
+          "type": "line-chart-01",
+          "description": "Line chart showing cumulative net cash flow over last 30 days"
+        },
+        "sub_question": "What is the trend of cumulative net cash flow over the last 30 days?",
+        "canonical_params": {
+          "metric": "cumulative_cash_flow",
+          "period": "30d"
+        }
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "Cash Flow by Category",
+        "dataContract": {
+          "type": "bar-list-01",
+          "description": "Bar list showing net cash flow by activity category"
+        },
+        "sub_question": "What is the net cash flow by activity category in the last 30 days?",
+        "canonical_params": {
+          "metric": "cash_flow_by_category",
+          "period": "30d"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 37,
+    "question": "What would my buying power be if I closed all open orders?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Buying Power Projection",
+        "dataContract": {
+          "type": "kpi-card-01",
+          "description": "Current buying power, buying power if all orders closed, and difference"
+        },
+        "sub_question": "What is the current buying power and what would it be if all open orders were closed?",
+        "canonical_params": {
+          "metric": "buying_power_projection"
+        }
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "Buying Power by Order Type",
+        "dataContract": {
+          "type": "bar-list-01",
+          "description": "Bar list showing buying power that would be released by closing each order type"
+        },
+        "sub_question": "How much buying power would be released by closing each type of open order?",
+        "canonical_params": {
+          "metric": "buying_power_by_order_type"
+        }
+      },
+      {
+        "blockId": "table-01",
+        "category": "tables",
+        "title": "Open Orders Buying Power Impact",
+        "dataContract": {
+          "type": "table-01",
+          "description": "Table showing buying power tied up in each open order"
+        },
+        "sub_question": "List all open orders with associated buying power impact including ticker, side, quantity, price, and buying power used.",
+        "canonical_params": {}
+      }
+    ]
+  },
+  {
+    "question_id": 38,
+    "question": "Which positions have an unrealized loss greater than 5%?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Positions with Losses Over 5%",
+        "dataContract": {
+          "type": "kpi-card-01",
+          "description": "Count and total unrealized loss of positions with losses greater than 5%"
+        },
+        "sub_question": "How many positions have an unrealized loss greater than 5% and what is the total unrealized loss?",
+        "canonical_params": {
+          "metric": "positions_loss_over_5pct"
+        }
+      },
+      {
+        "blockId": "table-01",
+        "category": "tables",
+        "title": "Positions with Losses Over 5%",
+        "dataContract": {
+          "type": "table-01",
+          "description": "Table showing positions with unrealized losses greater than 5%"
+        },
+        "sub_question": "List all positions with unrealized losses greater than 5% including ticker, quantity, average cost, current price, unrealized loss, and loss percentage.",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "Largest Unrealized Losses",
+        "dataContract": {
+          "type": "bar-list-01",
+          "description": "Bar list showing positions with largest unrealized losses and their percentages"
+        },
+        "sub_question": "Which positions have the largest unrealized losses and what are the loss percentages?",
+        "canonical_params": {
+          "metric": "largest_unrealized_losses"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 39,
+    "question": "Which positions have an unrealized gain greater than 10%?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Positions with Gains Over 10%",
+        "dataContract": {
+          "type": "kpi-card-01",
+          "description": "Count and total unrealized gain of positions with gains greater than 10%"
+        },
+        "sub_question": "How many positions have an unrealized gain greater than 10% and what is the total unrealized gain?",
+        "canonical_params": {
+          "metric": "positions_gain_over_10pct"
+        }
+      },
+      {
+        "blockId": "table-01",
+        "category": "tables",
+        "title": "Positions with Gains Over 10%",
+        "dataContract": {
+          "type": "table-01",
+          "description": "Table showing positions with unrealized gains greater than 10%"
+        },
+        "sub_question": "List all positions with unrealized gains greater than 10% including ticker, quantity, average cost, current price, unrealized gain, and gain percentage.",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "Largest Unrealized Gains",
+        "dataContract": {
+          "type": "bar-list-01",
+          "description": "Bar list showing positions with largest unrealized gains and their percentages"
+        },
+        "sub_question": "Which positions have the largest unrealized gains and what are the gain percentages?",
+        "canonical_params": {
+          "metric": "largest_unrealized_gains"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 40,
+    "question": "Which positions are within 2% of their 52-week high?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Positions Near 52-Week High",
+        "dataContract": {
+          "type": "kpi-card-01",
+          "description": "Count and total market value of positions within 2% of 52-week high"
+        },
+        "sub_question": "How many positions are within 2% of their 52-week high and what is the associated total market value?",
+        "canonical_params": {
+          "metric": "positions_near_52w_high"
+        }
+      },
+      {
+        "blockId": "table-01",
+        "category": "tables",
+        "title": "Positions Near 52-Week High",
+        "dataContract": {
+          "type": "table-01",
+          "description": "Table showing positions within 2% of their 52-week high"
+        },
+        "sub_question": "List all positions within 2% of their 52-week high including ticker, current price, 52-week high, percentage from high, and market value.",
+        "canonical_params": {}
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "Closest to 52-Week High",
+        "dataContract": {
+          "type": "bar-list-01",
+          "description": "Bar list showing positions closest to their 52-week high"
+        },
+        "sub_question": "Which positions are closest to their 52-week high and what is the percentage difference?",
+        "canonical_params": {
+          "metric": "closest_to_52w_high"
+        }
+      }
+    ]
+  }
+]

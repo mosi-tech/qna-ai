@@ -1,0 +1,905 @@
+[
+  {
+    "question_id": 1,
+    "original_question": "What is my current account equity and buying power?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Account Equity and Buying Power",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing account equity and buying power"
+        },
+        "sub_question": "What is the current account equity?",
+        "canonical_params": {
+          "metric": "equity"
+        }
+      },
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Buying Power Breakdown",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing buying power components"
+        },
+        "sub_question": "What is the total buying power available?",
+        "canonical_params": {
+          "metric": "buying_power"
+        }
+      },
+      {
+        "blockId": "kpi-card-02",
+        "category": "kpi-cards",
+        "title": "Account Summary Metrics",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing account summary with change indicators"
+        },
+        "sub_question": "What are the key account value metrics?",
+        "canonical_params": {
+          "metric": "account_summary"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 2,
+    "original_question": "How much cash is currently available to trade?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Available Cash Balance",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing cash balance and availability"
+        },
+        "sub_question": "What is the total available cash balance?",
+        "canonical_params": {
+          "metric": "cash_balance"
+        }
+      },
+      {
+        "blockId": "kpi-card-03",
+        "category": "kpi-cards",
+        "title": "Cash Components",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing cash breakdown by type"
+        },
+        "sub_question": "What are the different cash components available?",
+        "canonical_params": {
+          "metric": "cash_components"
+        }
+      },
+      {
+        "blockId": "donut-chart-01",
+        "category": "donut-charts",
+        "title": "Cash vs Invested Allocation",
+        "dataContract": {
+          "type": "DonutChartSegment[]",
+          "description": "Donut chart showing cash percentage vs invested positions"
+        },
+        "sub_question": "What percentage of the portfolio is in cash versus investments?",
+        "canonical_params": {
+          "metric": "allocation_breakdown"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 3,
+    "original_question": "What is my day-trading buying power right now?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Day-Trading Buying Power",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing day-trading buying power"
+        },
+        "sub_question": "What is the current day-trading buying power?",
+        "canonical_params": {
+          "metric": "day_trading_buying_power"
+        }
+      },
+      {
+        "blockId": "kpi-card-02",
+        "category": "kpi-cards",
+        "title": "Margin Buying Power Comparison",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items comparing different buying power types"
+        },
+        "sub_question": "How does day-trading buying power compare to regular buying power?",
+        "canonical_params": {
+          "metric": "buying_power_comparison"
+        }
+      },
+      {
+        "blockId": "kpi-card-04",
+        "category": "kpi-cards",
+        "title": "Buying Power Utilization",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing buying power usage and available"
+        },
+        "sub_question": "What is the available and used buying power?",
+        "canonical_params": {
+          "metric": "buying_power_utilization"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 4,
+    "original_question": "Is my account currently blocked from trading?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Trading Account Status",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing trading eligibility status"
+        },
+        "sub_question": "Is the account currently authorized for trading?",
+        "canonical_params": {
+          "metric": "trading_status"
+        }
+      },
+      {
+        "blockId": "status-monitoring-01",
+        "category": "status-monitoring",
+        "title": "Account Trading Permissions",
+        "dataContract": {
+          "type": "StatusTrackerItem[]",
+          "description": "Status tracker showing account trading permissions and restrictions"
+        },
+        "sub_question": "What are the current trading permissions on the account?",
+        "canonical_params": {
+          "metric": "trading_permissions"
+        }
+      },
+      {
+        "blockId": "kpi-card-02",
+        "category": "kpi-cards",
+        "title": "Account Restrictions",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing any trading restrictions or blocks"
+        },
+        "sub_question": "Are there any trading restrictions or blocks on the account?",
+        "canonical_params": {
+          "metric": "account_restrictions"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 5,
+    "original_question": "Has my account been flagged as a pattern day trader?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Pattern Day Trader Status",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing PDT flag status"
+        },
+        "sub_question": "Is the account flagged as a pattern day trader?",
+        "canonical_params": {
+          "metric": "pdt_status"
+        }
+      },
+      {
+        "blockId": "status-monitoring-01",
+        "category": "status-monitoring",
+        "title": "Day Trade Counter Status",
+        "dataContract": {
+          "type": "StatusTrackerItem[]",
+          "description": "Status tracker showing day trade count and PDT proximity"
+        },
+        "sub_question": "How many day trades have been executed in the current rolling period?",
+        "canonical_params": {
+          "metric": "day_trade_count"
+        }
+      },
+      {
+        "blockId": "kpi-card-03",
+        "category": "kpi-cards",
+        "title": "Day Trading Activity",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing day trading activity metrics"
+        },
+        "sub_question": "What is the current day trading activity level?",
+        "canonical_params": {
+          "metric": "day_trading_activity"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 6,
+    "original_question": "What is my portfolio's total market value at this moment?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Portfolio Market Value",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing total portfolio market value"
+        },
+        "sub_question": "What is the total market value of all portfolio holdings?",
+        "canonical_params": {
+          "metric": "portfolio_market_value"
+        }
+      },
+      {
+        "blockId": "kpi-card-02",
+        "category": "kpi-cards",
+        "title": "Portfolio Value Change",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing portfolio value change over time"
+        },
+        "sub_question": "How has the portfolio market value changed recently?",
+        "canonical_params": {
+          "metric": "portfolio_value_change"
+        }
+      },
+      {
+        "blockId": "spark-charts-01",
+        "category": "spark-charts",
+        "title": "Portfolio Value Trend",
+        "dataContract": {
+          "type": "SparkChartTickerItem[]",
+          "description": "Spark chart showing portfolio value trend over time"
+        },
+        "sub_question": "What is the trend of portfolio market value over the recent period?",
+        "canonical_params": {
+          "metric": "portfolio_value_trend"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 7,
+    "original_question": "What is my total unrealized profit and loss across open positions?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Total Unrealized P/L",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing total unrealized profit and loss"
+        },
+        "sub_question": "What is the total unrealized profit and loss across all open positions?",
+        "canonical_params": {
+          "metric": "total_unrealized_pnl"
+        }
+      },
+      {
+        "blockId": "kpi-card-02",
+        "category": "kpi-cards",
+        "title": "Unrealized P/L Breakdown",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing gains and losses breakdown"
+        },
+        "sub_question": "What is the breakdown between unrealized gains and unrealized losses?",
+        "canonical_params": {
+          "metric": "unrealized_pnl_breakdown"
+        }
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "Top Unrealized Gains",
+        "dataContract": {
+          "type": "BarListItem[]",
+          "description": "Bar list showing positions with highest unrealized gains"
+        },
+        "sub_question": "Which positions have the highest unrealized gains?",
+        "canonical_params": {
+          "metric": "top_unrealized_gains"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 8,
+    "original_question": "What is my total realized profit and loss today?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Today's Realized P/L",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing realized profit and loss today"
+        },
+        "sub_question": "What is the total realized profit and loss for today?",
+        "canonical_params": {
+          "metric": "today_realized_pnl",
+          "period": "1d"
+        }
+      },
+      {
+        "blockId": "kpi-card-02",
+        "category": "kpi-cards",
+        "title": "Realized P/L Components",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing realized gains and losses breakdown"
+        },
+        "sub_question": "What are the realized gains versus realized losses for today?",
+        "canonical_params": {
+          "metric": "realized_pnl_components",
+          "period": "1d"
+        }
+      },
+      {
+        "blockId": "spark-charts-04",
+        "category": "spark-charts",
+        "title": "Daily Realized P/L Trend",
+        "dataContract": {
+          "type": "SparkChartMetricItem[]",
+          "description": "Spark charts showing realized P/L trend over recent days"
+        },
+        "sub_question": "How has realized P/L trended over recent trading days?",
+        "canonical_params": {
+          "metric": "realized_pnl_trend",
+          "period": "5d"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 9,
+    "original_question": "How many open positions do I hold right now?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Total Open Positions",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing count of open positions"
+        },
+        "sub_question": "How many open positions are currently held?",
+        "canonical_params": {
+          "metric": "open_positions_count"
+        }
+      },
+      {
+        "blockId": "kpi-card-02",
+        "category": "kpi-cards",
+        "title": "Position Type Breakdown",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing breakdown by position type"
+        },
+        "sub_question": "What is the breakdown of open positions by type (long/short)?",
+        "canonical_params": {
+          "metric": "position_type_breakdown"
+        }
+      },
+      {
+        "blockId": "donut-chart-01",
+        "category": "donut-charts",
+        "title": "Positions by Asset Class",
+        "dataContract": {
+          "type": "DonutChartSegment[]",
+          "description": "Donut chart showing position distribution by asset class"
+        },
+        "sub_question": "How are open positions distributed across asset classes?",
+        "canonical_params": {
+          "metric": "positions_by_asset_class"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 10,
+    "original_question": "Which open position has the largest market value?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Largest Position Value",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing largest position details"
+        },
+        "sub_question": "What is the market value of the largest open position?",
+        "canonical_params": {
+          "metric": "largest_position_value"
+        }
+      },
+      {
+        "blockId": "kpi-card-03",
+        "category": "kpi-cards",
+        "title": "Largest Position Details",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing details of the largest position"
+        },
+        "sub_question": "Which position has the largest market value and what are its details?",
+        "canonical_params": {
+          "metric": "largest_position_details"
+        }
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "Top Positions by Market Value",
+        "dataContract": {
+          "type": "BarListItem[]",
+          "description": "Bar list showing positions ranked by market value"
+        },
+        "sub_question": "What are the top positions ranked by market value?",
+        "canonical_params": {
+          "metric": "top_positions_by_value"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 11,
+    "original_question": "Which open position has the smallest market value?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Smallest Position Value",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing smallest position details"
+        },
+        "sub_question": "What is the market value of the smallest open position?",
+        "canonical_params": {
+          "metric": "smallest_position_value"
+        }
+      },
+      {
+        "blockId": "kpi-card-03",
+        "category": "kpi-cards",
+        "title": "Smallest Position Details",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing details of the smallest position"
+        },
+        "sub_question": "Which position has the smallest market value and what are its details?",
+        "canonical_params": {
+          "metric": "smallest_position_details"
+        }
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "Bottom Positions by Market Value",
+        "dataContract": {
+          "type": "BarListItem[]",
+          "description": "Bar list showing positions ranked from smallest by market value"
+        },
+        "sub_question": "What are the smallest positions ranked by market value?",
+        "canonical_params": {
+          "metric": "bottom_positions_by_value"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 12,
+    "original_question": "Which open position has the highest unrealized gain?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Best Performing Position",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing best performing position"
+        },
+        "sub_question": "Which position has the highest unrealized gain?",
+        "canonical_params": {
+          "metric": "best_performing_position"
+        }
+      },
+      {
+        "blockId": "kpi-card-02",
+        "category": "kpi-cards",
+        "title": "Top Unrealized Gain Details",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing details of position with highest gain"
+        },
+        "sub_question": "What are the details of the position with the highest unrealized gain?",
+        "canonical_params": {
+          "metric": "top_gain_position_details"
+        }
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "Positions by Unrealized Gain",
+        "dataContract": {
+          "type": "BarListItem[]",
+          "description": "Bar list showing positions ranked by unrealized gain"
+        },
+        "sub_question": "Which positions have the highest unrealized gains?",
+        "canonical_params": {
+          "metric": "positions_by_gain"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 13,
+    "original_question": "Which open position has the largest unrealized loss?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Worst Performing Position",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing worst performing position"
+        },
+        "sub_question": "Which position has the largest unrealized loss?",
+        "canonical_params": {
+          "metric": "worst_performing_position"
+        }
+      },
+      {
+        "blockId": "kpi-card-02",
+        "category": "kpi-cards",
+        "title": "Largest Loss Position Details",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing details of position with largest loss"
+        },
+        "sub_question": "What are the details of the position with the largest unrealized loss?",
+        "canonical_params": {
+          "metric": "largest_loss_position_details"
+        }
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "Positions by Unrealized Loss",
+        "dataContract": {
+          "type": "BarListItem[]",
+          "description": "Bar list showing positions ranked by unrealized loss"
+        },
+        "sub_question": "Which positions have the largest unrealized losses?",
+        "canonical_params": {
+          "metric": "positions_by_loss"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 14,
+    "original_question": "What is my net long versus short market value exposure?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Long vs Short Exposure",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing long and short market values"
+        },
+        "sub_question": "What are the total long and short market values?",
+        "canonical_params": {
+          "metric": "long_short_exposure"
+        }
+      },
+      {
+        "blockId": "kpi-card-03",
+        "category": "kpi-cards",
+        "title": "Net Exposure",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing net long vs short difference"
+        },
+        "sub_question": "What is the net long versus short market value exposure?",
+        "canonical_params": {
+          "metric": "net_exposure"
+        }
+      },
+      {
+        "blockId": "donut-chart-01",
+        "category": "donut-charts",
+        "title": "Long vs Short Allocation",
+        "dataContract": {
+          "type": "DonutChartSegment[]",
+          "description": "Donut chart showing long vs short allocation"
+        },
+        "sub_question": "What is the percentage breakdown of long versus short exposure?",
+        "canonical_params": {
+          "metric": "long_short_allocation"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 15,
+    "original_question": "What percentage of my portfolio is currently in cash?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Cash Percentage",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing cash percentage of portfolio"
+        },
+        "sub_question": "What percentage of the portfolio is in cash?",
+        "canonical_params": {
+          "metric": "cash_percentage"
+        }
+      },
+      {
+        "blockId": "kpi-card-03",
+        "category": "kpi-cards",
+        "title": "Cash and Investment Values",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing cash and invested amounts"
+        },
+        "sub_question": "What are the absolute values of cash and investments?",
+        "canonical_params": {
+          "metric": "cash_investment_values"
+        }
+      },
+      {
+        "blockId": "donut-chart-01",
+        "category": "donut-charts",
+        "title": "Portfolio Allocation",
+        "dataContract": {
+          "type": "DonutChartSegment[]",
+          "description": "Donut chart showing cash vs invested percentage"
+        },
+        "sub_question": "How is the portfolio allocated between cash and investments?",
+        "canonical_params": {
+          "metric": "portfolio_allocation"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 16,
+    "original_question": "What is my margin multiplier and current margin usage?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Margin Multiplier",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing margin multiplier"
+        },
+        "sub_question": "What is the current margin multiplier on the account?",
+        "canonical_params": {
+          "metric": "margin_multiplier"
+        }
+      },
+      {
+        "blockId": "kpi-card-02",
+        "category": "kpi-cards",
+        "title": "Margin Usage",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing margin utilization percentage"
+        },
+        "sub_question": "What is the current margin usage as a percentage of available margin?",
+        "canonical_params": {
+          "metric": "margin_usage"
+        }
+      },
+      {
+        "blockId": "kpi-card-04",
+        "category": "kpi-cards",
+        "title": "Margin Details",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing margin balance and available"
+        },
+        "sub_question": "What are the margin balance and remaining available margin?",
+        "canonical_params": {
+          "metric": "margin_details"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 17,
+    "original_question": "List my open equity positions with quantities and average entry prices.",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Open Equity Positions Summary",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing count and total value"
+        },
+        "sub_question": "How many open equity positions exist and what is their total value?",
+        "canonical_params": {
+          "metric": "equity_positions_summary"
+        }
+      },
+      {
+        "blockId": "table-01",
+        "category": "tables",
+        "title": "Open Equity Positions",
+        "dataContract": {
+          "type": "TableItem[]",
+          "description": "Table showing ticker, quantity, average entry price, and current market value"
+        },
+        "sub_question": "What are the ticker symbols, quantities, and average entry prices for all open equity positions?",
+        "canonical_params": {
+          "metric": "equity_positions_list"
+        }
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "Positions by Quantity",
+        "dataContract": {
+          "type": "BarListItem[]",
+          "description": "Bar list showing positions ranked by share quantity"
+        },
+        "sub_question": "Which equity positions have the largest share quantities?",
+        "canonical_params": {
+          "metric": "positions_by_quantity"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 18,
+    "original_question": "For each open position, what is the cost basis and unrealized P/L?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Total Cost Basis and P/L",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing aggregate cost basis and P/L"
+        },
+        "sub_question": "What is the total cost basis and total unrealized P/L across all positions?",
+        "canonical_params": {
+          "metric": "total_cost_basis_pnl"
+        }
+      },
+      {
+        "blockId": "table-01",
+        "category": "tables",
+        "title": "Position Cost Basis and P/L",
+        "dataContract": {
+          "type": "TableItem[]",
+          "description": "Table showing ticker, cost basis, unrealized P/L, and percentage return"
+        },
+        "sub_question": "What is the cost basis and unrealized P/L for each open position?",
+        "canonical_params": {
+          "metric": "position_cost_basis_pnl"
+        }
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "Positions by Unrealized P/L Percentage",
+        "dataContract": {
+          "type": "BarListItem[]",
+          "description": "Bar list showing positions ranked by P/L percentage"
+        },
+        "sub_question": "Which positions have the highest or lowest unrealized P/L percentage?",
+        "canonical_params": {
+          "metric": "positions_by_pnl_percentage"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 19,
+    "original_question": "What is my total exposure by asset type within equities?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Equity Exposure Summary",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing total equity exposure"
+        },
+        "sub_question": "What is the total equity exposure in the portfolio?",
+        "canonical_params": {
+          "metric": "equity_exposure_summary"
+        }
+      },
+      {
+        "blockId": "donut-chart-01",
+        "category": "donut-charts",
+        "title": "Equity Exposure by Asset Type",
+        "dataContract": {
+          "type": "DonutChartSegment[]",
+          "description": "Donut chart showing equity breakdown by asset type"
+        },
+        "sub_question": "How is equity exposure distributed across asset types?",
+        "canonical_params": {
+          "metric": "equity_exposure_by_type"
+        }
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "Equity Exposure by Asset Type",
+        "dataContract": {
+          "type": "BarListItem[]",
+          "description": "Bar list showing equity exposure by asset type"
+        },
+        "sub_question": "What is the dollar exposure by equity asset type?",
+        "canonical_params": {
+          "metric": "equity_exposure_list"
+        }
+      }
+    ]
+  },
+  {
+    "question_id": 20,
+    "original_question": "What is my current buying power after accounting for open orders?",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Adjusted Buying Power",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing buying power after orders"
+        },
+        "sub_question": "What is the buying power after accounting for open orders?",
+        "canonical_params": {
+          "metric": "adjusted_buying_power"
+        }
+      },
+      {
+        "blockId": "kpi-card-02",
+        "category": "kpi-cards",
+        "title": "Buying Power Comparison",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items comparing gross and net buying power"
+        },
+        "sub_question": "How does buying power change when accounting for open orders?",
+        "canonical_params": {
+          "metric": "buying_power_comparison"
+        }
+      },
+      {
+        "blockId": "kpi-card-04",
+        "category": "kpi-cards",
+        "title": "Open Orders Impact",
+        "dataContract": {
+          "type": "MetricItem[]",
+          "description": "Array of metric items showing open orders value and impact"
+        },
+        "sub_question": "What is the total value of open orders and their impact on buying power?",
+        "canonical_params": {
+          "metric": "open_orders_impact"
+        }
+      }
+    ]
+  }
+]
