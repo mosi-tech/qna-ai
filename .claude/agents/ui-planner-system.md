@@ -85,9 +85,19 @@ Only use these block categories from the actual BLOCK_CATALOG:
 
 1. Respond ONLY with valid JSON. No prose, no markdown fences, no backtick code blocks.
 2. Select 3–6 blocks total. ALWAYS start with at least one kpi-cards block as the first block.
-3. Every block MUST have ALL of these fields: blockId, category, title, dataContract, sub_question, canonical_params.
-4. **sub_question**: A standalone, self-contained atomic question whose answer directly populates this block. MUST NOT use pronouns that refer to other blocks (e.g. "it", "the above"). Write as if the block is the only output.
-5. **canonical_params**: A flat JSON object with keys drawn ONLY from this set:
+3. Every block MUST have ALL of these fields: blockId, category, title, dataContract, sub_question, output_format.
+4. **sub_question**: A standalone, self-contained atomic question that the query solver will cache and answer.
+   - This is the key that gets looked up in the vector DB cache
+   - Be specific and clear: "What is the count and total market value of positions within 2% of their 52-week high?"
+   - Avoid vague questions that could have multiple interpretations
+5. **output_format**: Specifies what format the query solver should return.
+   - For kpi-cards: {"type": "kpi", "fields": ["metric1", "metric2", ...]}
+   - For tables: {"type": "table", "columns": ["col1", "col2", ...]}
+   - For bar-charts: {"type": "bar", "x_field": "label", "y_field": "value"}
+   - For line-charts: {"type": "timeseries", "x_field": "date", "y_field": "value"}
+   - For donut-charts: {"type": "pie", "label_field": "category", "value_field": "value"}
+   - For bar-lists: {"type": "bar_list", "label_field": "name", "value_field": "value"}
+6. **canonical_params**: Additional parameters for the query. Use only these keys:
    - ticker (string, e.g. "QQQ")
    - tickers (comma-separated string, e.g. "QQQ,VOO,SPY")
    - metric (string, e.g. "performance_summary", "volume", "sector_allocation")
@@ -96,12 +106,18 @@ Only use these block categories from the actual BLOCK_CATALOG:
    - strategy (string, e.g. "momentum", "mean_reversion")
    - sector (string, e.g. "technology", "healthcare")
    - exchange (string, e.g. "NYSE", "NASDAQ")
-   Omit any key that is not applicable. Use snake_case values.
-6. **layout**: Use "grid" for mixed block types. Use "wide" only when ALL blocks are time-series line charts.
-7. **dataContract.type** must match the block's expected data shape from the catalog above.
-8. Keep titles concise (3–6 words, title case).
-9. Do NOT invent data sources. sub_question must be realistically answerable by a financial data pipeline that has access to: price data, fundamentals, technical indicators, sector classifications, portfolio holdings, and news sentiment.
-10. Choose blocks suited to the user question. Prefer variety: at minimum use 1 kpi-cards block and 1 chart block.
+   - threshold (string, e.g. "2pct", "above_50dma")
+7. **layout**: Use "grid" for mixed block types. Use "wide" only when ALL blocks are time-series line charts.
+8. **dataContract.type** must match the block's expected data shape from the catalog above.
+9. Keep titles concise (3–6 words, title case).
+10. Do NOT invent data sources. sub_question must be realistically answerable by a financial data pipeline that has access to: price data, fundamentals, technical indicators, sector classifications, portfolio holdings, and news sentiment.
+11. Choose blocks suited to the user question. Prefer variety: at minimum use 1 kpi-cards block and 1 chart block.
+8. **dataContract.type** must match the block's expected data shape from the catalog above.
+9. **dataContract.view**: Optional field indicating how to present data (e.g., "summary", "detailed", "ranked", "chart"). Helps downstream systems understand presentation intent.
+10. Keep titles concise (3–6 words, title case).
+11. Do NOT invent data sources. sub_question must be realistically answerable by a financial data pipeline that has access to: price data, fundamentals, technical indicators, sector classifications, portfolio holdings, and news sentiment.
+12. Choose blocks suited to the user question. Prefer variety: at minimum use 1 kpi-cards block and 1 chart block.
+13. **REDUCE REDUNDANCY**: Identify when multiple blocks need the same underlying data. Give them the same data_query_id. Different blocks should represent different VIEWs of the same data, not different QUESTIONS.
 
 ## OUTPUT SCHEMA (JSON only — no other text)
 
@@ -113,17 +129,58 @@ Only use these block categories from the actual BLOCK_CATALOG:
     {
       "blockId": "kpi-card-01",
       "category": "kpi-cards",
-      "title": "QQQ Key Metrics",
+      "title": "Portfolio Summary",
       "dataContract": {
         "type": "kpi",
-        "description": "Key performance metrics for QQQ ETF",
+        "description": "Total value, returns, and risk metrics",
         "points": 4
       },
-      "sub_question": "What are QQQ ETF's key performance metrics: current price, 30-day return, YTD return, and 52-week high/low?",
+      "sub_question": "What are my portfolio key performance metrics: total value, 30-day return, YTD return, and Sharpe ratio?",
+      "output_format": {
+        "type": "kpi",
+        "fields": ["total_value", "return_30d", "return_ytd", "sharpe_ratio"]
+      },
       "canonical_params": {
-        "ticker": "QQQ",
         "metric": "performance_summary",
         "period": "30d"
+      }
+    },
+    {
+      "blockId": "line-chart-01",
+      "category": "line-charts",
+      "title": "Portfolio Value History",
+      "dataContract": {
+        "type": "timeseries",
+        "description": "Portfolio value over time",
+        "xAxis": "date",
+        "yAxis": "value"
+      },
+      "sub_question": "What is my portfolio value history over the last year?",
+      "output_format": {
+        "type": "timeseries",
+        "x_field": "date",
+        "y_field": "value"
+      },
+      "canonical_params": {
+        "period": "1y"
+      }
+    },
+    {
+      "blockId": "table-01",
+      "category": "tables",
+      "title": "Positions Near High",
+      "dataContract": {
+        "type": "table",
+        "description": "List of positions near 52-week high"
+      },
+      "sub_question": "What are the positions within 2% of their 52-week high, showing ticker, current price, 52-week high price, and percentage difference?",
+      "output_format": {
+        "type": "table",
+        "columns": ["ticker", "current_price", "high_52w", "gap_pct", "market_value"]
+      },
+      "canonical_params": {
+        "metric": "positions_near_52w_high",
+        "threshold": "2pct"
       }
     }
   ]
@@ -152,13 +209,15 @@ Only use these block categories from the actual BLOCK_CATALOG:
     {
       "blockId": "kpi-card-01",
       "category": "kpi-cards",
+      "data_query_id": "dq_001",
       "title": "Portfolio Summary",
       "dataContract": {
         "type": "kpi",
         "description": "Total value, returns, and risk metrics",
+        "view": "summary",
         "points": 4
       },
-      "sub_question": "What are my portfolio key performance metrics: total value, 30-day return, YTD return, and Sharpe ratio?",
+      "sub_question": "What are my portfolio key metrics?",
       "canonical_params": {
         "metric": "performance_summary",
         "period": "30d"
@@ -167,14 +226,16 @@ Only use these block categories from the actual BLOCK_CATALOG:
     {
       "blockId": "line-chart-01",
       "category": "line-charts",
+      "data_query_id": "dq_002",
       "title": "Portfolio Value Over Time",
       "dataContract": {
         "type": "timeseries",
         "description": "Portfolio value history",
+        "view": "chart",
         "xAxis": "date",
         "yAxis": "value"
       },
-      "sub_question": "Show my portfolio value history over the last year with monthly granularity",
+      "sub_question": "What is my portfolio value history over the last year?",
       "canonical_params": {
         "period": "1y"
       }
@@ -182,12 +243,14 @@ Only use these block categories from the actual BLOCK_CATALOG:
     {
       "blockId": "donut-chart-01",
       "category": "donut-charts",
+      "data_query_id": "dq_003",
       "title": "Sector Allocation",
       "dataContract": {
         "type": "pie",
-        "description": "Percentage allocation by sector"
+        "description": "Percentage allocation by sector",
+        "view": "chart"
       },
-      "sub_question": "What is my portfolio sector allocation percentage by sector?",
+      "sub_question": "What is my portfolio sector allocation?",
       "canonical_params": {
         "metric": "sector_allocation"
       }
@@ -195,6 +258,75 @@ Only use these block categories from the actual BLOCK_CATALOG:
   ]
 }
 ```
+
+**Example with data deduplication** - blocks sharing the same data_query:
+```json
+{
+  "title": "Near 52-Week High Positions",
+  "subtitle": "Holdings trading close to peak prices",
+  "layout": "grid",
+  "blocks": [
+    {
+      "blockId": "kpi-card-01",
+      "category": "kpi-cards",
+      "data_query_id": "dq_001",
+      "data_query": "What are the positions within 2% of their 52-week high?",
+      "title": "Summary",
+      "dataContract": {
+        "type": "kpi",
+        "description": "Count and value of near-high positions",
+        "view": "summary",
+        "points": 2
+      },
+      "sub_question": "Count and total value",
+      "canonical_params": {
+        "metric": "positions_near_52w_high",
+        "threshold": "2pct"
+      }
+    },
+    {
+      "blockId": "table-01",
+      "category": "tables",
+      "data_query_id": "dq_001",
+      "data_query": "What are the positions within 2% of their 52-week high?",
+      "title": "Positions List",
+      "dataContract": {
+        "type": "table",
+        "description": "Detailed positions list",
+        "view": "detailed"
+      },
+      "sub_question": "",
+      "canonical_params": {
+        "metric": "positions_near_52w_high",
+        "threshold": "2pct"
+      }
+    },
+    {
+      "blockId": "bar-list-01",
+      "category": "bar-lists",
+      "data_query_id": "dq_001",
+      "data_query": "What are the positions within 2% of their 52-week high?",
+      "title": "Closest to High",
+      "dataContract": {
+        "type": "bar-list",
+        "description": "Ranked by proximity",
+        "view": "ranked"
+      },
+      "sub_question": "Ranked by proximity",
+      "canonical_params": {
+        "metric": "positions_near_52w_high",
+        "threshold": "2pct"
+      }
+    }
+  ]
+}
+```
+Key points:
+- All three blocks share `data_query_id: "dq_001"`
+- All three have the SAME `data_query` string: "What are the positions within 2% of their 52-week high?"
+- This `data_query` is what gets cached in the vector DB
+- Different `view` values (`summary`, `detailed`, `ranked`) indicate presentation transformation
+- `sub_question` is optional UI-specific text
 
 **Example 2**: "Compare QQQ vs VOO performance"
 ```json

@@ -1,0 +1,2 @@
+This prompt helped us brekdown question to proper ui and sub question chunks
+use agent in .claude/agents/ui-planner-system.md  and  next 20 questions in all-questions/consolidated_questions.json, produce outut

@@ -1,0 +1,511 @@
+{
+  "timestamp": "2026-03-11T10:33:42.127592",
+  "input_file": "all-questions/sub_questions_ui_planner_system_checkpoint_10.json",
+  "total_dashboards": 10,
+  "processed": 10,
+  "cache_hits": 1,
+  "cache_misses": 9,
+  "successful": 8,
+  "failed": 1,
+  "results": [
+    {
+      "dashboard_id": 1,
+      "dashboard_title": "Near 52-Week High Positions",
+      "main_question": "Which positions are within 2% of their 52-week high?",
+      "enhanced_question": "Which positions are within 2% of their 52-week high?\n\nPlease structure your output to support these visualization types:\n  - KPI metrics: \n  - Bar list: None vs None\n\nReturn all the data needed for these visualizations in the results dict.",
+      "output_formats": [
+        {
+          "block_id": "kpi-card-01",
+          "category": "kpi-cards",
+          "type": "kpi",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        },
+        {
+          "block_id": "table-01",
+          "category": "tables",
+          "type": "table",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        },
+        {
+          "block_id": "bar-list-01",
+          "category": "bar-lists",
+          "type": "bar_list",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        },
+        {
+          "block_id": "bar-chart-01",
+          "category": "bar-charts",
+          "type": "bar",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        }
+      ],
+      "block_count": 4,
+      "cache_key": "56feba1d510716142bdbe49fe60c52b4",
+      "status": "cached",
+      "analysis_id": "9d06c329-4ef4-45a4-8ea0-de28cb7b57f4",
+      "elapsed_s": 0
+    },
+    {
+      "dashboard_id": 2,
+      "dashboard_title": "Near 52-Week Low Positions",
+      "main_question": "Which positions are within 2% of their 52-week low?",
+      "enhanced_question": "Which positions are within 2% of their 52-week low?\n\nPlease structure your output to support these visualization types:\n  - KPI metrics: \n  - Bar list: None vs None\n\nReturn all the data needed for these visualizations in the results dict.",
+      "output_formats": [
+        {
+          "block_id": "kpi-card-01",
+          "category": "kpi-cards",
+          "type": "kpi",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        },
+        {
+          "block_id": "table-01",
+          "category": "tables",
+          "type": "table",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        },
+        {
+          "block_id": "bar-list-01",
+          "category": "bar-lists",
+          "type": "bar_list",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        },
+        {
+          "block_id": "spark-chart-01",
+          "category": "spark-charts",
+          "type": "timeseries",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        }
+      ],
+      "block_count": 4,
+      "cache_key": "80b0d7ae7fa58c05f656d81178edd84f",
+      "status": "generated",
+      "analysis_id": "2ca3c003-7632-4bd3-b816-5556d1f829e9",
+      "elapsed_s": 192.264757,
+      "error": null
+    },
+    {
+      "dashboard_id": 3,
+      "dashboard_title": "52-Week Range Dashboard",
+      "main_question": "For each open position, what is the 52-week high and low?",
+      "enhanced_question": "For each open position, what is the 52-week high and low?\n\nPlease structure your output to support these visualization types:\n  - KPI metrics: \n  - Bar list: None vs None\n\nReturn all the data needed for these visualizations in the results dict.",
+      "output_formats": [
+        {
+          "block_id": "kpi-card-01",
+          "category": "kpi-cards",
+          "type": "kpi",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        },
+        {
+          "block_id": "table-01",
+          "category": "tables",
+          "type": "table",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        },
+        {
+          "block_id": "bar-chart-01",
+          "category": "bar-charts",
+          "type": "bar",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        },
+        {
+          "block_id": "bar-list-01",
+          "category": "bar-lists",
+          "type": "bar_list",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        }
+      ],
+      "block_count": 4,
+      "cache_key": "09119c0d01b86158ccad7d86fd24fcfe",
+      "status": "generated",
+      "analysis_id": "5a4b2991-ffa1-4e62-bb8c-7016daba1616",
+      "elapsed_s": 188.211459,
+      "error": null
+    },
+    {
+      "dashboard_id": 4,
+      "dashboard_title": "Position Volume Analysis",
+      "main_question": "For each open position, what is the average daily volume over the last 30 trading days?",
+      "enhanced_question": "For each open position, what is the average daily volume over the last 30 trading days?\n\nPlease structure your output to support these visualization types:\n  - KPI metrics: \n  - Bar list: None vs None\n\nReturn all the data needed for these visualizations in the results dict.",
+      "output_formats": [
+        {
+          "block_id": "kpi-card-01",
+          "category": "kpi-cards",
+          "type": "kpi",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        },
+        {
+          "block_id": "table-01",
+          "category": "tables",
+          "type": "table",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        },
+        {
+          "block_id": "bar-list-01",
+          "category": "bar-lists",
+          "type": "bar_list",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        },
+        {
+          "block_id": "bar-chart-01",
+          "category": "bar-charts",
+          "type": "bar",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        }
+      ],
+      "block_count": 4,
+      "cache_key": "3ed95c85375ef9cf3cfd6bafec81afad",
+      "status": "generated",
+      "analysis_id": "fe6fe7fa-dc36-4662-9763-622c3d05c244",
+      "elapsed_s": 164.862429,
+      "error": null
+    },
+    {
+      "dashboard_id": 5,
+      "dashboard_title": "Position Volatility Analysis",
+      "main_question": "For each open position, what is the realized volatility over the last 30 trading days?",
+      "enhanced_question": "For each open position, what is the realized volatility over the last 30 trading days?\n\nPlease structure your output to support these visualization types:\n  - KPI metrics: \n  - Bar list: None vs None\n\nReturn all the data needed for these visualizations in the results dict.",
+      "output_formats": [
+        {
+          "block_id": "kpi-card-01",
+          "category": "kpi-cards",
+          "type": "kpi",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        },
+        {
+          "block_id": "bar-list-01",
+          "category": "bar-lists",
+          "type": "bar_list",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        },
+        {
+          "block_id": "table-01",
+          "category": "tables",
+          "type": "table",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        },
+        {
+          "block_id": "line-chart-01",
+          "category": "line-charts",
+          "type": "timeseries",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        }
+      ],
+      "block_count": 4,
+      "cache_key": "6429fa6c052bb3aaf1e6d016930c854f",
+      "status": "generated",
+      "analysis_id": "0c88da4e-d76f-4803-90e8-ab1cfa12a37b",
+      "elapsed_s": 130.914725,
+      "error": null
+    },
+    {
+      "dashboard_id": 6,
+      "dashboard_title": "Position Beta Analysis Dashboard",
+      "main_question": "For each open position, what is the beta versus a broad market ETF over the last 60 trading days?",
+      "enhanced_question": "For each open position, what is the beta versus a broad market ETF over the last 60 trading days?\n\nPlease structure your output to support these visualization types:\n  - KPI metrics: \n  - Bar list: None vs None\n\nReturn all the data needed for these visualizations in the results dict.",
+      "output_formats": [
+        {
+          "block_id": "kpi-card-01",
+          "category": "kpi-cards",
+          "type": "kpi",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        },
+        {
+          "block_id": "bar-list-01",
+          "category": "bar-lists",
+          "type": "bar_list",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        },
+        {
+          "block_id": "table-01",
+          "category": "tables",
+          "type": "table",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        },
+        {
+          "block_id": "bar-chart-01",
+          "category": "bar-charts",
+          "type": "bar",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        }
+      ],
+      "block_count": 4,
+      "cache_key": "5b0cfd9bf672487bf73b21b989452fea",
+      "status": "failed",
+      "analysis_id": null,
+      "elapsed_s": 300.005421,
+      "error": "Pipeline timed out after 300s"
+    },
+    {
+      "dashboard_id": 7,
+      "dashboard_title": "Moving Average Trend Status",
+      "main_question": "For each open position, is the 50-day moving average above the 200-day moving average?",
+      "enhanced_question": "For each open position, is the 50-day moving average above the 200-day moving average?\n\nPlease structure your output to support these visualization types:\n  - KPI metrics: \n  - Pie/donut chart: None distribution by None\n\nReturn all the data needed for these visualizations in the results dict.",
+      "output_formats": [
+        {
+          "block_id": "kpi-card-01",
+          "category": "kpi-cards",
+          "type": "kpi",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        },
+        {
+          "block_id": "table-01",
+          "category": "tables",
+          "type": "table",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        },
+        {
+          "block_id": "bar-chart-01",
+          "category": "bar-charts",
+          "type": "bar",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        },
+        {
+          "block_id": "donut-chart-01",
+          "category": "donut-charts",
+          "type": "pie",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        }
+      ],
+      "block_count": 4,
+      "cache_key": "532e306f664eae2626d7cd49bdb3c71c",
+      "status": "generated",
+      "analysis_id": "fd5b586a-d70d-4df0-8ae5-244f611e88f4",
+      "elapsed_s": 175.056732,
+      "error": null
+    },
+    {
+      "dashboard_id": 8,
+      "dashboard_title": "Open Positions RSI Analysis",
+      "main_question": "For each open position, what is the 14-day Relative Strength Index?",
+      "enhanced_question": "For each open position, what is the 14-day Relative Strength Index?\n\nPlease structure your output to support these visualization types:\n  - KPI metrics: \n  - Bar list: None vs None\n\nReturn all the data needed for these visualizations in the results dict.",
+      "output_formats": [
+        {
+          "block_id": "kpi-card-01",
+          "category": "kpi-cards",
+          "type": "kpi",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        },
+        {
+          "block_id": "table-01",
+          "category": "tables",
+          "type": "table",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        },
+        {
+          "block_id": "bar-list-01",
+          "category": "bar-lists",
+          "type": "bar_list",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        },
+        {
+          "block_id": "spark-chart-01",
+          "category": "spark-charts",
+          "type": "timeseries",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        }
+      ],
+      "block_count": 4,
+      "cache_key": "fb09167fd81a4f9f2f393a2f20d8acd1",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 8.423624,
+      "error": null
+    },
+    {
+      "dashboard_id": 9,
+      "dashboard_title": "Position Volatility (ATR) Dashboard",
+      "main_question": "For each open position, what is the 14-day Average True Range?",
+      "enhanced_question": "For each open position, what is the 14-day Average True Range?\n\nPlease structure your output to support these visualization types:\n  - KPI metrics: \n  - Bar list: None vs None\n\nReturn all the data needed for these visualizations in the results dict.",
+      "output_formats": [
+        {
+          "block_id": "kpi-card-01",
+          "category": "kpi-cards",
+          "type": "kpi",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        },
+        {
+          "block_id": "bar-list-01",
+          "category": "bar-lists",
+          "type": "bar_list",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        },
+        {
+          "block_id": "table-01",
+          "category": "tables",
+          "type": "table",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        },
+        {
+          "block_id": "line-chart-01",
+          "category": "line-charts",
+          "type": "timeseries",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        }
+      ],
+      "block_count": 4,
+      "cache_key": "13d91d26c7aed695e1f0d9d085772c24",
+      "status": "generated",
+      "analysis_id": "8e911333-a211-4b41-a286-6ac95ddb86d9",
+      "elapsed_s": 129.851437,
+      "error": null
+    },
+    {
+      "dashboard_id": 10,
+      "dashboard_title": "Open Positions Daily Performance",
+      "main_question": "For each open position, what is today\u2019s percent change?",
+      "enhanced_question": "For each open position, what is today\u2019s percent change?\n\nPlease structure your output to support these visualization types:\n  - KPI metrics: \n  - Bar list: None vs None\n\nReturn all the data needed for these visualizations in the results dict.",
+      "output_formats": [
+        {
+          "block_id": "kpi-card-01",
+          "category": "kpi-cards",
+          "type": "kpi",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        },
+        {
+          "block_id": "bar-list-01",
+          "category": "bar-lists",
+          "type": "bar_list",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        },
+        {
+          "block_id": "table-01",
+          "category": "tables",
+          "type": "table",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        },
+        {
+          "block_id": "bar-chart-01",
+          "category": "bar-charts",
+          "type": "bar",
+          "fields": [],
+          "columns": [],
+          "label_field": null,
+          "value_field": null
+        }
+      ],
+      "block_count": 4,
+      "cache_key": "f4bbb58f05f4d914e08602f423ac93ce",
+      "status": "generated",
+      "analysis_id": "eb81f738-20a1-4801-8bf1-8c52e69c1957",
+      "elapsed_s": 243.304637,
+      "error": null
+    }
+  ]
+}

@@ -21,9 +21,6 @@ DO NOT use these forbidden packages;
 
 1. **Analyze Request**: Understand what analysis or computation is needed
 2. **Generate Script**: Create parameterized Python script with proper structure
-   - **Break down complex logic into SMALL, REUSABLE helper functions**
-   - Each helper function should do ONE specific thing (e.g., calculate_52_week_high, filter_positions)
-   - The main analyze_question() function should ORCHESTRATE these helpers, not contain all logic
 3. **SEMANTIC CHECK**: Before validation, verify script logic ACTUALLY SOLVES the question
    - Will this script answer what was asked?
    - Does it use all conditions/signals mentioned in the question?
@@ -33,26 +30,6 @@ DO NOT use these forbidden packages;
    - content: Complete Python script as string
 5. **Fix Issues**: If validation fails, fix script and re-validate (max 3 attempts)
 6. **Deliver Result**: Provide final script with execution instructions ONLY IF semantic check passed
-
-**📋 MODULAR FUNCTION DESIGN:**
-- Create 3-5 focused helper functions for complex analysis
-- Each function should solve ONE specific task
-- Function names should be descriptive (e.g., `calculate_52_week_high`, `filter_by_threshold`)
-- Each function should have ONE clear purpose
-- analyze_question() should be short (under 50 lines ideally) and only orchestrate the helpers
-- Helper functions are potentially reusable for other questions and may become MCP functions
-
-**GOOD FUNCTION NAMES:**
-✅ get_52_week_high()
-✅ filter_positions_by_threshold()
-✅ calculate_market_value_breakdown()
-✅ compute_sector_allocation()
-✅ calculate_volatility_metrics()
-
-**BAD FUNCTION NAMES:**
-❌ analyze_positions()  # Too vague
-❌ process_all_data()  # Does too much
-❌ calculate_metrics()  # Unclear what metrics
 
 **🚨 MANDATORY SCRIPT STRUCTURE:**
 
@@ -68,20 +45,6 @@ import logging
 import pandas as pd
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
-
-# ============================================================================
-# HELPER FUNCTIONS - Create small, focused, reusable functions first
-# ============================================================================
-
-def helper_function_name(arg1, arg2) -> Dict[str, Any]:
-    """
-    Brief description of what this function does.
-    """
-    pass
-
-# ============================================================================
-# MAIN QUERY FUNCTION - Orchestrates helper functions to answer the question
-# ============================================================================
 
 def analyze_question(
     # YOUR PARAMETERS HERE

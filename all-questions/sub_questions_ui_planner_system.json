@@ -1,0 +1,213 @@
+[
+  {
+    "title": "Positions Near 52-Week High",
+    "subtitle": "Holdings currently trading within 2% of their peak price",
+    "layout": "grid",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "data_query_id": "dq_40_near_high",
+        "data_query": "What are the positions within 2% of their 52-week high?",
+        "title": "Near High Summary",
+        "dataContract": {
+          "type": "kpi",
+          "description": "Count and total value of near-high positions",
+          "view": "summary",
+          "points": 2
+        },
+        "sub_question": "What is the count and total market value of positions within 2% of their 52-week high?",
+        "output_format": {
+          "type": "kpi",
+          "fields": [
+            "count",
+            "total_market_value"
+          ]
+        },
+        "canonical_params": {
+          "metric": "positions_near_52w_high",
+          "threshold": "2pct"
+        }
+      },
+      {
+        "blockId": "table-01",
+        "category": "tables",
+        "data_query_id": "dq_40_near_high",
+        "data_query": "What are the positions within 2% of their 52-week high?",
+        "title": "Positions List",
+        "dataContract": {
+          "type": "table",
+          "description": "Detailed list of positions near their high",
+          "view": "detailed"
+        },
+        "sub_question": "What are the positions within 2% of their 52-week high, showing ticker, current price, 52-week high, and percentage gap?",
+        "output_format": {
+          "type": "table",
+          "columns": [
+            "ticker",
+            "current_price",
+            "high_52w",
+            "gap_pct"
+          ]
+        },
+        "canonical_params": {
+          "metric": "positions_near_52w_high",
+          "threshold": "2pct"
+        }
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "data_query_id": "dq_40_near_high",
+        "data_query": "What are the positions within 2% of their 52-week high?",
+        "title": "Proximity Ranking",
+        "dataContract": {
+          "type": "bar-list",
+          "description": "Positions ranked by closest to 52-week high",
+          "view": "ranked"
+        },
+        "sub_question": "Rank the positions within 2% of their 52-week high by the smallest percentage difference to the high.",
+        "output_format": {
+          "type": "bar_list",
+          "label_field": "ticker",
+          "value_field": "gap_pct"
+        },
+        "canonical_params": {
+          "metric": "positions_near_52w_high",
+          "threshold": "2pct"
+        }
+      },
+      {
+        "blockId": "donut-chart-01",
+        "category": "donut-charts",
+        "data_query_id": "dq_40_near_high",
+        "data_query": "What are the positions within 2% of their 52-week high?",
+        "title": "Value Composition",
+        "dataContract": {
+          "type": "pie",
+          "description": "Market value distribution of near-high positions",
+          "view": "chart"
+        },
+        "sub_question": "What is the market value breakdown by ticker for positions within 2% of their 52-week high?",
+        "output_format": {
+          "type": "pie",
+          "label_field": "ticker",
+          "value_field": "market_value"
+        },
+        "canonical_params": {
+          "metric": "positions_near_52w_high",
+          "threshold": "2pct"
+        }
+      }
+    ],
+    "question_id": 40,
+    "original_question": "Which positions are within 2% of their 52-week high?",
+    "metadata": {
+      "source_file": "sample_questions_openai.json",
+      "source_type": "openai_sample",
+      "category": "account_portfolio",
+      "status": "unvalidated",
+      "extraction_date": "2026-03-05T22:58:17.079225"
+    }
+  },
+  {
+    "title": "Positions Near 52-Week Low",
+    "subtitle": "Holdings trading close to their annual lows",
+    "layout": "grid",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Near Low Summary",
+        "dataContract": {
+          "type": "kpi",
+          "description": "Count and total value of near-low positions",
+          "points": 2
+        },
+        "sub_question": "What is the count and total market value of positions within 2% of their 52-week low?",
+        "output_format": {
+          "type": "kpi",
+          "fields": [
+            "position_count",
+            "total_market_value"
+          ]
+        },
+        "canonical_params": {
+          "metric": "positions_near_52w_low",
+          "threshold": "2pct"
+        }
+      },
+      {
+        "blockId": "table-01",
+        "category": "tables",
+        "title": "Positions Detail",
+        "dataContract": {
+          "type": "table",
+          "description": "Detailed list of positions near 52-week low"
+        },
+        "sub_question": "What are the positions within 2% of their 52-week low, showing ticker, current price, 52-week low price, percentage difference, and market value?",
+        "output_format": {
+          "type": "table",
+          "columns": [
+            "ticker",
+            "current_price",
+            "low_52w",
+            "gap_pct",
+            "market_value"
+          ]
+        },
+        "canonical_params": {
+          "metric": "positions_near_52w_low",
+          "threshold": "2pct"
+        }
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "Closest to Low",
+        "dataContract": {
+          "type": "bar-list",
+          "description": "Positions ranked by proximity to 52-week low"
+        },
+        "sub_question": "Which positions within 2% of their 52-week low are closest to the low price?",
+        "output_format": {
+          "type": "bar_list",
+          "label_field": "ticker",
+          "value_field": "gap_pct"
+        },
+        "canonical_params": {
+          "metric": "positions_near_52w_low",
+          "threshold": "2pct"
+        }
+      },
+      {
+        "blockId": "donut-chart-01",
+        "category": "donut-charts",
+        "title": "Sector Breakdown",
+        "dataContract": {
+          "type": "pie",
+          "description": "Sector allocation of positions near low"
+        },
+        "sub_question": "What is the sector allocation of positions within 2% of their 52-week low?",
+        "output_format": {
+          "type": "pie",
+          "label_field": "sector",
+          "value_field": "market_value"
+        },
+        "canonical_params": {
+          "metric": "positions_near_52w_low",
+          "threshold": "2pct"
+        }
+      }
+    ],
+    "question_id": 41,
+    "original_question": "Which positions are within 2% of their 52-week low?",
+    "metadata": {
+      "source_file": "sample_questions_openai.json",
+      "source_type": "openai_sample",
+      "category": "account_portfolio",
+      "status": "unvalidated",
+      "extraction_date": "2026-03-05T22:58:17.079227"
+    }
+  }
+]
