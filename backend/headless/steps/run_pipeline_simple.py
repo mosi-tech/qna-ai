@@ -1,0 +1,203 @@
+#!/usr/bin/env python3
+"""
+Simplified Dashboard Pipeline - No MongoDB, No PM2, No Queue
+
+Essential steps only:
+  1. UIPlanner.plan() - decompose question into blocks
+  2. Analyze each block's sub-question inline (LLM call per block)
+
+Usage:
+    python headless/steps/run_pipeline_simple.py "How is QQQ performing?"
+"""
+
+import asyncio
+import json
+import sys
+import os
+from datetime import datetime
+
+# ── Path setup ────────────────────────────────────────────────────────────────
+_DIR     = os.path.dirname(os.path.abspath(__file__))
+_BACKEND = os.path.normpath(os.path.join(_DIR, "..", ".."))
+sys.path.insert(0, _BACKEND)
+
+# ── Logging ───────────────────────────────────────────────────────────────────
+import logging
+logging.basicConfig(level=logging.INFO, stream=sys.stderr)
+logger = logging.getLogger("simple-pipeline")
+
+from dotenv import load_dotenv
+# Load .env file - always use values from the file
+ENV_PATH = os.path.join(_BACKEND, "apiServer", ".env")
+logger.info(f"Loading .env from: {ENV_PATH}")
+logger.info(f".env exists: {os.path.exists(ENV_PATH)}")
+load_dotenv(ENV_PATH)
+# Capture API key before any imports that might conflict
+OLLAMA_API_KEY = os.environ.get('OLLAMA_API_KEY') or os.environ.get('UI_PLANNER_LLM_API_KEY') or os.environ.get('ANALYSIS_LLM_API_KEY')
+logger.info(f"OLLAMA_API_KEY loaded: {OLLAMA_API_KEY[:10] if OLLAMA_API_KEY else 'NOT_SET'}...")
+
+# ── Imports (after loading env to avoid conflicts) ─────────────────────────────
+from shared.services.ui_planner import create_ui_planner
+from shared.llm import LLMConfig, create_llm_service
+
+
+# Simple inline analyzer - no queue, no MongoDB
+class SimpleBlockAnalyzer:
+    """Analyze block sub-questions inline using LLM"""
+
+    def __init__(self):
+        # Use analysis config for better quality responses
+        # Use Ollama Cloud
+        config = LLMConfig.for_task("ANALYSIS")
+        config.service_name = "analysis"
+        config.max_tokens = 4000  # Increase for longer responses
+        config.base_url = "https://ollama.com/api"  # Ollama Cloud
+        # Explicitly set API key from env var
+        config.api_key = OLLAMA_API_KEY
+        logger.info(f"Analyzer Config api_key: {config.api_key[:10] if config.api_key else 'None'}...")
+        self.llm = create_llm_service(config=config)
+
+    async def analyze_block(self, sub_question: str, block_id: str) -> dict:
+        """Analyze a single block's sub-question"""
+        try:
+            logger.info(f"[{block_id}] Analyzing: {sub_question[:60]}...")
+
+            response = await self.llm.simple_completion(
+                prompt=sub_question,
+                max_tokens=1000,
+            )
+
+            if not response.get("success"):
+                return {
+                    "status": "failed",
+                    "error": response.get("error", "Unknown error"),
+                }
+
+            content = response.get("content", "")
+
+            # Try to parse as JSON, otherwise return as text
+            try:
+                result_data = json.loads(content)
+            except json.JSONDecodeError:
+                # Not JSON - wrap in a text result structure
+                result_data = {"text": content}
+
+            return {
+                "status": "complete",
+                "resultData": result_data,
+            }
+
+        except Exception as e:
+            logger.error(f"[{block_id}] Analysis failed: {e}")
+            return {
+                "status": "failed",
+                "error": str(e),
+            }
+
+
+# ── Main Pipeline ────────────────────────────────────────────────────────────
+async def main() -> None:
+    if len(sys.argv) < 2:
+        print("Usage: python run_pipeline_simple.py \"your question here\"", file=sys.stderr)
+        sys.exit(1)
+
+    question = sys.argv[1]
+    start_time = datetime.now()
+
+    logger.info("=" * 60)
+    logger.info(f"Question: {question}")
+    logger.info("=" * 60)
+
+    # ── Step 1: UIPlanner ─────────────────────────────────────────────────────
+    logger.info("[Step 1] Planning dashboard...")
+    # Create UIPlanner with higher max_tokens for complete JSON responses
+    # Use Ollama Cloud
+    ui_config = LLMConfig.for_task("UI_PLANNER")
+    ui_config.service_name = "ui-planner"
+    ui_config.max_tokens = 4000  # Increase to prevent truncated JSON
+    ui_config.base_url = "https://ollama.com/api"  # Ollama Cloud
+    # Explicitly set API key from env var
+    ui_config.api_key = OLLAMA_API_KEY
+    logger.info(f"UI Config api_key: {ui_config.api_key[:10] if ui_config.api_key else 'None'}...")
+    logger.info(f"UI Config base_url: {ui_config.base_url}")
+    logger.info(f"UI Config provider: {ui_config.provider_type}")
+    ui_llm = create_llm_service(config=ui_config)
+
+    # Create UIPlanner with custom LLM
+    from shared.services.ui_planner import UIPlanner
+    ui_planner = UIPlanner(llm_service=ui_llm)
+    plan = await ui_planner.plan(question)
+
+    if not plan.get("blocks"):
+        logger.error("No blocks generated by UIPlanner")
+        sys.exit(1)
+
+    logger.info(f"✅ Plan: '{plan['title']}' with {len(plan['blocks'])} blocks")
+
+    # ── Step 2: Analyze each block inline ─────────────────────────────────────
+    logger.info("[Step 2] Analyzing blocks inline...")
+    analyzer = SimpleBlockAnalyzer()
+
+    blocks_with_results = []
+    complete_count = 0
+    failed_count = 0
+
+    for i, block in enumerate(plan["blocks"]):
+        block_id = f"b{i}"
+        sub_question = block.get("sub_question", "")
+
+        # Analyze the block
+        analysis_result = await analyzer.analyze_block(sub_question, block_id)
+
+        # Combine block info with analysis result
+        block_result = {
+            "block_id": block_id,
+            "title": block.get("title", ""),
+            "category": block.get("category", ""),
+            "status": analysis_result.get("status", "pending"),
+            "has_result": analysis_result.get("status") == "complete",
+        }
+
+        if analysis_result.get("status") == "complete":
+            complete_count += 1
+            block_result["resultData"] = analysis_result.get("resultData")
+            logger.info(f"  ✅ [{block_id}] Complete")
+        else:
+            failed_count += 1
+            block_result["error"] = analysis_result.get("error", "Unknown error")
+            logger.warning(f"  ❌ [{block_id}] Failed: {block_result['error']}")
+
+        blocks_with_results.append(block_result)
+
+    # ── Final Result ───────────────────────────────────────────────────────────
+    elapsed = (datetime.now() - start_time).total_seconds()
+
+    result = {
+        "question": question,
+        "dashboard_id": f"simple-{datetime.now().strftime('%Y%m%d%H%M%S')}",
+        "elapsed_s": round(elapsed, 1),
+        "plan_title": plan.get("title", ""),
+        "cache_hits": 0,  # No cache in simplified mode
+        "jobs_enqueued": len(plan["blocks"]),
+        "summary": {
+            "total": len(plan["blocks"]),
+            "complete": complete_count,
+            "failed": failed_count,
+            "pending": 0,
+        },
+        "blocks": blocks_with_results,
+    }
+
+    logger.info("=" * 60)
+    logger.info(f"DONE - {complete_count}/{len(plan['blocks'])} complete ({elapsed:.1f}s)")
+    logger.info("=" * 60)
+
+    # Output final result as JSON (for API to parse)
+    print(json.dumps(result, indent=2, default=str))
+
+    # Exit with 0 if all blocks succeeded, 1 otherwise
+    sys.exit(0 if failed_count == 0 else 1)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
