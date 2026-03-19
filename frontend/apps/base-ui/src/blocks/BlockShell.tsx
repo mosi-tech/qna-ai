@@ -115,7 +115,15 @@ function renderSparkChart01(data: Record<string, unknown>, spec: BlockSpec): Rea
 
 function renderTable01(data: Record<string, unknown>, _spec: BlockSpec): React.ReactNode {
     const rows = (data.rows as Record<string, unknown>[]) ?? [];
-    const columns = (data.columns as any[]) ?? [];
+    const columnNames = (data.columns as string[]) ?? [];
+
+    // Convert column names to TableColumn objects
+    const columns = columnNames.map(name => ({
+        key: name,
+        label: name,
+        align: (name.toLowerCase().includes('p&l') || name.toLowerCase().includes('value') || name.toLowerCase().includes('%') || name.toLowerCase().includes('cost') || name.toLowerCase().includes('price')) ? 'right' as const : 'left' as const,
+    }));
+
     return <Table01 data={rows} columns={columns} />;
 }
 
