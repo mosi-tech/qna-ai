@@ -13,12 +13,27 @@ export interface SectorAllocationDonutData {
 
 const SAMPLE_DATA: SectorAllocationDonutData = {
   data: [
-    { name: 'Category A', value: 40 },
-    { name: 'Category B', value: 30 },
-    { name: 'Category C', value: 30 },
+    { name: 'Technology', value: 38 },
+    { name: 'Healthcare', value: 18 },
+    { name: 'Financials', value: 16 },
+    { name: 'Consumer', value: 12 },
+    { name: 'Energy', value: 8 },
+    { name: 'Industrials', value: 8 },
   ],
 };
 
 export const SectorAllocationDonut: React.FC<{ data?: SectorAllocationDonutData }> = ({ data = SAMPLE_DATA }) => {
-  return <DonutChart01 {...data} />;
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
+          Sector Allocation
+        </h2>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Portfolio distribution across business sectors
+        </p>
+      </div>
+      <DonutChart01 {...data} />
+    </div>
+  );
 };

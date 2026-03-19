@@ -1,7 +1,7 @@
 /**
  * Portfolio KPI Summary finBlock
  * Wraps: KpiCard01
- * Description: Total value, total P&L, YTD return, and Sharpe ratio
+ * Description: Overview of your portfolio's total value, profitability, and year-to-date performance
  */
 
 import React from 'react';
@@ -14,12 +14,40 @@ export interface PortfolioKpiSummaryData {
 
 const SAMPLE_DATA: PortfolioKpiSummaryData = {
   metrics: [
-    { name: 'Metric 1', stat: 100, change: '+5%', changeType: 'positive' },
-    { name: 'Metric 2', stat: 200, change: '-2%', changeType: 'negative' },
+    {
+      name: 'Portfolio Value',
+      stat: '$487,250',
+      change: '+8.3%',
+      changeType: 'positive'
+    },
+    {
+      name: 'Total P&L',
+      stat: '+$52,150',
+      change: '+12.0%',
+      changeType: 'positive'
+    },
+    {
+      name: 'YTD Return',
+      stat: '18.3%',
+      change: '+2.1% vs benchmark',
+      changeType: 'positive'
+    },
   ],
-  cols: 2,
+  cols: 3,
 };
 
 export const PortfolioKpiSummary: React.FC<{ data?: PortfolioKpiSummaryData }> = ({ data = SAMPLE_DATA }) => {
-  return <KpiCard01 {...data} />;
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
+          Portfolio KPI Summary
+        </h2>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Overview of your portfolio's total value, profitability, and year-to-date performance
+        </p>
+      </div>
+      <KpiCard01 {...data} />
+    </div>
+  );
 };

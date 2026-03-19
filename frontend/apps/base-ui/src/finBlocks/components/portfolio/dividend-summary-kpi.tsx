@@ -1,7 +1,7 @@
 /**
  * Portfolio Dividend Metrics finBlock
  * Wraps: KpiCard02
- * Description: Annual dividend income, yield, next ex-dividend date
+ * Description: Annual dividend income, current yield, and upcoming distribution dates
  */
 
 import React from 'react';
@@ -14,12 +14,40 @@ export interface DividendSummaryKpiData {
 
 const SAMPLE_DATA: DividendSummaryKpiData = {
   metrics: [
-    { name: 'Metric 1', stat: 100, change: '+5%', changeType: 'positive' },
-    { name: 'Metric 2', stat: 200, change: '-2%', changeType: 'negative' },
+    {
+      name: 'Annual Dividend Income',
+      stat: '$8,340',
+      change: '+12.5%',
+      changeType: 'positive'
+    },
+    {
+      name: 'Dividend Yield',
+      stat: '1.71%',
+      change: '+0.15% YoY',
+      changeType: 'positive'
+    },
+    {
+      name: 'Next Ex-Dividend',
+      stat: 'Mar 31, 2026',
+      change: '+15 days',
+      changeType: 'neutral'
+    },
   ],
-  cols: 2,
+  cols: 3,
 };
 
 export const DividendSummaryKpi: React.FC<{ data?: DividendSummaryKpiData }> = ({ data = SAMPLE_DATA }) => {
-  return <KpiCard02 {...data} />;
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-50">
+          Dividend Summary
+        </h2>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Annual dividend income, current yield, and upcoming distribution dates
+        </p>
+      </div>
+      <KpiCard02 {...data} />
+    </div>
+  );
 };
