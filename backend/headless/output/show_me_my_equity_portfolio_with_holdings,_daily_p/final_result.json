@@ -6,100 +6,210 @@
     {
       "blockId": "kpi-card-01",
       "category": "kpi-cards",
-      "title": "Portfolio P&L Summary",
+      "title": "Portfolio Performance",
       "dataContract": {
         "type": "kpi",
-        "description": "Portfolio-level summary showing NAV, daily return, and YTD return",
+        "description": "Current NAV, daily P&L (absolute $ and %), and YTD return percentage",
         "points": 1
       },
-      "sub_question": "What is the current Net Asset Value, daily return percentage, and YTD return percentage of the portfolio?",
+      "sub_question": "What is the portfolio's current Net Asset Value (NAV), daily profit and loss in both absolute dollars and percentage, and the overall year-to-date return percentage?",
       "canonical_params": {
-        "metric": "portfolio_summary"
+        "metric": "portfolio_performance"
       }
     },
     {
-      "blockId": "table-action-01",
+      "blockId": "table-01",
       "category": "tables",
-      "title": "Ranked Holdings List",
+      "title": "Detailed Holdings",
       "dataContract": {
         "type": "table",
-        "description": "Sortable table of portfolio holdings with ticker, price, quantity, market value, and weight",
+        "description": "Table of equity holdings with ticker, shares, price, market value, and weight",
         "points": 1
       },
-      "sub_question": "What is the ranked list of portfolio holdings including ticker, current price, quantity, market value, and weight percentage?",
+      "sub_question": "What are the detailed equity holdings in the portfolio including ticker symbol, number of shares, current price, market value, and portfolio weight percentage?",
       "canonical_params": {
-        "metric": "holdings_list"
+        "metric": "holdings_detailed"
       }
     },
     {
-      "blockId": "donut-chart-04",
+      "blockId": "donut-chart-01",
       "category": "donut-charts",
       "title": "Sector Allocation",
       "dataContract": {
         "type": "donut",
-        "description": "Percentage distribution of portfolio value by sector category",
+        "description": "Sector breakdown showing market value and percentage of portfolio",
         "points": 1
       },
-      "sub_question": "What is the percentage breakdown of the portfolio by sector?",
+      "sub_question": "What is the breakdown of the portfolio by sector, showing both the absolute market value and the percentage weight for each sector?",
       "canonical_params": {
         "metric": "sector_allocation"
       }
+    }
+  ],
+  "blocks_data": [
+    {
+      "blockId": "kpi-card-01",
+      "data": {
+        "metrics": [
+          {
+            "name": "Portfolio Value",
+            "stat": 86988.66,
+            "change": "9.03%",
+            "changeType": "negative"
+          },
+          {
+            "name": "Daily P&L",
+            "stat": 79438.61,
+            "change": "-0.67%",
+            "changeType": "positive"
+          },
+          {
+            "name": "YTD Return",
+            "stat": 67844.82,
+            "change": "14.82%",
+            "changeType": "positive"
+          },
+          {
+            "name": "Sharpe Ratio",
+            "stat": 85073.15,
+            "change": "-18.62%",
+            "changeType": "positive"
+          }
+        ],
+        "cols": 4
+      }
     },
     {
-      "blockId": "line-chart-02",
-      "category": "line-charts",
-      "title": "YTD Performance Trend",
-      "dataContract": {
-        "type": "line",
-        "description": "Daily time series of portfolio value from the beginning of the year to today",
-        "points": 1
-      },
-      "sub_question": "What is the daily time series of portfolio performance from the beginning of the year to today?",
-      "canonical_params": {
-        "metric": "performance_history",
-        "period": "ytd"
+      "blockId": "table-01",
+      "data": {
+        "rows": [
+          {
+            "Symbol": "STK1",
+            "Shares": 551,
+            "Avg Cost": 209.87,
+            "Market Value": 66328.73,
+            "P&L": 6609.87,
+            "P&L %": 3.46
+          },
+          {
+            "Symbol": "STK2",
+            "Shares": 740,
+            "Avg Cost": 240.22,
+            "Market Value": 4099.07,
+            "P&L": 7110.52,
+            "P&L %": -24.68
+          },
+          {
+            "Symbol": "STK3",
+            "Shares": 769,
+            "Avg Cost": 276.54,
+            "Market Value": 43093.77,
+            "P&L": 2858.23,
+            "P&L %": 24.43
+          },
+          {
+            "Symbol": "STK4",
+            "Shares": 840,
+            "Avg Cost": 419.49,
+            "Market Value": 36068.39,
+            "P&L": 5969.05,
+            "P&L %": 39.65
+          },
+          {
+            "Symbol": "STK5",
+            "Shares": 719,
+            "Avg Cost": 254.07,
+            "Market Value": 17009.37,
+            "P&L": 120.28,
+            "P&L %": -6.96
+          }
+        ],
+        "columns": [
+          "Symbol",
+          "Shares",
+          "Avg Cost",
+          "Market Value",
+          "P&L",
+          "P&L %"
+        ]
+      }
+    },
+    {
+      "blockId": "donut-chart-01",
+      "data": {
+        "data": [
+          {
+            "name": "Industrial",
+            "value": 19.69
+          },
+          {
+            "name": "Energy",
+            "value": 29.46
+          },
+          {
+            "name": "Finance",
+            "value": 29.14
+          },
+          {
+            "name": "Healthcare",
+            "value": 13.77
+          },
+          {
+            "name": "Consumer",
+            "value": 27.38
+          }
+        ]
       }
     }
   ],
-  "blocks_data": [],
-  "mock_data_file": null,
+  "mock_data_file": "/Users/shivc/Documents/Workspace/JS/qna-ai-admin/backend/headless/agents/mock/../../output/mock_data/show_me_my_equity_portfolio_with_holdings,_daily_p.json",
   "similarity": null,
-  "total_time": 60.730835,
+  "total_time": 57.999464,
   "steps": [
     {
       "step": "question_enhancer",
       "success": true,
-      "duration": 21.660447,
-      "timestamp": "2026-03-18T21:35:21.865131",
-      "output_size": 1551
+      "duration": 17.919945,
+      "timestamp": "2026-03-18T21:36:56.612430",
+      "output_size": 903
     },
     {
       "step": "ui_planner",
       "success": true,
-      "duration": 36.753758,
-      "timestamp": "2026-03-18T21:35:58.620256",
-      "output_size": 2433
+      "duration": 37.431899,
+      "timestamp": "2026-03-18T21:37:34.045981",
+      "output_size": 2070
     },
     {
       "step": "mock_reuse_evaluator",
       "success": true,
-      "duration": 2.308265,
-      "timestamp": "2026-03-18T21:36:00.930432",
+      "duration": 1.938048,
+      "timestamp": "2026-03-18T21:37:35.985690",
       "output_size": 221
+    },
+    {
+      "step": "mock_data_generator",
+      "success": true,
+      "duration": 0.703986,
+      "timestamp": "2026-03-18T21:37:36.690420",
+      "output_size": 241
     }
   ],
-  "timestamp": "2026-03-18T21:36:00.935521",
+  "timestamp": "2026-03-18T21:37:36.691950",
   "_debug": {
-    "timestamp": "2026-03-18T21:36:00.935627",
-    "blocks_count": 4,
-    "blocks_data_count": 0,
+    "timestamp": "2026-03-18T21:37:36.692024",
+    "blocks_count": 3,
+    "blocks_data_count": 3,
     "blocks_ids": [
       "kpi-card-01",
-      "table-action-01",
-      "donut-chart-04",
-      "line-chart-02"
+      "table-01",
+      "donut-chart-01"
     ],
-    "blocks_data_ids": [],
+    "blocks_data_ids": [
+      "kpi-card-01",
+      "table-01",
+      "donut-chart-01"
+    ],
     "success": true,
     "action": "mock_generated"
   }
