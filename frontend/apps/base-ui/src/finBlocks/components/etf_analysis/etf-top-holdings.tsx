@@ -1,68 +1,24 @@
-import React from 'react';
-
-// Data interface for Top 10 ETF Holdings
-interface EtfTopHoldingsProps {
-  title?: string;
-  data: any;
-  loading?: boolean;
-  error?: string;
-}
-
-
-// Sample data for development
-export const SAMPLE_DATA: EtfTopHoldingsProps = {
-  title: 'Top 10 ETF Holdings',
-  data: {
-    "data": [
-        {
-            "name": "AAPL",
-            "value": 15.5
-        },
-        {
-            "name": "MSFT",
-            "value": 12.3
-        },
-        {
-            "name": "GOOGL",
-            "value": 10.8
-        }
-    ]
-},
-  loading: false,
-  error: undefined,
-};
-
 /**
  * Top 10 ETF Holdings finBlock
- *
- * @description Largest positions within an ETF
- * @blockType bar-list
- * @concepts concentration, composition
- * @mcpRequired get_fundamentals
+ * Wraps: BarList04
+ * Description: Largest positions within an ETF
  */
-export const EtfTopHoldings: React.FC<EtfTopHoldingsProps> = ({
-  title = 'Top 10 ETF Holdings',
-  data,
-  loading = false,
-  error,
-}) => {
-  if (loading) {
-    return <div className="p-4">Loading...</div>;
-  }
 
-  if (error) {
-    return <div className="p-4 text-red-500">Error: {error}</div>;
-  }
+import React from 'react';
+import { BarList04 } from '../../../blocks/bar-lists/bar-list-04';
 
-  return (
-    <div className="finblock etf-top-holdings rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-      <h3 className="mb-3 font-semibold text-gray-800">{title}</h3>
-      {/* Block Type: bar-list */}
-      <pre className="max-h-96 overflow-auto rounded bg-gray-50 p-3 text-xs">
-        {JSON.stringify(data, null, 2)}
-      </pre>
-    </div>
-  );
+export interface EtfTopHoldingsData {
+  data?: any[];
+}
+
+const SAMPLE_DATA: EtfTopHoldingsData = {
+  data: [
+    { name: 'Item 1', value: 50 },
+    { name: 'Item 2', value: 40 },
+    { name: 'Item 3', value: 30 },
+  ],
 };
 
-export default EtfTopHoldings;
+export const EtfTopHoldings: React.FC<{ data?: EtfTopHoldingsData }> = ({ data = SAMPLE_DATA }) => {
+  return <BarList04 {...data} />;
+};

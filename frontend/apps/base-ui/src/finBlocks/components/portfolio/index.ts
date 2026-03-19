@@ -1,13 +1,13 @@
-// Auto-generated finBlocks index
+'use client';
 
-export { default as PortfolioKpiSummary, SAMPLE_DATA as PortfolioKpiSummarySampleData } from './portfolio-kpi-summary';
-export { default as HoldingsTable, SAMPLE_DATA as HoldingsTableSampleData } from './holdings-table';
-export { default as SectorAllocationDonut, SAMPLE_DATA as SectorAllocationDonutSampleData } from './sector-allocation-donut';
-export { default as AssetClassAllocation, SAMPLE_DATA as AssetClassAllocationSampleData } from './asset-class-allocation';
-export { default as PortfolioPerformanceVsBenchmark, SAMPLE_DATA as PortfolioPerformanceVsBenchmarkSampleData } from './portfolio-performance-vs-benchmark';
-export { default as PriceMovementsSpark, SAMPLE_DATA as PriceMovementsSparkSampleData } from './price-movements-spark';
-export { default as TopBottomPerformers, SAMPLE_DATA as TopBottomPerformersSampleData } from './top-bottom-performers';
-export { default as MonthlyReturnsBar, SAMPLE_DATA as MonthlyReturnsBarSampleData } from './monthly-returns-bar';
-export { default as ConcentrationByHolding, SAMPLE_DATA as ConcentrationByHoldingSampleData } from './concentration-by-holding';
-export { default as PortfolioTurnoverTable, SAMPLE_DATA as PortfolioTurnoverTableSampleData } from './portfolio-turnover-table';
-export { default as DividendSummaryKpi, SAMPLE_DATA as DividendSummaryKpiSampleData } from './dividend-summary-kpi';
+export { AssetClassAllocation } from './asset-class-allocation';
+export { ConcentrationByHolding } from './concentration-by-holding';
+export { DividendSummaryKpi } from './dividend-summary-kpi';
+export { HoldingsTable } from './holdings-table';
+export { MonthlyReturnsBar } from './monthly-returns-bar';
+export { PortfolioKpiSummary } from './portfolio-kpi-summary';
+export { PortfolioPerformanceVsBenchmark } from './portfolio-performance-vs-benchmark';
+export { PortfolioTurnoverTable } from './portfolio-turnover-table';
+export { PriceMovementsSpark } from './price-movements-spark';
+export { SectorAllocationDonut } from './sector-allocation-donut';
+export { TopBottomPerformers } from './top-bottom-performers';

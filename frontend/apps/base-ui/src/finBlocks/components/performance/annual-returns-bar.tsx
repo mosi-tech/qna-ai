@@ -1,71 +1,26 @@
-import React from 'react';
-
-// Data interface for Annual Returns Comparison
-interface AnnualReturnsBarProps {
-  title?: string;
-  data: any;
-  loading?: boolean;
-  error?: string;
-}
-
-
-// Sample data for development
-export const SAMPLE_DATA: AnnualReturnsBarProps = {
-  title: 'Annual Returns Comparison',
-  data: {
-    "data": [
-        {
-            "name": "Jan",
-            "value": 2.5
-        },
-        {
-            "name": "Feb",
-            "value": 1.8
-        },
-        {
-            "name": "Mar",
-            "value": 3.2
-        }
-    ],
-    "categories": [
-        "value"
-    ]
-},
-  loading: false,
-  error: undefined,
-};
-
 /**
  * Annual Returns Comparison finBlock
- *
- * @description Year-by-year returns vs benchmark for last 5-10 years
- * @blockType bar-chart
- * @concepts returns, consistency, outperformance
- * @mcpRequired get_portfolio_history, get_historical_data
+ * Wraps: BarChart07
+ * Description: Year-by-year returns vs benchmark for last 5-10 years
  */
-export const AnnualReturnsBar: React.FC<AnnualReturnsBarProps> = ({
-  title = 'Annual Returns Comparison',
-  data,
-  loading = false,
-  error,
-}) => {
-  if (loading) {
-    return <div className="p-4">Loading...</div>;
-  }
 
-  if (error) {
-    return <div className="p-4 text-red-500">Error: {error}</div>;
-  }
+import React from 'react';
+import { BarChart07 } from '../../../blocks/bar-charts/bar-chart-07';
 
-  return (
-    <div className="finblock annual-returns-bar rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-      <h3 className="mb-3 font-semibold text-gray-800">{title}</h3>
-      {/* Block Type: bar-chart */}
-      <pre className="max-h-96 overflow-auto rounded bg-gray-50 p-3 text-xs">
-        {JSON.stringify(data, null, 2)}
-      </pre>
-    </div>
-  );
+export interface AnnualReturnsBarData {
+  data?: any[];
+  categories?: string[];
+}
+
+const SAMPLE_DATA: AnnualReturnsBarData = {
+  data: [
+    { date: '2024-01-01', value: 100 },
+    { date: '2024-01-02', value: 120 },
+    { date: '2024-01-03', value: 110 },
+  ],
+  categories: ['value'],
 };
 
-export default AnnualReturnsBar;
+export const AnnualReturnsBar: React.FC<{ data?: AnnualReturnsBarData }> = ({ data = SAMPLE_DATA }) => {
+  return <BarChart07 {...data} />;
+};

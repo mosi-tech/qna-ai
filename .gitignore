@@ -102,3 +102,10 @@ backend/data/analysis_library_db/chroma.sqlite3
 
 # Headless step output files
 /backend/headless/steps/output/
+
+# Build artifacts and temporary generation files
+FINBLOCKS_*.md
+GENERATION_*.txt
+finblock_progress.json
+generate-*.js
+generate-*.ts

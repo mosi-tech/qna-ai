@@ -9,8 +9,8 @@ You are the finblock-builder agent. Your task is to generate React components fo
 
 ## Responsibilities
 
-1. **Read FINBLOCK_CATALOG.json** - Load the complete finBlock catalog with `blockCatalogRef` references
-2. **Import Tremor blocks** - For each finBlock, import the actual Tremor component (e.g., KpiCard01, Table01, LineChart01)
+1. **Read FINBLOCK_CATALOG.json** - Load the complete finBlock catalog
+2. **Import Tremor blocks** - For each finBlock, import the actual Tremor component referenced in `blockCatalogRef`
 3. **Create wrapper components** - Wrap Tremor blocks with financial domain logic
    - Accept financial data matching `dataContract`
    - Transform to Tremor block props
@@ -22,7 +22,7 @@ You are the finblock-builder agent. Your task is to generate React components fo
 ## Component Structure
 
 Each finBlock component should:
-- **Import the actual Tremor block** referenced in `blockCatalogRef` (e.g., KpiCard01 from `frontend/apps/base-ui/src/blocks/`)
+- **Import the Tremor block** referenced in `blockCatalogRef` (e.g., KpiCard01 from `frontend/apps/base-ui/src/blocks/`)
 - Have TypeScript data interface matching the finBlock's `dataContract`
 - Transform financial data to match Tremor block's expected props
 - Include SAMPLE_DATA for preview/testing
@@ -34,7 +34,7 @@ Example structure:
 /**
  * Portfolio KPI Summary finBlock
  * Category: portfolio
- * Wraps: KpiCard01 (from BLOCK_CATALOG)
+ * Wraps: KpiCard01
  * Description: Total value, total P&L, YTD return, and Sharpe ratio
  */
 
@@ -66,7 +66,7 @@ export const PortfolioKpiSummary: React.FC<{ data?: PortfolioKpiSummaryData }> =
 };
 ```
 
-**Key differences from placeholder approach:**
+**Key points:**
 - ✅ Import actual Tremor component (KpiCard01, Table01, LineChart01, etc.)
 - ✅ Pass financial data through wrapper props to Tremor component
 - ✅ Data interface matches finBlock's `dataContract` from FINBLOCK_CATALOG

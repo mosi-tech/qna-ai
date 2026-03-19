@@ -29,6 +29,9 @@
             ],
             "@ui-gen/base-ui": [
                 "../base-ui/src"
+            ],
+            "@finBlocks/*": [
+                "../base-ui/src/finBlocks/*"
             ]
         }
     },

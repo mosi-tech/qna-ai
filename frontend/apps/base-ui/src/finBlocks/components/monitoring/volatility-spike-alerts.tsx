@@ -1,68 +1,24 @@
-import React from 'react';
-
-// Data interface for Volatility Spike Alerts
-interface VolatilitySpikeAlertsProps {
-  title?: string;
-  data: any;
-  loading?: boolean;
-  error?: string;
-}
-
-
-// Sample data for development
-export const SAMPLE_DATA: VolatilitySpikeAlertsProps = {
-  title: 'Volatility Spike Alerts',
-  data: {
-    "data": [
-        {
-            "name": "AAPL",
-            "value": 15.5
-        },
-        {
-            "name": "MSFT",
-            "value": 12.3
-        },
-        {
-            "name": "GOOGL",
-            "value": 10.8
-        }
-    ]
-},
-  loading: false,
-  error: undefined,
-};
-
 /**
  * Volatility Spike Alerts finBlock
- *
- * @description Holdings with unusual volatility spikes or VIX alerts
- * @blockType bar-list
- * @concepts risk events, volatility
- * @mcpRequired get_technical_indicator
+ * Wraps: BarList02
+ * Description: Holdings with unusual volatility spikes or VIX alerts
  */
-export const VolatilitySpikeAlerts: React.FC<VolatilitySpikeAlertsProps> = ({
-  title = 'Volatility Spike Alerts',
-  data,
-  loading = false,
-  error,
-}) => {
-  if (loading) {
-    return <div className="p-4">Loading...</div>;
-  }
 
-  if (error) {
-    return <div className="p-4 text-red-500">Error: {error}</div>;
-  }
+import React from 'react';
+import { BarList02 } from '../../../blocks/bar-lists/bar-list-02';
 
-  return (
-    <div className="finblock volatility-spike-alerts rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-      <h3 className="mb-3 font-semibold text-gray-800">{title}</h3>
-      {/* Block Type: bar-list */}
-      <pre className="max-h-96 overflow-auto rounded bg-gray-50 p-3 text-xs">
-        {JSON.stringify(data, null, 2)}
-      </pre>
-    </div>
-  );
+export interface VolatilitySpikeAlertsData {
+  data?: any[];
+}
+
+const SAMPLE_DATA: VolatilitySpikeAlertsData = {
+  data: [
+    { name: 'Item 1', value: 50 },
+    { name: 'Item 2', value: 40 },
+    { name: 'Item 3', value: 30 },
+  ],
 };
 
-export default VolatilitySpikeAlerts;
+export const VolatilitySpikeAlerts: React.FC<{ data?: VolatilitySpikeAlertsData }> = ({ data = SAMPLE_DATA }) => {
+  return <BarList02 {...data} />;
+};

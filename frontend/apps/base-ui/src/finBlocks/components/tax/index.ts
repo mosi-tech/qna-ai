@@ -1,9 +1,9 @@
-// Auto-generated finBlocks index
+'use client';
 
-export { default as TaxLossHarvestingOpportunities, SAMPLE_DATA as TaxLossHarvestingOpportunitiesSampleData } from './tax-loss-harvesting-opportunities';
-export { default as LongTermVsShorttermGains, SAMPLE_DATA as LongTermVsShorttermGainsSampleData } from './long-term-vs-shortterm-gains';
-export { default as EstimatedTaxLiability, SAMPLE_DATA as EstimatedTaxLiabilitySampleData } from './estimated-tax-liability';
-export { default as CostBasisAnalysis, SAMPLE_DATA as CostBasisAnalysisSampleData } from './cost-basis-analysis';
-export { default as StateTaxOptimization, SAMPLE_DATA as StateTaxOptimizationSampleData } from './state-tax-optimization';
-export { default as CharitableGivingStrategy, SAMPLE_DATA as CharitableGivingStrategySampleData } from './charitable-giving-strategy';
-export { default as QuarterlyEstimatedTaxes, SAMPLE_DATA as QuarterlyEstimatedTaxesSampleData } from './quarterly-estimated-taxes';
+export { CharitableGivingStrategy } from './charitable-giving-strategy';
+export { CostBasisAnalysis } from './cost-basis-analysis';
+export { EstimatedTaxLiability } from './estimated-tax-liability';
+export { LongTermVsShorttermGains } from './long-term-vs-shortterm-gains';
+export { QuarterlyEstimatedTaxes } from './quarterly-estimated-taxes';
+export { StateTaxOptimization } from './state-tax-optimization';
+export { TaxLossHarvestingOpportunities } from './tax-loss-harvesting-opportunities';
