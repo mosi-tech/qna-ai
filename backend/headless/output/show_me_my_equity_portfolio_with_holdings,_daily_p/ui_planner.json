@@ -1,50 +1,41 @@
 {
   "step": "ui_planner",
   "input": {
-    "question": "Show me my equity portfolio with holdings, daily P&L, sector allocation and YTD performance"
+    "question": "Show me my equity portfolio with a comprehensive breakdown. Provide a ranked list of holdings including ticker, current price, quantity, market value, and weight percentage. Display daily P&L metrics including total portfolio value, daily change (absolute), and daily change percentage. Provide a sector allocation breakdown showing percentage distribution by category. Include YTD performance with time series data (daily dates and values) from the beginning of the year to today, along with the total YTD return percentage."
   },
   "output": {
     "success": true,
     "data": {
-      "title": "Portfolio Overview Dashboard",
-      "subtitle": "Equity holdings, daily P&L, sector exposure, and YTD performance",
+      "title": "Equity Portfolio Overview",
+      "subtitle": "Comprehensive breakdown of holdings, P&L metrics, sector allocation, and YTD performance",
       "layout": "grid",
       "blocks": [
         {
-          "blockId": "table-01",
-          "category": "tables",
-          "title": "Holdings",
-          "dataContract": {
-            "type": "table",
-            "description": "Portfolio holdings with ticker, asset class, market value, daily P&L, and status",
-            "points": 10,
-            "categories": [
-              "ticker",
-              "asset_class",
-              "market_value",
-              "daily_pnl",
-              "status"
-            ]
-          },
-          "sub_question": "What are the holdings in my equity portfolio, including ticker, asset class, market value, and daily P&L?",
-          "canonical_params": {}
-        },
-        {
-          "blockId": "kpi-card-02",
+          "blockId": "kpi-card-01",
           "category": "kpi-cards",
-          "title": "Daily P&L",
+          "title": "Portfolio P&L Summary",
           "dataContract": {
             "type": "kpi",
-            "description": "Portfolio daily profit and loss in USD",
-            "points": 1,
-            "categories": [
-              "daily_pnl",
-              "currency"
-            ]
+            "description": "Portfolio-level summary showing NAV, daily return, and YTD return",
+            "points": 1
           },
-          "sub_question": "What is the portfolio's daily profit and loss in USD?",
+          "sub_question": "What is the current Net Asset Value, daily return percentage, and YTD return percentage of the portfolio?",
           "canonical_params": {
-            "metric": "daily_pnl"
+            "metric": "portfolio_summary"
+          }
+        },
+        {
+          "blockId": "table-action-01",
+          "category": "tables",
+          "title": "Ranked Holdings List",
+          "dataContract": {
+            "type": "table",
+            "description": "Sortable table of portfolio holdings with ticker, price, quantity, market value, and weight",
+            "points": 1
+          },
+          "sub_question": "What is the ranked list of portfolio holdings including ticker, current price, quantity, market value, and weight percentage?",
+          "canonical_params": {
+            "metric": "holdings_list"
           }
         },
         {
@@ -53,54 +44,45 @@
           "title": "Sector Allocation",
           "dataContract": {
             "type": "donut",
-            "description": "Sector allocation percentages of the equity portfolio",
-            "points": 1,
-            "categories": [
-              "sector",
-              "allocation_percent"
-            ]
+            "description": "Percentage distribution of portfolio value by sector category",
+            "points": 1
           },
-          "sub_question": "What is the sector allocation of my equity portfolio in terms of market value percentage by sector?",
+          "sub_question": "What is the percentage breakdown of the portfolio by sector?",
           "canonical_params": {
             "metric": "sector_allocation"
           }
         },
         {
-          "blockId": "line-chart-06",
+          "blockId": "line-chart-02",
           "category": "line-charts",
-          "title": "YTD Performance",
+          "title": "YTD Performance Trend",
           "dataContract": {
             "type": "line",
-            "description": "Portfolio total return vs S&P 500 benchmark, YTD",
-            "points": 1,
-            "categories": [
-              "return",
-              "benchmark"
-            ]
+            "description": "Daily time series of portfolio value from the beginning of the year to today",
+            "points": 1
           },
-          "sub_question": "What is the YTD total return of my equity portfolio compared to the S&P 500 benchmark?",
+          "sub_question": "What is the daily time series of portfolio performance from the beginning of the year to today?",
           "canonical_params": {
-            "metric": "ytd_return",
-            "benchmark": "spy",
+            "metric": "performance_history",
             "period": "ytd"
           }
         }
       ],
       "metadata": {
-        "question": "Show me my equity portfolio with holdings, daily P&L, sector allocation and YTD performance",
+        "question": "Show me my equity portfolio with a comprehensive breakdown. Provide a ranked list of holdings including ticker, current price, quantity, market value, and weight percentage. Display daily P&L metrics including total portfolio value, daily change (absolute), and daily change percentage. Provide a sector allocation breakdown showing percentage distribution by category. Include YTD performance with time series data (daily dates and values) from the beginning of the year to today, along with the total YTD return percentage.",
         "block_count": 4,
         "block_ids": [
-          "table-01",
-          "kpi-card-02",
+          "kpi-card-01",
+          "table-action-01",
           "donut-chart-04",
-          "line-chart-06"
+          "line-chart-02"
         ]
       }
     },
     "error": null,
     "metadata": {},
-    "timestamp": "2026-03-18T21:33:50.514179"
+    "timestamp": "2026-03-18T21:35:58.620131"
   },
-  "duration": 12.984641,
-  "timestamp": "2026-03-18T21:33:50.514304"
+  "duration": 36.753758,
+  "timestamp": "2026-03-18T21:35:58.620455"
 }

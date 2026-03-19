@@ -7,40 +7,40 @@
   "output": {
     "success": true,
     "data": {
-      "enhanced_question": "Show me my equity portfolio with holdings, daily P&L, sector allocation, and YTD performance. Please provide a detailed table of holdings including ticker symbols, number of shares, current market price, and total market value. Calculate daily profit and loss in both absolute dollars and percentage terms based on the previous close. Generate a sector allocation breakdown showing specific percentage values for each sector. Additionally, provide year-to-date performance metrics, including the total return percentage and the portfolio value at the start of the year compared to the current value.",
+      "enhanced_question": "Show me my equity portfolio with a comprehensive breakdown. Provide a ranked list of holdings including ticker, current price, quantity, market value, and weight percentage. Display daily P&L metrics including total portfolio value, daily change (absolute), and daily change percentage. Provide a sector allocation breakdown showing percentage distribution by category. Include YTD performance with time series data (daily dates and values) from the beginning of the year to today, along with the total YTD return percentage.",
       "data_requirements": [
         {
-          "block_id": "inferred-holdings-table",
-          "block_type": "tables",
-          "requirement": "Detailed rows for each holding with ticker symbol, quantity, current price, and total market value."
+          "block_id": "holdings-list",
+          "block_type": "bar-lists",
+          "requirement": "Ranked list of holdings with ticker, current price, quantity, market value, and weight percentage"
         },
         {
-          "block_id": "inferred-pnl-kpi",
+          "block_id": "daily-pnl",
           "block_type": "kpi-cards",
-          "requirement": "Total portfolio current value, previous day value, daily change amount, and daily change percentage."
+          "requirement": "Total portfolio value, daily P&L absolute value, and daily P&L percentage change"
         },
         {
-          "block_id": "inferred-sector-donut",
+          "block_id": "sector-allocation",
           "block_type": "donut-charts",
-          "requirement": "Sector names and corresponding portfolio allocation percentages."
+          "requirement": "Sector names with corresponding allocation percentages"
         },
         {
-          "block_id": "inferred-ytd-kpi",
-          "block_type": "kpi-cards",
-          "requirement": "Portfolio value at the start of the year, current value, and calculated year-to-date return percentage."
+          "block_id": "ytd-performance",
+          "block_type": "line-charts",
+          "requirement": "Time series data (daily dates and portfolio values) from January 1st to today, plus total YTD return percentage"
         }
       ],
       "metadata": {
         "block_count": 0,
-        "enhancement_summary": "Added specific requirements for holding details (ticker, quantity, price), precise P&L calculations (value and percentage), sector percentage breakdowns, and YTD performance basis (start of year vs current).",
+        "enhancement_summary": "Inferred blocks from user request and added specific metrics (weights, absolute/percentage changes, time series ranges).",
         "original_question": "Show me my equity portfolio with holdings, daily P&L, sector allocation and YTD performance",
         "enhanced_block_ids": []
       }
     },
     "error": null,
     "metadata": {},
-    "timestamp": "2026-03-18T20:16:43.901460"
+    "timestamp": "2026-03-18T21:35:21.865043"
   },
-  "duration": 28.052507,
-  "timestamp": "2026-03-18T20:16:43.901669"
+  "duration": 21.660447,
+  "timestamp": "2026-03-18T21:35:21.865301"
 }

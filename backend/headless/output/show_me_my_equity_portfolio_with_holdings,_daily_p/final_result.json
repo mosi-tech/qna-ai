@@ -1,43 +1,34 @@
 {
   "success": true,
-  "action": "mock_reused",
-  "title": "Portfolio Overview Dashboard",
+  "action": "mock_generated",
+  "title": "Equity Portfolio Overview",
   "blocks": [
     {
-      "blockId": "table-01",
-      "category": "tables",
-      "title": "Holdings",
-      "dataContract": {
-        "type": "table",
-        "description": "Portfolio holdings with ticker, asset class, market value, daily P&L, and status",
-        "points": 10,
-        "categories": [
-          "ticker",
-          "asset_class",
-          "market_value",
-          "daily_pnl",
-          "status"
-        ]
-      },
-      "sub_question": "What are the holdings in my equity portfolio, including ticker, asset class, market value, and daily P&L?",
-      "canonical_params": {}
-    },
-    {
-      "blockId": "kpi-card-02",
+      "blockId": "kpi-card-01",
       "category": "kpi-cards",
-      "title": "Daily P&L",
+      "title": "Portfolio P&L Summary",
       "dataContract": {
         "type": "kpi",
-        "description": "Portfolio daily profit and loss in USD",
-        "points": 1,
-        "categories": [
-          "daily_pnl",
-          "currency"
-        ]
+        "description": "Portfolio-level summary showing NAV, daily return, and YTD return",
+        "points": 1
       },
-      "sub_question": "What is the portfolio's daily profit and loss in USD?",
+      "sub_question": "What is the current Net Asset Value, daily return percentage, and YTD return percentage of the portfolio?",
       "canonical_params": {
-        "metric": "daily_pnl"
+        "metric": "portfolio_summary"
+      }
+    },
+    {
+      "blockId": "table-action-01",
+      "category": "tables",
+      "title": "Ranked Holdings List",
+      "dataContract": {
+        "type": "table",
+        "description": "Sortable table of portfolio holdings with ticker, price, quantity, market value, and weight",
+        "points": 1
+      },
+      "sub_question": "What is the ranked list of portfolio holdings including ticker, current price, quantity, market value, and weight percentage?",
+      "canonical_params": {
+        "metric": "holdings_list"
       }
     },
     {
@@ -46,72 +37,70 @@
       "title": "Sector Allocation",
       "dataContract": {
         "type": "donut",
-        "description": "Sector allocation percentages of the equity portfolio",
-        "points": 1,
-        "categories": [
-          "sector",
-          "allocation_percent"
-        ]
+        "description": "Percentage distribution of portfolio value by sector category",
+        "points": 1
       },
-      "sub_question": "What is the sector allocation of my equity portfolio in terms of market value percentage by sector?",
+      "sub_question": "What is the percentage breakdown of the portfolio by sector?",
       "canonical_params": {
         "metric": "sector_allocation"
       }
     },
     {
-      "blockId": "line-chart-06",
+      "blockId": "line-chart-02",
       "category": "line-charts",
-      "title": "YTD Performance",
+      "title": "YTD Performance Trend",
       "dataContract": {
         "type": "line",
-        "description": "Portfolio total return vs S&P 500 benchmark, YTD",
-        "points": 1,
-        "categories": [
-          "return",
-          "benchmark"
-        ]
+        "description": "Daily time series of portfolio value from the beginning of the year to today",
+        "points": 1
       },
-      "sub_question": "What is the YTD total return of my equity portfolio compared to the S&P 500 benchmark?",
+      "sub_question": "What is the daily time series of portfolio performance from the beginning of the year to today?",
       "canonical_params": {
-        "metric": "ytd_return",
-        "benchmark": "spy",
+        "metric": "performance_history",
         "period": "ytd"
       }
     }
   ],
   "blocks_data": [],
   "mock_data_file": null,
-  "similarity": 0.944805622,
-  "total_time": 14.995533,
+  "similarity": null,
+  "total_time": 60.730835,
   "steps": [
+    {
+      "step": "question_enhancer",
+      "success": true,
+      "duration": 21.660447,
+      "timestamp": "2026-03-18T21:35:21.865131",
+      "output_size": 1551
+    },
     {
       "step": "ui_planner",
       "success": true,
-      "duration": 12.984641,
-      "timestamp": "2026-03-18T21:33:50.514215",
-      "output_size": 2005
+      "duration": 36.753758,
+      "timestamp": "2026-03-18T21:35:58.620256",
+      "output_size": 2433
     },
     {
       "step": "mock_reuse_evaluator",
       "success": true,
-      "duration": 2.009206,
-      "timestamp": "2026-03-18T21:33:52.524441",
+      "duration": 2.308265,
+      "timestamp": "2026-03-18T21:36:00.930432",
       "output_size": 221
     }
   ],
-  "timestamp": "2026-03-18T21:33:52.525103",
+  "timestamp": "2026-03-18T21:36:00.935521",
   "_debug": {
-    "timestamp": "2026-03-18T21:33:52.525135",
+    "timestamp": "2026-03-18T21:36:00.935627",
     "blocks_count": 4,
     "blocks_data_count": 0,
     "blocks_ids": [
-      "table-01",
-      "kpi-card-02",
+      "kpi-card-01",
+      "table-action-01",
       "donut-chart-04",
-      "line-chart-06"
+      "line-chart-02"
     ],
     "blocks_data_ids": [],
     "success": true,
-    "action": "mock_reused"
+    "action": "mock_generated"
   }
 }

@@ -178,8 +178,47 @@ class AnalysisOrchestrator:
                         mock_data_file = reuse_data.get("mock_data_file")
                         similarity = reuse_data.get("similarity")
 
-                # Step 4 (Mock): Generate new mock data if not reused
-                if not mock_data_file:
+                # Step 4 (Mock): Load and validate reused mock data, OR generate fresh
+                blocks_data = []
+                validation_passed = False
+
+                # First, try to load and validate reused data if available
+                if mock_data_file:
+                    try:
+                        if os.path.exists(mock_data_file):
+                            with open(mock_data_file, 'r') as f:
+                                mock_file_content = json.load(f)
+
+                            # Validate that reused mock data matches current UI layout
+                            mock_block_ids = {b.get("block_id") for b in mock_file_content.get("blocks", [])}
+                            ui_block_ids = {b.get("blockId") for b in blocks}
+
+                            if mock_block_ids != ui_block_ids:
+                                self._log(f"⚠️  Reused mock data blockIds don't match current UI layout")
+                                self._log(f"   UI expects: {ui_block_ids}")
+                                self._log(f"   Mock data has: {mock_block_ids}")
+                                mock_data_file = None  # Force regeneration
+                                similarity = None
+                            else:
+                                # Extract blocks from mock data and format for UI
+                                for mock_block in mock_file_content.get("blocks", []):
+                                    blocks_data.append({
+                                        "blockId": mock_block.get("block_id"),
+                                        "data": mock_block.get("data")
+                                    })
+                                self._log(f"✅ Loaded reused mock data with {len(blocks_data)} blocks")
+                                validation_passed = True
+                        else:
+                            self._log(f"⚠️  Mock data file not found: {mock_data_file}")
+                            mock_data_file = None
+                            similarity = None
+                    except Exception as e:
+                        self._log(f"⚠️  Failed to load mock data file: {e}")
+                        mock_data_file = None
+                        similarity = None
+
+                # If reused data failed validation or wasn't available, generate fresh data
+                if not validation_passed:
                     self._log("🧪 Generating new mock data")
                     step_result = self._run_step(
                         "mock_data_generator",
@@ -198,47 +237,19 @@ class AnalysisOrchestrator:
                     mock_data_file = mock_data.get("mock_data_file")
                     similarity = None
 
-                # Load mock data file to populate blocks_data
-                blocks_data = []
-                if mock_data_file and os.path.exists(mock_data_file):
+                    # Load the freshly generated mock data
                     try:
-                        with open(mock_data_file, 'r') as f:
-                            mock_file_content = json.load(f)
-
-                        # Validate that reused mock data matches current UI layout
-                        mock_block_ids = {b.get("block_id") for b in mock_file_content.get("blocks", [])}
-                        ui_block_ids = {b.get("blockId") for b in blocks}
-
-                        if mock_block_ids != ui_block_ids:
-                            self._log(f"⚠️  Reused mock data blockIds don't match current UI layout")
-                            self._log(f"   UI expects: {ui_block_ids}")
-                            self._log(f"   Mock data has: {mock_block_ids}")
-                            self._log(f"🧪 Generating new mock data instead of reusing")
-                            mock_data_file = None  # Force regeneration
-                            similarity = None
-                        else:
-                            # Extract blocks from mock data and format for UI
+                        if mock_data_file and os.path.exists(mock_data_file):
+                            with open(mock_data_file, 'r') as f:
+                                mock_file_content = json.load(f)
                             for mock_block in mock_file_content.get("blocks", []):
                                 blocks_data.append({
                                     "blockId": mock_block.get("block_id"),
                                     "data": mock_block.get("data")
                                 })
-
-                            self._log(f"✅ Loaded mock data with {len(blocks_data)} blocks")
+                            self._log(f"✅ Generated mock data with {len(blocks_data)} blocks")
                     except Exception as e:
-                        self._log(f"⚠️  Failed to load mock data file: {e}")
-                        mock_data_file = None
-                        similarity = None
-
-                # Validate blocks_data was actually populated
-                if not blocks_data and mock_data_file:
-                    self._log(f"⚠️  Mock data loaded but no blocks extracted, regenerating...")
-                    mock_data_file = None
-                    similarity = None
-
-                # Generate new mock data if not reused or blockIds don't match
-                if not mock_data_file:
-                    mock_data_file = None  # Reset to trigger generation below
+                        self._log(f"⚠️  Failed to load freshly generated mock data: {e}")
 
                 total_time = (datetime.now() - start_time).total_seconds()
 

@@ -1,19 +1,19 @@
 {
   "step": "mock_reuse_evaluator",
   "input": {
-    "question": "Show me my equity portfolio with holdings, daily P&L, sector allocation and YTD performance"
+    "question": "Show me my equity portfolio with a comprehensive breakdown. Provide a ranked list of holdings including ticker, current price, quantity, market value, and weight percentage. Display daily P&L metrics including total portfolio value, daily change (absolute), and daily change percentage. Provide a sector allocation breakdown showing percentage distribution by category. Include YTD performance with time series data (daily dates and values) from the beginning of the year to today, along with the total YTD return percentage."
   },
   "output": {
     "success": true,
     "data": {
       "reused": true,
       "mock_data_file": "/Users/shivc/Documents/Workspace/JS/qna-ai-admin/backend/headless/agents/mock/../../output/mock_data/show_me_my_equity_portfolio_with_holdings,_daily_p.json",
-      "similarity": 0.944805622
+      "similarity": 0.965768874
     },
     "error": null,
     "metadata": {},
-    "timestamp": "2026-03-18T21:33:52.524327"
+    "timestamp": "2026-03-18T21:36:00.930276"
   },
-  "duration": 2.009206,
-  "timestamp": "2026-03-18T21:33:52.524544"
+  "duration": 2.308265,
+  "timestamp": "2026-03-18T21:36:00.930680"
 }
