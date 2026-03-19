@@ -1,0 +1,226 @@
+{
+  "step": "mock_v2_generator",
+  "input": {
+    "original_question": "Show me my equity portfolio with holdings, daily P&L, sector allocation and YTD performance",
+    "intent": "User wants a comprehensive view of their equity portfolio including a list of holdings, daily profit and loss, sector diversification, and year-to-date return.",
+    "decomposition": [
+      {
+        "sub_question": "What are my current stock holdings?",
+        "block_type": "table",
+        "title": "Portfolio Holdings",
+        "description": "List of all equity positions currently held in the portfolio",
+        "canonical_params": {
+          "metric": "holdings"
+        }
+      },
+      {
+        "sub_question": "What is my portfolio's daily profit and loss?",
+        "block_type": "kpi-card",
+        "title": "Daily P&L",
+        "description": "Total monetary gain or loss for the portfolio today",
+        "canonical_params": {
+          "metric": "pnl"
+        }
+      },
+      {
+        "sub_question": "How is my portfolio allocated across sectors?",
+        "block_type": "donut-chart",
+        "title": "Sector Allocation",
+        "description": "Percentage breakdown of the portfolio by industry sector",
+        "canonical_params": {
+          "metric": "sector_allocation"
+        }
+      },
+      {
+        "sub_question": "What is my portfolio's year-to-date return?",
+        "block_type": "kpi-card",
+        "title": "YTD Performance",
+        "description": "Total percentage return of the portfolio from the start of the year to today",
+        "canonical_params": {
+          "period": "ytd",
+          "metric": "return"
+        }
+      }
+    ],
+    "dashboard_title": "Equity Portfolio Overview"
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "blocks": [
+        {
+          "blockId": "table-01",
+          "category": "tables",
+          "title": "Portfolio Holdings",
+          "dataContract": {
+            "type": "table",
+            "description": "What are my current stock holdings?"
+          },
+          "sub_question": "What are my current stock holdings?",
+          "canonical_params": {
+            "metric": "holdings"
+          }
+        },
+        {
+          "blockId": "kpi-card-02",
+          "category": "kpi-cards",
+          "title": "Daily P&L",
+          "dataContract": {
+            "type": "kpi",
+            "description": "What is my portfolio's daily profit and loss?"
+          },
+          "sub_question": "What is my portfolio's daily profit and loss?",
+          "canonical_params": {
+            "metric": "pnl"
+          }
+        },
+        {
+          "blockId": "donut-chart-03",
+          "category": "donut-charts",
+          "title": "Sector Allocation",
+          "dataContract": {
+            "type": "donut",
+            "description": "How is my portfolio allocated across sectors?"
+          },
+          "sub_question": "How is my portfolio allocated across sectors?",
+          "canonical_params": {
+            "metric": "sector_allocation"
+          }
+        },
+        {
+          "blockId": "kpi-card-04",
+          "category": "kpi-cards",
+          "title": "YTD Performance",
+          "dataContract": {
+            "type": "kpi",
+            "description": "What is my portfolio's year-to-date return?"
+          },
+          "sub_question": "What is my portfolio's year-to-date return?",
+          "canonical_params": {
+            "period": "ytd",
+            "metric": "return"
+          }
+        }
+      ],
+      "blocks_data": [
+        {
+          "blockId": "table-01",
+          "data": {
+            "rows": [
+              {
+                "symbol": "AAPL",
+                "shares": 13,
+                "price": 311.07215738702746,
+                "value": 27618.05307702152,
+                "P&L": -442.25132836294836,
+                "P&L %": 5.9633572924787295
+              },
+              {
+                "symbol": "MSFT",
+                "shares": 79,
+                "price": 432.3062054803617,
+                "value": 1654.6565128592076,
+                "P&L": 734.8509398481772,
+                "P&L %": -3.8880811932115322
+              },
+              {
+                "symbol": "GOOGL",
+                "shares": 21,
+                "price": 181.95885783041712,
+                "value": 23295.699469833533,
+                "P&L": 790.3949383603931,
+                "P&L %": -3.1885637800084443
+              },
+              {
+                "symbol": "AMZN",
+                "shares": 28,
+                "price": 394.19255332059464,
+                "value": 34110.31627807751,
+                "P&L": 1464.4257200982372,
+                "P&L %": 13.313961880316121
+              },
+              {
+                "symbol": "TSLA",
+                "shares": 32,
+                "price": 477.3625858128168,
+                "value": 30664.01316290678,
+                "P&L": 817.237919071453,
+                "P&L %": 2.941255323771223
+              },
+              {
+                "symbol": "NVDA",
+                "shares": 75,
+                "price": 213.78845591673627,
+                "value": 30018.23055768539,
+                "P&L": 4459.214802265393,
+                "P&L %": 2.847069110094411
+              }
+            ],
+            "columns": [
+              "symbol",
+              "shares",
+              "price",
+              "value",
+              "P&L",
+              "P&L %"
+            ]
+          }
+        },
+        {
+          "blockId": "kpi-card-02",
+          "data": {
+            "metrics": [
+              {
+                "label": "Daily P&L",
+                "value": "28.60",
+                "change": "9.8%",
+                "changeType": "negative"
+              }
+            ]
+          }
+        },
+        {
+          "blockId": "donut-chart-03",
+          "data": {
+            "data": [
+              {
+                "name": "Sector A",
+                "value": 21.11473310908431
+              },
+              {
+                "name": "Sector B",
+                "value": 39.325226667095045
+              },
+              {
+                "name": "Sector C",
+                "value": 18.68188322479016
+              },
+              {
+                "name": "Sector D",
+                "value": 20.878156999030484
+              }
+            ]
+          }
+        },
+        {
+          "blockId": "kpi-card-04",
+          "data": {
+            "metrics": [
+              {
+                "label": "YTD Performance",
+                "value": "40.8%",
+                "change": "4.1%",
+                "changeType": "negative"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-18T23:21:33.842012"
+  },
+  "duration": 0.000341,
+  "timestamp": "2026-03-18T23:21:33.842169"
+}

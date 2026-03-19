@@ -1,0 +1,54 @@
+{
+  "step": "ui_planner_batch_v2",
+  "input": {
+    "question": "Build an ETF dashboard with returns, expense ratios, tracking error and benchmark comparison"
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "original_question": "Build an ETF dashboard with returns, expense ratios, tracking error and benchmark comparison",
+      "intent": "Create a dashboard analyzing an ETF's performance, cost, and tracking accuracy relative to a benchmark.",
+      "decomposition": [
+        {
+          "sub_question": "How does the ETF's cumulative return compare to the benchmark over time?",
+          "block_type": "line-chart",
+          "title": "ETF vs Benchmark Returns",
+          "description": "A time-series comparison of cumulative returns between the ETF and its benchmark.",
+          "canonical_params": {
+            "ticker": "TICKER",
+            "benchmark": "BENCHMARK",
+            "period": "1y"
+          }
+        },
+        {
+          "sub_question": "What is the expense ratio of the ETF?",
+          "block_type": "kpi-card",
+          "title": "Expense Ratio",
+          "description": "The annual expense ratio charged by the ETF.",
+          "canonical_params": {
+            "ticker": "TICKER",
+            "metric": "expense_ratio"
+          }
+        },
+        {
+          "sub_question": "What is the tracking error of the ETF relative to the benchmark?",
+          "block_type": "kpi-card",
+          "title": "Tracking Error",
+          "description": "The standard deviation of the difference between the ETF returns and benchmark returns.",
+          "canonical_params": {
+            "ticker": "TICKER",
+            "benchmark": "BENCHMARK",
+            "metric": "tracking_error",
+            "period": "1y"
+          }
+        }
+      ],
+      "dashboard_title": "ETF Performance & Risk Dashboard"
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-18T23:22:37.330718"
+  },
+  "duration": 47.961171,
+  "timestamp": "2026-03-18T23:22:37.331178"
+}

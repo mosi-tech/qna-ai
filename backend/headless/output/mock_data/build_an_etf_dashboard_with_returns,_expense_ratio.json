@@ -1,0 +1,123 @@
+{
+  "question": "Build an ETF dashboard with returns, expense ratios, tracking error and benchmark comparison",
+  "generated_at": "2026-03-18T22:08:43.048761",
+  "data": {},
+  "blocks": [
+    {
+      "block_id": "line-chart-06",
+      "type": "lineChart",
+      "sub_question": "Show the cumulative return of the ETF versus its benchmark over the last year.",
+      "canonical_params": {
+        "ticker": "QQQ",
+        "metric": "cumulative_return",
+        "period": "1y",
+        "benchmark": "SPY"
+      },
+      "data": {
+        "data": [
+          {
+            "date": "2026-02-16",
+            "Value": 72624.86
+          },
+          {
+            "date": "2026-03-18",
+            "Value": 79145.34
+          },
+          {
+            "date": "2026-02-16",
+            "Benchmark": 80262.84
+          },
+          {
+            "date": "2026-03-18",
+            "Benchmark": 64660.3
+          }
+        ],
+        "categories": [
+          "Value",
+          "Benchmark"
+        ],
+        "summary": [
+          {
+            "name": "Value",
+            "value": 96489.6
+          },
+          {
+            "name": "Benchmark",
+            "value": 52227.92
+          }
+        ]
+      }
+    },
+    {
+      "block_id": "kpi-card-01",
+      "type": "kpi",
+      "sub_question": "What is the current expense ratio of the ETF?",
+      "canonical_params": {
+        "ticker": "QQQ",
+        "metric": "expense_ratio"
+      },
+      "data": {
+        "metrics": [
+          {
+            "name": "Portfolio Value",
+            "stat": 55388.62,
+            "change": "29.74%",
+            "changeType": "positive"
+          },
+          {
+            "name": "Daily P&L",
+            "stat": 1517.93,
+            "change": "-12.69%",
+            "changeType": "negative"
+          },
+          {
+            "name": "YTD Return",
+            "stat": 66425.91,
+            "change": "-11.78%",
+            "changeType": "negative"
+          },
+          {
+            "name": "Sharpe Ratio",
+            "stat": 2759.76,
+            "change": "16.25%",
+            "changeType": "negative"
+          }
+        ],
+        "cols": 4
+      }
+    },
+    {
+      "block_id": "kpi-card-02",
+      "type": "kpi",
+      "sub_question": "What is the current tracking error of the ETF?",
+      "canonical_params": {
+        "ticker": "QQQ",
+        "metric": "tracking_error",
+        "period": "1y"
+      },
+      "data": {
+        "metrics": [
+          {
+            "name": "Portfolio Value",
+            "stat": 95328.43,
+            "change": "26.44%",
+            "changeType": "positive"
+          },
+          {
+            "name": "Daily P&L",
+            "stat": 9940.98,
+            "change": "-9.38%",
+            "changeType": "positive"
+          },
+          {
+            "name": "YTD Return",
+            "stat": 20788.8,
+            "change": "-3.29%",
+            "changeType": "negative"
+          }
+        ],
+        "cols": 3
+      }
+    }
+  ]
+}

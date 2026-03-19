@@ -1,0 +1,35 @@
+{
+  "step": "ui_planner_batch_v2",
+  "input": {
+    "question": "Which sectors in my portfolio are performing best?"
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "original_question": "Which sectors in my portfolio are performing best?",
+      "intent": "Identify the sectors with the highest returns within the user's portfolio",
+      "decomposition": [
+        {
+          "sub_question": "What is the return of each sector in my portfolio?",
+          "block_type": "bar-chart",
+          "title": "Sector Performance Comparison",
+          "description": "Bar chart comparing returns across all portfolio sectors",
+          "canonical_params": {}
+        },
+        {
+          "sub_question": "Which sectors have the highest returns?",
+          "block_type": "bar-list",
+          "title": "Top Performing Sectors",
+          "description": "Ranked list of sectors by performance",
+          "canonical_params": {}
+        }
+      ],
+      "dashboard_title": "Portfolio Sector Performance"
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-18T22:34:13.377992"
+  },
+  "duration": 99.147241,
+  "timestamp": "2026-03-18T22:34:13.378245"
+}

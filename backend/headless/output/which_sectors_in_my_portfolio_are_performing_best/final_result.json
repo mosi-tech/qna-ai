@@ -1,0 +1,127 @@
+{
+  "success": true,
+  "action": "mock_generated",
+  "title": "Portfolio Sector Performance",
+  "blocks": [
+    {
+      "blockId": "bar-chart-01",
+      "category": "bar-charts",
+      "title": "Sector Performance Comparison",
+      "dataContract": {
+        "type": "bar",
+        "description": "What is the return of each sector in my portfolio?"
+      },
+      "sub_question": "What is the return of each sector in my portfolio?",
+      "canonical_params": {}
+    },
+    {
+      "blockId": "bar-list-02",
+      "category": "bar-lists",
+      "title": "Top Performing Sectors",
+      "dataContract": {
+        "type": "barlist",
+        "description": "Which sectors have the highest returns?"
+      },
+      "sub_question": "Which sectors have the highest returns?",
+      "canonical_params": {}
+    }
+  ],
+  "blocks_data": [
+    {
+      "blockId": "bar-chart-01",
+      "data": {
+        "data": [
+          {
+            "name": "A",
+            "value": 36.97335480688573,
+            "date": "2026-03-18"
+          },
+          {
+            "name": "B",
+            "value": 81.4146300453015,
+            "date": "2026-03-18"
+          },
+          {
+            "name": "C",
+            "value": 35.15397335041465,
+            "date": "2026-03-18"
+          },
+          {
+            "name": "D",
+            "value": 75.52132249843028,
+            "date": "2026-03-18"
+          }
+        ],
+        "categories": [
+          "value"
+        ],
+        "summary": [
+          {
+            "name": "value",
+            "value": 229.06328070103217
+          }
+        ]
+      }
+    },
+    {
+      "blockId": "bar-list-02",
+      "data": {
+        "data": [
+          {
+            "name": "Item C",
+            "value": 40.617124185743194
+          },
+          {
+            "name": "Item D",
+            "value": 28.10328401341174
+          },
+          {
+            "name": "Item A",
+            "value": 24.540239186658674
+          },
+          {
+            "name": "Item B",
+            "value": 24.1960608030723
+          },
+          {
+            "name": "Item E",
+            "value": 17.584951127469765
+          }
+        ]
+      }
+    }
+  ],
+  "total_time": 99.148985,
+  "steps": [
+    {
+      "step": "ui_planner_batch_v2",
+      "success": true,
+      "duration": 99.147241,
+      "timestamp": "2026-03-18T22:34:13.378071",
+      "output_size": 674
+    },
+    {
+      "step": "mock_v2_generator",
+      "success": true,
+      "duration": 0.000271,
+      "timestamp": "2026-03-18T22:34:13.379206",
+      "output_size": 1272
+    }
+  ],
+  "timestamp": "2026-03-18T22:34:13.379810",
+  "_debug": {
+    "timestamp": "2026-03-18T22:34:13.379855",
+    "blocks_count": 2,
+    "blocks_data_count": 2,
+    "blocks_ids": [
+      "bar-chart-01",
+      "bar-list-02"
+    ],
+    "blocks_data_ids": [
+      "bar-chart-01",
+      "bar-list-02"
+    ],
+    "success": true,
+    "action": "mock_generated"
+  }
+}

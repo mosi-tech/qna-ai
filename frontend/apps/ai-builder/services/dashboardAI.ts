@@ -194,11 +194,11 @@ interface PipelineError {
     };
 }
 
-export async function runHeadlessPipeline(question: string, options: { useNoCode?: boolean; mock?: boolean; skipReuse?: boolean } = {}): Promise<HeadlessResult> {
+export async function runHeadlessPipeline(question: string, options: { useNoCode?: boolean; mock?: boolean; mockV2?: boolean; skipReuse?: boolean } = {}): Promise<HeadlessResult> {
     const res = await fetch('/api/headless/run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question, useNoCode: options.useNoCode ?? true, mock: options.mock ?? false, skipReuse: options.skipReuse ?? false }),
+        body: JSON.stringify({ question, useNoCode: options.useNoCode ?? true, mock: options.mock ?? false, mockV2: options.mockV2 ?? false, skipReuse: options.skipReuse ?? false }),
     });
 
     if (!res.ok) {

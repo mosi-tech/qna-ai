@@ -1,0 +1,2029 @@
+{
+  "version": "1.0",
+  "description": "Comprehensive catalog of 100+ dashboard views/templates for retail investor questions. Each view composes finBlocks into complete dashboard layouts.",
+  "totalViews": 105,
+  "categories": {
+    "portfolio": {
+      "description": "Portfolio management and monitoring views",
+      "count": 12,
+      "views": [
+        {
+          "id": "portfolio-daily-check",
+          "name": "Portfolio Daily Check-in",
+          "description": "Quick daily portfolio overview with key metrics and top performers",
+          "userType": "Active trader, Daily monitor",
+          "matchingQuestions": ["Show my portfolio", "How's my portfolio?", "Portfolio snapshot", "What's my portfolio value?"],
+          "finBlocks": ["portfolio-kpi-summary", "holdings-table", "sector-allocation-donut", "price-movements-spark"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Summary", "rows": 1, "cols": 4, "blocks": ["portfolio-kpi-summary"]},
+              {"name": "Holdings", "rows": 2, "cols": 2, "blocks": ["holdings-table", "price-movements-spark"]},
+              {"name": "Diversification", "rows": 1, "cols": 2, "blocks": ["sector-allocation-donut", "asset-class-allocation"]}
+            ]
+          },
+          "mcpRequired": ["get_account", "get_positions", "get_portfolio_history", "get_real_time_data", "get_technical_indicator"],
+          "estimatedTime": "4 seconds",
+          "userTiers": ["free", "pro", "premium"]
+        },
+        {
+          "id": "portfolio-performance-review",
+          "name": "Portfolio Performance Review",
+          "description": "Detailed performance analysis vs benchmark with risk metrics and attribution",
+          "userType": "Investor, Performance analyst",
+          "matchingQuestions": ["How's my performance?", "Performance vs benchmark", "Show me my returns", "What's my Sharpe ratio?"],
+          "finBlocks": ["portfolio-performance-vs-benchmark", "annual-returns-bar", "risk-adjusted-returns", "portfolio-kpi-summary", "top-bottom-performers", "monthly-returns-bar"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Summary", "rows": 1, "cols": 4, "blocks": ["portfolio-kpi-summary"]},
+              {"name": "Performance vs Benchmark", "rows": 1, "cols": 1, "blocks": ["portfolio-performance-vs-benchmark"]},
+              {"name": "Returns Analysis", "rows": 1, "cols": 2, "blocks": ["annual-returns-bar", "monthly-returns-bar"]},
+              {"name": "Risk-Adjusted Metrics", "rows": 1, "cols": 2, "blocks": ["risk-adjusted-returns", "top-bottom-performers"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_portfolio_history", "get_benchmark_returns"],
+          "estimatedTime": "5 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "portfolio-rebalancing",
+          "name": "Rebalancing Analysis",
+          "description": "Target vs actual allocation with drift analysis and rebalancing recommendations",
+          "userType": "Strategic investor",
+          "matchingQuestions": ["Should I rebalance?", "Portfolio drift", "Allocation analysis", "Rebalancing suggestions"],
+          "finBlocks": ["sector-allocation-donut", "asset-class-allocation", "concentration-by-holding", "portfolio-turnover-table"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Current Allocation", "rows": 1, "cols": 2, "blocks": ["sector-allocation-donut", "asset-class-allocation"]},
+              {"name": "Concentration", "rows": 1, "cols": 2, "blocks": ["concentration-by-holding", "portfolio-turnover-table"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_account"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "portfolio-income",
+          "name": "Income Summary",
+          "description": "Total dividend income, yield, and distributions summary",
+          "userType": "Income investor",
+          "matchingQuestions": ["How much dividend income?", "Dividend yield", "Income portfolio", "Monthly distributions"],
+          "finBlocks": ["dividend-summary-kpi", "dividend-income-kpi", "monthly-dividend-trend"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Income Summary", "rows": 1, "cols": 2, "blocks": ["dividend-summary-kpi", "dividend-income-kpi"]},
+              {"name": "Trend", "rows": 1, "cols": 1, "blocks": ["monthly-dividend-trend"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_dividends"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["free", "pro", "premium"]
+        },
+        {
+          "id": "portfolio-concentration",
+          "name": "Concentration Risk Analysis",
+          "description": "Detailed concentration analysis and diversification metrics",
+          "userType": "Risk-conscious investor",
+          "matchingQuestions": ["Concentration risk", "How diversified?", "Top positions", "Diversification score"],
+          "finBlocks": ["concentration-by-holding", "concentration-risk", "sector-allocation-donut", "asset-class-allocation"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Concentration Metrics", "rows": 1, "cols": 2, "blocks": ["concentration-by-holding", "concentration-risk"]},
+              {"name": "Diversification", "rows": 1, "cols": 2, "blocks": ["sector-allocation-donut", "asset-class-allocation"]}
+            ]
+          },
+          "mcpRequired": ["get_positions"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "portfolio-tax-planning",
+          "name": "Tax Planning Overview",
+          "description": "Tax loss harvesting opportunities and gain/loss summary",
+          "userType": "Tax-aware investor",
+          "matchingQuestions": ["Tax planning", "Tax loss harvesting", "Capital gains", "Tax optimization"],
+          "finBlocks": ["tax-loss-harvesting-opportunities", "long-term-vs-shortterm-gains", "estimated-tax-liability"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Tax Opportunities", "rows": 1, "cols": 1, "blocks": ["tax-loss-harvesting-opportunities"]},
+              {"name": "Gains Summary", "rows": 1, "cols": 2, "blocks": ["long-term-vs-shortterm-gains", "estimated-tax-liability"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_account"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "portfolio-comparison",
+          "name": "Portfolio vs Benchmark Deep Dive",
+          "description": "Detailed benchmark comparison with attribution and capture ratios",
+          "userType": "Performance analyst",
+          "matchingQuestions": ["Outperformance analysis", "Alpha generation", "Beta analysis", "Attribution analysis"],
+          "finBlocks": ["portfolio-performance-vs-benchmark", "upside-downside-capture", "alpha-generation", "attribution-analysis"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Performance", "rows": 1, "cols": 1, "blocks": ["portfolio-performance-vs-benchmark"]},
+              {"name": "Capture Analysis", "rows": 1, "cols": 2, "blocks": ["upside-downside-capture", "alpha-generation"]},
+              {"name": "Attribution", "rows": 1, "cols": 1, "blocks": ["attribution-analysis"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_portfolio_history", "get_benchmark_returns"],
+          "estimatedTime": "5 seconds",
+          "userTiers": ["premium"]
+        },
+        {
+          "id": "portfolio-rolling-returns",
+          "name": "Rolling Returns Analysis",
+          "description": "Best and worst rolling period returns with consistency metrics",
+          "userType": "Advanced investor",
+          "matchingQuestions": ["Rolling returns", "Return consistency", "Best/worst periods", "Performance cycles"],
+          "finBlocks": ["rolling-returns", "best-worst-periods", "win-rate-metrics"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Rolling Analysis", "rows": 1, "cols": 1, "blocks": ["rolling-returns"]},
+              {"name": "Period Analysis", "rows": 1, "cols": 2, "blocks": ["best-worst-periods", "win-rate-metrics"]}
+            ]
+          },
+          "mcpRequired": ["get_portfolio_history"],
+          "estimatedTime": "3 seconds",
+          "userTiers": ["premium"]
+        },
+        {
+          "id": "portfolio-goals-tracking",
+          "name": "Goals Progress Tracking",
+          "description": "Track portfolio progress against financial goals",
+          "userType": "Goal-oriented investor",
+          "matchingQuestions": ["Goals progress", "Retirement tracking", "Savings target", "Goal achievement"],
+          "finBlocks": ["returns-vs-goals", "portfolio-kpi-summary", "annual-returns-bar"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Progress", "rows": 1, "cols": 1, "blocks": ["returns-vs-goals"]},
+              {"name": "Summary", "rows": 1, "cols": 2, "blocks": ["portfolio-kpi-summary", "annual-returns-bar"]}
+            ]
+          },
+          "mcpRequired": ["get_account", "get_portfolio_history"],
+          "estimatedTime": "3 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "portfolio-time-weighted-returns",
+          "name": "Time-Weighted Returns",
+          "description": "TWR analysis removing impact of cash flows",
+          "userType": "Advanced investor",
+          "matchingQuestions": ["Time-weighted returns", "TWR analysis", "Cash flow adjusted returns"],
+          "finBlocks": ["time-weighted-returns", "annual-returns-bar"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Analysis", "rows": 1, "cols": 1, "blocks": ["time-weighted-returns", "annual-returns-bar"]}
+            ]
+          },
+          "mcpRequired": ["get_portfolio_history", "get_account"],
+          "estimatedTime": "3 seconds",
+          "userTiers": ["premium"]
+        },
+        {
+          "id": "portfolio-asset-allocation",
+          "name": "Strategic Asset Allocation",
+          "description": "Asset class breakdown with target allocation comparison",
+          "userType": "Strategic investor",
+          "matchingQuestions": ["Asset allocation", "Asset class breakdown", "Strategic allocation"],
+          "finBlocks": ["asset-class-allocation", "portfolio-kpi-summary"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Allocation", "rows": 1, "cols": 2, "blocks": ["asset-class-allocation", "portfolio-kpi-summary"]}
+            ]
+          },
+          "mcpRequired": ["get_positions"],
+          "estimatedTime": "1 second",
+          "userTiers": ["free", "pro", "premium"]
+        },
+        {
+          "id": "portfolio-volatility-trend",
+          "name": "Volatility Trend Analysis",
+          "description": "Portfolio volatility changes over time with regime detection",
+          "userType": "Risk manager",
+          "matchingQuestions": ["Volatility trend", "Risk trend", "Volatility regime", "Volatility pattern"],
+          "finBlocks": ["portfolio-kpi-summary", "rolling-returns", "risk-adjusted-returns"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Summary", "rows": 1, "cols": 1, "blocks": ["portfolio-kpi-summary"]},
+              {"name": "Trend", "rows": 1, "cols": 2, "blocks": ["rolling-returns", "risk-adjusted-returns"]}
+            ]
+          },
+          "mcpRequired": ["get_portfolio_history"],
+          "estimatedTime": "3 seconds",
+          "userTiers": ["pro", "premium"]
+        }
+      ]
+    },
+    "stock_research": {
+      "description": "Individual stock analysis and research views",
+      "count": 12,
+      "views": [
+        {
+          "id": "stock-quick-research",
+          "name": "Stock Quick Research",
+          "description": "Essential stock metrics and price action at a glance",
+          "userType": "Quick researcher",
+          "matchingQuestions": ["Research AAPL", "Tell me about Tesla", "Stock info", "How's Microsoft?"],
+          "finBlocks": ["stock-price-kpi", "price-history-with-ma", "fundamental-metrics-list"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Price", "rows": 1, "cols": 1, "blocks": ["stock-price-kpi"]},
+              {"name": "History", "rows": 1, "cols": 1, "blocks": ["price-history-with-ma"]},
+              {"name": "Fundamentals", "rows": 1, "cols": 1, "blocks": ["fundamental-metrics-list"]}
+            ]
+          },
+          "mcpRequired": ["get_real_time_data", "get_historical_data", "get_fundamentals"],
+          "estimatedTime": "4 seconds",
+          "userTiers": ["free", "pro", "premium"]
+        },
+        {
+          "id": "stock-deep-research",
+          "name": "Stock Deep Research",
+          "description": "Comprehensive stock analysis with earnings and valuation",
+          "userType": "Deep researcher",
+          "matchingQuestions": ["Deep dive into", "Full stock analysis", "Detailed research", "Comprehensive analysis"],
+          "finBlocks": ["stock-price-kpi", "price-history-with-ma", "fundamental-metrics-list", "earnings-history-table", "valuation-comparison"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Summary", "rows": 1, "cols": 2, "blocks": ["stock-price-kpi", "fundamental-metrics-list"]},
+              {"name": "Price Action", "rows": 1, "cols": 1, "blocks": ["price-history-with-ma"]},
+              {"name": "Earnings", "rows": 1, "cols": 1, "blocks": ["earnings-history-table"]},
+              {"name": "Valuation", "rows": 1, "cols": 1, "blocks": ["valuation-comparison"]}
+            ]
+          },
+          "mcpRequired": ["get_real_time_data", "get_historical_data", "get_fundamentals", "get_market_news"],
+          "estimatedTime": "5 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "stock-earnings",
+          "name": "Earnings Analysis",
+          "description": "Quarterly earnings history and earnings quality score",
+          "userType": "Earnings trader",
+          "matchingQuestions": ["Show earnings", "Earnings history", "EPS trend", "Earnings quality"],
+          "finBlocks": ["earnings-history-table", "earnings-quality-score", "growth-metrics-comparison"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Earnings History", "rows": 1, "cols": 1, "blocks": ["earnings-history-table"]},
+              {"name": "Quality & Growth", "rows": 1, "cols": 2, "blocks": ["earnings-quality-score", "growth-metrics-comparison"]}
+            ]
+          },
+          "mcpRequired": ["get_fundamentals"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "stock-dividend-analysis",
+          "name": "Dividend Analysis",
+          "description": "Dividend history, yield, and growth trends",
+          "userType": "Dividend investor",
+          "matchingQuestions": ["Dividend history", "Dividend yield", "Dividend growth", "Payout ratio"],
+          "finBlocks": ["dividend-history-line", "top-dividend-yielders", "dividend-growth-analysis"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "History", "rows": 1, "cols": 1, "blocks": ["dividend-history-line"]},
+              {"name": "Analysis", "rows": 1, "cols": 2, "blocks": ["dividend-growth-analysis", "top-dividend-yielders"]}
+            ]
+          },
+          "mcpRequired": ["get_fundamentals", "get_dividends"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "stock-valuation",
+          "name": "Valuation Analysis",
+          "description": "P/E, P/B, DCF analysis with peer comparison",
+          "userType": "Value investor",
+          "matchingQuestions": ["Valuation analysis", "Is it expensive?", "Fair value", "Valuation metrics"],
+          "finBlocks": ["valuation-comparison", "stock-price-kpi", "fundamental-metrics-list"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Price & Metrics", "rows": 1, "cols": 2, "blocks": ["stock-price-kpi", "fundamental-metrics-list"]},
+              {"name": "Comparison", "rows": 1, "cols": 1, "blocks": ["valuation-comparison"]}
+            ]
+          },
+          "mcpRequired": ["get_fundamentals", "get_real_time_data"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "stock-technical",
+          "name": "Technical Analysis",
+          "description": "Moving averages, RSI, support/resistance levels",
+          "userType": "Technical trader",
+          "matchingQuestions": ["Technical analysis", "Support resistance", "Moving averages", "RSI level"],
+          "finBlocks": ["price-history-with-ma", "technical-indicators-kpi", "support-resistance-levels"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Price", "rows": 1, "cols": 1, "blocks": ["price-history-with-ma"]},
+              {"name": "Indicators", "rows": 1, "cols": 2, "blocks": ["technical-indicators-kpi", "support-resistance-levels"]}
+            ]
+          },
+          "mcpRequired": ["get_historical_data", "get_technical_indicator"],
+          "estimatedTime": "3 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "stock-insider-trading",
+          "name": "Insider Activity",
+          "description": "Insider trading patterns and transaction analysis",
+          "userType": "Insider activity tracker",
+          "matchingQuestions": ["Insider trading", "Insider activity", "Insider buying/selling"],
+          "finBlocks": ["insider-transactions-table", "stock-price-kpi"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Activity", "rows": 1, "cols": 1, "blocks": ["insider-transactions-table", "stock-price-kpi"]}
+            ]
+          },
+          "mcpRequired": ["get_fundamentals"],
+          "estimatedTime": "1 second",
+          "userTiers": ["premium"]
+        },
+        {
+          "id": "stock-analyst-ratings",
+          "name": "Analyst Ratings",
+          "description": "Sell-side analyst ratings and recommendations",
+          "userType": "Consensus tracker",
+          "matchingQuestions": ["Analyst ratings", "Price target", "Consensus", "Analyst recommendations"],
+          "finBlocks": ["analyst-ratings-bar", "stock-price-kpi"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Ratings", "rows": 1, "cols": 2, "blocks": ["analyst-ratings-bar", "stock-price-kpi"]}
+            ]
+          },
+          "mcpRequired": ["get_fundamentals"],
+          "estimatedTime": "1 second",
+          "userTiers": ["premium"]
+        },
+        {
+          "id": "stock-volume-analysis",
+          "name": "Volume & Momentum",
+          "description": "Volume trends and momentum indicators",
+          "userType": "Momentum trader",
+          "matchingQuestions": ["Volume analysis", "Momentum", "Volume trend", "MACD signals"],
+          "finBlocks": ["volume-trend-bar", "price-history-with-ma", "technical-indicators-kpi"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Momentum", "rows": 1, "cols": 1, "blocks": ["technical-indicators-kpi"]},
+              {"name": "Trend", "rows": 1, "cols": 2, "blocks": ["price-history-with-ma", "volume-trend-bar"]}
+            ]
+          },
+          "mcpRequired": ["get_historical_data", "get_technical_indicator"],
+          "estimatedTime": "3 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "stock-fundamental-quality",
+          "name": "Fundamental Quality",
+          "description": "Margin analysis, ROE, debt ratios, cash flow",
+          "userType": "Quality investor",
+          "matchingQuestions": ["Quality check", "Balance sheet", "Cash flow", "Debt analysis", "ROE analysis"],
+          "finBlocks": ["earnings-quality-score", "margin-analysis", "debt-to-equity-trend", "free-cashflow-analysis"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Quality", "rows": 1, "cols": 2, "blocks": ["earnings-quality-score", "margin-analysis"]},
+              {"name": "Leverage & Cash", "rows": 1, "cols": 2, "blocks": ["debt-to-equity-trend", "free-cashflow-analysis"]}
+            ]
+          },
+          "mcpRequired": ["get_fundamentals"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "stock-competitive-moat",
+          "name": "Competitive Position",
+          "description": "Competitive advantages and business moat analysis",
+          "userType": "Compounder investor",
+          "matchingQuestions": ["Competitive advantage", "Moat analysis", "Competitive position", "Business quality"],
+          "finBlocks": ["competitive-moat-analysis", "return-on-capital", "earnings-quality-score"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Analysis", "rows": 1, "cols": 2, "blocks": ["competitive-moat-analysis", "return-on-capital"]},
+              {"name": "Quality", "rows": 1, "cols": 1, "blocks": ["earnings-quality-score"]}
+            ]
+          },
+          "mcpRequired": ["get_fundamentals"],
+          "estimatedTime": "1 second",
+          "userTiers": ["premium"]
+        },
+        {
+          "id": "stock-revenue-analysis",
+          "name": "Revenue & Growth",
+          "description": "Revenue breakdown and growth trajectory",
+          "userType": "Growth investor",
+          "matchingQuestions": ["Revenue growth", "Growth analysis", "Revenue trend", "Sales growth"],
+          "finBlocks": ["revenue-growth-breakdown", "growth-metrics-comparison"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Growth", "rows": 1, "cols": 2, "blocks": ["revenue-growth-breakdown", "growth-metrics-comparison"]}
+            ]
+          },
+          "mcpRequired": ["get_fundamentals"],
+          "estimatedTime": "1 second",
+          "userTiers": ["pro", "premium"]
+        }
+      ]
+    },
+    "etf_analysis": {
+      "description": "ETF comparison and analysis views",
+      "count": 10,
+      "views": [
+        {
+          "id": "etf-quick-comparison",
+          "name": "ETF Quick Comparison",
+          "description": "Side-by-side ETF metrics and performance",
+          "userType": "ETF investor",
+          "matchingQuestions": ["Compare SPY vs QQQ", "ETF comparison", "Which ETF is better?"],
+          "finBlocks": ["etf-comparison-metrics", "etf-performance-line"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Metrics", "rows": 1, "cols": 1, "blocks": ["etf-comparison-metrics"]},
+              {"name": "Performance", "rows": 1, "cols": 1, "blocks": ["etf-performance-line"]}
+            ]
+          },
+          "mcpRequired": ["get_real_time_data", "get_historical_data"],
+          "estimatedTime": "3 seconds",
+          "userTiers": ["free", "pro", "premium"]
+        },
+        {
+          "id": "etf-holdings",
+          "name": "ETF Holdings Analysis",
+          "description": "Top holdings and composition breakdown",
+          "userType": "ETF analyst",
+          "matchingQuestions": ["ETF holdings", "What's in SPY?", "ETF composition"],
+          "finBlocks": ["etf-top-holdings", "etf-sector-allocation"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Holdings", "rows": 1, "cols": 1, "blocks": ["etf-top-holdings"]},
+              {"name": "Allocation", "rows": 1, "cols": 1, "blocks": ["etf-sector-allocation"]}
+            ]
+          },
+          "mcpRequired": ["get_fundamentals"],
+          "estimatedTime": "1 second",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "etf-risk-analysis",
+          "name": "ETF Risk Profile",
+          "description": "Volatility, beta, drawdown, and risk metrics",
+          "userType": "Risk manager",
+          "matchingQuestions": ["ETF risk", "Volatility comparison", "Risk metrics"],
+          "finBlocks": ["etf-risk-metrics", "etf-comparison-metrics"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Risk", "rows": 1, "cols": 2, "blocks": ["etf-risk-metrics", "etf-comparison-metrics"]}
+            ]
+          },
+          "mcpRequired": ["get_historical_data"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "etf-expense-analysis",
+          "name": "ETF Expense Impact",
+          "description": "Expense ratio comparison and long-term impact on returns",
+          "userType": "Cost-conscious investor",
+          "matchingQuestions": ["Expense ratio", "Fee comparison", "Cost impact"],
+          "finBlocks": ["etf-expense-ratio-impact", "etf-comparison-metrics"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Analysis", "rows": 1, "cols": 2, "blocks": ["etf-expense-ratio-impact", "etf-comparison-metrics"]}
+            ]
+          },
+          "mcpRequired": ["get_fundamentals"],
+          "estimatedTime": "1 second",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "etf-dividend-income",
+          "name": "ETF Dividend Income",
+          "description": "Dividend yield and income distribution history",
+          "userType": "Income investor",
+          "matchingQuestions": ["ETF dividend", "Dividend yield", "Income distribution"],
+          "finBlocks": ["etf-dividend-yield-trend", "etf-comparison-metrics"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Dividend", "rows": 1, "cols": 2, "blocks": ["etf-dividend-yield-trend", "etf-comparison-metrics"]}
+            ]
+          },
+          "mcpRequired": ["get_fundamentals", "get_dividends"],
+          "estimatedTime": "1 second",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "etf-sector-exposure",
+          "name": "Sector Exposure",
+          "description": "Sector breakdown and geographic exposure",
+          "userType": "Allocation manager",
+          "matchingQuestions": ["Sector exposure", "Geographic allocation", "Country breakdown"],
+          "finBlocks": ["etf-sector-allocation", "etf-geographic-exposure"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Exposure", "rows": 1, "cols": 2, "blocks": ["etf-sector-allocation", "etf-geographic-exposure"]}
+            ]
+          },
+          "mcpRequired": ["get_fundamentals"],
+          "estimatedTime": "1 second",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "etf-overlap",
+          "name": "ETF Overlap Analysis",
+          "description": "Holdings overlap between ETFs",
+          "userType": "Portfolio builder",
+          "matchingQuestions": ["ETF overlap", "Duplicate holdings", "Overlap analysis"],
+          "finBlocks": ["etf-overlap-analysis", "etf-top-holdings"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Overlap", "rows": 1, "cols": 2, "blocks": ["etf-overlap-analysis", "etf-top-holdings"]}
+            ]
+          },
+          "mcpRequired": ["get_fundamentals"],
+          "estimatedTime": "1 second",
+          "userTiers": ["premium"]
+        },
+        {
+          "id": "etf-tax-efficiency",
+          "name": "Tax Efficiency",
+          "description": "Tax efficiency metrics and distributions analysis",
+          "userType": "Tax optimizer",
+          "matchingQuestions": ["Tax efficiency", "Tax distributions", "Tax-efficient ETF"],
+          "finBlocks": ["etf-tax-efficiency"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Tax Efficiency", "rows": 1, "cols": 1, "blocks": ["etf-tax-efficiency"]}
+            ]
+          },
+          "mcpRequired": ["get_fundamentals"],
+          "estimatedTime": "1 second",
+          "userTiers": ["premium"]
+        },
+        {
+          "id": "etf-performance-analysis",
+          "name": "Deep Performance Analysis",
+          "description": "Long-term performance with rolling returns and consistency",
+          "userType": "Performance analyst",
+          "matchingQuestions": ["ETF performance", "Historical returns", "Long-term performance"],
+          "finBlocks": ["etf-performance-line", "etf-comparison-metrics", "rolling-returns"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Performance", "rows": 1, "cols": 1, "blocks": ["etf-performance-line"]},
+              {"name": "Metrics", "rows": 1, "cols": 2, "blocks": ["etf-comparison-metrics", "rolling-returns"]}
+            ]
+          },
+          "mcpRequired": ["get_historical_data"],
+          "estimatedTime": "3 seconds",
+          "userTiers": ["premium"]
+        },
+        {
+          "id": "etf-selection",
+          "name": "ETF Selection Guide",
+          "description": "Comprehensive comparison for ETF selection decision",
+          "userType": "Fund selector",
+          "matchingQuestions": ["Which ETF should I buy?", "Best ETF", "ETF selection"],
+          "finBlocks": ["etf-comparison-metrics", "etf-risk-metrics", "etf-sector-allocation", "etf-expense-ratio-impact"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Comparison", "rows": 1, "cols": 2, "blocks": ["etf-comparison-metrics", "etf-risk-metrics"]},
+              {"name": "Details", "rows": 1, "cols": 2, "blocks": ["etf-sector-allocation", "etf-expense-ratio-impact"]}
+            ]
+          },
+          "mcpRequired": ["get_real_time_data", "get_historical_data", "get_fundamentals"],
+          "estimatedTime": "3 seconds",
+          "userTiers": ["pro", "premium"]
+        }
+      ]
+    },
+    "risk_management": {
+      "description": "Portfolio risk analysis and monitoring views",
+      "count": 12,
+      "views": [
+        {
+          "id": "risk-overview",
+          "name": "Risk Overview",
+          "description": "Quick summary of portfolio risk metrics",
+          "userType": "Risk manager",
+          "matchingQuestions": ["Show risk", "What's my VaR?", "Portfolio concentration?"],
+          "finBlocks": ["risk-metrics-kpi", "volatility-by-holding", "concentration-risk"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Summary", "rows": 1, "cols": 1, "blocks": ["risk-metrics-kpi"]},
+              {"name": "Analysis", "rows": 1, "cols": 2, "blocks": ["volatility-by-holding", "concentration-risk"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_portfolio_history"],
+          "estimatedTime": "3 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "risk-correlation",
+          "name": "Correlation Analysis",
+          "description": "Asset correlation matrix and relationship analysis",
+          "userType": "Portfolio scientist",
+          "matchingQuestions": ["Correlation analysis", "Asset relationships", "Correlation matrix"],
+          "finBlocks": ["correlation-matrix", "concentration-risk"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Analysis", "rows": 1, "cols": 2, "blocks": ["correlation-matrix", "concentration-risk"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_portfolio_history"],
+          "estimatedTime": "3 seconds",
+          "userTiers": ["premium"]
+        },
+        {
+          "id": "risk-drawdown",
+          "name": "Drawdown Analysis",
+          "description": "Historical drawdowns and recovery patterns",
+          "userType": "Risk analyst",
+          "matchingQuestions": ["Drawdown history", "Max drawdown", "Recovery time"],
+          "finBlocks": ["drawdown-history", "best-worst-periods"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Analysis", "rows": 1, "cols": 2, "blocks": ["drawdown-history", "best-worst-periods"]}
+            ]
+          },
+          "mcpRequired": ["get_portfolio_history"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "risk-var",
+          "name": "Value at Risk",
+          "description": "VaR analysis across confidence levels and scenarios",
+          "userType": "Risk officer",
+          "matchingQuestions": ["Value at risk", "VaR calculation", "Tail risk"],
+          "finBlocks": ["var-by-scenario", "risk-metrics-kpi"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "VaR", "rows": 1, "cols": 2, "blocks": ["var-by-scenario", "risk-metrics-kpi"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_portfolio_history"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["premium"]
+        },
+        {
+          "id": "risk-beta",
+          "name": "Beta & Sensitivity",
+          "description": "Market sensitivity and systematic risk analysis",
+          "userType": "Risk analyst",
+          "matchingQuestions": ["Beta analysis", "Market sensitivity", "Systematic risk"],
+          "finBlocks": ["beta-analysis", "portfolio-performance-vs-benchmark"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Analysis", "rows": 1, "cols": 2, "blocks": ["beta-analysis", "portfolio-performance-vs-benchmark"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_portfolio_history"],
+          "estimatedTime": "3 seconds",
+          "userTiers": ["premium"]
+        },
+        {
+          "id": "risk-downside",
+          "name": "Downside Risk",
+          "description": "Downside deviation and tail risk metrics",
+          "userType": "Risk-conscious investor",
+          "matchingQuestions": ["Downside risk", "Downside protection", "Tail risk"],
+          "finBlocks": ["downside-risk-analysis", "risk-metrics-kpi"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Analysis", "rows": 1, "cols": 2, "blocks": ["downside-risk-analysis", "risk-metrics-kpi"]}
+            ]
+          },
+          "mcpRequired": ["get_portfolio_history"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["premium"]
+        },
+        {
+          "id": "risk-sector",
+          "name": "Sector Risk Exposure",
+          "description": "Risk contribution by sector",
+          "userType": "Sector analyst",
+          "matchingQuestions": ["Sector risk", "Risk by sector", "Sector exposure risk"],
+          "finBlocks": ["sector-risk-exposure", "concentration-risk"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Analysis", "rows": 1, "cols": 2, "blocks": ["sector-risk-exposure", "concentration-risk"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_portfolio_history"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "risk-stress-test",
+          "name": "Stress Testing",
+          "description": "Portfolio performance under various stress scenarios",
+          "userType": "Risk officer",
+          "matchingQuestions": ["Stress test", "What if markets crash?", "Scenario analysis"],
+          "finBlocks": ["stress-test-results", "var-by-scenario", "risk-metrics-kpi"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Scenarios", "rows": 1, "cols": 1, "blocks": ["stress-test-results"]},
+              {"name": "Analysis", "rows": 1, "cols": 2, "blocks": ["var-by-scenario", "risk-metrics-kpi"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_portfolio_history"],
+          "estimatedTime": "3 seconds",
+          "userTiers": ["premium"]
+        },
+        {
+          "id": "risk-limits",
+          "name": "Risk Limits Monitoring",
+          "description": "Monitor portfolio against risk limits and thresholds",
+          "userType": "Risk manager",
+          "matchingQuestions": ["Risk limits", "Limit violations", "Risk monitoring"],
+          "finBlocks": ["risk-limits-monitoring", "risk-metrics-kpi"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Monitoring", "rows": 1, "cols": 2, "blocks": ["risk-limits-monitoring", "risk-metrics-kpi"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_portfolio_history"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["premium"]
+        },
+        {
+          "id": "risk-volatility-clustering",
+          "name": "Volatility Clustering",
+          "description": "Volatility regime analysis and clustering patterns",
+          "userType": "Advanced analyst",
+          "matchingQuestions": ["Volatility clustering", "Volatility regimes", "Volatility patterns"],
+          "finBlocks": ["volatility-by-holding", "rolling-returns"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Analysis", "rows": 1, "cols": 2, "blocks": ["volatility-by-holding", "rolling-returns"]}
+            ]
+          },
+          "mcpRequired": ["get_portfolio_history"],
+          "estimatedTime": "3 seconds",
+          "userTiers": ["premium"]
+        },
+        {
+          "id": "risk-diversification-benefit",
+          "name": "Diversification Benefits",
+          "description": "How diversification reduces portfolio risk",
+          "userType": "Portfolio builder",
+          "matchingQuestions": ["Diversification benefit", "Diversification ratio", "Correlation benefit"],
+          "finBlocks": ["correlation-matrix", "concentration-risk", "sector-allocation-donut"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Analysis", "rows": 1, "cols": 2, "blocks": ["correlation-matrix", "concentration-risk"]},
+              {"name": "Allocation", "rows": 1, "cols": 1, "blocks": ["sector-allocation-donut"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_portfolio_history"],
+          "estimatedTime": "3 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "risk-tail-analysis",
+          "name": "Tail Risk Analysis",
+          "description": "Extreme loss probability and tail statistics",
+          "userType": "Risk officer",
+          "matchingQuestions": ["Tail risk", "Extreme loss", "Worst case scenario"],
+          "finBlocks": ["var-by-scenario", "downside-risk-analysis", "stress-test-results"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Analysis", "rows": 1, "cols": 3, "blocks": ["var-by-scenario", "downside-risk-analysis", "stress-test-results"]}
+            ]
+          },
+          "mcpRequired": ["get_portfolio_history"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["premium"]
+        }
+      ]
+    },
+    "performance": {
+      "description": "Performance analytics and attribution views",
+      "count": 12,
+      "views": [
+        {
+          "id": "performance-summary",
+          "name": "Performance Summary",
+          "description": "Annual returns and performance metrics",
+          "userType": "Investor",
+          "matchingQuestions": ["How's my performance?", "Performance summary", "Annual returns"],
+          "finBlocks": ["annual-returns-bar", "risk-adjusted-returns", "portfolio-kpi-summary"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Summary", "rows": 1, "cols": 1, "blocks": ["portfolio-kpi-summary"]},
+              {"name": "Analysis", "rows": 1, "cols": 2, "blocks": ["annual-returns-bar", "risk-adjusted-returns"]}
+            ]
+          },
+          "mcpRequired": ["get_portfolio_history"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["free", "pro", "premium"]
+        },
+        {
+          "id": "performance-distribution",
+          "name": "Return Distribution",
+          "description": "Distribution of returns and probability analysis",
+          "userType": "Analyst",
+          "matchingQuestions": ["Return distribution", "Return statistics", "Return probability"],
+          "finBlocks": ["return-distribution", "win-rate-metrics"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Distribution", "rows": 1, "cols": 2, "blocks": ["return-distribution", "win-rate-metrics"]}
+            ]
+          },
+          "mcpRequired": ["get_portfolio_history"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "performance-attribution",
+          "name": "Attribution Analysis",
+          "description": "Return attribution by position and sector",
+          "userType": "Performance analyst",
+          "matchingQuestions": ["Attribution analysis", "Return contribution", "Position contribution"],
+          "finBlocks": ["attribution-analysis", "top-bottom-performers"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Attribution", "rows": 1, "cols": 2, "blocks": ["attribution-analysis", "top-bottom-performers"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_portfolio_history"],
+          "estimatedTime": "3 seconds",
+          "userTiers": ["premium"]
+        },
+        {
+          "id": "performance-top-bottom",
+          "name": "Best & Worst Performers",
+          "description": "Top and bottom performing positions",
+          "userType": "Investor",
+          "matchingQuestions": ["Best performers", "Worst performers", "Top holdings", "Laggards"],
+          "finBlocks": ["top-bottom-performers", "holdings-table"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Performance", "rows": 1, "cols": 1, "blocks": ["top-bottom-performers"]},
+              {"name": "Holdings", "rows": 1, "cols": 1, "blocks": ["holdings-table"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_real_time_data"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["free", "pro", "premium"]
+        },
+        {
+          "id": "performance-upside-downside",
+          "name": "Upside/Downside Capture",
+          "description": "How much of benchmark gains/losses portfolio captures",
+          "userType": "Performance analyst",
+          "matchingQuestions": ["Upside capture", "Downside protection", "Capture ratio"],
+          "finBlocks": ["upside-downside-capture", "portfolio-performance-vs-benchmark"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Capture", "rows": 1, "cols": 2, "blocks": ["upside-downside-capture", "portfolio-performance-vs-benchmark"]}
+            ]
+          },
+          "mcpRequired": ["get_portfolio_history"],
+          "estimatedTime": "3 seconds",
+          "userTiers": ["premium"]
+        },
+        {
+          "id": "performance-alpha",
+          "name": "Alpha Generation",
+          "description": "Risk-adjusted excess return (alpha) analysis",
+          "userType": "Active manager",
+          "matchingQuestions": ["Alpha generation", "Excess return", "Skill analysis"],
+          "finBlocks": ["alpha-generation", "portfolio-performance-vs-benchmark", "risk-adjusted-returns"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Analysis", "rows": 1, "cols": 3, "blocks": ["alpha-generation", "portfolio-performance-vs-benchmark", "risk-adjusted-returns"]}
+            ]
+          },
+          "mcpRequired": ["get_portfolio_history"],
+          "estimatedTime": "3 seconds",
+          "userTiers": ["premium"]
+        },
+        {
+          "id": "performance-rolling",
+          "name": "Rolling Returns",
+          "description": "Rolling period returns and consistency",
+          "userType": "Consistency analyst",
+          "matchingQuestions": ["Rolling returns", "Consistency", "Return persistence"],
+          "finBlocks": ["rolling-returns", "win-rate-metrics"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Analysis", "rows": 1, "cols": 2, "blocks": ["rolling-returns", "win-rate-metrics"]}
+            ]
+          },
+          "mcpRequired": ["get_portfolio_history"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "performance-monthly",
+          "name": "Monthly Returns Heatmap",
+          "description": "Monthly returns heatmap and seasonality",
+          "userType": "Trader",
+          "matchingQuestions": ["Monthly returns", "Return patterns", "Seasonality"],
+          "finBlocks": ["monthly-returns-bar", "win-rate-metrics"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Heatmap", "rows": 1, "cols": 1, "blocks": ["monthly-returns-bar"]},
+              {"name": "Statistics", "rows": 1, "cols": 1, "blocks": ["win-rate-metrics"]}
+            ]
+          },
+          "mcpRequired": ["get_portfolio_history"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "performance-vs-goals",
+          "name": "Performance vs Goals",
+          "description": "How portfolio is tracking against financial goals",
+          "userType": "Goal-focused investor",
+          "matchingQuestions": ["Goals tracking", "Goal progress", "Target achievement"],
+          "finBlocks": ["returns-vs-goals", "annual-returns-bar"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Tracking", "rows": 1, "cols": 2, "blocks": ["returns-vs-goals", "annual-returns-bar"]}
+            ]
+          },
+          "mcpRequired": ["get_portfolio_history"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "performance-periods",
+          "name": "Best/Worst Periods",
+          "description": "Historical best and worst performance periods",
+          "userType": "Analyst",
+          "matchingQuestions": ["Best period", "Worst period", "Historical ranges"],
+          "finBlocks": ["best-worst-periods", "rolling-returns"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Periods", "rows": 1, "cols": 2, "blocks": ["best-worst-periods", "rolling-returns"]}
+            ]
+          },
+          "mcpRequired": ["get_portfolio_history"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "performance-twr",
+          "name": "Time-Weighted vs Money-Weighted",
+          "description": "TWR vs MWR comparison",
+          "userType": "Advanced investor",
+          "matchingQuestions": ["TWR vs MWR", "Time-weighted returns", "Money-weighted returns"],
+          "finBlocks": ["time-weighted-returns", "annual-returns-bar"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Comparison", "rows": 1, "cols": 2, "blocks": ["time-weighted-returns", "annual-returns-bar"]}
+            ]
+          },
+          "mcpRequired": ["get_portfolio_history"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["premium"]
+        },
+        {
+          "id": "performance-comprehensive",
+          "name": "Comprehensive Analysis",
+          "description": "Complete performance dashboard with all metrics",
+          "userType": "Professional analyst",
+          "matchingQuestions": ["Full performance analysis", "Comprehensive analysis", "Complete metrics"],
+          "finBlocks": ["portfolio-performance-vs-benchmark", "annual-returns-bar", "risk-adjusted-returns", "attribution-analysis", "top-bottom-performers", "rolling-returns"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Performance", "rows": 1, "cols": 1, "blocks": ["portfolio-performance-vs-benchmark"]},
+              {"name": "Returns", "rows": 1, "cols": 2, "blocks": ["annual-returns-bar", "rolling-returns"]},
+              {"name": "Risk", "rows": 1, "cols": 1, "blocks": ["risk-adjusted-returns"]},
+              {"name": "Attribution", "rows": 1, "cols": 2, "blocks": ["attribution-analysis", "top-bottom-performers"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_portfolio_history"],
+          "estimatedTime": "5 seconds",
+          "userTiers": ["premium"]
+        }
+      ]
+    },
+    "income": {
+      "description": "Dividend and income tracking views",
+      "count": 10,
+      "views": [
+        {
+          "id": "income-overview",
+          "name": "Income Overview",
+          "description": "Total dividend income, yield, and distributions",
+          "userType": "Income investor",
+          "matchingQuestions": ["Dividend income", "Dividend yield", "Income summary", "Total distributions"],
+          "finBlocks": ["dividend-income-kpi", "dividend-summary-kpi", "monthly-dividend-trend"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Summary", "rows": 1, "cols": 2, "blocks": ["dividend-income-kpi", "dividend-summary-kpi"]},
+              {"name": "Trend", "rows": 1, "cols": 1, "blocks": ["monthly-dividend-trend"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_dividends"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["free", "pro", "premium"]
+        },
+        {
+          "id": "income-payers",
+          "name": "Top Dividend Payers",
+          "description": "List of highest dividend yielding positions",
+          "userType": "Income investor",
+          "matchingQuestions": ["Top dividend payers", "Highest yield", "Dividend stocks"],
+          "finBlocks": ["dividend-payers-table", "top-dividend-yielders"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Top Payers", "rows": 1, "cols": 2, "blocks": ["top-dividend-yielders", "dividend-payers-table"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_dividends"],
+          "estimatedTime": "1 second",
+          "userTiers": ["free", "pro", "premium"]
+        },
+        {
+          "id": "income-growth",
+          "name": "Dividend Growth Analysis",
+          "description": "Dividend growth trajectory and trends",
+          "userType": "Dividend growth investor",
+          "matchingQuestions": ["Dividend growth", "Dividend trend", "Growth investing"],
+          "finBlocks": ["dividend-growth-analysis", "monthly-dividend-trend"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Growth", "rows": 1, "cols": 2, "blocks": ["dividend-growth-analysis", "monthly-dividend-trend"]}
+            ]
+          },
+          "mcpRequired": ["get_dividends"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "income-by-sector",
+          "name": "Dividend by Sector",
+          "description": "Income contribution by business sector",
+          "userType": "Sector analyzer",
+          "matchingQuestions": ["Income by sector", "Sector dividend yield", "Tech dividend income"],
+          "finBlocks": ["sector-dividend-yield", "sector-allocation-donut"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Analysis", "rows": 1, "cols": 2, "blocks": ["sector-dividend-yield", "sector-allocation-donut"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_dividends"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "income-coverage",
+          "name": "Dividend Safety",
+          "description": "Payout ratio and dividend coverage analysis",
+          "userType": "Conservative investor",
+          "matchingQuestions": ["Dividend safety", "Payout ratio", "Dividend coverage", "Sustainable dividend"],
+          "finBlocks": ["dividend-coverage-ratio", "dividend-payers-table"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Safety", "rows": 1, "cols": 2, "blocks": ["dividend-coverage-ratio", "dividend-payers-table"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_fundamentals", "get_dividends"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "income-vs-expenses",
+          "name": "Income vs Expenses",
+          "description": "Portfolio income compared to living expenses",
+          "userType": "Retirement planner",
+          "matchingQuestions": ["Income vs expenses", "Dividend coverage", "Living off dividends"],
+          "finBlocks": ["income-vs-expenses", "dividend-income-kpi"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Analysis", "rows": 1, "cols": 2, "blocks": ["income-vs-expenses", "dividend-income-kpi"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_dividends"],
+          "estimatedTime": "1 second",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "income-calendar",
+          "name": "Dividend Calendar",
+          "description": "Upcoming dividend payment dates and amounts",
+          "userType": "Cash flow manager",
+          "matchingQuestions": ["Dividend calendar", "Next dividend", "Payment dates", "Upcoming distributions"],
+          "finBlocks": ["distribution-calendar", "monthly-dividend-trend"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Calendar", "rows": 1, "cols": 2, "blocks": ["distribution-calendar", "monthly-dividend-trend"]}
+            ]
+          },
+          "mcpRequired": ["get_dividends"],
+          "estimatedTime": "1 second",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "income-reinvestment",
+          "name": "DRIP Tracking",
+          "description": "Dividend reinvestment results and compounding",
+          "userType": "Long-term investor",
+          "matchingQuestions": ["DRIP tracking", "Dividend reinvestment", "Compounding effect"],
+          "finBlocks": ["dividend-growth-analysis", "monthly-dividend-trend"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "DRIP", "rows": 1, "cols": 2, "blocks": ["dividend-growth-analysis", "monthly-dividend-trend"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_dividends"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "income-reit",
+          "name": "REIT Income Analysis",
+          "description": "REIT distributions and yield analysis",
+          "userType": "REIT investor",
+          "matchingQuestions": ["REIT income", "REIT distributions", "REIT yield"],
+          "finBlocks": ["dividend-income-kpi", "dividend-payers-table"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "REIT Analysis", "rows": 1, "cols": 2, "blocks": ["dividend-income-kpi", "dividend-payers-table"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_dividends"],
+          "estimatedTime": "1 second",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "income-optimization",
+          "name": "Income Optimization",
+          "description": "Recommendations to maximize portfolio income",
+          "userType": "Income optimizer",
+          "matchingQuestions": ["Optimize income", "Increase dividends", "Income improvement"],
+          "finBlocks": ["top-dividend-yielders", "sector-dividend-yield", "dividend-income-kpi"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Optimization", "rows": 1, "cols": 3, "blocks": ["top-dividend-yielders", "sector-dividend-yield", "dividend-income-kpi"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_dividends", "get_fundamentals"],
+          "estimatedTime": "3 seconds",
+          "userTiers": ["premium"]
+        }
+      ]
+    },
+    "sector": {
+      "description": "Sector analysis and rotation views",
+      "count": 10,
+      "views": [
+        {
+          "id": "sector-overview",
+          "name": "Sector Overview",
+          "description": "Sector allocation and performance",
+          "userType": "Sector analyst",
+          "matchingQuestions": ["Sector breakdown", "Sector allocation", "Sector performance"],
+          "finBlocks": ["sector-allocation-donut", "sector-performance-bar"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Overview", "rows": 1, "cols": 2, "blocks": ["sector-allocation-donut", "sector-performance-bar"]}
+            ]
+          },
+          "mcpRequired": ["get_positions"],
+          "estimatedTime": "1 second",
+          "userTiers": ["free", "pro", "premium"]
+        },
+        {
+          "id": "sector-holdings",
+          "name": "Holdings by Sector",
+          "description": "Complete list of holdings organized by sector",
+          "userType": "Portfolio manager",
+          "matchingQuestions": ["Holdings by sector", "Sector composition", "What's in tech?"],
+          "finBlocks": ["sector-holdings-table", "sector-allocation-donut"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Holdings", "rows": 1, "cols": 2, "blocks": ["sector-holdings-table", "sector-allocation-donut"]}
+            ]
+          },
+          "mcpRequired": ["get_positions"],
+          "estimatedTime": "1 second",
+          "userTiers": ["free", "pro", "premium"]
+        },
+        {
+          "id": "sector-volatility",
+          "name": "Sector Volatility Comparison",
+          "description": "Risk comparison across sectors",
+          "userType": "Risk analyst",
+          "matchingQuestions": ["Sector volatility", "Sector risk", "Risk by sector"],
+          "finBlocks": ["sector-volatility-comparison", "sector-risk-exposure"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Risk", "rows": 1, "cols": 2, "blocks": ["sector-volatility-comparison", "sector-risk-exposure"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_portfolio_history"],
+          "estimatedTime": "3 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "sector-valuation",
+          "name": "Sector Valuation",
+          "description": "Valuation metrics by sector",
+          "userType": "Value analyst",
+          "matchingQuestions": ["Sector valuation", "PE by sector", "Sector pricing"],
+          "finBlocks": ["sector-valuation-metrics", "sector-performance-bar"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Valuation", "rows": 1, "cols": 2, "blocks": ["sector-valuation-metrics", "sector-performance-bar"]}
+            ]
+          },
+          "mcpRequired": ["get_positions"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "sector-rotation",
+          "name": "Sector Rotation Signals",
+          "description": "Signals for tactical sector rotation",
+          "userType": "Tactical trader",
+          "matchingQuestions": ["Sector rotation", "Which sector to buy?", "Rotation signals"],
+          "finBlocks": ["sector-rotation-signals", "sector-performance-bar"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Signals", "rows": 1, "cols": 2, "blocks": ["sector-rotation-signals", "sector-performance-bar"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_portfolio_history"],
+          "estimatedTime": "3 seconds",
+          "userTiers": ["premium"]
+        },
+        {
+          "id": "sector-correlation",
+          "name": "Sector Correlation",
+          "description": "Correlation analysis between sectors",
+          "userType": "Portfolio scientist",
+          "matchingQuestions": ["Sector correlation", "Sector relationships", "Diversification"],
+          "finBlocks": ["sector-correlation", "concentration-risk"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Correlation", "rows": 1, "cols": 2, "blocks": ["sector-correlation", "concentration-risk"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_portfolio_history"],
+          "estimatedTime": "3 seconds",
+          "userTiers": ["premium"]
+        },
+        {
+          "id": "sector-economic-cycle",
+          "name": "Economic Cycle Positioning",
+          "description": "Sector positioning based on economic cycle",
+          "userType": "Macro analyst",
+          "matchingQuestions": ["Economic cycle", "Recession positioning", "Sector timing"],
+          "finBlocks": ["economic-cycle-positioning", "sector-performance-bar"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Positioning", "rows": 1, "cols": 2, "blocks": ["economic-cycle-positioning", "sector-performance-bar"]}
+            ]
+          },
+          "mcpRequired": ["get_positions"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["premium"]
+        },
+        {
+          "id": "sector-rebalancing",
+          "name": "Sector Rebalancing",
+          "description": "Rebalancing recommendations by sector",
+          "userType": "Rebalance manager",
+          "matchingQuestions": ["Sector rebalancing", "Target allocation", "Rebalance suggestion"],
+          "finBlocks": ["sector-rebalancing-recommendation", "sector-allocation-donut"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Rebalancing", "rows": 1, "cols": 2, "blocks": ["sector-rebalancing-recommendation", "sector-allocation-donut"]}
+            ]
+          },
+          "mcpRequired": ["get_positions"],
+          "estimatedTime": "1 second",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "sector-dividend",
+          "name": "Sector Dividend Analysis",
+          "description": "Dividend yield and income by sector",
+          "userType": "Income analyst",
+          "matchingQuestions": ["Sector dividend", "Income by sector", "Sector yield"],
+          "finBlocks": ["sector-dividend-yield", "sector-allocation-donut"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Dividend", "rows": 1, "cols": 2, "blocks": ["sector-dividend-yield", "sector-allocation-donut"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_dividends"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "sector-deep-analysis",
+          "name": "Deep Sector Analysis",
+          "description": "Comprehensive sector research and analysis",
+          "userType": "Analyst",
+          "matchingQuestions": ["Sector analysis", "Sector research", "Deep dive sector"],
+          "finBlocks": ["sector-holdings-table", "sector-performance-bar", "sector-valuation-metrics", "sector-volatility-comparison"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Overview", "rows": 1, "cols": 2, "blocks": ["sector-performance-bar", "sector-volatility-comparison"]},
+              {"name": "Details", "rows": 1, "cols": 2, "blocks": ["sector-valuation-metrics", "sector-holdings-table"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_portfolio_history"],
+          "estimatedTime": "3 seconds",
+          "userTiers": ["premium"]
+        }
+      ]
+    },
+    "technical": {
+      "description": "Technical analysis views",
+      "count": 8,
+      "views": [
+        {
+          "id": "technical-rsi",
+          "name": "RSI Overbought/Oversold",
+          "description": "RSI signals for overbought and oversold conditions",
+          "userType": "Technical trader",
+          "matchingQuestions": ["RSI signal", "Overbought oversold", "RSI analysis"],
+          "finBlocks": ["rsi-overbought-oversold", "price-history-with-ma"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "RSI", "rows": 1, "cols": 2, "blocks": ["rsi-overbought-oversold", "price-history-with-ma"]}
+            ]
+          },
+          "mcpRequired": ["get_historical_data", "get_technical_indicator"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "technical-macd",
+          "name": "MACD Signals",
+          "description": "MACD crossover and momentum signals",
+          "userType": "Momentum trader",
+          "matchingQuestions": ["MACD signal", "MACD crossover", "Momentum signal"],
+          "finBlocks": ["macd-crossover-signals", "price-history-with-ma"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "MACD", "rows": 1, "cols": 2, "blocks": ["macd-crossover-signals", "price-history-with-ma"]}
+            ]
+          },
+          "mcpRequired": ["get_historical_data", "get_technical_indicator"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "technical-ma",
+          "name": "Moving Average Crossover",
+          "description": "SMA/EMA crossover signals",
+          "userType": "Trend follower",
+          "matchingQuestions": ["Moving average", "MA crossover", "Trend signal"],
+          "finBlocks": ["moving-average-crossover", "price-history-with-ma"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "MA", "rows": 1, "cols": 2, "blocks": ["moving-average-crossover", "price-history-with-ma"]}
+            ]
+          },
+          "mcpRequired": ["get_historical_data", "get_technical_indicator"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "technical-bollinger",
+          "name": "Bollinger Bands",
+          "description": "Bollinger band squeeze and breakout signals",
+          "userType": "Volatility trader",
+          "matchingQuestions": ["Bollinger bands", "Band squeeze", "Volatility signal"],
+          "finBlocks": ["bollinger-band-squeeze", "price-history-with-ma"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Bollinger", "rows": 1, "cols": 2, "blocks": ["bollinger-band-squeeze", "price-history-with-ma"]}
+            ]
+          },
+          "mcpRequired": ["get_historical_data", "get_technical_indicator"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "technical-support-resistance",
+          "name": "Support & Resistance",
+          "description": "Key price levels for entry/exit",
+          "userType": "Swing trader",
+          "matchingQuestions": ["Support resistance", "Price levels", "Entry exit"],
+          "finBlocks": ["support-resistance-levels", "price-history-with-ma"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Levels", "rows": 1, "cols": 2, "blocks": ["support-resistance-levels", "price-history-with-ma"]}
+            ]
+          },
+          "mcpRequired": ["get_historical_data"],
+          "estimatedTime": "1 second",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "technical-volume",
+          "name": "Volume Analysis",
+          "description": "Volume confirmation of technical signals",
+          "userType": "Volume trader",
+          "matchingQuestions": ["Volume analysis", "Volume confirmation", "Volume signal"],
+          "finBlocks": ["volume-trend-technical", "price-history-with-ma"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Volume", "rows": 1, "cols": 2, "blocks": ["volume-trend-technical", "price-history-with-ma"]}
+            ]
+          },
+          "mcpRequired": ["get_historical_data"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "technical-stochastic",
+          "name": "Stochastic Momentum",
+          "description": "Stochastic oscillator momentum signals",
+          "userType": "Oscillator trader",
+          "matchingQuestions": ["Stochastic", "Momentum", "Oscillator signal"],
+          "finBlocks": ["stochastic-momentum", "price-history-with-ma"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Stochastic", "rows": 1, "cols": 2, "blocks": ["stochastic-momentum", "price-history-with-ma"]}
+            ]
+          },
+          "mcpRequired": ["get_historical_data", "get_technical_indicator"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["premium"]
+        },
+        {
+          "id": "technical-complete",
+          "name": "Complete Technical Analysis",
+          "description": "All technical indicators and signals",
+          "userType": "Advanced trader",
+          "matchingQuestions": ["Complete technical", "All signals", "Full technical analysis"],
+          "finBlocks": ["price-history-with-ma", "technical-indicators-kpi", "rsi-overbought-oversold", "macd-crossover-signals"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Price", "rows": 1, "cols": 1, "blocks": ["price-history-with-ma"]},
+              {"name": "Indicators", "rows": 1, "cols": 4, "blocks": ["technical-indicators-kpi", "rsi-overbought-oversold", "macd-crossover-signals", "support-resistance-levels"]}
+            ]
+          },
+          "mcpRequired": ["get_historical_data", "get_technical_indicator"],
+          "estimatedTime": "3 seconds",
+          "userTiers": ["premium"]
+        }
+      ]
+    },
+    "fundamental": {
+      "description": "Fundamental analysis views",
+      "count": 8,
+      "views": [
+        {
+          "id": "fundamental-quality",
+          "name": "Quality Score",
+          "description": "Overall earnings quality and business quality",
+          "userType": "Quality investor",
+          "matchingQuestions": ["Quality score", "Business quality", "Earnings quality"],
+          "finBlocks": ["earnings-quality-score", "margin-analysis"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Quality", "rows": 1, "cols": 2, "blocks": ["earnings-quality-score", "margin-analysis"]}
+            ]
+          },
+          "mcpRequired": ["get_fundamentals"],
+          "estimatedTime": "1 second",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "fundamental-margins",
+          "name": "Profitability Analysis",
+          "description": "Gross, operating, and net margins",
+          "userType": "Efficiency analyst",
+          "matchingQuestions": ["Margin analysis", "Profitability", "Operating margin"],
+          "finBlocks": ["margin-analysis", "earnings-quality-score"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Margins", "rows": 1, "cols": 2, "blocks": ["margin-analysis", "earnings-quality-score"]}
+            ]
+          },
+          "mcpRequired": ["get_fundamentals"],
+          "estimatedTime": "1 second",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "fundamental-debt",
+          "name": "Leverage Analysis",
+          "description": "Debt levels and balance sheet strength",
+          "userType": "Credit analyst",
+          "matchingQuestions": ["Debt analysis", "Leverage", "Balance sheet"],
+          "finBlocks": ["debt-to-equity-trend", "balance-sheet-health"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Leverage", "rows": 1, "cols": 2, "blocks": ["debt-to-equity-trend", "balance-sheet-health"]}
+            ]
+          },
+          "mcpRequired": ["get_fundamentals"],
+          "estimatedTime": "1 second",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "fundamental-cashflow",
+          "name": "Cash Flow Analysis",
+          "description": "Free cash flow and cash generation",
+          "userType": "Value analyst",
+          "matchingQuestions": ["Cash flow", "FCF analysis", "Cash generation"],
+          "finBlocks": ["free-cashflow-analysis", "earnings-quality-score"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Cash Flow", "rows": 1, "cols": 2, "blocks": ["free-cashflow-analysis", "earnings-quality-score"]}
+            ]
+          },
+          "mcpRequired": ["get_fundamentals"],
+          "estimatedTime": "1 second",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "fundamental-roc",
+          "name": "Return on Capital",
+          "description": "Return on equity and return on assets",
+          "userType": "Compounder",
+          "matchingQuestions": ["ROE analysis", "Return on capital", "Efficiency ratio"],
+          "finBlocks": ["return-on-capital", "competitive-moat-analysis"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "ROC", "rows": 1, "cols": 2, "blocks": ["return-on-capital", "competitive-moat-analysis"]}
+            ]
+          },
+          "mcpRequired": ["get_fundamentals"],
+          "estimatedTime": "1 second",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "fundamental-growth",
+          "name": "Growth Analysis",
+          "description": "Revenue and earnings growth rates",
+          "userType": "Growth investor",
+          "matchingQuestions": ["Growth rate", "Revenue growth", "Earnings growth"],
+          "finBlocks": ["revenue-growth-breakdown", "growth-metrics-comparison"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Growth", "rows": 1, "cols": 2, "blocks": ["revenue-growth-breakdown", "growth-metrics-comparison"]}
+            ]
+          },
+          "mcpRequired": ["get_fundamentals"],
+          "estimatedTime": "1 second",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "fundamental-moat",
+          "name": "Competitive Moat",
+          "description": "Business moat and competitive advantages",
+          "userType": "Compounder",
+          "matchingQuestions": ["Competitive moat", "Moat strength", "Competitive advantage"],
+          "finBlocks": ["competitive-moat-analysis", "return-on-capital"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Moat", "rows": 1, "cols": 2, "blocks": ["competitive-moat-analysis", "return-on-capital"]}
+            ]
+          },
+          "mcpRequired": ["get_fundamentals"],
+          "estimatedTime": "1 second",
+          "userTiers": ["premium"]
+        },
+        {
+          "id": "fundamental-complete",
+          "name": "Complete Fundamental Analysis",
+          "description": "All fundamental metrics in one view",
+          "userType": "Fundamental analyst",
+          "matchingQuestions": ["Fundamental analysis", "Complete analysis", "Full fundamental"],
+          "finBlocks": ["earnings-quality-score", "margin-analysis", "debt-to-equity-trend", "free-cashflow-analysis", "return-on-capital", "competitive-moat-analysis"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Quality", "rows": 1, "cols": 2, "blocks": ["earnings-quality-score", "margin-analysis"]},
+              {"name": "Balance Sheet", "rows": 1, "cols": 2, "blocks": ["debt-to-equity-trend", "balance-sheet-health"]},
+              {"name": "Returns", "rows": 1, "cols": 2, "blocks": ["return-on-capital", "competitive-moat-analysis"]}
+            ]
+          },
+          "mcpRequired": ["get_fundamentals"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["premium"]
+        }
+      ]
+    },
+    "tax": {
+      "description": "Tax planning and optimization views",
+      "count": 8,
+      "views": [
+        {
+          "id": "tax-summary",
+          "name": "Tax Summary",
+          "description": "Annual capital gains and tax liability estimate",
+          "userType": "Tax planner",
+          "matchingQuestions": ["Tax summary", "Capital gains", "Tax liability", "Tax estimate"],
+          "finBlocks": ["long-term-vs-shortterm-gains", "estimated-tax-liability"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Tax", "rows": 1, "cols": 2, "blocks": ["long-term-vs-shortterm-gains", "estimated-tax-liability"]}
+            ]
+          },
+          "mcpRequired": ["get_account", "get_positions"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "tax-loss-harvesting",
+          "name": "Tax Loss Harvesting",
+          "description": "Opportunities to harvest losses for tax reduction",
+          "userType": "Tax optimizer",
+          "matchingQuestions": ["Tax loss harvesting", "Realized losses", "Loss harvesting opportunity"],
+          "finBlocks": ["tax-loss-harvesting-opportunities", "holdings-table"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Harvesting", "rows": 1, "cols": 2, "blocks": ["tax-loss-harvesting-opportunities", "holdings-table"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_real_time_data"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "tax-cost-basis",
+          "name": "Cost Basis Analysis",
+          "description": "Detailed cost basis tracking and analysis",
+          "userType": "Detail-oriented investor",
+          "matchingQuestions": ["Cost basis", "Cost tracking", "Basis analysis"],
+          "finBlocks": ["cost-basis-analysis", "holdings-table"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Cost Basis", "rows": 1, "cols": 2, "blocks": ["cost-basis-analysis", "holdings-table"]}
+            ]
+          },
+          "mcpRequired": ["get_account", "get_positions"],
+          "estimatedTime": "1 second",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "tax-state",
+          "name": "State Tax Optimization",
+          "description": "State-level tax optimization strategies",
+          "userType": "State tax optimizer",
+          "matchingQuestions": ["State tax", "Tax optimization", "Residency tax"],
+          "finBlocks": ["state-tax-optimization", "estimated-tax-liability"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "State Tax", "rows": 1, "cols": 2, "blocks": ["state-tax-optimization", "estimated-tax-liability"]}
+            ]
+          },
+          "mcpRequired": ["get_account", "get_positions"],
+          "estimatedTime": "1 second",
+          "userTiers": ["premium"]
+        },
+        {
+          "id": "tax-charitable",
+          "name": "Charitable Giving",
+          "description": "Strategies for tax-efficient charitable giving",
+          "userType": "Philanthropist",
+          "matchingQuestions": ["Charitable giving", "Charity tax", "Donor strategy"],
+          "finBlocks": ["charitable-giving-strategy", "estimated-tax-liability"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Charitable", "rows": 1, "cols": 2, "blocks": ["charitable-giving-strategy", "estimated-tax-liability"]}
+            ]
+          },
+          "mcpRequired": ["get_account", "get_positions"],
+          "estimatedTime": "1 second",
+          "userTiers": ["premium"]
+        },
+        {
+          "id": "tax-quarterly",
+          "name": "Quarterly Taxes",
+          "description": "Quarterly estimated tax planning",
+          "userType": "Self-employed",
+          "matchingQuestions": ["Quarterly taxes", "Estimated taxes", "Quarterly payment"],
+          "finBlocks": ["quarterly-estimated-taxes", "estimated-tax-liability"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Quarterly", "rows": 1, "cols": 2, "blocks": ["quarterly-estimated-taxes", "estimated-tax-liability"]}
+            ]
+          },
+          "mcpRequired": ["get_account", "get_portfolio_history"],
+          "estimatedTime": "1 second",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "tax-long-term-strategy",
+          "name": "Long-term Tax Strategy",
+          "description": "Multi-year tax planning strategy",
+          "userType": "Strategic planner",
+          "matchingQuestions": ["Long-term tax strategy", "Tax planning", "Multi-year plan"],
+          "finBlocks": ["long-term-vs-shortterm-gains", "estimated-tax-liability"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Strategy", "rows": 1, "cols": 2, "blocks": ["long-term-vs-shortterm-gains", "estimated-tax-liability"]}
+            ]
+          },
+          "mcpRequired": ["get_account", "get_positions", "get_portfolio_history"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["premium"]
+        },
+        {
+          "id": "tax-complete",
+          "name": "Complete Tax Planning",
+          "description": "Comprehensive tax planning dashboard",
+          "userType": "Tax professional",
+          "matchingQuestions": ["Tax planning", "Complete tax analysis", "Tax dashboard"],
+          "finBlocks": ["estimated-tax-liability", "long-term-vs-shortterm-gains", "tax-loss-harvesting-opportunities", "cost-basis-analysis"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Summary", "rows": 1, "cols": 2, "blocks": ["estimated-tax-liability", "long-term-vs-shortterm-gains"]},
+              {"name": "Opportunities", "rows": 1, "cols": 2, "blocks": ["tax-loss-harvesting-opportunities", "cost-basis-analysis"]}
+            ]
+          },
+          "mcpRequired": ["get_account", "get_positions"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["premium"]
+        }
+      ]
+    },
+    "monitoring": {
+      "description": "Portfolio and market monitoring views",
+      "count": 10,
+      "views": [
+        {
+          "id": "monitoring-alerts",
+          "name": "Alert Center",
+          "description": "Price alerts and notifications",
+          "userType": "Active monitor",
+          "matchingQuestions": ["Set alert", "Price alert", "Alert setup"],
+          "finBlocks": ["price-alert-setup", "holdings-table"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Alerts", "rows": 1, "cols": 2, "blocks": ["price-alert-setup", "holdings-table"]}
+            ]
+          },
+          "mcpRequired": ["get_positions"],
+          "estimatedTime": "1 second",
+          "userTiers": ["free", "pro", "premium"]
+        },
+        {
+          "id": "monitoring-drift",
+          "name": "Portfolio Drift",
+          "description": "Monitor portfolio drift from target allocation",
+          "userType": "Portfolio manager",
+          "matchingQuestions": ["Portfolio drift", "Allocation drift", "Rebalance check"],
+          "finBlocks": ["portfolio-drift-monitoring", "sector-allocation-donut"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Drift", "rows": 1, "cols": 2, "blocks": ["portfolio-drift-monitoring", "sector-allocation-donut"]}
+            ]
+          },
+          "mcpRequired": ["get_positions"],
+          "estimatedTime": "1 second",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "monitoring-earnings",
+          "name": "Earnings Calendar",
+          "description": "Upcoming earnings releases for portfolio positions",
+          "userType": "Earnings trader",
+          "matchingQuestions": ["Earnings calendar", "Next earnings", "Earnings dates"],
+          "finBlocks": ["earnings-calendar", "holdings-table"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Calendar", "rows": 1, "cols": 2, "blocks": ["earnings-calendar", "holdings-table"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_fundamentals"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "monitoring-news",
+          "name": "News & Sentiment",
+          "description": "Portfolio news and sentiment tracking",
+          "userType": "News tracker",
+          "matchingQuestions": ["Portfolio news", "Sentiment", "News alerts"],
+          "finBlocks": ["news-sentiment-alerts", "holdings-table"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "News", "rows": 1, "cols": 2, "blocks": ["news-sentiment-alerts", "holdings-table"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_market_news"],
+          "estimatedTime": "3 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "monitoring-dividends",
+          "name": "Dividend Notifications",
+          "description": "Upcoming dividend announcements and ex-dates",
+          "userType": "Income tracker",
+          "matchingQuestions": ["Dividend announce", "Ex-date", "Dividend notice"],
+          "finBlocks": ["dividend-announcement-alerts", "distribution-calendar"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Dividends", "rows": 1, "cols": 2, "blocks": ["dividend-announcement-alerts", "distribution-calendar"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_dividends"],
+          "estimatedTime": "1 second",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "monitoring-ratings",
+          "name": "Rating Changes",
+          "description": "Analyst rating downgrades and upgrades",
+          "userType": "Consensus tracker",
+          "matchingQuestions": ["Rating downgrade", "Rating change", "Analyst upgrade"],
+          "finBlocks": ["rating-downgrade-alerts", "holdings-table"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Ratings", "rows": 1, "cols": 2, "blocks": ["rating-downgrade-alerts", "holdings-table"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_fundamentals"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["premium"]
+        },
+        {
+          "id": "monitoring-volatility",
+          "name": "Volatility Spikes",
+          "description": "Alert on unusual volatility in holdings",
+          "userType": "Risk monitor",
+          "matchingQuestions": ["Volatility spike", "Volatility alert", "Risk event"],
+          "finBlocks": ["volatility-spike-alerts", "holdings-table"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Volatility", "rows": 1, "cols": 2, "blocks": ["volatility-spike-alerts", "holdings-table"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_portfolio_history"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["pro", "premium"]
+        },
+        {
+          "id": "monitoring-buybacks",
+          "name": "Buyback Notifications",
+          "description": "Share buyback announcements",
+          "userType": "Corporate action tracker",
+          "matchingQuestions": ["Buyback", "Share repurchase", "Buyback announcement"],
+          "finBlocks": ["buyback-notification", "holdings-table"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Buybacks", "rows": 1, "cols": 2, "blocks": ["buyback-notification", "holdings-table"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_market_news"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["premium"]
+        },
+        {
+          "id": "monitoring-sec",
+          "name": "SEC Filings",
+          "description": "10-K, 10-Q, 8-K filing alerts",
+          "userType": "Detail researcher",
+          "matchingQuestions": ["SEC filing", "10-K filing", "10-Q release"],
+          "finBlocks": ["sec-filing-alerts", "holdings-table"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Filings", "rows": 1, "cols": 2, "blocks": ["sec-filing-alerts", "holdings-table"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_market_news"],
+          "estimatedTime": "2 seconds",
+          "userTiers": ["premium"]
+        },
+        {
+          "id": "monitoring-dashboard",
+          "name": "Monitoring Dashboard",
+          "description": "Complete monitoring dashboard with all alerts",
+          "userType": "Monitoring manager",
+          "matchingQuestions": ["Monitor dashboard", "All alerts", "Complete monitoring"],
+          "finBlocks": ["price-alert-setup", "portfolio-drift-monitoring", "earnings-calendar", "news-sentiment-alerts", "dividend-announcement-alerts"],
+          "layout": {
+            "type": "grid",
+            "sections": [
+              {"name": "Alerts", "rows": 1, "cols": 5, "blocks": ["price-alert-setup", "portfolio-drift-monitoring", "earnings-calendar", "news-sentiment-alerts", "dividend-announcement-alerts"]}
+            ]
+          },
+          "mcpRequired": ["get_positions", "get_fundamentals", "get_market_news", "get_dividends"],
+          "estimatedTime": "4 seconds",
+          "userTiers": ["premium"]
+        }
+      ]
+    }
+  },
+  "notes": {
+    "architecture": "Each view composes finBlocks into complete dashboard layouts. Views are mapped to user questions via keyword matching for fast intent detection. Views specify required MCP calls for parallel data fetching.",
+    "userTiers": "Views support multiple subscription tiers: free (basic portfolio/stock views), pro (intermediate analysis), premium (advanced/professional tools)",
+    "performance": "Template path target: 15 seconds total (1-2s classifier, 0ms template load, 3-5s parallel MCP, 1-2s render)",
+    "fallback": "Views not matching any template fall back to intelligent UI Planner LLM path for novel questions",
+    "scalability": "100+ views can be generated from 100 finBlocks through composition and parametrization, avoiding code explosion"
+  }
+}

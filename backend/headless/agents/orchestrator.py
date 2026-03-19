@@ -10,7 +10,8 @@ Usage:
     python orchestrator.py --question "..." --skip-execution
     python orchestrator.py --question "..." --skip-enhancement
     python orchestrator.py --question "..." --no-code  # Use direct MCP tool calling (faster)
-    python orchestrator.py --question "..." --mock  # Mock mode for testing UI Planner and Reuse
+    python orchestrator.py --question "..." --mock  # Mock v1: Single-shot planning + mock data
+    python orchestrator.py --question "..." --mock --mock-v2  # Mock v2: Decompose into sub-Qs + mock data per sub-Q
 
 Pipeline (default - with code generation):
     1. question_enhancer (optional, skipped via --skip-enhancement)
@@ -29,17 +30,25 @@ Pipeline (with --no-code flag):
     3. code_prompt_builder (selects relevant MCP functions)
     4. mcp_direct_agent (answers via direct MCP tool calling)
 
-Pipeline (with --mock flag):
+Pipeline (with --mock flag, v1 single-shot):
     1. question_enhancer (optional)
-    2. ui_planner
+    2. ui_planner (plan blocks directly from question)
     3. mock_reuse_evaluator (checks ChromaDB for existing mock data)
-    4. mock_data_generator (if no reuse, generates mock data based on UI Planner output)
+    4. mock_data_generator (generates mock data for all blocks together)
+
+Pipeline (with --mock --mock-v2 flags, hierarchical decomposition):
+    1. question_enhancer (optional)
+    2. ui_planner_batch_v2 (decompose question into atomic sub-questions)
+    3. mock_v2_generator (generate mock data for each sub-question independently)
 
 Skipped in no-code mode: reuse_evaluator, code_script_generator,
                          script_validator, verification_agent, script_executor
 
-Skipped in mock mode: code_script_generator, script_validator,
-                       verification_agent, script_executor
+Skipped in mock v1 mode: code_script_generator, script_validator,
+                         verification_agent, script_executor
+
+Skipped in mock v2 mode: ui_planner (uses hierarchical decomposition instead), mock_reuse_evaluator,
+                         code_script_generator, script_validator, verification_agent, script_executor
 """
 
 import argparse
@@ -56,6 +65,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 # Import agents and base class
 from agent_base import AgentResult
 from ui_planner_agent import create_ui_planner_agent
+from ui_planner_batch_v2_agent import create_ui_planner_batch_v2
 from question_enhancer_agent import create_question_enhancer_agent
 from reuse_evaluator_agent import create_reuse_evaluator_agent
 from code_prompt_builder_agent import create_code_prompt_builder_agent
@@ -66,6 +76,7 @@ from script_executor_agent import create_script_executor_agent
 from mcp_direct_agent import create_mcp_direct_agent
 from mock.mock_reuse_evaluator import create_mock_reuse_evaluator
 from mock.mock_data_generator import create_mock_data_generator
+from mock.mock_v2_generator import create_mock_v2_generator
 
 # Configure logging
 logging.basicConfig(
@@ -86,6 +97,7 @@ class AnalysisOrchestrator:
         skip_reuse: bool = False,
         no_code: bool = False,
         mock_mode: bool = False,
+        mock_v2_mode: bool = False,
         max_generation_attempts: int = 3,
         verbose: bool = False,
         output_dir: str = None
@@ -96,12 +108,14 @@ class AnalysisOrchestrator:
         self.skip_reuse = skip_reuse
         self.no_code = no_code
         self.mock_mode = mock_mode
+        self.mock_v2_mode = mock_v2_mode
         self.max_generation_attempts = max_generation_attempts
         self.verbose = verbose
         self.output_dir = output_dir or os.path.join(os.path.dirname(__file__), "..", "output")
 
         # Initialize agents
         self.ui_planner = create_ui_planner_agent()
+        self.ui_planner_batch_v2 = create_ui_planner_batch_v2() if mock_v2_mode else None
         self.question_enhancer = create_question_enhancer_agent()
         self.reuse_evaluator = create_reuse_evaluator_agent()
         self.code_prompt_builder = create_code_prompt_builder_agent()
@@ -111,9 +125,12 @@ class AnalysisOrchestrator:
         self.script_executor = create_script_executor_agent()
         self.mcp_direct = create_mcp_direct_agent()
 
-        # Mock mode agents
+        # Mock mode agents (v1 - single-shot)
         self.mock_reuse_evaluator = create_mock_reuse_evaluator()
         self.mock_data_generator = create_mock_data_generator()
+
+        # Mock mode agents (v2 - batch decomposition)
+        self.mock_v2_generator = create_mock_v2_generator() if mock_v2_mode else None
 
         # Track execution steps
         self.steps = []
@@ -143,7 +160,51 @@ class AnalysisOrchestrator:
                 else:
                     self._log("⚠️  Question enhancer failed, using original question")
 
-            # Step 2: UI Planner - Plan dashboard layout
+            # Mock V2 mode flow (batch decomposition): Skip normal UI planner
+            if self.mock_mode and self.mock_v2_mode:
+                self._log(f"🧪 Mock V2 mode enabled (batch decomposition)")
+
+                # Step 2b: UI Planner Batch V2 - Decompose into sub-questions
+                step_result = self._run_step(
+                    "ui_planner_batch_v2",
+                    self.ui_planner_batch_v2.execute,
+                    {"question": enhanced_question}
+                )
+                if not step_result["success"]:
+                    return self._error_result("UI Planner Batch V2 failed", step_result)
+
+                decomposition = step_result["data"]
+                title = decomposition.get("dashboard_title", enhanced_question)
+
+                # Step 3 (V2): Mock V2 Generator - Generate data for each sub-question
+                step_result = self._run_step(
+                    "mock_v2_generator",
+                    self.mock_v2_generator.execute,
+                    decomposition
+                )
+                if not step_result["success"]:
+                    return self._error_result("Mock V2 Generator failed", step_result)
+
+                mock_v2_data = step_result["data"]
+                blocks = mock_v2_data.get("blocks", [])
+                blocks_data = mock_v2_data.get("blocks_data", [])
+
+                total_time = (datetime.now() - start_time).total_seconds()
+
+                self._log(f"✅ Mock V2 complete: {len(blocks)} blocks, {len(blocks_data)} data items")
+
+                return {
+                    "success": True,
+                    "action": "mock_generated",
+                    "title": title,
+                    "blocks": blocks,
+                    "blocks_data": blocks_data,
+                    "total_time": total_time,
+                    "steps": self.steps,
+                    "timestamp": datetime.now().isoformat()
+                }
+
+            # Step 2: UI Planner - Plan dashboard layout (v1 flow)
             step_result = self._run_step(
                 "ui_planner",
                 self.ui_planner.execute,
@@ -156,7 +217,7 @@ class AnalysisOrchestrator:
             title = step_result["data"].get("title", enhanced_question)
             ui_output = step_result["data"]
 
-            # Mock mode flow: Skip script generation, use mock data
+            # Mock v1 mode flow: Skip script generation, use mock data
             if self.mock_mode:
                 self._log(f"🧪 Mock mode enabled (skip_reuse={self.skip_reuse})")
 
@@ -624,6 +685,11 @@ def main():
         help="Mock mode: Skip script generation/execution, use mock data for testing UI Planner and Reuse Evaluator"
     )
     parser.add_argument(
+        "--mock-v2",
+        action="store_true",
+        help="Mock V2 mode (batch decomposition): Requires --mock. Breaks questions into sub-questions and generates data per sub-question"
+    )
+    parser.add_argument(
         "--max-generation-attempts",
         type=int,
         default=3,
@@ -667,6 +733,7 @@ def main():
         skip_reuse=args.skip_reuse,
         no_code=args.no_code,
         mock_mode=args.mock,
+        mock_v2_mode=args.mock_v2,
         max_generation_attempts=args.max_generation_attempts,
         verbose=args.verbose,
         output_dir=args.output_dir

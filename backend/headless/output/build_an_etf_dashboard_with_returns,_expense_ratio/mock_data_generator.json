@@ -1,0 +1,88 @@
+{
+  "step": "mock_data_generator",
+  "input": {
+    "question": "Build an ETF dashboard with returns, expense ratios, tracking error and benchmark comparison",
+    "ui_planner_output": {
+      "title": "ETF Performance Dashboard",
+      "subtitle": "See returns, expense ratio, tracking error and benchmark comparison",
+      "layout": "grid",
+      "blocks": [
+        {
+          "blockId": "line-chart-06",
+          "category": "line-charts",
+          "title": "ETF vs Benchmark Return",
+          "dataContract": {
+            "type": "lineChart",
+            "description": "Cumulative return of ETF compared to its benchmark over the past year",
+            "points": 2
+          },
+          "sub_question": "Show the cumulative return of the ETF versus its benchmark over the last year.",
+          "canonical_params": {
+            "ticker": "QQQ",
+            "metric": "cumulative_return",
+            "period": "1y",
+            "benchmark": "SPY"
+          }
+        },
+        {
+          "blockId": "kpi-card-01",
+          "category": "kpi-cards",
+          "title": "Expense Ratio",
+          "dataContract": {
+            "type": "kpi",
+            "description": "Current expense ratio of the ETF",
+            "points": 1
+          },
+          "sub_question": "What is the current expense ratio of the ETF?",
+          "canonical_params": {
+            "ticker": "QQQ",
+            "metric": "expense_ratio"
+          }
+        },
+        {
+          "blockId": "kpi-card-02",
+          "category": "kpi-cards",
+          "title": "Tracking Error",
+          "dataContract": {
+            "type": "kpi",
+            "description": "Current tracking error of the ETF over the last year",
+            "points": 1
+          },
+          "sub_question": "What is the current tracking error of the ETF?",
+          "canonical_params": {
+            "ticker": "QQQ",
+            "metric": "tracking_error",
+            "period": "1y"
+          }
+        }
+      ],
+      "metadata": {
+        "question": "Build an ETF dashboard with returns, expense ratios, tracking error and benchmark comparison",
+        "block_count": 3,
+        "block_ids": [
+          "line-chart-06",
+          "kpi-card-01",
+          "kpi-card-02"
+        ]
+      }
+    },
+    "question_id": "build_an_etf_dashboard_with_returns,_expense_ratio"
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "mock_data_file": "/Users/shivc/Documents/Workspace/JS/qna-ai-admin/backend/headless/agents/mock/../../output/mock_data/build_an_etf_dashboard_with_returns,_expense_ratio.json",
+      "data_points": [
+        "question",
+        "generated_at",
+        "data",
+        "blocks"
+      ]
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-18T22:08:49.896395"
+  },
+  "duration": 6.848494,
+  "timestamp": "2026-03-18T22:08:49.898295"
+}

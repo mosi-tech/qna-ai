@@ -1,70 +1,94 @@
 {
   "question": "Show me my equity portfolio with holdings, daily P&L, sector allocation and YTD performance",
-  "generated_at": "2026-03-18T21:48:28.979471",
+  "generated_at": "2026-03-18T23:11:43.090595",
   "data": {},
   "blocks": [
     {
       "block_id": "table-01",
       "type": "table",
-      "sub_question": "What are the current holdings of the portfolio?",
+      "sub_question": "Show my equity portfolio holdings with ticker, class, and market value.",
       "canonical_params": {},
       "data": {
         "rows": [
           {
             "Symbol": "STK1",
-            "Shares": 594,
-            "Avg Cost": 348.04,
-            "Market Value": 36450.55,
-            "P&L": 13966.7,
-            "P&L %": 46.23
+            "Shares": 356,
+            "Avg Cost": 226.34,
+            "Market Value": 55605.65,
+            "P&L": -942.63,
+            "P&L %": 46.81
           },
           {
             "Symbol": "STK2",
-            "Shares": 156,
-            "Avg Cost": 493.42,
-            "Market Value": 31689.31,
-            "P&L": 2075.4,
-            "P&L %": 28.58
+            "Shares": 45,
+            "Avg Cost": 408.38,
+            "Market Value": 3481.89,
+            "P&L": 5372.92,
+            "P&L %": 35.3
           },
           {
             "Symbol": "STK3",
-            "Shares": 136,
-            "Avg Cost": 486.5,
-            "Market Value": 65575.4,
-            "P&L": 10284.73,
-            "P&L %": -4.18
+            "Shares": 571,
+            "Avg Cost": 464.27,
+            "Market Value": 21360.56,
+            "P&L": 179.08,
+            "P&L %": -14.98
           },
           {
             "Symbol": "STK4",
-            "Shares": 732,
-            "Avg Cost": 334.26,
-            "Market Value": 28487.89,
-            "P&L": 10779.23,
-            "P&L %": 49.61
+            "Shares": 937,
+            "Avg Cost": 286.02,
+            "Market Value": 52802.89,
+            "P&L": 12649.78,
+            "P&L %": 3.15
           },
           {
             "Symbol": "STK5",
-            "Shares": 288,
-            "Avg Cost": 31.58,
-            "Market Value": 82003.82,
-            "P&L": 7813.12,
-            "P&L %": -22.69
+            "Shares": 193,
+            "Avg Cost": 146.14,
+            "Market Value": 13919.21,
+            "P&L": 3260.36,
+            "P&L %": 43.76
           },
           {
             "Symbol": "STK6",
-            "Shares": 95,
-            "Avg Cost": 89.94,
-            "Market Value": 75622.5,
-            "P&L": -3904.39,
-            "P&L %": 6.05
+            "Shares": 654,
+            "Avg Cost": 12.68,
+            "Market Value": 69543.1,
+            "P&L": 7457.54,
+            "P&L %": 0.76
           },
           {
             "Symbol": "STK7",
-            "Shares": 173,
-            "Avg Cost": 413.04,
-            "Market Value": 36856.76,
-            "P&L": 7876.79,
-            "P&L %": -27.03
+            "Shares": 412,
+            "Avg Cost": 401.64,
+            "Market Value": 28406.66,
+            "P&L": 4094.9,
+            "P&L %": 4.68
+          },
+          {
+            "Symbol": "STK8",
+            "Shares": 760,
+            "Avg Cost": 359.53,
+            "Market Value": 16583.41,
+            "P&L": 2638.81,
+            "P&L %": 6.9
+          },
+          {
+            "Symbol": "STK9",
+            "Shares": 755,
+            "Avg Cost": 26.64,
+            "Market Value": 16364.82,
+            "P&L": 9162.38,
+            "P&L %": 44.36
+          },
+          {
+            "Symbol": "STK10",
+            "Shares": 75,
+            "Avg Cost": 179.23,
+            "Market Value": 39472.91,
+            "P&L": -1683.69,
+            "P&L %": 36.49
           }
         ],
         "columns": [
@@ -78,74 +102,207 @@
       }
     },
     {
+      "block_id": "spark-chart-01",
+      "type": "spark",
+      "sub_question": "Show my daily profit and loss trend for the portfolio.",
+      "canonical_params": {
+        "metric": "daily_pnl",
+        "period": "1d"
+      },
+      "data": {
+        "data": [
+          {
+            "date": "2023-10-30",
+            "Value": 61626.67
+          },
+          {
+            "date": "2023-11-29",
+            "Value": 62515.97
+          },
+          {
+            "date": "2023-12-29",
+            "Value": 64511.09
+          },
+          {
+            "date": "2024-01-28",
+            "Value": 50197.71
+          },
+          {
+            "date": "2024-02-27",
+            "Value": 67020.59
+          },
+          {
+            "date": "2024-03-28",
+            "Value": 69140.79
+          },
+          {
+            "date": "2024-04-27",
+            "Value": 62049.07
+          },
+          {
+            "date": "2024-05-27",
+            "Value": 71018.54
+          },
+          {
+            "date": "2024-06-26",
+            "Value": 56602.06
+          },
+          {
+            "date": "2024-07-26",
+            "Value": 51247.61
+          },
+          {
+            "date": "2024-08-25",
+            "Value": 73207.63
+          },
+          {
+            "date": "2024-09-24",
+            "Value": 62163.06
+          },
+          {
+            "date": "2024-10-24",
+            "Value": 57494.0
+          },
+          {
+            "date": "2024-11-23",
+            "Value": 70032.3
+          },
+          {
+            "date": "2024-12-23",
+            "Value": 57128.52
+          },
+          {
+            "date": "2025-01-22",
+            "Value": 54236.69
+          },
+          {
+            "date": "2025-02-21",
+            "Value": 53196.92
+          },
+          {
+            "date": "2025-03-23",
+            "Value": 51398.95
+          },
+          {
+            "date": "2025-04-22",
+            "Value": 60358.9
+          },
+          {
+            "date": "2025-05-22",
+            "Value": 56776.47
+          },
+          {
+            "date": "2025-06-21",
+            "Value": 50396.46
+          },
+          {
+            "date": "2025-07-21",
+            "Value": 67187.41
+          },
+          {
+            "date": "2025-08-20",
+            "Value": 63044.88
+          },
+          {
+            "date": "2025-09-19",
+            "Value": 70407.23
+          },
+          {
+            "date": "2025-10-19",
+            "Value": 51452.07
+          },
+          {
+            "date": "2025-11-18",
+            "Value": 64627.94
+          },
+          {
+            "date": "2025-12-18",
+            "Value": 57108.07
+          },
+          {
+            "date": "2026-01-17",
+            "Value": 71048.38
+          },
+          {
+            "date": "2026-02-16",
+            "Value": 69580.24
+          },
+          {
+            "date": "2026-03-18",
+            "Value": 53191.05
+          }
+        ],
+        "categories": [
+          "Value"
+        ],
+        "summary": [
+          {
+            "name": "Value",
+            "value": 99359.47
+          }
+        ]
+      }
+    },
+    {
+      "block_id": "bar-list-07",
+      "type": "bar-list",
+      "sub_question": "Show my portfolio sector allocation by market value.",
+      "canonical_params": {
+        "metric": "sector_allocation"
+      },
+      "data": {
+        "data": [
+          {
+            "name": "Holding A",
+            "value": 12608.74
+          },
+          {
+            "name": "Holding B",
+            "value": 42157.26
+          },
+          {
+            "name": "Holding C",
+            "value": 5655.55
+          },
+          {
+            "name": "Holding D",
+            "value": 49022.17
+          },
+          {
+            "name": "Holding E",
+            "value": 43077.39
+          },
+          {
+            "name": "Holding F",
+            "value": 39862.18
+          }
+        ]
+      }
+    },
+    {
       "block_id": "kpi-card-01",
       "type": "kpi",
-      "sub_question": "What is the daily P&L and YTD performance of the portfolio?",
+      "sub_question": "What is the year-to-date return of my portfolio?",
       "canonical_params": {
-        "metric": "performance_summary",
+        "metric": "ytd_return",
         "period": "ytd"
       },
       "data": {
         "metrics": [
           {
             "name": "Portfolio Value",
-            "stat": 29732.24,
-            "change": "18.41%",
+            "stat": 16482.17,
+            "change": "-9.74%",
             "changeType": "positive"
           },
           {
             "name": "Daily P&L",
-            "stat": 81160.06,
-            "change": "22.93%",
-            "changeType": "negative"
-          },
-          {
-            "name": "YTD Return",
-            "stat": 13414.7,
-            "change": "17.15%",
+            "stat": 70050.41,
+            "change": "1.32%",
             "changeType": "positive"
-          },
-          {
-            "name": "Sharpe Ratio",
-            "stat": 14276.86,
-            "change": "-6.30%",
-            "changeType": "negative"
           }
         ],
-        "cols": 4
-      }
-    },
-    {
-      "block_id": "donut-chart-04",
-      "type": "donut",
-      "sub_question": "What is the sector allocation of the portfolio?",
-      "canonical_params": {
-        "metric": "sector_allocation",
-        "period": "ytd"
-      },
-      "data": {
-        "data": [
-          {
-            "name": "Industrial",
-            "value": 10.38
-          },
-          {
-            "name": "Energy",
-            "value": 23.64
-          },
-          {
-            "name": "Technology",
-            "value": 17.5
-          },
-          {
-            "name": "Consumer",
-            "value": 17.04
-          },
-          {
-            "name": "Healthcare",
-            "value": 22.48
-          }
-        ]
+        "cols": 2
       }
     }
   ]

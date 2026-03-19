@@ -80,7 +80,7 @@ interface HeadlessResult {
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { question, useNoCode, mock, skipReuse } = body;
+        const { question, useNoCode, mock, mockV2, skipReuse } = body;
 
         if (!question || typeof question !== 'string') {
             return NextResponse.json({ error: 'question is required' }, { status: 400 });
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
 
         // Debug logging with timestamp
         const timestamp = new Date().toISOString();
-        console.log(`[${timestamp}] [headless/run] POST received:`, { question: question.substring(0, 80), useNoCode, mock, skipReuse });
+        console.log(`[${timestamp}] [headless/run] POST received:`, { question: question.substring(0, 80), useNoCode, mock, mockV2, skipReuse });
 
         // Path to the new orchestrator script
         const scriptPath = path.join(
@@ -146,6 +146,11 @@ export async function POST(request: NextRequest) {
             args.push('--mock');
         }
 
+        if (mockV2) {
+            args.push('--mock-v2');
+            console.log(`[${timestamp}] [headless/run] 🔄 Decomposition Mode ENABLED (breaks question into sub-Qs)`);
+        }
+
         if (skipReuse) {
             args.push('--skip-reuse');
             console.log(`[${timestamp}] [headless/run] ⚠️  SKIP CACHE ENABLED`);
@@ -154,7 +159,7 @@ export async function POST(request: NextRequest) {
         // Use fast settings: skip enhancement and fast model
         args.push('--skip-enhancement');
 
-        console.log(`[${timestamp}] [headless/run] Executing orchestrator with args:`, args.slice(1, 6).join(' '));
+        console.log(`[${timestamp}] [headless/run] Executing orchestrator with args:`, args.slice(1).join(' '));
 
         // Spawn Python process
         const python = spawn('python3', args, {

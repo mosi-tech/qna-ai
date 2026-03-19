@@ -1,0 +1,1988 @@
+{
+  "version": "1.0",
+  "description": "Comprehensive catalog of 100 financial blocks (finBlocks) for retail investor dashboards",
+  "categories": {
+    "portfolio": {
+      "description": "Portfolio management and overview finBlocks",
+      "count": 12,
+      "blocks": [
+        {
+          "id": "portfolio-kpi-summary",
+          "name": "Portfolio KPI Summary",
+          "description": "Total value, total P&L, YTD return, and Sharpe ratio",
+          "blockType": "kpi-card",
+          "blockCatalogRef": "kpi-card-01",
+          "financialConcepts": ["portfolio value", "P&L", "returns", "risk-adjusted returns"],
+          "dataContract": {
+            "metrics": [
+              {"name": "string", "stat": "number", "change": "string", "changeType": "positive|negative|neutral"}
+            ],
+            "cols": "number"
+          },
+          "parameters": [
+            {"name": "period", "type": "string", "default": "YTD", "options": ["1D", "5D", "1M", "3M", "YTD", "1Y", "3Y", "5Y"]}
+          ],
+          "mcpRequired": ["get_account", "get_positions", "get_portfolio_history"],
+          "useCases": ["Daily portfolio check-in", "Performance overview", "Quick risk assessment"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "holdings-table",
+          "name": "Holdings Detail Table",
+          "description": "Complete list of all holdings with symbol, shares, cost basis, current value, P&L, P&L %",
+          "blockType": "table",
+          "blockCatalogRef": "table-01",
+          "financialConcepts": ["holdings", "position sizing", "cost basis", "unrealized P&L"],
+          "dataContract": {
+            "rows": [
+              {"Symbol": "string", "Shares": "number", "Avg Cost": "number", "Market Value": "number", "P&L": "number", "P&L %": "number"}
+            ],
+            "columns": "string[]"
+          },
+          "parameters": [
+            {"name": "sortBy", "type": "string", "default": "market_value", "options": ["market_value", "pnl", "pnl_pct", "symbol"]},
+            {"name": "filterMinValue", "type": "number", "default": 0}
+          ],
+          "mcpRequired": ["get_positions", "get_real_time_data"],
+          "useCases": ["Detailed portfolio review", "Rebalancing analysis", "Cost basis verification"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "sector-allocation-donut",
+          "name": "Sector Allocation Breakdown",
+          "description": "Portfolio allocation across business sectors (Technology, Healthcare, Finance, etc.)",
+          "blockType": "donut-chart",
+          "blockCatalogRef": "donut-chart-01",
+          "financialConcepts": ["diversification", "sector exposure", "concentration risk"],
+          "dataContract": {
+            "data": [
+              {"name": "string", "value": "number"}
+            ]
+          },
+          "parameters": [
+            {"name": "minThreshold", "type": "number", "default": 1, "description": "Hide sectors below this %"}
+          ],
+          "mcpRequired": ["get_positions"],
+          "useCases": ["Understand sector bias", "Diversification check", "Rebalancing target"],
+          "estimatedDataFetch": "1 second"
+        },
+        {
+          "id": "asset-class-allocation",
+          "name": "Asset Class Allocation",
+          "description": "Breakdown of stocks vs ETFs vs bonds vs cash",
+          "blockType": "donut-chart",
+          "blockCatalogRef": "donut-chart-02",
+          "financialConcepts": ["asset allocation", "diversification", "portfolio structure"],
+          "dataContract": {
+            "data": [
+              {"name": "string", "value": "number"}
+            ]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_positions"],
+          "useCases": ["Strategic asset allocation", "Risk profile verification"],
+          "estimatedDataFetch": "1 second"
+        },
+        {
+          "id": "portfolio-performance-vs-benchmark",
+          "name": "Portfolio vs Benchmark Returns",
+          "description": "Compare portfolio cumulative returns against S&P 500 or custom benchmark",
+          "blockType": "line-chart",
+          "blockCatalogRef": "line-chart-01",
+          "financialConcepts": ["performance", "benchmark comparison", "outperformance", "alpha"],
+          "dataContract": {
+            "data": [
+              {"date": "string", "Portfolio": "number", "Benchmark": "number"}
+            ],
+            "categories": ["Portfolio", "Benchmark"],
+            "summary": [{"name": "string", "value": "number"}]
+          },
+          "parameters": [
+            {"name": "benchmark", "type": "string", "default": "SPY", "options": ["SPY", "QQQ", "IWM", "VTSAX"]},
+            {"name": "period", "type": "string", "default": "1Y"}
+          ],
+          "mcpRequired": ["get_portfolio_history", "get_historical_data"],
+          "useCases": ["Performance review", "Manager evaluation", "Investment thesis validation"],
+          "estimatedDataFetch": "2-3 seconds"
+        },
+        {
+          "id": "price-movements-spark",
+          "name": "Top Holdings Recent Price Action",
+          "description": "Last 2 weeks of price movements for top 5-10 holdings with sparklines",
+          "blockType": "spark-chart",
+          "blockCatalogRef": "spark-chart-01",
+          "financialConcepts": ["momentum", "volatility", "price trends"],
+          "dataContract": {
+            "data": [
+              {"date": "string", "AAPL": "number", "MSFT": "number"}
+            ],
+            "items": [
+              {"id": "string", "name": "string", "value": "string", "change": "string", "changeType": "string"}
+            ]
+          },
+          "parameters": [
+            {"name": "period", "type": "string", "default": "14", "description": "Days of history"}
+          ],
+          "mcpRequired": ["get_historical_data", "get_real_time_data"],
+          "useCases": ["Quick momentum check", "Recent volatility assessment"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "top-bottom-performers",
+          "name": "Top and Bottom Performers",
+          "description": "Best and worst performing holdings by return %",
+          "blockType": "bar-list",
+          "blockCatalogRef": "bar-list-01",
+          "financialConcepts": ["performance ranking", "winner/loser identification"],
+          "dataContract": {
+            "data": [
+              {"name": "string", "value": "number"}
+            ]
+          },
+          "parameters": [
+            {"name": "count", "type": "number", "default": 5, "description": "Number of top/bottom to show"}
+          ],
+          "mcpRequired": ["get_positions"],
+          "useCases": ["Identify winners/losers", "Rebalancing decisions"],
+          "estimatedDataFetch": "1 second"
+        },
+        {
+          "id": "monthly-returns-bar",
+          "name": "Monthly Portfolio Returns",
+          "description": "Bar chart of portfolio returns by month for last 12 months",
+          "blockType": "bar-chart",
+          "blockCatalogRef": "bar-chart-01",
+          "financialConcepts": ["return distribution", "consistency", "volatility"],
+          "dataContract": {
+            "data": [
+              {"month": "string", "Return %": "number"}
+            ],
+            "categories": ["Return %"]
+          },
+          "parameters": [
+            {"name": "months", "type": "number", "default": 12}
+          ],
+          "mcpRequired": ["get_portfolio_history"],
+          "useCases": ["Return consistency analysis", "Seasonal pattern identification"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "concentration-by-holding",
+          "name": "Portfolio Concentration Risk",
+          "description": "Top 10 holdings as % of portfolio - identifies concentration risk",
+          "blockType": "bar-list",
+          "blockCatalogRef": "bar-list-02",
+          "financialConcepts": ["concentration risk", "diversification", "position sizing"],
+          "dataContract": {
+            "data": [
+              {"name": "string", "value": "number"}
+            ]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_positions"],
+          "useCases": ["Identify concentration", "Diversification assessment", "Risk management"],
+          "estimatedDataFetch": "1 second"
+        },
+        {
+          "id": "portfolio-turnover-table",
+          "name": "Recent Trades and Turnover",
+          "description": "Recent buy/sell activity and portfolio turnover rate",
+          "blockType": "table",
+          "blockCatalogRef": "table-01",
+          "financialConcepts": ["trading activity", "taxes", "market timing"],
+          "dataContract": {
+            "rows": [
+              {"Date": "string", "Symbol": "string", "Action": "string", "Shares": "number", "Price": "number"}
+            ],
+            "columns": ["Date", "Symbol", "Action", "Shares", "Price"]
+          },
+          "parameters": [
+            {"name": "days", "type": "number", "default": 30}
+          ],
+          "mcpRequired": ["get_orders"],
+          "useCases": ["Tax planning", "Activity review", "Trading pattern analysis"],
+          "estimatedDataFetch": "1 second"
+        },
+        {
+          "id": "dividend-summary-kpi",
+          "name": "Portfolio Dividend Metrics",
+          "description": "Annual dividend income, yield, next ex-dividend date",
+          "blockType": "kpi-card",
+          "blockCatalogRef": "kpi-card-02",
+          "financialConcepts": ["income", "yield", "distributions"],
+          "dataContract": {
+            "metrics": [
+              {"name": "string", "stat": "number", "change": "string", "changeType": "string"}
+            ],
+            "cols": "number"
+          },
+          "parameters": [],
+          "mcpRequired": ["get_dividends", "get_positions"],
+          "useCases": ["Income tracking", "Yield analysis"],
+          "estimatedDataFetch": "1-2 seconds"
+        }
+      ]
+    },
+    "stock_research": {
+      "description": "Stock research and analysis finBlocks",
+      "count": 12,
+      "blocks": [
+        {
+          "id": "stock-price-kpi",
+          "name": "Stock Price & Key Metrics",
+          "description": "Current price, market cap, P/E ratio, dividend yield, 52-week range",
+          "blockType": "kpi-card",
+          "blockCatalogRef": "kpi-card-01",
+          "financialConcepts": ["valuation", "price", "dividend"],
+          "dataContract": {
+            "metrics": [
+              {"name": "string", "stat": "string|number", "change": "string", "changeType": "string"}
+            ],
+            "cols": "number"
+          },
+          "parameters": [
+            {"name": "symbol", "type": "string"}
+          ],
+          "mcpRequired": ["get_real_time_data", "get_fundamentals"],
+          "useCases": ["Stock snapshot", "Valuation assessment"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "price-history-with-ma",
+          "name": "Price History with Moving Averages",
+          "description": "12-month price history with 50-day and 200-day moving averages",
+          "blockType": "line-chart",
+          "blockCatalogRef": "line-chart-01",
+          "financialConcepts": ["trend", "support/resistance", "momentum"],
+          "dataContract": {
+            "data": [
+              {"date": "string", "Price": "number", "SMA-50": "number", "SMA-200": "number"}
+            ],
+            "categories": ["Price", "SMA-50", "SMA-200"],
+            "summary": [{"name": "string", "value": "number"}]
+          },
+          "parameters": [
+            {"name": "symbol", "type": "string"},
+            {"name": "period", "type": "string", "default": "1Y"}
+          ],
+          "mcpRequired": ["get_historical_data"],
+          "useCases": ["Technical analysis", "Trend identification", "Entry/exit points"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "fundamental-metrics-list",
+          "name": "Fundamental Metrics Comparison",
+          "description": "P/E, P/B, ROE, debt/equity, dividend yield ranked against peers",
+          "blockType": "bar-list",
+          "blockCatalogRef": "bar-list-01",
+          "financialConcepts": ["valuation", "profitability", "financial health"],
+          "dataContract": {
+            "data": [
+              {"name": "string", "value": "number"}
+            ]
+          },
+          "parameters": [
+            {"name": "symbol", "type": "string"}
+          ],
+          "mcpRequired": ["get_fundamentals"],
+          "useCases": ["Value assessment", "Peer comparison", "Quality scoring"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "earnings-history-table",
+          "name": "Quarterly Earnings History",
+          "description": "Last 8 quarters of revenue, EPS, earnings beat/miss",
+          "blockType": "table",
+          "blockCatalogRef": "table-01",
+          "financialConcepts": ["earnings", "growth", "consistency"],
+          "dataContract": {
+            "rows": [
+              {"Quarter": "string", "EPS": "number", "Revenue": "number", "Beat?": "string"}
+            ],
+            "columns": ["Quarter", "EPS", "Revenue", "Beat?"]
+          },
+          "parameters": [
+            {"name": "symbol", "type": "string"}
+          ],
+          "mcpRequired": ["get_fundamentals"],
+          "useCases": ["Earnings review", "Growth assessment", "Quality verification"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "analyst-ratings-bar",
+          "name": "Analyst Ratings & Target Price",
+          "description": "Buy/hold/sell consensus and average price target",
+          "blockType": "bar-chart",
+          "blockCatalogRef": "bar-chart-02",
+          "financialConcepts": ["analyst sentiment", "price targets"],
+          "dataContract": {
+            "data": [
+              {"Rating": "string", "Count": "number"}
+            ],
+            "categories": ["Count"]
+          },
+          "parameters": [
+            {"name": "symbol", "type": "string"}
+          ],
+          "mcpRequired": ["get_fundamentals"],
+          "useCases": ["Sentiment analysis", "Consensus checking"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "dividend-history-line",
+          "name": "Dividend History & Growth",
+          "description": "Dividend per share over last 10 years showing growth trend",
+          "blockType": "line-chart",
+          "blockCatalogRef": "line-chart-02",
+          "financialConcepts": ["dividend growth", "income stability"],
+          "dataContract": {
+            "data": [
+              {"year": "string", "DPS": "number"}
+            ],
+            "categories": ["DPS"],
+            "summary": [{"name": "string", "value": "number"}]
+          },
+          "parameters": [
+            {"name": "symbol", "type": "string"}
+          ],
+          "mcpRequired": ["get_dividends"],
+          "useCases": ["Dividend investor analysis", "Income stability check"],
+          "estimatedDataFetch": "1 second"
+        },
+        {
+          "id": "valuation-comparison",
+          "name": "Valuation vs Sector & Market",
+          "description": "Compare stock P/E, P/B, dividend yield to sector average and S&P 500",
+          "blockType": "bar-chart",
+          "blockCatalogRef": "bar-chart-03",
+          "financialConcepts": ["relative valuation", "value vs growth"],
+          "dataContract": {
+            "data": [
+              {"metric": "string", "Stock": "number", "Sector": "number", "Market": "number"}
+            ],
+            "categories": ["Stock", "Sector", "Market"]
+          },
+          "parameters": [
+            {"name": "symbol", "type": "string"}
+          ],
+          "mcpRequired": ["get_fundamentals", "get_historical_data"],
+          "useCases": ["Valuation assessment", "Value vs growth decision"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "insider-transactions-table",
+          "name": "Insider Buying/Selling Activity",
+          "description": "Recent insider transactions and net ownership changes",
+          "blockType": "table",
+          "blockCatalogRef": "table-01",
+          "financialConcepts": ["insider sentiment", "company confidence"],
+          "dataContract": {
+            "rows": [
+              {"Date": "string", "Insider": "string", "Action": "string", "Shares": "number"}
+            ],
+            "columns": ["Date", "Insider", "Action", "Shares"]
+          },
+          "parameters": [
+            {"name": "symbol", "type": "string"}
+          ],
+          "mcpRequired": ["get_fundamentals"],
+          "useCases": ["Sentiment gauge", "Confidence assessment"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "technical-indicators-kpi",
+          "name": "Technical Indicators Summary",
+          "description": "RSI, MACD, Bollinger Bands status - overbought/oversold signals",
+          "blockType": "kpi-card",
+          "blockCatalogRef": "kpi-card-03",
+          "financialConcepts": ["momentum", "overbought/oversold", "trend strength"],
+          "dataContract": {
+            "metrics": [
+              {"name": "string", "stat": "number", "change": "string", "changeType": "string"}
+            ],
+            "cols": "number"
+          },
+          "parameters": [
+            {"name": "symbol", "type": "string"}
+          ],
+          "mcpRequired": ["get_technical_indicator"],
+          "useCases": ["Entry signal detection", "Momentum assessment"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "volume-trend-bar",
+          "name": "Volume Trend Analysis",
+          "description": "Trading volume over last 3 months with average comparison",
+          "blockType": "bar-chart",
+          "blockCatalogRef": "bar-chart-04",
+          "financialConcepts": ["liquidity", "interest", "volatility"],
+          "dataContract": {
+            "data": [
+              {"date": "string", "Volume": "number"}
+            ],
+            "categories": ["Volume"]
+          },
+          "parameters": [
+            {"name": "symbol", "type": "string"}
+          ],
+          "mcpRequired": ["get_historical_data"],
+          "useCases": ["Liquidity check", "Interest assessment"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "growth-metrics-comparison",
+          "name": "Growth Rates (Revenue, EPS, Free Cash Flow)",
+          "description": "YoY growth rates for key metrics showing business acceleration/deceleration",
+          "blockType": "bar-list",
+          "blockCatalogRef": "bar-list-03",
+          "financialConcepts": ["growth", "business quality"],
+          "dataContract": {
+            "data": [
+              {"name": "string", "value": "number"}
+            ]
+          },
+          "parameters": [
+            {"name": "symbol", "type": "string"}
+          ],
+          "mcpRequired": ["get_fundamentals"],
+          "useCases": ["Growth assessment", "Business quality check"],
+          "estimatedDataFetch": "1-2 seconds"
+        }
+      ]
+    },
+    "etf_analysis": {
+      "description": "ETF comparison and analysis finBlocks",
+      "count": 10,
+      "blocks": [
+        {
+          "id": "etf-comparison-metrics",
+          "name": "ETF Comparison Metrics",
+          "description": "Compare expense ratio, AUM, dividend yield, 1Y/3Y/5Y returns across ETFs",
+          "blockType": "table",
+          "blockCatalogRef": "table-01",
+          "financialConcepts": ["cost comparison", "performance comparison"],
+          "dataContract": {
+            "rows": [
+              {"ETF": "string", "ER": "number", "AUM": "string", "Yield": "number", "1Y Return": "number"}
+            ],
+            "columns": ["ETF", "Expense Ratio", "AUM", "Dividend Yield", "1Y Return"]
+          },
+          "parameters": [
+            {"name": "symbols", "type": "string[]"},
+            {"name": "period", "type": "string"}
+          ],
+          "mcpRequired": ["get_fundamentals", "get_historical_data"],
+          "useCases": ["Fund selection", "Fee comparison"],
+          "estimatedDataFetch": "2-3 seconds"
+        },
+        {
+          "id": "etf-performance-line",
+          "name": "ETF Performance Comparison",
+          "description": "Cumulative returns comparison for multiple ETFs over time",
+          "blockType": "line-chart",
+          "blockCatalogRef": "line-chart-03",
+          "financialConcepts": ["performance", "returns"],
+          "dataContract": {
+            "data": [
+              {"date": "string", "SPY": "number", "QQQ": "number", "IWM": "number"}
+            ],
+            "categories": ["SPY", "QQQ", "IWM"],
+            "summary": [{"name": "string", "value": "number"}]
+          },
+          "parameters": [
+            {"name": "symbols", "type": "string[]"}
+          ],
+          "mcpRequired": ["get_historical_data"],
+          "useCases": ["Fund comparison", "Portfolio construction"],
+          "estimatedDataFetch": "2-3 seconds"
+        },
+        {
+          "id": "etf-sector-allocation",
+          "name": "ETF Sector Composition",
+          "description": "Sector breakdown within an ETF",
+          "blockType": "donut-chart",
+          "blockCatalogRef": "donut-chart-03",
+          "financialConcepts": ["composition", "sector exposure"],
+          "dataContract": {
+            "data": [
+              {"name": "string", "value": "number"}
+            ]
+          },
+          "parameters": [
+            {"name": "symbol", "type": "string"}
+          ],
+          "mcpRequired": ["get_fundamentals"],
+          "useCases": ["Holdings review", "Overlap analysis"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "etf-top-holdings",
+          "name": "Top 10 ETF Holdings",
+          "description": "Largest positions within an ETF",
+          "blockType": "bar-list",
+          "blockCatalogRef": "bar-list-04",
+          "financialConcepts": ["concentration", "composition"],
+          "dataContract": {
+            "data": [
+              {"name": "string", "value": "number"}
+            ]
+          },
+          "parameters": [
+            {"name": "symbol", "type": "string"}
+          ],
+          "mcpRequired": ["get_fundamentals"],
+          "useCases": ["Overlap analysis", "Concentration check"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "etf-risk-metrics",
+          "name": "ETF Risk Metrics",
+          "description": "Volatility, Sharpe ratio, max drawdown, beta for ETF",
+          "blockType": "kpi-card",
+          "blockCatalogRef": "kpi-card-02",
+          "financialConcepts": ["risk", "volatility", "risk-adjusted returns"],
+          "dataContract": {
+            "metrics": [
+              {"name": "string", "stat": "number", "change": "string", "changeType": "string"}
+            ],
+            "cols": "number"
+          },
+          "parameters": [
+            {"name": "symbol", "type": "string"}
+          ],
+          "mcpRequired": ["get_historical_data"],
+          "useCases": ["Risk assessment", "Fund quality check"],
+          "estimatedDataFetch": "2-3 seconds"
+        },
+        {
+          "id": "etf-dividend-yield-trend",
+          "name": "ETF Dividend Yield Over Time",
+          "description": "Dividend yield trend for distribution-focused ETF",
+          "blockType": "line-chart",
+          "blockCatalogRef": "line-chart-04",
+          "financialConcepts": ["income", "yield"],
+          "dataContract": {
+            "data": [
+              {"date": "string", "Yield": "number"}
+            ],
+            "categories": ["Yield"],
+            "summary": [{"name": "string", "value": "number"}]
+          },
+          "parameters": [
+            {"name": "symbol", "type": "string"}
+          ],
+          "mcpRequired": ["get_dividends"],
+          "useCases": ["Income consistency", "Yield prediction"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "etf-overlap-analysis",
+          "name": "ETF Overlap & Redundancy",
+          "description": "Shows common holdings between multiple ETFs to identify overlap",
+          "blockType": "bar-list",
+          "blockCatalogRef": "bar-list-05",
+          "financialConcepts": ["portfolio efficiency", "diversification"],
+          "dataContract": {
+            "data": [
+              {"name": "string", "value": "number"}
+            ]
+          },
+          "parameters": [
+            {"name": "symbols", "type": "string[]"}
+          ],
+          "mcpRequired": ["get_fundamentals"],
+          "useCases": ["Portfolio optimization", "Redundancy elimination"],
+          "estimatedDataFetch": "2-3 seconds"
+        },
+        {
+          "id": "etf-expense-ratio-impact",
+          "name": "Expense Ratio Impact on Returns",
+          "description": "Shows how fees compound over time at different return assumptions",
+          "blockType": "line-chart",
+          "blockCatalogRef": "line-chart-05",
+          "financialConcepts": ["costs", "long-term impact"],
+          "dataContract": {
+            "data": [
+              {"year": "number", "Net": "number", "Gross": "number"}
+            ],
+            "categories": ["Net Returns", "Gross Returns"],
+            "summary": [{"name": "string", "value": "number"}]
+          },
+          "parameters": [
+            {"name": "symbols", "type": "string[]"},
+            {"name": "years", "type": "number"}
+          ],
+          "mcpRequired": ["get_fundamentals"],
+          "useCases": ["Cost justification", "Fund selection"],
+          "estimatedDataFetch": "1 second"
+        },
+        {
+          "id": "etf-geographic-exposure",
+          "name": "Geographic Exposure",
+          "description": "Country/region breakdown for international ETFs",
+          "blockType": "donut-chart",
+          "blockCatalogRef": "donut-chart-04",
+          "financialConcepts": ["geographic diversification"],
+          "dataContract": {
+            "data": [
+              {"name": "string", "value": "number"}
+            ]
+          },
+          "parameters": [
+            {"name": "symbol", "type": "string"}
+          ],
+          "mcpRequired": ["get_fundamentals"],
+          "useCases": ["International exposure check", "Geographic allocation"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "etf-tax-efficiency",
+          "name": "ETF Tax Efficiency",
+          "description": "Distribution yield vs SEC yield, tracking error, tax loss harvesting potential",
+          "blockType": "kpi-card",
+          "blockCatalogRef": "kpi-card-03",
+          "financialConcepts": ["taxes", "efficiency"],
+          "dataContract": {
+            "metrics": [
+              {"name": "string", "stat": "number", "change": "string", "changeType": "string"}
+            ],
+            "cols": "number"
+          },
+          "parameters": [
+            {"name": "symbol", "type": "string"}
+          ],
+          "mcpRequired": ["get_fundamentals"],
+          "useCases": ["Tax planning", "Tax-loss harvesting identification"],
+          "estimatedDataFetch": "1-2 seconds"
+        }
+      ]
+    },
+    "risk_management": {
+      "description": "Risk analysis and management finBlocks",
+      "count": 12,
+      "blocks": [
+        {
+          "id": "risk-metrics-kpi",
+          "name": "Risk Metrics Summary",
+          "description": "VaR (95%), Volatility (annual), Max Drawdown, Beta, Sharpe ratio",
+          "blockType": "kpi-card",
+          "blockCatalogRef": "kpi-card-01",
+          "financialConcepts": ["value at risk", "volatility", "drawdown", "beta", "sharpe ratio"],
+          "dataContract": {
+            "metrics": [
+              {"name": "string", "stat": "number", "change": "string", "changeType": "string"}
+            ],
+            "cols": "number"
+          },
+          "parameters": [
+            {"name": "period", "type": "string"}
+          ],
+          "mcpRequired": ["get_portfolio_history"],
+          "useCases": ["Risk assessment", "Risk limit monitoring"],
+          "estimatedDataFetch": "2-3 seconds"
+        },
+        {
+          "id": "volatility-by-holding",
+          "name": "Volatility Breakdown by Holding",
+          "description": "Individual stock volatility ranked from highest to lowest",
+          "blockType": "bar-chart",
+          "blockCatalogRef": "bar-chart-05",
+          "financialConcepts": ["volatility", "risk concentration"],
+          "dataContract": {
+            "data": [
+              {"symbol": "string", "volatility": "number"}
+            ],
+            "categories": ["volatility"]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_positions", "get_technical_indicator"],
+          "useCases": ["Risk hotspot identification", "Volatility management"],
+          "estimatedDataFetch": "2-3 seconds"
+        },
+        {
+          "id": "concentration-risk",
+          "name": "Concentration Risk Index",
+          "description": "Top 10 holdings as % of portfolio, HHI concentration index",
+          "blockType": "bar-list",
+          "blockCatalogRef": "bar-list-06",
+          "financialConcepts": ["concentration", "diversification"],
+          "dataContract": {
+            "data": [
+              {"name": "string", "value": "number"}
+            ]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_positions"],
+          "useCases": ["Diversification check", "Position sizing"],
+          "estimatedDataFetch": "1 second"
+        },
+        {
+          "id": "correlation-matrix",
+          "name": "Correlation Matrix",
+          "description": "Correlation between top holdings showing diversification benefits",
+          "blockType": "heatmap",
+          "blockCatalogRef": "heatmap-01",
+          "financialConcepts": ["correlation", "diversification"],
+          "dataContract": {
+            "data": "number[][]",
+            "labels": "string[]"
+          },
+          "parameters": [],
+          "mcpRequired": ["get_positions", "get_historical_data"],
+          "useCases": ["Diversification analysis", "Risk reduction verification"],
+          "estimatedDataFetch": "3-5 seconds"
+        },
+        {
+          "id": "drawdown-history",
+          "name": "Historical Drawdown Analysis",
+          "description": "Peak-to-trough declines over last 3 years with recovery times",
+          "blockType": "line-chart",
+          "blockCatalogRef": "line-chart-06",
+          "financialConcepts": ["drawdown", "risk events", "recovery"],
+          "dataContract": {
+            "data": [
+              {"date": "string", "Portfolio": "number", "Drawdown %": "number"}
+            ],
+            "categories": ["Portfolio Value", "Drawdown %"],
+            "summary": [{"name": "string", "value": "number"}]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_portfolio_history"],
+          "useCases": ["Worst-case scenario understanding", "Volatility assessment"],
+          "estimatedDataFetch": "2-3 seconds"
+        },
+        {
+          "id": "var-by-scenario",
+          "name": "VaR Under Different Scenarios",
+          "description": "Value at Risk at different confidence levels (90%, 95%, 99%)",
+          "blockType": "kpi-card",
+          "blockCatalogRef": "kpi-card-02",
+          "financialConcepts": ["value at risk", "tail risk"],
+          "dataContract": {
+            "metrics": [
+              {"name": "string", "stat": "string", "change": "string", "changeType": "string"}
+            ],
+            "cols": "number"
+          },
+          "parameters": [
+            {"name": "timeHorizon", "type": "string", "default": "1D"}
+          ],
+          "mcpRequired": ["get_portfolio_history"],
+          "useCases": ["Tail risk quantification", "Risk limits"],
+          "estimatedDataFetch": "2-3 seconds"
+        },
+        {
+          "id": "beta-analysis",
+          "name": "Beta & Systematic Risk",
+          "description": "Portfolio beta vs S&P 500, sensitivity to market movements",
+          "blockType": "kpi-card",
+          "blockCatalogRef": "kpi-card-03",
+          "financialConcepts": ["systematic risk", "market sensitivity"],
+          "dataContract": {
+            "metrics": [
+              {"name": "string", "stat": "number", "change": "string", "changeType": "string"}
+            ],
+            "cols": "number"
+          },
+          "parameters": [
+            {"name": "period", "type": "string"}
+          ],
+          "mcpRequired": ["get_portfolio_history", "get_historical_data"],
+          "useCases": ["Risk profile assessment", "Market exposure check"],
+          "estimatedDataFetch": "2-3 seconds"
+        },
+        {
+          "id": "downside-risk-analysis",
+          "name": "Downside Risk (Sortino Ratio)",
+          "description": "Downside deviation vs full volatility, Sortino ratio",
+          "blockType": "kpi-card",
+          "blockCatalogRef": "kpi-card-04",
+          "financialConcepts": ["downside risk", "risk-adjusted returns"],
+          "dataContract": {
+            "metrics": [
+              {"name": "string", "stat": "number", "change": "string", "changeType": "string"}
+            ],
+            "cols": "number"
+          },
+          "parameters": [],
+          "mcpRequired": ["get_portfolio_history"],
+          "useCases": ["Downside protection assessment", "Conservative investor metrics"],
+          "estimatedDataFetch": "2-3 seconds"
+        },
+        {
+          "id": "sector-risk-exposure",
+          "name": "Risk by Sector",
+          "description": "Volatility and risk contribution by sector",
+          "blockType": "bar-chart",
+          "blockCatalogRef": "bar-chart-06",
+          "financialConcepts": ["sector risk", "concentration"],
+          "dataContract": {
+            "data": [
+              {"sector": "string", "risk": "number"}
+            ],
+            "categories": ["risk"]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_positions", "get_technical_indicator"],
+          "useCases": ["Sector risk assessment", "Rebalancing decisions"],
+          "estimatedDataFetch": "2-3 seconds"
+        },
+        {
+          "id": "stress-test-results",
+          "name": "Stress Test Scenarios",
+          "description": "Portfolio impact under historical stress scenarios (2008, 2020, etc.)",
+          "blockType": "bar-list",
+          "blockCatalogRef": "bar-list-07",
+          "financialConcepts": ["tail risk", "worst-case scenarios"],
+          "dataContract": {
+            "data": [
+              {"scenario": "string", "impact": "number"}
+            ]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_portfolio_history", "get_positions"],
+          "useCases": ["Worst-case planning", "Risk preparedness"],
+          "estimatedDataFetch": "3-5 seconds"
+        },
+        {
+          "id": "risk-limits-monitoring",
+          "name": "Risk Limits Monitoring",
+          "description": "Current vs target for VaR limit, volatility limit, concentration limit",
+          "blockType": "table",
+          "blockCatalogRef": "table-01",
+          "financialConcepts": ["risk governance", "limits"],
+          "dataContract": {
+            "rows": [
+              {"Metric": "string", "Current": "number", "Limit": "number", "Status": "string"}
+            ],
+            "columns": ["Metric", "Current", "Limit", "Status"]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_portfolio_history", "get_positions"],
+          "useCases": ["Risk governance", "Compliance monitoring"],
+          "estimatedDataFetch": "2-3 seconds"
+        }
+      ]
+    },
+    "performance": {
+      "description": "Performance tracking and attribution finBlocks",
+      "count": 12,
+      "blocks": [
+        {
+          "id": "annual-returns-bar",
+          "name": "Annual Returns Comparison",
+          "description": "Year-by-year returns vs benchmark for last 5-10 years",
+          "blockType": "bar-chart",
+          "blockCatalogRef": "bar-chart-07",
+          "financialConcepts": ["returns", "consistency", "outperformance"],
+          "dataContract": {
+            "data": [
+              {"year": "string", "Portfolio": "number", "Benchmark": "number"}
+            ],
+            "categories": ["Portfolio", "Benchmark"]
+          },
+          "parameters": [
+            {"name": "years", "type": "number"}
+          ],
+          "mcpRequired": ["get_portfolio_history", "get_historical_data"],
+          "useCases": ["Performance review", "Consistency analysis"],
+          "estimatedDataFetch": "2-3 seconds"
+        },
+        {
+          "id": "return-distribution",
+          "name": "Return Distribution Analysis",
+          "description": "Histogram of monthly returns showing distribution shape",
+          "blockType": "bar-chart",
+          "blockCatalogRef": "bar-chart-08",
+          "financialConcepts": ["return distribution", "skewness", "kurtosis"],
+          "dataContract": {
+            "data": [
+              {"bucket": "string", "count": "number"}
+            ],
+            "categories": ["count"]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_portfolio_history"],
+          "useCases": ["Distribution analysis", "Tail risk assessment"],
+          "estimatedDataFetch": "2-3 seconds"
+        },
+        {
+          "id": "win-rate-metrics",
+          "name": "Win Rate & Consistency",
+          "description": "% positive months, best/worst month, average monthly return",
+          "blockType": "kpi-card",
+          "blockCatalogRef": "kpi-card-01",
+          "financialConcepts": ["consistency", "reliability"],
+          "dataContract": {
+            "metrics": [
+              {"name": "string", "stat": "number", "change": "string", "changeType": "string"}
+            ],
+            "cols": "number"
+          },
+          "parameters": [],
+          "mcpRequired": ["get_portfolio_history"],
+          "useCases": ["Consistency assessment", "Investor confidence"],
+          "estimatedDataFetch": "2-3 seconds"
+        },
+        {
+          "id": "risk-adjusted-returns",
+          "name": "Risk-Adjusted Return Metrics",
+          "description": "Sharpe ratio, Sortino ratio, Calmar ratio, information ratio",
+          "blockType": "kpi-card",
+          "blockCatalogRef": "kpi-card-02",
+          "financialConcepts": ["risk-adjusted returns", "efficiency"],
+          "dataContract": {
+            "metrics": [
+              {"name": "string", "stat": "number", "change": "string", "changeType": "string"}
+            ],
+            "cols": "number"
+          },
+          "parameters": [
+            {"name": "period", "type": "string"}
+          ],
+          "mcpRequired": ["get_portfolio_history"],
+          "useCases": ["Performance quality assessment", "Manager evaluation"],
+          "estimatedDataFetch": "2-3 seconds"
+        },
+        {
+          "id": "attribution-analysis",
+          "name": "Performance Attribution",
+          "description": "Breakdown of returns by holding - which positions drove performance",
+          "blockType": "bar-list",
+          "blockCatalogRef": "bar-list-08",
+          "financialConcepts": ["attribution", "decision impact"],
+          "dataContract": {
+            "data": [
+              {"symbol": "string", "contribution": "number"}
+            ]
+          },
+          "parameters": [
+            {"name": "period", "type": "string"}
+          ],
+          "mcpRequired": ["get_positions", "get_portfolio_history"],
+          "useCases": ["Decision review", "Learning from results"],
+          "estimatedDataFetch": "2-3 seconds"
+        },
+        {
+          "id": "upside-downside-capture",
+          "name": "Upside/Downside Capture Ratios",
+          "description": "% of benchmark upside captured vs % of downside avoided",
+          "blockType": "kpi-card",
+          "blockCatalogRef": "kpi-card-03",
+          "financialConcepts": ["risk management", "performance quality"],
+          "dataContract": {
+            "metrics": [
+              {"name": "string", "stat": "number", "change": "string", "changeType": "string"}
+            ],
+            "cols": "number"
+          },
+          "parameters": [
+            {"name": "benchmark", "type": "string"}
+          ],
+          "mcpRequired": ["get_portfolio_history", "get_historical_data"],
+          "useCases": ["Risk management assessment", "Strategy evaluation"],
+          "estimatedDataFetch": "2-3 seconds"
+        },
+        {
+          "id": "rolling-returns",
+          "name": "Rolling Returns Analysis",
+          "description": "Rolling 12-month, 3-year, 5-year returns showing consistency",
+          "blockType": "line-chart",
+          "blockCatalogRef": "line-chart-07",
+          "financialConcepts": ["consistency", "period risk"],
+          "dataContract": {
+            "data": [
+              {"date": "string", "Return_1Y": "number", "Return_3Y": "number", "Return_5Y": "number"}
+            ],
+            "categories": ["1-Year", "3-Year", "5-Year"],
+            "summary": [{"name": "string", "value": "number"}]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_portfolio_history"],
+          "useCases": ["Consistency verification", "Period analysis"],
+          "estimatedDataFetch": "2-3 seconds"
+        },
+        {
+          "id": "best-worst-periods",
+          "name": "Best & Worst Performing Periods",
+          "description": "Top and bottom N days/weeks/months showing extreme performance",
+          "blockType": "bar-list",
+          "blockCatalogRef": "bar-list-09",
+          "financialConcepts": ["extreme events", "timing importance"],
+          "dataContract": {
+            "data": [
+              {"period": "string", "return": "number"}
+            ]
+          },
+          "parameters": [
+            {"name": "window", "type": "string"}
+          ],
+          "mcpRequired": ["get_portfolio_history"],
+          "useCases": ["Timing importance", "Volatility assessment"],
+          "estimatedDataFetch": "2-3 seconds"
+        },
+        {
+          "id": "alpha-generation",
+          "name": "Alpha Generation Analysis",
+          "description": "Excess return (alpha) vs benchmark with statistical significance",
+          "blockType": "kpi-card",
+          "blockCatalogRef": "kpi-card-04",
+          "financialConcepts": ["alpha", "manager skill"],
+          "dataContract": {
+            "metrics": [
+              {"name": "string", "stat": "number", "change": "string", "changeType": "string"}
+            ],
+            "cols": "number"
+          },
+          "parameters": [],
+          "mcpRequired": ["get_portfolio_history", "get_historical_data"],
+          "useCases": ["Manager/strategy evaluation", "Skill assessment"],
+          "estimatedDataFetch": "2-3 seconds"
+        },
+        {
+          "id": "returns-vs-goals",
+          "name": "Returns vs Investment Goals",
+          "description": "Current return rate vs target for retirement/goals",
+          "blockType": "bar-chart",
+          "blockCatalogRef": "bar-chart-09",
+          "financialConcepts": ["goal tracking", "retirement planning"],
+          "dataContract": {
+            "data": [
+              {"goal": "string", "needed": "number", "actual": "number"}
+            ],
+            "categories": ["Needed", "Actual"]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_portfolio_history"],
+          "useCases": ["Goal progress tracking", "Retirement planning"],
+          "estimatedDataFetch": "2-3 seconds"
+        },
+        {
+          "id": "time-weighted-returns",
+          "name": "Time-Weighted vs Money-Weighted Returns",
+          "description": "TWR (manager performance) vs MWR (investor returns) comparison",
+          "blockType": "kpi-card",
+          "blockCatalogRef": "kpi-card-01",
+          "financialConcepts": ["returns", "timing impact"],
+          "dataContract": {
+            "metrics": [
+              {"name": "string", "stat": "number", "change": "string", "changeType": "string"}
+            ],
+            "cols": "number"
+          },
+          "parameters": [],
+          "mcpRequired": ["get_portfolio_history", "get_account"],
+          "useCases": ["Timing impact analysis", "Return fairness"],
+          "estimatedDataFetch": "2-3 seconds"
+        }
+      ]
+    },
+    "income": {
+      "description": "Income and dividend analysis finBlocks",
+      "count": 10,
+      "blocks": [
+        {
+          "id": "dividend-income-kpi",
+          "name": "Annual Dividend Income Summary",
+          "description": "Total annual dividend income, yield, monthly average",
+          "blockType": "kpi-card",
+          "blockCatalogRef": "kpi-card-01",
+          "financialConcepts": ["income", "yield", "distributions"],
+          "dataContract": {
+            "metrics": [
+              {"name": "string", "stat": "number", "change": "string", "changeType": "string"}
+            ],
+            "cols": "number"
+          },
+          "parameters": [],
+          "mcpRequired": ["get_dividends", "get_positions"],
+          "useCases": ["Income tracking", "Retirement planning"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "dividend-payers-table",
+          "name": "Dividend-Paying Holdings",
+          "description": "All dividend payers with symbol, yield, annual payment, next ex-date",
+          "blockType": "table",
+          "blockCatalogRef": "table-01",
+          "financialConcepts": ["dividend stocks", "income sources"],
+          "dataContract": {
+            "rows": [
+              {"Symbol": "string", "Shares": "number", "Yield": "number", "Annual": "number", "Next Ex": "string"}
+            ],
+            "columns": ["Symbol", "Shares", "Dividend Yield", "Annual Payment", "Next Ex-Date"]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_positions", "get_dividends"],
+          "useCases": ["Income tracking", "Dividend calendar"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "monthly-dividend-trend",
+          "name": "Monthly Dividend Income Trend",
+          "description": "Monthly dividend income over last 12 months showing seasonality",
+          "blockType": "line-chart",
+          "blockCatalogRef": "line-chart-08",
+          "financialConcepts": ["income trends", "seasonality"],
+          "dataContract": {
+            "data": [
+              {"month": "string", "Income": "number"}
+            ],
+            "categories": ["Income"],
+            "summary": [{"name": "string", "value": "number"}]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_dividends"],
+          "useCases": ["Income planning", "Cash flow forecasting"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "top-dividend-yielders",
+          "name": "Top Dividend Yielders",
+          "description": "Holdings ranked by dividend yield",
+          "blockType": "bar-list",
+          "blockCatalogRef": "bar-list-10",
+          "financialConcepts": ["high yield", "income optimization"],
+          "dataContract": {
+            "data": [
+              {"symbol": "string", "yield": "number"}
+            ]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_positions", "get_dividends"],
+          "useCases": ["Income optimization", "Yield hunting"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "dividend-growth-analysis",
+          "name": "Dividend Growth Rate",
+          "description": "YoY dividend per share growth showing dividend growth trajectory",
+          "blockType": "bar-chart",
+          "blockCatalogRef": "bar-chart-10",
+          "financialConcepts": ["dividend growth", "income growth"],
+          "dataContract": {
+            "data": [
+              {"year": "string", "Growth %": "number"}
+            ],
+            "categories": ["Growth %"]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_dividends"],
+          "useCases": ["Dividend growth investing", "Income stability"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "sector-dividend-yield",
+          "name": "Dividend Yield by Sector",
+          "description": "Average dividend yield for each sector in portfolio",
+          "blockType": "bar-chart",
+          "blockCatalogRef": "bar-chart-11",
+          "financialConcepts": ["sector yields", "income allocation"],
+          "dataContract": {
+            "data": [
+              {"sector": "string", "yield": "number"}
+            ],
+            "categories": ["yield"]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_positions", "get_dividends"],
+          "useCases": ["Sector income analysis", "Allocation review"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "dividend-coverage-ratio",
+          "name": "Dividend Coverage & Sustainability",
+          "description": "Payout ratio and free cash flow coverage for dividend safety",
+          "blockType": "kpi-card",
+          "blockCatalogRef": "kpi-card-02",
+          "financialConcepts": ["dividend safety", "sustainability"],
+          "dataContract": {
+            "metrics": [
+              {"name": "string", "stat": "number", "change": "string", "changeType": "string"}
+            ],
+            "cols": "number"
+          },
+          "parameters": [],
+          "mcpRequired": ["get_dividends", "get_fundamentals"],
+          "useCases": ["Risk assessment", "Dividend safety"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "income-vs-expenses",
+          "name": "Income vs Withdrawal Needs",
+          "description": "Annual dividend income vs target withdrawal for retirement",
+          "blockType": "bar-chart",
+          "blockCatalogRef": "bar-chart-12",
+          "financialConcepts": ["income planning", "retirement"],
+          "dataContract": {
+            "data": [
+              {"year": "string", "Income": "number", "Need": "number"}
+            ],
+            "categories": ["Income", "Need"]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_dividends", "get_positions"],
+          "useCases": ["Retirement planning", "Income adequacy"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "distribution-calendar",
+          "name": "Upcoming Dividend/Distribution Calendar",
+          "description": "Next 90 days of ex-dates, record dates, and payment dates",
+          "blockType": "table",
+          "blockCatalogRef": "table-01",
+          "financialConcepts": ["cash flow timing", "planning"],
+          "dataContract": {
+            "rows": [
+              {"Date": "string", "Symbol": "string", "Amount": "number", "Type": "string"}
+            ],
+            "columns": ["Date", "Symbol", "Amount", "Type"]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_dividends"],
+          "useCases": ["Cash flow planning", "Tax planning"],
+          "estimatedDataFetch": "1 second"
+        }
+      ]
+    },
+    "sector": {
+      "description": "Sector and asset class analysis finBlocks",
+      "count": 10,
+      "blocks": [
+        {
+          "id": "sector-performance-bar",
+          "name": "Sector Performance Comparison",
+          "description": "Annual returns by sector showing best/worst performing sectors",
+          "blockType": "bar-chart",
+          "blockCatalogRef": "bar-chart-01",
+          "financialConcepts": ["sector returns", "rotation signals"],
+          "dataContract": {
+            "data": [
+              {"sector": "string", "return": "number"}
+            ],
+            "categories": ["return"]
+          },
+          "parameters": [
+            {"name": "period", "type": "string"}
+          ],
+          "mcpRequired": ["get_positions", "get_technical_indicator"],
+          "useCases": ["Sector rotation", "Rebalancing"],
+          "estimatedDataFetch": "2-3 seconds"
+        },
+        {
+          "id": "sector-holdings-table",
+          "name": "Holdings by Sector",
+          "description": "All holdings organized by sector with allocation and performance",
+          "blockType": "table",
+          "blockCatalogRef": "table-01",
+          "financialConcepts": ["sector composition"],
+          "dataContract": {
+            "rows": [
+              {"Sector": "string", "Symbol": "string", "Weight": "number", "Return": "number"}
+            ],
+            "columns": ["Sector", "Symbol", "Weight %", "Return %"]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_positions"],
+          "useCases": ["Sector review", "Concentration analysis"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "sector-volatility-comparison",
+          "name": "Volatility by Sector",
+          "description": "Risk level (volatility) for each sector in portfolio",
+          "blockType": "bar-chart",
+          "blockCatalogRef": "bar-chart-02",
+          "financialConcepts": ["sector risk", "defensive vs growth"],
+          "dataContract": {
+            "data": [
+              {"sector": "string", "volatility": "number"}
+            ],
+            "categories": ["volatility"]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_positions", "get_technical_indicator"],
+          "useCases": ["Risk assessment", "Allocation strategy"],
+          "estimatedDataFetch": "2-3 seconds"
+        },
+        {
+          "id": "sector-valuation-metrics",
+          "name": "Average Valuation by Sector",
+          "description": "Average P/E and P/B ratios for sectors in portfolio",
+          "blockType": "bar-list",
+          "blockCatalogRef": "bar-list-01",
+          "financialConcepts": ["valuation", "growth vs value"],
+          "dataContract": {
+            "data": [
+              {"sector": "string", "pe": "number"}
+            ]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_positions", "get_fundamentals"],
+          "useCases": ["Valuation assessment", "Style analysis"],
+          "estimatedDataFetch": "2-3 seconds"
+        },
+        {
+          "id": "sector-rotation-signals",
+          "name": "Sector Rotation Signals",
+          "description": "Technical indicators (momentum, trend) for sector rotation",
+          "blockType": "kpi-card",
+          "blockCatalogRef": "kpi-card-01",
+          "financialConcepts": ["momentum", "rotation signals"],
+          "dataContract": {
+            "metrics": [
+              {"name": "string", "stat": "string", "change": "string", "changeType": "string"}
+            ],
+            "cols": "number"
+          },
+          "parameters": [],
+          "mcpRequired": ["get_technical_indicator"],
+          "useCases": ["Rotation trading", "Timing decisions"],
+          "estimatedDataFetch": "2-3 seconds"
+        },
+        {
+          "id": "sector-correlation",
+          "name": "Sector Correlation Analysis",
+          "description": "How sectors move together - diversification within sectors",
+          "blockType": "heatmap",
+          "blockCatalogRef": "heatmap-01",
+          "financialConcepts": ["correlation", "sector diversification"],
+          "dataContract": {
+            "data": "number[][]",
+            "labels": "string[]"
+          },
+          "parameters": [],
+          "mcpRequired": ["get_positions", "get_historical_data"],
+          "useCases": ["Diversification analysis", "Risk reduction"],
+          "estimatedDataFetch": "3-5 seconds"
+        },
+        {
+          "id": "economic-cycle-positioning",
+          "name": "Economic Cycle Positioning",
+          "description": "Sector positions aligned with growth/value/defensive cycles",
+          "blockType": "bar-chart",
+          "blockCatalogRef": "bar-chart-03",
+          "financialConcepts": ["economic cycles", "allocation strategy"],
+          "dataContract": {
+            "data": [
+              {"cycle": "string", "allocation": "number"}
+            ],
+            "categories": ["allocation"]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_positions"],
+          "useCases": ["Macro strategy", "Positioning"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "sector-rebalancing-recommendation",
+          "name": "Sector Rebalancing Opportunities",
+          "description": "Sectors over/underweight vs target allocation",
+          "blockType": "bar-list",
+          "blockCatalogRef": "bar-list-02",
+          "financialConcepts": ["rebalancing", "target allocation"],
+          "dataContract": {
+            "data": [
+              {"sector": "string", "deviation": "number"}
+            ]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_positions"],
+          "useCases": ["Portfolio rebalancing", "Drift correction"],
+          "estimatedDataFetch": "1 second"
+        },
+        {
+          "id": "sector-dividend-composition",
+          "name": "Dividend Income by Sector",
+          "description": "Which sectors contribute to portfolio dividend income",
+          "blockType": "donut-chart",
+          "blockCatalogRef": "donut-chart-01",
+          "financialConcepts": ["income sources", "diversification"],
+          "dataContract": {
+            "data": [
+              {"name": "string", "value": "number"}
+            ]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_dividends", "get_positions"],
+          "useCases": ["Income analysis", "Sector contribution"],
+          "estimatedDataFetch": "1-2 seconds"
+        }
+      ]
+    },
+    "technical": {
+      "description": "Technical analysis finBlocks",
+      "count": 8,
+      "blocks": [
+        {
+          "id": "rsi-overbought-oversold",
+          "name": "RSI Overbought/Oversold Signals",
+          "description": "Holdings with RSI > 70 (overbought) or < 30 (oversold)",
+          "blockType": "bar-list",
+          "blockCatalogRef": "bar-list-01",
+          "financialConcepts": ["momentum", "entry/exit signals"],
+          "dataContract": {
+            "data": [
+              {"symbol": "string", "rsi": "number"}
+            ]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_technical_indicator"],
+          "useCases": ["Entry/exit signals", "Rebalancing timing"],
+          "estimatedDataFetch": "2-3 seconds"
+        },
+        {
+          "id": "macd-crossover-signals",
+          "name": "MACD Trend Following Signals",
+          "description": "Holdings with MACD crossovers (bullish/bearish)",
+          "blockType": "bar-list",
+          "blockCatalogRef": "bar-list-02",
+          "financialConcepts": ["trend following", "momentum"],
+          "dataContract": {
+            "data": [
+              {"symbol": "string", "signal": "string"}
+            ]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_technical_indicator"],
+          "useCases": ["Trend identification", "Momentum trading"],
+          "estimatedDataFetch": "2-3 seconds"
+        },
+        {
+          "id": "moving-average-crossover",
+          "name": "Moving Average Signals",
+          "description": "Price above/below 50/200 day moving averages for each holding",
+          "blockType": "table",
+          "blockCatalogRef": "table-01",
+          "financialConcepts": ["trend", "support/resistance"],
+          "dataContract": {
+            "rows": [
+              {"Symbol": "string", "Price": "number", "SMA50": "number", "SMA200": "number", "Signal": "string"}
+            ],
+            "columns": ["Symbol", "Price", "SMA-50", "SMA-200", "Signal"]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_technical_indicator"],
+          "useCases": ["Trend confirmation", "Support/resistance"],
+          "estimatedDataFetch": "2-3 seconds"
+        },
+        {
+          "id": "bollinger-band-squeeze",
+          "name": "Bollinger Band Volatility",
+          "description": "Holdings in Bollinger Band squeeze (low volatility, potential breakout)",
+          "blockType": "bar-list",
+          "blockCatalogRef": "bar-list-03",
+          "financialConcepts": ["volatility", "breakout signals"],
+          "dataContract": {
+            "data": [
+              {"symbol": "string", "width": "number"}
+            ]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_technical_indicator"],
+          "useCases": ["Volatility assessment", "Breakout prediction"],
+          "estimatedDataFetch": "2-3 seconds"
+        },
+        {
+          "id": "support-resistance-levels",
+          "name": "Support & Resistance Levels",
+          "description": "Key support and resistance prices for top holdings",
+          "blockType": "table",
+          "blockCatalogRef": "table-01",
+          "financialConcepts": ["price levels", "trading strategy"],
+          "dataContract": {
+            "rows": [
+              {"Symbol": "string", "Resistance": "number", "Current": "number", "Support": "number"}
+            ],
+            "columns": ["Symbol", "Resistance", "Current Price", "Support"]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_technical_indicator"],
+          "useCases": ["Entry/exit planning", "Stop loss placement"],
+          "estimatedDataFetch": "2-3 seconds"
+        },
+        {
+          "id": "volume-trend-technical",
+          "name": "Volume Trend Signals",
+          "description": "Above/below average volume confirming price moves",
+          "blockType": "bar-list",
+          "blockCatalogRef": "bar-list-04",
+          "financialConcepts": ["volume confirmation", "trend strength"],
+          "dataContract": {
+            "data": [
+              {"symbol": "string", "volume": "number"}
+            ]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_technical_indicator"],
+          "useCases": ["Trend confirmation", "Breakout validation"],
+          "estimatedDataFetch": "2-3 seconds"
+        },
+        {
+          "id": "stochastic-momentum",
+          "name": "Stochastic Oscillator Signals",
+          "description": "Stochastic values indicating momentum and entry signals",
+          "blockType": "bar-list",
+          "blockCatalogRef": "bar-list-05",
+          "financialConcepts": ["momentum", "entry signals"],
+          "dataContract": {
+            "data": [
+              {"symbol": "string", "stochastic": "number"}
+            ]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_technical_indicator"],
+          "useCases": ["Entry timing", "Momentum trading"],
+          "estimatedDataFetch": "2-3 seconds"
+        }
+      ]
+    },
+    "fundamental": {
+      "description": "Fundamental analysis finBlocks",
+      "count": 8,
+      "blocks": [
+        {
+          "id": "earnings-quality-score",
+          "name": "Earnings Quality Assessment",
+          "description": "Revenue vs earnings growth, quality of earnings indicators",
+          "blockType": "kpi-card",
+          "blockCatalogRef": "kpi-card-01",
+          "financialConcepts": ["earnings quality", "business health"],
+          "dataContract": {
+            "metrics": [
+              {"name": "string", "stat": "number", "change": "string", "changeType": "string"}
+            ],
+            "cols": "number"
+          },
+          "parameters": [],
+          "mcpRequired": ["get_fundamentals"],
+          "useCases": ["Quality screening", "Red flag detection"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "margin-analysis",
+          "name": "Profitability Margins Over Time",
+          "description": "Gross, operating, net margins trend showing profitability",
+          "blockType": "line-chart",
+          "blockCatalogRef": "line-chart-01",
+          "financialConcepts": ["profitability", "operational efficiency"],
+          "dataContract": {
+            "data": [
+              {"quarter": "string", "Gross": "number", "Operating": "number", "Net": "number"}
+            ],
+            "categories": ["Gross Margin", "Operating Margin", "Net Margin"],
+            "summary": [{"name": "string", "value": "number"}]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_fundamentals"],
+          "useCases": ["Profitability trend", "Efficiency assessment"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "debt-to-equity-trend",
+          "name": "Leverage & Debt Metrics",
+          "description": "Debt-to-equity, debt-to-assets, interest coverage trend",
+          "blockType": "bar-chart",
+          "blockCatalogRef": "bar-chart-01",
+          "financialConcepts": ["financial health", "solvency"],
+          "dataContract": {
+            "data": [
+              {"year": "string", "Leverage": "number"}
+            ],
+            "categories": ["Leverage"]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_fundamentals"],
+          "useCases": ["Financial health", "Risk assessment"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "free-cashflow-analysis",
+          "name": "Free Cash Flow & Sustainability",
+          "description": "Operating cash flow vs capital expenditure showing cash generation",
+          "blockType": "line-chart",
+          "blockCatalogRef": "line-chart-02",
+          "financialConcepts": ["cash generation", "sustainability"],
+          "dataContract": {
+            "data": [
+              {"year": "string", "OCF": "number", "CapEx": "number", "FCF": "number"}
+            ],
+            "categories": ["Operating Cash Flow", "CapEx", "Free Cash Flow"],
+            "summary": [{"name": "string", "value": "number"}]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_fundamentals"],
+          "useCases": ["Dividend sustainability", "Business quality"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "return-on-capital",
+          "name": "Return on Capital (ROIC/ROE/ROA)",
+          "description": "Capital efficiency metrics showing how well company uses capital",
+          "blockType": "kpi-card",
+          "blockCatalogRef": "kpi-card-02",
+          "financialConcepts": ["capital efficiency", "quality"],
+          "dataContract": {
+            "metrics": [
+              {"name": "string", "stat": "number", "change": "string", "changeType": "string"}
+            ],
+            "cols": "number"
+          },
+          "parameters": [],
+          "mcpRequired": ["get_fundamentals"],
+          "useCases": ["Quality assessment", "Business comparison"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "revenue-growth-breakdown",
+          "name": "Revenue Growth Sources",
+          "description": "Organic growth vs acquisitions vs price increases",
+          "blockType": "bar-list",
+          "blockCatalogRef": "bar-list-01",
+          "financialConcepts": ["growth quality", "sustainability"],
+          "dataContract": {
+            "data": [
+              {"source": "string", "percentage": "number"}
+            ]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_fundamentals"],
+          "useCases": ["Growth sustainability", "Quality assessment"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "balance-sheet-health",
+          "name": "Balance Sheet Strength",
+          "description": "Current ratio, quick ratio, working capital metrics",
+          "blockType": "kpi-card",
+          "blockCatalogRef": "kpi-card-03",
+          "financialConcepts": ["liquidity", "financial health"],
+          "dataContract": {
+            "metrics": [
+              {"name": "string", "stat": "number", "change": "string", "changeType": "string"}
+            ],
+            "cols": "number"
+          },
+          "parameters": [],
+          "mcpRequired": ["get_fundamentals"],
+          "useCases": ["Financial health", "Crisis risk assessment"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "competitive-moat-analysis",
+          "name": "Competitive Advantage Indicators",
+          "description": "Metrics suggesting durable competitive moat (pricing power, retention, uniqueness)",
+          "blockType": "bar-list",
+          "blockCatalogRef": "bar-list-02",
+          "financialConcepts": ["competitive advantage", "moat"],
+          "dataContract": {
+            "data": [
+              {"indicator": "string", "score": "number"}
+            ]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_fundamentals"],
+          "useCases": ["Quality screening", "Long-term holding assessment"],
+          "estimatedDataFetch": "1-2 seconds"
+        }
+      ]
+    },
+    "tax": {
+      "description": "Tax planning and optimization finBlocks",
+      "count": 8,
+      "blocks": [
+        {
+          "id": "tax-loss-harvesting-opportunities",
+          "name": "Tax-Loss Harvesting Candidates",
+          "description": "Holdings with unrealized losses available for tax-loss harvesting",
+          "blockType": "table",
+          "blockCatalogRef": "table-01",
+          "financialConcepts": ["tax efficiency", "loss harvesting"],
+          "dataContract": {
+            "rows": [
+              {"Symbol": "string", "Loss": "number", "Tax Benefit": "number", "Wash Sale Risk": "string"}
+            ],
+            "columns": ["Symbol", "Unrealized Loss", "Tax Benefit", "Wash Sale Risk"]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_positions"],
+          "useCases": ["Tax optimization", "Year-end planning"],
+          "estimatedDataFetch": "1 second"
+        },
+        {
+          "id": "long-term-vs-shortterm-gains",
+          "name": "Long-term vs Short-term Gains Tax Analysis",
+          "description": "Unrealized gains categorized by holding period (tax efficiency)",
+          "blockType": "bar-chart",
+          "blockCatalogRef": "bar-chart-01",
+          "financialConcepts": ["tax brackets", "holding periods"],
+          "dataContract": {
+            "data": [
+              {"type": "string", "amount": "number"}
+            ],
+            "categories": ["amount"]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_positions"],
+          "useCases": ["Tax planning", "Realization timing"],
+          "estimatedDataFetch": "1 second"
+        },
+        {
+          "id": "estimated-tax-liability",
+          "name": "Estimated Tax Liability",
+          "description": "Unrealized gains and expected tax liability if liquidated",
+          "blockType": "kpi-card",
+          "blockCatalogRef": "kpi-card-01",
+          "financialConcepts": ["tax liability", "planning"],
+          "dataContract": {
+            "metrics": [
+              {"name": "string", "stat": "number", "change": "string", "changeType": "string"}
+            ],
+            "cols": "number"
+          },
+          "parameters": [],
+          "mcpRequired": ["get_positions"],
+          "useCases": ["Tax planning", "Liquidation planning"],
+          "estimatedDataFetch": "1 second"
+        },
+        {
+          "id": "cost-basis-analysis",
+          "name": "Cost Basis Summary",
+          "description": "Aggregate cost basis, current value, unrealized gains/losses",
+          "blockType": "table",
+          "blockCatalogRef": "table-01",
+          "financialConcepts": ["cost basis", "returns"],
+          "dataContract": {
+            "rows": [
+              {"Symbol": "string", "Cost": "number", "Current": "number", "Gain/Loss": "number"}
+            ],
+            "columns": ["Symbol", "Cost Basis", "Current Value", "Gain/Loss"]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_positions"],
+          "useCases": ["Tax verification", "Return calculation"],
+          "estimatedDataFetch": "1 second"
+        },
+        {
+          "id": "state-tax-optimization",
+          "name": "State Tax Efficiency",
+          "description": "Tax implications if moving to different state (state income tax)",
+          "blockType": "kpi-card",
+          "blockCatalogRef": "kpi-card-02",
+          "financialConcepts": ["state taxes", "relocation planning"],
+          "dataContract": {
+            "metrics": [
+              {"name": "string", "stat": "number", "change": "string", "changeType": "string"}
+            ],
+            "cols": "number"
+          },
+          "parameters": [],
+          "mcpRequired": ["get_positions"],
+          "useCases": ["Relocation planning", "Tax savings"],
+          "estimatedDataFetch": "1 second"
+        },
+        {
+          "id": "charitable-giving-strategy",
+          "name": "Charitable Giving Opportunity (Donate Appreciated Stock)",
+          "description": "Identify appreciated holdings suitable for charitable donations",
+          "blockType": "bar-list",
+          "blockCatalogRef": "bar-list-01",
+          "financialConcepts": ["charitable giving", "tax deduction"],
+          "dataContract": {
+            "data": [
+              {"symbol": "string", "value": "number"}
+            ]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_positions"],
+          "useCases": ["Charitable giving", "Tax optimization"],
+          "estimatedDataFetch": "1 second"
+        },
+        {
+          "id": "quarterly-estimated-taxes",
+          "name": "Quarterly Estimated Tax Payments",
+          "description": "Expected quarterly tax payments based on dividend and capital gains",
+          "blockType": "table",
+          "blockCatalogRef": "table-01",
+          "financialConcepts": ["estimated taxes", "quarterly payments"],
+          "dataContract": {
+            "rows": [
+              {"Quarter": "string", "Estimated Tax": "number", "Due Date": "string"}
+            ],
+            "columns": ["Quarter", "Estimated Tax Amount", "Due Date"]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_dividends", "get_positions"],
+          "useCases": ["Tax planning", "Cash flow planning"],
+          "estimatedDataFetch": "1-2 seconds"
+        }
+      ]
+    },
+    "monitoring": {
+      "description": "Alerts, monitoring and notifications finBlocks",
+      "count": 10,
+      "blocks": [
+        {
+          "id": "price-alert-setup",
+          "name": "Price Alert Monitoring",
+          "description": "Holdings with active price alerts (above/below target)",
+          "blockType": "table",
+          "blockCatalogRef": "table-01",
+          "financialConcepts": ["alerts", "monitoring"],
+          "dataContract": {
+            "rows": [
+              {"Symbol": "string", "Current": "number", "Target": "number", "Alert": "string"}
+            ],
+            "columns": ["Symbol", "Current Price", "Alert Target", "Status"]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_real_time_data"],
+          "useCases": ["Price monitoring", "Alert management"],
+          "estimatedDataFetch": "1 second"
+        },
+        {
+          "id": "portfolio-drift-monitoring",
+          "name": "Portfolio Drift from Target",
+          "description": "Holdings that have drifted from target allocation requiring rebalancing",
+          "blockType": "bar-list",
+          "blockCatalogRef": "bar-list-01",
+          "financialConcepts": ["rebalancing", "drift"],
+          "dataContract": {
+            "data": [
+              {"symbol": "string", "drift": "number"}
+            ]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_positions"],
+          "useCases": ["Portfolio rebalancing", "Allocation maintenance"],
+          "estimatedDataFetch": "1 second"
+        },
+        {
+          "id": "earnings-calendar",
+          "name": "Upcoming Earnings Dates",
+          "description": "Next earnings announcements for portfolio holdings",
+          "blockType": "table",
+          "blockCatalogRef": "table-01",
+          "financialConcepts": ["event risk", "planning"],
+          "dataContract": {
+            "rows": [
+              {"Symbol": "string", "Date": "string", "Time": "string", "Consensus EPS": "number"}
+            ],
+            "columns": ["Symbol", "Date", "Time", "Consensus EPS"]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_fundamentals"],
+          "useCases": ["Event risk awareness", "Position management"],
+          "estimatedDataFetch": "1 second"
+        },
+        {
+          "id": "news-sentiment-alerts",
+          "name": "News & Sentiment Monitoring",
+          "description": "Recent news and sentiment (bullish/bearish) for holdings",
+          "blockType": "table",
+          "blockCatalogRef": "table-01",
+          "financialConcepts": ["sentiment", "news"],
+          "dataContract": {
+            "rows": [
+              {"Symbol": "string", "Headline": "string", "Sentiment": "string", "Date": "string"}
+            ],
+            "columns": ["Symbol", "Recent News", "Sentiment", "Date"]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_market_news"],
+          "useCases": ["Risk awareness", "Position decisions"],
+          "estimatedDataFetch": "2-3 seconds"
+        },
+        {
+          "id": "dividend-announcement-alerts",
+          "name": "Dividend Announcements",
+          "description": "Recent dividend announcements, increases, cuts, suspensions",
+          "blockType": "table",
+          "blockCatalogRef": "table-01",
+          "financialConcepts": ["dividend changes", "income"],
+          "dataContract": {
+            "rows": [
+              {"Symbol": "string", "Change": "string", "Amount": "number", "Date": "string"}
+            ],
+            "columns": ["Symbol", "Change Type", "New Amount", "Date"]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_dividends"],
+          "useCases": ["Income tracking", "Position decisions"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "rating-downgrade-alerts",
+          "name": "Analyst Rating Changes",
+          "description": "Recent analyst upgrades/downgrades for holdings",
+          "blockType": "table",
+          "blockCatalogRef": "table-01",
+          "financialConcepts": ["sentiment", "positioning"],
+          "dataContract": {
+            "rows": [
+              {"Symbol": "string", "Change": "string", "From": "string", "To": "string", "Date": "string"}
+            ],
+            "columns": ["Symbol", "Change", "From Rating", "To Rating", "Date"]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_fundamentals"],
+          "useCases": ["Sentiment tracking", "Position decisions"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "volatility-spike-alerts",
+          "name": "Volatility Spike Alerts",
+          "description": "Holdings with unusual volatility spikes or VIX alerts",
+          "blockType": "bar-list",
+          "blockCatalogRef": "bar-list-02",
+          "financialConcepts": ["risk events", "volatility"],
+          "dataContract": {
+            "data": [
+              {"symbol": "string", "volatility_spike": "number"}
+            ]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_technical_indicator"],
+          "useCases": ["Risk awareness", "Opportunity identification"],
+          "estimatedDataFetch": "2-3 seconds"
+        },
+        {
+          "id": "buyback-notification",
+          "name": "Stock Buyback Announcements",
+          "description": "Companies announcing or executing share buybacks",
+          "blockType": "table",
+          "blockCatalogRef": "table-01",
+          "financialConcepts": ["capital allocation", "valuation"],
+          "dataContract": {
+            "rows": [
+              {"Symbol": "string", "Amount": "number", "Status": "string", "Date": "string"}
+            ],
+            "columns": ["Symbol", "Buyback Amount", "Status", "Date"]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_fundamentals"],
+          "useCases": ["Capital allocation tracking", "Valuation considerations"],
+          "estimatedDataFetch": "1-2 seconds"
+        },
+        {
+          "id": "sec-filing-alerts",
+          "name": "SEC Filing Monitoring",
+          "description": "Recent 10-K, 10-Q, 8-K filings for holdings",
+          "blockType": "table",
+          "blockCatalogRef": "table-01",
+          "financialConcepts": ["transparency", "insider activity"],
+          "dataContract": {
+            "rows": [
+              {"Symbol": "string", "Filing": "string", "Date": "string"}
+            ],
+            "columns": ["Symbol", "Filing Type", "Date"]
+          },
+          "parameters": [],
+          "mcpRequired": ["get_fundamentals"],
+          "useCases": ["Information gathering", "Risk assessment"],
+          "estimatedDataFetch": "1-2 seconds"
+        }
+      ]
+    }
+  }
+}
