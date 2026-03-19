@@ -227,15 +227,15 @@ class MockDataGenerator(AgentBase):
 
             dates = [(datetime.now() - timedelta(days=30*i)).strftime("%Y-%m-%d") for i in reversed(range(num_points))]
 
-            # Generate data for each category
+            # Generate data: each date gets all categories in one row
             data = []
-            for cat in categories:
-                base_value = random.uniform(50000, 100000)
-                values = [round(base_value + random.uniform(-10000, 15000), 2) for _ in range(num_points)]
-                for i, date in enumerate(dates):
-                    row = {"date": date}
-                    row[cat] = values[i]
-                    data.append(row)
+            category_values = {cat: random.uniform(50000, 100000) for cat in categories}
+
+            for date in dates:
+                row = {"date": date}
+                for cat in categories:
+                    row[cat] = round(category_values[cat] + random.uniform(-10000, 15000), 2)
+                data.append(row)
 
             return {
                 "data": data,
@@ -243,7 +243,7 @@ class MockDataGenerator(AgentBase):
                 "summary": [
                     {
                         "name": cat,
-                        "value": round(random.uniform(50000, 100000), 2)
+                        "value": round(category_values[cat], 2)
                     }
                     for cat in categories
                 ]
@@ -340,15 +340,35 @@ class MockDataGenerator(AgentBase):
 
             dates = [(datetime.now() - timedelta(days=1*i)).strftime("%Y-%m-%d") for i in reversed(range(num_points))]
 
+            # Generate chart data with prices for each ticker over time
+            data = []
+            for date in dates:
+                row = {"date": date}
+                for ticker in selected_tickers:
+                    row[ticker] = round(random.uniform(100, 200), 2)
+                data.append(row)
+
+            # Generate items with complete metadata
+            items = []
+            for ticker in selected_tickers:
+                # Get start and end prices to calculate change
+                start_price = data[0][ticker]
+                end_price = data[-1][ticker]
+                change_pct = ((end_price - start_price) / start_price) * 100
+                change_type = 'positive' if change_pct > 0 else 'negative' if change_pct < 0 else 'neutral'
+
+                items.append({
+                    "id": ticker,
+                    "name": ticker,
+                    "dataKey": ticker,
+                    "value": f"${end_price:.2f}",
+                    "change": f"{change_pct:+.1f}%",
+                    "changeType": change_type
+                })
+
             return {
-                "data": [
-                    {
-                        "date": date,
-                        **{ticker: round(random.uniform(100, 200), 2) for ticker in selected_tickers}
-                    }
-                    for date in dates
-                ],
-                "items": [{"name": ticker} for ticker in selected_tickers]
+                "data": data,
+                "items": items
             }
 
         elif component_type == "tracker" or "tracker" in sub_question.lower() or "monitoring" in sub_question.lower():

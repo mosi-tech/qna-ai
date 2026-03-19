@@ -33,6 +33,7 @@ export default function BuilderApp() {
     const [specLoading, setSpecLoading] = useState(false);
     const [specError, setSpecError] = useState<string | undefined>();
     const [mockMode, setMockMode] = useState(true);
+    const [mockV2Mode, setMockV2Mode] = useState(true);
     const [skipReuse, setSkipReuse] = useState(true);
 
     const handleSend = useCallback(async (text: string) => {
@@ -50,7 +51,7 @@ export default function BuilderApp() {
 
         let headlessResult: HeadlessResult;
         try {
-            headlessResult = await runHeadlessPipeline(text, { useNoCode: true, mock: mockMode, skipReuse });
+            headlessResult = await runHeadlessPipeline(text, { useNoCode: true, mock: mockMode, mockV2: mockV2Mode, skipReuse });
         } catch (err: any) {
             const msg = err?.message ?? 'Unknown error from headless pipeline';
             setMessages((prev) =>
@@ -190,6 +191,22 @@ export default function BuilderApp() {
                             Skip Cache
                         </span>
                     </label>
+                    {mockMode && (
+                        <label className="flex items-center gap-1.5 cursor-pointer group">
+                            <input
+                                type="checkbox"
+                                checked={mockV2Mode}
+                                onChange={(e) => setMockV2Mode(e.target.checked)}
+                                className="sr-only peer"
+                            />
+                            <div className="relative w-8 h-4 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-checked:bg-purple-500 transition-colors">
+                                <div className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform ${mockV2Mode ? 'translate-x-4' : ''}`} />
+                            </div>
+                            <span className="text-xs font-medium text-slate-600 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200">
+                                Decompose
+                            </span>
+                        </label>
+                    )}
                     {isLoading && (
                         <span className="flex items-center gap-1.5 text-xs text-blue-500 dark:text-blue-400">
                             <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
