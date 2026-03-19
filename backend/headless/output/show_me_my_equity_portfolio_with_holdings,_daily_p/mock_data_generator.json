@@ -1,10 +1,10 @@
 {
   "step": "mock_data_generator",
   "input": {
-    "question": "Show me my equity portfolio with detailed holdings including ticker, quantity, current price, and weight percentage. Provide daily P&L metrics showing total daily profit/loss in both currency and percentage change compared to the previous close. Display sector allocation with specific percentage breakdowns by industry. Include YTD performance data showing total return percentage for the overall portfolio, and time series data of portfolio values from the start of the year to the current date.",
+    "question": "Show me my equity portfolio with holdings, daily P&L, sector allocation, and YTD performance. Please provide a detailed table of holdings including ticker symbols, number of shares, current market price, and total market value. Calculate daily profit and loss in both absolute dollars and percentage terms based on the previous close. Generate a sector allocation breakdown showing specific percentage values for each sector. Additionally, provide year-to-date performance metrics, including the total return percentage and the portfolio value at the start of the year compared to the current value.",
     "ui_planner_output": {
       "title": "Equity Portfolio Overview",
-      "subtitle": "Detailed view of holdings, performance metrics, sector allocation, and YTD trends",
+      "subtitle": "Comprehensive view of portfolio performance, sector allocation, and detailed holdings with daily P&L",
       "layout": "grid",
       "blocks": [
         {
@@ -13,27 +13,12 @@
           "title": "Portfolio Performance Summary",
           "dataContract": {
             "type": "kpi",
-            "description": "Daily P&L and YTD return metrics",
+            "description": "Current portfolio NAV, daily return percentage, and YTD return percentage",
             "points": 1
           },
-          "sub_question": "What is the total daily profit/loss in currency and percentage compared to the previous close, and what is the year-to-date total return percentage for the portfolio?",
+          "sub_question": "What is the current Net Asset Value (NAV), daily return percentage, and year-to-date (YTD) return percentage of the portfolio?",
           "canonical_params": {
             "metric": "performance_summary"
-          }
-        },
-        {
-          "blockId": "line-chart-06",
-          "category": "line-charts",
-          "title": "Portfolio Value Time Series",
-          "dataContract": {
-            "type": "time-series",
-            "description": "Historical portfolio values from start of year to now",
-            "points": 1
-          },
-          "sub_question": "What is the time series of portfolio total values or returns from the start of the year to the current date?",
-          "canonical_params": {
-            "metric": "total_return",
-            "period": "ytd"
           }
         },
         {
@@ -41,11 +26,11 @@
           "category": "donut-charts",
           "title": "Sector Allocation Breakdown",
           "dataContract": {
-            "type": "allocation",
-            "description": "Percentage breakdown by industry",
+            "type": "donut",
+            "description": "Percentage breakdown of portfolio market value by economic sector",
             "points": 1
           },
-          "sub_question": "What is the percentage breakdown of the portfolio by sector and industry?",
+          "sub_question": "What is the percentage allocation of the portfolio's total market value across different sectors?",
           "canonical_params": {
             "metric": "sector_allocation"
           }
@@ -53,24 +38,23 @@
         {
           "blockId": "table-action-01",
           "category": "tables",
-          "title": "Detailed Equity Holdings",
+          "title": "Holdings and Daily P&L",
           "dataContract": {
-            "type": "holdings",
-            "description": "List of positions with ticker, quantity, price, weight",
+            "type": "table",
+            "description": "Detailed list of holdings with ticker, shares, price, market value, daily P&L ($), and daily P&L (%)",
             "points": 1
           },
-          "sub_question": "What are the detailed equity holdings including ticker, quantity, current price, and weight percentage?",
+          "sub_question": "What are the ticker symbols, number of shares, current market price, total market value, daily profit and loss in dollars, and daily profit and loss percentage for each holding in the portfolio?",
           "canonical_params": {
-            "metric": "holdings"
+            "metric": "holdings_detail_with_pnl"
           }
         }
       ],
       "metadata": {
-        "question": "Show me my equity portfolio with detailed holdings including ticker, quantity, current price, and weight percentage. Provide daily P&L metrics showing total daily profit/loss in both currency and percentage change compared to the previous close. Display sector allocation with specific percentage breakdowns by industry. Include YTD performance data showing total return percentage for the overall portfolio, and time series data of portfolio values from the start of the year to the current date.",
-        "block_count": 4,
+        "question": "Show me my equity portfolio with holdings, daily P&L, sector allocation, and YTD performance. Please provide a detailed table of holdings including ticker symbols, number of shares, current market price, and total market value. Calculate daily profit and loss in both absolute dollars and percentage terms based on the previous close. Generate a sector allocation breakdown showing specific percentage values for each sector. Additionally, provide year-to-date performance metrics, including the total return percentage and the portfolio value at the start of the year compared to the current value.",
+        "block_count": 3,
         "block_ids": [
           "kpi-card-01",
-          "line-chart-06",
           "donut-chart-04",
           "table-action-01"
         ]
@@ -91,8 +75,8 @@
     },
     "error": null,
     "metadata": {},
-    "timestamp": "2026-03-18T20:09:56.547446"
+    "timestamp": "2026-03-18T20:17:47.875436"
   },
-  "duration": 2.115812,
-  "timestamp": "2026-03-18T20:09:56.547751"
+  "duration": 2.374572,
+  "timestamp": "2026-03-18T20:17:47.875859"
 }

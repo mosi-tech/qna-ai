@@ -6,12 +6,14 @@
   "output": {
     "success": true,
     "data": {
-      "reused": false
+      "reused": true,
+      "mock_data_file": "/Users/shivc/Documents/Workspace/JS/qna-ai-admin/backend/headless/agents/mock/../../output/mock_data/show_me_my_equity_portfolio_with_holdings,_daily_p.json",
+      "similarity": 0.944805622
     },
     "error": null,
     "metadata": {},
-    "timestamp": "2026-03-18T20:04:58.441485"
+    "timestamp": "2026-03-18T20:11:38.219338"
   },
-  "duration": 1.892958,
-  "timestamp": "2026-03-18T20:04:58.441755"
+  "duration": 1.738126,
+  "timestamp": "2026-03-18T20:11:38.219466"
 }

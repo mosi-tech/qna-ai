@@ -9,27 +9,12 @@
       "title": "Portfolio Performance Summary",
       "dataContract": {
         "type": "kpi",
-        "description": "Daily P&L and YTD return metrics",
+        "description": "Current portfolio NAV, daily return percentage, and YTD return percentage",
         "points": 1
       },
-      "sub_question": "What is the total daily profit/loss in currency and percentage compared to the previous close, and what is the year-to-date total return percentage for the portfolio?",
+      "sub_question": "What is the current Net Asset Value (NAV), daily return percentage, and year-to-date (YTD) return percentage of the portfolio?",
       "canonical_params": {
         "metric": "performance_summary"
-      }
-    },
-    {
-      "blockId": "line-chart-06",
-      "category": "line-charts",
-      "title": "Portfolio Value Time Series",
-      "dataContract": {
-        "type": "time-series",
-        "description": "Historical portfolio values from start of year to now",
-        "points": 1
-      },
-      "sub_question": "What is the time series of portfolio total values or returns from the start of the year to the current date?",
-      "canonical_params": {
-        "metric": "total_return",
-        "period": "ytd"
       }
     },
     {
@@ -37,11 +22,11 @@
       "category": "donut-charts",
       "title": "Sector Allocation Breakdown",
       "dataContract": {
-        "type": "allocation",
-        "description": "Percentage breakdown by industry",
+        "type": "donut",
+        "description": "Percentage breakdown of portfolio market value by economic sector",
         "points": 1
       },
-      "sub_question": "What is the percentage breakdown of the portfolio by sector and industry?",
+      "sub_question": "What is the percentage allocation of the portfolio's total market value across different sectors?",
       "canonical_params": {
         "metric": "sector_allocation"
       }
@@ -49,15 +34,15 @@
     {
       "blockId": "table-action-01",
       "category": "tables",
-      "title": "Detailed Equity Holdings",
+      "title": "Holdings and Daily P&L",
       "dataContract": {
-        "type": "holdings",
-        "description": "List of positions with ticker, quantity, price, weight",
+        "type": "table",
+        "description": "Detailed list of holdings with ticker, shares, price, market value, daily P&L ($), and daily P&L (%)",
         "points": 1
       },
-      "sub_question": "What are the detailed equity holdings including ticker, quantity, current price, and weight percentage?",
+      "sub_question": "What are the ticker symbols, number of shares, current market price, total market value, daily profit and loss in dollars, and daily profit and loss percentage for each holding in the portfolio?",
       "canonical_params": {
-        "metric": "holdings"
+        "metric": "holdings_detail_with_pnl"
       }
     }
   ],
@@ -68,88 +53,24 @@
         "metrics": [
           {
             "name": "Portfolio Value",
-            "stat": 50464.58,
-            "change": "12.82%",
-            "changeType": "positive"
+            "stat": 33077.89,
+            "change": "3.36%",
+            "changeType": "negative"
           },
           {
             "name": "Daily P&L",
-            "stat": 61795.87,
-            "change": "28.96%",
+            "stat": 6830.32,
+            "change": "24.95%",
             "changeType": "positive"
           },
           {
             "name": "YTD Return",
-            "stat": 93624.02,
-            "change": "2.50%",
-            "changeType": "positive"
+            "stat": 73292.82,
+            "change": "18.05%",
+            "changeType": "negative"
           }
         ],
         "cols": 3
-      }
-    },
-    {
-      "blockId": "line-chart-06",
-      "data": {
-        "data": [
-          {
-            "date": "2025-04-22",
-            "Value": 105426.56
-          },
-          {
-            "date": "2025-05-22",
-            "Value": 107728.42
-          },
-          {
-            "date": "2025-06-21",
-            "Value": 102220.42
-          },
-          {
-            "date": "2025-07-21",
-            "Value": 91247.8
-          },
-          {
-            "date": "2025-08-20",
-            "Value": 107964.6
-          },
-          {
-            "date": "2025-09-19",
-            "Value": 109330.1
-          },
-          {
-            "date": "2025-10-19",
-            "Value": 88819.53
-          },
-          {
-            "date": "2025-11-18",
-            "Value": 91649.71
-          },
-          {
-            "date": "2025-12-18",
-            "Value": 109969.65
-          },
-          {
-            "date": "2026-01-17",
-            "Value": 96824.89
-          },
-          {
-            "date": "2026-02-16",
-            "Value": 100180.44
-          },
-          {
-            "date": "2026-03-18",
-            "Value": 100963.04
-          }
-        ],
-        "categories": [
-          "Value"
-        ],
-        "summary": [
-          {
-            "name": "Value",
-            "value": 84393.01
-          }
-        ]
       }
     },
     {
@@ -157,24 +78,24 @@
       "data": {
         "data": [
           {
-            "name": "Healthcare",
-            "value": 25.63
-          },
-          {
-            "name": "Consumer",
-            "value": 12.6
-          },
-          {
-            "name": "Energy",
-            "value": 24.12
+            "name": "Finance",
+            "value": 27.5
           },
           {
             "name": "Technology",
-            "value": 18.67
+            "value": 25.39
           },
           {
             "name": "Industrial",
-            "value": 10.07
+            "value": 20.33
+          },
+          {
+            "name": "Energy",
+            "value": 20.65
+          },
+          {
+            "name": "Consumer",
+            "value": 28.73
           }
         ]
       }
@@ -185,43 +106,75 @@
         "rows": [
           {
             "Symbol": "STK1",
-            "Shares": 124,
-            "Avg Cost": 414.1,
-            "Market Value": 99340.09,
-            "P&L": -4215.78,
-            "P&L %": -10.85
+            "Shares": 415,
+            "Avg Cost": 146.38,
+            "Market Value": 69434.63,
+            "P&L": 10284.36,
+            "P&L %": 46.64
           },
           {
             "Symbol": "STK2",
-            "Shares": 321,
-            "Avg Cost": 299.98,
-            "Market Value": 23939.07,
-            "P&L": 16113.97,
-            "P&L %": -16.72
+            "Shares": 347,
+            "Avg Cost": 426.05,
+            "Market Value": 40063.72,
+            "P&L": -4449.28,
+            "P&L %": 4.44
           },
           {
             "Symbol": "STK3",
-            "Shares": 545,
-            "Avg Cost": 323.12,
-            "Market Value": 61768.01,
-            "P&L": 7239.59,
-            "P&L %": -26.13
+            "Shares": 234,
+            "Avg Cost": 388.09,
+            "Market Value": 15979.25,
+            "P&L": 6927.32,
+            "P&L %": 18.87
           },
           {
             "Symbol": "STK4",
-            "Shares": 283,
-            "Avg Cost": 410.6,
-            "Market Value": 38997.53,
-            "P&L": 9246.24,
-            "P&L %": 15.48
+            "Shares": 508,
+            "Avg Cost": 429.21,
+            "Market Value": 52484.86,
+            "P&L": 17715.78,
+            "P&L %": -11.78
           },
           {
             "Symbol": "STK5",
-            "Shares": 154,
-            "Avg Cost": 403.48,
-            "Market Value": 88917.76,
-            "P&L": 19257.73,
-            "P&L %": 14.55
+            "Shares": 523,
+            "Avg Cost": 485.73,
+            "Market Value": 21969.19,
+            "P&L": -2023.24,
+            "P&L %": -9.14
+          },
+          {
+            "Symbol": "STK6",
+            "Shares": 951,
+            "Avg Cost": 253.94,
+            "Market Value": 61947.34,
+            "P&L": 5252.65,
+            "P&L %": -5.6
+          },
+          {
+            "Symbol": "STK7",
+            "Shares": 788,
+            "Avg Cost": 330.95,
+            "Market Value": 25842.69,
+            "P&L": 19710.31,
+            "P&L %": 27.92
+          },
+          {
+            "Symbol": "STK8",
+            "Shares": 842,
+            "Avg Cost": 201.8,
+            "Market Value": 83930.48,
+            "P&L": 16185.91,
+            "P&L %": -19.45
+          },
+          {
+            "Symbol": "STK9",
+            "Shares": 726,
+            "Avg Cost": 83.11,
+            "Market Value": 23343.39,
+            "P&L": 12600.13,
+            "P&L %": 45.7
           }
         ],
         "columns": [
@@ -237,29 +190,46 @@
   ],
   "mock_data_file": "/Users/shivc/Documents/Workspace/JS/qna-ai-admin/backend/headless/agents/mock/../../output/mock_data/show_me_my_equity_portfolio_with_holdings,_daily_p.json",
   "similarity": null,
-  "total_time": 44.624095,
+  "total_time": 92.028134,
   "steps": [
     {
       "step": "question_enhancer",
       "success": true,
-      "duration": 17.164695,
-      "timestamp": "2026-03-18T20:09:29.089244",
-      "output_size": 1835
+      "duration": 28.052507,
+      "timestamp": "2026-03-18T20:16:43.901527",
+      "output_size": 1753
     },
     {
       "step": "ui_planner",
       "success": true,
-      "duration": 25.340436,
-      "timestamp": "2026-03-18T20:09:54.430480",
-      "output_size": 2374
+      "duration": 61.596838,
+      "timestamp": "2026-03-18T20:17:45.499149",
+      "output_size": 2263
     },
     {
       "step": "mock_data_generator",
       "success": true,
-      "duration": 2.115812,
-      "timestamp": "2026-03-18T20:09:56.547580",
+      "duration": 2.374572,
+      "timestamp": "2026-03-18T20:17:47.875591",
       "output_size": 241
     }
   ],
-  "timestamp": "2026-03-18T20:09:56.548645"
+  "timestamp": "2026-03-18T20:17:47.877150",
+  "_debug": {
+    "timestamp": "2026-03-18T20:17:47.877195",
+    "blocks_count": 3,
+    "blocks_data_count": 3,
+    "blocks_ids": [
+      "kpi-card-01",
+      "donut-chart-04",
+      "table-action-01"
+    ],
+    "blocks_data_ids": [
+      "kpi-card-01",
+      "donut-chart-04",
+      "table-action-01"
+    ],
+    "success": true,
+    "action": "mock_generated"
+  }
 }

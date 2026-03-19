@@ -158,7 +158,7 @@ class AnalysisOrchestrator:
 
             # Mock mode flow: Skip script generation, use mock data
             if self.mock_mode:
-                self._log("🧪 Mock mode enabled")
+                self._log(f"🧪 Mock mode enabled (skip_reuse={self.skip_reuse})")
 
                 mock_data_file = None
                 similarity = None
@@ -521,6 +521,7 @@ class AnalysisOrchestrator:
             output_path = os.path.join(self.output_dir, self.question_id)
             os.makedirs(output_path, exist_ok=True)
 
+            step_timestamp = datetime.now().isoformat()
             step_file = os.path.join(output_path, f"{step_name}.json")
 
             step_data = {
@@ -528,13 +529,20 @@ class AnalysisOrchestrator:
                 "input": input_data,
                 "output": result.to_dict(),
                 "duration": duration,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": step_timestamp
             }
 
             with open(step_file, 'w') as f:
                 json.dump(step_data, f, indent=2)
 
             self._log(f"💾 Saved: {step_file}")
+
+            # Also save a debug log entry
+            debug_log_file = os.path.join(output_path, "_debug.log")
+            debug_entry = f"[{step_timestamp}] {step_name}: {duration:.2f}s - {'SUCCESS' if result.success else 'FAILED'}\n"
+            with open(debug_log_file, 'a') as f:
+                f.write(debug_entry)
+
         except Exception as e:
             self._log(f"⚠️  Failed to save step output: {e}")
 
@@ -669,9 +677,22 @@ def main():
         question_output_dir = os.path.join(output_dir, orchestrator.question_id)
         os.makedirs(question_output_dir, exist_ok=True)
         final_result_file = os.path.join(question_output_dir, "final_result.json")
+
+        # Add debug info to result
+        result["_debug"] = {
+            "timestamp": datetime.now().isoformat(),
+            "blocks_count": len(result.get("blocks", [])),
+            "blocks_data_count": len(result.get("blocks_data", [])),
+            "blocks_ids": [b.get("blockId") for b in result.get("blocks", [])],
+            "blocks_data_ids": [b.get("blockId") for b in result.get("blocks_data", [])],
+            "success": result.get("success"),
+            "action": result.get("action"),
+        }
+
         with open(final_result_file, 'w') as f:
             json.dump(result, f, indent=2)
         print(f"💾 Final result saved to: {final_result_file}")
+        print(f"   Blocks: {result['_debug']['blocks_count']}, BlocksData: {result['_debug']['blocks_data_count']}")
     except Exception as e:
         logger.error(f"Failed to save final result: {e}")
 

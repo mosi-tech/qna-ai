@@ -7,40 +7,40 @@
   "output": {
     "success": true,
     "data": {
-      "enhanced_question": "Show me my equity portfolio with detailed holdings including ticker, quantity, current price, and weight percentage. Provide daily P&L metrics showing total daily profit/loss in both currency and percentage change compared to the previous close. Display sector allocation with specific percentage breakdowns by industry. Include YTD performance data showing total return percentage for the overall portfolio, and time series data of portfolio values from the start of the year to the current date.",
+      "enhanced_question": "Show me my equity portfolio with holdings, daily P&L, sector allocation, and YTD performance. Please provide a detailed table of holdings including ticker symbols, number of shares, current market price, and total market value. Calculate daily profit and loss in both absolute dollars and percentage terms based on the previous close. Generate a sector allocation breakdown showing specific percentage values for each sector. Additionally, provide year-to-date performance metrics, including the total return percentage and the portfolio value at the start of the year compared to the current value.",
       "data_requirements": [
         {
-          "block_id": "implied-holdings-table",
-          "block_type": "table",
-          "requirement": "Structured table data for individual holdings including ticker symbol, number of shares, current market price, total market value, and weight percentage."
+          "block_id": "inferred-holdings-table",
+          "block_type": "tables",
+          "requirement": "Detailed rows for each holding with ticker symbol, quantity, current price, and total market value."
         },
         {
-          "block_id": "implied-daily-pnl",
+          "block_id": "inferred-pnl-kpi",
           "block_type": "kpi-cards",
-          "requirement": "Current total portfolio value, daily profit/loss amount, daily change percentage, and previous close value for comparison."
+          "requirement": "Total portfolio current value, previous day value, daily change amount, and daily change percentage."
         },
         {
-          "block_id": "implied-sector-allocation",
+          "block_id": "inferred-sector-donut",
           "block_type": "donut-charts",
-          "requirement": "Sector allocation data with category labels (industry sectors) and corresponding percentage values or weights."
+          "requirement": "Sector names and corresponding portfolio allocation percentages."
         },
         {
-          "block_id": "implied-ytd-performance",
-          "block_type": "line-charts",
-          "requirement": "Time series data (dates and values) for portfolio value from the start of the year to present, and aggregate YTD return percentage."
+          "block_id": "inferred-ytd-kpi",
+          "block_type": "kpi-cards",
+          "requirement": "Portfolio value at the start of the year, current value, and calculated year-to-date return percentage."
         }
       ],
       "metadata": {
         "block_count": 0,
-        "enhancement_summary": "Added specific data fields for holdings (ticker, quantity, price), P&L (currency and percentage change), allocation (sector percentages), and performance (YTD return and time series history) to enable comprehensive visualization.",
+        "enhancement_summary": "Added specific requirements for holding details (ticker, quantity, price), precise P&L calculations (value and percentage), sector percentage breakdowns, and YTD performance basis (start of year vs current).",
         "original_question": "Show me my equity portfolio with holdings, daily P&L, sector allocation and YTD performance",
         "enhanced_block_ids": []
       }
     },
     "error": null,
     "metadata": {},
-    "timestamp": "2026-03-18T20:09:29.089154"
+    "timestamp": "2026-03-18T20:16:43.901460"
   },
-  "duration": 17.164695,
-  "timestamp": "2026-03-18T20:09:29.089443"
+  "duration": 28.052507,
+  "timestamp": "2026-03-18T20:16:43.901669"
 }

@@ -86,8 +86,9 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'question is required' }, { status: 400 });
         }
 
-        // Debug logging
-        console.log('[headless/run] Received flags:', { useNoCode, mock, skipReuse });
+        // Debug logging with timestamp
+        const timestamp = new Date().toISOString();
+        console.log(`[${timestamp}] [headless/run] POST received:`, { question: question.substring(0, 80), useNoCode, mock, skipReuse });
 
         // Path to the new orchestrator script
         const scriptPath = path.join(
@@ -147,13 +148,13 @@ export async function POST(request: NextRequest) {
 
         if (skipReuse) {
             args.push('--skip-reuse');
-            console.log('[headless/run] Skip cache ENABLED');
+            console.log(`[${timestamp}] [headless/run] ⚠️  SKIP CACHE ENABLED`);
         }
 
         // Use fast settings: skip enhancement and fast model
         args.push('--skip-enhancement');
 
-        console.log('[headless/run] Final args:', args.slice(1, 10)); // Log args for debugging
+        console.log(`[${timestamp}] [headless/run] Executing orchestrator with args:`, args.slice(1, 6).join(' '));
 
         // Spawn Python process
         const python = spawn('python3', args, {
@@ -182,6 +183,9 @@ export async function POST(request: NextRequest) {
 
         return new Promise<NextResponse>((resolve) => {
             python.on('close', (code: number | null) => {
+                const closeTimestamp = new Date().toISOString();
+                console.log(`[${closeTimestamp}] [headless/run] Process exited with code:`, code);
+
                 if (code !== 0) {
                     // Extract useful debug info from logs
                     const logLines = stderr.trim().split('\n');
@@ -210,19 +214,29 @@ export async function POST(request: NextRequest) {
                 try {
                     // Parse the JSON output from stdout
                     const lines = stdout.trim().split('\n');
+                    console.log(`[${closeTimestamp}] [headless/run] stdout lines: ${lines.length}, searching for JSON...`);
 
                     // Find the line that starts with '{' (JSON start)
                     const jsonStartIndex = lines.findIndex(line => line.trim().startsWith('{'));
 
                     if (jsonStartIndex === -1) {
+                        console.error(`[${closeTimestamp}] [headless/run] ❌ No JSON found in output. Last 5 lines:`, lines.slice(-5));
                         throw new Error('No JSON found in output');
                     }
+
+                    console.log(`[${closeTimestamp}] [headless/run] JSON found at line ${jsonStartIndex}, parsing...`);
 
                     // Collect all lines from the JSON start to the end
                     const jsonLines = lines.slice(jsonStartIndex);
                     const jsonString = jsonLines.join('\n');
 
                     const orchestratorResult = JSON.parse(jsonString) as OrchestratorOutput;
+                    console.log(`[${closeTimestamp}] [headless/run] ✅ Parsed orchestrator result:`, {
+                        success: orchestratorResult.success,
+                        action: orchestratorResult.action,
+                        blocks: orchestratorResult.blocks?.length || 0,
+                        blocks_data: orchestratorResult.blocks_data?.length || 0,
+                    });
 
                     // Transform orchestrator output to HeadlessResult format
                     const headlessResult: HeadlessResult = {
@@ -238,7 +252,7 @@ export async function POST(request: NextRequest) {
                         ui_blocks: orchestratorResult.blocks || [],
                         blocks_data: orchestratorResult.blocks_data?.map(block => {
                             const hasData = block.data !== null && block.data !== undefined;
-                            return {
+                            const transformed = {
                                 block_id: block.blockId,
                                 title: orchestratorResult.blocks?.find(b => b.blockId === block.blockId)?.title || block.blockId,
                                 status: hasData ? 'complete' : 'failed',
@@ -246,6 +260,10 @@ export async function POST(request: NextRequest) {
                                 data: block.data,
                                 error: hasData ? undefined : 'No data available',
                             };
+                            if (!hasData) {
+                                console.warn(`[${closeTimestamp}] [headless/run] ⚠️  Block ${block.blockId} has no data`);
+                            }
+                            return transformed;
                         }) || [],
                         plan_title: orchestratorResult.title,
                         mock_data_file: orchestratorResult.mock_data_file,
@@ -254,6 +272,13 @@ export async function POST(request: NextRequest) {
                         steps: orchestratorResult.steps || [],
                     };
 
+                    console.log(`[${closeTimestamp}] [headless/run] ✅ Returning HeadlessResult:`, {
+                        question: headlessResult.question.substring(0, 60),
+                        status: headlessResult.status,
+                        blocks: headlessResult.blocks,
+                        blocks_data_count: headlessResult.blocks_data?.length || 0,
+                        elapsed_s: headlessResult.elapsed_s,
+                    });
                     resolve(NextResponse.json(headlessResult));
                 } catch (e) {
                     const logLines = stdout.trim().split('\n');

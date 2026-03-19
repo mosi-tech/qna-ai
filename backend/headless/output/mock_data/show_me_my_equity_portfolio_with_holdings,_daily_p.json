@@ -1,12 +1,12 @@
 {
-  "question": "Show me my equity portfolio with detailed holdings including ticker, quantity, current price, and weight percentage. Provide daily P&L metrics showing total daily profit/loss in both currency and percentage change compared to the previous close. Display sector allocation with specific percentage breakdowns by industry. Include YTD performance data showing total return percentage for the overall portfolio, and time series data of portfolio values from the start of the year to the current date.",
-  "generated_at": "2026-03-18T20:09:54.431965",
+  "question": "Show me my equity portfolio with holdings, daily P&L, sector allocation, and YTD performance. Please provide a detailed table of holdings including ticker symbols, number of shares, current market price, and total market value. Calculate daily profit and loss in both absolute dollars and percentage terms based on the previous close. Generate a sector allocation breakdown showing specific percentage values for each sector. Additionally, provide year-to-date performance metrics, including the total return percentage and the portfolio value at the start of the year compared to the current value.",
+  "generated_at": "2026-03-18T20:17:45.501253",
   "data": {},
   "blocks": [
     {
       "block_id": "kpi-card-01",
       "type": "kpi",
-      "sub_question": "What is the total daily profit/loss in currency and percentage compared to the previous close, and what is the year-to-date total return percentage for the portfolio?",
+      "sub_question": "What is the current Net Asset Value (NAV), daily return percentage, and year-to-date (YTD) return percentage of the portfolio?",
       "canonical_params": {
         "metric": "performance_summary"
       },
@@ -14,176 +14,138 @@
         "metrics": [
           {
             "name": "Portfolio Value",
-            "stat": 50464.58,
-            "change": "12.82%",
-            "changeType": "positive"
+            "stat": 33077.89,
+            "change": "3.36%",
+            "changeType": "negative"
           },
           {
             "name": "Daily P&L",
-            "stat": 61795.87,
-            "change": "28.96%",
+            "stat": 6830.32,
+            "change": "24.95%",
             "changeType": "positive"
           },
           {
             "name": "YTD Return",
-            "stat": 93624.02,
-            "change": "2.50%",
-            "changeType": "positive"
+            "stat": 73292.82,
+            "change": "18.05%",
+            "changeType": "negative"
           }
         ],
         "cols": 3
       }
     },
     {
-      "block_id": "line-chart-06",
-      "type": "time-series",
-      "sub_question": "What is the time series of portfolio total values or returns from the start of the year to the current date?",
-      "canonical_params": {
-        "metric": "total_return",
-        "period": "ytd"
-      },
-      "data": {
-        "data": [
-          {
-            "date": "2025-04-22",
-            "Value": 105426.56
-          },
-          {
-            "date": "2025-05-22",
-            "Value": 107728.42
-          },
-          {
-            "date": "2025-06-21",
-            "Value": 102220.42
-          },
-          {
-            "date": "2025-07-21",
-            "Value": 91247.8
-          },
-          {
-            "date": "2025-08-20",
-            "Value": 107964.6
-          },
-          {
-            "date": "2025-09-19",
-            "Value": 109330.1
-          },
-          {
-            "date": "2025-10-19",
-            "Value": 88819.53
-          },
-          {
-            "date": "2025-11-18",
-            "Value": 91649.71
-          },
-          {
-            "date": "2025-12-18",
-            "Value": 109969.65
-          },
-          {
-            "date": "2026-01-17",
-            "Value": 96824.89
-          },
-          {
-            "date": "2026-02-16",
-            "Value": 100180.44
-          },
-          {
-            "date": "2026-03-18",
-            "Value": 100963.04
-          }
-        ],
-        "categories": [
-          "Value"
-        ],
-        "summary": [
-          {
-            "name": "Value",
-            "value": 84393.01
-          }
-        ]
-      }
-    },
-    {
       "block_id": "donut-chart-04",
-      "type": "allocation",
-      "sub_question": "What is the percentage breakdown of the portfolio by sector and industry?",
+      "type": "donut",
+      "sub_question": "What is the percentage allocation of the portfolio's total market value across different sectors?",
       "canonical_params": {
         "metric": "sector_allocation"
       },
       "data": {
         "data": [
           {
-            "name": "Healthcare",
-            "value": 25.63
-          },
-          {
-            "name": "Consumer",
-            "value": 12.6
-          },
-          {
-            "name": "Energy",
-            "value": 24.12
+            "name": "Finance",
+            "value": 27.5
           },
           {
             "name": "Technology",
-            "value": 18.67
+            "value": 25.39
           },
           {
             "name": "Industrial",
-            "value": 10.07
+            "value": 20.33
+          },
+          {
+            "name": "Energy",
+            "value": 20.65
+          },
+          {
+            "name": "Consumer",
+            "value": 28.73
           }
         ]
       }
     },
     {
       "block_id": "table-action-01",
-      "type": "holdings",
-      "sub_question": "What are the detailed equity holdings including ticker, quantity, current price, and weight percentage?",
+      "type": "table",
+      "sub_question": "What are the ticker symbols, number of shares, current market price, total market value, daily profit and loss in dollars, and daily profit and loss percentage for each holding in the portfolio?",
       "canonical_params": {
-        "metric": "holdings"
+        "metric": "holdings_detail_with_pnl"
       },
       "data": {
         "rows": [
           {
             "Symbol": "STK1",
-            "Shares": 124,
-            "Avg Cost": 414.1,
-            "Market Value": 99340.09,
-            "P&L": -4215.78,
-            "P&L %": -10.85
+            "Shares": 415,
+            "Avg Cost": 146.38,
+            "Market Value": 69434.63,
+            "P&L": 10284.36,
+            "P&L %": 46.64
           },
           {
             "Symbol": "STK2",
-            "Shares": 321,
-            "Avg Cost": 299.98,
-            "Market Value": 23939.07,
-            "P&L": 16113.97,
-            "P&L %": -16.72
+            "Shares": 347,
+            "Avg Cost": 426.05,
+            "Market Value": 40063.72,
+            "P&L": -4449.28,
+            "P&L %": 4.44
           },
           {
             "Symbol": "STK3",
-            "Shares": 545,
-            "Avg Cost": 323.12,
-            "Market Value": 61768.01,
-            "P&L": 7239.59,
-            "P&L %": -26.13
+            "Shares": 234,
+            "Avg Cost": 388.09,
+            "Market Value": 15979.25,
+            "P&L": 6927.32,
+            "P&L %": 18.87
           },
           {
             "Symbol": "STK4",
-            "Shares": 283,
-            "Avg Cost": 410.6,
-            "Market Value": 38997.53,
-            "P&L": 9246.24,
-            "P&L %": 15.48
+            "Shares": 508,
+            "Avg Cost": 429.21,
+            "Market Value": 52484.86,
+            "P&L": 17715.78,
+            "P&L %": -11.78
           },
           {
             "Symbol": "STK5",
-            "Shares": 154,
-            "Avg Cost": 403.48,
-            "Market Value": 88917.76,
-            "P&L": 19257.73,
-            "P&L %": 14.55
+            "Shares": 523,
+            "Avg Cost": 485.73,
+            "Market Value": 21969.19,
+            "P&L": -2023.24,
+            "P&L %": -9.14
+          },
+          {
+            "Symbol": "STK6",
+            "Shares": 951,
+            "Avg Cost": 253.94,
+            "Market Value": 61947.34,
+            "P&L": 5252.65,
+            "P&L %": -5.6
+          },
+          {
+            "Symbol": "STK7",
+            "Shares": 788,
+            "Avg Cost": 330.95,
+            "Market Value": 25842.69,
+            "P&L": 19710.31,
+            "P&L %": 27.92
+          },
+          {
+            "Symbol": "STK8",
+            "Shares": 842,
+            "Avg Cost": 201.8,
+            "Market Value": 83930.48,
+            "P&L": 16185.91,
+            "P&L %": -19.45
+          },
+          {
+            "Symbol": "STK9",
+            "Shares": 726,
+            "Avg Cost": 83.11,
+            "Market Value": 23343.39,
+            "P&L": 12600.13,
+            "P&L %": 45.7
           }
         ],
         "columns": [

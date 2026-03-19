@@ -66,6 +66,18 @@ export default function BuilderApp() {
         const statusBadge = headlessResult.status === 'cached' ? ' (cached)' : '';
         const summary = `Generated in ${headlessResult.elapsed_s.toFixed(1)}s${statusBadge}`;
 
+        // Debug: Log data structures
+        console.log('[BuilderApp] Result received:', {
+            status: headlessResult.status,
+            ui_blocks_count: headlessResult.ui_blocks?.length || 0,
+            blocks_data_count: headlessResult.blocks_data?.length || 0,
+            blocks_data_sample: headlessResult.blocks_data?.[0] ? {
+                block_id: headlessResult.blocks_data[0].block_id,
+                has_data: headlessResult.blocks_data[0].data !== undefined,
+                data_keys: headlessResult.blocks_data[0].data ? Object.keys(headlessResult.blocks_data[0].data) : [],
+            } : null,
+        });
+
         // Build steps summary for display
         let stepsContent = '';
         if (headlessResult.steps && headlessResult.steps.length > 0) {
@@ -92,9 +104,18 @@ export default function BuilderApp() {
         const uiBlocks = headlessResult.ui_blocks || [];
         const blocksData = headlessResult.blocks_data || [];
 
+        console.log('[BuilderApp] Matching blocks to data:');
+        console.log('  dashSpec.blocks:', dashSpec.blocks.map(b => b.blockId));
+        console.log('  blocksData:', blocksData.map(b => b.block_id));
+
         const initial: BlockState[] = dashSpec.blocks.map((blockSpec, idx) => {
             // Find matching data by blockId
             const backendBlock = blocksData.find(b => b.block_id === blockSpec.blockId);
+            if (!backendBlock) {
+                console.warn(`[BuilderApp] No data found for block ${blockSpec.blockId}`);
+            } else {
+                console.log(`[BuilderApp] ✓ Matched ${blockSpec.blockId} with data`);
+            }
 
             // Also check if there's a matching UI block
             const uiBlock = uiBlocks.find(b => b.blockId === blockSpec.blockId);
