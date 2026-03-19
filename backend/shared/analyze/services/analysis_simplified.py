@@ -44,9 +44,10 @@ class AnalysisService(BaseService):
         """Initialize analysis simplified specific components"""
         # Load coding-only prompt for enriched prompts
         self.coding_prompt_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), 
-            "..", 
-            "config", 
+            os.path.dirname(os.path.abspath(__file__)),
+            "..",
+            "..",
+            "config",
             "system-prompt-coding-only.txt"
         )
         self.coding_prompt = None  # Cache for coding prompt

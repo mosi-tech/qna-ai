@@ -1,0 +1,54 @@
+{
+  "step": "mock_data_generator",
+  "input": {
+    "question": "Show portfolio holdings table with detailed rows and columns including ticker symbol, company name, quantity, current market price, market value, cost basis, total gain/loss (value and percentage), daily change percentage, and sector allocation.",
+    "ui_planner_output": {
+      "title": "Portfolio Holdings Dashboard",
+      "subtitle": "Detailed view of all portfolio positions with market value, cost basis, and performance metrics",
+      "layout": "grid",
+      "blocks": [
+        {
+          "blockId": "table-action-01",
+          "category": "tables",
+          "title": "Portfolio Holdings Table",
+          "dataContract": {
+            "type": "table",
+            "description": "Detailed table of portfolio positions including ticker, name, quantity, price, market value, cost basis, gain/loss, and sector.",
+            "points": 1,
+            "categories": [
+              "Portfolio",
+              "Holdings"
+            ]
+          },
+          "sub_question": "What are the detailed holdings of the portfolio including ticker symbol, company name, quantity, current market price, market value, cost basis, total gain/loss value, total gain/loss percentage, daily change percentage, and sector allocation?",
+          "canonical_params": {}
+        }
+      ],
+      "metadata": {
+        "question": "Show portfolio holdings table with detailed rows and columns including ticker symbol, company name, quantity, current market price, market value, cost basis, total gain/loss (value and percentage), daily change percentage, and sector allocation.",
+        "block_count": 1,
+        "block_ids": [
+          "table-action-01"
+        ]
+      }
+    },
+    "question_id": "show_portfolio_holdings_table"
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "mock_data_file": "headless/output/mock_data/show_portfolio_holdings_table.json",
+      "data_points": [
+        "question",
+        "generated_at",
+        "data",
+        "blocks"
+      ]
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-18T14:55:08.396138"
+  },
+  "duration": 0.474727,
+  "timestamp": "2026-03-18T14:55:08.396394"
+}

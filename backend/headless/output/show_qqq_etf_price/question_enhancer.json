@@ -1,0 +1,25 @@
+{
+  "step": "question_enhancer",
+  "input": {
+    "question": "Show QQQ ETF price",
+    "original_question": "Show QQQ ETF price"
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "enhanced_question": "Show QQQ ETF price including current market price, daily change percentage, previous close, trading volume, market capitalization, and 1-year daily closing price history.",
+      "data_requirements": [],
+      "metadata": {
+        "block_count": 0,
+        "enhancement_summary": "Added comprehensive metrics (current price, daily change, volume, market cap, and historical time series) to support a general ETF analysis, as no specific visualization blocks were provided in the plan.",
+        "original_question": "Show QQQ ETF price",
+        "enhanced_block_ids": []
+      }
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-16T19:04:32.193931"
+  },
+  "duration": 30.098381,
+  "timestamp": "2026-03-16T19:04:32.194172"
+}

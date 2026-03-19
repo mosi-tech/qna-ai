@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useToast } from '../../lib/useToast.js';
+import { useToast } from '../../lib/useToast';
 
 import { Toast, ToastProvider, ToastViewport } from './Toast';
 

@@ -1,0 +1,3366 @@
+{
+  "timestamp": "2026-03-10T21:38:22.792501",
+  "input_file": "all-questions/sub_questions_ui_planner_system_checkpoint_100.json",
+  "total_questions": 200,
+  "processed": 200,
+  "cache_hits": 5,
+  "cache_misses": 195,
+  "successful": 165,
+  "failed": 30,
+  "results": [
+    {
+      "question": "How many portfolio positions are currently within 2% of their 52-week high and what is the total market value of these specific positions?",
+      "dashboard_id": 1,
+      "dashboard_title": "Near 52-Week High Positions",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "52w_high_proximity_summary"
+      },
+      "cache_key": "4f03f4989928f9064f6c0b7ebcd176e7",
+      "status": "generated",
+      "analysis_id": "e78062da-e424-4829-8537-cf3ef190ce42",
+      "elapsed_s": 118.412176,
+      "error": null
+    },
+    {
+      "question": "Which portfolio positions are currently within 2% of their 52-week high, showing ticker, current price, 52-week high price, and percentage difference?",
+      "dashboard_id": 1,
+      "dashboard_title": "Near 52-Week High Positions",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "52w_high_proximity_list"
+      },
+      "cache_key": "984798450471ce4656a1cf54cb7ecde3",
+      "status": "generated",
+      "analysis_id": "3f378aa2-ebcf-4534-baa8-d0746b39d4b6",
+      "elapsed_s": 172.473158,
+      "error": null
+    },
+    {
+      "question": "Rank the portfolio positions currently within 2% of their 52-week high by their percentage distance from the high, showing the closest first.",
+      "dashboard_id": 1,
+      "dashboard_title": "Near 52-Week High Positions",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "52w_high_proximity_rank"
+      },
+      "cache_key": "17c6779fc51acf9fd3165f3e7dafc522",
+      "status": "generated",
+      "analysis_id": "6a7f9f6f-bddb-4d65-b91c-d1b9439fd921",
+      "elapsed_s": 89.930297,
+      "error": null
+    },
+    {
+      "question": "What is the percentage distance from the 52-week high for each portfolio position currently within 2% of that high?",
+      "dashboard_id": 1,
+      "dashboard_title": "Near 52-Week High Positions",
+      "block_id": "bar-chart-01",
+      "block_category": "bar-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "52w_high_distance"
+      },
+      "cache_key": "061a6698ea3bb8a6eedb619760d5b021",
+      "status": "generated",
+      "analysis_id": "63fbec62-c018-4047-a9e4-88d917fe037e",
+      "elapsed_s": 263.565209,
+      "error": null
+    },
+    {
+      "question": "What is the total number of positions within 2% of their 52-week low and the average percentage distance from the low?",
+      "dashboard_id": 2,
+      "dashboard_title": "Near 52-Week Low Positions",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "near_low_summary"
+      },
+      "cache_key": "0c6abf04bc59b6098acaf53d208ca2fa",
+      "status": "generated",
+      "analysis_id": "ede0775c-b109-4054-9fe2-227106f156fb",
+      "elapsed_s": 258.910047,
+      "error": null
+    },
+    {
+      "question": "Which positions are currently within 2% of their 52-week low, displaying ticker, current price, and 52-week low?",
+      "dashboard_id": 2,
+      "dashboard_title": "Near 52-Week Low Positions",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "near_low_positions"
+      },
+      "cache_key": "5ff52bb8d3cdb1643d4da06144f3063d",
+      "status": "failed",
+      "analysis_id": null,
+      "elapsed_s": 300.018449,
+      "error": "Pipeline timed out after 300s"
+    },
+    {
+      "question": "What are the percentage distances from the 52-week low for positions within 2% of that low?",
+      "dashboard_id": 2,
+      "dashboard_title": "Near 52-Week Low Positions",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "distance_from_low"
+      },
+      "cache_key": "0b7837d7216c95bc2e2f784e1f22aabb",
+      "status": "cached",
+      "analysis_id": "a99da50d-bfe7-4dea-a0d6-b16943ffc9a1",
+      "elapsed_s": 0
+    },
+    {
+      "question": "What is the 30-day price history for positions currently within 2% of their 52-week low?",
+      "dashboard_id": 2,
+      "dashboard_title": "Near 52-Week Low Positions",
+      "block_id": "spark-chart-01",
+      "block_category": "spark-charts",
+      "output_format": {},
+      "canonical_params": {
+        "period": "30d"
+      },
+      "cache_key": "9437cb8aa28d9fb699dc86a398ab85f0",
+      "status": "cached",
+      "analysis_id": "04e5a44d-737f-42b1-b17c-fc82c14b8149",
+      "elapsed_s": 0
+    },
+    {
+      "question": "What are the summary metrics for all open positions: total number of holdings, count of positions within 10% of 52-week high, count of positions within 10% of 52-week low, and average percentage distance from 52-week high?",
+      "dashboard_id": 3,
+      "dashboard_title": "52-Week Range Dashboard",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "position_range_summary",
+        "period": "52w"
+      },
+      "cache_key": "0dcafed126c9737865fa0459674e072d",
+      "status": "generated",
+      "analysis_id": "987fc7af-a581-483f-af74-0e24e5019b37",
+      "elapsed_s": 176.106738,
+      "error": null
+    },
+    {
+      "question": "What are all open positions with their current prices, 52-week highs, and 52-week lows?",
+      "dashboard_id": 3,
+      "dashboard_title": "52-Week Range Dashboard",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "52_week_range"
+      },
+      "cache_key": "e9ebf6ab68a3454ea89e58d928a98b8b",
+      "status": "generated",
+      "analysis_id": "41486381-e1a4-4730-80e8-17f98c7458b5",
+      "elapsed_s": 118.947297,
+      "error": null
+    },
+    {
+      "question": "What is the current price expressed as a percentage of the 52-week high for each open position?",
+      "dashboard_id": 3,
+      "dashboard_title": "52-Week Range Dashboard",
+      "block_id": "bar-chart-01",
+      "block_category": "bar-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "price_vs_52w_high",
+        "period": "52w"
+      },
+      "cache_key": "fd40fa228751cab2e65e37f8923e971a",
+      "status": "generated",
+      "analysis_id": "11701ac4-ec9e-4dd2-b530-1d1813a99b31",
+      "elapsed_s": 91.871916,
+      "error": null
+    },
+    {
+      "question": "Which open positions are closest to their 52-week highs, ranked by percentage difference from the high?",
+      "dashboard_id": 3,
+      "dashboard_title": "52-Week Range Dashboard",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "near_52w_high_ranking",
+        "period": "52w"
+      },
+      "cache_key": "bba9e60ac3872da23981811fd3fcf67d",
+      "status": "generated",
+      "analysis_id": "5e4f43eb-dab5-4d99-8d2f-adc146958daf",
+      "elapsed_s": 186.411488,
+      "error": null
+    },
+    {
+      "question": "What are the aggregate volume metrics for the open positions including the total number of positions, highest average daily volume, lowest average daily volume, and mean average daily volume over the last 30 trading days?",
+      "dashboard_id": 4,
+      "dashboard_title": "Position Volume Analysis",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "volume_summary",
+        "period": "30d"
+      },
+      "cache_key": "9ded8f800dcd9606edfa3fbd9a72f049",
+      "status": "generated",
+      "analysis_id": "a884e554-b33a-459d-ace6-401d2beba07c",
+      "elapsed_s": 110.441163,
+      "error": null
+    },
+    {
+      "question": "What is the list of all open positions showing the ticker name and average daily volume for the last 30 trading days?",
+      "dashboard_id": 4,
+      "dashboard_title": "Position Volume Analysis",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "average_daily_volume",
+        "period": "30d"
+      },
+      "cache_key": "1ccbaa1b48f47f21cac3d7d204e1bcd0",
+      "status": "generated",
+      "analysis_id": "e51f906b-6397-4ef9-baa4-35d700617c50",
+      "elapsed_s": 110.314718,
+      "error": null
+    },
+    {
+      "question": "Which open positions have the highest average daily volume over the last 30 trading days, ranked in descending order?",
+      "dashboard_id": 4,
+      "dashboard_title": "Position Volume Analysis",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "average_daily_volume",
+        "period": "30d"
+      },
+      "cache_key": "0ac9b4b2eb5bff9ba5c0cef0b497ffd5",
+      "status": "generated",
+      "analysis_id": "363602e6-f0b7-49fe-a701-f42ce76bd9bc",
+      "elapsed_s": 122.996797,
+      "error": null
+    },
+    {
+      "question": "What is the average daily volume over the last 30 trading days for the top 10 open positions by portfolio weight?",
+      "dashboard_id": 4,
+      "dashboard_title": "Position Volume Analysis",
+      "block_id": "bar-chart-01",
+      "block_category": "bar-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "average_daily_volume",
+        "period": "30d"
+      },
+      "cache_key": "af51e0e1a9402c48665c9f3a064d1c2b",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 8.969013,
+      "error": null
+    },
+    {
+      "question": "What are the highest, lowest, and average realized volatility percentages for all open positions over the last 30 trading days?",
+      "dashboard_id": 5,
+      "dashboard_title": "Position Volatility Analysis",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "realized_volatility",
+        "period": "30d"
+      },
+      "cache_key": "56232fac5ac31342f6ee01f51653f4f0",
+      "status": "generated",
+      "analysis_id": "3b847b50-b5d9-4399-9820-4b93ad80cb1e",
+      "elapsed_s": 154.571076,
+      "error": null
+    },
+    {
+      "question": "What is the realized volatility percentage for each open position over the last 30 trading days, ranked from highest to lowest?",
+      "dashboard_id": 5,
+      "dashboard_title": "Position Volatility Analysis",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "realized_volatility",
+        "period": "30d"
+      },
+      "cache_key": "bc5a959bfc49bdc0f5a6ee7b56da7591",
+      "status": "generated",
+      "analysis_id": "97aefa23-ead5-4455-95f1-745f426812df",
+      "elapsed_s": 138.042085,
+      "error": null
+    },
+    {
+      "question": "What are the ticker symbols and their corresponding 30-day realized volatility percentages for all open positions?",
+      "dashboard_id": 5,
+      "dashboard_title": "Position Volatility Analysis",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "realized_volatility",
+        "period": "30d"
+      },
+      "cache_key": "5202520da3c0d8542e9e6d41ec61a4c3",
+      "status": "generated",
+      "analysis_id": "c80c487e-e5ee-4880-99ea-e170da72af96",
+      "elapsed_s": 95.037529,
+      "error": null
+    },
+    {
+      "question": "Show the rolling 30-day realized volatility trend for the entire portfolio over the last 3 months.",
+      "dashboard_id": 5,
+      "dashboard_title": "Position Volatility Analysis",
+      "block_id": "line-chart-01",
+      "block_category": "line-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "realized_volatility",
+        "period": "3m"
+      },
+      "cache_key": "9767f99b321cc0d0a9ad4058bea07991",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 8.200782,
+      "error": null
+    },
+    {
+      "question": "What are the portfolio beta statistics: average beta across all open positions, highest individual position beta, lowest individual position beta, and overall portfolio beta versus SPY over the last 60 trading days?",
+      "dashboard_id": 6,
+      "dashboard_title": "Position Beta Analysis Dashboard",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "beta_summary",
+        "period": "60d",
+        "benchmark": "SPY"
+      },
+      "cache_key": "b0b0a458b9c0d361024a4ebe479a1529",
+      "status": "generated",
+      "analysis_id": "184983f4-e2ec-447c-a349-3d13c1ae08b7",
+      "elapsed_s": 94.831758,
+      "error": null
+    },
+    {
+      "question": "What is the beta versus SPY for each open position over the last 60 trading days, ranked from highest to lowest beta?",
+      "dashboard_id": 6,
+      "dashboard_title": "Position Beta Analysis Dashboard",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "beta",
+        "period": "60d",
+        "benchmark": "SPY"
+      },
+      "cache_key": "14438fb908b8d45422e45eabd2d3070c",
+      "status": "generated",
+      "analysis_id": "182730b2-5366-45c8-943c-eeaae0c4985f",
+      "elapsed_s": 92.67585,
+      "error": null
+    },
+    {
+      "question": "What are the detailed beta values versus SPY for each open position over the last 60 trading days including ticker, position name, sector, and beta value?",
+      "dashboard_id": 6,
+      "dashboard_title": "Position Beta Analysis Dashboard",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "beta_details",
+        "period": "60d",
+        "benchmark": "SPY"
+      },
+      "cache_key": "7ffe85158258852651c308c17951d817",
+      "status": "generated",
+      "analysis_id": "8ffe2b19-2087-4253-acb9-4c3accad0984",
+      "elapsed_s": 90.249567,
+      "error": null
+    },
+    {
+      "question": "What is the average beta versus SPY for each sector represented in the open positions over the last 60 trading days?",
+      "dashboard_id": 6,
+      "dashboard_title": "Position Beta Analysis Dashboard",
+      "block_id": "bar-chart-01",
+      "block_category": "bar-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "sector_beta",
+        "period": "60d",
+        "benchmark": "SPY"
+      },
+      "cache_key": "e2d38feda22e5bf399917aa6f832a600",
+      "status": "generated",
+      "analysis_id": "522ba66b-bf53-402e-89d0-a1594a834a46",
+      "elapsed_s": 115.309046,
+      "error": null
+    },
+    {
+      "question": "What are the total counts of open positions where the 50-day moving average is above the 200-day moving average versus below it?",
+      "dashboard_id": 7,
+      "dashboard_title": "Moving Average Trend Status",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "ma_trend_summary"
+      },
+      "cache_key": "e26be26b21dcf19724008fa42693fbbf",
+      "status": "generated",
+      "analysis_id": "1dabfe9f-cd41-479f-aa66-7af23a01ba87",
+      "elapsed_s": 151.173029,
+      "error": null
+    },
+    {
+      "question": "List all open positions with their current 50-day moving average, 200-day moving average, and a status indicator of whether the 50-day MA is above the 200-day MA.",
+      "dashboard_id": 7,
+      "dashboard_title": "Moving Average Trend Status",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "ma_cross_status"
+      },
+      "cache_key": "e5bae9c1031bf5c12fb024ad61efb7a2",
+      "status": "failed",
+      "analysis_id": null,
+      "elapsed_s": 300.004453,
+      "error": "Pipeline timed out after 300s"
+    },
+    {
+      "question": "What is the number of open positions currently in a bullish trend compared to those in a bearish trend based on moving averages?",
+      "dashboard_id": 7,
+      "dashboard_title": "Moving Average Trend Status",
+      "block_id": "bar-chart-01",
+      "block_category": "bar-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "ma_trend_distribution"
+      },
+      "cache_key": "d7c43135659078cb7963c1bf618ec6cd",
+      "status": "generated",
+      "analysis_id": "dbbb9554-5fd5-42b6-966c-6ad63802dddd",
+      "elapsed_s": 299.213101,
+      "error": null
+    },
+    {
+      "question": "What is the percentage of total open positions that have a 50-day moving average above the 200-day moving average?",
+      "dashboard_id": 7,
+      "dashboard_title": "Moving Average Trend Status",
+      "block_id": "donut-chart-01",
+      "block_category": "donut-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "ma_trend_percentage"
+      },
+      "cache_key": "abfe597aa6894ac5d2a4d25d143a8064",
+      "status": "generated",
+      "analysis_id": "1dabfe9f-cd41-479f-aa66-7af23a01ba87",
+      "elapsed_s": 64.400321,
+      "error": null
+    },
+    {
+      "question": "What is the portfolio's average 14-day RSI, number of overbought positions (RSI > 70), number of oversold positions (RSI < 30), and total number of positions?",
+      "dashboard_id": 8,
+      "dashboard_title": "Open Positions RSI Analysis",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "rsi_summary",
+        "period": "14d"
+      },
+      "cache_key": "5494a7a7e68dfa156d0f568078dbc528",
+      "status": "generated",
+      "analysis_id": "d30dfbfe-0b2c-4502-aa5e-3c66c72b001e",
+      "elapsed_s": 81.289805,
+      "error": null
+    },
+    {
+      "question": "What are the ticker, current price, and 14-day RSI for each open position sorted by position size?",
+      "dashboard_id": 8,
+      "dashboard_title": "Open Positions RSI Analysis",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "rsi_by_position",
+        "period": "14d"
+      },
+      "cache_key": "2667b8553d443828c75e4d427b9355ee",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 7.05051,
+      "error": null
+    },
+    {
+      "question": "Rank all open positions by their 14-day RSI value from highest to lowest with visual indicator bars.",
+      "dashboard_id": 8,
+      "dashboard_title": "Open Positions RSI Analysis",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "rsi_rankings",
+        "period": "14d"
+      },
+      "cache_key": "e5cfcebb2bf7105ab9cc20d5d85f65d1",
+      "status": "generated",
+      "analysis_id": "0f178707-0926-4ac3-90c3-1a8a026b6629",
+      "elapsed_s": 104.005088,
+      "error": null
+    },
+    {
+      "question": "Show the 14-day RSI history trend for the top 5 open positions by portfolio weight.",
+      "dashboard_id": 8,
+      "dashboard_title": "Open Positions RSI Analysis",
+      "block_id": "spark-chart-01",
+      "block_category": "spark-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "rsi_history",
+        "period": "14d"
+      },
+      "cache_key": "125dc157d4aceffe23315e9df2e4a180",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 6.796671,
+      "error": null
+    },
+    {
+      "question": "What are the portfolio's key volatility metrics based on 14-day ATR: the average ATR across all positions, the highest single position ATR value, and the lowest single position ATR value?",
+      "dashboard_id": 9,
+      "dashboard_title": "Position Volatility (ATR) Dashboard",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "atr_summary",
+        "period": "14d"
+      },
+      "cache_key": "30c0e4736da0db2e5729fc91b5f92776",
+      "status": "generated",
+      "analysis_id": "026e53b2-9670-417f-a36e-00b56ee84234",
+      "elapsed_s": 176.531978,
+      "error": null
+    },
+    {
+      "question": "List all open positions ranked from highest to lowest based on their 14-day Average True Range value.",
+      "dashboard_id": 9,
+      "dashboard_title": "Position Volatility (ATR) Dashboard",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "atr",
+        "period": "14d"
+      },
+      "cache_key": "59e09114b3de1ff7e619932def794d49",
+      "status": "generated",
+      "analysis_id": "7a5dff25-3489-48ac-98c8-baa512549419",
+      "elapsed_s": 138.17219,
+      "error": null
+    },
+    {
+      "question": "What is the ticker and 14-day Average True Range value for every open position?",
+      "dashboard_id": 9,
+      "dashboard_title": "Position Volatility (ATR) Dashboard",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "atr",
+        "period": "14d"
+      },
+      "cache_key": "05541ebece3f9f7d71a18f8b24829631",
+      "status": "generated",
+      "analysis_id": "6aeccfee-2620-4582-ae48-c73998cf4dab",
+      "elapsed_s": 109.822815,
+      "error": null
+    },
+    {
+      "question": "How has the average 14-day Average True Range of the portfolio changed over the last 30 days?",
+      "dashboard_id": 9,
+      "dashboard_title": "Position Volatility (ATR) Dashboard",
+      "block_id": "line-chart-01",
+      "block_category": "line-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "atr_history",
+        "period": "30d"
+      },
+      "cache_key": "971a13e3b7cc53767a82bb45b5eb0911",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 6.304652,
+      "error": null
+    },
+    {
+      "question": "What are the portfolio's daily performance metrics: total value, total dollar change, total percent change, and the number of positions that are up versus down?",
+      "dashboard_id": 10,
+      "dashboard_title": "Open Positions Daily Performance",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "performance_summary",
+        "period": "1d"
+      },
+      "cache_key": "53085cbc385a40d5491a2d513d1310fb",
+      "status": "generated",
+      "analysis_id": "6ebc2ef9-7f16-485f-a89f-ddcdf3a2196c",
+      "elapsed_s": 150.693725,
+      "error": null
+    },
+    {
+      "question": "Which open positions have the highest positive percent change and which have the lowest negative percent change today, ranked by magnitude?",
+      "dashboard_id": 10,
+      "dashboard_title": "Open Positions Daily Performance",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "top_movers",
+        "period": "1d"
+      },
+      "cache_key": "75b2e7eff76326306ecb26911a6d7338",
+      "status": "failed",
+      "analysis_id": null,
+      "elapsed_s": 109.356062,
+      "error": "We ran into an issue and couldn't answer your question. Please try again."
+    },
+    {
+      "question": "What is the complete list of open positions showing symbol, quantity, last price, and today's percent change?",
+      "dashboard_id": 10,
+      "dashboard_title": "Open Positions Daily Performance",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "holdings_list",
+        "period": "1d"
+      },
+      "cache_key": "c5953d2b4f1cb9e66dc5654c8f529e03",
+      "status": "generated",
+      "analysis_id": "41486381-e1a4-4730-80e8-17f98c7458b5",
+      "elapsed_s": 77.593697,
+      "error": null
+    },
+    {
+      "question": "What is the average daily percent change for the portfolio grouped by sector?",
+      "dashboard_id": 10,
+      "dashboard_title": "Open Positions Daily Performance",
+      "block_id": "bar-chart-01",
+      "block_category": "bar-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "sector_performance",
+        "period": "1d"
+      },
+      "cache_key": "0129a27e76073e14651ea1a877420c3a",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 9.197233,
+      "error": null
+    },
+    {
+      "question": "What are the total intraday unrealized P/L, number of open positions, best performing position P/L, and worst performing position P/L for today?",
+      "dashboard_id": 11,
+      "dashboard_title": "Open Positions Intraday P/L",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "intraday_pl_summary",
+        "period": "1d"
+      },
+      "cache_key": "6b869c6715202d027a23635197d06ce4",
+      "status": "failed",
+      "analysis_id": null,
+      "elapsed_s": 379.29221,
+      "error": "We ran into an issue and couldn't answer your question. Please try again."
+    },
+    {
+      "question": "What is the intraday unrealized P/L for each open position showing symbol, quantity, current price, cost basis, and P/L amount?",
+      "dashboard_id": 11,
+      "dashboard_title": "Open Positions Intraday P/L",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "positions_pl",
+        "period": "1d"
+      },
+      "cache_key": "28d18886596eded92a7729212f65ff13",
+      "status": "failed",
+      "analysis_id": null,
+      "elapsed_s": 154.90468,
+      "error": "We ran into an issue and couldn't answer your question. Please try again."
+    },
+    {
+      "question": "What are the top and bottom open positions ranked by intraday unrealized P/L showing position name and P/L amount?",
+      "dashboard_id": 11,
+      "dashboard_title": "Open Positions Intraday P/L",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "positions_pl_ranking",
+        "period": "1d"
+      },
+      "cache_key": "a2b65aea746da3f3456db8dbf932b2f5",
+      "status": "generated",
+      "analysis_id": "dfd592cb-c477-4c52-9b06-d337c676e228",
+      "elapsed_s": 142.281422,
+      "error": null
+    },
+    {
+      "question": "What is the total intraday unrealized P/L aggregated by sector for all open positions?",
+      "dashboard_id": 11,
+      "dashboard_title": "Open Positions Intraday P/L",
+      "block_id": "bar-chart-01",
+      "block_category": "bar-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "sector_pl",
+        "period": "1d"
+      },
+      "cache_key": "d3a62ef82c6bbdd653cc23e60d6f064e",
+      "status": "generated",
+      "analysis_id": "39de6187-8833-4dd6-8c0c-16fca7b6f618",
+      "elapsed_s": 138.997611,
+      "error": null
+    },
+    {
+      "question": "What is the total average daily dollar volume across all open positions and the highest individual position average daily volume over the last 30 trading days?",
+      "dashboard_id": 12,
+      "dashboard_title": "Open Positions Liquidity Analysis",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "liquidity_summary",
+        "period": "30d"
+      },
+      "cache_key": "134eccdd32b739ae4a88fdaac5dd2253",
+      "status": "failed",
+      "analysis_id": null,
+      "elapsed_s": 124.382364,
+      "error": "We ran into an issue and couldn't answer your question. Please try again."
+    },
+    {
+      "question": "Which open positions have the highest average daily dollar volume over the last 30 trading days, ranked from highest to lowest?",
+      "dashboard_id": 12,
+      "dashboard_title": "Open Positions Liquidity Analysis",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "average_daily_dollar_volume",
+        "period": "30d"
+      },
+      "cache_key": "4e7203b314340c96f072814ad7f4cd7a",
+      "status": "generated",
+      "analysis_id": "3771f640-c6ef-4c3a-bf9c-a65f40396120",
+      "elapsed_s": 123.418912,
+      "error": null
+    },
+    {
+      "question": "What is the daily dollar volume trend over the last 30 trading days for the top 5 open positions by average volume?",
+      "dashboard_id": 12,
+      "dashboard_title": "Open Positions Liquidity Analysis",
+      "block_id": "spark-chart-01",
+      "block_category": "spark-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "volume_history",
+        "period": "30d"
+      },
+      "cache_key": "c77e3a96e6cafde557c12173531e8c22",
+      "status": "generated",
+      "analysis_id": "9aa6db22-3ed3-4be4-aa10-139fe5f9aaf5",
+      "elapsed_s": 141.542417,
+      "error": null
+    },
+    {
+      "question": "What are the tickers, current prices, and average daily dollar volumes for all open positions over the last 30 trading days?",
+      "dashboard_id": 12,
+      "dashboard_title": "Open Positions Liquidity Analysis",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "average_daily_dollar_volume",
+        "period": "30d"
+      },
+      "cache_key": "4954b2f4c57862152115c467e25af414",
+      "status": "generated",
+      "analysis_id": "2e94c838-f063-418f-b6fb-fce3b2cb17ec",
+      "elapsed_s": 126.56524,
+      "error": null
+    },
+    {
+      "question": "What are the key liquidity metrics for open positions: count of positions with below-average daily dollar volume, the average daily dollar volume across all open positions, and the lowest average daily dollar volume among all positions over the last 30 trading days?",
+      "dashboard_id": 13,
+      "dashboard_title": "Low Volume Positions Analysis",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "volume_summary",
+        "period": "30d"
+      },
+      "cache_key": "e1b491a299b431139343b3021ec61421",
+      "status": "generated",
+      "analysis_id": "9d93c406-3dfb-4b07-8e1f-2f450f7738eb",
+      "elapsed_s": 232.696464,
+      "error": null
+    },
+    {
+      "question": "Which open positions have the lowest average daily dollar volume over the last 30 trading days, ranked from lowest to highest with their ticker and corresponding volume values?",
+      "dashboard_id": 13,
+      "dashboard_title": "Low Volume Positions Analysis",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "lowest_volume_positions",
+        "period": "30d"
+      },
+      "cache_key": "442201fa8ef90c7bf669732e7af22d82",
+      "status": "generated",
+      "analysis_id": "b76a24a2-2c03-47ea-b513-46b83dcd2f68",
+      "elapsed_s": 177.145359,
+      "error": null
+    },
+    {
+      "question": "What is the average daily dollar volume for each open position over the last 30 trading days, displayed as a comparison chart?",
+      "dashboard_id": 13,
+      "dashboard_title": "Low Volume Positions Analysis",
+      "block_id": "bar-chart-01",
+      "block_category": "bar-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "volume_by_position",
+        "period": "30d"
+      },
+      "cache_key": "f7dbffa79da6604fab84b19500ae32af",
+      "status": "generated",
+      "analysis_id": "a5f25caf-2693-4ee3-8c39-1ecd40c2d673",
+      "elapsed_s": 170.150179,
+      "error": null
+    },
+    {
+      "question": "What are my portfolio sector allocation summary metrics: total holdings value, number of sectors represented, percentage in top sector, and number of unique sectors?",
+      "dashboard_id": 14,
+      "dashboard_title": "Sector Allocation Dashboard",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "sector_allocation_summary"
+      },
+      "cache_key": "f11f32f332ebface1e8a463f9e9c7abe",
+      "status": "failed",
+      "analysis_id": null,
+      "elapsed_s": 267.494084,
+      "error": "We ran into an issue and couldn't answer your question. Please try again."
+    },
+    {
+      "question": "What is the percentage breakdown of my portfolio holdings by sector?",
+      "dashboard_id": 14,
+      "dashboard_title": "Sector Allocation Dashboard",
+      "block_id": "donut-chart-01",
+      "block_category": "donut-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "sector_allocation"
+      },
+      "cache_key": "f1f9d568f5c37b679494385ba686ec02",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 5.473806,
+      "error": null
+    },
+    {
+      "question": "What are the sector allocation percentages ranked from highest to lowest?",
+      "dashboard_id": 14,
+      "dashboard_title": "Sector Allocation Dashboard",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "sector_allocation"
+      },
+      "cache_key": "38f3e3bbfbeff62ee9098aab42e49e35",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 5.97669,
+      "error": null
+    },
+    {
+      "question": "What are all my current holdings grouped by sector with ticker, name, and current value?",
+      "dashboard_id": 14,
+      "dashboard_title": "Sector Allocation Dashboard",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "holdings_by_sector"
+      },
+      "cache_key": "192ced24eeb0bdae8f3bf2d33920458c",
+      "status": "cached",
+      "analysis_id": "31136a7b-1d74-491e-8b8c-2e20aaef94bc",
+      "elapsed_s": 0
+    },
+    {
+      "question": "What are the key portfolio industry allocation metrics: total number of industries represented, largest industry weighting percentage, and total number of holdings?",
+      "dashboard_id": 15,
+      "dashboard_title": "Portfolio Industry Allocation",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "industry_allocation"
+      },
+      "cache_key": "d3341813f83e1c02159c502af2b6d066",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 6.08401,
+      "error": null
+    },
+    {
+      "question": "What is the percentage allocation of portfolio value across all industries?",
+      "dashboard_id": 15,
+      "dashboard_title": "Portfolio Industry Allocation",
+      "block_id": "donut-chart-01",
+      "block_category": "donut-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "industry_allocation"
+      },
+      "cache_key": "eac9ab8605a5698465fa9d2447591a11",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 7.492505,
+      "error": null
+    },
+    {
+      "question": "Which industries have the highest allocation percentage in the portfolio ranked from highest to lowest?",
+      "dashboard_id": 15,
+      "dashboard_title": "Portfolio Industry Allocation",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "industry_allocation"
+      },
+      "cache_key": "7493e727a91cf2584e845eddd6c8345a",
+      "status": "failed",
+      "analysis_id": null,
+      "elapsed_s": 1.781409,
+      "error": "We ran into an issue and couldn't answer your question. Please try again."
+    },
+    {
+      "question": "What is the monetary value of portfolio holdings distributed by industry?",
+      "dashboard_id": 15,
+      "dashboard_title": "Portfolio Industry Allocation",
+      "block_id": "treemap-01",
+      "block_category": "treemaps",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "industry_allocation"
+      },
+      "cache_key": "940eb2ec0c6cbc0b96c54273e9eb4221",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 5.527254,
+      "error": null
+    },
+    {
+      "question": "What are my portfolio sector summary metrics: total number of sectors, largest sector weight percentage, sector count exceeding 5%, and number of one-sector positions?",
+      "dashboard_id": 16,
+      "dashboard_title": "Portfolio Sector Allocation",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "sector_allocation"
+      },
+      "cache_key": "cdeb1f969790269c744d88d7dd86ea64",
+      "status": "generated",
+      "analysis_id": "e103636e-825f-45df-b541-b2596e016a6f",
+      "elapsed_s": 251.545027,
+      "error": null
+    },
+    {
+      "question": "What is my portfolio sector allocation by percentage for all sectors?",
+      "dashboard_id": 16,
+      "dashboard_title": "Portfolio Sector Allocation",
+      "block_id": "donut-chart-01",
+      "block_category": "donut-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "sector_allocation"
+      },
+      "cache_key": "a8116af384b4374c52f35629e207735a",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 8.899798,
+      "error": null
+    },
+    {
+      "question": "What are my portfolio sector weights ranked from largest to smallest by percentage?",
+      "dashboard_id": 16,
+      "dashboard_title": "Portfolio Sector Allocation",
+      "block_id": "bar-chart-01",
+      "block_category": "bar-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "sector_allocation"
+      },
+      "cache_key": "95ac6a5b7f96480d181195779efd2aac",
+      "status": "failed",
+      "analysis_id": null,
+      "elapsed_s": 300.000962,
+      "error": "Pipeline timed out after 300s"
+    },
+    {
+      "question": "What are the top 10 holdings in my portfolio ranked by weight percentage?",
+      "dashboard_id": 16,
+      "dashboard_title": "Portfolio Sector Allocation",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "top_holdings"
+      },
+      "cache_key": "fea329dfb4a1ae226658f02eb282e0c5",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 7.457762,
+      "error": null
+    },
+    {
+      "question": "What is the detailed breakdown of my portfolio by sector including sector name, weight percentage, number of holdings, and total dollar value?",
+      "dashboard_id": 16,
+      "dashboard_title": "Portfolio Sector Allocation",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "sector_allocation"
+      },
+      "cache_key": "b6e02ad4f8de4318691695cd511a710d",
+      "status": "cached",
+      "analysis_id": "a41b5362-9833-4468-81b1-b6fbef0217dd",
+      "elapsed_s": 0
+    },
+    {
+      "question": "What is the total number of sectors represented in my portfolio and what is the smallest sector weight percentage?",
+      "dashboard_id": 17,
+      "dashboard_title": "Portfolio Underweight Sector Analysis",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "sector_diversity"
+      },
+      "cache_key": "c7aecbd39d4f076562a266c00c97dcee",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 11.279724,
+      "error": null
+    },
+    {
+      "question": "What are the sector weights in my portfolio ranked from smallest percentage to largest percentage?",
+      "dashboard_id": 17,
+      "dashboard_title": "Portfolio Underweight Sector Analysis",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "sector_allocation"
+      },
+      "cache_key": "13af7bdcd213ee49fc338fd9bb953c15",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 7.251813,
+      "error": null
+    },
+    {
+      "question": "What is the percentage allocation of my portfolio by sector?",
+      "dashboard_id": 17,
+      "dashboard_title": "Portfolio Underweight Sector Analysis",
+      "block_id": "donut-chart-01",
+      "block_category": "donut-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "sector_allocation"
+      },
+      "cache_key": "751f5f640cb0fc7c90d628f8ce50d913",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 4.664297,
+      "error": null
+    },
+    {
+      "question": "What are the individual holdings comprising the sectors with the smallest weights in my portfolio?",
+      "dashboard_id": 17,
+      "dashboard_title": "Portfolio Underweight Sector Analysis",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "holdings_by_sector"
+      },
+      "cache_key": "77ebf382f8a62bcdab4e41d5a37a2a37",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 6.782295,
+      "error": null
+    },
+    {
+      "question": "What is the total realized portfolio volatility and the contribution percentage of the largest position over the last 60 trading days?",
+      "dashboard_id": 18,
+      "dashboard_title": "Portfolio Volatility Contribution",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "volatility_summary",
+        "period": "60d"
+      },
+      "cache_key": "f3f5ca966491ad2295edd2960ffd40f4",
+      "status": "generated",
+      "analysis_id": "49d35059-d039-48b9-931c-ebdf6c8a6d79",
+      "elapsed_s": 67.272184,
+      "error": null
+    },
+    {
+      "question": "Which positions have the highest marginal contribution to portfolio volatility over the last 60 trading days, ranked from highest to lowest?",
+      "dashboard_id": 18,
+      "dashboard_title": "Portfolio Volatility Contribution",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "volatility_contribution",
+        "period": "60d"
+      },
+      "cache_key": "f4eb15971802658432b8700f2f5accd5",
+      "status": "generated",
+      "analysis_id": "5bf4bf3d-c33a-45df-9c3a-091701d34b9a",
+      "elapsed_s": 181.84284,
+      "error": null
+    },
+    {
+      "question": "What is the 20-day rolling realized volatility of the portfolio over the last 60 trading days?",
+      "dashboard_id": 18,
+      "dashboard_title": "Portfolio Volatility Contribution",
+      "block_id": "line-chart-01",
+      "block_category": "line-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "rolling_volatility",
+        "period": "60d"
+      },
+      "cache_key": "67e76df80ea2c0b90354b6cc762f3982",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 5.515563,
+      "error": null
+    },
+    {
+      "question": "What is the proportion of total portfolio volatility contributed by each position over the last 60 trading days?",
+      "dashboard_id": 18,
+      "dashboard_title": "Portfolio Volatility Contribution",
+      "block_id": "treemap-01",
+      "block_category": "treemaps",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "volatility_contribution",
+        "period": "60d"
+      },
+      "cache_key": "3cdf9c330898d00d3333265c49a37914",
+      "status": "generated",
+      "analysis_id": "5bf4bf3d-c33a-45df-9c3a-091701d34b9a",
+      "elapsed_s": 69.480821,
+      "error": null
+    },
+    {
+      "question": "What are the total market value, total portfolio weight percentage, and count of my top 5 positions?",
+      "dashboard_id": 19,
+      "dashboard_title": "Top 5 Correlation Analysis",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "top_positions_summary",
+        "period": "60d"
+      },
+      "cache_key": "df0f870df4339faed2068bcbfbd47f14",
+      "status": "generated",
+      "analysis_id": "662e6bc7-df45-4e0d-8ccd-724c40e6474a",
+      "elapsed_s": 137.742538,
+      "error": null
+    },
+    {
+      "question": "What is the correlation matrix of my top 5 positions based on daily returns over the last 60 trading days?",
+      "dashboard_id": 19,
+      "dashboard_title": "Top 5 Correlation Analysis",
+      "block_id": "heatmap-01",
+      "block_category": "heatmaps",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "correlation_matrix",
+        "period": "60d"
+      },
+      "cache_key": "cc93a9a38c5fdd1b66a40d705a96ded9",
+      "status": "generated",
+      "analysis_id": "5c7fd902-7ef4-4119-bd38-e23ae75aae94",
+      "elapsed_s": 82.963982,
+      "error": null
+    },
+    {
+      "question": "What are the ticker symbols and current portfolio weights of my top 5 positions ranked by weight?",
+      "dashboard_id": 19,
+      "dashboard_title": "Top 5 Correlation Analysis",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "holdings_ranking"
+      },
+      "cache_key": "79521cc46c48dc6427cf505599c4e512",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 5.517432,
+      "error": null
+    },
+    {
+      "question": "What is the normalized price history for my top 5 positions over the last 60 trading days?",
+      "dashboard_id": 19,
+      "dashboard_title": "Top 5 Correlation Analysis",
+      "block_id": "line-chart-01",
+      "block_category": "line-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "price_history",
+        "period": "60d"
+      },
+      "cache_key": "4ddb48f6b0204f08c5acb70b53d608b4",
+      "status": "cached",
+      "analysis_id": "3ad79b10-6628-47b7-81b4-538ddcd60256",
+      "elapsed_s": 0
+    },
+    {
+      "question": "Which two positions have the highest positive correlation coefficient and what is the value over the last 60 trading days?",
+      "dashboard_id": 20,
+      "dashboard_title": "Position Correlation Analysis",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "max_correlation_pair",
+        "period": "60d"
+      },
+      "cache_key": "5b1546e0ed944fa41d516f8047583191",
+      "status": "generated",
+      "analysis_id": "81418bea-2212-429c-84d2-9c23041bfc39",
+      "elapsed_s": 186.902837,
+      "error": null
+    },
+    {
+      "question": "What is the correlation matrix for all portfolio positions based on daily returns over the last 60 trading days?",
+      "dashboard_id": 20,
+      "dashboard_title": "Position Correlation Analysis",
+      "block_id": "heatmap-01",
+      "block_category": "heatmaps",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "correlation_matrix",
+        "period": "60d"
+      },
+      "cache_key": "feac6e2d4ca21414c8d7dc5083e21cbf",
+      "status": "generated",
+      "analysis_id": "81418bea-2212-429c-84d2-9c23041bfc39",
+      "elapsed_s": 76.592217,
+      "error": null
+    },
+    {
+      "question": "Show the normalized price history for the two positions with the highest positive correlation over the last 60 trading days",
+      "dashboard_id": 20,
+      "dashboard_title": "Position Correlation Analysis",
+      "block_id": "line-chart-01",
+      "block_category": "line-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "normalized_price_history",
+        "period": "60d"
+      },
+      "cache_key": "0bbb75d91c48fa26ddd4d8905ad2c032",
+      "status": "failed",
+      "analysis_id": null,
+      "elapsed_s": 260.835411,
+      "error": "We ran into an issue and couldn't answer your question. Please try again."
+    },
+    {
+      "question": "What are the top 5 position pairs ranked by positive correlation coefficient over the last 60 trading days?",
+      "dashboard_id": 20,
+      "dashboard_title": "Position Correlation Analysis",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "top_correlation_pairs",
+        "period": "60d"
+      },
+      "cache_key": "5447e5a84ef26fe63aef34b72b1df66c",
+      "status": "failed",
+      "analysis_id": null,
+      "elapsed_s": 7.975775,
+      "error": "We ran into an issue and couldn't answer your question. Please try again."
+    },
+    {
+      "question": "What are the tickers of the two positions with the lowest correlation coefficient and what is the correlation value over the last 60 trading days?",
+      "dashboard_id": 21,
+      "dashboard_title": "Negative Correlation Analysis",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "min_correlation_pair",
+        "period": "60d"
+      },
+      "cache_key": "b6e91b8ba46732eca4376d6f0af1adcb",
+      "status": "failed",
+      "analysis_id": null,
+      "elapsed_s": 52.728543,
+      "error": "We ran into an issue and couldn't answer your question. Please try again."
+    },
+    {
+      "question": "What is the correlation matrix for all positions over the last 60 trading days?",
+      "dashboard_id": 21,
+      "dashboard_title": "Negative Correlation Analysis",
+      "block_id": "heatmap-01",
+      "block_category": "heatmaps",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "correlation_matrix",
+        "period": "60d"
+      },
+      "cache_key": "7da807c91b615b779cfb8b7b19bac1cc",
+      "status": "generated",
+      "analysis_id": "757387ae-eb89-4cf8-8569-74dab05cfaf7",
+      "elapsed_s": 73.547573,
+      "error": null
+    },
+    {
+      "question": "What are the top 10 position pairs ranked by lowest correlation coefficient over the last 60 trading days?",
+      "dashboard_id": 21,
+      "dashboard_title": "Negative Correlation Analysis",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "correlation_ranking",
+        "period": "60d"
+      },
+      "cache_key": "c5c5e64aae81fb8dfbf95c59f98fc501",
+      "status": "generated",
+      "analysis_id": "e29245ca-6285-4abd-b1fb-e0e8290e9114",
+      "elapsed_s": 221.431479,
+      "error": null
+    },
+    {
+      "question": "Show the normalized price history over the last 60 trading days for the two positions with the lowest correlation.",
+      "dashboard_id": 21,
+      "dashboard_title": "Negative Correlation Analysis",
+      "block_id": "line-chart-01",
+      "block_category": "line-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "price_history",
+        "period": "60d"
+      },
+      "cache_key": "5b645fb261d3accb0d42a6ee7894e6e3",
+      "status": "generated",
+      "analysis_id": "624af4fd-0fc4-45d2-a57e-1389e3cc2418",
+      "elapsed_s": 89.720281,
+      "error": null
+    },
+    {
+      "question": "What are the portfolio's year-to-date risk metrics including Sharpe ratio, total return, and annualized volatility calculated using daily data?",
+      "dashboard_id": 22,
+      "dashboard_title": "Portfolio Risk Analysis",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "risk_adjusted_metrics",
+        "period": "ytd"
+      },
+      "cache_key": "42a5ac5f2db53cc359b022ed8c084c2a",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 6.929844,
+      "error": null
+    },
+    {
+      "question": "Show the portfolio's cumulative return performance from the start of the year to today.",
+      "dashboard_id": 22,
+      "dashboard_title": "Portfolio Risk Analysis",
+      "block_id": "line-chart-01",
+      "block_category": "line-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "cumulative_return",
+        "period": "ytd"
+      },
+      "cache_key": "de33d1dd9fac6ea4561f0373a25f00de",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 5.942849,
+      "error": null
+    },
+    {
+      "question": "Compare the portfolio's year-to-date Sharpe ratio against the S&P 500 benchmark Sharpe ratio.",
+      "dashboard_id": 22,
+      "dashboard_title": "Portfolio Risk Analysis",
+      "block_id": "bar-chart-01",
+      "block_category": "bar-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "sharpe_ratio",
+        "period": "ytd",
+        "benchmark": "SPY"
+      },
+      "cache_key": "38618cec925a777aea94ff25052a6901",
+      "status": "failed",
+      "analysis_id": null,
+      "elapsed_s": 1.74008,
+      "error": "We ran into an issue and couldn't answer your question. Please try again."
+    },
+    {
+      "question": "What are the current holdings in the portfolio listed by percentage weight and current value?",
+      "dashboard_id": 22,
+      "dashboard_title": "Portfolio Risk Analysis",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "holdings_list"
+      },
+      "cache_key": "5f6b0223b279d24db2b3c12a31e22e93",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 5.870108,
+      "error": null
+    },
+    {
+      "question": "What are my portfolio's key risk-adjusted performance metrics year-to-date, specifically the Sortino ratio, Sharpe ratio, annualized volatility, and YTD return?",
+      "dashboard_id": 23,
+      "dashboard_title": "Portfolio Sortino Ratio Analysis",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "risk_adjusted_metrics",
+        "period": "ytd"
+      },
+      "cache_key": "3e74fede2e625b61cc786bf6c0fd8e2a",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 7.770638,
+      "error": null
+    },
+    {
+      "question": "What is my portfolio's daily value history from the start of the year to today?",
+      "dashboard_id": 23,
+      "dashboard_title": "Portfolio Sortino Ratio Analysis",
+      "block_id": "line-chart-01",
+      "block_category": "line-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "portfolio_value",
+        "period": "ytd"
+      },
+      "cache_key": "e60d14f3b9e1894310a0ff45f40d4997",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 5.845095,
+      "error": null
+    },
+    {
+      "question": "How does my portfolio's year-to-date Sortino ratio compare to the Sortino ratio of the S&P 500 benchmark?",
+      "dashboard_id": 23,
+      "dashboard_title": "Portfolio Sortino Ratio Analysis",
+      "block_id": "bar-chart-01",
+      "block_category": "bar-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "sortino_ratio",
+        "period": "ytd",
+        "benchmark": "SPY"
+      },
+      "cache_key": "4b54a844269d31db31808499d7ff2a29",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 7.951278,
+      "error": null
+    },
+    {
+      "question": "What are the current 30-day rolling volatility, the average 30-day rolling volatility, and the maximum 30-day rolling volatility for my portfolio over the last 6 months?",
+      "dashboard_id": 24,
+      "dashboard_title": "Portfolio Volatility Analysis",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "volatility_summary",
+        "period": "6m"
+      },
+      "cache_key": "dbbaf6b3d2a94eacb40f1032d7545d80",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 8.158727,
+      "error": null
+    },
+    {
+      "question": "What is the daily time series data for my portfolio's rolling 30-day volatility over the last 6 months?",
+      "dashboard_id": 24,
+      "dashboard_title": "Portfolio Volatility Analysis",
+      "block_id": "line-chart-01",
+      "block_category": "line-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "rolling_volatility",
+        "period": "6m"
+      },
+      "cache_key": "e7b7a03844aca2995bad55466f277c47",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 6.170081,
+      "error": null
+    },
+    {
+      "question": "What is the time series comparison between my portfolio's rolling 30-day volatility and the SPY benchmark's rolling 30-day volatility over the last 6 months?",
+      "dashboard_id": 24,
+      "dashboard_title": "Portfolio Volatility Analysis",
+      "block_id": "line-chart-02",
+      "block_category": "line-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "rolling_volatility",
+        "benchmark": "SPY",
+        "period": "6m"
+      },
+      "cache_key": "822f777f594ea49724e29775650e7979",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 8.034825,
+      "error": null
+    },
+    {
+      "question": "Which holdings in my portfolio currently have the highest 30-day rolling volatility ranked in descending order?",
+      "dashboard_id": 24,
+      "dashboard_title": "Portfolio Volatility Analysis",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "holdings_volatility",
+        "period": "30d"
+      },
+      "cache_key": "750e4cd396b3010ab974c75ce6eef194",
+      "status": "generated",
+      "analysis_id": "cf486fd1-bf30-4649-a8a4-e23739ed231e",
+      "elapsed_s": 95.729373,
+      "error": null
+    },
+    {
+      "question": "What are my portfolio's 30-day return, the broad market ETF's 30-day return, the alpha (difference between portfolio and market), and the portfolio's volatility over the last 30 trading days?",
+      "dashboard_id": 25,
+      "dashboard_title": "Portfolio vs Market Performance",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "performance_summary",
+        "period": "30d",
+        "benchmark": "SPY"
+      },
+      "cache_key": "68cb180d35bd9d1c9c551b23f51cb3c2",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 11.37619,
+      "error": null
+    },
+    {
+      "question": "Show the cumulative returns for both my portfolio and a broad market ETF over the last 30 trading days.",
+      "dashboard_id": 25,
+      "dashboard_title": "Portfolio vs Market Performance",
+      "block_id": "line-chart-01",
+      "block_category": "line-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "cumulative_returns",
+        "period": "30d",
+        "benchmark": "SPY"
+      },
+      "cache_key": "860af4588d4a519dfa2d98d49d862d07",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 7.489365,
+      "error": null
+    },
+    {
+      "question": "What are the Sharpe ratios, maximum drawdowns, and volatilities for my portfolio and a broad market ETF over the last 30 trading days?",
+      "dashboard_id": 25,
+      "dashboard_title": "Portfolio vs Market Performance",
+      "block_id": "bar-chart-01",
+      "block_category": "bar-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "risk_metrics",
+        "period": "30d",
+        "benchmark": "SPY"
+      },
+      "cache_key": "af319f271d040681670a30ac80fd20ea",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 7.562018,
+      "error": null
+    },
+    {
+      "question": "What is the daily return trend for my portfolio over the last 10 trading days?",
+      "dashboard_id": 25,
+      "dashboard_title": "Portfolio vs Market Performance",
+      "block_id": "spark-chart-01",
+      "block_category": "spark-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "daily_returns",
+        "period": "10d"
+      },
+      "cache_key": "674bade28a57e2846d934ac38e560f20",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 6.942002,
+      "error": null
+    },
+    {
+      "question": "What are the tracking error, portfolio return, and SPY benchmark return over the last 60 trading days?",
+      "dashboard_id": 26,
+      "dashboard_title": "Portfolio Tracking Error Analysis",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "benchmark": "SPY",
+        "period": "60d",
+        "metric": "tracking_error_summary"
+      },
+      "cache_key": "8b9371633c9c9fd24376bbceb0b03b69",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 6.502481,
+      "error": null
+    },
+    {
+      "question": "What is the cumulative return history for the portfolio and SPY over the last 60 trading days?",
+      "dashboard_id": 26,
+      "dashboard_title": "Portfolio Tracking Error Analysis",
+      "block_id": "line-chart-01",
+      "block_category": "line-charts",
+      "output_format": {},
+      "canonical_params": {
+        "benchmark": "SPY",
+        "period": "60d",
+        "metric": "cumulative_returns"
+      },
+      "cache_key": "43a033f3c478687aabf042d8279d126d",
+      "status": "generated",
+      "analysis_id": "8a996137-6964-4801-8595-13c326b315f6",
+      "elapsed_s": 137.433054,
+      "error": null
+    },
+    {
+      "question": "What are the volatility values for the portfolio and SPY over the last 60 trading days?",
+      "dashboard_id": 26,
+      "dashboard_title": "Portfolio Tracking Error Analysis",
+      "block_id": "bar-chart-01",
+      "block_category": "bar-charts",
+      "output_format": {},
+      "canonical_params": {
+        "benchmark": "SPY",
+        "period": "60d",
+        "metric": "volatility"
+      },
+      "cache_key": "5fd19975d715380d3da0c4fe34095e63",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 6.242822,
+      "error": null
+    },
+    {
+      "question": "What is the daily return spread between the portfolio and SPY over the last 60 trading days?",
+      "dashboard_id": 26,
+      "dashboard_title": "Portfolio Tracking Error Analysis",
+      "block_id": "spark-chart-01",
+      "block_category": "spark-charts",
+      "output_format": {},
+      "canonical_params": {
+        "benchmark": "SPY",
+        "period": "60d",
+        "metric": "return_spread"
+      },
+      "cache_key": "283144a33d00fe457bb65c1525bfe75b",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 6.797687,
+      "error": null
+    },
+    {
+      "question": "What is the highest daily return percentage, the total count of positions with positive returns, and the average return of all gaining positions today?",
+      "dashboard_id": 27,
+      "dashboard_title": "Top Gainers Today Dashboard",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "gainer_summary",
+        "period": "1d"
+      },
+      "cache_key": "59f01a8392b2b8b38b75f1847d4cb7aa",
+      "status": "generated",
+      "analysis_id": "8273bd81-2770-4aa3-80d2-1946869d28a6",
+      "elapsed_s": 133.46405,
+      "error": null
+    },
+    {
+      "question": "Which positions had the largest positive returns today ranked from highest to lowest?",
+      "dashboard_id": 27,
+      "dashboard_title": "Top Gainers Today Dashboard",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "position_returns",
+        "period": "1d"
+      },
+      "cache_key": "1aa8a6dc154c1bda92e0e5c2b7fa075e",
+      "status": "generated",
+      "analysis_id": "be26c1e1-811a-4401-bf90-7abbc887ad7a",
+      "elapsed_s": 161.152995,
+      "error": null
+    },
+    {
+      "question": "What are the daily return percentages for the top 5 positions with the highest returns today?",
+      "dashboard_id": 27,
+      "dashboard_title": "Top Gainers Today Dashboard",
+      "block_id": "bar-chart-01",
+      "block_category": "bar-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "position_returns",
+        "period": "1d"
+      },
+      "cache_key": "114b6a5020a078c0e94b5f781e1055ee",
+      "status": "failed",
+      "analysis_id": null,
+      "elapsed_s": 492.804606,
+      "error": "We ran into an issue and couldn't answer your question. Please try again."
+    },
+    {
+      "question": "What is the intraday price history for the position with the highest return today?",
+      "dashboard_id": 27,
+      "dashboard_title": "Top Gainers Today Dashboard",
+      "block_id": "spark-chart-01",
+      "block_category": "spark-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "intraday_price",
+        "period": "1d"
+      },
+      "cache_key": "7ba95c54a98c172cfcbe740940875d93",
+      "status": "generated",
+      "analysis_id": "ba2e044b-9a87-40f4-88ef-440c90f77b1e",
+      "elapsed_s": 140.616133,
+      "error": null
+    },
+    {
+      "question": "What are the daily return percentages and current prices for all positions in the portfolio?",
+      "dashboard_id": 27,
+      "dashboard_title": "Top Gainers Today Dashboard",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "position_returns",
+        "period": "1d"
+      },
+      "cache_key": "6028efb30dd7b5394f4ce90d325967f8",
+      "status": "generated",
+      "analysis_id": "9a09f5b8-61b9-401c-8a39-4cf20a69f263",
+      "elapsed_s": 194.639049,
+      "error": null
+    },
+    {
+      "question": "What is the total portfolio return today, the worst single position return percentage today, and the total count of positions with negative returns?",
+      "dashboard_id": 28,
+      "dashboard_title": "Top Daily Losers Dashboard",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "performance_summary",
+        "period": "1d"
+      },
+      "cache_key": "377913f3561f1aa2007bd80127b26f80",
+      "status": "failed",
+      "analysis_id": null,
+      "elapsed_s": 156.863155,
+      "error": "We ran into an issue and couldn't answer your question. Please try again."
+    },
+    {
+      "question": "Which positions had the largest negative returns today, ranked from lowest return to highest return?",
+      "dashboard_id": 28,
+      "dashboard_title": "Top Daily Losers Dashboard",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "performance_ranking",
+        "period": "1d"
+      },
+      "cache_key": "52c2c8478a0b55af47ead61713bfe655",
+      "status": "generated",
+      "analysis_id": "b143b09d-1b12-4b71-818b-e61087bf1fea",
+      "elapsed_s": 105.39044,
+      "error": null
+    },
+    {
+      "question": "What are the ticker, current price, and daily percentage change for all positions with negative returns today?",
+      "dashboard_id": 28,
+      "dashboard_title": "Top Daily Losers Dashboard",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "holdings_performance",
+        "period": "1d"
+      },
+      "cache_key": "607a99a826c09ed1192fa373fbfb9091",
+      "status": "generated",
+      "analysis_id": "bc2aaab7-441d-4afd-9fc6-7791b4ea37e1",
+      "elapsed_s": 181.32104,
+      "error": null
+    },
+    {
+      "question": "What are the daily percentage returns for the 5 positions with the largest negative returns today?",
+      "dashboard_id": 28,
+      "dashboard_title": "Top Daily Losers Dashboard",
+      "block_id": "bar-chart-01",
+      "block_category": "bar-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "performance_values",
+        "period": "1d"
+      },
+      "cache_key": "c28d372ed9c5990017c2b86c8ef465d7",
+      "status": "generated",
+      "analysis_id": "b143b09d-1b12-4b71-818b-e61087bf1fea",
+      "elapsed_s": 62.834593,
+      "error": null
+    },
+    {
+      "question": "What are the portfolio's key intraday volatility metrics: maximum single position range, average position range, and number of positions exceeding 5% range?",
+      "dashboard_id": 29,
+      "dashboard_title": "Highest Intraday Range Positions",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "volatility_summary"
+      },
+      "cache_key": "257c493acf84b7f8301335fb1ed91aed",
+      "status": "generated",
+      "analysis_id": "16231381-0b4a-487c-ae94-e1cd92f6f46d",
+      "elapsed_s": 184.01817,
+      "error": null
+    },
+    {
+      "question": "Which 10 portfolio positions had the highest intraday range calculated as High minus Low today?",
+      "dashboard_id": 29,
+      "dashboard_title": "Highest Intraday Range Positions",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "intraday_range_ranking"
+      },
+      "cache_key": "e160a81b0cbdb3ad83cea90401424d02",
+      "status": "failed",
+      "analysis_id": null,
+      "elapsed_s": 126.179812,
+      "error": "We ran into an issue and couldn't answer your question. Please try again."
+    },
+    {
+      "question": "What is the intraday price history for the top 5 positions with the highest range today?",
+      "dashboard_id": 29,
+      "dashboard_title": "Highest Intraday Range Positions",
+      "block_id": "spark-chart-01",
+      "block_category": "spark-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "intraday_price_history"
+      },
+      "cache_key": "70573245411c9601d49097d3aeb09b1b",
+      "status": "generated",
+      "analysis_id": "1f03df4d-2acb-4451-9ef3-dbfba9da50d8",
+      "elapsed_s": 216.274572,
+      "error": null
+    },
+    {
+      "question": "What are the open, high, low, current price, and calculated intraday range for all portfolio positions today sorted by range descending?",
+      "dashboard_id": 29,
+      "dashboard_title": "Highest Intraday Range Positions",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "position_range_details"
+      },
+      "cache_key": "689a0b1c8e9f93c2481825bddf9b9c75",
+      "status": "failed",
+      "analysis_id": null,
+      "elapsed_s": 205.680368,
+      "error": "We ran into an issue and couldn't answer your question. Please try again."
+    },
+    {
+      "question": "What is the total trading volume across all portfolio positions today and which single position recorded the highest volume?",
+      "dashboard_id": 30,
+      "dashboard_title": "High Volume Positions",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "volume_summary",
+        "period": "1d"
+      },
+      "cache_key": "4d948dfa8439a91b2bb4dc3faa2b87d0",
+      "status": "failed",
+      "analysis_id": null,
+      "elapsed_s": 97.370907,
+      "error": "We ran into an issue and couldn't answer your question. Please try again."
+    },
+    {
+      "question": "Which positions in my portfolio had the highest trading volume today ranked from highest to lowest?",
+      "dashboard_id": 30,
+      "dashboard_title": "High Volume Positions",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "volume_rankings",
+        "period": "1d"
+      },
+      "cache_key": "134a6b02094b1b38350d3e62955d3b8f",
+      "status": "generated",
+      "analysis_id": "ff03c1f9-3d99-430a-b5c7-b6b387a9aaf0",
+      "elapsed_s": 207.345761,
+      "error": null
+    },
+    {
+      "question": "How does the current trading volume of the top 5 positions compare to their 30-day average volume?",
+      "dashboard_id": 30,
+      "dashboard_title": "High Volume Positions",
+      "block_id": "bar-chart-01",
+      "block_category": "bar-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "volume_vs_avg",
+        "period": "1d"
+      },
+      "cache_key": "9903ef69e8ac545553b97046a4b86aee",
+      "status": "generated",
+      "analysis_id": "00822fe0-c621-4b07-a36e-a822cba8ad60",
+      "elapsed_s": 119.78811,
+      "error": null
+    },
+    {
+      "question": "What is the trading volume for every position in the portfolio today?",
+      "dashboard_id": 30,
+      "dashboard_title": "High Volume Positions",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "volume_detail",
+        "period": "1d"
+      },
+      "cache_key": "4d81e8ce2ba3f87d316907b7b68a76d6",
+      "status": "generated",
+      "analysis_id": "ff03c1f9-3d99-430a-b5c7-b6b387a9aaf0",
+      "elapsed_s": 63.976051,
+      "error": null
+    },
+    {
+      "question": "What are the total trading volume, average volume per position, and number of positions with below-average volume today?",
+      "dashboard_id": 31,
+      "dashboard_title": "Lowest Trading Volume Today",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "volume_summary",
+        "period": "1d"
+      },
+      "cache_key": "c77d9f77a19efb7da8619085b2b60d8f",
+      "status": "generated",
+      "analysis_id": "fd617b48-20c5-4711-bdcb-5039b8302abf",
+      "elapsed_s": 165.551972,
+      "error": null
+    },
+    {
+      "question": "Which portfolio positions had the lowest trading volume today ranked from lowest to highest?",
+      "dashboard_id": 31,
+      "dashboard_title": "Lowest Trading Volume Today",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "trading_volume",
+        "period": "1d"
+      },
+      "cache_key": "36d38f75570d2377a7c701878ae39dda",
+      "status": "failed",
+      "analysis_id": null,
+      "elapsed_s": 300.005102,
+      "error": "Pipeline timed out after 300s"
+    },
+    {
+      "question": "What is the detailed trading volume for each position today including ticker, current price, and volume?",
+      "dashboard_id": 31,
+      "dashboard_title": "Lowest Trading Volume Today",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "trading_volume",
+        "period": "1d"
+      },
+      "cache_key": "8dc10d8def209edd569f25801985f5f1",
+      "status": "failed",
+      "analysis_id": null,
+      "elapsed_s": 119.367726,
+      "error": "We ran into an issue and couldn't answer your question. Please try again."
+    },
+    {
+      "question": "Show the trading volume trend for the positions with lowest volume over the last 5 trading days",
+      "dashboard_id": 31,
+      "dashboard_title": "Lowest Trading Volume Today",
+      "block_id": "spark-chart-01",
+      "block_category": "spark-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "trading_volume",
+        "period": "5d"
+      },
+      "cache_key": "d2de188b343933475fb8ad0c46c33951",
+      "status": "generated",
+      "analysis_id": "c1ef4c0c-10dd-4ae1-8746-4c9331a5e644",
+      "elapsed_s": 105.16609,
+      "error": null
+    },
+    {
+      "question": "What are the summary statistics for stocks that gapped up today: total count, average gap percentage, maximum gap percentage, and total trading volume?",
+      "dashboard_id": 32,
+      "dashboard_title": "Top Gap Up Positions Today",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "gap_summary"
+      },
+      "cache_key": "9b2feb0855618d15ce6860555a433baa",
+      "status": "failed",
+      "analysis_id": null,
+      "elapsed_s": 164.53643,
+      "error": "We ran into an issue and couldn't answer your question. Please try again."
+    },
+    {
+      "question": "Which positions had the largest gap up at the open today versus yesterday's close, ranked by gap percentage?",
+      "dashboard_id": 32,
+      "dashboard_title": "Top Gap Up Positions Today",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "gap_ranking"
+      },
+      "cache_key": "ecaab62fda60ca9497f483d1c2dba614",
+      "status": "generated",
+      "analysis_id": "a96effdd-765a-4cfb-8f88-430a24d5719a",
+      "elapsed_s": 116.817226,
+      "error": null
+    },
+    {
+      "question": "What are the detailed gap up statistics for positions including ticker symbol, previous close price, open price, gap percentage, and trading volume?",
+      "dashboard_id": 32,
+      "dashboard_title": "Top Gap Up Positions Today",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "gap_details"
+      },
+      "cache_key": "5e608687d5ec17c0fa82c42b0ec0d2fc",
+      "status": "generated",
+      "analysis_id": "89973f88-a45b-4594-96e1-ed68ed6cac5c",
+      "elapsed_s": 206.497896,
+      "error": null
+    },
+    {
+      "question": "Show the intraday price trends for the top 5 stocks that gapped up the most today",
+      "dashboard_id": 32,
+      "dashboard_title": "Top Gap Up Positions Today",
+      "block_id": "spark-chart-01",
+      "block_category": "spark-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "top_gapper_trends",
+        "period": "1d"
+      },
+      "cache_key": "4a6137ea7b0de5f52f00b3af2d8edb94",
+      "status": "failed",
+      "analysis_id": null,
+      "elapsed_s": 270.961382,
+      "error": "We ran into an issue and couldn't answer your question. Please try again."
+    },
+    {
+      "question": "What are the key statistics for positions gapping down today, including the total number of gapping stocks, the average gap down percentage, and the maximum single gap down percentage?",
+      "dashboard_id": 33,
+      "dashboard_title": "Market Gap Down Analysis",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "gap_down_summary",
+        "period": "1d"
+      },
+      "cache_key": "65f8467839a548716b590a10125e77c7",
+      "status": "generated",
+      "analysis_id": "dddf2491-be8e-4ce1-a1f1-9112c96696ee",
+      "elapsed_s": 84.622471,
+      "error": null
+    },
+    {
+      "question": "Which positions experienced the largest negative gap between today's opening price and yesterday's closing price, ranked by the gap percentage?",
+      "dashboard_id": 33,
+      "dashboard_title": "Market Gap Down Analysis",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "gap_down_rankings",
+        "period": "1d"
+      },
+      "cache_key": "3e952c535d8999347b5f66367b7c35d2",
+      "status": "generated",
+      "analysis_id": "ef42165b-1d45-4cbc-ad6a-c3876718ca2c",
+      "elapsed_s": 163.426017,
+      "error": null
+    },
+    {
+      "question": "What are the specific gap details for all positions that gapped down, listing ticker symbol, previous close price, today's open price, and the calculated gap percentage?",
+      "dashboard_id": 33,
+      "dashboard_title": "Market Gap Down Analysis",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "gap_down_details",
+        "period": "1d"
+      },
+      "cache_key": "79190ea2e999351ec80760186bf46a1a",
+      "status": "generated",
+      "analysis_id": "dddf2491-be8e-4ce1-a1f1-9112c96696ee",
+      "elapsed_s": 72.077449,
+      "error": null
+    },
+    {
+      "question": "What is the average gap down percentage for each market sector based on today's opening prices versus yesterday's close?",
+      "dashboard_id": 33,
+      "dashboard_title": "Market Gap Down Analysis",
+      "block_id": "bar-chart-01",
+      "block_category": "bar-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "sector_gap_analysis",
+        "period": "1d"
+      },
+      "cache_key": "516f7d603cd27623b6bd56adee4489f4",
+      "status": "generated",
+      "analysis_id": "f0e84a1e-acc2-4644-b8c9-150bfb58c125",
+      "elapsed_s": 101.379872,
+      "error": null
+    },
+    {
+      "question": "How many positions are currently trading above the 20-day moving average, how many are below, and what percentage of the total portfolio do they represent?",
+      "dashboard_id": 34,
+      "dashboard_title": "Positions Above 20-Day MA",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "ma_status_summary",
+        "period": "20d"
+      },
+      "cache_key": "39bda302cae393b03d349f2585b2ae5e",
+      "status": "generated",
+      "analysis_id": "4d9fe65a-9f69-4521-b947-22b00d829c0d",
+      "elapsed_s": 110.785667,
+      "error": null
+    },
+    {
+      "question": "Which specific portfolio positions have a current price greater than their 20-day moving average, including the ticker, current price, and moving average value?",
+      "dashboard_id": 34,
+      "dashboard_title": "Positions Above 20-Day MA",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "positions_above_ma20",
+        "period": "20d"
+      },
+      "cache_key": "17c98d12b1414d789f88ef9723a01c02",
+      "status": "generated",
+      "analysis_id": "dbcf0580-2c8b-4e84-946a-352e88204796",
+      "elapsed_s": 91.106675,
+      "error": null
+    },
+    {
+      "question": "What are the positions ranked by the largest positive percentage difference between current price and 20-day moving average?",
+      "dashboard_id": 34,
+      "dashboard_title": "Positions Above 20-Day MA",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "distance_above_ma20",
+        "period": "20d"
+      },
+      "cache_key": "a5b502db60dfc1718d5bfe902b23621e",
+      "status": "generated",
+      "analysis_id": "7a720bbe-2675-4073-a120-fb412bce0d7e",
+      "elapsed_s": 132.384012,
+      "error": null
+    },
+    {
+      "question": "What is the count-based percentage breakdown of positions trading above the 20-day moving average versus those trading below it?",
+      "dashboard_id": 34,
+      "dashboard_title": "Positions Above 20-Day MA",
+      "block_id": "donut-chart-01",
+      "block_category": "donut-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "ma_status_distribution",
+        "period": "20d"
+      },
+      "cache_key": "81e7a8b73147b7412f95e6cbd9c8c9e5",
+      "status": "generated",
+      "analysis_id": "5cf3b6d8-3ae2-417f-b412-7dfb7f3925a9",
+      "elapsed_s": 227.056455,
+      "error": null
+    },
+    {
+      "question": "How many portfolio positions are currently trading below their 20-day moving average and what percentage of the total portfolio does this represent?",
+      "dashboard_id": 35,
+      "dashboard_title": "Positions Below 20-Day MA",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "moving_average_summary",
+        "period": "20d"
+      },
+      "cache_key": "12b4476a7b070c9f36e8631789634732",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 10.556687,
+      "error": null
+    },
+    {
+      "question": "List all portfolio positions where the current price is lower than the 20-day moving average, including ticker, current price, moving average value, and percentage difference.",
+      "dashboard_id": 35,
+      "dashboard_title": "Positions Below 20-Day MA",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "moving_average_breach_list",
+        "period": "20d"
+      },
+      "cache_key": "0264e5b01dcf14b9e3092d67f000dc9d",
+      "status": "generated",
+      "analysis_id": "32fd0afc-8dda-4dd4-857e-ef8b1d189ff5",
+      "elapsed_s": 153.566824,
+      "error": null
+    },
+    {
+      "question": "What is the percentage difference between the current price and the 20-day moving average for all positions currently trading below the moving average?",
+      "dashboard_id": 35,
+      "dashboard_title": "Positions Below 20-Day MA",
+      "block_id": "bar-chart-01",
+      "block_category": "bar-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "moving_average_deviation",
+        "period": "20d"
+      },
+      "cache_key": "3e76c28ac8ef4c4e0753ce2b6c3c5598",
+      "status": "generated",
+      "analysis_id": "32fd0afc-8dda-4dd4-857e-ef8b1d189ff5",
+      "elapsed_s": 56.993935,
+      "error": null
+    },
+    {
+      "question": "Show the price trend over the last 30 days for the top 3 positions with the largest drop below their 20-day moving average.",
+      "dashboard_id": 35,
+      "dashboard_title": "Positions Below 20-Day MA",
+      "block_id": "spark-chart-01",
+      "block_category": "spark-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "price_history",
+        "period": "30d"
+      },
+      "cache_key": "4c1ea9f9f918b544160f2abb8dc68b1e",
+      "status": "generated",
+      "analysis_id": "b33ab802-2f6b-4d89-8fbe-1c788967e2eb",
+      "elapsed_s": 90.319886,
+      "error": null
+    },
+    {
+      "question": "What are the total number of positions, the number trading above the 50-day moving average, the number trading below the 50-day moving average, and the percentage of positions above the 50-day moving average?",
+      "dashboard_id": 36,
+      "dashboard_title": "Position vs 50DMA Analysis",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "ma_crossing_summary",
+        "period": "50d"
+      },
+      "cache_key": "bf04f64d8e5646aebfc36cb9645c00ae",
+      "status": "generated",
+      "analysis_id": "25421630-476b-4200-8051-6794cd8166aa",
+      "elapsed_s": 96.551924,
+      "error": null
+    },
+    {
+      "question": "What is the count of positions above the 50-day moving average versus the count of positions below the 50-day moving average?",
+      "dashboard_id": 36,
+      "dashboard_title": "Position vs 50DMA Analysis",
+      "block_id": "donut-chart-01",
+      "block_category": "donut-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "ma_crossing_distribution",
+        "period": "50d"
+      },
+      "cache_key": "e3d66d3c328377df0ed37d6c9be44b7a",
+      "status": "generated",
+      "analysis_id": "851ad813-f183-4cb8-bd45-d2e456a211aa",
+      "elapsed_s": 93.085506,
+      "error": null
+    },
+    {
+      "question": "List all positions with their current price, 50-day moving average value, and percentage difference from the 50-day moving average.",
+      "dashboard_id": 36,
+      "dashboard_title": "Position vs 50DMA Analysis",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "ma_crossing_table",
+        "period": "50d"
+      },
+      "cache_key": "0cd48af0fbc7253fefd362208c4bb6d3",
+      "status": "generated",
+      "analysis_id": "63631e8c-e868-4145-9697-6d2b5afb61e7",
+      "elapsed_s": 237.26804,
+      "error": null
+    },
+    {
+      "question": "Which positions have the highest percentage distance above their 50-day moving average?",
+      "dashboard_id": 36,
+      "dashboard_title": "Position vs 50DMA Analysis",
+      "block_id": "bar-chart-01",
+      "block_category": "bar-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "distance_above_ma",
+        "period": "50d"
+      },
+      "cache_key": "d90baabad52e03cb5914e9d4a3dbc590",
+      "status": "generated",
+      "analysis_id": "28b5f26e-0b6e-4a21-9863-df52af5e07f7",
+      "elapsed_s": 147.053034,
+      "error": null
+    },
+    {
+      "question": "What are the portfolio summary metrics for positions below their 50-day moving average: total positions, count below 50D MA, percentage below 50D MA, and average percentage below 50D MA?",
+      "dashboard_id": 37,
+      "dashboard_title": "Positions Below 50-Day MA",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "below_ma_summary",
+        "period": "50d"
+      },
+      "cache_key": "b9384023d182855bf86d36afb919bfbe",
+      "status": "generated",
+      "analysis_id": "d6614b36-bfbc-4aa0-8dee-ea10a79a7d30",
+      "elapsed_s": 205.9701,
+      "error": null
+    },
+    {
+      "question": "Which portfolio positions have a current price below their 50-day moving average, showing ticker, current price, 50-day moving average, and percentage difference?",
+      "dashboard_id": 37,
+      "dashboard_title": "Positions Below 50-Day MA",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "below_ma_positions",
+        "period": "50d"
+      },
+      "cache_key": "27f4d851f8e5e1956ba6e66065d89ea1",
+      "status": "failed",
+      "analysis_id": null,
+      "elapsed_s": 201.457843,
+      "error": "We ran into an issue and couldn't answer your question. Please try again."
+    },
+    {
+      "question": "What are the portfolio positions ranked by how far they are trading below their 50-day moving average, showing ticker and percentage difference?",
+      "dashboard_id": 37,
+      "dashboard_title": "Positions Below 50-Day MA",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "below_ma_ranked",
+        "period": "50d"
+      },
+      "cache_key": "dac837db265d521b860ecae914cfe544",
+      "status": "generated",
+      "analysis_id": "66b06148-91d8-40f5-90b3-5ff833ebe5a4",
+      "elapsed_s": 154.342041,
+      "error": null
+    },
+    {
+      "question": "Show the recent 30-day price history and 50-day moving average for positions currently trading below their 50-day moving average?",
+      "dashboard_id": 37,
+      "dashboard_title": "Positions Below 50-Day MA",
+      "block_id": "spark-chart-01",
+      "block_category": "spark-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "price_vs_ma_history",
+        "period": "30d"
+      },
+      "cache_key": "e32e2338829c71b6cf605d7a95e36992",
+      "status": "generated",
+      "analysis_id": "84ec06b4-8e1a-46f7-98d5-1a548a9a63a2",
+      "elapsed_s": 95.181276,
+      "error": null
+    },
+    {
+      "question": "How many total positions are in the portfolio, how many are trading above the 200-day moving average, and what percentage of the total does this represent?",
+      "dashboard_id": 38,
+      "dashboard_title": "Position Moving Average Analysis",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "moving_average_status",
+        "period": "200d"
+      },
+      "cache_key": "0d39aa3354cd75e7c0e1346b47b4c489",
+      "status": "generated",
+      "analysis_id": "336af3ad-b485-4cc7-9c81-66287cba5f06",
+      "elapsed_s": 148.997318,
+      "error": null
+    },
+    {
+      "question": "Which portfolio positions have a current price above the 200-day moving average, showing ticker, current price, 200-day moving average value, and percentage difference?",
+      "dashboard_id": 38,
+      "dashboard_title": "Position Moving Average Analysis",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "moving_average_comparison",
+        "period": "200d"
+      },
+      "cache_key": "c7a1cf889cb8b36e1e7bd96a3f7b25eb",
+      "status": "generated",
+      "analysis_id": "6c2dfd88-6ce5-44b5-b28c-2f3e0cd8072b",
+      "elapsed_s": 102.486812,
+      "error": null
+    },
+    {
+      "question": "Which positions are trading the furthest above their 200-day moving average, ranked by percentage difference?",
+      "dashboard_id": 38,
+      "dashboard_title": "Position Moving Average Analysis",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "moving_average_distance",
+        "period": "200d"
+      },
+      "cache_key": "559279d6f9f4b34ffccf396ea192c053",
+      "status": "generated",
+      "analysis_id": "cd39eb70-097e-471e-bebb-67aacf854ddc",
+      "elapsed_s": 152.323316,
+      "error": null
+    },
+    {
+      "question": "What is the count of portfolio positions currently trading above the 200-day moving average compared to those trading below it?",
+      "dashboard_id": 38,
+      "dashboard_title": "Position Moving Average Analysis",
+      "block_id": "bar-chart-01",
+      "block_category": "bar-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "moving_average_distribution",
+        "period": "200d"
+      },
+      "cache_key": "76bd87c508790954bc43e01f463245b7",
+      "status": "generated",
+      "analysis_id": "336af3ad-b485-4cc7-9c81-66287cba5f06",
+      "elapsed_s": 69.435475,
+      "error": null
+    },
+    {
+      "question": "What is the total number of positions in the portfolio, how many are currently trading below their 200-day moving average, and what percentage of the total portfolio does this represent?",
+      "dashboard_id": 39,
+      "dashboard_title": "Positions Below 200-Day MA",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "below_200ma_summary"
+      },
+      "cache_key": "168539866aa47f0b38d153062c6cb464",
+      "status": "generated",
+      "analysis_id": "fb7c52a3-6687-4277-bdb8-289276f90ffc",
+      "elapsed_s": 218.757052,
+      "error": null
+    },
+    {
+      "question": "Which portfolio positions are currently trading below their 200-day moving average, showing ticker, current price, 200-day moving average value, and percentage difference?",
+      "dashboard_id": 39,
+      "dashboard_title": "Positions Below 200-Day MA",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "positions_below_200ma_list"
+      },
+      "cache_key": "b23298b45d027247a13211c92651d355",
+      "status": "generated",
+      "analysis_id": "27b13133-3b09-41ba-b4d1-e8b75420d19d",
+      "elapsed_s": 108.531209,
+      "error": null
+    },
+    {
+      "question": "Rank the portfolio positions trading below their 200-day moving average by the percentage difference between the current price and the moving average?",
+      "dashboard_id": 39,
+      "dashboard_title": "Positions Below 200-Day MA",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "ma_distance_below_ranking"
+      },
+      "cache_key": "0cea79f363a2413447f2d93064254efd",
+      "status": "generated",
+      "analysis_id": "32c36e29-bd7e-4db5-9040-fb156f26eb2d",
+      "elapsed_s": 228.895213,
+      "error": null
+    },
+    {
+      "question": "What is the overall technical trend status of the portfolio based on the breadth of positions trading below the 200-day moving average?",
+      "dashboard_id": 39,
+      "dashboard_title": "Positions Below 200-Day MA",
+      "block_id": "status-monitor-01",
+      "block_category": "status-monitoring",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "trend_health_status"
+      },
+      "cache_key": "787538e95e5265fad9687984cdfcc4ed",
+      "status": "generated",
+      "analysis_id": "6eaed014-a66d-4ff4-8208-857215e5ce80",
+      "elapsed_s": 277.857586,
+      "error": null
+    },
+    {
+      "question": "How many portfolio positions currently have a 50-day moving average above the 200-day moving average, and what is their average return since the crossover?",
+      "dashboard_id": 40,
+      "dashboard_title": "Recent Golden Crosses Dashboard",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "golden_cross_summary"
+      },
+      "cache_key": "f0f18e9e4da6beca966c3706976e27de",
+      "status": "generated",
+      "analysis_id": "21186efd-9fbf-44a3-ab68-10c682eaedc6",
+      "elapsed_s": 123.766391,
+      "error": null
+    },
+    {
+      "question": "Which portfolio positions have experienced a 50-day moving average crossing above the 200-day moving average in the last 90 days, including the specific crossover date and current price?",
+      "dashboard_id": 40,
+      "dashboard_title": "Recent Golden Crosses Dashboard",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "golden_cross_list",
+        "period": "90d"
+      },
+      "cache_key": "1fd43db12692a5e98377cf940831f1a5",
+      "status": "generated",
+      "analysis_id": "b7ede99c-d2f8-4f97-85d9-1c1d3757a678",
+      "elapsed_s": 133.008396,
+      "error": null
+    },
+    {
+      "question": "What is the percentage return for each portfolio position currently in a golden cross state calculated from the day of the 50-day moving average crossover?",
+      "dashboard_id": 40,
+      "dashboard_title": "Recent Golden Crosses Dashboard",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "performance_since_cross"
+      },
+      "cache_key": "159e50d8f2e5881062ead2b5c2d08ae3",
+      "status": "generated",
+      "analysis_id": "21186efd-9fbf-44a3-ab68-10c682eaedc6",
+      "elapsed_s": 57.970624,
+      "error": null
+    },
+    {
+      "question": "How many days have elapsed since the 50-day moving average crossed above the 200-day moving average for each portfolio position currently exhibiting a golden cross?",
+      "dashboard_id": 40,
+      "dashboard_title": "Recent Golden Crosses Dashboard",
+      "block_id": "bar-chart-01",
+      "block_category": "bar-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "days_since_crossover"
+      },
+      "cache_key": "85925646ea253f2a6f698d4ea3b05f39",
+      "status": "generated",
+      "analysis_id": "3a6d74ba-7e3c-49eb-b0dc-6676ad37d1f0",
+      "elapsed_s": 255.247047,
+      "error": null
+    },
+    {
+      "question": "How many positions in the current watchlist have a 50-day moving average below the 200-day moving average, what is the average percentage gap between the averages, and what is the average 30-day return for these positions?",
+      "dashboard_id": 41,
+      "dashboard_title": "Death Cross Positions Dashboard",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "death_cross_summary",
+        "period": "30d"
+      },
+      "cache_key": "57a2385b0adcca2bcbe6e3f96126f9f6",
+      "status": "failed",
+      "analysis_id": null,
+      "elapsed_s": 220.291754,
+      "error": "We ran into an issue and couldn't answer your question. Please try again."
+    },
+    {
+      "question": "Which positions currently have a 50-day moving average below the 200-day moving average, ranked by the percentage difference between the 50-day and 200-day averages?",
+      "dashboard_id": 41,
+      "dashboard_title": "Death Cross Positions Dashboard",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "death_cross_magnitude",
+        "period": "30d"
+      },
+      "cache_key": "3acc474c6e35f90402ca2cdc05dd3a43",
+      "status": "generated",
+      "analysis_id": "92aedcfc-8af7-4783-bc69-2df59b5fec9d",
+      "elapsed_s": 128.182618,
+      "error": null
+    },
+    {
+      "question": "Show the price history, 50-day moving average, and 200-day moving average for the position with the largest percentage gap between the averages over the last 6 months?",
+      "dashboard_id": 41,
+      "dashboard_title": "Death Cross Positions Dashboard",
+      "block_id": "line-chart-01",
+      "block_category": "line-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "moving_average_crossover",
+        "period": "6m"
+      },
+      "cache_key": "1b831bb39ebd7c4de9cc53e872f8ad92",
+      "status": "failed",
+      "analysis_id": null,
+      "elapsed_s": 294.343228,
+      "error": "We ran into an issue and couldn't answer your question. Please try again."
+    },
+    {
+      "question": "What is the sector allocation percentage breakdown for all positions that have recently experienced a death cross?",
+      "dashboard_id": 41,
+      "dashboard_title": "Death Cross Positions Dashboard",
+      "block_id": "donut-chart-01",
+      "block_category": "donut-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "sector_allocation",
+        "period": "30d"
+      },
+      "cache_key": "8c9f17a3088a653ce27146c164500e9a",
+      "status": "generated",
+      "analysis_id": "188b1414-e381-422a-ba09-accd24c17785",
+      "elapsed_s": 88.263015,
+      "error": null
+    },
+    {
+      "question": "What is the total number of portfolio positions with an RSI above 70 and what is the highest RSI value among them?",
+      "dashboard_id": 42,
+      "dashboard_title": "Overbought RSI Positions Dashboard",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "rsi_overbought_summary"
+      },
+      "cache_key": "db0b079787be7243be24a9df8ba393f3",
+      "status": "generated",
+      "analysis_id": "b8ee2426-933f-44f3-93ef-228bc67e4ca5",
+      "elapsed_s": 128.352614,
+      "error": null
+    },
+    {
+      "question": "Which portfolio tickers have an RSI value greater than 70, and what are their current prices and specific RSI values?",
+      "dashboard_id": 42,
+      "dashboard_title": "Overbought RSI Positions Dashboard",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "holdings_list",
+        "strategy": "rsi_over_70"
+      },
+      "cache_key": "c628e3428966e89242933acffbf92aa4",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 4.861425,
+      "error": null
+    },
+    {
+      "question": "What are the specific RSI values for all portfolio positions currently identified as overbought?",
+      "dashboard_id": 42,
+      "dashboard_title": "Overbought RSI Positions Dashboard",
+      "block_id": "bar-chart-01",
+      "block_category": "bar-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "rsi_values",
+        "strategy": "overbought"
+      },
+      "cache_key": "687025090e30dc1f9bc5d43c15bac031",
+      "status": "generated",
+      "analysis_id": "5bc55382-9108-4b0e-98ec-16c93d06e037",
+      "elapsed_s": 162.353397,
+      "error": null
+    },
+    {
+      "question": "What is the sector distribution breakdown for all portfolio positions with an RSI above 70?",
+      "dashboard_id": 42,
+      "dashboard_title": "Overbought RSI Positions Dashboard",
+      "block_id": "donut-chart-01",
+      "block_category": "donut-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "sector_allocation",
+        "strategy": "overbought"
+      },
+      "cache_key": "722f47ceb7b6165458044daef5043dca",
+      "status": "generated",
+      "analysis_id": "6cadd4fb-a608-438e-be7b-af2da6593a9f",
+      "elapsed_s": 149.721931,
+      "error": null
+    },
+    {
+      "question": "How many positions currently have an RSI below 30, what is the minimum RSI value among them, and what is their average RSI?",
+      "dashboard_id": 43,
+      "dashboard_title": "Oversold Positions RSI Monitor",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "rsi_summary",
+        "strategy": "oversold"
+      },
+      "cache_key": "41abe1e271ffb0d4664bb2dc81b80f5e",
+      "status": "generated",
+      "analysis_id": "25b1d7ec-b4d8-4125-a5d0-6d9d764c75e8",
+      "elapsed_s": 156.126769,
+      "error": null
+    },
+    {
+      "question": "What are the tickers and current RSI values for all positions with an RSI below 30?",
+      "dashboard_id": 43,
+      "dashboard_title": "Oversold Positions RSI Monitor",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "holdings_rsi",
+        "strategy": "oversold"
+      },
+      "cache_key": "3929918295341cf9c151f47898a2688c",
+      "status": "generated",
+      "analysis_id": "823d0f0a-7595-42f6-808c-4d08ff55960d",
+      "elapsed_s": 236.997498,
+      "error": null
+    },
+    {
+      "question": "Which positions have the lowest RSI values ranked from lowest to highest?",
+      "dashboard_id": 43,
+      "dashboard_title": "Oversold Positions RSI Monitor",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "rsi_ranking"
+      },
+      "cache_key": "a077758e9d45be59004ff88db81c4a40",
+      "status": "generated",
+      "analysis_id": "47dbd8e8-d986-404f-baab-a7d61a7b40fb",
+      "elapsed_s": 115.79252,
+      "error": null
+    },
+    {
+      "question": "What is the 30-day historical RSI trend for the position with the lowest current RSI?",
+      "dashboard_id": 43,
+      "dashboard_title": "Oversold Positions RSI Monitor",
+      "block_id": "line-chart-01",
+      "block_category": "line-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "rsi_history",
+        "period": "30d"
+      },
+      "cache_key": "17de039d3f8ab4839e4c8f6eab16566f",
+      "status": "generated",
+      "analysis_id": "44aaeb1d-a282-4221-945a-ec4eef989ab1",
+      "elapsed_s": 179.808421,
+      "error": null
+    },
+    {
+      "question": "How many positions in the portfolio have an ATR as a percent of price greater than 5%?",
+      "dashboard_id": 44,
+      "dashboard_title": "High ATR Positions Dashboard",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "high_atr_count"
+      },
+      "cache_key": "3b40b2b61344bef7d1f967591a40c4a2",
+      "status": "generated",
+      "analysis_id": "5d4d15bd-fd34-494f-8d99-6e43ccd14638",
+      "elapsed_s": 156.775675,
+      "error": null
+    },
+    {
+      "question": "What are the tickers and ATR percentages for positions where ATR as a percent of price is above 5%, ranked highest to lowest?",
+      "dashboard_id": 44,
+      "dashboard_title": "High ATR Positions Dashboard",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "atr_percentage_ranking"
+      },
+      "cache_key": "a88df21e375ed3629c0f82d31f6d131e",
+      "status": "generated",
+      "analysis_id": "055cea4b-8c08-40bf-aa73-806055eb82ec",
+      "elapsed_s": 158.912023,
+      "error": null
+    },
+    {
+      "question": "What are the ticker, current price, ATR value, and ATR as a percent of price for all positions where the ATR percent is above 5%?",
+      "dashboard_id": 44,
+      "dashboard_title": "High ATR Positions Dashboard",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "atr_position_details"
+      },
+      "cache_key": "b8cdfd8890a7bede7361f74e816c8c4f",
+      "status": "generated",
+      "analysis_id": "b7b1bc7d-e4be-4e10-b30d-f599fd8a8e0a",
+      "elapsed_s": 121.809384,
+      "error": null
+    },
+    {
+      "question": "How many portfolio positions have an Average True Range (ATR) as a percent of price below 2%, and what is the average ATR percentage and minimum ATR percentage among these positions?",
+      "dashboard_id": 45,
+      "dashboard_title": "Low Volatility Positions Screening",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "atr_screen_summary"
+      },
+      "cache_key": "296fd74a3c8e685684357faf2b4b3e19",
+      "status": "generated",
+      "analysis_id": "2c514495-5a9f-4682-87c4-ff09fe7aa2b7",
+      "elapsed_s": 104.686249,
+      "error": null
+    },
+    {
+      "question": "What are the ticker names, current prices, ATR values, and ATR as a percent of price for all positions where ATR percentage is below 2%?",
+      "dashboard_id": 45,
+      "dashboard_title": "Low Volatility Positions Screening",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "atr_screen_details"
+      },
+      "cache_key": "82c9fa952116801cc05e77c2acf8f931",
+      "status": "generated",
+      "analysis_id": "6b12672d-1e22-4d02-89bf-84bf1bbddcb5",
+      "elapsed_s": 115.859303,
+      "error": null
+    },
+    {
+      "question": "What is the ATR as a percent of price for each position that meets the criteria of being below 2%?",
+      "dashboard_id": 45,
+      "dashboard_title": "Low Volatility Positions Screening",
+      "block_id": "bar-chart-01",
+      "block_category": "bar-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "atr_percent_distribution"
+      },
+      "cache_key": "33378e1e188a2a7d543c67e9d618454b",
+      "status": "generated",
+      "analysis_id": null,
+      "elapsed_s": 8.82752,
+      "error": null
+    },
+    {
+      "question": "What is the ranked list of positions with the lowest ATR as a percent of price, limited to the top 10 results?",
+      "dashboard_id": 45,
+      "dashboard_title": "Low Volatility Positions Screening",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "lowest_atr_ranking"
+      },
+      "cache_key": "99fb19fda7013da2d14713d18178088e",
+      "status": "generated",
+      "analysis_id": "a7bac8af-a47c-45e6-bae6-2404e33c7c15",
+      "elapsed_s": 87.783577,
+      "error": null
+    },
+    {
+      "question": "How many positions have increasing average volume and what is the median percentage growth over the last 4 weeks?",
+      "dashboard_id": 46,
+      "dashboard_title": "Position Volume Trends",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "volume_trend_summary",
+        "period": "4w"
+      },
+      "cache_key": "248a2ce4fc26ba3758ba824931a98b7a",
+      "status": "generated",
+      "analysis_id": "2cda4a5a-da25-44c3-9c6a-8a5f2918d071",
+      "elapsed_s": 144.41253,
+      "error": null
+    },
+    {
+      "question": "Which positions have the highest percentage increase in average volume over the last 4 weeks?",
+      "dashboard_id": 46,
+      "dashboard_title": "Position Volume Trends",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "volume_growth_ranking",
+        "period": "4w"
+      },
+      "cache_key": "f6d784af2016af4250be3948150ebfb8",
+      "status": "generated",
+      "analysis_id": "2cda4a5a-da25-44c3-9c6a-8a5f2918d071",
+      "elapsed_s": 71.598421,
+      "error": null
+    },
+    {
+      "question": "What is the percentage increase in average volume for the top 10 positions with rising volume over the last 4 weeks?",
+      "dashboard_id": 46,
+      "dashboard_title": "Position Volume Trends",
+      "block_id": "bar-chart-01",
+      "block_category": "bar-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "volume_growth_top",
+        "period": "4w"
+      },
+      "cache_key": "b98070a7b7aab143d8830b15606578e0",
+      "status": "generated",
+      "analysis_id": "4a154eee-bc10-4c04-a26e-f3a4698ff64f",
+      "elapsed_s": 147.938551,
+      "error": null
+    },
+    {
+      "question": "What are the specific volume metrics for all positions including current average volume, prior 4-week average, and percentage change?",
+      "dashboard_id": 46,
+      "dashboard_title": "Position Volume Trends",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "volume_details",
+        "period": "4w"
+      },
+      "cache_key": "be31ef1973a24c09b6cfd7afd243e35f",
+      "status": "failed",
+      "analysis_id": null,
+      "elapsed_s": 94.694759,
+      "error": "We ran into an issue and couldn't answer your question. Please try again."
+    },
+    {
+      "question": "What is the count of positions with decreasing average volume and the average percentage volume change across the portfolio over the last 4 weeks?",
+      "dashboard_id": 47,
+      "dashboard_title": "Declining Volume Positions Analysis",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "volume_trend_summary",
+        "period": "4w"
+      },
+      "cache_key": "510aa7efdb2ba9007ddd209a855f6321",
+      "status": "generated",
+      "analysis_id": "cd1a82b4-472d-410a-affc-3db89d83e221",
+      "elapsed_s": 112.567994,
+      "error": null
+    },
+    {
+      "question": "What are the current average daily volumes and percentage volume changes for all positions over the last 4 weeks?",
+      "dashboard_id": 47,
+      "dashboard_title": "Declining Volume Positions Analysis",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "positions_volume_change",
+        "period": "4w"
+      },
+      "cache_key": "9ab261b16f053d31b0ba879987b43cc1",
+      "status": "generated",
+      "analysis_id": "f22a5ed3-d01d-4802-aa9f-0e2ef5aecd13",
+      "elapsed_s": 187.454302,
+      "error": null
+    },
+    {
+      "question": "Which positions have the largest percentage decrease in average volume over the last 4 weeks ranked from highest to lowest decline?",
+      "dashboard_id": 47,
+      "dashboard_title": "Declining Volume Positions Analysis",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "volume_decline_ranking",
+        "period": "4w"
+      },
+      "cache_key": "d12205cde27257ae5734bf7337a4e839",
+      "status": "generated",
+      "analysis_id": "aaa9b7c4-a08c-4fc5-864b-95a84added19",
+      "elapsed_s": 106.038309,
+      "error": null
+    },
+    {
+      "question": "What is the daily trading volume history over the last 4 weeks for the positions with the most significant volume decreases?",
+      "dashboard_id": 47,
+      "dashboard_title": "Declining Volume Positions Analysis",
+      "block_id": "line-chart-01",
+      "block_category": "line-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "volume_history",
+        "period": "4w"
+      },
+      "cache_key": "5350d5f4cf8adddbddfda12fc88a413c",
+      "status": "generated",
+      "analysis_id": "dd69f1a6-294a-4e3b-a915-4f207de37c02",
+      "elapsed_s": 219.452439,
+      "error": null
+    },
+    {
+      "question": "What is the highest single-day percentage gain for any position in the last 30 trading days, including the ticker symbol and the date it occurred?",
+      "dashboard_id": 48,
+      "dashboard_title": "Top Single-Day Gainers",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "max_single_day_gain",
+        "period": "30d"
+      },
+      "cache_key": "700fb08bad0c22cda7f154e4321f8d39",
+      "status": "generated",
+      "analysis_id": "b15b143a-2ea1-46d6-9b51-096e995dd370",
+      "elapsed_s": 175.59029,
+      "error": null
+    },
+    {
+      "question": "Which positions in the portfolio had the largest single-day percentage gains in the last 30 trading days, ranked from highest to lowest?",
+      "dashboard_id": 48,
+      "dashboard_title": "Top Single-Day Gainers",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "top_single_day_gains",
+        "period": "30d"
+      },
+      "cache_key": "d632da6b6eaa7ba50105d6a02f944879",
+      "status": "generated",
+      "analysis_id": "43345b4f-4b46-4095-93ba-09bd0e8cf6b8",
+      "elapsed_s": 131.690462,
+      "error": null
+    },
+    {
+      "question": "What are the specific single-day percentage gain values for the top 5 positions with the largest gains in the last 30 trading days?",
+      "dashboard_id": 48,
+      "dashboard_title": "Top Single-Day Gainers",
+      "block_id": "bar-chart-01",
+      "block_category": "bar-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "top_single_day_gains",
+        "period": "30d"
+      },
+      "cache_key": "b159536db4cc1b367b2d4d036889192c",
+      "status": "generated",
+      "analysis_id": "43345b4f-4b46-4095-93ba-09bd0e8cf6b8",
+      "elapsed_s": 46.394744,
+      "error": null
+    },
+    {
+      "question": "What are the details of all single-day gains exceeding 2% for any position in the last 30 trading days, showing ticker, percentage gain, and date?",
+      "dashboard_id": 48,
+      "dashboard_title": "Top Single-Day Gainers",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "single_day_gain_events",
+        "period": "30d"
+      },
+      "cache_key": "38f090751af9a7b97b4ea343860b5c19",
+      "status": "generated",
+      "analysis_id": "804a9d37-9030-4030-ba9a-153f750ac98e",
+      "elapsed_s": 155.42458,
+      "error": null
+    },
+    {
+      "question": "What are the summary statistics for largest single-day losses across all positions in the last 30 trading days: worst single-day loss percentage, number of positions with losses exceeding 5%, average maximum single-day loss, and total positions analyzed?",
+      "dashboard_id": 49,
+      "dashboard_title": "Largest Single-Day Losses",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "period": "30d",
+        "metric": "single_day_loss_summary"
+      },
+      "cache_key": "ee2af703cce5bd540ec34cf2199b8f0c",
+      "status": "generated",
+      "analysis_id": "8ff7e56b-a072-445e-a7b8-ee1f5543df5f",
+      "elapsed_s": 93.881009,
+      "error": null
+    },
+    {
+      "question": "Which positions had the largest single-day percentage losses in the last 30 trading days, ranked from worst to best with ticker and loss percentage?",
+      "dashboard_id": 49,
+      "dashboard_title": "Largest Single-Day Losses",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "period": "30d",
+        "metric": "single_day_loss_ranking"
+      },
+      "cache_key": "4093ec595122356616f784ae7e81d2f3",
+      "status": "failed",
+      "analysis_id": null,
+      "elapsed_s": 242.348103,
+      "error": "We ran into an issue and couldn't answer your question. Please try again."
+    },
+    {
+      "question": "What are the detailed records for positions with the largest single-day losses in the last 30 trading days including ticker, loss date, opening price, closing price, and percentage loss?",
+      "dashboard_id": 49,
+      "dashboard_title": "Largest Single-Day Losses",
+      "block_id": "table-01",
+      "block_category": "tables",
+      "output_format": {},
+      "canonical_params": {
+        "period": "30d",
+        "metric": "single_day_loss_details"
+      },
+      "cache_key": "7bc2f0294d8efd8a6887417d7feb4684",
+      "status": "generated",
+      "analysis_id": "87c5a309-14f7-4c1a-9282-74ec4de8f25a",
+      "elapsed_s": 257.640059,
+      "error": null
+    },
+    {
+      "question": "Show the 30-day price history for the position with the largest single-day loss, highlighting the specific date of the maximum loss?",
+      "dashboard_id": 49,
+      "dashboard_title": "Largest Single-Day Losses",
+      "block_id": "line-chart-01",
+      "block_category": "line-charts",
+      "output_format": {},
+      "canonical_params": {
+        "period": "30d",
+        "metric": "price_history_worst_performer"
+      },
+      "cache_key": "32201eb5b20de4c0883b8c326c368a92",
+      "status": "failed",
+      "analysis_id": null,
+      "elapsed_s": 300.002571,
+      "error": "Pipeline timed out after 300s"
+    },
+    {
+      "question": "What is the average largest single-day loss percentage by sector for all positions in the last 30 trading days?",
+      "dashboard_id": 49,
+      "dashboard_title": "Largest Single-Day Losses",
+      "block_id": "bar-chart-01",
+      "block_category": "bar-charts",
+      "output_format": {},
+      "canonical_params": {
+        "period": "30d",
+        "metric": "sector_single_day_loss_avg"
+      },
+      "cache_key": "4d98809f91d59b04ca0dc6c7ba30d9a2",
+      "status": "generated",
+      "analysis_id": "5f3813ff-ad9c-4caa-a06b-f51782151daf",
+      "elapsed_s": 161.756883,
+      "error": null
+    },
+    {
+      "question": "What is the total count and average return of portfolio positions that gained more than 20% in the last 3 months?",
+      "dashboard_id": 50,
+      "dashboard_title": "Top Gainers Dashboard",
+      "block_id": "kpi-card-01",
+      "block_category": "kpi-cards",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "performance_summary",
+        "period": "3m"
+      },
+      "cache_key": "4059e4e41f041fbb267a6b9db71b538b",
+      "status": "generated",
+      "analysis_id": "6747b2b0-7afd-4370-a6e2-74b5e46579ac",
+      "elapsed_s": 133.567618,
+      "error": null
+    },
+    {
+      "question": "Which portfolio positions have a 3-month return greater than 20%, ranked by return percentage?",
+      "dashboard_id": 50,
+      "dashboard_title": "Top Gainers Dashboard",
+      "block_id": "bar-list-01",
+      "block_category": "bar-lists",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "top_performers",
+        "period": "3m"
+      },
+      "cache_key": "464f19f67ef372551d54c7bec9494713",
+      "status": "generated",
+      "analysis_id": "6747b2b0-7afd-4370-a6e2-74b5e46579ac",
+      "elapsed_s": 88.674217,
+      "error": null
+    },
+    {
+      "question": "What are the specific return percentages for all portfolio positions exceeding a 20% gain in the last 3 months?",
+      "dashboard_id": 50,
+      "dashboard_title": "Top Gainers Dashboard",
+      "block_id": "bar-chart-01",
+      "block_category": "bar-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "individual_returns",
+        "period": "3m"
+      },
+      "cache_key": "96e414cdce1c9083160570f3e74fb4ec",
+      "status": "failed",
+      "analysis_id": null,
+      "elapsed_s": 194.009293,
+      "error": "We ran into an issue and couldn't answer your question. Please try again."
+    },
+    {
+      "question": "What are the daily price trends over the last 3 months for the top 5 positions that gained more than 20%?",
+      "dashboard_id": 50,
+      "dashboard_title": "Top Gainers Dashboard",
+      "block_id": "spark-chart-01",
+      "block_category": "spark-charts",
+      "output_format": {},
+      "canonical_params": {
+        "metric": "price_history",
+        "period": "3m"
+      },
+      "cache_key": "1ec40a646b74bea845076a172340732a",
+      "status": "failed",
+      "analysis_id": null,
+      "elapsed_s": 228.994213,
+      "error": "We ran into an issue and couldn't answer your question. Please try again."
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "step": "question_enhancer",
+  "input": {
+    "question": "Show me my equity portfolio with holdings, daily P&L, sector allocation and YTD performance",
+    "original_question": "Show me my equity portfolio with holdings, daily P&L, sector allocation and YTD performance"
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "enhanced_question": "Show me my equity portfolio with detailed holdings including ticker, quantity, current price, and weight percentage. Provide daily P&L metrics showing total daily profit/loss in both currency and percentage change compared to the previous close. Display sector allocation with specific percentage breakdowns by industry. Include YTD performance data showing total return percentage for the overall portfolio, and time series data of portfolio values from the start of the year to the current date.",
+      "data_requirements": [
+        {
+          "block_id": "implied-holdings-table",
+          "block_type": "table",
+          "requirement": "Structured table data for individual holdings including ticker symbol, number of shares, current market price, total market value, and weight percentage."
+        },
+        {
+          "block_id": "implied-daily-pnl",
+          "block_type": "kpi-cards",
+          "requirement": "Current total portfolio value, daily profit/loss amount, daily change percentage, and previous close value for comparison."
+        },
+        {
+          "block_id": "implied-sector-allocation",
+          "block_type": "donut-charts",
+          "requirement": "Sector allocation data with category labels (industry sectors) and corresponding percentage values or weights."
+        },
+        {
+          "block_id": "implied-ytd-performance",
+          "block_type": "line-charts",
+          "requirement": "Time series data (dates and values) for portfolio value from the start of the year to present, and aggregate YTD return percentage."
+        }
+      ],
+      "metadata": {
+        "block_count": 0,
+        "enhancement_summary": "Added specific data fields for holdings (ticker, quantity, price), P&L (currency and percentage change), allocation (sector percentages), and performance (YTD return and time series history) to enable comprehensive visualization.",
+        "original_question": "Show me my equity portfolio with holdings, daily P&L, sector allocation and YTD performance",
+        "enhanced_block_ids": []
+      }
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-18T20:09:29.089154"
+  },
+  "duration": 17.164695,
+  "timestamp": "2026-03-18T20:09:29.089443"
+}

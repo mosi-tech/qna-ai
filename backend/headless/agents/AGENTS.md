@@ -16,7 +16,7 @@ backend/headless/agents/
 ├── script_validator_agent.py     # Validates syntax and execution
 ├── verification_agent.py         # Multi-model verification of scripts
 ├── script_executor_agent.py      # Executes scripts and captures results
-├── result_formatter_agent.py     # Formats output for dashboard rendering
+├── mcp_direct_agent.py           # Answers questions via direct MCP tool calling (no-code path)
 ├── agent_base.py                 # Base class with common agent functionality
 ├── run_single_agent.py           # Generic runner: run any agent standalone
 ├── orchestrator.py               # Chains agents together (when needed)
@@ -218,6 +218,32 @@ backend/headless/agents/
 }
 ```
 
+### mcp_direct_agent.py
+**Input:**
+```json
+{
+  "question": "Show QQQ ETF price",
+  "blocks": [...],
+  "selected_functions": ["financial_data__get_real_time_data", ...],
+  "selected_function_schemas": {...}
+}
+```
+
+**Output:**
+```json
+{
+  "blocks_data": [
+    {"blockId": "kpi-card-01", "data": {"price": 450.23, ...}},
+    ...
+  ],
+  "raw_results": {...},
+  "metadata": {
+    "functions_called": ["function1", "function2"],
+    "total_calls": 2
+  }
+}
+```
+
 ## Running Agents
 
 ### Run Single Agent (Isolated Testing)
@@ -267,9 +293,14 @@ python headless/agents/orchestrator.py \
 python headless/agents/orchestrator.py \
     --question "Show QQQ ETF price" \
     --max-generation-attempts 5
+
+# Use no-code path (direct MCP tool calling, faster for simple queries)
+python headless/agents/orchestrator.py \
+    --question "Show QQQ ETF price" \
+    --no-code --skip-enhancement
 ```
 
-**Pipeline Steps:**
+**Pipeline Steps (default - with code generation):**
 1. `question_enhancer` - Expand short questions (skipped via `--skip-enhancement`)
 2. `ui_planner` - Plan dashboard layout
 3. `reuse_evaluator` - Check for reusable analyses
@@ -278,6 +309,14 @@ python headless/agents/orchestrator.py \
 6. `script_validator` - Validate script (with retry, max 3 attempts)
 7. `verification_agent` - Multi-model verification (skipped via `--skip-verification`)
 8. `script_executor` - Execute script (skipped via `--skip-execution`)
+
+**Pipeline Steps (with --no-code flag):**
+1. `question_enhancer` - Expand short questions (skipped via `--skip-enhancement`)
+2. `ui_planner` - Plan dashboard layout
+3. `code_prompt_builder` - Select MCP functions
+4. `mcp_direct_agent` - Answer via direct MCP tool calling
+
+Skipped in no-code mode: `reuse_evaluator`, `code_script_generator`, `script_validator`, `verification_agent`, `script_executor`
 
 **Note:** Generated scripts should return data matching UI planner block contracts. No separate result formatter needed.
 
@@ -302,7 +341,8 @@ python headless/agents/orchestrator.py \
 - [x] script_validator_agent.py - AST-based validation with retry ✅
 - [x] verification_agent.py - Multi-model verification (glm-4.7:cloud, gpt-oss:120b) ✅
 - [x] script_executor_agent.py - Executes scripts ✅
-- [x] orchestrator.py - Full pipeline with skip flags and retry mechanism ✅
+- [x] mcp_direct_agent.py - Direct MCP tool calling (no-code path) ✅
+- [x] orchestrator.py - Full pipeline with --no-code flag support ✅
 - [x] result_formatter_agent.py - Removed (scripts should return UI-ready data)
 
 ## Two-Stage Code Generation
@@ -318,6 +358,42 @@ The code generation uses a two-stage approach:
    - Takes enriched prompt and selected functions
    - Generates Python script using `call_mcp_function()`
    - Includes validation feedback for retry attempts
+
+## Two Execution Paths
+
+### Code Generation Path (default)
+
+Use for complex analyses that require:
+- Custom calculations (e.g., portfolio optimization, backtesting)
+- Multiple data transformations
+- Custom logic beyond simple data fetching
+
+**Steps:** question_enhancer → ui_planner → reuse_evaluator → code_prompt_builder → code_script_generator → script_validator → verification → script_executor
+
+**Typical time:** 60-90 seconds
+
+### No-Code Path (--no-code flag)
+
+Use for simple queries that only need:
+- Data fetching (e.g., current price, historical data)
+- Basic aggregations (e.g., sector allocation, top holdings)
+- Direct answers from MCP functions
+
+**Steps:** question_enhancer → ui_planner → code_prompt_builder → mcp_direct_agent
+
+**Typical time:** 5-15 seconds
+
+**Example:**
+```bash
+# Complex analysis requiring custom logic - use code path
+python headless/agents/orchestrator.py \
+    --question "Calculate optimal portfolio weights for QQQ, SPY, VTI using mean-variance optimization"
+
+# Simple data fetch - use no-code path (faster)
+python headless/agents/orchestrator.py \
+    --question "Show QQQ ETF price" \
+    --no-code --skip-enhancement
+```
 
 ## Unified Retry Loop
 

@@ -1,0 +1,731 @@
+[
+  {
+    "title": "Near 52-Week High Positions",
+    "subtitle": "Identify holdings trading within 2% of their peak prices",
+    "layout": "grid",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Proximity Summary",
+        "dataContract": {
+          "type": "kpi",
+          "description": "Count and value of positions near high",
+          "points": 4
+        },
+        "sub_question": "How many portfolio positions are currently within 2% of their 52-week high and what is the total market value of these specific positions?",
+        "canonical_params": {
+          "metric": "52w_high_proximity_summary"
+        }
+      },
+      {
+        "blockId": "table-01",
+        "category": "tables",
+        "title": "Positions Near High",
+        "dataContract": {
+          "type": "table",
+          "description": "Detailed list of positions within 2% of high"
+        },
+        "sub_question": "Which portfolio positions are currently within 2% of their 52-week high, showing ticker, current price, 52-week high price, and percentage difference?",
+        "canonical_params": {
+          "metric": "52w_high_proximity_list"
+        }
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "Closest to High",
+        "dataContract": {
+          "type": "bar-list",
+          "description": "Ranked list by proximity to 52-week high"
+        },
+        "sub_question": "Rank the portfolio positions currently within 2% of their 52-week high by their percentage distance from the high, showing the closest first.",
+        "canonical_params": {
+          "metric": "52w_high_proximity_rank"
+        }
+      },
+      {
+        "blockId": "bar-chart-01",
+        "category": "bar-charts",
+        "title": "Distance Comparison",
+        "dataContract": {
+          "type": "bar",
+          "description": "Percentage distance from 52-week high"
+        },
+        "sub_question": "What is the percentage distance from the 52-week high for each portfolio position currently within 2% of that high?",
+        "canonical_params": {
+          "metric": "52w_high_distance"
+        }
+      }
+    ],
+    "question_id": 40,
+    "original_question": "Which positions are within 2% of their 52-week high?",
+    "metadata": {
+      "source_file": "sample_questions_openai.json",
+      "source_type": "openai_sample",
+      "category": "account_portfolio",
+      "status": "unvalidated",
+      "extraction_date": "2026-03-05T22:58:17.079225"
+    }
+  },
+  {
+    "title": "Near 52-Week Low Positions",
+    "subtitle": "Overview of portfolio positions trading near yearly lows",
+    "layout": "grid",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Near Low Summary",
+        "dataContract": {
+          "type": "kpi",
+          "description": "Total count of positions near 52-week lows",
+          "points": 3
+        },
+        "sub_question": "What is the total number of positions within 2% of their 52-week low and the average percentage distance from the low?",
+        "canonical_params": {
+          "metric": "near_low_summary"
+        }
+      },
+      {
+        "blockId": "table-01",
+        "category": "tables",
+        "title": "Positions Near Lows",
+        "dataContract": {
+          "type": "table",
+          "description": "Detailed list of positions near lows"
+        },
+        "sub_question": "Which positions are currently within 2% of their 52-week low, displaying ticker, current price, and 52-week low?",
+        "canonical_params": {
+          "metric": "near_low_positions"
+        }
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "Distance to Low",
+        "dataContract": {
+          "type": "bar-list",
+          "description": "Ranked distance from 52-week low"
+        },
+        "sub_question": "What are the percentage distances from the 52-week low for positions within 2% of that low?",
+        "canonical_params": {
+          "metric": "distance_from_low"
+        }
+      },
+      {
+        "blockId": "spark-chart-01",
+        "category": "spark-charts",
+        "title": "30-Day Trends",
+        "dataContract": {
+          "type": "timeseries",
+          "description": "Recent price performance for near-low positions"
+        },
+        "sub_question": "What is the 30-day price history for positions currently within 2% of their 52-week low?",
+        "canonical_params": {
+          "period": "30d"
+        }
+      }
+    ],
+    "question_id": 41,
+    "original_question": "Which positions are within 2% of their 52-week low?",
+    "metadata": {
+      "source_file": "sample_questions_openai.json",
+      "source_type": "openai_sample",
+      "category": "account_portfolio",
+      "status": "unvalidated",
+      "extraction_date": "2026-03-05T22:58:17.079227"
+    }
+  },
+  {
+    "title": "52-Week Range Dashboard",
+    "subtitle": "52-week high and low analysis for open positions",
+    "layout": "grid",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Position Range Summary",
+        "dataContract": {
+          "type": "kpi",
+          "description": "Summary metrics for positions relative to 52-week range",
+          "points": 4
+        },
+        "sub_question": "What are the summary metrics for all open positions: total number of holdings, count of positions within 10% of 52-week high, count of positions within 10% of 52-week low, and average percentage distance from 52-week high?",
+        "canonical_params": {
+          "metric": "position_range_summary",
+          "period": "52w"
+        }
+      },
+      {
+        "blockId": "table-01",
+        "category": "tables",
+        "title": "52-Week Range Table",
+        "dataContract": {
+          "type": "table",
+          "description": "List of positions with 52-week high and low values"
+        },
+        "sub_question": "What are all open positions with their current prices, 52-week highs, and 52-week lows?",
+        "canonical_params": {
+          "metric": "52_week_range"
+        }
+      },
+      {
+        "blockId": "bar-chart-01",
+        "category": "bar-charts",
+        "title": "Price vs 52-Week High",
+        "dataContract": {
+          "type": "bar",
+          "description": "Current price as percentage of 52-week high"
+        },
+        "sub_question": "What is the current price expressed as a percentage of the 52-week high for each open position?",
+        "canonical_params": {
+          "metric": "price_vs_52w_high",
+          "period": "52w"
+        }
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "Near 52-Week Highs",
+        "dataContract": {
+          "type": "bar-list",
+          "description": "Positions ranked by proximity to 52-week high"
+        },
+        "sub_question": "Which open positions are closest to their 52-week highs, ranked by percentage difference from the high?",
+        "canonical_params": {
+          "metric": "near_52w_high_ranking",
+          "period": "52w"
+        }
+      }
+    ],
+    "question_id": 42,
+    "original_question": "For each open position, what is the 52-week high and low?",
+    "metadata": {
+      "source_file": "sample_questions_openai.json",
+      "source_type": "openai_sample",
+      "category": "account_portfolio",
+      "status": "unvalidated",
+      "extraction_date": "2026-03-05T22:58:17.079229"
+    }
+  },
+  {
+    "title": "Position Volume Analysis",
+    "subtitle": "Average daily volume metrics for all open positions over the last 30 trading days",
+    "layout": "grid",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Volume Summary Stats",
+        "dataContract": {
+          "type": "kpi",
+          "description": "Key volume statistics across all open positions",
+          "points": 4
+        },
+        "sub_question": "What are the aggregate volume metrics for the open positions including the total number of positions, highest average daily volume, lowest average daily volume, and mean average daily volume over the last 30 trading days?",
+        "canonical_params": {
+          "metric": "volume_summary",
+          "period": "30d"
+        }
+      },
+      {
+        "blockId": "table-01",
+        "category": "tables",
+        "title": "Positions Volume Detail",
+        "dataContract": {
+          "type": "table",
+          "description": "List of all open positions with average daily volume"
+        },
+        "sub_question": "What is the list of all open positions showing the ticker name and average daily volume for the last 30 trading days?",
+        "canonical_params": {
+          "metric": "average_daily_volume",
+          "period": "30d"
+        }
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "Highest Volume Rankings",
+        "dataContract": {
+          "type": "bar-list",
+          "description": "Open positions ranked by average daily volume"
+        },
+        "sub_question": "Which open positions have the highest average daily volume over the last 30 trading days, ranked in descending order?",
+        "canonical_params": {
+          "metric": "average_daily_volume",
+          "period": "30d"
+        }
+      },
+      {
+        "blockId": "bar-chart-01",
+        "category": "bar-charts",
+        "title": "Volume Comparison Chart",
+        "dataContract": {
+          "type": "bar",
+          "description": "Visual comparison of average daily volume per position"
+        },
+        "sub_question": "What is the average daily volume over the last 30 trading days for the top 10 open positions by portfolio weight?",
+        "canonical_params": {
+          "metric": "average_daily_volume",
+          "period": "30d"
+        }
+      }
+    ],
+    "question_id": 43,
+    "original_question": "For each open position, what is the average daily volume over the last 30 trading days?",
+    "metadata": {
+      "source_file": "sample_questions_openai.json",
+      "source_type": "openai_sample",
+      "category": "account_portfolio",
+      "status": "unvalidated",
+      "extraction_date": "2026-03-05T22:58:17.079231"
+    }
+  },
+  {
+    "title": "Position Volatility Analysis",
+    "subtitle": "Realized volatility breakdown for all open positions over the last 30 trading days",
+    "layout": "grid",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Volatility Summary",
+        "dataContract": {
+          "type": "kpi",
+          "description": "Highest, lowest, and average volatility metrics",
+          "points": 3
+        },
+        "sub_question": "What are the highest, lowest, and average realized volatility percentages for all open positions over the last 30 trading days?",
+        "canonical_params": {
+          "metric": "realized_volatility",
+          "period": "30d"
+        }
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "Volatility Rankings",
+        "dataContract": {
+          "type": "bar-list",
+          "description": "Positions ranked by realized volatility"
+        },
+        "sub_question": "What is the realized volatility percentage for each open position over the last 30 trading days, ranked from highest to lowest?",
+        "canonical_params": {
+          "metric": "realized_volatility",
+          "period": "30d"
+        }
+      },
+      {
+        "blockId": "table-01",
+        "category": "tables",
+        "title": "Position Volatility Detail",
+        "dataContract": {
+          "type": "table",
+          "description": "Detailed volatility data per position"
+        },
+        "sub_question": "What are the ticker symbols and their corresponding 30-day realized volatility percentages for all open positions?",
+        "canonical_params": {
+          "metric": "realized_volatility",
+          "period": "30d"
+        }
+      },
+      {
+        "blockId": "line-chart-01",
+        "category": "line-charts",
+        "title": "Portfolio Volatility Trend",
+        "dataContract": {
+          "type": "timeseries",
+          "description": "Portfolio volatility history over time",
+          "xAxis": "date",
+          "yAxis": "volatility"
+        },
+        "sub_question": "Show the rolling 30-day realized volatility trend for the entire portfolio over the last 3 months.",
+        "canonical_params": {
+          "metric": "realized_volatility",
+          "period": "3m"
+        }
+      }
+    ],
+    "question_id": 44,
+    "original_question": "For each open position, what is the realized volatility over the last 30 trading days?",
+    "metadata": {
+      "source_file": "sample_questions_openai.json",
+      "source_type": "openai_sample",
+      "category": "account_portfolio",
+      "status": "unvalidated",
+      "extraction_date": "2026-03-05T22:58:17.079234"
+    }
+  },
+  {
+    "title": "Position Beta Analysis Dashboard",
+    "subtitle": "Beta values for all open positions versus broad market ETF over 60 trading days",
+    "layout": "grid",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Portfolio Beta Summary",
+        "dataContract": {
+          "type": "kpi",
+          "description": "Average beta, high, low, and portfolio beta versus SPY",
+          "points": 4
+        },
+        "sub_question": "What are the portfolio beta statistics: average beta across all open positions, highest individual position beta, lowest individual position beta, and overall portfolio beta versus SPY over the last 60 trading days?",
+        "canonical_params": {
+          "metric": "beta_summary",
+          "period": "60d",
+          "benchmark": "SPY"
+        }
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "Positions Ranked by Beta",
+        "dataContract": {
+          "type": "bar-list",
+          "description": "Open positions ranked by beta value versus SPY"
+        },
+        "sub_question": "What is the beta versus SPY for each open position over the last 60 trading days, ranked from highest to lowest beta?",
+        "canonical_params": {
+          "metric": "beta",
+          "period": "60d",
+          "benchmark": "SPY"
+        }
+      },
+      {
+        "blockId": "table-01",
+        "category": "tables",
+        "title": "Position Beta Details",
+        "dataContract": {
+          "type": "table",
+          "description": "Detailed breakdown of position betas with ticker and sector"
+        },
+        "sub_question": "What are the detailed beta values versus SPY for each open position over the last 60 trading days including ticker, position name, sector, and beta value?",
+        "canonical_params": {
+          "metric": "beta_details",
+          "period": "60d",
+          "benchmark": "SPY"
+        }
+      },
+      {
+        "blockId": "bar-chart-01",
+        "category": "bar-charts",
+        "title": "Sector Beta Breakdown",
+        "dataContract": {
+          "type": "bar",
+          "description": "Average beta by sector"
+        },
+        "sub_question": "What is the average beta versus SPY for each sector represented in the open positions over the last 60 trading days?",
+        "canonical_params": {
+          "metric": "sector_beta",
+          "period": "60d",
+          "benchmark": "SPY"
+        }
+      }
+    ],
+    "question_id": 45,
+    "original_question": "For each open position, what is the beta versus a broad market ETF over the last 60 trading days?",
+    "metadata": {
+      "source_file": "sample_questions_openai.json",
+      "source_type": "openai_sample",
+      "category": "account_portfolio",
+      "status": "unvalidated",
+      "extraction_date": "2026-03-05T22:58:17.079236"
+    }
+  },
+  {
+    "title": "Moving Average Trend Status",
+    "subtitle": "Analysis of 50-day vs 200-day moving averages for all open positions",
+    "layout": "grid",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "MA Trend Summary",
+        "dataContract": {
+          "type": "kpi",
+          "description": "Count of positions above and below the 200-day MA",
+          "points": 4
+        },
+        "sub_question": "What are the total counts of open positions where the 50-day moving average is above the 200-day moving average versus below it?",
+        "canonical_params": {
+          "metric": "ma_trend_summary"
+        }
+      },
+      {
+        "blockId": "table-01",
+        "category": "tables",
+        "title": "Position MA Status",
+        "dataContract": {
+          "type": "table",
+          "description": "Detailed list of positions with MA crossover status"
+        },
+        "sub_question": "List all open positions with their current 50-day moving average, 200-day moving average, and a status indicator of whether the 50-day MA is above the 200-day MA.",
+        "canonical_params": {
+          "metric": "ma_cross_status"
+        }
+      },
+      {
+        "blockId": "bar-chart-01",
+        "category": "bar-charts",
+        "title": "Bullish vs Bearish Count",
+        "dataContract": {
+          "type": "bar",
+          "description": "Comparison of bullish and bearish position counts"
+        },
+        "sub_question": "What is the number of open positions currently in a bullish trend compared to those in a bearish trend based on moving averages?",
+        "canonical_params": {
+          "metric": "ma_trend_distribution"
+        }
+      },
+      {
+        "blockId": "donut-chart-01",
+        "category": "donut-charts",
+        "title": "Trend Proportion",
+        "dataContract": {
+          "type": "pie",
+          "description": "Percentage of portfolio in bullish trend"
+        },
+        "sub_question": "What is the percentage of total open positions that have a 50-day moving average above the 200-day moving average?",
+        "canonical_params": {
+          "metric": "ma_trend_percentage"
+        }
+      }
+    ],
+    "question_id": 46,
+    "original_question": "For each open position, is the 50-day moving average above the 200-day moving average?",
+    "metadata": {
+      "source_file": "sample_questions_openai.json",
+      "source_type": "openai_sample",
+      "category": "account_portfolio",
+      "status": "unvalidated",
+      "extraction_date": "2026-03-05T22:58:17.079239"
+    }
+  },
+  {
+    "title": "Open Positions RSI Analysis",
+    "subtitle": "14-day Relative Strength Index breakdown for all open positions",
+    "layout": "grid",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "RSI Portfolio Summary",
+        "dataContract": {
+          "type": "kpi",
+          "description": "Average RSI and overbought/oversold position counts",
+          "points": 4
+        },
+        "sub_question": "What is the portfolio's average 14-day RSI, number of overbought positions (RSI > 70), number of oversold positions (RSI < 30), and total number of positions?",
+        "canonical_params": {
+          "metric": "rsi_summary",
+          "period": "14d"
+        }
+      },
+      {
+        "blockId": "table-01",
+        "category": "tables",
+        "title": "Open Positions RSI",
+        "dataContract": {
+          "type": "table",
+          "description": "Detailed RSI values for all open positions",
+          "xAxis": "ticker",
+          "yAxis": "rsi_value"
+        },
+        "sub_question": "What are the ticker, current price, and 14-day RSI for each open position sorted by position size?",
+        "canonical_params": {
+          "metric": "rsi_by_position",
+          "period": "14d"
+        }
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "RSI Rankings",
+        "dataContract": {
+          "type": "bar-list",
+          "description": "Positions ranked by RSI value from highest to lowest"
+        },
+        "sub_question": "Rank all open positions by their 14-day RSI value from highest to lowest with visual indicator bars.",
+        "canonical_params": {
+          "metric": "rsi_rankings",
+          "period": "14d"
+        }
+      },
+      {
+        "blockId": "spark-chart-01",
+        "category": "spark-charts",
+        "title": "RSI 14-Day Trends",
+        "dataContract": {
+          "type": "timeseries",
+          "description": "14-day RSI history for top positions",
+          "xAxis": "date",
+          "yAxis": "rsi"
+        },
+        "sub_question": "Show the 14-day RSI history trend for the top 5 open positions by portfolio weight.",
+        "canonical_params": {
+          "metric": "rsi_history",
+          "period": "14d"
+        }
+      }
+    ],
+    "question_id": 47,
+    "original_question": "For each open position, what is the 14-day Relative Strength Index?",
+    "metadata": {
+      "source_file": "sample_questions_openai.json",
+      "source_type": "openai_sample",
+      "category": "account_portfolio",
+      "status": "unvalidated",
+      "extraction_date": "2026-03-05T22:58:17.079241"
+    }
+  },
+  {
+    "title": "Position Volatility (ATR) Dashboard",
+    "subtitle": "14-day Average True Range analysis for open positions",
+    "layout": "grid",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Portfolio ATR Summary",
+        "dataContract": {
+          "type": "kpi",
+          "description": "Average, highest, and lowest ATR across positions",
+          "points": 3
+        },
+        "sub_question": "What are the portfolio's key volatility metrics based on 14-day ATR: the average ATR across all positions, the highest single position ATR value, and the lowest single position ATR value?",
+        "canonical_params": {
+          "metric": "atr_summary",
+          "period": "14d"
+        }
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "Positions Ranked by ATR",
+        "dataContract": {
+          "type": "bar-list",
+          "description": "Open positions sorted by 14-day ATR"
+        },
+        "sub_question": "List all open positions ranked from highest to lowest based on their 14-day Average True Range value.",
+        "canonical_params": {
+          "metric": "atr",
+          "period": "14d"
+        }
+      },
+      {
+        "blockId": "table-01",
+        "category": "tables",
+        "title": "Detailed Position ATR",
+        "dataContract": {
+          "type": "table",
+          "description": "Ticker and 14-day ATR for each position"
+        },
+        "sub_question": "What is the ticker and 14-day Average True Range value for every open position?",
+        "canonical_params": {
+          "metric": "atr",
+          "period": "14d"
+        }
+      },
+      {
+        "blockId": "line-chart-01",
+        "category": "line-charts",
+        "title": "ATR Trend (30 Days)",
+        "dataContract": {
+          "type": "timeseries",
+          "description": "Average portfolio ATR over time",
+          "xAxis": "date",
+          "yAxis": "avg_atr"
+        },
+        "sub_question": "How has the average 14-day Average True Range of the portfolio changed over the last 30 days?",
+        "canonical_params": {
+          "metric": "atr_history",
+          "period": "30d"
+        }
+      }
+    ],
+    "question_id": 48,
+    "original_question": "For each open position, what is the 14-day Average True Range?",
+    "metadata": {
+      "source_file": "sample_questions_openai.json",
+      "source_type": "openai_sample",
+      "category": "account_portfolio",
+      "status": "unvalidated",
+      "extraction_date": "2026-03-05T22:58:17.079243"
+    }
+  },
+  {
+    "title": "Open Positions Daily Performance",
+    "subtitle": "Daily percent change and breakdown for all current holdings",
+    "layout": "grid",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Today's Portfolio Summary",
+        "dataContract": {
+          "type": "kpi",
+          "description": "Daily performance metrics for the entire portfolio",
+          "points": 4
+        },
+        "sub_question": "What are the portfolio's daily performance metrics: total value, total dollar change, total percent change, and the number of positions that are up versus down?",
+        "canonical_params": {
+          "metric": "performance_summary",
+          "period": "1d"
+        }
+      },
+      {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "Top Daily Movers",
+        "dataContract": {
+          "type": "bar-list",
+          "description": "Ranked list of positions with largest daily gains and losses"
+        },
+        "sub_question": "Which open positions have the highest positive percent change and which have the lowest negative percent change today, ranked by magnitude?",
+        "canonical_params": {
+          "metric": "top_movers",
+          "period": "1d"
+        }
+      },
+      {
+        "blockId": "table-01",
+        "category": "tables",
+        "title": "All Positions Daily Change",
+        "dataContract": {
+          "type": "table",
+          "description": "Detailed list of all open positions with daily performance"
+        },
+        "sub_question": "What is the complete list of open positions showing symbol, quantity, last price, and today's percent change?",
+        "canonical_params": {
+          "metric": "holdings_list",
+          "period": "1d"
+        }
+      },
+      {
+        "blockId": "bar-chart-01",
+        "category": "bar-charts",
+        "title": "Sector Performance Today",
+        "dataContract": {
+          "type": "bar",
+          "description": "Average percent change by sector for the portfolio"
+        },
+        "sub_question": "What is the average daily percent change for the portfolio grouped by sector?",
+        "canonical_params": {
+          "metric": "sector_performance",
+          "period": "1d"
+        }
+      }
+    ],
+    "question_id": 49,
+    "original_question": "For each open position, what is today\u2019s percent change?",
+    "metadata": {
+      "source_file": "sample_questions_openai.json",
+      "source_type": "openai_sample",
+      "category": "account_portfolio",
+      "status": "unvalidated",
+      "extraction_date": "2026-03-05T22:58:17.079245"
+    }
+  }
+]

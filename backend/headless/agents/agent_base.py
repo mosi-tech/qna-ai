@@ -310,7 +310,8 @@ class AgentBase(ABC):
     def _make_llm_request(
         self,
         messages: List[Dict[str, str]],
-        system_prompt: Optional[str] = None
+        system_prompt: Optional[str] = None,
+        tools: Optional[List[Dict[str, Any]]] = None
     ) -> Dict[str, Any]:
         """Make LLM request with error handling"""
         if not self.llm_service:
@@ -325,7 +326,8 @@ class AgentBase(ABC):
             import asyncio
             response = asyncio.run(self.llm_service.make_request(
                 messages=messages,
-                system_prompt=prompt
+                system_prompt=prompt,
+                tools=tools
             ))
 
             if not response.get("success"):

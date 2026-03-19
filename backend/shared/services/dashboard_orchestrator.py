@@ -80,6 +80,7 @@ class DashboardOrchestrator:
         session_id: str,
         message_id: str,
         force_refresh: bool = False,
+        mock_mode: bool = False,
     ) -> Dict[str, Any]:
         """
         Plan, persist, and dispatch a dashboard for *question*.
@@ -139,35 +140,50 @@ class DashboardOrchestrator:
         dashboard_id = await self.dashboard_repo.create(dashboard)
         logger.info(
             f"📋 Dashboard plan persisted: {dashboard_id} "
-            f"({len(block_models)} blocks)"
+            f"({len(block_models)} blocks, mock_mode={mock_mode})"
         )
 
-        # ── Step 3: Dispatch per block (always enqueue — script reuse via metadata) ──
+        # ── Step 3: Dispatch per block (skip enqueue in mock mode) ────────────────
         block_summaries: List[Dict[str, Any]] = []
 
-        for block in dashboard.blocks:
-            job_id = await self._enqueue_block(
-                block=block,
+        if mock_mode:
+            # Mock mode: Use mock data instead of enqueuing for analysis
+            await self._mock_fill_blocks(
                 dashboard_id=dashboard_id,
-                user_id=user_id,
-                session_id=session_id,
+                blocks=dashboard.blocks,
+                question=question
             )
-            await self.dashboard_repo.update_block_status(
-                dashboard_id,
-                block.block_id,
-                status=BlockStatus.PENDING,
-                analysis_id=job_id,
-            )
-            logger.info(
-                f"📥 Enqueued block {block.block_id} "
-                f"(job={job_id}, script_key={block.script_key or 'n/a'})"
-            )
-            block_summaries.append(
-                {
+            # Set blocks to complete status with mock data
+            for block in dashboard.blocks:
+                block_summaries.append({
                     **block.model_dump(by_alias=True),
-                    "status": "pending",
-                }
-            )
+                    "status": "complete",
+                })
+        else:
+            # Normal mode: Enqueue blocks for analysis
+            for block in dashboard.blocks:
+                job_id = await self._enqueue_block(
+                    block=block,
+                    dashboard_id=dashboard_id,
+                    user_id=user_id,
+                    session_id=session_id,
+                )
+                await self.dashboard_repo.update_block_status(
+                    dashboard_id,
+                    block.block_id,
+                    status=BlockStatus.PENDING,
+                    analysis_id=job_id,
+                )
+                logger.info(
+                    f"📥 Enqueued block {block.block_id} "
+                    f"(job={job_id}, script_key={block.script_key or 'n/a'})"
+                )
+                block_summaries.append(
+                    {
+                        **block.model_dump(by_alias=True),
+                        "status": "pending",
+                    }
+                )
 
         return {
             "dashboard_id": dashboard_id,
@@ -350,6 +366,96 @@ class DashboardOrchestrator:
             }
         )
         return job_id
+
+    async def _mock_fill_blocks(
+        self,
+        dashboard_id: str,
+        blocks: List[BlockPlanModel],
+        question: str,
+    ):
+        """
+        Fill blocks with mock data in mock mode.
+        Uses mock_reuse_evaluator and mock_data_generator.
+        """
+        import sys
+        import os
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/../headless/agents")
+
+        from mock.mock_reuse_evaluator import create_mock_reuse_evaluator
+        from mock.mock_data_generator import create_mock_data_generator
+
+        mock_reuse_evaluator = create_mock_reuse_evaluator()
+        mock_data_generator = create_mock_data_generator()
+
+        for block in blocks:
+            try:
+                # Try to find reusable mock data
+                reuse_result = mock_reuse_evaluator.execute({
+                    "question": block.sub_question
+                })
+
+                if reuse_result.success and reuse_result.data.get("reused"):
+                    # Use existing mock data
+                    mock_file = reuse_result.data.get("mock_data_file")
+                    import json
+                    with open(mock_file, 'r') as f:
+                        mock_data = json.load(f)
+
+                    await self.dashboard_repo.update_block_status(
+                        dashboard_id,
+                        block.block_id,
+                        status=BlockStatus.COMPLETE,
+                        result_data=mock_data.get("data", mock_data),
+                    )
+                    logger.info(f"🧪 Mock mode: reused data for block {block.block_id}")
+                else:
+                    # Generate new mock data
+                    mock_result = mock_data_generator.execute({
+                        "question": block.sub_question,
+                        "ui_planner_output": {
+                            "blocks": [{
+                                "blockId": block.block_spec_id,
+                                "category": block.category,
+                                "title": block.title,
+                                "dataContract": block.data_contract,
+                                "sub_question": block.sub_question,
+                                "canonical_params": block.canonical_params,
+                            }]
+                        },
+                        "question_id": f"{dashboard_id}_{block.block_id}"
+                    })
+
+                    if mock_result.success:
+                        mock_data_file = mock_result.data.get("mock_data_file")
+                        import json
+                        with open(mock_data_file, 'r') as f:
+                            mock_data = json.load(f)
+
+                        await self.dashboard_repo.update_block_status(
+                            dashboard_id,
+                            block.block_id,
+                            status=BlockStatus.COMPLETE,
+                            result_data=mock_data.get("data", mock_data),
+                        )
+                        logger.info(f"🧪 Mock mode: generated data for block {block.block_id}")
+                    else:
+                        # Fallback to simple mock data
+                        await self.dashboard_repo.update_block_status(
+                            dashboard_id,
+                            block.block_id,
+                            status=BlockStatus.COMPLETE,
+                            result_data={"mock": True, "message": "Mock data placeholder"},
+                        )
+                        logger.warning(f"⚠️ Mock mode: fallback for block {block.block_id}")
+
+            except Exception as e:
+                logger.error(f"❌ Mock mode failed for block {block.block_id}: {e}")
+                await self.dashboard_repo.update_block_status(
+                    dashboard_id,
+                    block.block_id,
+                    status=BlockStatus.FAILED,
+                    error=str(e),
+                )
 
 
 # ---------------------------------------------------------------------------

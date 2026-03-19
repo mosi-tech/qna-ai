@@ -1,0 +1,17 @@
+{
+  "step": "mock_reuse_evaluator",
+  "input": {
+    "question": "Show portfolio holdings table with detailed rows and columns including ticker symbol, company name, quantity, current market price, market value, cost basis, total gain/loss (value and percentage), daily change percentage, and sector allocation."
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "reused": false
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-18T14:55:07.921106"
+  },
+  "duration": 1.845935,
+  "timestamp": "2026-03-18T14:55:07.921298"
+}

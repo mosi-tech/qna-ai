@@ -83,11 +83,10 @@ export const BarChart01: React.FC<BarChart01Props> = ({
             <Divider />
             <div className="mb-2 flex items-center space-x-3">
                 <Switch
-                    id="comparison"
                     checked={showComparison}
                     onCheckedChange={setShowComparison}
                 />
-                <Label htmlFor="comparison">{comparisonLabel}</Label>
+                <Label>{comparisonLabel}</Label>
             </div>
         </Card>
     );

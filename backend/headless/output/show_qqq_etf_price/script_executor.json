@@ -1,0 +1,43 @@
+{
+  "step": "script_executor",
+  "input": {
+    "script_content": "#!/usr/bin/env python3\n\"\"\"\nQ: Show QQQ ETF price\n\nRetrieves the current market price for the QQQ ETF and computes short-term\nperformance metrics including daily change and YTD annualized return for display in a KPI card.\n\"\"\"\n\nimport json\nimport pandas as pd\nfrom datetime import datetime, timedelta\nfrom typing import Dict, Any\n\ndef analyze_question(\n    symbol: str = 'QQQ',\n    period_days: int = 90\n) -> Dict[str, Any]:\n    \"\"\"\n    Main analysis function for QQQ ETF price and performance metrics\n\n    Args:\n        symbol: Ticker symbol to analyze\n        period_days: Number of days of historical data for performance metrics\n\n    Returns:\n        Dictionary containing current price, daily change, and YTD performance\n    \"\"\"\n    results = {\n        'question': 'Show QQQ ETF price',\n        'symbol': symbol,\n        'current_price': None,\n        'bid': None,\n        'ask': None,\n        'volume': None,\n        'timestamp': None,\n        'daily_change': None,\n        'daily_change_percent': None,\n        'ytd_return': None,\n        'ytd_annualized': None,\n        'success': False\n    }\n\n    try:\n        # Fetch real-time data for current price\n        realtime_result = call_mcp_function(\n            'financial-data__get_real_time_data',\n            {'symbol': symbol}\n        )\n\n        if realtime_result.get('success') and realtime_result.get('data'):\n            data = realtime_result['data']\n            results['current_price'] = data.get('price')\n            results['bid'] = data.get('bid')\n            results['ask'] = data.get('ask')\n            results['volume'] = data.get('volume')\n            results['timestamp'] = data.get('timestamp')\n\n        # Fetch historical data for performance metrics\n        end_date = datetime.now()\n        start_date = end_date - timedelta(days=period_days)\n\n        historical_result = call_mcp_function(\n            'financial-data__get_historical_data',\n            {\n                'symbols': symbol,\n                'start_date': start_date.strftime('%Y-%m-%d'),\n                'end_date': end_date.strftime('%Y-%m-%d'),\n                'timeframe': '1Day'\n            }\n        )\n\n        if historical_result.get('success') and historical_result.get('data'):\n            bars = historical_result['data'].get(symbol, [])\n            if bars:\n                df = pd.DataFrame(bars)\n                df['timestamp'] = pd.to_datetime(df['timestamp'])\n                df.set_index('timestamp', inplace=True)\n                df = df.sort_index()\n                df = df.dropna()\n\n                if len(df) >= 2:\n                    # Calculate daily change (most recent vs previous close)\n                    latest_close = df['close'].iloc[-1]\n                    previous_close = df['close'].iloc[-2]\n                    daily_change = latest_close - previous_close\n                    daily_change_percent = (daily_change / previous_close) * 100\n\n                    results['daily_change'] = round(daily_change, 2)\n                    results['daily_change_percent'] = round(daily_change_percent, 2)\n\n                    # Calculate YTD metrics\n                    ytd_start = pd.Timestamp(datetime.now().year, 1, 1)\n                    ytd_data = df[df.index >= ytd_start]\n\n                    if len(ytd_data) >= 2:\n                        ytd_start_price = ytd_data['close'].iloc[0]\n                        ytd_end_price = ytd_data['close'].iloc[-1]\n                        ytd_return = ((ytd_end_price - ytd_start_price) / ytd_start_price) * 100\n                        results['ytd_return'] = round(ytd_return, 2)\n\n                        # Calculate YTD annualized return using MCP function\n                        annualized_result = call_mcp_function(\n                            'analytics-engine__calculate_annualized_return',\n                            {'prices': ytd_data['close'].to_dict()}\n                        )\n\n                        if annualized_result.get('success'):\n                            results['ytd_annualized'] = round(annualized_result.get('data'), 4)\n\n        results['success'] = True\n\n    except Exception as e:\n        results['error'] = str(e)\n        results['success'] = False\n\n    return results\n\ndef main(**kwargs):\n    \"\"\"Main function for HTTP execution\"\"\"\n    symbol = kwargs.get('symbol', 'QQQ')\n    period_days = kwargs.get('period_days', 90)\n\n    return analyze_question(symbol=symbol, period_days=period_days)\n\nif __name__ == '__main__':\n    import argparse\n    parser = argparse.ArgumentParser()\n    parser.add_argument('--symbol', default='QQQ', help='Ticker symbol')\n    parser.add_argument('--period', type=int, default=90, help='Number of days of historical data')\n    args = parser.parse_args()\n\n    result = analyze_question(symbol=args.symbol, period_days=args.period)\n    print(json.dumps(result, indent=2, default=str))",
+    "parameters": {}
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "success": true,
+      "results": {
+        "question": "Show QQQ ETF price",
+        "symbol": "QQQ",
+        "current_price": null,
+        "bid": null,
+        "ask": null,
+        "volume": null,
+        "timestamp": null,
+        "daily_change": null,
+        "daily_change_percent": null,
+        "ytd_return": null,
+        "ytd_annualized": null,
+        "success": false,
+        "error": "name 'call_mcp_function' is not defined"
+      },
+      "execution_time": 0.494459,
+      "stdout": "{\n  \"question\": \"Show QQQ ETF price\",\n  \"symbol\": \"QQQ\",\n  \"current_price\": null,\n  \"bid\": null,\n  \"ask\": null,\n  \"volume\": null,\n  \"timestamp\": null,\n  \"daily_change\": null,\n  \"daily_change_percent\": null,\n  \"ytd_return\": null,\n  \"ytd_annualized\": null,\n  \"success\": false,\n  \"error\": \"name 'call_mcp_function' is not defined\"\n}\n",
+      "stderr": "",
+      "error": null,
+      "metadata": {
+        "script_path": "/var/folders/r8/r72mmdm561g8ctfm468mrclc0000gn/T/tmpkoozquy6.py",
+        "parameters": {},
+        "return_code": 0,
+        "timestamp": "2026-03-16T21:58:14.749182"
+      }
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-16T21:58:14.749311"
+  },
+  "duration": 0.496559,
+  "timestamp": "2026-03-16T21:58:14.749585"
+}

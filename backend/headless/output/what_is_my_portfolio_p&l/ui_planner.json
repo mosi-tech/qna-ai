@@ -1,0 +1,73 @@
+{
+  "step": "ui_planner",
+  "input": {
+    "question": "What is my portfolio P&L?"
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "title": "Portfolio Profit & Loss",
+      "subtitle": "Total P&L, monthly performance trend, and position-level breakdown",
+      "layout": "grid",
+      "blocks": [
+        {
+          "blockId": "kpi-card-01",
+          "category": "kpi-cards",
+          "title": "Total Portfolio P&L",
+          "dataContract": {
+            "type": "kpi",
+            "description": "Current total P&L, daily return, and YTD return",
+            "points": 1
+          },
+          "sub_question": "What is the current total P&L, daily percentage return, and year-to-date return for the portfolio?",
+          "canonical_params": {
+            "metric": "performance_summary"
+          }
+        },
+        {
+          "blockId": "line-chart-04",
+          "category": "line-charts",
+          "title": "MTD Cumulative P&L",
+          "dataContract": {
+            "type": "line",
+            "description": "Month-to-date cumulative P&L compared to prior month",
+            "points": 1
+          },
+          "sub_question": "What is the month-to-date cumulative P&L trajectory compared to the full prior month?",
+          "canonical_params": {
+            "metric": "cumulative_pnl",
+            "period": "mtd"
+          }
+        },
+        {
+          "blockId": "table-action-01",
+          "category": "tables",
+          "title": "Position P&L Breakdown",
+          "dataContract": {
+            "type": "table",
+            "description": "Sortable table of portfolio positions with P&L and returns",
+            "points": 1
+          },
+          "sub_question": "What is the P&L, market value, and daily return for each individual holding in the portfolio?",
+          "canonical_params": {
+            "metric": "position_pnl"
+          }
+        }
+      ],
+      "metadata": {
+        "question": "What is my portfolio P&L?",
+        "block_count": 3,
+        "block_ids": [
+          "kpi-card-01",
+          "line-chart-04",
+          "table-action-01"
+        ]
+      }
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-18T11:48:03.783866"
+  },
+  "duration": 64.857315,
+  "timestamp": "2026-03-18T11:48:03.783996"
+}

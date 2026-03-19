@@ -38,6 +38,7 @@ class VerificationAgent(AgentBase):
     ):
         super().__init__(
             name="verification",
+            task="VERIFICATION",  # Use task-based config
             prompt_file=prompt_file,
             llm_model=llm_model,
             llm_provider=llm_provider

@@ -9,7 +9,7 @@ const config: Config = {
         // Scan base-ui source so Tailwind includes all utility classes used by blocks
         '../base-ui/src/**/*.{js,ts,jsx,tsx}',
         // Scan auth-core so page/admin/handler components are not purged
-        '../packages/auth-core/src/**/*.{js,ts,jsx,tsx}',
+        '../../packages/auth-core/src/**/*.{js,ts,jsx,tsx}',
     ],
     darkMode: 'class',
     theme: {

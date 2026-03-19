@@ -1,3 +1,5 @@
-import { createHeaderOnlyLayout } from '@ui-gen/auth-core/pages/header-only-layout';
+import { ReactNode } from 'react';
 
-export default createHeaderOnlyLayout({ appName: 'AI Builder' });
+export default function BuilderLayout({ children }: { children: ReactNode }) {
+    return <>{children}</>;
+}

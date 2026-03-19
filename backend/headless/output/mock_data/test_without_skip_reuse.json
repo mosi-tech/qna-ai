@@ -1,0 +1,100 @@
+{
+  "question": "Test without skip reuse",
+  "generated_at": "2026-03-18T20:01:47.427742",
+  "data": {},
+  "blocks": [
+    {
+      "block_id": "tracker-01",
+      "type": "status-history",
+      "sub_question": "What is the 90-day operational history of the primary market data feeds?",
+      "canonical_params": {},
+      "data": {
+        "data": [
+          {
+            "date": "2025-04-22",
+            "Value": 97543.02
+          },
+          {
+            "date": "2025-05-22",
+            "Value": 109013.93
+          },
+          {
+            "date": "2025-06-21",
+            "Value": 90914.36
+          },
+          {
+            "date": "2025-07-21",
+            "Value": 96111.43
+          },
+          {
+            "date": "2025-08-20",
+            "Value": 87094.79
+          },
+          {
+            "date": "2025-09-19",
+            "Value": 110307.61
+          },
+          {
+            "date": "2025-10-19",
+            "Value": 95076.1
+          },
+          {
+            "date": "2025-11-18",
+            "Value": 93780.44
+          },
+          {
+            "date": "2025-12-18",
+            "Value": 100393.21
+          },
+          {
+            "date": "2026-01-17",
+            "Value": 105914.28
+          },
+          {
+            "date": "2026-02-16",
+            "Value": 94811.05
+          },
+          {
+            "date": "2026-03-18",
+            "Value": 105159.38
+          }
+        ],
+        "categories": [
+          "Value"
+        ],
+        "summary": [
+          {
+            "name": "Value",
+            "value": 58416.72
+          }
+        ]
+      }
+    },
+    {
+      "block_id": "tracker-02",
+      "type": "status-indicator",
+      "sub_question": "What is the current connectivity status of the major exchange gateways?",
+      "canonical_params": {},
+      "data": {
+        "data": [
+          {
+            "status": "ok"
+          }
+        ]
+      }
+    },
+    {
+      "block_id": "tracker-03",
+      "type": "tag-list",
+      "sub_question": "What is the current health status of the tagged feeds in the market data pipeline?",
+      "canonical_params": {},
+      "data": {
+        "data": [
+          {
+            "status": "error"
+          }
+        ]
+      }
+    }
+  ]
+}

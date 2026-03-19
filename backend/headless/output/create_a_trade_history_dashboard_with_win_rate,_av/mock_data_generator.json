@@ -1,0 +1,119 @@
+{
+  "step": "mock_data_generator",
+  "input": {
+    "question": "Create a trade history dashboard with win rate, average gain/loss, holding period and strategy breakdown",
+    "ui_planner_output": {
+      "title": "Trade History Performance Dashboard",
+      "subtitle": "Key metrics and strategy breakdown for trading performance analysis",
+      "layout": "grid",
+      "blocks": [
+        {
+          "blockId": "kpi-card-01",
+          "category": "kpi-cards",
+          "title": "Win Rate",
+          "dataContract": {
+            "type": "kpi",
+            "description": "Win rate percentage with positive/negative indicators",
+            "points": 1
+          },
+          "sub_question": "What is the overall win rate percentage for all completed trades?",
+          "canonical_params": {
+            "metric": "win_rate"
+          }
+        },
+        {
+          "blockId": "kpi-card-03",
+          "category": "kpi-cards",
+          "title": "Avg Gain vs Loss",
+          "dataContract": {
+            "type": "kpi",
+            "description": "Average gain for winning trades and average loss for losing trades",
+            "points": 1
+          },
+          "sub_question": "What is the average gain for winning trades and average loss for losing trades?",
+          "canonical_params": {
+            "metric": "average_gain_loss"
+          }
+        },
+        {
+          "blockId": "kpi-card-02",
+          "category": "kpi-cards",
+          "title": "Avg Holding Period",
+          "dataContract": {
+            "type": "kpi",
+            "description": "Average holding period per trade with directional change",
+            "points": 1
+          },
+          "sub_question": "What is the average holding period duration for all closed trades?",
+          "canonical_params": {
+            "metric": "avg_holding_period"
+          }
+        },
+        {
+          "blockId": "donut-chart-04",
+          "category": "donut-charts",
+          "title": "Strategy Allocation",
+          "dataContract": {
+            "type": "donut",
+            "description": "Breakdown of trades by strategy",
+            "points": 1,
+            "categories": [
+              "strategy"
+            ]
+          },
+          "sub_question": "What is the distribution of trade count across different strategies?",
+          "canonical_params": {
+            "metric": "strategy_allocation"
+          }
+        },
+        {
+          "blockId": "bar-list-01",
+          "category": "bar-lists",
+          "title": "Performance by Strategy",
+          "dataContract": {
+            "type": "bar-list",
+            "description": "List of trading strategies ranked by performance",
+            "points": 1,
+            "categories": [
+              "strategy",
+              "performance"
+            ]
+          },
+          "sub_question": "What is the total return or win rate for each trading strategy?",
+          "canonical_params": {
+            "metric": "strategy_performance"
+          }
+        }
+      ],
+      "metadata": {
+        "question": "Create a trade history dashboard with win rate, average gain/loss, holding period and strategy breakdown",
+        "block_count": 5,
+        "block_ids": [
+          "kpi-card-01",
+          "kpi-card-03",
+          "kpi-card-02",
+          "donut-chart-04",
+          "bar-list-01"
+        ]
+      }
+    },
+    "question_id": "create_a_trade_history_dashboard_with_win_rate,_av"
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "mock_data_file": "/Users/shivc/Documents/Workspace/JS/qna-ai-admin/backend/headless/agents/mock/../../output/mock_data/create_a_trade_history_dashboard_with_win_rate,_av.json",
+      "data_points": [
+        "question",
+        "generated_at",
+        "data",
+        "blocks"
+      ]
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-18T19:58:47.415548"
+  },
+  "duration": 0.502209,
+  "timestamp": "2026-03-18T19:58:47.415632"
+}

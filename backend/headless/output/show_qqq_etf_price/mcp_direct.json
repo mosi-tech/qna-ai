@@ -1,0 +1,264 @@
+{
+  "step": "mcp_direct",
+  "input": {
+    "question": "Show QQQ ETF price",
+    "blocks": [
+      {
+        "blockId": "line-chart-02",
+        "category": "line-charts",
+        "title": "QQQ Price Trend",
+        "dataContract": {
+          "type": "time-series",
+          "description": "Historical price data for QQQ ETF",
+          "points": 1
+        },
+        "sub_question": "What is the price history of the QQQ ETF over the last 30 days?",
+        "canonical_params": {
+          "ticker": "QQQ",
+          "metric": "price",
+          "period": "30d"
+        }
+      }
+    ],
+    "selected_functions": [
+      "financial_data__get_historical_data",
+      "financial_data__get_real_time_data",
+      "analytics_engine__calculate_annualized_return",
+      "analytics_engine__calculate_annualized_volatility",
+      "analytics_engine__calculate_drawdown"
+    ]
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "blocks_data": [
+        {
+          "blockId": "line-chart-02",
+          "data": {
+            "type": "timeseries",
+            "symbol": "QQQ",
+            "metric": "price",
+            "period": "30d",
+            "data": [
+              {
+                "date": "2024-12-02",
+                "value": 100.63,
+                "open": 100.0,
+                "high": 102.89,
+                "low": 99.93,
+                "close": 100.63,
+                "volume": 48454439
+              },
+              {
+                "date": "2024-12-03",
+                "value": 100.09,
+                "open": 100.63,
+                "high": 101.5,
+                "low": 98.34,
+                "close": 100.09,
+                "volume": 40022672
+              },
+              {
+                "date": "2024-12-04",
+                "value": 95.93,
+                "open": 100.09,
+                "high": 100.69,
+                "low": 95.66,
+                "close": 95.93,
+                "volume": 56653949
+              },
+              {
+                "date": "2024-12-05",
+                "value": 94.26,
+                "open": 95.93,
+                "high": 97.11,
+                "low": 93.3,
+                "close": 94.26,
+                "volume": 73294529
+              },
+              {
+                "date": "2024-12-06",
+                "value": 93.95,
+                "open": 94.26,
+                "high": 94.67,
+                "low": 93.38,
+                "close": 93.95,
+                "volume": 45838107
+              },
+              {
+                "date": "2024-12-09",
+                "value": 95.07,
+                "open": 93.95,
+                "high": 95.51,
+                "low": 93.77,
+                "close": 95.07,
+                "volume": 49807917
+              },
+              {
+                "date": "2024-12-10",
+                "value": 95.5,
+                "open": 95.07,
+                "high": 96.5,
+                "low": 94.74,
+                "close": 95.5,
+                "volume": 68278678
+              },
+              {
+                "date": "2024-12-11",
+                "value": 90.92,
+                "open": 95.5,
+                "high": 96.34,
+                "low": 90.54,
+                "close": 90.92,
+                "volume": 48472316
+              },
+              {
+                "date": "2024-12-12",
+                "value": 90.2,
+                "open": 90.92,
+                "high": 92.06,
+                "low": 89.3,
+                "close": 90.2,
+                "volume": 51164411
+              },
+              {
+                "date": "2024-12-13",
+                "value": 89.69,
+                "open": 90.2,
+                "high": 90.6,
+                "low": 88.6,
+                "close": 89.69,
+                "volume": 64630470
+              },
+              {
+                "date": "2024-12-16",
+                "value": 89.57,
+                "open": 89.69,
+                "high": 90.55,
+                "low": 89.52,
+                "close": 89.57,
+                "volume": 31642783
+              },
+              {
+                "date": "2024-12-17",
+                "value": 88.97,
+                "open": 89.57,
+                "high": 90.05,
+                "low": 88.79,
+                "close": 88.97,
+                "volume": 59616266
+              },
+              {
+                "date": "2024-12-18",
+                "value": 87.47,
+                "open": 88.97,
+                "high": 89.12,
+                "low": 87.44,
+                "close": 87.47,
+                "volume": 36303340
+              },
+              {
+                "date": "2024-12-19",
+                "value": 85.24,
+                "open": 87.47,
+                "high": 87.96,
+                "low": 85.19,
+                "close": 85.24,
+                "volume": 45716214
+              },
+              {
+                "date": "2024-12-20",
+                "value": 89.09,
+                "open": 85.24,
+                "high": 89.59,
+                "low": 84.07,
+                "close": 89.09,
+                "volume": 61019222
+              },
+              {
+                "date": "2024-12-23",
+                "value": 86.27,
+                "open": 89.09,
+                "high": 89.43,
+                "low": 85.78,
+                "close": 86.27,
+                "volume": 40242613
+              },
+              {
+                "date": "2024-12-24",
+                "value": 87.75,
+                "open": 86.27,
+                "high": 88.14,
+                "low": 85.19,
+                "close": 87.75,
+                "volume": 65130239
+              },
+              {
+                "date": "2024-12-25",
+                "value": 87.18,
+                "open": 87.75,
+                "high": 88.59,
+                "low": 86.52,
+                "close": 87.18,
+                "volume": 26365449
+              },
+              {
+                "date": "2024-12-26",
+                "value": 88.38,
+                "open": 87.18,
+                "high": 88.61,
+                "low": 87.08,
+                "close": 88.38,
+                "volume": 66080748
+              },
+              {
+                "date": "2024-12-27",
+                "value": 89.42,
+                "open": 88.38,
+                "high": 89.82,
+                "low": 87.98,
+                "close": 89.42,
+                "volume": 62058588
+              },
+              {
+                "date": "2024-12-30",
+                "value": 89.26,
+                "open": 89.42,
+                "high": 90.3,
+                "low": 88.62,
+                "close": 89.26,
+                "volume": 48523663
+              },
+              {
+                "date": "2024-12-31",
+                "value": 91.78,
+                "open": 89.26,
+                "high": 91.79,
+                "low": 87.91,
+                "close": 91.78,
+                "volume": 11561093
+              }
+            ],
+            "start_price": 100.63,
+            "end_price": 91.78,
+            "high": 102.89,
+            "low": 84.07,
+            "change": -8.85,
+            "change_percent": -8.79
+          }
+        }
+      ],
+      "metadata": {
+        "functions_called": [
+          "financial-data__get_historical_data"
+        ],
+        "total_calls": 1
+      }
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-16T23:23:33.470192"
+  },
+  "duration": 47.11123,
+  "timestamp": "2026-03-16T23:23:33.470444"
+}

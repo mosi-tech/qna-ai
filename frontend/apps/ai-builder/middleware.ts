@@ -2,7 +2,7 @@ import { createAuthMiddleware } from '@ui-gen/auth-core/middleware';
 
 export const middleware = createAuthMiddleware({
   appId: 'ai-builder',
-  protectedPrefixes: ['/builder', '/dashboard'],
+  protectedPrefixes: ['/dashboard'],
   adminPrefixes: ['/admin'],
   quotaEvent: 'ai_builds',
   loginUrl: '/login',

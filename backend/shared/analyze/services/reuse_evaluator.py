@@ -293,7 +293,6 @@ Return ONLY valid JSON:
             try:
                 reuse_decision = safe_json_loads(response["content"])
                 logger.info(f"📋 Reuse decision: {reuse_decision['reuse_decision']['should_reuse']}")
-                print(reuse_decision)
 
                 decision = reuse_decision["reuse_decision"]
 
@@ -327,9 +326,8 @@ Return ONLY valid JSON:
                     # Search for matching analysis in existing_analyses
                     found = False
                     matched_analysis = None
-                    
+
                     for idx, analysis in enumerate(existing_analyses):
-                        print(analysis)
                         # Log the full structure of the first analysis for debugging
                         if idx == 0:
                             logger.info(f"📋 First analysis structure: {list(analysis.keys())}")

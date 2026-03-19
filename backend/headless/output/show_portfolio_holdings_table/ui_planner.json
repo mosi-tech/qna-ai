@@ -1,0 +1,44 @@
+{
+  "step": "ui_planner",
+  "input": {
+    "question": "Show portfolio holdings table with detailed rows and columns including ticker symbol, company name, quantity, current market price, market value, cost basis, total gain/loss (value and percentage), daily change percentage, and sector allocation."
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "title": "Portfolio Holdings Dashboard",
+      "subtitle": "Detailed view of all portfolio positions with market value, cost basis, and performance metrics",
+      "layout": "grid",
+      "blocks": [
+        {
+          "blockId": "table-action-01",
+          "category": "tables",
+          "title": "Portfolio Holdings Table",
+          "dataContract": {
+            "type": "table",
+            "description": "Detailed table of portfolio positions including ticker, name, quantity, price, market value, cost basis, gain/loss, and sector.",
+            "points": 1,
+            "categories": [
+              "Portfolio",
+              "Holdings"
+            ]
+          },
+          "sub_question": "What are the detailed holdings of the portfolio including ticker symbol, company name, quantity, current market price, market value, cost basis, total gain/loss value, total gain/loss percentage, daily change percentage, and sector allocation?",
+          "canonical_params": {}
+        }
+      ],
+      "metadata": {
+        "question": "Show portfolio holdings table with detailed rows and columns including ticker symbol, company name, quantity, current market price, market value, cost basis, total gain/loss (value and percentage), daily change percentage, and sector allocation.",
+        "block_count": 1,
+        "block_ids": [
+          "table-action-01"
+        ]
+      }
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-18T14:55:06.074266"
+  },
+  "duration": 33.329166,
+  "timestamp": "2026-03-18T14:55:06.074514"
+}

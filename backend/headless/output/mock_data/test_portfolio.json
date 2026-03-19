@@ -1,0 +1,202 @@
+{
+  "question": "Test portfolio",
+  "generated_at": "2026-03-18T19:04:01.876072",
+  "data": {},
+  "blocks": [
+    {
+      "block_id": "kpi-card-01",
+      "type": "kpi",
+      "sub_question": "What are the current Net Asset Value (NAV), daily return percentage, and year-to-date return of the test portfolio?",
+      "canonical_params": {
+        "ticker": "TEST_PORTFOLIO",
+        "metric": "performance_summary"
+      },
+      "data": {
+        "metrics": [
+          {
+            "name": "Portfolio Value",
+            "stat": 87443.72,
+            "change": "10.73%",
+            "changeType": "negative"
+          },
+          {
+            "name": "Daily P&L",
+            "stat": 68814.46,
+            "change": "-5.13%",
+            "changeType": "positive"
+          },
+          {
+            "name": "YTD Return",
+            "stat": 38011.9,
+            "change": "8.51%",
+            "changeType": "negative"
+          },
+          {
+            "name": "Sharpe Ratio",
+            "stat": 94454.16,
+            "change": "18.28%",
+            "changeType": "positive"
+          }
+        ],
+        "cols": 4
+      }
+    },
+    {
+      "block_id": "line-chart-06",
+      "type": "time-series",
+      "sub_question": "How does the total return of the test portfolio compare to the SPY benchmark over the last 1 year?",
+      "canonical_params": {
+        "ticker": "TEST_PORTFOLIO",
+        "benchmark": "SPY",
+        "period": "1y"
+      },
+      "data": {
+        "data": [
+          {
+            "date": "2025-04-22",
+            "Value": 57332.1
+          },
+          {
+            "date": "2025-05-22",
+            "Value": 65796.77
+          },
+          {
+            "date": "2025-06-21",
+            "Value": 60966.28
+          },
+          {
+            "date": "2025-07-21",
+            "Value": 65439.48
+          },
+          {
+            "date": "2025-08-20",
+            "Value": 52458.97
+          },
+          {
+            "date": "2025-09-19",
+            "Value": 62086.65
+          },
+          {
+            "date": "2025-10-19",
+            "Value": 69231.96
+          },
+          {
+            "date": "2025-11-18",
+            "Value": 70124.22
+          },
+          {
+            "date": "2025-12-18",
+            "Value": 64927.01
+          },
+          {
+            "date": "2026-01-17",
+            "Value": 55956.38
+          },
+          {
+            "date": "2026-02-16",
+            "Value": 64537.49
+          },
+          {
+            "date": "2026-03-18",
+            "Value": 56091.8
+          },
+          {
+            "date": "2025-04-22",
+            "Benchmark": 65624.85
+          },
+          {
+            "date": "2025-05-22",
+            "Benchmark": 54158.24
+          },
+          {
+            "date": "2025-06-21",
+            "Benchmark": 66269.51
+          },
+          {
+            "date": "2025-07-21",
+            "Benchmark": 45899.76
+          },
+          {
+            "date": "2025-08-20",
+            "Benchmark": 65487.2
+          },
+          {
+            "date": "2025-09-19",
+            "Benchmark": 61398.55
+          },
+          {
+            "date": "2025-10-19",
+            "Benchmark": 43282.18
+          },
+          {
+            "date": "2025-11-18",
+            "Benchmark": 43859.54
+          },
+          {
+            "date": "2025-12-18",
+            "Benchmark": 51871.2
+          },
+          {
+            "date": "2026-01-17",
+            "Benchmark": 51598.34
+          },
+          {
+            "date": "2026-02-16",
+            "Benchmark": 66919.45
+          },
+          {
+            "date": "2026-03-18",
+            "Benchmark": 66812.9
+          }
+        ],
+        "categories": [
+          "Value",
+          "Benchmark"
+        ],
+        "summary": [
+          {
+            "name": "Value",
+            "value": 52679.55
+          },
+          {
+            "name": "Benchmark",
+            "value": 89680.33
+          }
+        ]
+      }
+    },
+    {
+      "block_id": "bar-list-01",
+      "type": "list",
+      "sub_question": "What are the top holdings in the test portfolio ranked by their current market value?",
+      "canonical_params": {
+        "ticker": "TEST_PORTFOLIO",
+        "metric": "top_holdings"
+      },
+      "data": {
+        "data": [
+          {
+            "name": "Holding A",
+            "value": 24530.62
+          },
+          {
+            "name": "Holding B",
+            "value": 3947.55
+          },
+          {
+            "name": "Holding C",
+            "value": 44405.93
+          },
+          {
+            "name": "Holding D",
+            "value": 13090.65
+          },
+          {
+            "name": "Holding E",
+            "value": 22237.28
+          }
+        ]
+      }
+    }
+  ]
+}

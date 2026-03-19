@@ -1,0 +1,200 @@
+{
+  "question": "Show me my equity portfolio with detailed holdings including ticker, quantity, current price, and weight percentage. Provide daily P&L metrics showing total daily profit/loss in both currency and percentage change compared to the previous close. Display sector allocation with specific percentage breakdowns by industry. Include YTD performance data showing total return percentage for the overall portfolio, and time series data of portfolio values from the start of the year to the current date.",
+  "generated_at": "2026-03-18T20:09:54.431965",
+  "data": {},
+  "blocks": [
+    {
+      "block_id": "kpi-card-01",
+      "type": "kpi",
+      "sub_question": "What is the total daily profit/loss in currency and percentage compared to the previous close, and what is the year-to-date total return percentage for the portfolio?",
+      "canonical_params": {
+        "metric": "performance_summary"
+      },
+      "data": {
+        "metrics": [
+          {
+            "name": "Portfolio Value",
+            "stat": 50464.58,
+            "change": "12.82%",
+            "changeType": "positive"
+          },
+          {
+            "name": "Daily P&L",
+            "stat": 61795.87,
+            "change": "28.96%",
+            "changeType": "positive"
+          },
+          {
+            "name": "YTD Return",
+            "stat": 93624.02,
+            "change": "2.50%",
+            "changeType": "positive"
+          }
+        ],
+        "cols": 3
+      }
+    },
+    {
+      "block_id": "line-chart-06",
+      "type": "time-series",
+      "sub_question": "What is the time series of portfolio total values or returns from the start of the year to the current date?",
+      "canonical_params": {
+        "metric": "total_return",
+        "period": "ytd"
+      },
+      "data": {
+        "data": [
+          {
+            "date": "2025-04-22",
+            "Value": 105426.56
+          },
+          {
+            "date": "2025-05-22",
+            "Value": 107728.42
+          },
+          {
+            "date": "2025-06-21",
+            "Value": 102220.42
+          },
+          {
+            "date": "2025-07-21",
+            "Value": 91247.8
+          },
+          {
+            "date": "2025-08-20",
+            "Value": 107964.6
+          },
+          {
+            "date": "2025-09-19",
+            "Value": 109330.1
+          },
+          {
+            "date": "2025-10-19",
+            "Value": 88819.53
+          },
+          {
+            "date": "2025-11-18",
+            "Value": 91649.71
+          },
+          {
+            "date": "2025-12-18",
+            "Value": 109969.65
+          },
+          {
+            "date": "2026-01-17",
+            "Value": 96824.89
+          },
+          {
+            "date": "2026-02-16",
+            "Value": 100180.44
+          },
+          {
+            "date": "2026-03-18",
+            "Value": 100963.04
+          }
+        ],
+        "categories": [
+          "Value"
+        ],
+        "summary": [
+          {
+            "name": "Value",
+            "value": 84393.01
+          }
+        ]
+      }
+    },
+    {
+      "block_id": "donut-chart-04",
+      "type": "allocation",
+      "sub_question": "What is the percentage breakdown of the portfolio by sector and industry?",
+      "canonical_params": {
+        "metric": "sector_allocation"
+      },
+      "data": {
+        "data": [
+          {
+            "name": "Healthcare",
+            "value": 25.63
+          },
+          {
+            "name": "Consumer",
+            "value": 12.6
+          },
+          {
+            "name": "Energy",
+            "value": 24.12
+          },
+          {
+            "name": "Technology",
+            "value": 18.67
+          },
+          {
+            "name": "Industrial",
+            "value": 10.07
+          }
+        ]
+      }
+    },
+    {
+      "block_id": "table-action-01",
+      "type": "holdings",
+      "sub_question": "What are the detailed equity holdings including ticker, quantity, current price, and weight percentage?",
+      "canonical_params": {
+        "metric": "holdings"
+      },
+      "data": {
+        "rows": [
+          {
+            "Symbol": "STK1",
+            "Shares": 124,
+            "Avg Cost": 414.1,
+            "Market Value": 99340.09,
+            "P&L": -4215.78,
+            "P&L %": -10.85
+          },
+          {
+            "Symbol": "STK2",
+            "Shares": 321,
+            "Avg Cost": 299.98,
+            "Market Value": 23939.07,
+            "P&L": 16113.97,
+            "P&L %": -16.72
+          },
+          {
+            "Symbol": "STK3",
+            "Shares": 545,
+            "Avg Cost": 323.12,
+            "Market Value": 61768.01,
+            "P&L": 7239.59,
+            "P&L %": -26.13
+          },
+          {
+            "Symbol": "STK4",
+            "Shares": 283,
+            "Avg Cost": 410.6,
+            "Market Value": 38997.53,
+            "P&L": 9246.24,
+            "P&L %": 15.48
+          },
+          {
+            "Symbol": "STK5",
+            "Shares": 154,
+            "Avg Cost": 403.48,
+            "Market Value": 88917.76,
+            "P&L": 19257.73,
+            "P&L %": 14.55
+          }
+        ],
+        "columns": [
+          "Symbol",
+          "Shares",
+          "Avg Cost",
+          "Market Value",
+          "P&L",
+          "P&L %"
+        ]
+      }
+    }
+  ]
+}

@@ -161,7 +161,7 @@ class UIPlanner(BaseService):
         response = await self.llm_service.make_request(
             messages=[{"role": "user", "content": user_message}],
             system_prompt=system_prompt,
-            max_tokens=2000,
+            max_tokens=8000,  # Increased for complete JSON responses
             temperature=0.1,
         )
 

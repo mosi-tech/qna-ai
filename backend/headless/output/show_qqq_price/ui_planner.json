@@ -1,0 +1,43 @@
+{
+  "step": "ui_planner",
+  "input": {
+    "question": "Show QQQ price"
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "title": "QQQ Price Dashboard",
+      "subtitle": "Current market price and performance for QQQ",
+      "layout": "grid",
+      "blocks": [
+        {
+          "blockId": "kpi-card-01",
+          "category": "kpi-cards",
+          "title": "QQQ Current Price",
+          "dataContract": {
+            "type": "kpi",
+            "description": "Current price of QQQ ETF",
+            "points": 1
+          },
+          "sub_question": "What is the current market price of the QQQ ETF?",
+          "canonical_params": {
+            "ticker": "QQQ",
+            "metric": "price"
+          }
+        }
+      ],
+      "metadata": {
+        "question": "Show QQQ price",
+        "block_count": 1,
+        "block_ids": [
+          "kpi-card-01"
+        ]
+      }
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-16T23:09:49.551037"
+  },
+  "duration": 16.668599,
+  "timestamp": "2026-03-16T23:09:49.551398"
+}

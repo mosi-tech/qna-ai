@@ -405,12 +405,8 @@ async def main():
         from .analysis_queue import initialize_analysis_queue, get_analysis_queue
         from .progress_event_queue import initialize_progress_event_queue, get_progress_event_queue
         
-        # Add apiServer path for progress_manager and database imports
-        api_server_path = os.path.join(os.path.dirname(__file__), '..', '..', 'scriptEdition', 'apiServer')
-        if api_server_path not in sys.path:
-            sys.path.insert(0, api_server_path)
-        
-        from db import MongoDBClient, RepositoryManager
+        # Import database components
+        from shared.db import MongoDBClient, RepositoryManager
         
         # Initialize MongoDB connection for the queue
         db_client = MongoDBClient()

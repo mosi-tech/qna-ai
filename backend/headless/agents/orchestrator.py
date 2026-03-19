@@ -9,8 +9,10 @@ Usage:
     python orchestrator.py --question "..." --skip-verification
     python orchestrator.py --question "..." --skip-execution
     python orchestrator.py --question "..." --skip-enhancement
+    python orchestrator.py --question "..." --no-code  # Use direct MCP tool calling (faster)
+    python orchestrator.py --question "..." --mock  # Mock mode for testing UI Planner and Reuse
 
-Pipeline:
+Pipeline (default - with code generation):
     1. question_enhancer (optional, skipped via --skip-enhancement)
     2. ui_planner
     3. reuse_evaluator
@@ -20,6 +22,24 @@ Pipeline:
        - If verification fails: retry generation with verification feedback
        - Max 3 generation attempts (configurable)
     6. script_executor (skipped via --skip-execution)
+
+Pipeline (with --no-code flag):
+    1. question_enhancer (optional)
+    2. ui_planner
+    3. code_prompt_builder (selects relevant MCP functions)
+    4. mcp_direct_agent (answers via direct MCP tool calling)
+
+Pipeline (with --mock flag):
+    1. question_enhancer (optional)
+    2. ui_planner
+    3. mock_reuse_evaluator (checks ChromaDB for existing mock data)
+    4. mock_data_generator (if no reuse, generates mock data based on UI Planner output)
+
+Skipped in no-code mode: reuse_evaluator, code_script_generator,
+                         script_validator, verification_agent, script_executor
+
+Skipped in mock mode: code_script_generator, script_validator,
+                       verification_agent, script_executor
 """
 
 import argparse
@@ -43,6 +63,9 @@ from code_script_generator_agent import create_code_script_generator_agent
 from script_validator_agent import create_script_validator_agent
 from verification_agent import create_verification_agent
 from script_executor_agent import create_script_executor_agent
+from mcp_direct_agent import create_mcp_direct_agent
+from mock.mock_reuse_evaluator import create_mock_reuse_evaluator
+from mock.mock_data_generator import create_mock_data_generator
 
 # Configure logging
 logging.basicConfig(
@@ -60,6 +83,9 @@ class AnalysisOrchestrator:
         skip_verification: bool = False,
         skip_execution: bool = False,
         skip_enhancement: bool = False,
+        skip_reuse: bool = False,
+        no_code: bool = False,
+        mock_mode: bool = False,
         max_generation_attempts: int = 3,
         verbose: bool = False,
         output_dir: str = None
@@ -67,9 +93,12 @@ class AnalysisOrchestrator:
         self.skip_verification = skip_verification
         self.skip_execution = skip_execution
         self.skip_enhancement = skip_enhancement
+        self.skip_reuse = skip_reuse
+        self.no_code = no_code
+        self.mock_mode = mock_mode
         self.max_generation_attempts = max_generation_attempts
         self.verbose = verbose
-        self.output_dir = output_dir or "headless/output"
+        self.output_dir = output_dir or os.path.join(os.path.dirname(__file__), "..", "output")
 
         # Initialize agents
         self.ui_planner = create_ui_planner_agent()
@@ -80,6 +109,11 @@ class AnalysisOrchestrator:
         self.script_validator = create_script_validator_agent()
         self.verification = create_verification_agent()
         self.script_executor = create_script_executor_agent()
+        self.mcp_direct = create_mcp_direct_agent()
+
+        # Mock mode agents
+        self.mock_reuse_evaluator = create_mock_reuse_evaluator()
+        self.mock_data_generator = create_mock_data_generator()
 
         # Track execution steps
         self.steps = []
@@ -120,30 +154,122 @@ class AnalysisOrchestrator:
 
             blocks = step_result["data"].get("blocks", [])
             title = step_result["data"].get("title", enhanced_question)
+            ui_output = step_result["data"]
 
-            # Step 3: Reuse Evaluator - Check if we can reuse existing analysis
-            step_result = self._run_step(
-                "reuse_evaluator",
-                self.reuse_evaluator.execute,
-                {
-                    "question": enhanced_question,
-                    "existing_analyses": existing_analyses or []
-                }
-            )
+            # Mock mode flow: Skip script generation, use mock data
+            if self.mock_mode:
+                self._log("🧪 Mock mode enabled")
 
-            if step_result["success"] and step_result["data"].get("should_reuse"):
-                # Reuse existing analysis
-                self._log("🔄 Reusing existing analysis")
-                reuse_data = step_result["data"]
+                mock_data_file = None
+                similarity = None
+
+                # Step 3 (Mock): Mock Reuse Evaluator - Check for existing mock data (unless skipped)
+                if not self.skip_reuse:
+                    step_result = self._run_step(
+                        "mock_reuse_evaluator",
+                        self.mock_reuse_evaluator.execute,
+                        {"question": enhanced_question}
+                    )
+
+                    if step_result["success"] and step_result["data"].get("reused"):
+                        # Reuse existing mock data
+                        self._log("🔄 Reusing existing mock data")
+                        reuse_data = step_result["data"]
+                        mock_data_file = reuse_data.get("mock_data_file")
+                        similarity = reuse_data.get("similarity")
+
+                # Step 4 (Mock): Generate new mock data if not reused
+                if not mock_data_file:
+                    self._log("🧪 Generating new mock data")
+                    step_result = self._run_step(
+                        "mock_data_generator",
+                        self.mock_data_generator.execute,
+                        {
+                            "question": enhanced_question,
+                            "ui_planner_output": ui_output,
+                            "question_id": self.question_id
+                        }
+                    )
+
+                    if not step_result["success"]:
+                        return self._error_result("Mock data generator failed", step_result)
+
+                    mock_data = step_result["data"]
+                    mock_data_file = mock_data.get("mock_data_file")
+                    similarity = None
+
+                # Load mock data file to populate blocks_data
+                blocks_data = []
+                if mock_data_file and os.path.exists(mock_data_file):
+                    try:
+                        with open(mock_data_file, 'r') as f:
+                            mock_file_content = json.load(f)
+
+                        # Validate that reused mock data matches current UI layout
+                        mock_block_ids = {b.get("block_id") for b in mock_file_content.get("blocks", [])}
+                        ui_block_ids = {b.get("blockId") for b in blocks}
+
+                        if mock_block_ids != ui_block_ids:
+                            self._log(f"⚠️  Reused mock data blockIds don't match current UI layout")
+                            self._log(f"   UI expects: {ui_block_ids}")
+                            self._log(f"   Mock data has: {mock_block_ids}")
+                            self._log(f"🧪 Generating new mock data instead of reusing")
+                            mock_data_file = None  # Force regeneration
+                        else:
+                            # Extract blocks from mock data and format for UI
+                            for mock_block in mock_file_content.get("blocks", []):
+                                blocks_data.append({
+                                    "blockId": mock_block.get("block_id"),
+                                    "data": mock_block.get("data")
+                                })
+
+                            self._log(f"✅ Loaded mock data with {len(blocks_data)} blocks")
+                    except Exception as e:
+                        self._log(f"⚠️  Failed to load mock data file: {e}")
+
+                # Generate new mock data if not reused or blockIds don't match
+                if not mock_data_file:
+                    mock_data_file = None  # Reset to trigger generation below
+
+                total_time = (datetime.now() - start_time).total_seconds()
+
                 return {
                     "success": True,
-                    "action": "reused",
-                    "analysis_id": reuse_data.get("analysis_id"),
-                    "script_name": reuse_data.get("script_name"),
-                    "execution": reuse_data.get("execution"),
-                    "total_time": (datetime.now() - start_time).total_seconds(),
-                    "steps": self.steps
+                    "action": "mock_reused" if similarity is not None else "mock_generated",
+                    "title": title,
+                    "blocks": blocks,
+                    "blocks_data": blocks_data,
+                    "mock_data_file": mock_data_file,
+                    "similarity": similarity,
+                    "total_time": total_time,
+                    "steps": self.steps,
+                    "timestamp": datetime.now().isoformat()
                 }
+
+            # Step 3: Reuse Evaluator - Check if we can reuse existing analysis (skip in no-code mode)
+            if not self.no_code:
+                step_result = self._run_step(
+                    "reuse_evaluator",
+                    self.reuse_evaluator.execute,
+                    {
+                        "question": enhanced_question,
+                        "existing_analyses": existing_analyses or []
+                    }
+                )
+
+                if step_result["success"] and step_result["data"].get("should_reuse"):
+                    # Reuse existing analysis
+                    self._log("🔄 Reusing existing analysis")
+                    reuse_data = step_result["data"]
+                    return {
+                        "success": True,
+                        "action": "reused",
+                        "analysis_id": reuse_data.get("analysis_id"),
+                        "script_name": reuse_data.get("script_name"),
+                        "execution": reuse_data.get("execution"),
+                        "total_time": (datetime.now() - start_time).total_seconds(),
+                        "steps": self.steps
+                    }
 
             # Step 4: Code Prompt Builder - Build enriched prompt and select functions
             step_result = self._run_step(
@@ -155,12 +281,44 @@ class AnalysisOrchestrator:
                     "context": {}
                 }
             )
+
             if not step_result["success"]:
                 return self._error_result("Code Prompt Builder failed", step_result)
 
             enriched_prompt = step_result["data"].get("enriched_prompt")
             selected_functions = step_result["data"].get("selected_functions", [])
 
+            # No-code path: Use direct MCP tool calling instead of script generation
+            if self.no_code:
+                self._log("🚀 Using no-code path (direct MCP tool calling)")
+
+                step_result = self._run_step(
+                    "mcp_direct",
+                    self.mcp_direct.execute,
+                    {
+                        "question": question,
+                        "blocks": blocks,
+                        "selected_functions": selected_functions
+                    }
+                )
+                if not step_result["success"]:
+                    return self._error_result("MCP Direct agent failed", step_result)
+
+                mcp_data = step_result["data"].get("blocks_data", [])
+                total_time = (datetime.now() - start_time).total_seconds()
+
+                return {
+                    "success": True,
+                    "action": "mcp_direct",
+                    "title": title,
+                    "blocks": blocks,
+                    "blocks_data": mcp_data,
+                    "total_time": total_time,
+                    "steps": self.steps,
+                    "timestamp": datetime.now().isoformat()
+                }
+
+            # Code path: Script generation with validation and verification
             # Unified retry loop: Generation → Validation → Verification
             # Any failure in validation or verification triggers regeneration with feedback
             generation_passed = False
@@ -423,6 +581,21 @@ def main():
         help="Skip question enhancement step (for testing with well-formed questions)"
     )
     parser.add_argument(
+        "--skip-reuse",
+        action="store_true",
+        help="Skip reuse evaluation and always generate fresh data (useful for testing without caching)"
+    )
+    parser.add_argument(
+        "--no-code",
+        action="store_true",
+        help="Skip code generation and use direct MCP tool calling (faster for simple queries)"
+    )
+    parser.add_argument(
+        "--mock",
+        action="store_true",
+        help="Mock mode: Skip script generation/execution, use mock data for testing UI Planner and Reuse Evaluator"
+    )
+    parser.add_argument(
         "--max-generation-attempts",
         type=int,
         default=3,
@@ -434,8 +607,8 @@ def main():
     )
     parser.add_argument(
         "--output-dir", "-o",
-        default="headless/output",
-        help="Output directory for step outputs"
+        default=None,
+        help="Output directory for step outputs (default: backend/headless/output)"
     )
     parser.add_argument(
         "--output-file",
@@ -463,6 +636,9 @@ def main():
         skip_verification=args.skip_verification,
         skip_execution=args.skip_execution,
         skip_enhancement=args.skip_enhancement,
+        skip_reuse=args.skip_reuse,
+        no_code=args.no_code,
+        mock_mode=args.mock,
         max_generation_attempts=args.max_generation_attempts,
         verbose=args.verbose,
         output_dir=args.output_dir
@@ -489,7 +665,8 @@ def main():
     # Save final result to question directory
     try:
         import os
-        question_output_dir = os.path.join(args.output_dir, orchestrator.question_id)
+        output_dir = args.output_dir or orchestrator.output_dir
+        question_output_dir = os.path.join(output_dir, orchestrator.question_id)
         os.makedirs(question_output_dir, exist_ok=True)
         final_result_file = os.path.join(question_output_dir, "final_result.json")
         with open(final_result_file, 'w') as f:
@@ -497,6 +674,9 @@ def main():
         print(f"💾 Final result saved to: {final_result_file}")
     except Exception as e:
         logger.error(f"Failed to save final result: {e}")
+
+    # Print JSON to stdout for API parsing
+    print(json.dumps(result))
 
     # Write output file if specified
     if args.output_file:

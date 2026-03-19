@@ -1,0 +1,286 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { spawn } from 'child_process';
+import path from 'path';
+
+export const runtime = 'nodejs';
+export const maxDuration = 600; // 10 minutes max for pipeline execution
+
+interface OrchestratorOutput {
+    success: boolean;
+    action: 'generated' | 'mcp_direct' | 'mock_generated' | 'mock_reused';
+    title?: string;
+    blocks?: Array<{
+        blockId: string;
+        category: string;
+        title: string;
+        dataContract: any;
+        sub_question?: string;
+        canonical_params?: any;
+    }>;
+    blocks_data?: Array<{
+        blockId: string;
+        data?: any;
+    }>;
+    mock_data_file?: string;
+    similarity?: number;
+    total_time: number;
+    steps: Array<{
+        step: string;
+        success: boolean;
+        duration: number;
+    }>;
+    error?: string;
+    timestamp: string;
+}
+
+interface HeadlessBlockData {
+    block_id: string;
+    title: string;
+    status: string;
+    has_result: boolean;
+    data?: any;
+    error?: string;
+}
+
+interface HeadlessResult {
+    question: string;
+    cache_key: string;
+    status: 'generated' | 'cached' | 'mock_generated' | 'mock_reused' | 'failed';
+    analysis_id?: string;
+    execution_id?: string;
+    elapsed_s: number;
+    total_elapsed_s: number;
+    blocks: number;
+    blocks_data?: Array<{
+        block_id: string;
+        title: string;
+        status: string;
+        data?: any;
+    }>;
+    // Include original blocks array from UI Planner
+    ui_blocks?: Array<{
+        blockId: string;
+        category: string;
+        title: string;
+        dataContract: any;
+        sub_question?: string;
+        canonical_params?: any;
+    }>;
+    plan_title?: string;
+    mock_data_file?: string;
+    similarity?: number;
+    error?: string;
+    steps?: Array<{
+        step: string;
+        success: boolean;
+        duration: number;
+    }>;
+}
+
+export async function POST(request: NextRequest) {
+    try {
+        const body = await request.json();
+        const { question, useNoCode, mock, skipReuse } = body;
+
+        if (!question || typeof question !== 'string') {
+            return NextResponse.json({ error: 'question is required' }, { status: 400 });
+        }
+
+        // Debug logging
+        console.log('[headless/run] Received flags:', { useNoCode, mock, skipReuse });
+
+        // Path to the new orchestrator script
+        const scriptPath = path.join(
+            process.cwd(),
+            '..',
+            '..',
+            '..',
+            'backend',
+            'headless',
+            'agents',
+            'orchestrator.py'
+        );
+
+        // Get absolute path to backend directory
+        const backendDir = path.resolve(
+            path.join(
+                process.cwd(),
+                '..',
+                '..',
+                '..',
+                'backend'
+            )
+        );
+
+        // Load environment variables from backend .env file
+        const fs = require('fs');
+        const envPath = path.join(backendDir, 'apiServer', '.env');
+        const envVars: Record<string, string> = {};
+
+        if (fs.existsSync(envPath)) {
+            const envContent = fs.readFileSync(envPath, 'utf-8');
+            envContent.split('\n').forEach(line => {
+                const match = line.match(/^([^#][^=]+)=(.*)$/);
+                if (match) {
+                    const [, key, value] = match;
+                    // Remove quotes from value if present
+                    const cleanValue = value.trim().replace(/^["']|["']$/g, '');
+                    envVars[key.trim()] = cleanValue;
+                }
+            });
+        }
+
+        // Build command arguments
+        const args = [
+            scriptPath,
+            '--question',
+            question
+        ];
+
+        if (useNoCode) {
+            args.push('--no-code');
+        }
+
+        if (mock) {
+            args.push('--mock');
+        }
+
+        if (skipReuse) {
+            args.push('--skip-reuse');
+            console.log('[headless/run] Skip cache ENABLED');
+        }
+
+        // Use fast settings: skip enhancement and fast model
+        args.push('--skip-enhancement');
+
+        console.log('[headless/run] Final args:', args.slice(1, 10)); // Log args for debugging
+
+        // Spawn Python process
+        const python = spawn('python3', args, {
+            env: {
+                ...process.env,
+                ...envVars, // Pass backend .env variables
+                PYTHONPATH: backendDir, // Ensure Python can find the backend modules
+                // Use fast model for ui_planner
+                UI_PLANNER_LLM_MODEL: 'gpt-oss:20b',
+            },
+            cwd: backendDir, // Set working directory to backend so .env loads correctly
+        });
+
+        let stdout = '';
+        let stderr = '';
+
+        python.stdout.on('data', (data: Buffer) => {
+            stdout += data.toString();
+        });
+
+        python.stderr.on('data', (data: Buffer) => {
+            stderr += data.toString();
+            // Log stderr for debugging but don't include in response
+            console.error('[headless run]', data.toString());
+        });
+
+        return new Promise<NextResponse>((resolve) => {
+            python.on('close', (code: number | null) => {
+                if (code !== 0) {
+                    // Extract useful debug info from logs
+                    const logLines = stderr.trim().split('\n');
+                    const lastLogs = logLines.slice(-10);
+                    const errorLogs = logLines.filter(l =>
+                        l.includes('Traceback') ||
+                        l.includes('ValueError') ||
+                        l.includes('ERROR') ||
+                        l.includes('❌')
+                    );
+
+                    resolve(NextResponse.json(
+                        {
+                            error: 'Dashboard generation failed',
+                            details: {
+                                exitCode: code,
+                                error: errorLogs[0] || 'Unknown error',
+                                lastLogs: lastLogs,
+                            },
+                        },
+                        { status: 500 }
+                    ));
+                    return;
+                }
+
+                try {
+                    // Parse the JSON output from stdout
+                    const lines = stdout.trim().split('\n');
+
+                    // Find the line that starts with '{' (JSON start)
+                    const jsonStartIndex = lines.findIndex(line => line.trim().startsWith('{'));
+
+                    if (jsonStartIndex === -1) {
+                        throw new Error('No JSON found in output');
+                    }
+
+                    // Collect all lines from the JSON start to the end
+                    const jsonLines = lines.slice(jsonStartIndex);
+                    const jsonString = jsonLines.join('\n');
+
+                    const orchestratorResult = JSON.parse(jsonString) as OrchestratorOutput;
+
+                    // Transform orchestrator output to HeadlessResult format
+                    const headlessResult: HeadlessResult = {
+                        question: question,
+                        cache_key: `orchestrator_${Date.now()}_${question.length}`, // Simple cache key
+                        status: orchestratorResult.success ? (
+                            orchestratorResult.action === 'mock_generated' ? 'mock_generated' :
+                            orchestratorResult.action === 'mock_reused' ? 'mock_reused' : 'generated'
+                        ) : 'failed',
+                        elapsed_s: orchestratorResult.total_time,
+                        total_elapsed_s: orchestratorResult.total_time,
+                        blocks: orchestratorResult.blocks?.length || 0,
+                        ui_blocks: orchestratorResult.blocks || [],
+                        blocks_data: orchestratorResult.blocks_data?.map(block => {
+                            const hasData = block.data !== null && block.data !== undefined;
+                            return {
+                                block_id: block.blockId,
+                                title: orchestratorResult.blocks?.find(b => b.blockId === block.blockId)?.title || block.blockId,
+                                status: hasData ? 'complete' : 'failed',
+                                has_result: hasData,
+                                data: block.data,
+                                error: hasData ? undefined : 'No data available',
+                            };
+                        }) || [],
+                        plan_title: orchestratorResult.title,
+                        mock_data_file: orchestratorResult.mock_data_file,
+                        similarity: orchestratorResult.similarity,
+                        error: orchestratorResult.error,
+                        steps: orchestratorResult.steps || [],
+                    };
+
+                    resolve(NextResponse.json(headlessResult));
+                } catch (e) {
+                    const logLines = stdout.trim().split('\n');
+                    const lastLogs = logLines.slice(-20);
+                    const errorLogs = logLines.filter(l =>
+                        l.includes('ERROR') || l.includes('❌') || l.includes('Failed')
+                    );
+
+                    resolve(NextResponse.json(
+                        {
+                            error: 'Dashboard generation failed',
+                            details: {
+                                lastLogs: lastLogs,
+                                errors: errorLogs,
+                                parseError: String(e),
+                            },
+                        },
+                        { status: 500 }
+                    ));
+                }
+            });
+        });
+
+    } catch (error: any) {
+        return NextResponse.json(
+            { error: error?.message || 'Unknown error' },
+            { status: 500 }
+        );
+    }
+}

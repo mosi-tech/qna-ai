@@ -1,0 +1,115 @@
+{
+  "question": "Test with skip reuse",
+  "generated_at": "2026-03-18T20:02:09.048540",
+  "data": {},
+  "blocks": [
+    {
+      "block_id": "kpi-card-01",
+      "type": "kpi",
+      "sub_question": "What is the current value of the S&P 500 index?",
+      "canonical_params": {
+        "ticker": "SPY",
+        "metric": "price"
+      },
+      "data": {
+        "metrics": [
+          {
+            "name": "Portfolio Value",
+            "stat": 67661.5,
+            "change": "13.27%",
+            "changeType": "positive"
+          },
+          {
+            "name": "Daily P&L",
+            "stat": 88962.57,
+            "change": "-1.32%",
+            "changeType": "positive"
+          },
+          {
+            "name": "YTD Return",
+            "stat": 65054.82,
+            "change": "-9.96%",
+            "changeType": "positive"
+          },
+          {
+            "name": "Sharpe Ratio",
+            "stat": 66065.97,
+            "change": "21.61%",
+            "changeType": "positive"
+          }
+        ],
+        "cols": 4
+      }
+    },
+    {
+      "block_id": "line-chart-02",
+      "type": "line",
+      "sub_question": "What is the price history of the SPY ETF over the last 30 days?",
+      "canonical_params": {
+        "ticker": "SPY",
+        "period": "30d"
+      },
+      "data": {
+        "data": [
+          {
+            "date": "2025-04-22",
+            "Value": 66746.08
+          },
+          {
+            "date": "2025-05-22",
+            "Value": 86017.2
+          },
+          {
+            "date": "2025-06-21",
+            "Value": 70696.33
+          },
+          {
+            "date": "2025-07-21",
+            "Value": 76672.04
+          },
+          {
+            "date": "2025-08-20",
+            "Value": 69220.01
+          },
+          {
+            "date": "2025-09-19",
+            "Value": 83260.72
+          },
+          {
+            "date": "2025-10-19",
+            "Value": 85606.61
+          },
+          {
+            "date": "2025-11-18",
+            "Value": 75095.86
+          },
+          {
+            "date": "2025-12-18",
+            "Value": 66829.68
+          },
+          {
+            "date": "2026-01-17",
+            "Value": 67402.55
+          },
+          {
+            "date": "2026-02-16",
+            "Value": 61981.44
+          },
+          {
+            "date": "2026-03-18",
+            "Value": 83239.8
+          }
+        ],
+        "categories": [
+          "Value"
+        ],
+        "summary": [
+          {
+            "name": "Value",
+            "value": 58162.56
+          }
+        ]
+      }
+    }
+  ]
+}

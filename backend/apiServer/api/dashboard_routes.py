@@ -39,6 +39,7 @@ class CreateDashboardRequest(BaseModel):
 class HeadlessRunRequest(BaseModel):
     question: str
     timeout_seconds: int = 120
+    mock: bool = False  # Enable mock mode (skip script generation/execution)
 
 
 class DashboardResponse(BaseModel):
@@ -144,6 +145,7 @@ async def run_headless(
             session_id="",        # no SSE session needed for headless
             message_id="headless",
             force_refresh=False,
+            mock_mode=body.mock,  # Pass mock mode flag
         )
     except Exception as exc:
         logger.exception("Error planning headless dashboard: %s", exc)

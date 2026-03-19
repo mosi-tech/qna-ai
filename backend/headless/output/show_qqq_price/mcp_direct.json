@@ -1,0 +1,58 @@
+{
+  "step": "mcp_direct",
+  "input": {
+    "question": "Show QQQ price",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "QQQ Current Price",
+        "dataContract": {
+          "type": "kpi",
+          "description": "Current price of QQQ ETF",
+          "points": 1
+        },
+        "sub_question": "What is the current market price of the QQQ ETF?",
+        "canonical_params": {
+          "ticker": "QQQ",
+          "metric": "price"
+        }
+      }
+    ],
+    "selected_functions": [
+      "financial_data__get_real_time_data"
+    ]
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "blocks_data": [
+        {
+          "blockId": "kpi-card-01",
+          "data": {
+            "ticker": "QQQ",
+            "metric": "price",
+            "value": null,
+            "error": "Unable to retrieve current price data"
+          }
+        }
+      ],
+      "raw_results": {
+        "success": false,
+        "data": null,
+        "error": "'bs'"
+      },
+      "metadata": {
+        "functions_called": [
+          "financial-data__get_real_time_data"
+        ],
+        "total_calls": 1
+      }
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-16T23:10:01.123023"
+  },
+  "duration": 6.452787,
+  "timestamp": "2026-03-16T23:10:01.123234"
+}

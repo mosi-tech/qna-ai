@@ -1,0 +1,52 @@
+{
+  "step": "mcp_direct",
+  "input": {
+    "question": "Show AAPL",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "AAPL Performance Summary",
+        "dataContract": {
+          "type": "kpi",
+          "description": "Current price, daily return, and YTD return for AAPL",
+          "points": 1
+        },
+        "sub_question": "What is the current price, daily return, and YTD return for AAPL?",
+        "canonical_params": {
+          "ticker": "AAPL",
+          "metric": "performance_summary"
+        }
+      },
+      {
+        "blockId": "line-chart-02",
+        "category": "line-charts",
+        "title": "AAPL Price History",
+        "dataContract": {
+          "type": "timeseries",
+          "description": "Single equity price chart for AAPL over a defined period",
+          "points": 1
+        },
+        "sub_question": "What is the daily closing price history of AAPL over the last year?",
+        "canonical_params": {
+          "ticker": "AAPL",
+          "period": "1y"
+        }
+      }
+    ],
+    "selected_functions": [
+      "financial_data__get_real_time_data",
+      "financial_data__get_historical_data",
+      "analytics_engine__calculate_annualized_return"
+    ]
+  },
+  "output": {
+    "success": false,
+    "data": null,
+    "error": "Ollama Cloud API error: HTTPSConnectionPool(host='ollama.com', port=443): Read timed out. (read timeout=300)",
+    "metadata": {},
+    "timestamp": "2026-03-16T23:16:35.626351"
+  },
+  "duration": 332.752679,
+  "timestamp": "2026-03-16T23:16:35.626526"
+}

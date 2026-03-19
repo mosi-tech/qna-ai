@@ -1,0 +1,25 @@
+{
+  "step": "question_enhancer",
+  "input": {
+    "question": "Show portfolio holdings table",
+    "original_question": "Show portfolio holdings table"
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "enhanced_question": "Show portfolio holdings table with detailed rows and columns including ticker symbol, company name, quantity, current market price, market value, cost basis, total gain/loss (value and percentage), daily change percentage, and sector allocation.",
+      "data_requirements": [],
+      "metadata": {
+        "block_count": 0,
+        "enhancement_summary": "Enhanced the request to specify detailed table columns and financial metrics for portfolio holdings, as no specific dashboard blocks were provided in the plan.",
+        "original_question": "Show portfolio holdings table",
+        "enhanced_block_ids": []
+      }
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-18T14:54:32.744539"
+  },
+  "duration": 40.590271,
+  "timestamp": "2026-03-18T14:54:32.744850"
+}

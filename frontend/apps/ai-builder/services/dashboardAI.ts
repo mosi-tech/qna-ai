@@ -99,6 +99,189 @@ async function callOllama(messages: { role: string; content: string }[]): Promis
     );
 }
 
+// ─── Headless pipeline integration ─────────────────────────────────────────────
+
+interface HeadlessBlock {
+    block_id: string;
+    title: string;
+    status: string;
+    has_result: boolean;
+    data?: any;
+    error?: string;
+}
+
+export interface HeadlessResult {
+    question: string;
+    cache_key: string;
+    status: 'generated' | 'cached' | 'mock_generated' | 'mock_reused' | 'failed';
+    analysis_id?: string;
+    execution_id?: string;
+    elapsed_s: number;
+    total_elapsed_s: number;
+    blocks: number;
+    blocks_data?: HeadlessBlock[];
+    dashboard_id?: string;
+    plan_title?: string;
+    error?: string;
+    response_type?: string;
+    mock_data_file?: string;
+    similarity?: number;
+    steps?: Array<{
+        step: string;
+        success: boolean;
+        duration: number;
+    }>;
+    // Include original UI Planner blocks
+    ui_blocks?: Array<{
+        blockId: string;
+        category: string;
+        title: string;
+        dataContract: any;
+        sub_question?: string;
+        canonical_params?: any;
+    }>;
+    // Legacy fields for compatibility
+    cache_hits?: number;
+    jobs_enqueued?: number;
+    summary?: {
+        total: number;
+        complete: number;
+        failed: number;
+        pending: number;
+    };
+}
+
+// Maps block types from backend to frontend block IDs
+const BLOCK_TYPE_MAP: Record<string, string> = {
+    'kpi-cards': 'kpi-card-01',
+    'line-charts': 'line-chart-01',
+    'bar-charts': 'bar-chart-01',
+    'bar-lists': 'bar-list-01',
+    'donut-charts': 'donut-chart-01',
+    'spark-charts': 'spark-chart-01',
+    'tables': 'table-01',
+    'status-monitoring': 'tracker-01',
+};
+
+// Maps backend categories to frontend block categories
+const CATEGORY_MAP: Record<string, BlockCategory> = {
+    'price': 'kpi-cards',
+    'trend': 'line-charts',
+    'comparison': 'bar-charts',
+    'ranking': 'bar-lists',
+    'allocation': 'donut-charts',
+    'history': 'line-charts',
+    'watchlist': 'spark-charts',
+    'table': 'tables',
+    'status': 'status-monitoring',
+};
+
+function mapBackendToFrontend(backendCategory: string, title: string): { blockId: string; category: BlockCategory } {
+    const normalized = backendCategory.toLowerCase().trim();
+    const category = CATEGORY_MAP[normalized] || 'kpi-cards';
+    const blockId = BLOCK_TYPE_MAP[category] || 'kpi-card-01';
+    return { blockId, category };
+}
+
+interface PipelineError {
+    error: string;
+    details?: {
+        exitCode?: number;
+        step?: string;
+        error?: string;
+        lastLogs?: string[];
+        parseError?: string;
+    };
+}
+
+export async function runHeadlessPipeline(question: string, options: { useNoCode?: boolean; mock?: boolean; skipReuse?: boolean } = {}): Promise<HeadlessResult> {
+    const res = await fetch('/api/headless/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question, useNoCode: options.useNoCode ?? true, mock: options.mock ?? false, skipReuse: options.skipReuse ?? false }),
+    });
+
+    if (!res.ok) {
+        const errorBody = await res.json() as PipelineError;
+
+        // Extract a user-friendly error message from the detailed response
+        let userMessage = errorBody.error || 'Dashboard generation failed';
+
+        if (errorBody.details) {
+            const { step, error: detailError, parseError, exitCode } = errorBody.details;
+
+            // Build a concise error message with key info only
+            const parts: string[] = [];
+            if (step && step !== 'Unknown') parts.push(`Step: ${step}`);
+            if (detailError) parts.push(detailError);
+            if (parseError) parts.push(parseError);
+            if (exitCode) parts.push(`Exit code: ${exitCode}`);
+
+            if (parts.length > 0) {
+                userMessage = parts.join(' · ');
+            }
+
+            // Log full details for debugging but don't include in user message
+            console.error('[HeadlessPipeline] Full error details:', errorBody.details);
+        }
+
+        throw new Error(userMessage);
+    }
+
+    return res.json() as Promise<HeadlessResult>;
+}
+
+// ─── Convert headless result to DashboardSpec ─────────────────────────────────────
+
+export function headlessResultToSpec(result: HeadlessResult): DashboardSpec {
+    // Use ui_blocks from UI Planner if available, otherwise fallback to blocks_data
+    const uiBlocks = result.ui_blocks || [];
+    const blocksData = result.blocks_data || [];
+
+    const blocks: BlockSpec[] = uiBlocks.map((uiBlock) => {
+        // Use UI Planner's blockId and category directly
+        const blockId = uiBlock.blockId;
+        const category = uiBlock.category as BlockCategory;
+
+        // Infer data contract type from category
+        let contractType: DataContractType = 'kpi';
+        let description = uiBlock.dataContract?.description || uiBlock.title;
+
+        if (category === 'line-charts') {
+            contractType = 'timeseries';
+        } else if (category === 'bar-lists') {
+            contractType = 'ranked-list';
+        } else if (category === 'donut-charts') {
+            contractType = 'categorical';
+        } else if (category === 'spark-charts') {
+            contractType = 'spark';
+        } else if (category === 'tables') {
+            contractType = 'table-rows';
+        } else if (category === 'status-monitoring') {
+            contractType = 'tracker';
+        }
+
+        return {
+            blockId,
+            category,
+            title: uiBlock.title,
+            dataContract: {
+                type: contractType,
+                description,
+                points: uiBlock.dataContract?.points || (contractType === 'timeseries' ? 12 : contractType === 'spark' ? 14 : 5),
+                categories: contractType === 'timeseries' ? ['Value'] : undefined,
+            },
+        };
+    });
+
+    return {
+        title: result.plan_title || 'Dashboard',
+        subtitle: `Generated in ${result.elapsed_s.toFixed(1)}s${result.status === 'cached' ? ' (cached)' : ''}`,
+        layout: 'grid',
+        blocks,
+    };
+}
+
 // ─── buildDashboardSpec ───────────────────────────────────────────────────────
 
 export async function buildDashboardSpec(userPrompt: string): Promise<DashboardSpec> {

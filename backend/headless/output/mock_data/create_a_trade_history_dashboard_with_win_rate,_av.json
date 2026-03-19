@@ -1,0 +1,164 @@
+{
+  "question": "Create a trade history dashboard with win rate, average gain/loss, holding period and strategy breakdown",
+  "generated_at": "2026-03-18T19:58:46.913569",
+  "data": {},
+  "blocks": [
+    {
+      "block_id": "kpi-card-01",
+      "type": "kpi",
+      "sub_question": "What is the overall win rate percentage for all completed trades?",
+      "canonical_params": {
+        "metric": "win_rate"
+      },
+      "data": {
+        "metrics": [
+          {
+            "name": "Portfolio Value",
+            "stat": 55859.84,
+            "change": "11.70%",
+            "changeType": "positive"
+          },
+          {
+            "name": "Daily P&L",
+            "stat": 42978.9,
+            "change": "-15.11%",
+            "changeType": "negative"
+          }
+        ],
+        "cols": 2
+      }
+    },
+    {
+      "block_id": "kpi-card-03",
+      "type": "kpi",
+      "sub_question": "What is the average gain for winning trades and average loss for losing trades?",
+      "canonical_params": {
+        "metric": "average_gain_loss"
+      },
+      "data": {
+        "metrics": [
+          {
+            "name": "Portfolio Value",
+            "stat": 96490.48,
+            "change": "-19.07%",
+            "changeType": "positive"
+          },
+          {
+            "name": "Daily P&L",
+            "stat": 85182.57,
+            "change": "-1.60%",
+            "changeType": "positive"
+          },
+          {
+            "name": "YTD Return",
+            "stat": 20449.83,
+            "change": "7.84%",
+            "changeType": "negative"
+          }
+        ],
+        "cols": 3
+      }
+    },
+    {
+      "block_id": "kpi-card-02",
+      "type": "kpi",
+      "sub_question": "What is the average holding period duration for all closed trades?",
+      "canonical_params": {
+        "metric": "avg_holding_period"
+      },
+      "data": {
+        "metrics": [
+          {
+            "name": "Portfolio Value",
+            "stat": 47449.13,
+            "change": "-18.57%",
+            "changeType": "positive"
+          },
+          {
+            "name": "Daily P&L",
+            "stat": 36407.61,
+            "change": "19.49%",
+            "changeType": "positive"
+          },
+          {
+            "name": "YTD Return",
+            "stat": 10512.9,
+            "change": "19.88%",
+            "changeType": "positive"
+          },
+          {
+            "name": "Sharpe Ratio",
+            "stat": 61409.93,
+            "change": "2.08%",
+            "changeType": "negative"
+          }
+        ],
+        "cols": 4
+      }
+    },
+    {
+      "block_id": "donut-chart-04",
+      "type": "donut",
+      "sub_question": "What is the distribution of trade count across different strategies?",
+      "canonical_params": {
+        "metric": "strategy_allocation"
+      },
+      "data": {
+        "data": [
+          {
+            "name": "Technology",
+            "value": 14.65
+          },
+          {
+            "name": "Consumer",
+            "value": 25.53
+          },
+          {
+            "name": "Energy",
+            "value": 27.84
+          },
+          {
+            "name": "Healthcare",
+            "value": 29.36
+          },
+          {
+            "name": "Finance",
+            "value": 27.42
+          }
+        ]
+      }
+    },
+    {
+      "block_id": "bar-list-01",
+      "type": "bar-list",
+      "sub_question": "What is the total return or win rate for each trading strategy?",
+      "canonical_params": {
+        "metric": "strategy_performance"
+      },
+      "data": {
+        "data": [
+          {
+            "name": "Holding A",
+            "value": 43828.7
+          },
+          {
+            "name": "Holding B",
+            "value": 20553.19
+          },
+          {
+            "name": "Holding C",
+            "value": 24036.32
+          },
+          {
+            "name": "Holding D",
+            "value": 21499.77
+          },
+          {
+            "name": "Holding E",
+            "value": 37878.25
+          }
+        ]
+      }
+    }
+  ]
+}

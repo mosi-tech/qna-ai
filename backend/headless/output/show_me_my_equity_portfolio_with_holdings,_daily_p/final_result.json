@@ -1,0 +1,265 @@
+{
+  "success": true,
+  "action": "mock_generated",
+  "title": "Equity Portfolio Overview",
+  "blocks": [
+    {
+      "blockId": "kpi-card-01",
+      "category": "kpi-cards",
+      "title": "Portfolio Performance Summary",
+      "dataContract": {
+        "type": "kpi",
+        "description": "Daily P&L and YTD return metrics",
+        "points": 1
+      },
+      "sub_question": "What is the total daily profit/loss in currency and percentage compared to the previous close, and what is the year-to-date total return percentage for the portfolio?",
+      "canonical_params": {
+        "metric": "performance_summary"
+      }
+    },
+    {
+      "blockId": "line-chart-06",
+      "category": "line-charts",
+      "title": "Portfolio Value Time Series",
+      "dataContract": {
+        "type": "time-series",
+        "description": "Historical portfolio values from start of year to now",
+        "points": 1
+      },
+      "sub_question": "What is the time series of portfolio total values or returns from the start of the year to the current date?",
+      "canonical_params": {
+        "metric": "total_return",
+        "period": "ytd"
+      }
+    },
+    {
+      "blockId": "donut-chart-04",
+      "category": "donut-charts",
+      "title": "Sector Allocation Breakdown",
+      "dataContract": {
+        "type": "allocation",
+        "description": "Percentage breakdown by industry",
+        "points": 1
+      },
+      "sub_question": "What is the percentage breakdown of the portfolio by sector and industry?",
+      "canonical_params": {
+        "metric": "sector_allocation"
+      }
+    },
+    {
+      "blockId": "table-action-01",
+      "category": "tables",
+      "title": "Detailed Equity Holdings",
+      "dataContract": {
+        "type": "holdings",
+        "description": "List of positions with ticker, quantity, price, weight",
+        "points": 1
+      },
+      "sub_question": "What are the detailed equity holdings including ticker, quantity, current price, and weight percentage?",
+      "canonical_params": {
+        "metric": "holdings"
+      }
+    }
+  ],
+  "blocks_data": [
+    {
+      "blockId": "kpi-card-01",
+      "data": {
+        "metrics": [
+          {
+            "name": "Portfolio Value",
+            "stat": 50464.58,
+            "change": "12.82%",
+            "changeType": "positive"
+          },
+          {
+            "name": "Daily P&L",
+            "stat": 61795.87,
+            "change": "28.96%",
+            "changeType": "positive"
+          },
+          {
+            "name": "YTD Return",
+            "stat": 93624.02,
+            "change": "2.50%",
+            "changeType": "positive"
+          }
+        ],
+        "cols": 3
+      }
+    },
+    {
+      "blockId": "line-chart-06",
+      "data": {
+        "data": [
+          {
+            "date": "2025-04-22",
+            "Value": 105426.56
+          },
+          {
+            "date": "2025-05-22",
+            "Value": 107728.42
+          },
+          {
+            "date": "2025-06-21",
+            "Value": 102220.42
+          },
+          {
+            "date": "2025-07-21",
+            "Value": 91247.8
+          },
+          {
+            "date": "2025-08-20",
+            "Value": 107964.6
+          },
+          {
+            "date": "2025-09-19",
+            "Value": 109330.1
+          },
+          {
+            "date": "2025-10-19",
+            "Value": 88819.53
+          },
+          {
+            "date": "2025-11-18",
+            "Value": 91649.71
+          },
+          {
+            "date": "2025-12-18",
+            "Value": 109969.65
+          },
+          {
+            "date": "2026-01-17",
+            "Value": 96824.89
+          },
+          {
+            "date": "2026-02-16",
+            "Value": 100180.44
+          },
+          {
+            "date": "2026-03-18",
+            "Value": 100963.04
+          }
+        ],
+        "categories": [
+          "Value"
+        ],
+        "summary": [
+          {
+            "name": "Value",
+            "value": 84393.01
+          }
+        ]
+      }
+    },
+    {
+      "blockId": "donut-chart-04",
+      "data": {
+        "data": [
+          {
+            "name": "Healthcare",
+            "value": 25.63
+          },
+          {
+            "name": "Consumer",
+            "value": 12.6
+          },
+          {
+            "name": "Energy",
+            "value": 24.12
+          },
+          {
+            "name": "Technology",
+            "value": 18.67
+          },
+          {
+            "name": "Industrial",
+            "value": 10.07
+          }
+        ]
+      }
+    },
+    {
+      "blockId": "table-action-01",
+      "data": {
+        "rows": [
+          {
+            "Symbol": "STK1",
+            "Shares": 124,
+            "Avg Cost": 414.1,
+            "Market Value": 99340.09,
+            "P&L": -4215.78,
+            "P&L %": -10.85
+          },
+          {
+            "Symbol": "STK2",
+            "Shares": 321,
+            "Avg Cost": 299.98,
+            "Market Value": 23939.07,
+            "P&L": 16113.97,
+            "P&L %": -16.72
+          },
+          {
+            "Symbol": "STK3",
+            "Shares": 545,
+            "Avg Cost": 323.12,
+            "Market Value": 61768.01,
+            "P&L": 7239.59,
+            "P&L %": -26.13
+          },
+          {
+            "Symbol": "STK4",
+            "Shares": 283,
+            "Avg Cost": 410.6,
+            "Market Value": 38997.53,
+            "P&L": 9246.24,
+            "P&L %": 15.48
+          },
+          {
+            "Symbol": "STK5",
+            "Shares": 154,
+            "Avg Cost": 403.48,
+            "Market Value": 88917.76,
+            "P&L": 19257.73,
+            "P&L %": 14.55
+          }
+        ],
+        "columns": [
+          "Symbol",
+          "Shares",
+          "Avg Cost",
+          "Market Value",
+          "P&L",
+          "P&L %"
+        ]
+      }
+    }
+  ],
+  "mock_data_file": "/Users/shivc/Documents/Workspace/JS/qna-ai-admin/backend/headless/agents/mock/../../output/mock_data/show_me_my_equity_portfolio_with_holdings,_daily_p.json",
+  "similarity": null,
+  "total_time": 44.624095,
+  "steps": [
+    {
+      "step": "question_enhancer",
+      "success": true,
+      "duration": 17.164695,
+      "timestamp": "2026-03-18T20:09:29.089244",
+      "output_size": 1835
+    },
+    {
+      "step": "ui_planner",
+      "success": true,
+      "duration": 25.340436,
+      "timestamp": "2026-03-18T20:09:54.430480",
+      "output_size": 2374
+    },
+    {
+      "step": "mock_data_generator",
+      "success": true,
+      "duration": 2.115812,
+      "timestamp": "2026-03-18T20:09:56.547580",
+      "output_size": 241
+    }
+  ],
+  "timestamp": "2026-03-18T20:09:56.548645"
+}

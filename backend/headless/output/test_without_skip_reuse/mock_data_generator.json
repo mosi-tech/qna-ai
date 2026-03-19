@@ -1,0 +1,76 @@
+{
+  "step": "mock_data_generator",
+  "input": {
+    "question": "Test without skip reuse",
+    "ui_planner_output": {
+      "title": "System Health Dashboard",
+      "subtitle": "Operational status and uptime history of market data feeds and exchange connectivity",
+      "layout": "grid",
+      "blocks": [
+        {
+          "blockId": "tracker-01",
+          "category": "status-monitoring",
+          "title": "Data Feed Uptime",
+          "dataContract": {
+            "type": "status-history",
+            "description": "Market data feed uptime dashboard showing 90-day operational history for feeds like NYSE, NASDAQ, FX",
+            "points": 1
+          },
+          "sub_question": "What is the 90-day operational history of the primary market data feeds?",
+          "canonical_params": {}
+        },
+        {
+          "blockId": "tracker-02",
+          "category": "status-monitoring",
+          "title": "Exchange Connectivity",
+          "dataContract": {
+            "type": "status-indicator",
+            "description": "Exchange connectivity status page where operations teams need to read a quick insight on status",
+            "points": 1
+          },
+          "sub_question": "What is the current connectivity status of the major exchange gateways?",
+          "canonical_params": {}
+        },
+        {
+          "blockId": "tracker-03",
+          "category": "status-monitoring",
+          "title": "Pipeline Health",
+          "dataContract": {
+            "type": "tag-list",
+            "description": "Market data pipeline health view listing tagged feeds (equities-feed, fx-rates) with status badges",
+            "points": 1
+          },
+          "sub_question": "What is the current health status of the tagged feeds in the market data pipeline?",
+          "canonical_params": {}
+        }
+      ],
+      "metadata": {
+        "question": "Test without skip reuse",
+        "block_count": 3,
+        "block_ids": [
+          "tracker-01",
+          "tracker-02",
+          "tracker-03"
+        ]
+      }
+    },
+    "question_id": "test_without_skip_reuse"
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "mock_data_file": "/Users/shivc/Documents/Workspace/JS/qna-ai-admin/backend/headless/agents/mock/../../output/mock_data/test_without_skip_reuse.json",
+      "data_points": [
+        "question",
+        "generated_at",
+        "data",
+        "blocks"
+      ]
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-18T20:01:47.661644"
+  },
+  "duration": 0.234024,
+  "timestamp": "2026-03-18T20:01:47.661729"
+}

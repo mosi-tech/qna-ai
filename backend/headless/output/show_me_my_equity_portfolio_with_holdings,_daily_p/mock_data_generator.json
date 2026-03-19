@@ -1,0 +1,98 @@
+{
+  "step": "mock_data_generator",
+  "input": {
+    "question": "Show me my equity portfolio with detailed holdings including ticker, quantity, current price, and weight percentage. Provide daily P&L metrics showing total daily profit/loss in both currency and percentage change compared to the previous close. Display sector allocation with specific percentage breakdowns by industry. Include YTD performance data showing total return percentage for the overall portfolio, and time series data of portfolio values from the start of the year to the current date.",
+    "ui_planner_output": {
+      "title": "Equity Portfolio Overview",
+      "subtitle": "Detailed view of holdings, performance metrics, sector allocation, and YTD trends",
+      "layout": "grid",
+      "blocks": [
+        {
+          "blockId": "kpi-card-01",
+          "category": "kpi-cards",
+          "title": "Portfolio Performance Summary",
+          "dataContract": {
+            "type": "kpi",
+            "description": "Daily P&L and YTD return metrics",
+            "points": 1
+          },
+          "sub_question": "What is the total daily profit/loss in currency and percentage compared to the previous close, and what is the year-to-date total return percentage for the portfolio?",
+          "canonical_params": {
+            "metric": "performance_summary"
+          }
+        },
+        {
+          "blockId": "line-chart-06",
+          "category": "line-charts",
+          "title": "Portfolio Value Time Series",
+          "dataContract": {
+            "type": "time-series",
+            "description": "Historical portfolio values from start of year to now",
+            "points": 1
+          },
+          "sub_question": "What is the time series of portfolio total values or returns from the start of the year to the current date?",
+          "canonical_params": {
+            "metric": "total_return",
+            "period": "ytd"
+          }
+        },
+        {
+          "blockId": "donut-chart-04",
+          "category": "donut-charts",
+          "title": "Sector Allocation Breakdown",
+          "dataContract": {
+            "type": "allocation",
+            "description": "Percentage breakdown by industry",
+            "points": 1
+          },
+          "sub_question": "What is the percentage breakdown of the portfolio by sector and industry?",
+          "canonical_params": {
+            "metric": "sector_allocation"
+          }
+        },
+        {
+          "blockId": "table-action-01",
+          "category": "tables",
+          "title": "Detailed Equity Holdings",
+          "dataContract": {
+            "type": "holdings",
+            "description": "List of positions with ticker, quantity, price, weight",
+            "points": 1
+          },
+          "sub_question": "What are the detailed equity holdings including ticker, quantity, current price, and weight percentage?",
+          "canonical_params": {
+            "metric": "holdings"
+          }
+        }
+      ],
+      "metadata": {
+        "question": "Show me my equity portfolio with detailed holdings including ticker, quantity, current price, and weight percentage. Provide daily P&L metrics showing total daily profit/loss in both currency and percentage change compared to the previous close. Display sector allocation with specific percentage breakdowns by industry. Include YTD performance data showing total return percentage for the overall portfolio, and time series data of portfolio values from the start of the year to the current date.",
+        "block_count": 4,
+        "block_ids": [
+          "kpi-card-01",
+          "line-chart-06",
+          "donut-chart-04",
+          "table-action-01"
+        ]
+      }
+    },
+    "question_id": "show_me_my_equity_portfolio_with_holdings,_daily_p"
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "mock_data_file": "/Users/shivc/Documents/Workspace/JS/qna-ai-admin/backend/headless/agents/mock/../../output/mock_data/show_me_my_equity_portfolio_with_holdings,_daily_p.json",
+      "data_points": [
+        "question",
+        "generated_at",
+        "data",
+        "blocks"
+      ]
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-18T20:09:56.547446"
+  },
+  "duration": 2.115812,
+  "timestamp": "2026-03-18T20:09:56.547751"
+}

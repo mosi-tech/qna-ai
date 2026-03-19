@@ -27,15 +27,6 @@
       "env": {
         "PYTHONPATH": "/Users/shivc/Documents/Workspace/JS/qna-ai-admin"
       }
-    },
-    "react-components-server": {
-      "command": "python",
-      "args": [
-        "/Users/shivc/Documents/Workspace/JS/qna-ai-admin/backend/mcp-server/ui/react_components_server.py"
-      ],
-      "env": {
-        "PYTHONPATH": "/Users/shivc/Documents/Workspace/JS/qna-ai-admin"
-      }
     }
   },
   "serviceConfigs": {
@@ -75,10 +66,7 @@
       "enabled": false
     },
     "ui-result-formatter": {
-      "enabled": false,
-      "servers": [
-        "react-components-server"
-      ]
+      "enabled": false
     },
     "schema-formatter": {
       "enabled": false

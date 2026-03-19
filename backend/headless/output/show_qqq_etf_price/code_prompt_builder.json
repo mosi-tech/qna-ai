@@ -4,66 +4,19 @@
     "question": "Show QQQ ETF price",
     "blocks": [
       {
-        "blockId": "kpi-card-01",
-        "category": "kpi-cards",
-        "title": "QQQ Key Metrics",
-        "dataContract": {
-          "type": "kpi",
-          "description": "Current price, daily change, YTD return, and 52-week range for QQQ",
-          "points": 4
-        },
-        "sub_question": "What are the current price, daily percentage change, year-to-date return, and 52-week high and low for the QQQ ETF?",
-        "canonical_params": {
-          "ticker": "QQQ",
-          "metric": "performance_summary"
-        }
-      },
-      {
         "blockId": "line-chart-02",
         "category": "line-charts",
         "title": "QQQ Price Trend",
         "dataContract": {
-          "type": "timeseries",
-          "description": "Historical daily closing prices of QQQ",
-          "points": 252
+          "type": "time-series",
+          "description": "Historical price data for QQQ ETF",
+          "points": 1
         },
-        "sub_question": "What is the daily closing price history of the QQQ ETF over the past year?",
+        "sub_question": "What is the price history of the QQQ ETF over the last 30 days?",
         "canonical_params": {
           "ticker": "QQQ",
           "metric": "price",
-          "period": "1y"
-        }
-      },
-      {
-        "blockId": "line-chart-06",
-        "category": "line-charts",
-        "title": "QQQ vs Benchmark",
-        "dataContract": {
-          "type": "timeseries",
-          "description": "Cumulative total return of QQQ compared to S&P 500",
-          "points": 252
-        },
-        "sub_question": "How does the cumulative total return of the QQQ ETF compare to the S&P 500 benchmark over the past year?",
-        "canonical_params": {
-          "tickers": "QQQ,SPY",
-          "metric": "total_return",
-          "period": "1y",
-          "benchmark": "SPY"
-        }
-      },
-      {
-        "blockId": "bar-list-01",
-        "category": "bar-lists",
-        "title": "Top Holdings",
-        "dataContract": {
-          "type": "categorical",
-          "description": "List of largest QQQ holdings by market value",
-          "points": 10
-        },
-        "sub_question": "What are the top 10 holdings within the QQQ ETF ranked by their market weight?",
-        "canonical_params": {
-          "ticker": "QQQ",
-          "metric": "top_holdings"
+          "period": "30d"
         }
       }
     ],
@@ -72,26 +25,27 @@
   "output": {
     "success": true,
     "data": {
-      "enriched_prompt": "Retrieve the current market quote for the QQQ ETF, including price, daily change, YTD return, and 52\u2011week high/low. Pull the last 252 daily closing prices for QQQ and for the S&P\u202f500 benchmark. Using the price series, calculate the YTD return for QQQ and generate cumulative total\u2011return series for both QQQ and the S&P\u202f500 to plot on a comparative line chart. Also fetch the top 10 QQQ holdings with their market values for a bar\u2011list. Return all data ready for the KPI card, price trend chart, benchmark comparison chart, and holdings list.",
+      "enriched_prompt": "Retrieve the historical OHLCV price data for the QQQ ETF (e.g., last 1 year) to plot a line chart of its price trend, and also obtain the latest real\u2011time quote for QQQ. Optionally compute basic performance metrics such as annualized return, annualized volatility, and maximum drawdown to supplement the visualization. Return the historical price series (date and closing price) and the current price, along with any computed metrics.",
       "selected_functions": [
-        "financial_data__get_real_time_data",
         "financial_data__get_historical_data",
-        "financial_data__get_fundamentals",
-        "analytics_engine__calculate_annualized_return"
+        "financial_data__get_real_time_data",
+        "analytics_engine__calculate_annualized_return",
+        "analytics_engine__calculate_annualized_volatility",
+        "analytics_engine__calculate_drawdown"
       ],
-      "analysis_type": "Single ETF KPI and benchmark comparison dashboard",
-      "suggested_workflow": "Step 1: Use financial_data__get_real_time_data to obtain QQQ's current price, daily change, YTD return, and 52\u2011week range. Step 2: Use financial_data__get_historical_data to pull 252 days of daily closing prices for QQQ and for the S&P\u202f500 ticker. Step 3: Apply analytics_engine__calculate_annualized_return on the QQQ price series to derive YTD return and on both series to compute cumulative total\u2011return curves. Step 4: Use financial_data__get_fundamentals to retrieve QQQ holdings and select the top 10 by market value. Step 5: Package the KPI metrics, price series, cumulative return series, and holdings list for the dashboard blocks.",
+      "analysis_type": "Single asset price visualization with optional performance metrics",
+      "suggested_workflow": "Step 1: Use financial_data__get_historical_data to fetch QQQ's historical OHLCV data. Step 2: Use financial_data__get_real_time_data to fetch the current QQQ price. Step 3: Apply analytics_engine__calculate_annualized_return, analytics_engine__calculate_annualized_volatility, and analytics_engine__calculate_drawdown on the historical series to derive performance stats. Step 4: Package the date\u2011price series for the line\u2011chart block and include the latest price and any metrics in the response.",
       "metadata": {
         "question": "Show QQQ ETF price",
-        "timestamp": "2026-03-16T16:00:11.945484",
-        "function_count": 4,
-        "block_count": 4
+        "timestamp": "2026-03-16T23:22:46.357442",
+        "function_count": 5,
+        "block_count": 1
       }
     },
     "error": null,
     "metadata": {},
-    "timestamp": "2026-03-16T16:00:11.945627"
+    "timestamp": "2026-03-16T23:22:46.357698"
   },
-  "duration": 7.167202,
-  "timestamp": "2026-03-16T16:00:11.945815"
+  "duration": 4.801734,
+  "timestamp": "2026-03-16T23:22:46.358017"
 }

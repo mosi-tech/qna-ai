@@ -1,0 +1,63 @@
+{
+  "step": "code_prompt_builder",
+  "input": {
+    "question": "Show AAPL",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "AAPL Performance Summary",
+        "dataContract": {
+          "type": "kpi",
+          "description": "Current price, daily return, and YTD return for AAPL",
+          "points": 1
+        },
+        "sub_question": "What is the current price, daily return, and YTD return for AAPL?",
+        "canonical_params": {
+          "ticker": "AAPL",
+          "metric": "performance_summary"
+        }
+      },
+      {
+        "blockId": "line-chart-02",
+        "category": "line-charts",
+        "title": "AAPL Price History",
+        "dataContract": {
+          "type": "timeseries",
+          "description": "Single equity price chart for AAPL over a defined period",
+          "points": 1
+        },
+        "sub_question": "What is the daily closing price history of AAPL over the last year?",
+        "canonical_params": {
+          "ticker": "AAPL",
+          "period": "1y"
+        }
+      }
+    ],
+    "context": {}
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "enriched_prompt": "Create a dashboard for AAPL that includes:\n1. A KPI card showing the current price, the daily return (percentage change from previous close to current price), and the YTD return (percentage change from the first trading day of the current calendar year to the latest price).\n2. A line chart displaying AAPL's historical price (use the close price) over a user\u2011defined period (e.g., last 1 year, 6 months, etc.).\nThe implementation should:\n- Use real\u2011time market data to get the latest price and previous close.\n- Retrieve historical OHLCV data for the requested period.\n- Calculate daily return and YTD return based on the fetched prices.\n- Return the KPI values and a time\u2011series array (date, close) suitable for plotting the line chart.",
+      "selected_functions": [
+        "financial_data__get_real_time_data",
+        "financial_data__get_historical_data",
+        "analytics_engine__calculate_annualized_return"
+      ],
+      "analysis_type": "Single asset performance dashboard",
+      "suggested_workflow": "Step 1: Call financial_data__get_real_time_data for AAPL to obtain current price and previous close. Step 2: Call financial_data__get_historical_data for AAPL over the requested period to retrieve daily close prices. Step 3: Compute daily return using (current price - previous close) / previous close. Step 4: Compute YTD return using the close price on the first trading day of the year versus the latest close (or use analytics_engine__calculate_annualized_return with appropriate dates). Step 5: Package KPI values and the historical close series for the line chart.",
+      "metadata": {
+        "question": "Show AAPL",
+        "timestamp": "2026-03-16T23:11:02.873128",
+        "function_count": 3,
+        "block_count": 2
+      }
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-16T23:11:02.873233"
+  },
+  "duration": 8.605091,
+  "timestamp": "2026-03-16T23:11:02.873367"
+}

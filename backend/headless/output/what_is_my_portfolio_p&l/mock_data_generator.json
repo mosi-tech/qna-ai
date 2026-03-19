@@ -1,0 +1,83 @@
+{
+  "step": "mock_data_generator",
+  "input": {
+    "question": "What is my portfolio P&L?",
+    "ui_planner_output": {
+      "title": "Portfolio P&L Overview",
+      "subtitle": "Total profit and loss summary with performance trends and position-level breakdown",
+      "layout": "grid",
+      "blocks": [
+        {
+          "blockId": "kpi-card-01",
+          "category": "kpi-cards",
+          "title": "Total Portfolio P&L",
+          "dataContract": {
+            "type": "kpi",
+            "description": "Current portfolio P&L with daily and YTD return",
+            "points": 1
+          },
+          "sub_question": "What is the current total profit and loss, daily return, and year-to-date return for the entire portfolio?",
+          "canonical_params": {
+            "metric": "portfolio_pnl"
+          }
+        },
+        {
+          "blockId": "line-chart-06",
+          "category": "line-charts",
+          "title": "P&L Performance Trend",
+          "dataContract": {
+            "type": "line-chart",
+            "description": "Portfolio total return vs benchmark over time",
+            "points": 1
+          },
+          "sub_question": "How has the portfolio total return performed compared to the benchmark over the last year?",
+          "canonical_params": {
+            "metric": "total_return",
+            "benchmark": "SPY"
+          }
+        },
+        {
+          "blockId": "table-action-01",
+          "category": "tables",
+          "title": "Position Level P&L",
+          "dataContract": {
+            "type": "table",
+            "description": "Sortable table of positions with P&L data",
+            "points": 1
+          },
+          "sub_question": "What is the profit and loss for each individual holding in the portfolio, sortable by gain or loss?",
+          "canonical_params": {
+            "metric": "position_pnl"
+          }
+        }
+      ],
+      "metadata": {
+        "question": "What is my portfolio P&L?",
+        "block_count": 3,
+        "block_ids": [
+          "kpi-card-01",
+          "line-chart-06",
+          "table-action-01"
+        ]
+      }
+    },
+    "question_id": "what_is_my_portfolio_p&l"
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "mock_data_file": "headless/output/mock_data/what_is_my_portfolio_p&l.json",
+      "data_points": [
+        "question",
+        "generated_at",
+        "data",
+        "blocks"
+      ]
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-18T11:46:14.788877"
+  },
+  "duration": 0.208616,
+  "timestamp": "2026-03-18T11:46:14.788942"
+}

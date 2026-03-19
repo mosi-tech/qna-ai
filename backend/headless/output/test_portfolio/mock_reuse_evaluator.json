@@ -1,0 +1,17 @@
+{
+  "step": "mock_reuse_evaluator",
+  "input": {
+    "question": "Test portfolio"
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "reused": false
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-18T19:04:01.875011"
+  },
+  "duration": 5.900938,
+  "timestamp": "2026-03-18T19:04:01.875659"
+}

@@ -44,9 +44,10 @@ class CodePromptBuilderService(BaseService):
     def _load_code_prompt_template(self):
         """Load fixed system prompt template"""
         template_path = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), 
-            "..", 
-            "config", 
+            os.path.dirname(os.path.abspath(__file__)),
+            "..",
+            "..",
+            "config",
             "system-prompt-code-generation-fixed.txt"
         )
         

@@ -1,0 +1,46 @@
+{
+  "step": "code_prompt_builder",
+  "input": {
+    "question": "Show QQQ price",
+    "blocks": [
+      {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "QQQ Current Price",
+        "dataContract": {
+          "type": "kpi",
+          "description": "Current price of QQQ ETF",
+          "points": 1
+        },
+        "sub_question": "What is the current market price of the QQQ ETF?",
+        "canonical_params": {
+          "ticker": "QQQ",
+          "metric": "price"
+        }
+      }
+    ],
+    "context": {}
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "enriched_prompt": "Retrieve the latest market price for the QQQ ETF using real\u2011time market data and return the price value suitable for display in a KPI card.",
+      "selected_functions": [
+        "financial_data__get_real_time_data"
+      ],
+      "analysis_type": "Single asset real\u2011time price retrieval",
+      "suggested_workflow": "Step 1: Call financial_data__get_real_time_data with symbol 'QQQ'. Step 2: Extract the current price from the response. Step 3: Return the price for the KPI card.",
+      "metadata": {
+        "question": "Show QQQ price",
+        "timestamp": "2026-03-16T23:09:54.669313",
+        "function_count": 1,
+        "block_count": 1
+      }
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-16T23:09:54.669475"
+  },
+  "duration": 5.117747,
+  "timestamp": "2026-03-16T23:09:54.669682"
+}

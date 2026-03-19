@@ -1,0 +1,59 @@
+{
+  "step": "ui_planner",
+  "input": {
+    "question": "Show AAPL"
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "title": "Apple Inc. (AAPL) Overview",
+      "subtitle": "Current performance metrics and price trend for AAPL",
+      "layout": "grid",
+      "blocks": [
+        {
+          "blockId": "kpi-card-01",
+          "category": "kpi-cards",
+          "title": "AAPL Performance Summary",
+          "dataContract": {
+            "type": "kpi",
+            "description": "Current price, daily return, and YTD return for AAPL",
+            "points": 1
+          },
+          "sub_question": "What is the current price, daily return, and YTD return for AAPL?",
+          "canonical_params": {
+            "ticker": "AAPL",
+            "metric": "performance_summary"
+          }
+        },
+        {
+          "blockId": "line-chart-02",
+          "category": "line-charts",
+          "title": "AAPL Price History",
+          "dataContract": {
+            "type": "timeseries",
+            "description": "Single equity price chart for AAPL over a defined period",
+            "points": 1
+          },
+          "sub_question": "What is the daily closing price history of AAPL over the last year?",
+          "canonical_params": {
+            "ticker": "AAPL",
+            "period": "1y"
+          }
+        }
+      ],
+      "metadata": {
+        "question": "Show AAPL",
+        "block_count": 2,
+        "block_ids": [
+          "kpi-card-01",
+          "line-chart-02"
+        ]
+      }
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-16T23:10:54.267429"
+  },
+  "duration": 21.032156,
+  "timestamp": "2026-03-16T23:10:54.267775"
+}

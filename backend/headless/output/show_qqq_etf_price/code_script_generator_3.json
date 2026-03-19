@@ -1,0 +1,109 @@
+{
+  "step": "code_script_generator_3",
+  "input": {
+    "enriched_prompt": "Retrieve the current market snapshot for the QQQ ETF, including its latest price, daily change (both percentage and absolute value), previous close, trading volume, and market capitalization. Also compute the year-to-date (YTD) return based on the price at the start of the current calendar year versus the latest price. Then obtain the daily closing prices for QQQ covering the past 1 year to support a line\u2011chart time series visualization. Return the real\u2011time summary for the spark\u2011chart block and the 1\u2011year closing price series for the line\u2011chart block.",
+    "selected_functions": [
+      "financial_data__get_real_time_data",
+      "financial_data__get_historical_data",
+      "analytics_engine__calculate_annualized_return"
+    ],
+    "question": "Show QQQ ETF price",
+    "context": {
+      "blocks": [
+        {
+          "blockId": "spark-chart-06",
+          "category": "spark-charts",
+          "title": "QQQ Market Summary",
+          "dataContract": {
+            "type": "spark-chart",
+            "description": "Current QQQ market data including price, daily change, volume, market cap, and YTD return",
+            "points": 1
+          },
+          "sub_question": "What are the current price, daily change percentage, absolute daily change, previous close, trading volume, market cap, and year-to-date return for the QQQ ETF?",
+          "canonical_params": {
+            "ticker": "QQQ",
+            "metric": "market_summary",
+            "period": "1d"
+          }
+        },
+        {
+          "blockId": "line-chart-02",
+          "category": "line-charts",
+          "title": "QQQ 1-Year Price History",
+          "dataContract": {
+            "type": "line-chart",
+            "description": "Daily closing price history for QQQ over the last 1 year",
+            "points": 1
+          },
+          "sub_question": "What is the daily closing price history for the QQQ ETF over the last 1 year?",
+          "canonical_params": {
+            "ticker": "QQQ",
+            "metric": "price_history",
+            "period": "1y"
+          }
+        }
+      ],
+      "validation_feedback": [
+        {
+          "attempt": 1,
+          "errors": [],
+          "warnings": [
+            "main() should accept **kwargs for HTTP execution",
+            "Line 164: Hardcoded value 'QQQ' should be a parameter"
+          ],
+          "valid": true
+        },
+        {
+          "attempt": 2,
+          "errors": [],
+          "warnings": [
+            "main() should accept **kwargs for HTTP execution",
+            "Line 178: Hardcoded value 'QQQ' should be a parameter"
+          ],
+          "valid": true
+        }
+      ],
+      "verification_feedback": [
+        {
+          "attempt": 1,
+          "approved": false,
+          "issues": [],
+          "suggestions": [],
+          "model_votes": {
+            "glm-4.6": "reject",
+            "gpt-oss:120b": "reject"
+          }
+        },
+        {
+          "attempt": 2,
+          "approved": false,
+          "issues": [],
+          "suggestions": [],
+          "model_votes": {
+            "glm-4.6": "reject",
+            "gpt-oss:120b": "reject"
+          }
+        }
+      ]
+    }
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "script": "#!/usr/bin/env python3\n\"\"\"\nQ: Show QQQ ETF price\n\nRetrieves the current market snapshot for the QQQ ETF, including its latest price,\ndaily change, previous close, volume, and market cap. Computes YTD return and fetches\n1-year historical closing prices for visualization.\n\"\"\"\n\nimport json\nimport pandas as pd\nfrom datetime import datetime, timedelta\nfrom typing import Dict, Any, List, Optional\n\ndef analyze_question(\n    symbol: str = 'QQQ'\n) -> Dict[str, Any]:\n    \"\"\"\n    Main analysis function for QQQ ETF price snapshot and historical data.\n\n    Args:\n        symbol: Ticker symbol to analyze (default: 'QQQ')\n\n    Returns:\n        Dictionary containing analysis results including real-time snapshot,\n        YTD return, and 1-year historical price series.\n    \"\"\"\n    now = datetime.now()\n    start_of_year = datetime(now.year, 1, 1)\n    one_year_ago = now - timedelta(days=365)\n\n    results: Dict[str, Any] = {\n        'question': 'Show QQQ ETF price',\n        'symbol': symbol,\n        'success': False\n    }\n\n    try:\n        # 1. Fetch Real-time Data\n        realtime_result = call_mcp_function(\n            'financial-data__get_real_time_data',\n            {'symbol': symbol}\n        )\n\n        if not realtime_result.get('success'):\n            return {\n                **results,\n                'error': f\"Failed to fetch real-time data: {realtime_result.get('error')}\"\n            }\n\n        realtime_data = realtime_result.get('data', {})\n        current_price = realtime_data.get('price')\n        previous_close = realtime_data.get('previous_close')\n\n        # Calculate daily change\n        daily_change_abs = 0.0\n        daily_change_pct = 0.0\n        \n        if current_price is not None and previous_close is not None and previous_close > 0:\n            daily_change_abs = current_price - previous_close\n            daily_change_pct = (daily_change_abs / previous_close) * 100\n\n        snapshot = {\n            'current_price': current_price,\n            'daily_change_absolute': daily_change_abs,\n            'daily_change_percentage': daily_change_pct,\n            'previous_close': previous_close,\n            'volume': realtime_data.get('volume'),\n            'market_cap': realtime_data.get('market_cap')\n        }\n\n        results['realtime_snapshot'] = snapshot\n\n        # 2. Fetch YTD Data\n        ytd_result = call_mcp_function(\n            'financial-data__get_historical_data',\n            {\n                'symbols': symbol,\n                'start_date': start_of_year.strftime('%Y-%m-%d'),\n                'end_date': now.strftime('%Y-%m-%d'),\n                'timeframe': '1Day'\n            }\n        )\n\n        ytd_return = None\n        if ytd_result.get('success') and ytd_result.get('data'):\n            ytd_bars = ytd_result['data'].get(symbol, [])\n            if ytd_bars:\n                ytd_df = pd.DataFrame(ytd_bars)\n                ytd_df['timestamp'] = pd.to_datetime(ytd_df['timestamp'])\n                ytd_df.set_index('timestamp', inplace=True)\n                ytd_df = ytd_df.sort_index()\n                \n                # Calculate YTD return based on first close of year vs current price\n                first_close = ytd_df['close'].iloc[0]\n                if current_price and first_close:\n                    ytd_return = ((current_price - first_close) / first_close) * 100\n\n        results['ytd_return_percentage'] = ytd_return\n\n        # 3. Fetch 1-Year Historical Data for Chart\n        hist_result = call_mcp_function(\n            'financial-data__get_historical_data',\n            {\n                'symbols': symbol,\n                'start_date': one_year_ago.strftime('%Y-%m-%d'),\n                'end_date': now.strftime('%Y-%m-%d'),\n                'timeframe': '1Day'\n            }\n        )\n\n        historical_series = []\n        annualized_return = None\n\n        if hist_result.get('success') and hist_result.get('data'):\n            bars = hist_result['data'].get(symbol, [])\n            if bars:\n                hist_df = pd.DataFrame(bars)\n                hist_df['timestamp'] = pd.to_datetime(hist_df['timestamp'])\n                hist_df = hist_df.sort_values('timestamp')\n                \n                # Format for chart: list of dicts with date and price\n                historical_series = [\n                    {'date': row['timestamp'].strftime('%Y-%m-%d'), 'close': row['close']}\n                    for _, row in hist_df.iterrows()\n                ]\n\n                # Use selected analytics function for annualized return\n                try:\n                    ann_return_calc = call_mcp_function(\n                        'analytics-engine__calculate_annualized_return',\n                        {'prices': hist_df['close'].tolist(), 'periods': 252}\n                    )\n                    if ann_return_calc.get('success'):\n                        annualized_return = ann_return_calc.get('data')\n                except Exception:\n                    pass # Analytics failure shouldn't break the whole script\n\n        results['historical_1year'] = historical_series\n        results['annualized_return_1year'] = annualized_return\n        results['success'] = True\n\n    except Exception as e:\n        results['error'] = str(e)\n\n    return results\n\ndef main(**kwargs):\n    \"\"\"Main function for HTTP execution\"\"\"\n    # Extract symbol from kwargs, default to 'QQQ'\n    symbol = kwargs.get('symbol', 'QQQ')\n    return analyze_question(symbol=symbol)\n\nif __name__ == '__main__':\n    import argparse\n    parser = argparse.ArgumentParser()\n    parser.add_argument('--symbol', default='QQQ', help='Ticker symbol')\n    args = parser.parse_args()\n\n    result = analyze_question(symbol=args.symbol)\n    print(json.dumps(result, indent=2, default=str))",
+      "script_name": "show_qqq_etf_price_20260316_190237.py",
+      "metadata": {
+        "question": "Show QQQ ETF price",
+        "enriched_prompt_length": 558,
+        "selected_function_count": 3,
+        "script_length": 5728,
+        "timestamp": "2026-03-16T19:02:37.778910"
+      }
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-16T19:02:37.779268"
+  },
+  "duration": 49.69996,
+  "timestamp": "2026-03-16T19:02:37.779594"
+}

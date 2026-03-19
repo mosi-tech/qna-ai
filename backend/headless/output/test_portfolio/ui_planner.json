@@ -1,0 +1,76 @@
+{
+  "step": "ui_planner",
+  "input": {
+    "question": "Test portfolio"
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "title": "Test Portfolio Overview",
+      "subtitle": "Summary of performance, benchmark comparison, and top holdings for the test portfolio.",
+      "layout": "grid",
+      "blocks": [
+        {
+          "blockId": "kpi-card-01",
+          "category": "kpi-cards",
+          "title": "Portfolio Summary",
+          "dataContract": {
+            "type": "kpi",
+            "description": "Current NAV, daily return, and YTD return",
+            "points": 1
+          },
+          "sub_question": "What are the current Net Asset Value (NAV), daily return percentage, and year-to-date return of the test portfolio?",
+          "canonical_params": {
+            "ticker": "TEST_PORTFOLIO",
+            "metric": "performance_summary"
+          }
+        },
+        {
+          "blockId": "line-chart-06",
+          "category": "line-charts",
+          "title": "Total Return vs Benchmark",
+          "dataContract": {
+            "type": "time-series",
+            "description": "Portfolio total return compared to SPY benchmark over 1 year",
+            "points": 1
+          },
+          "sub_question": "How does the total return of the test portfolio compare to the SPY benchmark over the last 1 year?",
+          "canonical_params": {
+            "ticker": "TEST_PORTFOLIO",
+            "benchmark": "SPY",
+            "period": "1y"
+          }
+        },
+        {
+          "blockId": "bar-list-01",
+          "category": "bar-lists",
+          "title": "Top Holdings",
+          "dataContract": {
+            "type": "list",
+            "description": "List of top holdings ranked by market value",
+            "points": 1
+          },
+          "sub_question": "What are the top holdings in the test portfolio ranked by their current market value?",
+          "canonical_params": {
+            "ticker": "TEST_PORTFOLIO",
+            "metric": "top_holdings"
+          }
+        }
+      ],
+      "metadata": {
+        "question": "Test portfolio",
+        "block_count": 3,
+        "block_ids": [
+          "kpi-card-01",
+          "line-chart-06",
+          "bar-list-01"
+        ]
+      }
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-18T19:03:55.973323"
+  },
+  "duration": 16.398588,
+  "timestamp": "2026-03-18T19:03:55.973729"
+}

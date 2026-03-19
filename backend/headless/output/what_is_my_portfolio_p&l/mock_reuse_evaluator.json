@@ -1,0 +1,19 @@
+{
+  "step": "mock_reuse_evaluator",
+  "input": {
+    "question": "What is my portfolio P&L?"
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "reused": true,
+      "mock_data_file": "headless/output/mock_data/what_is_my_portfolio_p&l.json",
+      "similarity": 0.8902139099999999
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-18T11:48:05.300891"
+  },
+  "duration": 1.515815,
+  "timestamp": "2026-03-18T11:48:05.300987"
+}

@@ -1,0 +1,69 @@
+{
+  "step": "mock_data_generator",
+  "input": {
+    "question": "Test with skip reuse",
+    "ui_planner_output": {
+      "title": "Market Test Dashboard",
+      "subtitle": "Overview of current market levels and trends",
+      "layout": "grid",
+      "blocks": [
+        {
+          "blockId": "kpi-card-01",
+          "category": "kpi-cards",
+          "title": "S&P 500 Level",
+          "dataContract": {
+            "type": "kpi",
+            "description": "Current value of the S&P 500 index",
+            "points": 1
+          },
+          "sub_question": "What is the current value of the S&P 500 index?",
+          "canonical_params": {
+            "ticker": "SPY",
+            "metric": "price"
+          }
+        },
+        {
+          "blockId": "line-chart-02",
+          "category": "line-charts",
+          "title": "SPY Price Trend",
+          "dataContract": {
+            "type": "line",
+            "description": "Historical price performance of SPY",
+            "points": 1
+          },
+          "sub_question": "What is the price history of the SPY ETF over the last 30 days?",
+          "canonical_params": {
+            "ticker": "SPY",
+            "period": "30d"
+          }
+        }
+      ],
+      "metadata": {
+        "question": "Test with skip reuse",
+        "block_count": 2,
+        "block_ids": [
+          "kpi-card-01",
+          "line-chart-02"
+        ]
+      }
+    },
+    "question_id": "test_with_skip_reuse"
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "mock_data_file": "/Users/shivc/Documents/Workspace/JS/qna-ai-admin/backend/headless/agents/mock/../../output/mock_data/test_with_skip_reuse.json",
+      "data_points": [
+        "question",
+        "generated_at",
+        "data",
+        "blocks"
+      ]
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-18T20:02:10.659788"
+  },
+  "duration": 1.611479,
+  "timestamp": "2026-03-18T20:02:10.660172"
+}

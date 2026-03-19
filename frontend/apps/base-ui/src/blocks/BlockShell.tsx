@@ -133,15 +133,28 @@ function renderTracker01(data: Record<string, unknown>, spec: BlockSpec): React.
 
 const BLOCK_REGISTRY: Record<string, Renderer> = {
     'kpi-card-01': renderKpiCard, 'kpi-card-02': renderKpiCard, 'kpi-card-03': renderKpiCard,
+    'kpi-card-04': renderKpiCard, 'kpi-card-05': renderKpiCard, 'kpi-card-06': renderKpiCard, 'kpi-card-07': renderKpiCard,
+    'kpi-card-08': renderKpiCard, 'kpi-card-09': renderKpiCard, 'kpi-card-10': renderKpiCard, 'kpi-card-11': renderKpiCard,
+    'kpi-card-12': renderKpiCard, 'kpi-card-13': renderKpiCard, 'kpi-card-14': renderKpiCard, 'kpi-card-15': renderKpiCard,
+    'kpi-card-16': renderKpiCard, 'kpi-card-17': renderKpiCard, 'kpi-card-18': renderKpiCard, 'kpi-card-19': renderKpiCard,
+    'kpi-card-20': renderKpiCard, 'kpi-card-21': renderKpiCard, 'kpi-card-22': renderKpiCard, 'kpi-card-23': renderKpiCard,
+    'kpi-card-24': renderKpiCard, 'kpi-card-25': renderKpiCard, 'kpi-card-26': renderKpiCard, 'kpi-card-27': renderKpiCard,
+    'kpi-card-28': renderKpiCard, 'kpi-card-29': renderKpiCard,
     'line-chart-01': renderLineChart01, 'line-chart-02': renderLineChart01,
     'line-chart-03': renderLineChart01, 'line-chart-04': renderLineChart01, 'line-chart-05': renderLineChart01,
+    'line-chart-06': renderLineChart01, 'line-chart-07': renderLineChart01, 'line-chart-08': renderLineChart01, 'line-chart-09': renderLineChart01,
     'bar-chart-01': renderBarChart01, 'bar-chart-02': renderBarChart01, 'bar-chart-03': renderBarChart01,
     'bar-chart-04': renderBarChart01, 'bar-chart-05': renderBarChart05, 'bar-chart-06': renderBarChart01,
-    'bar-list-01': renderBarList01, 'bar-list-02': renderBarList01,
+    'bar-chart-07': renderBarChart01, 'bar-chart-08': renderBarChart01, 'bar-chart-09': renderBarChart01,
+    'bar-chart-10': renderBarChart01, 'bar-chart-11': renderBarChart01, 'bar-chart-12': renderBarChart01,
+    'bar-list-01': renderBarList01, 'bar-list-02': renderBarList01, 'bar-list-03': renderBarList01,
+    'bar-list-04': renderBarList01, 'bar-list-05': renderBarList01, 'bar-list-06': renderBarList01, 'bar-list-07': renderBarList01,
     'donut-chart-01': renderDonutChart01, 'donut-chart-02': renderDonutChart01, 'donut-chart-03': renderDonutChart01,
-    'spark-chart-01': renderSparkChart01, 'spark-chart-02': renderSparkChart01,
+    'donut-chart-04': renderDonutChart01, 'donut-chart-05': renderDonutChart01, 'donut-chart-06': renderDonutChart01, 'donut-chart-07': renderDonutChart01,
+    'spark-chart-01': renderSparkChart01, 'spark-chart-02': renderSparkChart01, 'spark-chart-03': renderSparkChart01,
+    'spark-chart-04': renderSparkChart01, 'spark-chart-05': renderSparkChart01, 'spark-chart-06': renderSparkChart01,
     'table-01': renderTable01, 'table-action-01': renderTable01,
-    'tracker-01': renderTracker01, 'tracker-02': renderTracker01, 'tracker-03': renderTracker01,
+    'tracker-01': renderTracker01, 'tracker-02': renderTracker01, 'tracker-03': renderTracker01, 'tracker-04': renderTracker01,
 };
 
 // ─── BlockShell ───────────────────────────────────────────────────────────────

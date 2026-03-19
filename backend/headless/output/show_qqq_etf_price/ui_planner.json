@@ -6,89 +6,39 @@
   "output": {
     "success": true,
     "data": {
-      "title": "QQQ ETF Price Dashboard",
-      "subtitle": "Comprehensive view of QQQ ETF price performance, benchmark comparison, and top holdings",
-      "layout": "grid",
+      "title": "QQQ ETF Price Performance",
+      "subtitle": "Current price trend and historical performance of the Invesco QQQ Trust",
+      "layout": "wide",
       "blocks": [
-        {
-          "blockId": "kpi-card-01",
-          "category": "kpi-cards",
-          "title": "QQQ Key Metrics",
-          "dataContract": {
-            "type": "kpi",
-            "description": "Current price, daily change, YTD return, and 52-week range for QQQ",
-            "points": 4
-          },
-          "sub_question": "What are the current price, daily percentage change, year-to-date return, and 52-week high and low for the QQQ ETF?",
-          "canonical_params": {
-            "ticker": "QQQ",
-            "metric": "performance_summary"
-          }
-        },
         {
           "blockId": "line-chart-02",
           "category": "line-charts",
           "title": "QQQ Price Trend",
           "dataContract": {
-            "type": "timeseries",
-            "description": "Historical daily closing prices of QQQ",
-            "points": 252
+            "type": "time-series",
+            "description": "Historical price data for QQQ ETF",
+            "points": 1
           },
-          "sub_question": "What is the daily closing price history of the QQQ ETF over the past year?",
+          "sub_question": "What is the price history of the QQQ ETF over the last 30 days?",
           "canonical_params": {
             "ticker": "QQQ",
             "metric": "price",
-            "period": "1y"
-          }
-        },
-        {
-          "blockId": "line-chart-06",
-          "category": "line-charts",
-          "title": "QQQ vs Benchmark",
-          "dataContract": {
-            "type": "timeseries",
-            "description": "Cumulative total return of QQQ compared to S&P 500",
-            "points": 252
-          },
-          "sub_question": "How does the cumulative total return of the QQQ ETF compare to the S&P 500 benchmark over the past year?",
-          "canonical_params": {
-            "tickers": "QQQ,SPY",
-            "metric": "total_return",
-            "period": "1y",
-            "benchmark": "SPY"
-          }
-        },
-        {
-          "blockId": "bar-list-01",
-          "category": "bar-lists",
-          "title": "Top Holdings",
-          "dataContract": {
-            "type": "categorical",
-            "description": "List of largest QQQ holdings by market value",
-            "points": 10
-          },
-          "sub_question": "What are the top 10 holdings within the QQQ ETF ranked by their market weight?",
-          "canonical_params": {
-            "ticker": "QQQ",
-            "metric": "top_holdings"
+            "period": "30d"
           }
         }
       ],
       "metadata": {
         "question": "Show QQQ ETF price",
-        "block_count": 4,
+        "block_count": 1,
         "block_ids": [
-          "kpi-card-01",
-          "line-chart-02",
-          "line-chart-06",
-          "bar-list-01"
+          "line-chart-02"
         ]
       }
     },
     "error": null,
     "metadata": {},
-    "timestamp": "2026-03-16T16:00:03.154532"
+    "timestamp": "2026-03-16T23:22:41.555244"
   },
-  "duration": 29.422306,
-  "timestamp": "2026-03-16T16:00:03.155028"
+  "duration": 90.222837,
+  "timestamp": "2026-03-16T23:22:41.555466"
 }
