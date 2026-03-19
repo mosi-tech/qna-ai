@@ -238,6 +238,15 @@ export async function POST(request: NextRequest) {
                         blocks_data: orchestratorResult.blocks_data?.length || 0,
                     });
 
+                    // Debug: Show blocks_data structure
+                    if (!orchestratorResult.blocks_data || orchestratorResult.blocks_data.length === 0) {
+                        console.error(`[${closeTimestamp}] [headless/run] ❌ CRITICAL: blocks_data is empty!`);
+                        console.error(`[${closeTimestamp}] [headless/run] orchestratorResult keys:`, Object.keys(orchestratorResult).sort());
+                        console.error(`[${closeTimestamp}] [headless/run] Full orchestratorResult:`, orchestratorResult);
+                    } else {
+                        console.log(`[${closeTimestamp}] [headless/run] blocks_data[0]:`, orchestratorResult.blocks_data[0]);
+                    }
+
                     // Transform orchestrator output to HeadlessResult format
                     const headlessResult: HeadlessResult = {
                         question: question,

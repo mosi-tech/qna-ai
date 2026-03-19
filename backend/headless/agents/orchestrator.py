@@ -215,6 +215,7 @@ class AnalysisOrchestrator:
                             self._log(f"   Mock data has: {mock_block_ids}")
                             self._log(f"🧪 Generating new mock data instead of reusing")
                             mock_data_file = None  # Force regeneration
+                            similarity = None
                         else:
                             # Extract blocks from mock data and format for UI
                             for mock_block in mock_file_content.get("blocks", []):
@@ -226,6 +227,14 @@ class AnalysisOrchestrator:
                             self._log(f"✅ Loaded mock data with {len(blocks_data)} blocks")
                     except Exception as e:
                         self._log(f"⚠️  Failed to load mock data file: {e}")
+                        mock_data_file = None
+                        similarity = None
+
+                # Validate blocks_data was actually populated
+                if not blocks_data and mock_data_file:
+                    self._log(f"⚠️  Mock data loaded but no blocks extracted, regenerating...")
+                    mock_data_file = None
+                    similarity = None
 
                 # Generate new mock data if not reused or blockIds don't match
                 if not mock_data_file:

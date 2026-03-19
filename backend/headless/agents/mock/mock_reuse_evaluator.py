@@ -122,15 +122,20 @@ class MockReuseEvaluator(AgentBase):
                     # Check if this is a mock data entry
                     if analysis.get("is_mock_data"):
                         mock_file = analysis.get("mock_file")
+                        similarity = analysis.get("similarity", 0)
 
                         # Verify the file exists
                         if mock_file and os.path.exists(mock_file):
-                            self.logger.info(f"✅ Found reusable mock data: {mock_file} (similarity: {analysis.get('similarity', 0):.2f})")
+                            self.logger.info(f"✅ Found reusable mock data: {mock_file} (similarity: {similarity:.2f})")
                             return AgentResult(success=True, data={
                                 "reused": True,
                                 "mock_data_file": mock_file,
-                                "similarity": analysis.get("similarity", 0)
+                                "similarity": similarity
                             })
+                        else:
+                            # File doesn't exist or mock_file is None - log and skip
+                            self.logger.warning(f"⚠️  Mock data entry found but file missing/invalid: {mock_file} (similarity: {similarity:.2f})")
+                            continue
 
             # No reusable mock data found
             self.logger.info(f"✅ No reusable mock data found for: {question[:50]}...")
