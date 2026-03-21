@@ -217,8 +217,8 @@ const statusMonitoring: (BlockDefinition & { category: string })[] = [
 
 const otherBlocks: (BlockDefinition & { category: string })[] = [
   { id: 'table-action-01', name: 'Data Table', description: 'Structured data', component: TableExamples.TableAction01Example, category: 'Tables', defaultProps: {} },
-  { id: 'heatmap-01', name: 'Heatmap', description: 'Correlation matrix', component: HeatmapExamples.Heatmap01Example, category: 'Heatmaps', defaultProps: {} },
-  { id: 'treemap-01', name: 'Treemap', description: 'Tree hierarchy', component: TreemapExamples.Treemap01Example, category: 'Treemaps', defaultProps: {} },
+  { id: 'heatmap-01', name: 'Heatmap', description: 'Correlation matrix', component: HeatmapExamples.PortfolioCorrelationExample, category: 'Heatmaps', defaultProps: {} },
+  { id: 'treemap-01', name: 'Treemap', description: 'Tree hierarchy', component: TreemapExamples.EquityBookSectorExample, category: 'Treemaps', defaultProps: {} },
 ];
 
 // Combine all blocks (81 total)

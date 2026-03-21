@@ -1,2 +1,2 @@
-export * from './fintech/equity-book-sector';
-export * from './fintech/sp-sectors';
+export * from './fintech/equity-book-sector.tsx';
+export * from './fintech/sp-sectors.tsx';
