@@ -47,7 +47,7 @@ export const WidthCompatibilityTester: React.FC = () => {
   useEffect(() => {
     const loadApprovals = async () => {
       try {
-        const response = await fetch('http://localhost:3001/api/width-approvals');
+        const response = await fetch('/api/width-approvals');
         if (response.ok) {
           const data = await response.json();
           const approvals = data.data || {};
@@ -77,7 +77,7 @@ export const WidthCompatibilityTester: React.FC = () => {
     const saveToBackend = async () => {
       try {
         console.log('💾 Saving approvals:', approvals);
-        const response = await fetch('http://localhost:3001/api/width-approvals', {
+        const response = await fetch('/api/width-approvals', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(approvals),
