@@ -175,19 +175,23 @@ export const WidthCompatibilityTester: React.FC = () => {
             </div>
 
             {/* Approval checkbox */}
-            <label className="flex items-center gap-2 cursor-pointer whitespace-nowrap">
+            <div className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={blockApprovals.includes(width.size)}
-                onChange={() =>
-                  handleToggleApproval(currentBlock.id, width.size)
-                }
-                className="w-4 h-4 rounded"
+                onChange={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleToggleApproval(currentBlock.id, width.size);
+                }}
+                onClick={(e) => e.stopPropagation()}
+                className="w-4 h-4 rounded cursor-pointer"
               />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer whitespace-nowrap"
+                onClick={() => handleToggleApproval(currentBlock.id, width.size)}>
                 {blockApprovals.includes(width.size) ? '✓' : '○'}
               </span>
-            </label>
+            </div>
           </div>
 
           {/* Controls row */}
