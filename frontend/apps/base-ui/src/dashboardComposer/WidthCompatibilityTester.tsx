@@ -184,12 +184,9 @@ export const WidthCompatibilityTester: React.FC = () => {
               <input
                 type="checkbox"
                 checked={blockApprovals.includes(width.size)}
-                onChange={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
+                onChange={() => {
                   handleToggleApproval(currentBlock.id, width.size);
                 }}
-                onClick={(e) => e.stopPropagation()}
                 className="w-4 h-4 rounded cursor-pointer"
               />
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300 cursor-pointer whitespace-nowrap"
