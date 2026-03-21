@@ -140,7 +140,7 @@ const SparkAreaChart = React.forwardRef<HTMLDivElement, SparkAreaChartProps>(
                     name={category}
                     type="linear"
                     dataKey={category}
-                    stroke=""
+                    stroke="currentColor"
                     strokeWidth={2}
                     strokeLinejoin="round"
                     strokeLinecap="round"
@@ -225,7 +225,7 @@ const SparkLineChart = React.forwardRef<HTMLDivElement, SparkLineChartProps>(
                 name={category}
                 type="linear"
                 dataKey={category}
-                stroke=""
+                stroke="currentColor"
                 strokeWidth={2}
                 strokeLinejoin="round"
                 strokeLinecap="round"
@@ -313,7 +313,7 @@ const SparkBarChart = React.forwardRef<HTMLDivElement, BarChartProps>(
                 dataKey={category}
                 stackId={stacked ? 'stack' : undefined}
                 isAnimationActive={false}
-                fill=""
+                fill="currentColor"
               />
             ))}
           </RechartsBarChart>
