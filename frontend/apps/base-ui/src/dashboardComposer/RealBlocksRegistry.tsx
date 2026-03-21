@@ -217,8 +217,10 @@ const statusMonitoring: (BlockDefinition & { category: string })[] = [
 
 const otherBlocks: (BlockDefinition & { category: string })[] = [
   { id: 'table-action-01', name: 'Data Table', description: 'Structured data', component: TableExamples.TableAction01Example, category: 'Tables', defaultProps: {} },
-  { id: 'heatmap-01', name: 'Heatmap', description: 'Correlation matrix', component: HeatmapExamples.PortfolioCorrelationExample, category: 'Heatmaps', defaultProps: {} },
-  { id: 'treemap-01', name: 'Treemap', description: 'Tree hierarchy', component: TreemapExamples.EquityBookSectorExample, category: 'Treemaps', defaultProps: {} },
+  { id: 'heatmap-01', name: 'Heatmap 01', description: 'Portfolio correlation', component: HeatmapExamples.PortfolioCorrelationExample, category: 'Heatmaps', defaultProps: {} },
+  { id: 'heatmap-02', name: 'Heatmap 02', description: 'Sector correlation', component: HeatmapExamples.SectorCorrelationExample, category: 'Heatmaps', defaultProps: {} },
+  { id: 'treemap-01', name: 'Treemap 01', description: 'Equity by sector', component: TreemapExamples.EquityBookSectorExample, category: 'Treemaps', defaultProps: {} },
+  { id: 'treemap-02', name: 'Treemap 02', description: 'S&P sectors', component: TreemapExamples.SpSectorsExample, category: 'Treemaps', defaultProps: {} },
 ];
 
 // Combine all blocks (81 total)
@@ -243,8 +245,8 @@ export const BLOCKS_BY_CATEGORY = {
   'Bar Lists': barLists,
   'Status Monitoring': statusMonitoring,
   'Tables': [otherBlocks[0]],
-  'Heatmaps': [otherBlocks[1]],
-  'Treemaps': [otherBlocks[2]],
+  'Heatmaps': [otherBlocks[1], otherBlocks[2]],
+  'Treemaps': [otherBlocks[3], otherBlocks[4]],
 };
 
 export const BLOCK_CATEGORIES = Object.keys(BLOCKS_BY_CATEGORY);
