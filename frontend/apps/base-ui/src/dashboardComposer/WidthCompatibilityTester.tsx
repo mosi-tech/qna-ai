@@ -50,8 +50,10 @@ export const WidthCompatibilityTester: React.FC = () => {
         if (response.ok) {
           const data = await response.json();
           const approvals = data.data || {};
+          console.log('✓ Loaded approvals:', approvals);
           setApprovals(approvals);
         } else {
+          console.warn('Backend returned non-ok status:', response.status);
           setApprovals({});
         }
       } catch (err) {
@@ -67,13 +69,17 @@ export const WidthCompatibilityTester: React.FC = () => {
   useEffect(() => {
     const saveToBackend = async () => {
       try {
+        console.log('💾 Saving approvals:', approvals);
         const response = await fetch('/api/dashboard/width-approvals', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(approvals),
         });
-        if (!response.ok) {
-          console.error('Failed to save approvals to backend');
+        if (response.ok) {
+          const result = await response.json();
+          console.log('✓ Saved successfully:', result.data);
+        } else {
+          console.error('Failed to save approvals - status:', response.status);
         }
       } catch (err) {
         console.error('Error saving approvals to backend:', err);
