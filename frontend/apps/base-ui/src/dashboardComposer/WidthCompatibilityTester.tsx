@@ -41,7 +41,7 @@ export const WidthCompatibilityTester: React.FC = () => {
     '3/4': { category: BLOCK_CATEGORIES[0], blockIndex: 0 },
   });
   const [approvals, setApprovals] = useState<Record<string, WidthSize[]>>({});
-  const isInitialLoadRef = React.useRef(true);
+  const hasLoadedRef = React.useRef(false);
 
   // Load approvals from backend file on mount
   useEffect(() => {
@@ -60,16 +60,17 @@ export const WidthCompatibilityTester: React.FC = () => {
       } catch (err) {
         console.error('Error loading approvals from backend:', err);
         setApprovals({});
+      } finally {
+        hasLoadedRef.current = true;
       }
     };
 
     loadApprovals();
   }, []);
 
-  // Save approvals to backend file whenever they change (skip initial load)
+  // Save approvals to backend file whenever they change (skip until after load)
   useEffect(() => {
-    if (isInitialLoadRef.current) {
-      isInitialLoadRef.current = false;
+    if (!hasLoadedRef.current) {
       return;
     }
 
