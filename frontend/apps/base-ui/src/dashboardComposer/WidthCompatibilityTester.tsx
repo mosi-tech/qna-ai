@@ -42,27 +42,48 @@ export const WidthCompatibilityTester: React.FC = () => {
   });
   const [approvals, setApprovals] = useState<Record<string, WidthSize[]>>({});
 
-  // Load approvals from backend file on mount (with localStorage fallback)
+  // Load approvals from localStorage or backend on mount
   useEffect(() => {
     const loadApprovals = async () => {
       try {
-        const response = await fetch('/api/dashboard/width-approvals');
-        if (response.ok) {
-          const data = await response.json();
-          const approvals = data.data || {};
-          setApprovals(approvals);
-          localStorage.setItem('widthApprovals', JSON.stringify(approvals));
-        }
-      } catch (err) {
-        // Fallback to localStorage if backend unavailable
+        // Try localStorage first (faster, always reliable)
         const saved = localStorage.getItem('widthApprovals');
         if (saved) {
           try {
-            setApprovals(JSON.parse(saved));
+            const parsed = JSON.parse(saved);
+            setApprovals(parsed);
+            // Still try backend in background to sync newer data
+            try {
+              const response = await fetch('/api/dashboard/width-approvals');
+              if (response.ok) {
+                const data = await response.json();
+                const backendApprovals = data.data || {};
+                if (Object.keys(backendApprovals).length > 0) {
+                  setApprovals(backendApprovals);
+                  localStorage.setItem('widthApprovals', JSON.stringify(backendApprovals));
+                }
+              }
+            } catch {
+              // Backend sync failed, stick with localStorage
+            }
+            return;
           } catch (e) {
-            console.error('Failed to load approvals', e);
+            console.error('Failed to parse localStorage approvals', e);
           }
         }
+
+        // Fallback to backend if localStorage empty
+        const response = await fetch('/api/dashboard/width-approvals');
+        if (response.ok) {
+          const data = await response.json();
+          const backendApprovals = data.data || {};
+          setApprovals(backendApprovals);
+          if (Object.keys(backendApprovals).length > 0) {
+            localStorage.setItem('widthApprovals', JSON.stringify(backendApprovals));
+          }
+        }
+      } catch (err) {
+        console.error('Error loading approvals:', err);
       }
     };
 
