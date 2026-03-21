@@ -89,20 +89,10 @@ export const BarChart08: React.FC<BarChart08Props> = ({
                     colors={colors as AvailableChartColorsKeys[]}
                     type={type}
                     showLegend={false}
-                    yAxisWidth={45}
+                    yAxisWidth={50}
+                    showGridLines={true}
                     valueFormatter={valueFormatter}
-                    className="mt-10 hidden !h-72 md:block"
-                />
-                <BarChart
-                    data={data}
-                    index={indexField}
-                    categories={categories}
-                    colors={colors as AvailableChartColorsKeys[]}
-                    type={type}
-                    showLegend={false}
-                    showYAxis={false}
-                    valueFormatter={valueFormatter}
-                    className="mt-6 !h-72 md:hidden"
+                    className="mt-10 !h-72"
                 />
             </div>
         </Card>

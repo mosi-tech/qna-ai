@@ -30,3 +30,58 @@ body {
 .recharts-responsive-container {
     @apply w-full h-full !important;
 }
+
+/* Container Query Support for Responsive Components */
+
+/* KPI Cards - Responsive Grid based on container width */
+dl[class*="grid"] {
+    container-type: inline-size;
+}
+
+/* 1 column for very small containers (< 300px) */
+@container (max-width: 299px) {
+    dl.grid {
+        @apply grid-cols-1 !important;
+    }
+}
+
+/* 2 columns for small containers (300px - 600px) */
+@container (min-width: 300px) and (max-width: 599px) {
+    dl.grid {
+        @apply grid-cols-1 sm:grid-cols-2 !important;
+    }
+}
+
+/* 3 columns for medium containers (600px+) */
+@container (min-width: 600px) {
+    dl.grid {
+        @apply grid-cols-2 lg:grid-cols-3 !important;
+    }
+}
+
+/* ===== VIEWPORT-BASED FONT RESPONSIVENESS ===== */
+
+/* Mobile viewport (< 640px) */
+@media (max-width: 639px) {
+    h1 { font-size: 1.125rem; line-height: 1.75rem; }
+    h2 { font-size: 1rem; line-height: 1.5rem; }
+    h3 { font-size: 0.875rem; line-height: 1.25rem; }
+    p { font-size: 0.75rem; line-height: 1rem; }
+    span, small { font-size: 0.75rem; }
+}
+
+/* Tablet viewport (640px - 1024px) */
+@media (min-width: 640px) and (max-width: 1023px) {
+    h1 { font-size: 1.25rem; line-height: 1.75rem; }
+    h2 { font-size: 1.125rem; line-height: 1.75rem; }
+    h3 { font-size: 1rem; line-height: 1.5rem; }
+    p { font-size: 0.875rem; line-height: 1.25rem; }
+}
+
+/* Desktop viewport (1024px+) */
+@media (min-width: 1024px) {
+    h1 { font-size: 1.875rem; line-height: 2.25rem; }
+    h2 { font-size: 1.5rem; line-height: 2rem; }
+    h3 { font-size: 1.25rem; line-height: 1.75rem; }
+    p { font-size: 1rem; line-height: 1.5rem; }
+}

@@ -1,0 +1,128 @@
+{
+  "execution_complete": true,
+  "question_number": 215,
+  "original_question": "Which positions had the strongest closing hour performance over the last 20 trading days?",
+  "agent_execution": "Question Decomposer Agent",
+  "execution_timestamp": "2026-03-20",
+  "analysis": {
+    "question_type": "filtering_and_ranking_with_intraday_analysis",
+    "requires_data_retrieval": true,
+    "requires_analysis": true,
+    "decomposition_required": true,
+    "analysis_summary": "Question asks to identify and rank open positions based on their closing hour performance over a specific 20-day lookback period. This requires both data retrieval to get positions and specialized intraday analysis focused on the closing hour time segment."
+  },
+  "decomposition": {
+    "is_leaf_node": false,
+    "decomposition_type": "composite_with_new_utility_creation",
+    "sub_questions": [
+      {
+        "step": 1,
+        "type": "data_retrieval",
+        "description": "Retrieve all open positions with P&L metrics",
+        "utility_name": "get_open_positions_with_pnl",
+        "utility_domain": "portfolio",
+        "purpose": "Identifies which positions/symbols need to be analyzed for closing hour performance",
+        "expected_outputs": [
+          "symbol",
+          "quantity",
+          "cost_basis",
+          "current_value",
+          "unrealized_gain_loss"
+        ]
+      },
+      {
+        "step": 2,
+        "type": "intraday_analysis",
+        "description": "Analyze closing hour performance for identified positions",
+        "utility_name": "analyze_closing_hour_performance",
+        "utility_domain": "intraday",
+        "utility_status": "NEW - created for question 215",
+        "purpose": "Calculate closing hour-specific performance metrics and rank positions by performance strength",
+        "parameters": {
+          "symbols": "from_step_1",
+          "lookback_period_days": 20,
+          "time_segment": "closing_hour",
+          "analysis_metric": "performance_strength_score"
+        },
+        "expected_outputs": [
+          "symbol",
+          "closing_hour_return_percent",
+          "closing_hour_win_rate",
+          "number_of_closing_sessions_analyzed",
+          "average_closing_hour_return",
+          "best_closing_hour_return",
+          "worst_closing_hour_return",
+          "closing_hour_consistency_score",
+          "closing_hour_performance_strength_score",
+          "lookback_period",
+          "intraday_price_at_hour_open",
+          "intraday_price_at_hour_close"
+        ]
+      }
+    ],
+    "question_fully_answered": true,
+    "reasoning": "The decomposition breaks down the composite question into two independent steps: first retrieving the list of positions that need analysis, then analyzing the closing hour performance for those positions. The new utility provides the specialized intraday analysis needed for the closing hour time segment, enabling position ranking by closing hour performance strength."
+  },
+  "new_utilities_created": [
+    {
+      "name": "analyze_closing_hour_performance",
+      "domain": "intraday",
+      "description": "Analyze the closing hour (final hour of trading session) performance for a list of symbols over a specified lookback period (e.g., 20 trading days) to identify which positions show the strongest closing hour performance. Calculates closing hour returns, win rates, consistency, and generates a performance strength score to rank positions.",
+      "sub_utilities": [
+        "symbol",
+        "closing_hour_return_percent",
+        "closing_hour_win_rate",
+        "number_of_closing_sessions_analyzed",
+        "average_closing_hour_return",
+        "best_closing_hour_return",
+        "worst_closing_hour_return",
+        "closing_hour_consistency_score",
+        "closing_hour_performance_strength_score",
+        "lookback_period",
+        "intraday_price_at_hour_open",
+        "intraday_price_at_hour_close"
+      ],
+      "rationale": "The existing utility library contained general intraday analysis capabilities but lacked a dedicated utility for closing hour specific performance metrics. This new utility fills the gap by providing: (1) Closing hour-specific return calculations, (2) Win rate statistics for closing hour direction, (3) Consistency scoring across the lookback period, (4) A composite performance strength score for ranking positions."
+    }
+  ],
+  "library_update": {
+    "status": "COMPLETED",
+    "action": "Added 1 new utility to question_utility_library_final.json",
+    "insertion_point": "Alphabetically between 'analyze_breakout_potential' and 'analyze_consecutive_high_volume_moves'",
+    "library_location": "/Users/shivc/Documents/Workspace/JS/qna-ai-admin/backend/headless/output/question_utility_library_final.json",
+    "library_size_before": 71,
+    "library_size_after": 72,
+    "validation": {
+      "json_valid": true,
+      "alphabetical_order_maintained": true,
+      "all_required_fields_present": true,
+      "no_duplicates": true
+    }
+  },
+  "output_files_generated": [
+    {
+      "filename": "question_215_decomposition.json",
+      "content": "Structured decomposition with analysis and sub-questions"
+    },
+    {
+      "filename": "question_215_agent_summary.md",
+      "content": "Markdown summary of decomposition and library updates"
+    },
+    {
+      "filename": "question_215_final_output.json",
+      "content": "This comprehensive JSON output file"
+    },
+    {
+      "filename": "question_utility_library_final.json",
+      "content": "Updated library with new utility"
+    }
+  ],
+  "quality_assurance": {
+    "sub_questions_independent": true,
+    "new_utility_complete": true,
+    "question_fully_addressed": true,
+    "existing_utilities_preserved": true,
+    "alphabetical_order_maintained": true,
+    "json_validity_verified": true
+  }
+}

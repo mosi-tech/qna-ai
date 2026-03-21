@@ -1,0 +1,323 @@
+
+==========================================================================================
+QUESTION PRIORITIZER AGENT - FINAL REPORT
+==========================================================================================
+
+EXECUTIVE SUMMARY
+------------------------------------------------------------------------------------------
+
+All 1,813 retail investor questions have been rearranged by importance and analyzed
+for retail investor focus. The analysis reveals a clear three-tier core (CRITICAL +
+HIGH = 398 questions) for operational portfolio management, with MEDIUM tier
+providing strategic depth for advanced investors.
+
+KEY METRICS
+------------------------------------------------------------------------------------------
+  Total Questions Analyzed:         1,813
+  Duplicate Questions Found:          160 (8.8%)
+  Unique Core Use Cases:              15
+  Implementation Priority:            CRITICAL → HIGH → MEDIUM → LOW → IRRELEVANT
+
+TIER DISTRIBUTION & STRATEGY
+------------------------------------------------------------------------------------------
+
+CRITICAL TIER (Tier 1): 65 questions (3.6%)
+├─ Essential for any trader/investor
+├─ Required for daily operations
+├─ Implementable with basic API calls
+└─ Focus Areas:
+    • Account Management (9): equity, cash, buying power, PDT status, blocks
+    • Position Tracking (11): current holdings, quantities, valuations
+    • P&L Monitoring (15): unrealized/realized gains/losses daily tracking
+    • Order Management (8): order status, types, fills, pending orders
+    • Margin & Risk (7): margin multiplier, requirements, maintenance
+    • Sector/Industry (4): basic allocation tracking
+    
+    Sample Critical Questions:
+    1. What is my current account equity and buying power?
+    2. How much cash is currently available to trade?
+    3. What is my day-trading buying power right now?
+    4. Is my account currently blocked from trading?
+    5. Has my account been flagged as a pattern day trader?
+
+HIGH TIER (Tier 2): 333 questions (18.4%)
+├─ Important for active traders
+├─ Support daily monitoring and decision-making
+├─ Requires technical indicator calculations
+└─ Focus Areas:
+    • Technical Analysis (141): moving averages, RSI, MACD, ATR, oscillators
+    • Daily Performance (39): intraday P&L, hourly analysis, daily changes
+    • Trend Analysis (76): strength, breakouts, support/resistance
+    • Trading Signals (28): entry/exit signals, crossovers, quality metrics
+    • Position Sizing (41): position weight, allocation percentages
+    • Trade Quality (39): win rates, trade analysis, performance stats
+    • Liquidity (59): volume, spreads, bid-ask analysis
+    
+    Sample High-Tier Questions:
+    66. What is the correlation matrix of my top five positions over the last 60 trades?
+    67. Which positions had the highest intraday range today?
+    70. Which positions had the lowest trading volume today?
+    73. Which positions have a price above their 20-day moving average?
+    81. Which positions have RSI above 70?
+
+MEDIUM TIER (Tier 3): 1,338 questions (73.8%)
+├─ Strategic analysis and portfolio planning
+├─ Monthly/quarterly review focus
+├─ Supports long-term portfolio management
+└─ Focus Areas:
+    • General Analysis (891): portfolio composition, asset breakdown, overview
+    • Benchmarking (120): performance vs benchmarks, outperformance analysis
+    • Risk Metrics (116): volatility, Sharpe ratio, maximum drawdown, VaR
+    • Correlation Analysis (66): asset relationships, diversification benefits
+    • Income Analysis (45): dividend tracking, yield analysis
+    • Historical Analysis (37): 52-week data, long-term trends
+    • Momentum Analysis (39): rate of change, accelerating trends
+    • Trend Analysis (76): seasonal patterns, recurring cycles
+    • Seasonality (16): month/day/quarter effects
+
+LOW TIER (Tier 4): 38 questions (2.1%)
+├─ Specialized/niche analysis
+├─ Advanced statistical methods
+├─ Rarely needed by typical retail investors
+└─ Focus Areas:
+    • Statistical Analysis: skewness, kurtosis, percentiles, tail risk
+    • Volatility Clustering: regime detection, autocorrelation, ARCH
+    • Advanced Methods: factor attribution, stress testing, Monte Carlo
+
+IRRELEVANT TIER (Tier 5): 39 questions (2.2%)
+├─ Not applicable to personal portfolio management
+├─ Price prediction (infeasible)
+├─ Institutional-only data
+├─ Off-topic general market analysis
+└─ Examples:
+    • "What's my portfolio's sector exposure to interest rate sensitive industries?"
+    • "What's the term structure of interest rates across maturities?"
+    • "How much could I save by switching to lower-cost funds?"
+
+DUPLICATE ANALYSIS
+------------------------------------------------------------------------------------------
+Total Duplicates Identified: 160 (8.8% of all questions)
+
+Distribution by Tier:
+  CRITICAL: 8 duplicates (12.3% of CRITICAL tier)
+  HIGH:     46 duplicates (13.8% of HIGH tier)
+  MEDIUM:   102 duplicates (7.6% of MEDIUM tier)
+  LOW:      2 duplicates (5.3% of LOW tier)
+  IRRELEVANT: 2 duplicates (5.1% of IRRELEVANT tier)
+
+Consolidation Impact:
+- 160 duplicate questions can be consolidated into their original counterparts
+- Effective unique questions: 1,653
+- This provides 8.8% consolidation opportunity for Phase 1 implementation
+
+Common Duplicate Patterns:
+1. Directional opposites: "above/below", "highest/lowest", "gaining/losing"
+2. Time variations: "30 days/60 days", "average/median"
+3. Semantic variations: Different phrasing of same analytical need
+4. Singular/plural: "position"/"positions", "symbol"/"symbols"
+
+USE CASE BREAKDOWN
+------------------------------------------------------------------------------------------
+Top 15 Use Cases by Question Count:
+
+  1. General Analysis (891):     Portfolio composition, asset breakdown, overview stats
+  2. Technical Analysis (141):   Moving averages, RSI, MACD, momentum indicators
+  3. Benchmarking (120):         Performance comparison, alpha, tracking error
+  4. Risk Metrics (116):         Volatility, Sharpe ratio, max drawdown, VaR
+  5. Trend Analysis (76):        Strength, breakouts, support/resistance patterns
+  6. Correlation Analysis (66):  Asset relationships, beta, covariance
+  7. Liquidity Analysis (59):    Volume, spreads, bid-ask, trading activity
+  8. Income Analysis (45):       Dividends, yield, earnings, payout metrics
+  9. Position Tracking (41):     Holdings list, quantities, valuations
+ 10. Daily Performance (39):     Intraday P&L, hourly analysis, daily changes
+ 11. Momentum Analysis (39):     Rate of change, acceleration, deceleration
+ 12. Historical Analysis (37):   52-week highs/lows, price history
+ 13. Institutional (36):         Fund data, NAV, costs (NOT applicable)
+ 14. Advanced Analytics (26):    Attribution, stress testing, advanced methods
+ 15. Seasonality (16):           Seasonal patterns, calendar effects
+
+FREQUENCY DISTRIBUTION
+------------------------------------------------------------------------------------------
+When traders typically need each tier's questions:
+
+DAILY (Asked every trading day):
+  • CRITICAL tier questions - mandatory for position monitoring
+  • HIGH tier technical/performance questions - for active traders
+  • Total questions in this frequency: ~400
+
+WEEKLY (Asked once per week):
+  • Position sizing and weight analysis
+  • Technical indicator updates
+  • Trade quality and win rate analysis
+  • Total questions in this frequency: ~250
+
+MONTHLY (Asked once per month):
+  • Strategic portfolio review
+  • Risk metrics and volatility analysis
+  • Correlation and diversification assessment
+  • Income and dividend analysis
+  • Total questions in this frequency: ~900
+
+RARELY (Asked infrequently):
+  • Statistical analysis and advanced metrics
+  • Advanced analytical methods
+  • Total questions in this frequency: ~60
+
+IMPLEMENTATION RECOMMENDATIONS
+------------------------------------------------------------------------------------------
+
+PHASE 1 - CRITICAL FOUNDATION (65 questions)
+└─ Estimated effort: 2-3 sprints
+└─ Business value: Essential operational capability
+└─ Dependencies: Account, positions, orders, margin APIs
+   Priority: Implement all 65 questions
+   Impact: Enables basic portfolio management dashboard
+
+PHASE 2 - HIGH VALUE (333 questions) 
+└─ Estimated effort: 4-6 sprints
+└─ Business value: Active trader support
+└─ Dependencies: Technical indicators, market data, time-series analysis
+   Priority: Implement top 100 questions by trader demand
+   Impact: Enables advanced monitoring and trading support
+
+PHASE 3 - STRATEGIC DEPTH (1,338 questions)
+└─ Estimated effort: 8-12 sprints
+└─ Business value: Long-term investor support
+└─ Dependencies: Complex analytics, backtesting, correlation matrices
+   Priority: Implement by use case clusters
+   Impact: Enables comprehensive portfolio analysis
+
+PHASE 4 - SPECIALIZED FEATURES (38 LOW tier questions)
+└─ Estimated effort: 2-4 sprints
+└─ Business value: Differentiated analytics
+└─ Dependencies: Advanced statistical libraries
+   Priority: Based on user demand and competitive analysis
+
+PHASE 5 - DEPRECATION (39 IRRELEVANT questions)
+└─ Action: Remove or redirect these questions
+└─ Impact: Cleaner, more focused question library
+
+DATA CONSOLIDATION STRATEGY
+------------------------------------------------------------------------------------------
+
+Step 1: Duplicate Consolidation
+  - 160 duplicate questions → mapped to originals
+  - Reduces from 1,813 to 1,653 unique questions
+  - Maintain dual references in output
+
+Step 2: Use-Case Clustering
+  - Group questions by use case (15 primary clusters)
+  - Enables focused implementation and API optimization
+  - Provides clearer product feature structure
+
+Step 3: Tier-Based Prioritization
+  - Focus development on CRITICAL tier first (3.6%)
+  - Then HIGH tier (18.4%)
+  - Then MEDIUM tier (73.8%)
+  - Reserve LOW and IRRELEVANT for later phases
+
+Step 4: Frequency-Based Caching
+  - Daily questions: real-time or near real-time updates
+  - Weekly questions: updated on schedule
+  - Monthly questions: batch processing acceptable
+  - Rarely: on-demand only
+
+OUTPUT FILE STRUCTURE
+------------------------------------------------------------------------------------------
+
+File: all-questions/consolidated_questions_prioritized.json
+
+Structure:
+{
+  "total_questions": 1813,
+  "tier_summary": {
+    "critical": 65,
+    "high": 333,
+    "medium": 1338,
+    "low": 38,
+    "irrelevant": 39
+  },
+  "rearranged_questions": [
+    {
+      "rank": 1,
+      "original_question_number": N,
+      "question": "...",
+      "importance_tier": "critical|high|medium|low|irrelevant",
+      "frequency": "daily|weekly|monthly|rarely",
+      "use_case": "specific_use_case",
+      "rationale": "...",
+      "duplicate_of": null or original_number,
+      "related_questions": [...]
+    },
+    ...
+  ],
+  "duplicates_found": 160,
+  "consolidation_notes": "..."
+}
+
+KEY FINDINGS
+------------------------------------------------------------------------------------------
+
+1. SKEWED DISTRIBUTION
+   - 22% of questions are CRITICAL or HIGH priority
+   - 74% are MEDIUM priority (strategic depth)
+   - 4% are LOW or IRRELEVANT
+   → Recommendation: Focus Phase 1 on CRITICAL tier only
+
+2. DUPLICATE PREVALENCE
+   - 8.8% duplication rate across all tiers
+   - Highest in HIGH tier (13.8%)
+   - Suggests question generation was not fully deduplicated
+   → Recommendation: Apply strict deduplication before implementation
+
+3. USE-CASE CONCENTRATION
+   - 49% of questions are generic "general analysis" (891 questions)
+   - Only 8% are actionable technical/signal questions (333 HIGH tier)
+   - Suggests need for more specific question refinement
+   → Recommendation: Subdivide "general analysis" into specific use cases
+
+4. FREQUENCY ALIGNMENT
+   - CRITICAL questions cluster around daily operations
+   - HIGH questions support active trading (daily/weekly)
+   - MEDIUM questions support strategic planning (monthly)
+   → Recommendation: Implement caching/update strategy aligned to frequency
+
+5. RETAIL FOCUS ACHIEVED
+   - All questions evaluated for personal portfolio applicability
+   - Predictions and institutional-only questions separated out
+   - Action-oriented, not theoretical
+   → Recommendation: Maintain this retail-investor focus in refinement
+
+NEXT STEPS
+------------------------------------------------------------------------------------------
+
+1. ✓ Rearranged all 1,813 questions by importance tier
+2. ✓ Identified 160 duplicates with similarity > 0.85
+3. ✓ Analyzed use cases and frequency patterns
+4. ✓ Generated implementation roadmap by tier
+5. → NEXT: Phase 1 decomposition focusing on 65 CRITICAL questions
+6. → THEN: Map CRITICAL questions to required APIs and data sources
+7. → THEN: Design dashboard/UI for CRITICAL tier visibility
+8. → THEN: Implement CRITICAL tier agents and tools
+
+CONCLUSION
+------------------------------------------------------------------------------------------
+
+The 1,813 questions have been successfully rearranged by retail investor importance,
+with clear tier stratification and use-case classification. The distribution shows:
+
+• 65 CRITICAL questions form the essential foundation
+• 333 HIGH-tier questions enable active trading support
+• 1,338 MEDIUM-tier questions provide strategic depth
+• 160 duplicates can be consolidated for cleaner implementation
+• Focus implementation on CRITICAL tier first for maximum impact
+
+This prioritization provides a clear roadmap for Phase 1 decomposition and
+subsequent agent/tool implementation.
+
+==========================================================================================
+Generated: 2026-03-20
+Agent: Question Prioritizer
+File: all-questions/consolidated_questions_prioritized.json
+Status: COMPLETE ✓
+==========================================================================================

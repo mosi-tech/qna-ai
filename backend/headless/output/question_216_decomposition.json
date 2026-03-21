@@ -1,0 +1,64 @@
+{
+  "question_number": 216,
+  "original_question": "Which positions had the weakest closing hour performance over the last 20 trading days?",
+  "analysis": {
+    "question_type": "filtering_and_ranking",
+    "requires_data_retrieval": true,
+    "requires_analysis": true,
+    "decomposition_required": true,
+    "keywords": ["which", "weakest", "closing hour performance"],
+    "data_entities_referenced": ["positions"],
+    "analysis_type": "intraday_performance_analysis",
+    "key_metric": "closing_hour_performance",
+    "time_period": "20_trading_days"
+  },
+  "decomposition": {
+    "is_leaf": false,
+    "reasoning": "Question requires both data retrieval (get open positions) and analysis (analyze closing hour performance). The existing 'analyze_closing_hour_performance' utility can analyze a list of symbols over a lookback period. Must decompose into retrieval step followed by analysis step.",
+    "sub_questions": [
+      {
+        "sequence": 1,
+        "question": "Get all currently open positions with their cost basis and market values",
+        "utility_name": "get_open_positions_with_pnl",
+        "required_parameters": [],
+        "output_fields": ["symbol", "quantity", "current_value", "unrealized_gain_loss"]
+      },
+      {
+        "sequence": 2,
+        "question": "Analyze closing hour performance for open positions over the last 20 trading days, ranking from weakest to strongest",
+        "utility_name": "analyze_closing_hour_performance",
+        "required_parameters": [
+          "symbols",
+          "lookback_period: 20"
+        ],
+        "output_fields": [
+          "symbol",
+          "closing_hour_return_percent",
+          "closing_hour_win_rate",
+          "closing_hour_performance_strength_score",
+          "number_of_closing_sessions_analyzed"
+        ],
+        "filtering_instruction": "Sort by closing_hour_performance_strength_score ascending to identify weakest performers"
+      }
+    ]
+  },
+  "utilities_referenced": [
+    {
+      "name": "get_open_positions_with_pnl",
+      "status": "existing",
+      "purpose": "Retrieve list of open positions to pass to analysis utility"
+    },
+    {
+      "name": "analyze_closing_hour_performance",
+      "status": "existing",
+      "purpose": "Analyze closing hour performance metrics for specified symbols"
+    }
+  ],
+  "new_utilities_created": [],
+  "library_update_required": false,
+  "summary": {
+    "decomposition_type": "two_step_retrieval_and_analysis",
+    "data_flow": "open_positions → extract_symbols → analyze_closing_hour_performance → rank_by_weakest_performance",
+    "expected_output": "List of positions ranked by closing hour performance from weakest to strongest, with metrics including closing hour return percentage, win rate, and performance strength score"
+  }
+}

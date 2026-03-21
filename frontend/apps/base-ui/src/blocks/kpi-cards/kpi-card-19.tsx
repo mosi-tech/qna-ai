@@ -118,7 +118,7 @@ function KpiCardItem({ item, chartData, indexField, valueSizeClass }: KpiCardIte
             </dd>
             {chartData.length > 0 && (
                 <AreaChart
-                    className="mt-8 h-20"
+                    className="mt-8 h-28"
                     data={chartData}
                     index={indexField}
                     categories={[item.chartCategory]}

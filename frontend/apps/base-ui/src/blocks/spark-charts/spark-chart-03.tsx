@@ -122,7 +122,7 @@ export const SparkChart03: React.FC<SparkChart03Props> = ({
                                                         ? ['red']
                                                         : ['gray']) as any
                                             }
-                                            className="h-10 w-36 flex-none sm:w-44"
+                                            className="h-20 w-48 flex-none sm:w-56"
                                         />
                                     </li>
                                 ))}

@@ -1,0 +1,172 @@
+[
+  {
+    "question_number": 200,
+    "original_question": "Which positions have decreasing relative volume over the last 5 trading days?",
+    "decomposition": {
+      "question": "Which positions have decreasing relative volume over the last 5 trading days?",
+      "is_leaf": false,
+      "sub_questions": [
+        {
+          "question": "Get my open positions",
+          "is_leaf": true,
+          "utility_needed": {
+            "name": "get_open_positions_with_pnl",
+            "existing": true,
+            "sub_utilities": ["symbol", "quantity", "cost_basis", "current_value", "unrealized_gain_loss"]
+          }
+        },
+        {
+          "question": "Analyze volume trend over last 5 trading days for each position",
+          "is_leaf": true,
+          "utility_needed": {
+            "name": "analyze_relative_volume_change",
+            "existing": false,
+            "description": "Analyze relative volume changes over specified period to identify positions with decreasing trading volume. Returns volume trend indicators comparing recent volume to historical average volume.",
+            "sub_utilities": ["symbol", "volume_trend", "relative_change_percentage", "average_volume_5d", "current_volume", "trend_direction"]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "question_number": 201,
+    "original_question": "Which positions had the highest volume spike relative to 20-day average in the last 10 trading days?",
+    "decomposition": {
+      "question": "Which positions had the highest volume spike relative to 20-day average in the last 10 trading days?",
+      "is_leaf": true,
+      "utility_needed": {
+        "name": "analyze_volume_spikes",
+        "existing": true
+      }
+    }
+  },
+  {
+    "question_number": 202,
+    "original_question": "Which positions had the largest downside gap relative to ATR in the last 20 trading days?",
+    "decomposition": {
+      "question": "Which positions had the largest downside gap relative to ATR in the last 20 trading days?",
+      "is_leaf": true,
+      "utility_needed": {
+        "name": "analyze_gap_to_atr_ratios",
+        "existing": true
+      }
+    }
+  },
+  {
+    "question_number": 203,
+    "original_question": "Which positions had the largest upside gap relative to ATR in the last 20 trading days?",
+    "decomposition": {
+      "question": "Which positions had the largest upside gap relative to ATR in the last 20 trading days?",
+      "is_leaf": true,
+      "utility_needed": {
+        "name": "analyze_gap_to_atr_ratios",
+        "existing": true
+      }
+    }
+  },
+  {
+    "question_number": 204,
+    "original_question": "Which positions closed above the upper Bollinger Band in the last 10 trading days?",
+    "decomposition": {
+      "question": "Which positions closed above the upper Bollinger Band in the last 10 trading days?",
+      "is_leaf": true,
+      "utility_needed": {
+        "name": "analyze_bollinger_band_breakouts",
+        "existing": true
+      }
+    }
+  },
+  {
+    "question_number": 205,
+    "original_question": "Which positions closed below the lower Bollinger Band in the last 10 trading days?",
+    "decomposition": {
+      "question": "Which positions closed below the lower Bollinger Band in the last 10 trading days?",
+      "is_leaf": true,
+      "utility_needed": {
+        "name": "analyze_bollinger_band_breakouts",
+        "existing": true
+      }
+    }
+  },
+  {
+    "question_number": 206,
+    "original_question": "Which positions currently have the narrowest Bollinger Band width?",
+    "decomposition": {
+      "question": "Which positions currently have the narrowest Bollinger Band width?",
+      "is_leaf": true,
+      "utility_needed": {
+        "name": "get_positions_with_technicals",
+        "existing": true
+      }
+    }
+  },
+  {
+    "question_number": 207,
+    "original_question": "Which positions currently have the widest Bollinger Band width?",
+    "decomposition": {
+      "question": "Which positions currently have the widest Bollinger Band width?",
+      "is_leaf": true,
+      "utility_needed": {
+        "name": "get_positions_with_technicals",
+        "existing": true
+      }
+    }
+  },
+  {
+    "question_number": 208,
+    "original_question": "Which positions show the strongest breakout potential based on recent highs?",
+    "decomposition": {
+      "question": "Which positions show the strongest breakout potential based on recent highs?",
+      "is_leaf": false,
+      "sub_questions": [
+        {
+          "sub_question": "Get all open positions with current market price and recent price action data",
+          "utility": "get_positions_with_technicals",
+          "is_leaf": true
+        },
+        {
+          "sub_question": "Identify positions approaching or breaking recent resistance highs with analysis of breakout strength",
+          "utility": "analyze_breakout_potential",
+          "is_leaf": true
+        }
+      ],
+      "utility_needed": {
+        "name": "analyze_breakout_potential",
+        "existing": false,
+        "description": "Analyze open positions to identify those showing strongest breakout potential based on current price proximity to recent resistance highs and momentum indicators.",
+        "sub_utilities": [
+          "symbol",
+          "current_price",
+          "recent_high",
+          "days_since_high",
+          "percent_to_high",
+          "breakout_strength_score"
+        ]
+      }
+    }
+  },
+  {
+    "question_number": 209,
+    "original_question": "Which positions show the strongest mean reversion potential based on z-score from the 20-day mean?",
+    "decomposition": {
+      "question": "Which positions show the strongest mean reversion potential based on z-score from the 20-day mean?",
+      "is_leaf": true,
+      "utility_needed": {
+        "name": "calculate_mean_reversion_z_scores",
+        "existing": true
+      }
+    }
+  },
+  {
+    "question_number": 210,
+    "original_question": "Which positions had the highest intraday reversal frequency over the last 20 trading days?",
+    "decomposition": {
+      "question": "Which positions had the highest intraday reversal frequency over the last 20 trading days?",
+      "is_leaf": true,
+      "utility_needed": {
+        "name": "analyze_intraday_reversal_frequency",
+        "existing": true
+      }
+    }
+  }
+]

@@ -181,9 +181,9 @@ export const SparkChart04Example = () => {
     ];
 
     const items: SparkChart04MetricItem[] = [
-        { name: 'Monthly active users', stat: '341' },
-        { name: 'Monthly sessions', stat: '1,530' },
-        { name: 'Monthly user growth', stat: '4.9%' },
+        { name: 'Monthly active users', stat: '341', color: 'blue' },
+        { name: 'Monthly sessions', stat: '1,530', color: 'emerald' },
+        { name: 'Monthly user growth', stat: '4.9%', color: 'indigo' },
     ];
 
     return <SparkChart04 data={data} items={items} />;

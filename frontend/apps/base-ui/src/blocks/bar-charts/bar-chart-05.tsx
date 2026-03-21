@@ -85,9 +85,8 @@ export const BarChart05: React.FC<BarChart05Props> = ({
                             valueFormatter={valueFormatter}
                             type={type}
                             showLegend={false}
-                            showYAxis={false}
-                            startEndOnly={true}
-                            className="mt-8 !h-48"
+                            yAxisWidth={50}
+                            className="mt-8 h-72"
                         />
                         <ul
                             role="list"

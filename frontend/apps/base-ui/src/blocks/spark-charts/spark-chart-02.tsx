@@ -97,7 +97,7 @@ export const SparkChart02: React.FC<SparkChart02Props> = ({
                                             ? ['red']
                                             : ['gray']) as any
                                 }
-                                className="h-10 w-32 flex-none sm:w-44"
+                                className="h-20 w-40 flex-none sm:w-56"
                             />
                             <div className="w-14 text-right sm:w-16">
                                 <p className="text-sm font-medium text-gray-900 dark:text-gray-50">

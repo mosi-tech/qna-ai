@@ -119,9 +119,8 @@ export const BarChart04: React.FC<BarChart04Props> = ({
                             type={type}
                             valueFormatter={valueFormatter}
                             showLegend={false}
-                            showYAxis={false}
+                            yAxisWidth={50}
                             showGridLines={true}
-                            startEndOnly={true}
                             className="mt-8 !h-48"
                         />
                         <ul

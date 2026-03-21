@@ -1,0 +1,900 @@
+[
+  {
+    "name": "analyze_atr_trends",
+    "description": "Analyze the Average True Range (ATR) trends for a list of symbols over a specified period to identify if volatility is increasing, decreasing, or stable.",
+    "sub_utilities": [
+      "symbol",
+      "atr_values",
+      "trend_direction",
+      "average_atr",
+      "atr_change_percentage",
+      "lookback_period"
+    ]
+  },
+  {
+    "name": "analyze_consecutive_high_volume_moves",
+    "description": "Analyze daily price and volume history for a list of symbols to identify specific patterns such as consecutive days with price increases and above-average trading volume within a defined lookback period.",
+    "sub_utilities": [
+      "symbol",
+      "pattern_matched",
+      "consecutive_days_count",
+      "event_start_date",
+      "relative_volume_ratio",
+      "pattern_direction",
+      "volume_vs_average",
+      "lookback_period"
+    ]
+  },
+  {
+    "name": "analyze_daily_range_trends",
+    "description": "Analyze the daily price ranges (High - Low) for a list of symbols over a specified historical period to identify patterns of narrowing (decreasing volatility), widening, or stable ranges.",
+    "sub_utilities": [
+      "symbol",
+      "range_trend_direction",
+      "average_range",
+      "most_recent_range",
+      "trend_direction",
+      "volatility_status",
+      "trend_pattern",
+      "range_change_percentage"
+    ]
+  },
+  {
+    "name": "analyze_trading_halt_events",
+    "description": "Analyze historical trading data for a list of symbols to identify and count trading halt events within a specified timeframe (e.g., last 30 trading days), returning the frequency and timestamps of halts to determine the most halted positions.",
+    "sub_utilities": [
+      "symbol",
+      "halt_count",
+      "halt_timestamps",
+      "halt_codes"
+    ]
+  },
+  {
+    "name": "analyze_volume_spikes",
+    "description": "Identify and analyze volume spikes relative to historical averages for a list of symbols, returning the magnitude and frequency of unusual trading activity.",
+    "sub_utilities": [
+      "symbol",
+      "volume_spike_magnitude",
+      "spike_dates",
+      "relative_volume_ratio",
+      "frequency",
+      "lookback_period"
+    ]
+  },
+  {
+    "name": "calculate_average_intraday_range",
+    "description": "Calculate the average daily price range (High - Low) for a specific symbol over a specified historical period (e.g., 10 trading days).",
+    "sub_utilities": [
+      "symbol",
+      "lookback_period",
+      "daily_highs",
+      "daily_lows",
+      "average_range_value",
+      "average_daily_range"
+    ]
+  },
+  {
+    "name": "calculate_average_intraday_range_for_symbols",
+    "description": "Calculate the average daily price range (High - Low) for multiple symbols over a specified historical period to assess intraday volatility patterns.",
+    "sub_utilities": [
+      "symbol",
+      "average_range_value",
+      "daily_ranges",
+      "lookback_period",
+      "average_daily_range"
+    ]
+  },
+  {
+    "name": "calculate_benchmark_comparison",
+    "description": "Calculate the tracking error and other relative performance metrics (alpha, beta) of the portfolio against a specified benchmark ETF over a defined historical period (e.g., 60 trading days). This utility fetches the necessary historical return series for both the portfolio and the benchmark to compute the standard deviation of the excess returns.",
+    "sub_utilities": [
+      "tracking_error",
+      "portfolio_beta_vs_benchmark",
+      "portfolio_alpha_vs_benchmark",
+      "correlation_coefficient"
+    ]
+  },
+  {
+    "name": "calculate_daily_pnl_statistics",
+    "description": "Calculate daily profit/loss statistics including total realized and unrealized P&L, win rate, and average win/loss amounts for a specified date range.",
+    "sub_utilities": [
+      "daily_pnl",
+      "realized_pnl",
+      "unrealized_pnl",
+      "win_rate",
+      "average_win",
+      "average_loss",
+      "total_trades",
+      "winning_trades",
+      "losing_trades"
+    ]
+  },
+  {
+    "name": "calculate_gap_statistics",
+    "description": "Analyze historical daily price data (Open vs Previous Close) for a specified symbol over a given lookback period to identify and count gap-up and gap-down events.",
+    "sub_utilities": [
+      "gap_up_count",
+      "gap_down_count",
+      "gap_magnitudes",
+      "symbol",
+      "gap_up_percentage",
+      "gap_down_percentage",
+      "open_price",
+      "previous_close_price",
+      "gap_percentage",
+      "gap_type",
+      "previous_close"
+    ]
+  },
+  {
+    "name": "calculate_intraday_range_statistics",
+    "description": "Calculate detailed intraday range statistics for symbols including average range, range volatility, and distribution of ranges over a specified period.",
+    "sub_utilities": [
+      "average_range",
+      "max_range",
+      "min_range",
+      "range_volatility",
+      "distribution_percentiles",
+      "lookback_period"
+    ]
+  },
+  {
+    "name": "calculate_ma_crossovers",
+    "description": "Analyze a list of symbols to identify specific moving average crossover events (e.g., price crossing below 20-day SMA) within a defined recent lookback window (e.g., 3 trading days).",
+    "sub_utilities": [
+      "symbol",
+      "ma_period",
+      "crossover_direction",
+      "crossover_date",
+      "lookback_window",
+      "crossover_event_type",
+      "crossover_type",
+      "moving_average_period",
+      "price_at_crossover",
+      "deviation_percentage",
+      "event_date",
+      "ma_period_short",
+      "ma_period_long",
+      "ma_short_period",
+      "ma_long_period"
+    ]
+  },
+  {
+    "name": "calculate_max_drawdown",
+    "description": "Calculate the maximum peak-to-trough decline for a specific symbol over a specified historical timeframe (e.g., 6 months). This utility fetches the historical price data and computes the drawdown metric.",
+    "sub_utilities": [
+      "max_drawdown_percentage",
+      "max_drawdown_value",
+      "peak_date",
+      "trough_date"
+    ]
+  },
+  {
+    "name": "calculate_momentum_slopes",
+    "description": "Calculate the slope (rate of change) of specified Simple Moving Averages (e.g., 20-day, 50-day) for a list of symbols to determine if momentum is positive, negative, or deteriorating relative to another timeframe.",
+    "sub_utilities": [
+      "symbol",
+      "sma_20_slope",
+      "sma_50_slope",
+      "slope_trend_status"
+    ]
+  },
+  {
+    "name": "calculate_period_returns",
+    "description": "Calculate the percentage return (price change) for a list of provided symbols over a specified historical timeframe (e.g., 30 trading days).",
+    "sub_utilities": [
+      "symbol",
+      "start_date",
+      "end_date",
+      "period_return_percentage",
+      "start_price",
+      "end_price",
+      "percentage_return",
+      "period_start_date",
+      "period_end_date"
+    ]
+  },
+  {
+    "name": "calculate_portfolio_performance_metrics",
+    "description": "Calculate portfolio-level risk-adjusted return metrics such as Sortino ratio, Sharpe ratio, and volatility over a specified timeframe (e.g., YTD) using historical daily return data.",
+    "sub_utilities": [
+      "sortino_ratio",
+      "sharpe_ratio",
+      "annualized_volatility",
+      "max_drawdown",
+      "cumulative_return",
+      "portfolio_daily_returns",
+      "rolling_volatility_series",
+      "total_return",
+      "volatility",
+      "timeframe"
+    ]
+  },
+  {
+    "name": "calculate_price_streaks",
+    "description": "Calculate the streak of consecutive positive and negative price movements for a specific symbol over a defined historical period (e.g., 30 days).",
+    "sub_utilities": [
+      "consecutive_up_days",
+      "consecutive_down_days",
+      "current_streak_direction",
+      "current_streak_length",
+      "longest_positive_streak",
+      "longest_negative_streak",
+      "consecutive_positive_days",
+      "consecutive_negative_days",
+      "historical_period",
+      "symbol",
+      "period_analyzed"
+    ]
+  },
+  {
+    "name": "calculate_sma_proximity",
+    "description": "Calculate the percentage difference between the current market price and a specified Simple Moving Average (e.g., 20-day) for a list of symbols to determine proximity.",
+    "sub_utilities": [
+      "symbol",
+      "current_price",
+      "sma_value",
+      "percent_difference",
+      "sma_period",
+      "percentage_difference"
+    ]
+  },
+  {
+    "name": "calculate_symbol_performance_metrics",
+    "description": "Calculate performance metrics for specified symbols over a timeframe including total return, volatility, Sharpe ratio, and maximum drawdown.",
+    "sub_utilities": [
+      "symbol",
+      "total_return",
+      "annualized_return",
+      "volatility",
+      "sharpe_ratio",
+      "max_drawdown",
+      "time_period"
+    ]
+  },
+  {
+    "name": "get_account_info",
+    "description": "Retrieve comprehensive account summary information including current equity, available buying power, and cash balance.",
+    "sub_utilities": [
+      "account_equity",
+      "buying_power",
+      "cash_balance",
+      "day_trading_buying_power",
+      "account_status",
+      "trading_restrictions",
+      "active_flags",
+      "pdt_flag"
+    ]
+  },
+  {
+    "name": "get_account_performance_history",
+    "description": "Retrieve historical account-level performance data including equity curves, daily returns, and cumulative performance over specified time periods.",
+    "sub_utilities": [
+      "date",
+      "account_value",
+      "daily_return",
+      "cumulative_return",
+      "daily_pnl",
+      "period_start_date",
+      "period_end_date"
+    ]
+  },
+  {
+    "name": "get_benchmark_performance",
+    "description": "Retrieve historical performance metrics for a specified benchmark symbol (e.g., SPY) over a given timeframe, including total return and volatility, to enable comparison against portfolio performance.",
+    "sub_utilities": [
+      "benchmark_symbol",
+      "total_return_percent",
+      "volatility",
+      "performance_period"
+    ]
+  },
+  {
+    "name": "get_beta_metrics",
+    "description": "Calculate the beta coefficient for a list of provided symbols relative to a specified benchmark index (e.g., SPY) over a defined historical period.",
+    "sub_utilities": [
+      "symbol",
+      "beta_value",
+      "benchmark_symbol",
+      "lookback_period",
+      "time_period",
+      "correlation_coefficient"
+    ]
+  },
+  {
+    "name": "get_closed_positions",
+    "description": "Retrieve history of closed positions with realized P&L metrics, closing dates, and holding periods to analyze trade performance and execution.",
+    "sub_utilities": [
+      "symbol",
+      "quantity",
+      "entry_price",
+      "exit_price",
+      "entry_date",
+      "exit_date",
+      "realized_pnl",
+      "holding_period_days"
+    ]
+  },
+  {
+    "name": "get_closed_trade_statistics",
+    "description": "Calculate aggregated statistics from closed trades including total trades executed, winning trades, losing trades, and trade-related metrics.",
+    "sub_utilities": [
+      "total_trades",
+      "winning_trades",
+      "losing_trades",
+      "win_rate",
+      "average_win",
+      "average_loss",
+      "profit_factor",
+      "avg_holding_period"
+    ]
+  },
+  {
+    "name": "get_closed_trades",
+    "description": "Retrieve the history of closed trades within a specified date range, including entry and exit timestamps, symbols, and quantities to calculate holding periods and performance.",
+    "sub_utilities": [
+      "trade_id",
+      "symbol",
+      "entry_date",
+      "exit_date",
+      "holding_period_days",
+      "realized_pnl",
+      "quantity",
+      "entry_timestamp",
+      "exit_timestamp",
+      "trade_date",
+      "execution_price",
+      "notional_value"
+    ]
+  },
+  {
+    "name": "get_correlation_matrix",
+    "description": "Calculate the correlation coefficient matrix for a provided list of symbols over a specified historical time period (e.g., 60 trading days) based on daily closing prices.",
+    "sub_utilities": [
+      "correlation_matrix",
+      "symbols_analyzed",
+      "time_period",
+      "correlation_coefficient_matrix",
+      "time_period_days"
+    ]
+  },
+  {
+    "name": "get_daily_performance_history",
+    "description": "Retrieve daily performance history for the portfolio or specific positions including daily returns, daily P&L, and cumulative performance trends.",
+    "sub_utilities": [
+      "date",
+      "daily_return_percent",
+      "daily_pnl",
+      "cumulative_return",
+      "portfolio_value"
+    ]
+  },
+  {
+    "name": "get_daily_pnl_history",
+    "description": "Retrieve historical daily profit/loss data for the account or specific positions showing realized and unrealized P&L by trading date.",
+    "sub_utilities": [
+      "date",
+      "realized_pnl",
+      "unrealized_pnl",
+      "total_pnl",
+      "daily_return_percent"
+    ]
+  },
+  {
+    "name": "get_day_trade_statistics",
+    "description": "Retrieve day trading activity metrics, specifically counting the number of day trades executed within a defined rolling window (e.g., the last 5 trading days).",
+    "sub_utilities": [
+      "day_trade_count_5_day_window",
+      "day_trade_count_today",
+      "pdt_flag",
+      "win_rate",
+      "total_day_trades",
+      "winning_day_trades"
+    ]
+  },
+  {
+    "name": "get_dividend_calendar",
+    "description": "Retrieve upcoming dividend dates and estimated dividend payment amounts for securities in the portfolio or watchlist.",
+    "sub_utilities": [
+      "symbol",
+      "dividend_date",
+      "payment_date",
+      "dividend_amount",
+      "dividend_yield",
+      "frequency"
+    ]
+  },
+  {
+    "name": "get_dividend_history",
+    "description": "Retrieve historical dividend payments for the account, including payment dates, amounts, and associated symbols, with support for filtering by date ranges.",
+    "sub_utilities": [
+      "payment_date",
+      "dividend_amount",
+      "symbol",
+      "frequency",
+      "amount"
+    ]
+  },
+  {
+    "name": "get_earnings_calendar",
+    "description": "Retrieve upcoming earnings dates, times, and estimate data for a provided list of symbols, optionally filtered by a date range.",
+    "sub_utilities": [
+      "symbol",
+      "earnings_date",
+      "earnings_time",
+      "estimated_eps",
+      "report_time"
+    ]
+  },
+  {
+    "name": "get_historical_daily_returns",
+    "description": "Retrieve daily returns time series for specified symbols calculated from historical price data for quantitative analysis and risk measurement.",
+    "sub_utilities": [
+      "symbol",
+      "date",
+      "daily_return",
+      "return_percent",
+      "close_price",
+      "return_basis"
+    ]
+  },
+  {
+    "name": "get_historical_market_data",
+    "description": "Retrieve historical market data including OHLCV (open, high, low, close, volume) for specified symbols over custom date ranges.",
+    "sub_utilities": [
+      "symbol",
+      "date",
+      "open_price",
+      "high",
+      "low",
+      "close_price",
+      "volume"
+    ]
+  },
+  {
+    "name": "get_historical_price_data",
+    "description": "Retrieve historical closing prices for specified symbols over defined periods to support technical analysis and backtesting.",
+    "sub_utilities": [
+      "symbol",
+      "date",
+      "price",
+      "adjusted_price",
+      "time_period"
+    ]
+  },
+  {
+    "name": "get_historical_volatility",
+    "description": "Retrieve calculated realized volatility metrics for a list of symbols over a specified historical time period (e.g., 30 trading days)",
+    "sub_utilities": [
+      "symbol",
+      "realized_volatility",
+      "period_days",
+      "standard_deviation",
+      "time_period",
+      "realized_volatility_value",
+      "volatility_value",
+      "timeframe",
+      "volatility_metric"
+    ]
+  },
+  {
+    "name": "get_liquidity_metrics",
+    "description": "Retrieve liquidity metrics for specified symbols including bid-ask spreads, trading volumes, and liquidity trends over various time periods.",
+    "sub_utilities": [
+      "symbol",
+      "bid_ask_spread",
+      "average_daily_volume",
+      "average_daily_dollar_volume",
+      "volume_trend"
+    ]
+  },
+  {
+    "name": "get_margin_details",
+    "description": "Retrieve detailed margin account metrics including the leverage multiplier and current usage statistics.",
+    "sub_utilities": [
+      "margin_multiplier",
+      "margin_used",
+      "margin_available",
+      "maintenance_requirement",
+      "maintenance_margin_requirement",
+      "initial_margin_requirement",
+      "maintenance_excess",
+      "account_equity",
+      "leverage_multiplier",
+      "account_type"
+    ]
+  },
+  {
+    "name": "get_market_data",
+    "description": "Retrieve current market data for a list of symbols, including price and 52-week range statistics.",
+    "sub_utilities": [
+      "symbol",
+      "current_price",
+      "52_week_high",
+      "52_week_low",
+      "avg_daily_volume_30d",
+      "percent_change",
+      "daily_high",
+      "daily_low",
+      "volume",
+      "daily_volume",
+      "52_week_range",
+      "open_price",
+      "previous_close",
+      "bid_price",
+      "ask_price",
+      "last_trade_price",
+      "day_high",
+      "day_low",
+      "day_volume",
+      "daily_percent_change",
+      "indicated_dividend_yield"
+    ]
+  },
+  {
+    "name": "get_open_orders_with_buying_power_impact",
+    "description": "Retrieve all open orders with their individual buying power requirements and margin holds to calculate total locked-up capital.",
+    "sub_utilities": [
+      "order_id",
+      "symbol",
+      "side",
+      "quantity",
+      "status",
+      "buying_power_impact",
+      "margin_held"
+    ]
+  },
+  {
+    "name": "get_open_positions_with_pnl",
+    "description": "Retrieve all currently open positions with their cost basis and current market values to allow calculation of profit and loss metrics",
+    "sub_utilities": [
+      "symbol",
+      "quantity",
+      "cost_basis",
+      "current_value",
+      "unrealized_gain_loss",
+      "asset_type",
+      "unrealized_gain_loss_percentage",
+      "intraday_unrealized_pl",
+      "daily_pnl",
+      "daily_return_percentage",
+      "current_market_value"
+    ]
+  },
+  {
+    "name": "get_orders",
+    "description": "Retrieve order history with optional filtering capabilities for status and date ranges.",
+    "sub_utilities": [
+      "order_id",
+      "symbol",
+      "side",
+      "quantity",
+      "status",
+      "filled_at",
+      "order_type",
+      "submitted_time",
+      "cancelled_time",
+      "price",
+      "filled_quantity",
+      "limit_price",
+      "order_status",
+      "order_value",
+      "rejection_reason",
+      "submitted_at",
+      "updated_at",
+      "created_at",
+      "fill_price",
+      "filled_price",
+      "executed_timestamp",
+      "fill_date"
+    ]
+  },
+  {
+    "name": "get_pnl_summary",
+    "description": "Retrieve profit and loss summary data for specified date ranges including realized P&L, unrealized P&L, and composite P&L metrics.",
+    "sub_utilities": [
+      "realized_pnl",
+      "unrealized_pnl",
+      "total_pnl",
+      "period_start_date",
+      "period_end_date",
+      "time_period"
+    ]
+  },
+  {
+    "name": "get_portfolio_composition",
+    "description": "Retrieve the breakdown of the portfolio including sector allocation and asset class distribution based on current holdings.",
+    "sub_utilities": [
+      "sector_breakdown",
+      "asset_allocation",
+      "total_value",
+      "industry_breakdown",
+      "sector_allocation"
+    ]
+  },
+  {
+    "name": "get_portfolio_performance_metrics",
+    "description": "Retrieve comprehensive portfolio-level performance metrics including returns, volatility, risk-adjusted ratios, and comparison against benchmarks.",
+    "sub_utilities": [
+      "total_return",
+      "annualized_return",
+      "volatility",
+      "sharpe_ratio",
+      "sortino_ratio",
+      "max_drawdown",
+      "win_rate"
+    ]
+  },
+  {
+    "name": "get_portfolio_risk_metrics",
+    "description": "Calculate portfolio-level risk metrics including total volatility, Value-at-Risk (VaR), and component contribution of each holding to portfolio risk.",
+    "sub_utilities": [
+      "total_volatility",
+      "value_at_risk",
+      "conditional_value_at_risk",
+      "component_var_by_position",
+      "concentration_risk"
+    ]
+  },
+  {
+    "name": "get_position_correlation_matrix",
+    "description": "Calculate the correlation coefficient matrix for currently held open positions over a specified historical period.",
+    "sub_utilities": [
+      "correlation_matrix",
+      "symbols_analyzed",
+      "time_period",
+      "correlation_values"
+    ]
+  },
+  {
+    "name": "get_positions_period_performance",
+    "description": "Retrieve performance data for open positions over a specific time period including period returns, P&L changes, and volatility during the period.",
+    "sub_utilities": [
+      "symbol",
+      "period_return_percent",
+      "period_start_price",
+      "period_end_price",
+      "period_pnl",
+      "time_period"
+    ]
+  },
+  {
+    "name": "get_positions_technical_analysis",
+    "description": "Retrieve open positions enriched with technical analysis indicators to evaluate each position's technical strength.",
+    "sub_utilities": [
+      "symbol",
+      "current_price",
+      "sma_20",
+      "sma_50",
+      "sma_200",
+      "rsi",
+      "atr"
+    ]
+  },
+  {
+    "name": "get_positions_with_technicals",
+    "description": "Retrieve current open positions combined with technical indicator values (moving averages, oscillators) for comprehensive position analysis.",
+    "sub_utilities": [
+      "symbol",
+      "quantity",
+      "current_price",
+      "moving_averages",
+      "oscillators",
+      "momentum_indicators"
+    ]
+  },
+  {
+    "name": "get_price_statistics",
+    "description": "Calculate statistical measures on price data including mean, standard deviation, skewness, and kurtosis for specified symbols.",
+    "sub_utilities": [
+      "symbol",
+      "mean_price",
+      "std_deviation",
+      "min_price",
+      "max_price",
+      "skewness",
+      "kurtosis"
+    ]
+  },
+  {
+    "name": "get_realized_pnl",
+    "description": "Retrieve realized profit and loss from closed positions or executed trades.",
+    "sub_utilities": [
+      "symbol",
+      "realized_pnl",
+      "realized_gain",
+      "realized_loss",
+      "trade_date"
+    ]
+  },
+  {
+    "name": "get_realized_pnl_history",
+    "description": "Retrieve historical realized P&L data across all closed positions and trades for performance attribution and analysis.",
+    "sub_utilities": [
+      "symbol",
+      "date",
+      "realized_pnl",
+      "trade_id",
+      "entry_price",
+      "exit_price",
+      "quantity"
+    ]
+  },
+  {
+    "name": "get_realized_trade_history",
+    "description": "Retrieve detailed history of realized trades including entry/exit prices, execution times, and trade-level P&L metrics.",
+    "sub_utilities": [
+      "trade_id",
+      "symbol",
+      "entry_date",
+      "exit_date",
+      "entry_price",
+      "exit_price",
+      "quantity",
+      "realized_pnl"
+    ]
+  },
+  {
+    "name": "get_realized_trade_performance",
+    "description": "Calculate performance metrics for realized trades including total trade P&L, win rate, profit factor, and average trade metrics.",
+    "sub_utilities": [
+      "total_realized_pnl",
+      "winning_trades",
+      "losing_trades",
+      "win_rate",
+      "average_trade_pnl",
+      "profit_factor"
+    ]
+  },
+  {
+    "name": "get_symbol_daily_performance",
+    "description": "Retrieve daily performance data for specified symbols including daily returns, price changes, and volume activity.",
+    "sub_utilities": [
+      "symbol",
+      "date",
+      "daily_return_percent",
+      "price_change",
+      "volume",
+      "price_change_percent"
+    ]
+  },
+  {
+    "name": "get_symbol_performance",
+    "description": "Retrieve comprehensive performance data for specified symbols over various time horizons for comparison and analysis.",
+    "sub_utilities": [
+      "symbol",
+      "total_return",
+      "period_return",
+      "volatility",
+      "current_price",
+      "time_period"
+    ]
+  },
+  {
+    "name": "get_technical_events",
+    "description": "Identify and retrieve technical analysis events such as moving average crossovers, support/resistance breaks, and indicator signals for specified symbols.",
+    "sub_utilities": [
+      "symbol",
+      "event_type",
+      "event_date",
+      "indicator_value",
+      "signal_direction",
+      "price_at_event"
+    ]
+  },
+  {
+    "name": "get_technical_indicators",
+    "description": "Retrieve technical analysis indicators for a list of symbols, including Simple Moving Averages (SMA) and other common metrics over specified time periods.",
+    "sub_utilities": [
+      "symbol",
+      "sma_50",
+      "sma_200",
+      "rsi_14",
+      "atr_14",
+      "sma_20",
+      "current_price",
+      "50_day_sma",
+      "200_day_sma",
+      "RSI",
+      "SMA",
+      "EMA",
+      "rsi",
+      "sma",
+      "other_common_metrics",
+      "atr",
+      "average_volume_4_weeks",
+      "volume_trend_slope",
+      "current_volume_vs_average",
+      "ema",
+      "macd",
+      "standard_deviation_20",
+      "momentum_20",
+      "momentum_50"
+    ]
+  },
+  {
+    "name": "get_trade_history",
+    "description": "Retrieve complete trade history including all executed trades with timestamps, prices, quantities, and commissions.",
+    "sub_utilities": [
+      "trade_id",
+      "symbol",
+      "side",
+      "quantity",
+      "entry_price",
+      "entry_timestamp",
+      "exit_price",
+      "exit_timestamp"
+    ]
+  },
+  {
+    "name": "get_trading_volume_analysis",
+    "description": "Retrieve trading volume statistics for a list of symbols, calculating average volume over specified rolling periods (e.g., 1 week vs 4 weeks) to identify increasing or decreasing liquidity trends.",
+    "sub_utilities": [
+      "symbol",
+      "average_volume_short_term",
+      "average_volume_long_term",
+      "volume_trend_direction",
+      "average_volume",
+      "rolling_period",
+      "average_daily_volume",
+      "average_daily_dollar_volume",
+      "volume_trend",
+      "average_volume_current_period",
+      "average_volume_comparison_period",
+      "volume_trend_status",
+      "average_volume_recent",
+      "average_volume_comparison",
+      "volume_change_percentage"
+    ]
+  },
+  {
+    "name": "get_transaction_history",
+    "description": "Retrieve comprehensive transaction history including deposits, withdrawals, trades, dividends, and fees for accounting and tax purposes.",
+    "sub_utilities": [
+      "transaction_id",
+      "transaction_type",
+      "symbol",
+      "date",
+      "amount",
+      "quantity",
+      "price",
+      "commission"
+    ]
+  },
+  {
+    "name": "get_volume_statistics",
+    "description": "Retrieve volume metrics for specified symbols including average daily volume, volume trends, and volume distribution analysis.",
+    "sub_utilities": [
+      "symbol",
+      "average_daily_volume",
+      "average_volume_short_term",
+      "average_volume_long_term",
+      "volume_trend"
+    ]
+  },
+  {
+    "name": "get_watchlist_with_performance",
+    "description": "Retrieve watchlist symbols enhanced with current market data and performance metrics for comparative analysis.",
+    "sub_utilities": [
+      "watchlist_name",
+      "symbol",
+      "current_price",
+      "daily_return",
+      "period_return",
+      "market_data"
+    ]
+  },
+  {
+    "name": "get_watchlists",
+    "description": "Retrieve all watchlists associated with the user account, including their names and the list of symbols contained in each watchlist.",
+    "sub_utilities": [
+      "watchlist_name",
+      "watchlist_id",
+      "symbols",
+      "symbols_list",
+      "watchlist_names",
+      "symbols_per_watchlist",
+      "symbol_list"
+    ]
+  }
+]

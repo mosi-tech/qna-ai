@@ -106,20 +106,10 @@ export const BarChart09: React.FC<BarChart09Props> = ({
                                 colors={tab.colors as AvailableChartColorsKeys[]}
                                 type={tab.type || 'stacked'}
                                 showLegend={false}
-                                yAxisWidth={45}
+                                yAxisWidth={50}
+                                showGridLines={true}
                                 valueFormatter={valueFormatter}
-                                className="mt-10 hidden !h-72 md:block"
-                            />
-                            <BarChart
-                                data={tab.data}
-                                index={tab.indexField || 'date'}
-                                categories={tab.categories}
-                                colors={tab.colors as AvailableChartColorsKeys[]}
-                                type={tab.type || 'stacked'}
-                                showLegend={false}
-                                showYAxis={false}
-                                valueFormatter={valueFormatter}
-                                className="mt-6 !h-72 md:hidden"
+                                className="mt-10 !h-72"
                             />
                         </TabsContent>
                     ))}

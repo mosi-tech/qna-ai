@@ -1223,3 +1223,40 @@ export const KpiCard29Example = () => {
 
     return <KpiCard29 metrics={metricsData} />;
 };
+
+// ─── KpiCard05FourItemsExample (4 Items Test) ────────────────────────────────
+
+export const KpiCard05FourItemsExample = () => {
+    const data: MetricItem[] = [
+        {
+            name: 'Total revenue',
+            stat: '$128.5K',
+            previousStat: '$115.2K',
+            change: '+11.5%',
+            changeType: 'positive',
+        },
+        {
+            name: 'Active customers',
+            stat: '1,240',
+            previousStat: '1,089',
+            change: '+13.9%',
+            changeType: 'positive',
+        },
+        {
+            name: 'Avg order value',
+            stat: '$342',
+            previousStat: '$298',
+            change: '+14.8%',
+            changeType: 'positive',
+        },
+        {
+            name: 'Conversion rate',
+            stat: '3.2%',
+            previousStat: '2.8%',
+            change: '+14.3%',
+            changeType: 'positive',
+        },
+    ];
+
+    return <KpiCard05 metrics={data} cols={4} />;
+};

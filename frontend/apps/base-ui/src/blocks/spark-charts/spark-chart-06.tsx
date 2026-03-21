@@ -69,7 +69,7 @@ export const SparkChart06: React.FC<SparkChart06Props> = ({ data, dataIndex = 'd
                         categories={[item.category]}
                         fill="solid"
                         colors={(item.changeType === 'positive' ? ['emerald'] : item.changeType === 'negative' ? ['red'] : ['gray']) as any}
-                        className="h-10 flex-none"
+                        className="h-20 w-32 flex-none"
                     />
                 </Card>
             ))}

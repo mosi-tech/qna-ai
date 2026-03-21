@@ -1,0 +1,73 @@
+{
+  "question_number": 215,
+  "original_question": "Which positions had the strongest closing hour performance over the last 20 trading days?",
+  "analysis": {
+    "question_type": "filtering_and_ranking_with_intraday_analysis",
+    "requires_data_retrieval": true,
+    "requires_analysis": true,
+    "decomposition_required": true,
+    "keywords": [
+      "which positions",
+      "strongest",
+      "closing hour performance",
+      "last 20 trading days"
+    ],
+    "key_insights": [
+      "Question asks to identify and rank open positions",
+      "Analysis required for a specific intraday time segment (closing hour)",
+      "Lookback period is 20 trading days",
+      "Pattern: Data retrieval + specialized intraday analysis"
+    ]
+  },
+  "decomposition": {
+    "is_leaf": false,
+    "reasoning": "This is a composite question requiring two steps: (1) retrieve list of open positions, (2) analyze closing hour performance for those positions over 20-day lookback period. A new utility is needed to specifically analyze closing hour performance metrics.",
+    "sub_questions": [
+      {
+        "step": 1,
+        "description": "Retrieve all open positions",
+        "utility": "get_open_positions_with_pnl",
+        "purpose": "Identify which positions/symbols to analyze"
+      },
+      {
+        "step": 2,
+        "description": "Analyze closing hour performance for identified positions",
+        "utility": "analyze_closing_hour_performance",
+        "purpose": "Calculate performance metrics specifically for the closing hour (final hour of trading session) over the last 20 trading days, then rank positions by strength",
+        "parameters": {
+          "symbols_from": "get_open_positions_with_pnl",
+          "lookback_period": 20,
+          "time_segment": "closing_hour",
+          "metric": "performance_strength_score"
+        }
+      }
+    ]
+  },
+  "new_utilities": [
+    {
+      "name": "analyze_closing_hour_performance",
+      "domain": "intraday",
+      "description": "Analyze the closing hour (final hour of trading session) performance for a list of symbols over a specified lookback period (e.g., 20 trading days) to identify which positions show the strongest closing hour performance. Calculates closing hour returns, win rates, consistency, and generates a performance strength score to rank positions.",
+      "sub_utilities": [
+        "symbol",
+        "closing_hour_return_percent",
+        "closing_hour_win_rate",
+        "number_of_closing_sessions_analyzed",
+        "average_closing_hour_return",
+        "best_closing_hour_return",
+        "worst_closing_hour_return",
+        "closing_hour_consistency_score",
+        "closing_hour_performance_strength_score",
+        "lookback_period",
+        "intraday_price_at_hour_open",
+        "intraday_price_at_hour_close"
+      ]
+    }
+  ],
+  "library_update_status": "pending",
+  "notes": [
+    "New utility 'analyze_closing_hour_performance' needed to support closing hour specific analysis",
+    "This utility fills gap in existing library for time-segment specific intraday performance metrics",
+    "Utility will be added alphabetically to the question_utility_library_final.json"
+  ]
+}

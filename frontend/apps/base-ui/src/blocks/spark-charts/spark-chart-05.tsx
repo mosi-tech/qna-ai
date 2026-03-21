@@ -68,7 +68,7 @@ export const SparkChart05: React.FC<SparkChart05Props> = ({ data, dataIndex = 'd
                                         ? ['red']
                                         : ['gray']) as any
                             }
-                            className="flex-none"
+                            className="h-20 w-32 flex-none"
                         />
                     </div>
                 </Card>

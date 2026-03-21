@@ -341,3 +341,60 @@ async def refresh_block(
             block_id, dashboard_id, exc,
         )
         raise HTTPException(status_code=500, detail=str(exc))
+
+
+# ---------------------------------------------------------------------------
+# POST /api/width-approvals — Save width compatibility approvals
+# ---------------------------------------------------------------------------
+
+
+class WidthApprovalsRequest(BaseModel):
+    """Width approval matrix: { blockId: [widths...] }"""
+    pass
+
+
+@router.get("/width-approvals")
+async def get_width_approvals():
+    """
+    Retrieve saved width compatibility approvals from persistent JSON file.
+    Returns empty dict if no file exists.
+    """
+    try:
+        approvals_file = os.path.join(
+            os.path.dirname(__file__), '..', 'data', 'width-approvals.json'
+        )
+        if os.path.exists(approvals_file):
+            with open(approvals_file, 'r') as f:
+                data = json.load(f)
+            logger.info(f"✅ Width approvals loaded: {len(data)} blocks")
+            return _ok(data)
+        return _ok({})
+    except Exception as exc:
+        logger.exception("Error loading width approvals: %s", exc)
+        return _ok({})  # Return empty on error, don't fail
+
+
+@router.post("/width-approvals")
+async def save_width_approvals(body: dict):
+    """
+    Save width compatibility approvals to a persistent JSON file.
+    Called automatically by the WidthCompatibilityTester whenever approvals change.
+
+    Saves to: backend/data/width-approvals.json
+    """
+    try:
+        # Ensure data directory exists
+        data_dir = os.path.join(os.path.dirname(__file__), '..', 'data')
+        os.makedirs(data_dir, exist_ok=True)
+
+        # Write to persistent file
+        approvals_file = os.path.join(data_dir, 'width-approvals.json')
+        with open(approvals_file, 'w') as f:
+            json.dump(body, f, indent=2)
+
+        logger.info(f"✅ Width approvals saved: {len(body)} blocks tracked")
+        return _ok({"saved": True, "blocks": len(body)})
+
+    except Exception as exc:
+        logger.exception("Error saving width approvals: %s", exc)
+        raise HTTPException(status_code=500, detail=str(exc))

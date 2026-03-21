@@ -1,0 +1,1137 @@
+{
+  "summary": {
+    "total_decompositions": 464,
+    "utilities_in_final_library": 115,
+    "utilities_discovered_as_new": 207,
+    "utilities_consolidated_as_sub": 180
+  },
+  "utilities_in_final_library": [
+    "analyze_200sma_support_bounces",
+    "analyze_atr_trends",
+    "analyze_bollinger_band_breakouts",
+    "analyze_breakout_potential",
+    "analyze_bullish_outside_days",
+    "analyze_closing_hour_performance",
+    "analyze_commodity_price_sensitivity",
+    "analyze_consecutive_high_volume_moves",
+    "analyze_daily_range_trends",
+    "analyze_day_of_week_return_persistence",
+    "analyze_dividend_changes",
+    "analyze_dollar_gold_timing_relationship",
+    "analyze_gap_to_atr_ratios",
+    "analyze_intraday_reversal_frequency",
+    "analyze_leverage_cost_breakeven",
+    "analyze_loss_aversion_patterns",
+    "analyze_macd_crossover_sustainability",
+    "analyze_new_highs_with_obv_confirmation",
+    "analyze_news_sentiment",
+    "analyze_order_slippage",
+    "analyze_pivot_retest_success",
+    "analyze_position_size_impact",
+    "analyze_relative_benchmark_tracking",
+    "analyze_repo_liquidity_conditions",
+    "analyze_revenue_diversification",
+    "analyze_rolling_win_rate_stability",
+    "analyze_rsi_oversold_holding_periods",
+    "analyze_sector_earnings_consistency",
+    "analyze_technical_event_seasonality",
+    "analyze_trading_halt_events",
+    "analyze_transportation_route_networks",
+    "analyze_volume_spikes",
+    "analyze_vwap_close_divergence",
+    "backtest_regime_switching_strategy",
+    "calculate_average_intraday_range",
+    "calculate_average_intraday_range_for_symbols",
+    "calculate_benchmark_comparison",
+    "calculate_daily_pnl_statistics",
+    "calculate_gap_statistics",
+    "calculate_intraday_range_statistics",
+    "calculate_ma_crossovers",
+    "calculate_max_drawdown",
+    "calculate_mean_reversion_z_scores",
+    "calculate_momentum_slopes",
+    "calculate_period_returns",
+    "calculate_portfolio_performance_metrics",
+    "calculate_price_streaks",
+    "calculate_relative_strength",
+    "calculate_rsi_threshold_crossings",
+    "calculate_sma_proximity",
+    "calculate_symbol_performance_metrics",
+    "calculate_thematic_exposure",
+    "calculate_up_day_frequency",
+    "compare_historical_fundamental_strength",
+    "get_52_week_highs_and_lows",
+    "get_account_info",
+    "get_account_performance_history",
+    "get_analyst_recommendation_changes",
+    "get_benchmark_performance",
+    "get_beta_metrics",
+    "get_closed_positions",
+    "get_closed_trade_statistics",
+    "get_closed_trades",
+    "get_correlation_matrix",
+    "get_credit_spreads",
+    "get_daily_performance_history",
+    "get_daily_pnl_history",
+    "get_day_trade_statistics",
+    "get_dividend_calendar",
+    "get_dividend_history",
+    "get_earnings_calendar",
+    "get_equity_asset_type_breakdown",
+    "get_etf_holdings",
+    "get_fundamental_sector_ranking",
+    "get_geographic_exposure",
+    "get_historical_daily_returns",
+    "get_historical_market_data",
+    "get_historical_price_data",
+    "get_historical_volatility",
+    "get_industry_allocation",
+    "get_insider_transactions",
+    "get_intraday_vwap_data_for_positions",
+    "get_liquidity_metrics",
+    "get_margin_details",
+    "get_market_data",
+    "get_open_orders_with_buying_power_impact",
+    "get_open_positions_with_pnl",
+    "get_orders",
+    "get_pnl_summary",
+    "get_portfolio_composition",
+    "get_portfolio_performance_metrics",
+    "get_portfolio_risk_metrics",
+    "get_position_correlation_matrix",
+    "get_positions_period_performance",
+    "get_positions_technical_analysis",
+    "get_positions_with_technicals",
+    "get_price_statistics",
+    "get_realized_pnl",
+    "get_realized_pnl_history",
+    "get_realized_trade_history",
+    "get_realized_trade_performance",
+    "get_stocks_by_criteria",
+    "get_support_resistance_levels",
+    "get_symbol_daily_performance",
+    "get_symbol_performance",
+    "get_technical_events",
+    "get_technical_indicators",
+    "get_trade_history",
+    "get_trading_volume_analysis",
+    "get_transaction_history",
+    "get_volume_statistics",
+    "get_watchlist_with_performance",
+    "get_watchlists",
+    "identify_synchronized_strength_dates",
+    "screen_etfs_by_fundamentals"
+  ],
+  "utilities_discovered_as_new": [
+    {
+      "name": "analyze_200sma_reclaim_with_volume_rally",
+      "description": "Analyze open positions to identify those that have recently reclaimed their 200-day moving average (crossed from below to above) with above-average volume confirmation, calculate the subsequent percentage rally from the reclaim point to the current price, and rank them by performance magnitude."
+    },
+    {
+      "name": "analyze_200sma_support_bounces",
+      "description": "Analyze a list of symbols to identify those that recently bounced off their 200-day Simple Moving Average (SMA) support. It detects recent price action where the symbol touched or approached the 200-day SMA and subsequently reversed upward, calculating the percentage gain from the support level to the current price. Returns the symbols ranked by the magnitude of the bounce."
+    },
+    {
+      "name": "analyze_50sma_support_bounces",
+      "description": "Analyze a list of symbols to identify those that recently bounced off their 50-day Simple Moving Average (SMA) support. It detects recent price action where the symbol touched or approached the 50-day SMA and subsequently reversed upward, calculating the percentage gain from the support level to the current price. Returns the symbols ranked by the magnitude of the bounce."
+    },
+    {
+      "name": "analyze_advancing_volume_dominance",
+      "description": "Analyze a list of ETF symbols over a specified historical period to count the number of days where advancing volume (up-volume) exceeded declining volume (down-volume). Returns the ETFs ranked by this count."
+    },
+    {
+      "name": "analyze_afternoon_uptrend_persistence",
+      "description": "Analyze intraday price data for a list of symbols to identify those with the most persistent uptrends during the afternoon trading session (e.g., 12:00 PM - 4:00 PM ET) over a specified lookback period. Calculates trend slope and consistency to rank positions by persistence strength."
+    },
+    {
+      "name": "analyze_bollinger_band_mean_reversion",
+      "description": "Analyze open positions to identify mean reversion setups using Bollinger Bands. This utility calculates the %B indicator (position of price within the bands) and the distance of price from the upper/lower bands to identify overbought or oversold conditions. It returns a ranking of positions showing the highest potential for mean reversion based on these metrics."
+    },
+    {
+      "name": "analyze_bollinger_band_squeezes",
+      "description": "Analyze Bollinger Band data for a list of symbols over a specified period (e.g., this week) to identify and rank assets based on the tightest squeeze events (minimum bandwidth). Returns the symbols, the date of the tightest squeeze, and the bandwidth metric."
+    },
+    {
+      "name": "analyze_bollinger_band_width",
+      "description": "Analyze open positions to calculate current Bollinger Band widths (both absolute and percentage-based) and rank them from widest to narrowest to identify positions experiencing the highest volatility expansion."
+    },
+    {
+      "name": "analyze_bollinger_bandwidth",
+      "description": "Calculate the Bollinger Bandwidth (the width of the bands relative to the moving average) for a list of symbols and rank them to identify those with the narrowest bandwidth, indicating consolidation or low volatility states."
+    },
+    {
+      "name": "analyze_bollinger_squeezes",
+      "description": "Analyze daily price and Bollinger Band data for a list of symbols to identify those currently experiencing a Bollinger Band squeeze (a period of low volatility where the upper and lower bands contract). The utility calculates the bandwidth, compares it to historical volatility averages (e.g., 6-month lookback), and ranks symbols by the intensity of the squeeze (e.g., bandwidth percentile or z-score)."
+    },
+    {
+      "name": "analyze_breadth_conditioned_performance",
+      "description": "Analyze open positions to identify and rank those with the highest historical frequency of positive returns following bullish morning breadth conditions (e.g., strong advancers vs. decliners ratio during the first hour of trading). The utility calculates win rates and returns for positions during these specific market scenarios."
+    },
+    {
+      "name": "analyze_breakout_breadth_confirmation",
+      "description": "Analyze specified sector ETFs to identify historical price breakout events and determine how often they coincided with rising breadth indicators (e.g., advance/decline line) within the respective sector. Returns the ETFs ranked by their confirmation frequency."
+    },
+    {
+      "name": "analyze_breakout_follow_through",
+      "description": "Analyze historical price data for a list of symbols to identify breakout events (e.g., closing above resistance levels or moving averages) and measure the frequency of positive price performance during a subsequent follow-up period (e.g., 3 days). Returns the symbols ranked by their success rate or frequency of positive follow-through."
+    },
+    {
+      "name": "analyze_breakout_level_support_respect",
+      "description": "Analyze a list of symbols to identify historical resistance breakouts and calculate the frequency with which these levels subsequently acted as support (polarity), returning symbols ranked by the highest support respect rate."
+    },
+    {
+      "name": "analyze_breakout_pullback_continuations",
+      "description": "Analyze historical price and volume data for a list of symbols to identify the frequency of a specific continuation pattern: a price breakout followed by a low-volume pullback that subsequently leads to a new price high. Returns symbols ranked by how often this specific sequence occurs."
+    },
+    {
+      "name": "analyze_breakout_retest_continuation",
+      "description": "Analyze historical price data for a list of symbols to identify patterns where the price retested a recent breakout level (previous resistance turned support) and subsequently resumed an upward trend. Returns positions ranked by the strength of the continuation move."
+    },
+    {
+      "name": "analyze_breakout_retest_reversals",
+      "description": "Analyze historical price data for a provided list of symbols to identify and rank symbols that frequently exhibit bullish reversals after retesting prior breakout levels (support turned resistance scenarios). The utility detects significant breakout events, tracks subsequent price retracements to those levels, and measures the frequency and magnitude of bullish bounces."
+    },
+    {
+      "name": "analyze_breakout_retest_success",
+      "description": "Analyze historical price data for a provided list of symbols to identify breakout events (price closing above a resistance level), detect subsequent retests of that level, and calculate the success rate (frequency of the level holding as support). Returns the symbols ranked by their retest success rate."
+    },
+    {
+      "name": "analyze_bullish_engulfing_new_highs",
+      "description": "Analyze historical daily price data for all open positions to identify past bullish engulfing candlestick patterns. For each occurrence, track subsequent price action to determine if a new high (e.g., 20-day high) was made within a specified window (e.g., 5-10 days). Calculate the frequency and success rate of this pattern-to-outcome relationship and return the positions ranked by the frequency of making new highs after the pattern."
+    },
+    {
+      "name": "analyze_bullish_outside_day_continuation",
+      "description": "Analyze historical OHLC price data for a list of symbols to identify bullish outside day patterns and calculate the frequency of bullish continuation (positive price movement) over specified subsequent periods (e.g., 1 day, 3 days). Returns symbols ranked by their historical success rate of posting gains following the pattern."
+    },
+    {
+      "name": "analyze_bullish_outside_days",
+      "description": "Analyze daily OHLC price data for a list of symbols over a specified timeframe (e.g., the current week) to identify bullish outside day candles (Open < Prev Close, Close > Prev Open, High > Prev High, Low < Prev Low) and rank them by the magnitude of the price action."
+    },
+    {
+      "name": "analyze_bullish_outside_week_performance",
+      "description": "Analyze weekly OHLC data for a list of symbols over a specified historical period to identify 'bullish outside week' patterns (current high > previous high, current low < previous low, close > open) and calculate the frequency of positive returns (advancement) for a defined holding period following the signal. Returns symbols ranked by their historical win rate."
+    },
+    {
+      "name": "analyze_candlestick_pattern_performance",
+      "description": "Analyze historical daily OHLC data for a list of symbols to identify occurrences of a specified candlestick pattern (e.g., 'bullish_engulfing') and calculate the frequency with which the subsequent trading session results in a higher closing price. Returns symbols ranked by this follow-through frequency."
+    },
+    {
+      "name": "analyze_candlestick_patterns",
+      "description": "Analyze historical OHLC data for a list of symbols to identify and count occurrences of specific candlestick patterns (e.g., bullish hammer, bearish engulfing, doji) over a specified timeframe, ranking them by frequency."
+    },
+    {
+      "name": "analyze_closing_strength_during_volatile_periods",
+      "description": "Identify weeks with high volatility (e.g., using ATR thresholds or range expansion) and calculate the closing hour strength (e.g., last hour return or close vs. VWAP) for the provided symbols specifically during those periods, returning the symbols ranked by their strength."
+    },
+    {
+      "name": "analyze_closing_strength_score_change",
+      "description": "Calculate the closing hour strength score for a current period (e.g., this month) and a prior period (e.g., last month) for a list of symbols, compute the difference (delta), and return the symbols ranked by the largest increase in score."
+    },
+    {
+      "name": "analyze_closing_strength_trends",
+      "description": "Analyze historical OHLC price data for a list of symbols to calculate the rate of change (slope) in their closing strength (typically defined as the position of the close relative to the daily high-low range) over a specified lookback period. Returns the symbols ranked by the steepest positive slope (improvement) in closing strength."
+    },
+    {
+      "name": "analyze_consolidation_breakout_history",
+      "description": "Analyze price history for a list of symbols to identify periods of tight consolidation (e.g., 3 weeks of low volatility/narrow ranges) immediately followed by price breakouts. Returns symbols ranked by the tightness of the consolidation range and the magnitude of the subsequent breakout."
+    },
+    {
+      "name": "analyze_consolidation_breakout_tightness",
+      "description": "Analyze historical price data for a list of symbols to identify specific patterns where a breakout event was preceded by a tight consolidation period (volatility contraction). Returns the symbols ranked by the degree of consolidation tightness prior to the breakout."
+    },
+    {
+      "name": "analyze_consolidation_breakouts",
+      "description": "Analyze a list of symbols to identify those that recently broke out of a consolidation phase (characterized by low volatility or tight trading ranges) and posted the strongest performance over a specified period (e.g., 5 days). Returns symbols ranked by breakout magnitude."
+    },
+    {
+      "name": "analyze_day_of_week_return_persistence",
+      "description": "Analyze a list of symbols to identify those that exhibit a specific return pattern (e.g., persistent positive returns) on a specific day of the week (e.g., Monday) over a defined number of recent weeks."
+    },
+    {
+      "name": "analyze_distribution_day_performance",
+      "description": "Analyze a list of symbols to identify high-volume distribution days (days where price closed lower with above-average volume) and rank the symbols by their performance (resilience) during these specific market conditions."
+    },
+    {
+      "name": "analyze_dollar_gold_timing_relationship",
+      "description": "Analyze the historical relationship between US Dollar strength (DXY) and Gold prices to determine correlation effects and identify investment timing signals. This involves calculating correlation coefficients (including lagged correlations), analyzing Gold's performance during strong vs. weak Dollar regimes, and identifying specific Dollar levels or trend shifts that act as optimal entry or exit signals for Gold positions."
+    },
+    {
+      "name": "analyze_downside_gap_fill_recovery",
+      "description": "Analyze historical price data for a list of symbols to identify trading days where a downside gap (Open < Previous Close) was completely filled intraday (High >= Previous Close). Calculate the percentage gain achieved during these sessions (e.g., from Open to Close) and rank the symbols by their average or maximum recovery performance."
+    },
+    {
+      "name": "analyze_drawdowns_during_intraday_swoons",
+      "description": "Identify periods of significant intraday market decline (swoons) using a benchmark index (e.g., SPY) and calculate the maximum peak-to-trough drawdown for a list of ETFs specifically during those periods. Returns the ETFs ranked by smallest drawdown (highest resilience) during the identified swoon events."
+    },
+    {
+      "name": "analyze_earnings_window_volatility",
+      "description": "Calculate intraday volatility metrics (e.g., average daily High-Low range percentage) for a list of symbols specifically during defined windows surrounding their historical earnings announcements (e.g., 3 days before to 1 day after). Returns the symbols ranked by their volatility during these events."
+    },
+    {
+      "name": "analyze_ema_crossover_sustainability",
+      "description": "Analyze historical price and EMA indicator data for a list of symbols to identify past EMA crossover events, calculate the subsequent returns for various holding periods, and determine the success rate (frequency of positive returns) to rank signals."
+    },
+    {
+      "name": "analyze_etf_advances_during_rising_volume",
+      "description": "Analyze a list of ETFs to identify which ones most frequently advanced (positive daily return) during trading sessions where market volume was rising (increasing relative to prior session or average). Returns ETFs ranked by the frequency or percentage of volume-rising sessions where they posted gains."
+    },
+    {
+      "name": "analyze_etf_expense_ratios",
+      "description": "Identify ETF holdings within the current portfolio, retrieve their individual expense ratios, and calculate the aggregate portfolio impact including the weighted average expense ratio and total estimated annual cost."
+    },
+    {
+      "name": "analyze_etf_holdings_concentration",
+      "description": "Analyze the top 10 holdings of a provided list of ETFs to calculate concentration metrics (e.g., aggregate weight of top 10, Herfindahl-Hirschman Index) and rank them by diversification to identify the ETF with the most distributed holdings."
+    },
+    {
+      "name": "analyze_etf_price_volume_breadth_alignment",
+      "description": "Analyze a list of ETFs to determine which ones exhibit the strongest alignment (correlation) between price movements, volume trends, and internal breadth (advance-decline ratio of underlying holdings) over a specified period. Returns ETFs ranked by an alignment score."
+    },
+    {
+      "name": "analyze_exit_volatility_sensitivity",
+      "description": "Analyze historical trade data to simulate exit signals triggered at different volatility percentile thresholds (e.g., 90th, 95th). Compare the performance metrics (win rate, average P&L, max drawdown) of these simulated thresholds against the current setting to determine if a different volatility percentile would yield better results."
+    },
+    {
+      "name": "analyze_failed_breakouts",
+      "description": "Analyze daily price and volatility data (e.g., Bollinger Bands) for a list of symbols to identify 'failed breakout' events (where price breaches a resistance level but closes back below it) and count the frequency of these events over the specified lookback period (e.g., 1 month)."
+    },
+    {
+      "name": "analyze_gap_follow_through",
+      "description": "Analyze historical market data for a list of symbols to identify occurrences of positive premarket gaps (Open > Previous Close) and determine the frequency with which these gaps resulted in extended intraday gains (e.g., Close > Open or High > Open + threshold). Returns the symbols ranked by their follow-through success rate or frequency."
+    },
+    {
+      "name": "analyze_heavy_volume_up_day_returns",
+      "description": "Analyze historical daily OHLCV data for provided symbols to identify 'Heavy Volume Up Days' (days where price closed higher than previous close and volume exceeded a defined threshold relative to average). Calculate the average percentage return for these specific days for each symbol and rank them to identify which holdings advance most under these conditions."
+    },
+    {
+      "name": "analyze_high_volume_open_gain_retention",
+      "description": "Analyze historical daily data for a list of symbols to identify days with high-volume opens (e.g., volume exceeding a rolling average threshold) and calculate the percentage/frequency of those days where the price closed higher than the open (maintained gains), returning the symbols ranked by this retention frequency."
+    },
+    {
+      "name": "analyze_high_volume_outperformance",
+      "description": "Analyze historical daily returns and volume data for a list of symbols to identify those that consistently show positive returns on days where trading volume is significantly above average (high-liquidity days). Returns symbols ranked by their average return or win rate on high-volume days."
+    },
+    {
+      "name": "analyze_high_volume_up_day_frequency",
+      "description": "Analyze a list of symbols to calculate the frequency of trading days where the closing price was higher than the previous close and the trading volume was above the historical average volume over a specified lookback period. Returns the symbols ranked by this frequency."
+    },
+    {
+      "name": "analyze_high_volume_up_day_returns",
+      "description": "Analyze historical daily price and volume data for a list of symbols to identify 'high-volume up days' (days where the closing price is higher than the previous close and volume is above a specified threshold, e.g., 1.5x average). Calculate the average (or max) return for each symbol specifically on those days and return the symbols ranked by this performance metric."
+    },
+    {
+      "name": "analyze_higher_low_frequency",
+      "description": "Analyze historical daily price data for a list of symbols to count how many days within a specified period had the intraday low (Low) above the prior day's low (Low). Returns symbols ranked by the frequency/count of these higher-low days, indicating which positions show the most persistent intraday strength pattern."
+    },
+    {
+      "name": "analyze_holdings_resilience_after_sector_reversals",
+      "description": "Analyzes the user's holdings to identify which stocks maintained or increased in value (strength) following specific reversal patterns observed in their corresponding sector ETFs. It maps holdings to their sector ETFs, detects historical reversal events in those ETFs over a specified lookback period, calculates the subsequent returns for the holdings, and ranks them by their resilience (positive performance) after those signals."
+    },
+    {
+      "name": "analyze_inside_week_breakout_frequency",
+      "description": "Analyze historical weekly data for a provided list of ETF symbols to identify occurrences of 'inside weeks' (current week's high/low within previous week's range) immediately followed by upside breakouts (price exceeding the inside week's high) in the subsequent week. Calculate the frequency of this pattern sequence and return the ETFs ranked by the frequency of occurrence."
+    },
+    {
+      "name": "analyze_intraday_drawdowns",
+      "description": "Analyze daily high-low price data for a list of symbols over a specified historical period to identify the deepest intraday drawdowns (largest percentage drop from daily high to daily low), ranking the symbols by this metric."
+    },
+    {
+      "name": "analyze_intraday_drawdowns_on_trend_days",
+      "description": "For a list of symbols, identifies historical 'trend days' (e.g., days with significant directional movement where price closes near the high/low) and calculates the intraday drawdown (High - Low) for those specific days. Returns the position that exhibited the smallest drawdown during these trend events."
+    },
+    {
+      "name": "analyze_intraday_loss_recovery_consistency",
+      "description": "Analyze daily OHLC data for a list of symbols over a specified lookback period to identify days where the price dropped from the open (creating an intraday loss) but subsequently rallied to close above the opening price. Calculates the frequency and percentage of these recovery events to rank symbols by consistency."
+    },
+    {
+      "name": "analyze_intraday_ma_bounces",
+      "description": "Analyze a list of symbols to identify those that touched a specified moving average (e.g., 100-day SMA) intraday and subsequently rebounded. Ranks the symbols by the magnitude of the bounce from the support level."
+    },
+    {
+      "name": "analyze_intraday_volatility_by_day_type",
+      "description": "Calculate intraday volatility metrics (e.g., average daily range, range percentage) specifically for days where the price closed higher (up days) for a list of symbols over a specified historical period."
+    },
+    {
+      "name": "analyze_keltner_channel_patterns",
+      "description": "Analyze a list of symbols to identify specific Keltner Channel patterns, including breakouts (price closing outside the upper or lower band) and squeezes (bandwidth contraction indicating low volatility). Returns the symbols categorized by pattern type along with relevant metrics like current price and band values."
+    },
+    {
+      "name": "analyze_leverage_cost_breakeven",
+      "description": "Calculates the holding period required for a leveraged ETF (e.g., TQQQ) to become more cost-effective than holding the underlying asset on margin, based on the comparison between the ETF's expense ratio and the account's margin interest rate."
+    },
+    {
+      "name": "analyze_leveraged_etf_spread_timing_impact",
+      "description": "Analyze the relationship between bid-ask spreads and timing costs (volatility decay) for leveraged ETFs. This utility retrieves current bid-ask spreads and historical volatility data to calculate the spread percentage and compare it against the estimated volatility drag, determining how much the spread contributes to the overall cost efficiency of trading the ETF."
+    },
+    {
+      "name": "analyze_lookback_period_sensitivity",
+      "description": "Compare the historical performance metrics (such as win rate, average return, and maximum drawdown) of a specific technical timing signal (e.g., SMA crossover, RSI) across a range of lookback periods to determine sensitivity to the parameter and identify optimal settings."
+    },
+    {
+      "name": "analyze_loss_aversion_patterns",
+      "description": "Analyze closed trading history to detect loss aversion behavior (Disposition Effect) by comparing the holding periods and realized P&L of winning trades versus losing trades. Returns metrics such as average holding period for winners vs. losers, the Disposition Effect ratio, and frequency of selling at specific profit/loss thresholds."
+    },
+    {
+      "name": "analyze_low_volume_breakout_continuation",
+      "description": "Analyze historical price and volume data for a list of symbols to identify breakout events (e.g., crossing resistance or Bollinger bands) that occurred on below-average trading volume, and calculate the frequency of subsequent upward price movement to rank symbols by this pattern."
+    },
+    {
+      "name": "analyze_ma_crossover_regime_performance",
+      "description": "Analyze the historical performance of SMA crossover signals segmented by market regime (trending vs. sideways). This utility identifies SMA crossover events, classifies the market state at the time of each event using metrics like ADX or moving average slope, calculates the subsequent returns for each signal, and aggregates the data to compare the strategy's effectiveness (e.g., win rate, average return) in trending conditions versus sideways conditions."
+    },
+    {
+      "name": "analyze_ma_timing_effectiveness",
+      "description": "Analyze and compare the historical performance of different moving average strategies (e.g., various SMA/EMA periods or crossover pairs) for a specific symbol (e.g., Gold/GLD) to identify which periods provide the most profitable or reliable timing signals over a specified lookback period."
+    },
+    {
+      "name": "analyze_macd_crossover_performance",
+      "description": "Analyze historical price and MACD indicator data for a list of symbols to identify past MACD crossover events (specifically bullish crossovers) and calculate the frequency of higher closes occurring after those events. Returns the symbols ranked by the success rate or probability of a higher close following the signal."
+    },
+    {
+      "name": "analyze_macd_crossover_sustainability",
+      "description": "Analyze historical price and MACD indicator data for a list of symbols to identify past MACD bullish crossover events, calculate the subsequent returns for various holding periods (e.g., 3-day, 5-day), and determine the success rate (frequency of positive returns) to rank symbols that most often sustain gains after this signal."
+    },
+    {
+      "name": "analyze_macd_crossovers",
+      "description": "Analyze a list of symbols to identify specific bullish MACD crossover events (MACD line crossing above the signal line) within a defined recent lookback window (e.g., the last 3-5 trading days)."
+    },
+    {
+      "name": "analyze_mid_day_breakout_sustainability",
+      "description": "Analyze historical intraday price data for a list of symbols to identify mid-day breakout events (e.g., price surges or volume-driven moves between specific hours like 11 AM - 1 PM) and measure the frequency with which these moves are sustained into the market close or subsequent periods. Returns symbols ranked by their success rate of sustaining gains following mid-day breakouts."
+    },
+    {
+      "name": "analyze_midday_reversal_sustainability",
+      "description": "Analyze historical intraday price data for a list of symbols to identify mid-day reversal events (e.g., price recovery from session lows during mid-day hours) and calculate the frequency with which the price maintained strength (e.g., closed higher than the reversal low or showed positive follow-through) until the market close or subsequent session. Returns symbols ranked by their sustainability score or win rate."
+    },
+    {
+      "name": "analyze_momentum_persistence",
+      "description": "Analyze a list of symbols to evaluate the strength and duration of their current momentum trends. This involves calculating the slope of moving averages (momentum strength) and the length of consecutive up/down price streaks (momentum duration) to identify positions with persistent price action."
+    },
+    {
+      "name": "analyze_month_end_strength",
+      "description": "Analyze historical daily returns for a list of symbols to identify those with the highest frequency of positive returns (win rate) and average return magnitude during the final trading days of the month (e.g., last 1-3 days) over a specified lookback period. Returns symbols ranked by their month-end strength metrics."
+    },
+    {
+      "name": "analyze_monthly_high_volume_breakouts",
+      "description": "Analyze historical daily data for a list of symbols to identify and count occurrences where the price closed above the previous month's high while simultaneously experiencing above-average trading volume (volume confirmation). Returns symbols ranked by the frequency of these confirmed breakout events over a specified lookback period."
+    },
+    {
+      "name": "analyze_n_day_high_breakouts",
+      "description": "Analyze a list of symbols to identify those where the current price has crossed above a specified N-day high (e.g., 100-day high) or below a specified N-day low. Returns the symbols, the specific N-day level breached, and the current price."
+    },
+    {
+      "name": "analyze_new_highs_on_volume",
+      "description": "Identify symbols currently trading at or near new highs (e.g., 52-week highs) for the current trading session accompanied by expanding volume relative to historical averages. Returns the list of matching symbols with details on price performance and volume metrics."
+    },
+    {
+      "name": "analyze_new_highs_with_obv_confirmation",
+      "description": "Analyze a list of symbols over a specified lookback period to identify those that frequently made new 20-day highs accompanied by a rising On-Balance Volume (OBV) trend. This utility detects specific price breakout events and validates them with volume momentum to rank symbols by the frequency of confirmed bullish signals."
+    },
+    {
+      "name": "analyze_new_highs_with_subdued_volatility",
+      "description": "Analyze historical daily price data for a list of symbols to identify and rank those that most frequently achieved new price highs (e.g., 20-day or 52-week highs) while simultaneously exhibiting subdued intraday volatility (e.g., a daily range smaller than the average true range or a specific volatility threshold) on those same days. This utility correlates price breakout events with volatility characteristics to identify 'quiet' strength."
+    },
+    {
+      "name": "analyze_normalized_atr",
+      "description": "Calculate the 20-day Average True Range (ATR) for a list of symbols, compute the ratio of ATR to the current price (normalized ATR), and return the symbols ranked by this ratio to identify those with the lowest relative volatility."
+    },
+    {
+      "name": "analyze_nr4_bullish_continuation_frequency",
+      "description": "Analyze historical price data for a list of symbols to identify NR4 (Narrow Range 4) days and measure the frequency of subsequent bullish continuation (e.g., closing higher the next day). Returns symbols ranked by their historical success rate of bullish continuation following NR4 patterns."
+    },
+    {
+      "name": "analyze_opening_hour_performance",
+      "description": "Analyze the opening hour (first hour of trading session) performance for a list of symbols over a specified lookback period (e.g., 20 trading days) to identify which positions show the weakest opening hour performance. Calculates opening hour returns, win rates, consistency, and generates a performance strength score to rank positions."
+    },
+    {
+      "name": "analyze_optimal_ema_crossover_periods",
+      "description": "Analyze historical price data for a specific symbol to test various EMA period combinations (e.g., 5/10, 9/21, 12/26) over a defined lookback period. Calculate performance metrics (total return, win rate, max drawdown) for each combination to determine the optimal parameter set."
+    },
+    {
+      "name": "analyze_order_slippage",
+      "description": "Analyze slippage statistics for filled limit orders within a specified date range by calculating the difference between the order's limit price and the actual fill price. Returns metrics including average, maximum, and minimum slippage."
+    },
+    {
+      "name": "analyze_oversold_rsi_conditions",
+      "description": "Analyze a list of symbols (e.g., portfolio or watchlist) to identify those currently exhibiting RSI values below a specified threshold (e.g., 30), indicating oversold conditions. Returns the matching symbols and their specific RSI values."
+    },
+    {
+      "name": "analyze_performance_during_market_dips",
+      "description": "Identify periods where a specified benchmark index experienced significant declines (dips) and analyze the performance of a list of symbols relative to that benchmark during those specific periods. Returns symbols ranked by their relative strength or outperformance during market downturns."
+    },
+    {
+      "name": "analyze_performance_during_market_phases",
+      "description": "Calculate the performance metrics (returns, volatility) for a list of symbols specifically during discrete historical date ranges defined by a benchmark's technical phase (e.g., mean-reversion periods), and rank them to identify leaders."
+    },
+    {
+      "name": "analyze_performance_on_breadth_conditions",
+      "description": "Identify historical trading sessions that match specific market breadth and volume criteria (e.g., positive A/D line, up volume > down volume), then calculate the average or cumulative performance of a provided list of symbols during those sessions to rank them by leadership."
+    },
+    {
+      "name": "analyze_performance_on_event_dates",
+      "description": "Calculate the average return for a list of symbols specifically on a provided list of event dates, and rank them by performance to identify the highest average return."
+    },
+    {
+      "name": "analyze_performance_on_rising_volume_days",
+      "description": "Identify trading days where a specified market benchmark (e.g., SPY) experienced rising trading volume (e.g., volume increase compared to previous day). Analyze the performance of a provided list of symbols on those specific dates to determine which holdings consistently outperformed (positive return or beating benchmark). Returns symbols ranked by consistency and magnitude of outperformance during these volume-trend days."
+    },
+    {
+      "name": "analyze_pivot_high_breakouts_with_volume",
+      "description": "Analyze historical daily price and volume data for a list of symbols to identify and count occurrences where the price broke above a previously identified pivot high (swing high) accompanied by confirming volume (e.g., volume above the moving average). Returns the symbols ranked by the frequency of these confirmed breakout events over a specified lookback period."
+    },
+    {
+      "name": "analyze_pivot_retest_success",
+      "description": "Analyze historical price data for a list of symbols to identify instances where the price tested a prior breakout pivot point (support level) and subsequently resumed the uptrend. Calculate the frequency and success rate of these events to rank symbols by their tendency to resume uptrends after pivot tests."
+    },
+    {
+      "name": "analyze_position_volume_spikes",
+      "description": "Analyze open positions to identify and rank those with the highest volume spikes relative to their 20-day average volume over the last 10 trading days. This utility retrieves the list of open positions, performs volume spike analysis on the held symbols, and returns the positions ranked by the magnitude of the spike."
+    },
+    {
+      "name": "analyze_positions_near_52_week_lows",
+      "description": "Analyze open positions to identify those trading within a specified percentage (e.g., 2%) of their 52-week low. Retrieves 52-week range data for current positions and filters based on the proximity threshold."
+    },
+    {
+      "name": "analyze_post_breakout_momentum_persistence",
+      "description": "Identify breakout events (e.g., closing above resistance levels, Bollinger Bands, or recent highs) for a provided list of symbols and calculate the subsequent returns over a defined 'persistence' window (e.g., 5 or 10 trading days). Returns the symbols ranked by the strength of their post-breakout momentum performance."
+    },
+    {
+      "name": "analyze_post_breakout_return_medians",
+      "description": "Analyze historical price data for a list of symbols to identify breakout signals (e.g., price exceeding resistance levels), calculate the 3-day forward return for each occurrence, compute the median of these returns for each symbol, and rank them to identify the highest."
+    },
+    {
+      "name": "analyze_post_volume_high_frequency",
+      "description": "Analyze historical price and volume data for a list of symbols to identify and rank them based on how frequently they hit new highs (e.g., 52-week highs) following strong up-volume days. This involves detecting strong up-volume events, detecting subsequent new high events, and calculating the correlation frequency."
+    },
+    {
+      "name": "analyze_price_above_sma_frequency",
+      "description": "Analyze a list of symbols to determine the frequency (count or percentage) of days where the closing price was above a specified Simple Moving Average (e.g., 10-day) over a defined historical lookback period. Returns the symbols ranked by this frequency."
+    },
+    {
+      "name": "analyze_price_rsi_divergence",
+      "description": "Analyze historical price and RSI data for a list of symbols to identify divergence patterns (e.g., price making higher highs while RSI makes lower highs) over a specified timeframe. Returns symbols ranked by the magnitude of the divergence."
+    },
+    {
+      "name": "analyze_price_volume_breakouts",
+      "description": "Analyze a list of symbols to identify instances where a price breakout (e.g., breaking resistance, moving averages, or Bollinger bands) is accompanied by a significant volume increase (volume spike), indicating strong coordinated movement. Returns symbols ranked by the strength of the coordination."
+    },
+    {
+      "name": "analyze_price_vs_sma_statistics",
+      "description": "Analyze the historical relationship between closing prices and a specified Simple Moving Average (SMA) for a list of symbols. Calculates metrics such as the percentage of trading sessions where the close was above the SMA, frequency of crossovers, and average absolute distance, returning the symbols ranked by the specified metric."
+    },
+    {
+      "name": "analyze_prior_day_high_support",
+      "description": "Analyze historical price data for currently open positions to identify and rank them based on how frequently the prior day's high acts as a support level (price touches or approaches the level and reverses upward) within a specified lookback period."
+    },
+    {
+      "name": "analyze_prior_month_high_breakouts",
+      "description": "Analyze historical daily price and volume data for a list of symbols over a specified lookback period to identify and count occurrences where the closing price exceeded the high of the prior month (approx. 20 trading days) accompanied by above-average trading volume. Returns symbols ranked by the frequency of these volume-confirmed breakout events."
+    },
+    {
+      "name": "analyze_quarterly_high_breakout_persistence",
+      "description": "Analyze historical price data to identify occurrences where a symbol's price broke above its quarterly high (e.g., 90-day high) and measure the frequency with which the symbol maintained those gains over subsequent periods (e.g., 1-day, 3-day, 1-week forward). Returns symbols ranked by their historical persistence or 'hold rate' following such breakouts."
+    },
+    {
+      "name": "analyze_quarterly_highs_with_rising_volume",
+      "description": "Analyze a list of symbols to identify those currently trading at a new 3-month (quarterly) high price on trading volume that is significantly higher than the average volume over the same period. This screens for bullish breakout events confirmed by volume participation."
+    },
+    {
+      "name": "analyze_range_atr_continuation",
+      "description": "Analyze open positions to identify and rank holdings based on the frequency of sessions where the daily price range exceeded a specified multiple of the Average True Range (ATR, e.g., 1.5x) and was followed by a positive return in the next trading session."
+    },
+    {
+      "name": "analyze_relative_benchmark_tracking",
+      "description": "Analyze open positions to determine which have a higher correlation coefficient with a primary benchmark (e.g., RSP) than a secondary benchmark (e.g., SPY) over a specified historical period."
+    },
+    {
+      "name": "analyze_relative_strength_improvement",
+      "description": "Calculate the change in relative strength (performance relative to a benchmark) for a list of symbols between two distinct time periods (e.g., the most recent 4 weeks versus the 4 weeks prior) to identify momentum shifts. Returns symbols ranked by the magnitude of positive change in relative strength."
+    },
+    {
+      "name": "analyze_relative_strength_rank_improvement",
+      "description": "Analyze a list of symbols to identify those with the largest positive change in their 52-week relative strength rank over a specified comparison period (e.g., ranking improvement over the last month). This involves calculating relative strength for the current period and a prior period, ranking the symbols for both, and computing the difference."
+    },
+    {
+      "name": "analyze_relative_strength_trend_consistency",
+      "description": "Analyze a list of symbols to determine which exhibit the steadiest positive trend in relative strength against a benchmark over a specified period. It calculates the rolling relative strength, then performs a linear regression to determine the slope (improvement) and R-squared (steadiness/consistency) of that trend, ranking symbols by a combined score of positive slope and trend reliability."
+    },
+    {
+      "name": "analyze_relative_strength_trends",
+      "description": "Calculate the relative strength (ratio or return difference) time series for a list of symbols against a specified benchmark (e.g., SPY) over a lookback period, determine the slope of that trend, and rank the symbols based on the consistency and magnitude of the improvement."
+    },
+    {
+      "name": "analyze_relative_volume_trends",
+      "description": "Calculate the relative volume (current volume vs average volume) for each day over the last 5 trading days for a list of symbols and identify those where the relative volume metric shows a consistent increasing trend."
+    },
+    {
+      "name": "analyze_repo_liquidity_conditions",
+      "description": "Retrieve the current repo rate and analyze what it indicates about market liquidity conditions. This includes comparing the rate to historical averages, identifying deviations from normal ranges, and interpreting whether the signal suggests tight or loose liquidity conditions in the financial system."
+    },
+    {
+      "name": "analyze_resistance_breakout_sustainability",
+      "description": "Analyze a list of symbols to identify those that have experienced a momentum rebound (price recovery from a dip) and are currently sustaining price action above identified key resistance levels (e.g., recent swing highs or pivot points), indicating a confirmed breakout."
+    },
+    {
+      "name": "analyze_resistance_consolidation_frequency",
+      "description": "Analyze historical price data for a list of symbols to identify and count instances where price broke through a prior resistance level and subsequently consolidated (moved sideways with low volatility) above that level. Returns symbols ranked by the frequency of these events."
+    },
+    {
+      "name": "analyze_revenue_diversification",
+      "description": "Retrieve and analyze revenue breakdown data (by product segment and geography) for a list of symbols, calculate a diversification metric (such as the Herfindahl-Hirschman Index), and compare the results to identify which symbol has the most diversified revenue streams."
+    },
+    {
+      "name": "analyze_rising_streak_frequency",
+      "description": "Analyze open positions to identify and rank those with the highest frequency of rising return streaks of a specific length (e.g., 10 consecutive days) over a defined historical period."
+    },
+    {
+      "name": "analyze_rolling_win_rate_stability",
+      "description": "Analyze open positions to identify those with the most stable rolling win rate over a specified window (e.g., 20 days). This utility fetches historical daily returns for each position, calculates the rolling proportion of positive return days, determines the standard deviation of this rolling series to measure stability, and ranks positions accordingly."
+    },
+    {
+      "name": "analyze_rsi_crossover_performance",
+      "description": "Analyze a list of symbols to identify historical instances where the Relative Strength Index (RSI) crossed above 50, and calculate the frequency and magnitude of subsequent price advances over specified holding periods (e.g., 3 days, 5 days). Returns the symbols ranked by their success rate in sustaining advances after the crossover."
+    },
+    {
+      "name": "analyze_rsi_depth_rebound_correlation",
+      "description": "Analyze historical price and RSI data to identify oversold events, record the minimum RSI value (depth) for each event and the subsequent price return (rebound magnitude) over a specified holding period, and calculate the correlation coefficient to determine the relationship between how deep the RSI went and how strong the subsequent rebound was."
+    },
+    {
+      "name": "analyze_rsi_divergence",
+      "description": "Analyze historical price and RSI indicator data for specified symbols around specific dates to detect bullish or bearish divergence patterns where price action makes new highs/lows while RSI momentum does not confirm."
+    },
+    {
+      "name": "analyze_rsi_divergence_frequency",
+      "description": "Analyze a list of symbols (ETFs) to identify and count occurrences of positive RSI divergence (price making lower lows while RSI makes higher lows) on a weekly timeframe over a specified lookback period. Returns the symbols ranked by the frequency of these divergence events."
+    },
+    {
+      "name": "analyze_rsi_higher_high_frequency",
+      "description": "Analyze historical price and RSI data for a list of symbols to identify events where the RSI crosses above 60 and determine if a higher high (price exceeding a recent peak) occurs subsequently. Returns the symbols ranked by the frequency or success rate of this pattern occurring within a specified lookback period."
+    },
+    {
+      "name": "analyze_rsi_oversold_holding_periods",
+      "description": "Analyze historical price data for a list of symbols to identify past RSI oversold events (e.g., RSI < 30), calculate the subsequent returns for various holding periods (e.g., 1-day, 3-day, 5-day, 10-day), and determine the optimal holding period based on average return or win rate statistics."
+    },
+    {
+      "name": "analyze_rsi_oversold_with_volume_confirmation",
+      "description": "Analyze historical RSI oversold signals to determine subsequent performance (returns, win rate) specifically for those signals that occurred with simultaneous volume spikes, to evaluate if signal quality improves with volume confirmation."
+    },
+    {
+      "name": "analyze_rsi_reclaim_new_high_frequency",
+      "description": "Analyze historical price and RSI data for a list of symbols to identify instances where RSI reclaimed the 50 level (crossed from below to above), track the subsequent price action to determine if a new high was made within a specified look-forward window, and calculate the frequency of these successful outcomes. Returns symbols ranked by the frequency of new highs following the RSI reclaim signal."
+    },
+    {
+      "name": "analyze_rsi_sma_crossover_combination",
+      "description": "Analyze historical price data to simulate and compare two strategies: 1) a standalone SMA crossover strategy, and 2) a combined strategy requiring both an SMA crossover and a specific RSI condition (e.g., RSI > 50 for confirmation). Calculate performance metrics such as win rate, average return, and maximum drawdown for both strategies over a specified lookback period to determine if the combination improves results."
+    },
+    {
+      "name": "analyze_rsi_stability",
+      "description": "Analyze historical price data for a list of symbols to calculate the 14-day Relative Strength Index (RSI) over a specified lookback period, measure the variance and mean deviation of the RSI values from the 50 level (neutrality), and rank the symbols by stability (lowest variance/deviation)."
+    },
+    {
+      "name": "analyze_rsi_threshold_reliability",
+      "description": "Analyze historical price data to evaluate the predictive reliability of different RSI oversold levels (e.g., 20, 25, 30). For each specified threshold, the utility calculates win rates and average returns for price rebounds over standard holding periods (e.g., 1, 3, 5 days) following an RSI cross-below event. It returns a comparison of these metrics to identify if a specific minimum threshold provides significantly more reliable rebound signals."
+    },
+    {
+      "name": "analyze_sector_relative_strength",
+      "description": "Analyze major market sectors (e.g., via Select Sector SPDRs) to identify those with the strongest performance over a specified timeframe, returning a ranking of sectors by their relative strength/returns."
+    },
+    {
+      "name": "analyze_sector_relative_strength_streaks",
+      "description": "Identify sector ETFs that have shown improving relative strength against a specified benchmark (e.g., SPY) for a defined number of consecutive weeks. This utility retrieves the relevant sector ETF universe, calculates relative strength for each week within the lookback period, and filters for symbols exhibiting a consistent positive trend."
+    },
+    {
+      "name": "analyze_sma_crossover_bear_market_timing",
+      "description": "Analyze the historical lead time of SMA crossover signals (e.g., death cross) relative to the start of bear markets for a specified symbol. Identifies bear market entry dates based on a drawdown threshold (e.g., -20% from peak), identifies historical SMA crossover dates, and calculates the average and distribution of time differences (days) between the signal and the actual market peak."
+    },
+    {
+      "name": "analyze_sma_crossover_cost_impact",
+      "description": "Simulate a Simple Moving Average (SMA) crossover strategy for specified symbols over a historical period, and analyze the impact of transaction costs (commissions and slippage) by comparing gross strategy returns against net returns."
+    },
+    {
+      "name": "analyze_sma_crossover_effectiveness",
+      "description": "Analyze historical price data for a list of symbols to evaluate and compare the performance of specified SMA crossover pairs (e.g., 20/50, 50/200). This utility identifies past crossover events, calculates subsequent returns over defined holding periods (e.g., 5, 10, 20 days), and aggregates metrics (average return, win rate) to recommend which strategy has historically been more reliable."
+    },
+    {
+      "name": "analyze_sma_crossover_false_breakouts",
+      "description": "Analyze historical price and SMA data for a list of symbols to identify SMA crossover events, determine which events resulted in false breakouts (price reversion within a specified timeframe after the signal), and return the count and frequency of these false signals."
+    },
+    {
+      "name": "analyze_sma_crossover_frequency_profitability",
+      "description": "Simulate the profitability of SMA crossover strategies across varying transaction frequencies (holding periods) for specified symbols to identify the threshold where transaction costs erode returns to zero or negative."
+    },
+    {
+      "name": "analyze_sma_crossover_indicator_synergy",
+      "description": "Analyze historical SMA crossover events for a specified symbol and period, filtering those events using various trend strength indicators (e.g., RSI, ADX, MACD) to determine which indicator provides the most effective filter for predicting price direction or improving trade outcomes. Returns a ranking of indicators by their effectiveness metrics such as win rate, average return, or risk-adjusted return when used in conjunction with the crossover signal."
+    },
+    {
+      "name": "analyze_sma_crossover_intervals",
+      "description": "Analyze historical price data for a specified symbol and SMA configuration (e.g., 50-day crossing 200-day) to identify all crossover events over a defined historical period, calculate the duration between consecutive signals, and return the average time interval."
+    },
+    {
+      "name": "analyze_sma_crossover_performance_in_regimes",
+      "description": "Simulate a Simple Moving Average (SMA) crossover strategy on a specified symbol (e.g., QQQ) and calculate its historical performance metrics (returns, win rate, drawdown) specifically during identified bear market periods. This utility detects bear market regimes based on drawdown thresholds (e.g., 20% decline from highs), generates crossover signals, and evaluates the strategy's effectiveness within those specific timeframes."
+    },
+    {
+      "name": "analyze_sma_crossover_profitability",
+      "description": "Analyze historical SMA crossover events for specified symbols to determine the win rate (percentage of profitable trades) for subsequent holding periods. This utility identifies crossover points, calculates the price return after those events for defined periods (e.g., 5 days, 10 days), and aggregates the results to show the percentage of events that yielded positive returns."
+    },
+    {
+      "name": "analyze_sma_crossover_regime_performance",
+      "description": "Analyze the effectiveness of SMA crossover strategies under various market regimes (e.g., trending vs. ranging, high vs. low volatility). It simulates the strategy on historical data, segments the performance based on market conditions like ATR or trend strength, and identifies which conditions yield the highest returns."
+    },
+    {
+      "name": "analyze_sma_crossover_reliability",
+      "description": "Analyze historical SMA crossover events to identify market conditions (e.g., low volume, high volatility, counter-trend slope) that frequently result in whipsaws (false signals) versus sustained trends. Returns specific conditions or filters that historically predict crossover failure."
+    },
+    {
+      "name": "analyze_sma_crossover_strategy_performance",
+      "description": "Simulate a Simple Moving Average (SMA) crossover trading strategy (e.g., 50-day/200-day) for specified symbols over a historical period. Generate the equity curve based on crossover signals and calculate performance metrics, specifically the maximum drawdown, to compare against a benchmark."
+    },
+    {
+      "name": "analyze_sma_crossover_volatility_impact",
+      "description": "Compare the realized volatility of a Simple Moving Average (SMA) crossover trading strategy against the buy-and-hold volatility of the underlying symbol. Simulates the strategy returns (e.g., long when price > SMA) over the specified period and calculates the percentage difference in volatility to determine if exposure is reduced."
+    },
+    {
+      "name": "analyze_sma_crossover_volatility_performance",
+      "description": "Analyze the historical performance and success rate of Simple Moving Average (SMA) crossover signals specifically during low volatility regimes compared to high volatility regimes. This utility identifies past crossover events, determines the volatility context (using ATR or standard deviation) for each event, calculates subsequent returns, and generates a report comparing the efficacy of signals in different volatility environments to inform strategy avoidance."
+    },
+    {
+      "name": "analyze_sma_crossover_volume_effectiveness",
+      "description": "Analyze historical SMA crossover events for a list of symbols over a specified period to determine if volume confirmation improves signal reliability. This utility calculates performance metrics (win rate, average return, maximum drawdown) for two groups: crossovers that occurred with high volume (confirmation) and crossovers that occurred with low/average volume, allowing the user to decide if volume confirmation adds value."
+    },
+    {
+      "name": "analyze_sma_drawdown_protection",
+      "description": "Analyze the effectiveness of an SMA crossover strategy in mitigating drawdowns for a specific symbol by identifying the worst historical drawdown periods and comparing the performance of a buy-and-hold strategy versus an SMA-based strategy during those specific periods."
+    },
+    {
+      "name": "analyze_sma_ema_crossover_performance",
+      "description": "Compare the historical effectiveness of SMA crossover signals versus EMA (Exponential Moving Average) crossover signals. This utility identifies crossover events for both Simple Moving Averages and Exponential Moving Averages over a specified historical period, calculates the subsequent returns for various holding periods following each signal, and aggregates performance metrics (win rate, average return, profit factor) to determine which weighting method provided better results."
+    },
+    {
+      "name": "analyze_sma_mean_reversion",
+      "description": "Analyze historical price data relative to a specified moving average (e.g., 50-day) for a list of symbols to identify instances where price deviated by a specific percentage (e.g., 5%) and subsequently reverted back to the mean. Returns the symbols that exhibited this pattern along with the dates of deviation and reversion."
+    },
+    {
+      "name": "analyze_sma_support_bounces",
+      "description": "Analyze a list of symbols to identify and rank those that recently tested a specified Simple Moving Average (e.g., 50-day) on below-average volume and subsequently bounced upward. Returns symbols ranked by bounce magnitude, including the percentage gain from the support level and the volume ratio relative to the average."
+    },
+    {
+      "name": "analyze_sma_support_respect_frequency",
+      "description": "Analyze historical daily price data for a list of symbols to identify and count how frequently a specified Simple Moving Average (e.g., 20-day) acted as support over a defined lookback period. This analysis specifically looks for instances where the price approaches or touches the SMA while the SMA trend is positive (rising), and subsequently reverses upwards (bounce). Returns the symbols ranked by the frequency or count of these valid support respect events."
+    },
+    {
+      "name": "analyze_spread_atr_ratios",
+      "description": "Calculate the ratio of bid-ask spread magnitude to Average True Range (ATR) for a list of symbols to identify positions where the cost of execution is high relative to volatility, indicating how spreads affect the viability of trading signals like SMA crossovers."
+    },
+    {
+      "name": "analyze_strategy_volatility_breakout_impact",
+      "description": "Analyze the portfolio's performance during specific volatility breakout events (e.g., Bollinger Band breakouts) to determine if the strategy benefits or suffers from increased volatility. This involves identifying breakout dates and comparing strategy returns during those periods against baseline performance."
+    },
+    {
+      "name": "analyze_technical_event_intervals",
+      "description": "Analyze the historical time intervals between specific technical events (such as SMA crossovers) for a list of symbols over a defined period. This utility calculates the maximum duration (longest drought), minimum duration, and average duration between consecutive event occurrences."
+    },
+    {
+      "name": "analyze_technical_event_seasonality",
+      "description": "Analyze the historical frequency and distribution of specified technical events (e.g., SMA crossovers) for a given symbol to identify if they exhibit seasonal patterns (e.g., occurring more frequently in certain months or quarters)."
+    },
+    {
+      "name": "analyze_technical_indicator_duration",
+      "description": "Analyze historical technical indicator data to identify periods where the indicator meets a specific condition (e.g., RSI < 30) and calculate the average duration (in bars or time) of those periods."
+    },
+    {
+      "name": "analyze_technical_indicator_reliability",
+      "description": "Analyze historical price data for a specified symbol to calculate the historical success rate (win rate) and average returns for common momentum indicators such as RSI, MACD, and Moving Averages."
+    },
+    {
+      "name": "analyze_technical_signal_regime_performance",
+      "description": "Analyze the historical performance (returns, win rate, etc.) of a specified technical signal (e.g., SMA crossover) for a given symbol, specifically during periods defined by a market regime (e.g., corrections). This utility identifies market regime periods (like corrections defined by drawdown thresholds), detects the technical signal events within those windows, and calculates performance metrics."
+    },
+    {
+      "name": "analyze_three_black_crows",
+      "description": "Analyze daily OHLC price data for a list of symbols to identify instances of the Three Black Crows candlestick pattern (three consecutive long bearish candles opening within the previous body and closing lower). Returns the symbols exhibiting the pattern and details of the occurrence."
+    },
+    {
+      "name": "analyze_trend_strength_improvement",
+      "description": "Analyze a list of symbols to identify those showing the largest improvement in trend strength over a specified period (e.g., 12 weeks). This utility calculates a trend strength metric (e.g., linear regression slope or momentum score) for the recent period and compares it to the trend strength of a prior period to determine the delta (improvement), then ranks the symbols by this change."
+    },
+    {
+      "name": "analyze_trend_strength_oversold_filter",
+      "description": "Analyze historical price and indicator data to identify oversold events and correlate them with trend strength metrics to determine the specific threshold at which the oversold signal becomes unreliable (invalidated) based on historical performance."
+    },
+    {
+      "name": "analyze_trending_gap_sizes",
+      "description": "Analyze open positions to identify those currently in a trending state (e.g., price above key moving averages with positive slope) and calculate the absolute magnitude of their price gaps (Open vs Previous Close) over the specified lookback period, returning the positions ranked by smallest average gap size."
+    },
+    {
+      "name": "analyze_up_down_volume_frequency",
+      "description": "Analyze historical price and volume data for a list of symbols to identify those that most frequently exhibit higher trading volume on days where the price closed up compared to days where it closed down. This involves filtering days by price direction, aggregating volume metrics for up and down days, and calculating a frequency or ratio score to rank symbols by this accumulation pattern."
+    },
+    {
+      "name": "analyze_upside_volume_expansion_frequency",
+      "description": "Analyze daily price and volume history for a list of ETFs over a specified lookback period to count and rank symbols based on the frequency of days where price closed higher (up day) and volume was above the average (expanding)."
+    },
+    {
+      "name": "analyze_volatility_after_breakouts",
+      "description": "Analyze a list of symbols to identify specific breakout events (e.g., closing above upper Bollinger Band or recent resistance) and compare volatility metrics (e.g., ATR, daily range) for a period prior to the event versus a period after the event. Returns the symbols ranked by the magnitude of volatility reduction."
+    },
+    {
+      "name": "analyze_volatility_mean_reversion_strength",
+      "description": "Analyze and compare the mean reversion characteristics of different volatility measures (e.g., VIX, historical volatility, ATR) over a specified period. Calculates statistical metrics such as mean reversion half-life and Hurst exponent to determine which measure exhibits the strongest tendency to revert to its mean."
+    },
+    {
+      "name": "analyze_volatility_regime_timing_impact",
+      "description": "Analyze the correlation between intraday/daily volatility divergence (volatility regimes) and trade timing quality. This utility calculates the ratio of intraday range to daily volatility, classifies trades into volatility regimes, and compares timing quality metrics (such as slippage or execution efficiency) across these regimes to determine if volatility conditions significantly affect timing."
+    },
+    {
+      "name": "analyze_volatility_signal_impact",
+      "description": "Analyze and compare the influence of intraday volatility versus daily volatility on trading signals. This utility retrieves intraday range statistics, daily realized volatility metrics, and historical technical events for specified symbols. It then classifies volatility regimes (high/low) based on both metrics, correlates these regimes with the occurrence and subsequent performance (outcome) of technical signals, and returns a comparison of which volatility measure has a stronger predictive relationship or impact on signal efficacy."
+    },
+    {
+      "name": "analyze_vwap_range_tightness",
+      "description": "Analyze open positions to identify and rank those with the tightest intraday price action relative to the Volume Weighted Average Price (VWAP). This utility calculates the spread between the daily High/Low prices and the VWAP to determine which positions traded closest to their VWAP throughout the session."
+    },
+    {
+      "name": "analyze_weekly_breakout_continuation",
+      "description": "Analyze historical weekly price data for a list of symbols to identify past weekly breakout events (e.g., closing above a previous X-week high or resistance level) and calculate the subsequent price performance (continuation) over a defined period following the breakout. Returns symbols ranked by the strength of the continuation (e.g., average return over the next 1-4 weeks)."
+    },
+    {
+      "name": "analyze_weekly_consolidation_breakout_rankings",
+      "description": "Analyze historical weekly price data for current open positions to identify and rank those with the tightest consolidation periods (lowest volatility/range) immediately followed by a breakout event."
+    },
+    {
+      "name": "backtest_regime_switching_strategy",
+      "description": "Simulates the performance of a strategy that identifies market regimes (e.g., trending vs. ranging) and switches between momentum and mean-reversion logic accordingly. Returns performance metrics such as total return, Sharpe ratio, maximum drawdown, and win rate over the specified historical period."
+    },
+    {
+      "name": "calculate_atr_to_price_ratios",
+      "description": "Calculate the Average True Range (ATR) expressed as a percentage of the current market price for a list of symbols to identify positions with low relative volatility."
+    },
+    {
+      "name": "calculate_average_daily_dollar_volume",
+      "description": "Calculate the average daily dollar volume (Closing Price * Volume) for a specified symbol over a defined lookback period (e.g., 30 trading days)."
+    },
+    {
+      "name": "calculate_gap_statistics_for_symbols",
+      "description": "Calculate gap statistics, including mean absolute gap size, for a list of provided symbols over a specified historical period (e.g., year-to-date) to determine volatility based on overnight price action."
+    },
+    {
+      "name": "calculate_holding_period_statistics",
+      "description": "Calculate holding period statistics for closed trades, including the average holding period for profitable trades, losing trades, and overall average. This utility analyzes the time difference between entry and exit timestamps for all closed trades and aggregates them based on profitability."
+    },
+    {
+      "name": "calculate_intraday_win_rate",
+      "description": "Calculate the win rate for intraday trades (opened and closed on the same day) over a specified date range (e.g., today)."
+    },
+    {
+      "name": "calculate_optimal_portfolio_allocation",
+      "description": "Calculate the optimal asset allocation weights for the portfolio using mathematical optimization techniques (e.g., Mean-Variance Optimization, Efficient Frontier analysis, or Maximum Diversification) to minimize risk for a given return or maximize the diversification ratio based on historical data."
+    },
+    {
+      "name": "calculate_optimal_volatility_entry_exit_spread",
+      "description": "Analyze historical volatility data and price movements to determine the optimal volatility spread threshold (e.g., IV vs HV, or ATR percentiles) that historically provided the best risk-adjusted returns for entry and exit signals."
+    },
+    {
+      "name": "calculate_portfolio_rolling_volatility",
+      "description": "Calculate the rolling 30-day volatility (standard deviation of daily returns) for the portfolio over a specified historical period (e.g., the last 6 months)."
+    },
+    {
+      "name": "calculate_relative_strength",
+      "description": "Calculate the relative strength (difference in percentage returns) of a list of symbols compared to a benchmark index over a specified timeframe, returning the symbols ranked by outperformance or underperformance."
+    },
+    {
+      "name": "calculate_return_statistics",
+      "description": "Calculate statistical metrics for daily returns such as average, median, and standard deviation for specified symbols over a defined historical period (e.g., 30 trading days)."
+    },
+    {
+      "name": "calculate_rsi_threshold_crossings",
+      "description": "Count the number of times the RSI indicator for a specific symbol crossed below a defined threshold (e.g., 20 for oversold) within a specified historical lookback period (e.g., 1 year)."
+    },
+    {
+      "name": "calculate_sma_crossover_strategy_performance",
+      "description": "Simulate a specific SMA crossover strategy (e.g., 50-day crossing 200-day) for a given symbol over a defined historical period. This utility generates buy/sell signals based on the crossover rules and calculates resulting performance metrics such as total return, win rate, maximum drawdown, and trade count to evaluate strategy effectiveness."
+    },
+    {
+      "name": "calculate_up_down_volume_ratio",
+      "description": "Calculate the ratio of volume traded on upticks versus volume traded on downticks for a specified list of symbols. Returns the symbols ranked by this ratio to identify those with the strongest buying pressure."
+    },
+    {
+      "name": "calculate_weekly_return_persistence",
+      "description": "Analyze historical price data for a list of symbols to calculate the frequency and count of positive weekly returns over a specified lookback period, ranking the symbols by their persistence (percentage of positive weeks)."
+    },
+    {
+      "name": "compare_historical_fundamental_strength",
+      "description": "Compare the balance sheet strength of a specific symbol against its sector peers for a specified historical year. Identifies the symbol's sector, retrieves historical balance sheet metrics (e.g., Debt-to-Equity, Current Ratio, Cash Position) for the symbol and its peers, and calculates relative strength indicators (e.g., percentile rank, Z-score) against the peer group."
+    },
+    {
+      "name": "get_analyst_recommendation_changes",
+      "description": "Retrieve analyst recommendation changes (upgrades, downgrades, and price target revisions) for a provided list of symbols within a specified date range."
+    },
+    {
+      "name": "get_cash_flow_summary",
+      "description": "Calculate the net cash flow for the account over a specified date range by aggregating transaction data such as deposits, withdrawals, dividends, interest, and fees."
+    },
+    {
+      "name": "get_credit_spreads",
+      "description": "Retrieve the current credit spread (yield difference) for specified bond categories or indices (e.g., High Yield Corporate) relative to a risk-free benchmark (e.g., US Treasuries)."
+    },
+    {
+      "name": "get_equity_asset_type_breakdown",
+      "description": "Retrieve the breakdown of equity holdings by asset type (e.g., Large Cap, Mid Cap, Small Cap, ETF, ADR), calculating the total market value and percentage allocation for each type."
+    },
+    {
+      "name": "get_etf_holdings",
+      "description": "Retrieve the list of holdings for a specified ETF symbol, including ticker, name, weight, and rank, with an option to limit results to the top N positions."
+    },
+    {
+      "name": "get_holdings_correlation_to_benchmark",
+      "description": "Calculate the correlation coefficient between the user's current open positions and a specified benchmark symbol (e.g., DXY) over a defined historical period. Returns the positions ranked by their correlation score to identify those most positively or inversely correlated."
+    },
+    {
+      "name": "get_industry_allocation",
+      "description": "Retrieve the portfolio's breakdown by industry groups, showing the percentage allocation and market value for each industry based on current open holdings."
+    },
+    {
+      "name": "get_macro_event_calendar",
+      "description": "Retrieve dates of significant macro-economic events (e.g., FOMC announcements, CPI releases, GDP reports) within a specified timeframe."
+    },
+    {
+      "name": "get_positions_near_52_week_highs",
+      "description": "Retrieve open positions that are trading within a specified percentage threshold of their 52-week high, calculating the exact proximity percentage for each position."
+    },
+    {
+      "name": "get_positions_summary",
+      "description": "Retrieve summary statistics for open positions including total long market value, total short market value, gross exposure, and net exposure."
+    },
+    {
+      "name": "get_positions_with_dividend_yield",
+      "description": "Retrieve all currently open positions and calculate the indicated dividend yield for each based on the latest annualized dividend payment and the current market price."
+    },
+    {
+      "name": "get_sector_etfs",
+      "description": "Retrieve the standard list of sector ETFs (e.g., Select Sector SPDRs, Vanguard sectors) representing major market segments."
+    },
+    {
+      "name": "get_sector_volume_leaders",
+      "description": "Retrieve a list of stocks within a specified sector ranked by their current daily trading volume to identify the most active stocks."
+    },
+    {
+      "name": "get_support_resistance_levels",
+      "description": "Calculate and retrieve technical support and resistance levels for a specified symbol. This includes pivot points (S1, S2, S3, R1, R2, R3), Fibonacci retracement levels, and key moving averages acting as dynamic support."
+    },
+    {
+      "name": "get_technical_indicator_definition",
+      "description": "Retrieve the definition, calculation method, and standard interpretation thresholds for a specified technical analysis indicator (e.g., RSI, MACD)."
+    },
+    {
+      "name": "get_technical_indicator_interpretation",
+      "description": "Retrieve interpretive guidelines, standard thresholds, and common trading signals for specified technical indicators to help users understand how to read them."
+    },
+    {
+      "name": "get_top_performers_on_specific_dates",
+      "description": "Analyze a provided list of ETFs to identify those with the strongest performance (e.g., highest average return or frequency of top returns) on a specific list of historical dates."
+    },
+    {
+      "name": "get_top_volume_stocks",
+      "description": "Retrieve a list of stocks ranked by their daily trading volume for the current session. This utility acts as a market screener to identify the most active liquid stocks today."
+    },
+    {
+      "name": "identify_synchronized_strength_dates",
+      "description": "Identify dates where a list of benchmark symbols (e.g., SPY, QQQ, IWM) all exhibit strong positive performance simultaneously based on a defined threshold."
+    },
+    {
+      "name": "optimize_volume_signal_filter",
+      "description": "Determine the optimal volume threshold (e.g., multiplier of average volume) to use as a filter for trading signals by backtesting various threshold levels against historical price action and identifying the threshold that yields the highest performance (e.g., Sharpe ratio, win rate)."
+    },
+    {
+      "name": "screen_rsi_oversold",
+      "description": "Screen a specified market universe (e.g., S&P 500, Russell 2000, or a custom watchlist) for stocks currently in an oversold condition based on the Relative Strength Index (RSI) falling below a defined threshold (e.g., 30). Returns the matching symbols with their current RSI values and price data."
+    },
+    {
+      "name": "screen_stocks_by_market_cap_and_technical_criteria",
+      "description": "Screen the stock market universe to identify symbols meeting specific fundamental criteria (e.g., Mega-cap market capitalization) and technical criteria (e.g., positive daily return, volume above historical average), returning the matching symbols ranked by their daily performance."
+    }
+  ],
+  "utilities_consolidated_as_sub": [
+    "analyze_200sma_reclaim_with_volume_rally",
+    "analyze_50sma_support_bounces",
+    "analyze_advancing_volume_dominance",
+    "analyze_afternoon_uptrend_persistence",
+    "analyze_bollinger_band_mean_reversion",
+    "analyze_bollinger_band_squeezes",
+    "analyze_bollinger_band_width",
+    "analyze_bollinger_bandwidth",
+    "analyze_bollinger_squeezes",
+    "analyze_breadth_conditioned_performance",
+    "analyze_breakout_breadth_confirmation",
+    "analyze_breakout_follow_through",
+    "analyze_breakout_level_support_respect",
+    "analyze_breakout_pullback_continuations",
+    "analyze_breakout_retest_continuation",
+    "analyze_breakout_retest_reversals",
+    "analyze_breakout_retest_success",
+    "analyze_bullish_engulfing_new_highs",
+    "analyze_bullish_outside_day_continuation",
+    "analyze_bullish_outside_week_performance",
+    "analyze_candlestick_pattern_performance",
+    "analyze_candlestick_patterns",
+    "analyze_closing_strength_during_volatile_periods",
+    "analyze_closing_strength_score_change",
+    "analyze_closing_strength_trends",
+    "analyze_consolidation_breakout_history",
+    "analyze_consolidation_breakout_tightness",
+    "analyze_consolidation_breakouts",
+    "analyze_distribution_day_performance",
+    "analyze_downside_gap_fill_recovery",
+    "analyze_drawdowns_during_intraday_swoons",
+    "analyze_earnings_window_volatility",
+    "analyze_ema_crossover_sustainability",
+    "analyze_etf_advances_during_rising_volume",
+    "analyze_etf_expense_ratios",
+    "analyze_etf_holdings_concentration",
+    "analyze_etf_price_volume_breadth_alignment",
+    "analyze_exit_volatility_sensitivity",
+    "analyze_failed_breakouts",
+    "analyze_gap_follow_through",
+    "analyze_heavy_volume_up_day_returns",
+    "analyze_high_volume_open_gain_retention",
+    "analyze_high_volume_outperformance",
+    "analyze_high_volume_up_day_frequency",
+    "analyze_high_volume_up_day_returns",
+    "analyze_higher_low_frequency",
+    "analyze_holdings_resilience_after_sector_reversals",
+    "analyze_inside_week_breakout_frequency",
+    "analyze_intraday_drawdowns",
+    "analyze_intraday_drawdowns_on_trend_days",
+    "analyze_intraday_loss_recovery_consistency",
+    "analyze_intraday_ma_bounces",
+    "analyze_intraday_volatility_by_day_type",
+    "analyze_keltner_channel_patterns",
+    "analyze_leveraged_etf_spread_timing_impact",
+    "analyze_lookback_period_sensitivity",
+    "analyze_low_volume_breakout_continuation",
+    "analyze_ma_crossover_regime_performance",
+    "analyze_ma_timing_effectiveness",
+    "analyze_macd_crossover_performance",
+    "analyze_macd_crossovers",
+    "analyze_mid_day_breakout_sustainability",
+    "analyze_midday_reversal_sustainability",
+    "analyze_momentum_persistence",
+    "analyze_month_end_strength",
+    "analyze_monthly_high_volume_breakouts",
+    "analyze_n_day_high_breakouts",
+    "analyze_new_highs_on_volume",
+    "analyze_new_highs_with_subdued_volatility",
+    "analyze_normalized_atr",
+    "analyze_nr4_bullish_continuation_frequency",
+    "analyze_opening_hour_performance",
+    "analyze_optimal_ema_crossover_periods",
+    "analyze_oversold_rsi_conditions",
+    "analyze_performance_during_market_dips",
+    "analyze_performance_during_market_phases",
+    "analyze_performance_on_breadth_conditions",
+    "analyze_performance_on_event_dates",
+    "analyze_performance_on_rising_volume_days",
+    "analyze_pivot_high_breakouts_with_volume",
+    "analyze_position_volume_spikes",
+    "analyze_positions_near_52_week_lows",
+    "analyze_post_breakout_momentum_persistence",
+    "analyze_post_breakout_return_medians",
+    "analyze_post_volume_high_frequency",
+    "analyze_price_above_sma_frequency",
+    "analyze_price_rsi_divergence",
+    "analyze_price_volume_breakouts",
+    "analyze_price_vs_sma_statistics",
+    "analyze_prior_day_high_support",
+    "analyze_prior_month_high_breakouts",
+    "analyze_quarterly_high_breakout_persistence",
+    "analyze_quarterly_highs_with_rising_volume",
+    "analyze_range_atr_continuation",
+    "analyze_relative_strength_improvement",
+    "analyze_relative_strength_rank_improvement",
+    "analyze_relative_strength_trend_consistency",
+    "analyze_relative_strength_trends",
+    "analyze_relative_volume_trends",
+    "analyze_resistance_breakout_sustainability",
+    "analyze_resistance_consolidation_frequency",
+    "analyze_rising_streak_frequency",
+    "analyze_rsi_crossover_performance",
+    "analyze_rsi_depth_rebound_correlation",
+    "analyze_rsi_divergence",
+    "analyze_rsi_divergence_frequency",
+    "analyze_rsi_higher_high_frequency",
+    "analyze_rsi_oversold_with_volume_confirmation",
+    "analyze_rsi_reclaim_new_high_frequency",
+    "analyze_rsi_sma_crossover_combination",
+    "analyze_rsi_stability",
+    "analyze_rsi_threshold_reliability",
+    "analyze_sector_relative_strength",
+    "analyze_sector_relative_strength_streaks",
+    "analyze_sma_crossover_bear_market_timing",
+    "analyze_sma_crossover_cost_impact",
+    "analyze_sma_crossover_effectiveness",
+    "analyze_sma_crossover_false_breakouts",
+    "analyze_sma_crossover_frequency_profitability",
+    "analyze_sma_crossover_indicator_synergy",
+    "analyze_sma_crossover_intervals",
+    "analyze_sma_crossover_performance_in_regimes",
+    "analyze_sma_crossover_profitability",
+    "analyze_sma_crossover_regime_performance",
+    "analyze_sma_crossover_reliability",
+    "analyze_sma_crossover_strategy_performance",
+    "analyze_sma_crossover_volatility_impact",
+    "analyze_sma_crossover_volatility_performance",
+    "analyze_sma_crossover_volume_effectiveness",
+    "analyze_sma_drawdown_protection",
+    "analyze_sma_ema_crossover_performance",
+    "analyze_sma_mean_reversion",
+    "analyze_sma_support_bounces",
+    "analyze_sma_support_respect_frequency",
+    "analyze_spread_atr_ratios",
+    "analyze_strategy_volatility_breakout_impact",
+    "analyze_technical_event_intervals",
+    "analyze_technical_indicator_duration",
+    "analyze_technical_indicator_reliability",
+    "analyze_technical_signal_regime_performance",
+    "analyze_three_black_crows",
+    "analyze_trend_strength_improvement",
+    "analyze_trend_strength_oversold_filter",
+    "analyze_trending_gap_sizes",
+    "analyze_up_down_volume_frequency",
+    "analyze_upside_volume_expansion_frequency",
+    "analyze_volatility_after_breakouts",
+    "analyze_volatility_mean_reversion_strength",
+    "analyze_volatility_regime_timing_impact",
+    "analyze_volatility_signal_impact",
+    "analyze_vwap_range_tightness",
+    "analyze_weekly_breakout_continuation",
+    "analyze_weekly_consolidation_breakout_rankings",
+    "calculate_atr_to_price_ratios",
+    "calculate_average_daily_dollar_volume",
+    "calculate_gap_statistics_for_symbols",
+    "calculate_holding_period_statistics",
+    "calculate_intraday_win_rate",
+    "calculate_optimal_portfolio_allocation",
+    "calculate_optimal_volatility_entry_exit_spread",
+    "calculate_portfolio_rolling_volatility",
+    "calculate_return_statistics",
+    "calculate_sma_crossover_strategy_performance",
+    "calculate_up_down_volume_ratio",
+    "calculate_weekly_return_persistence",
+    "get_cash_flow_summary",
+    "get_holdings_correlation_to_benchmark",
+    "get_macro_event_calendar",
+    "get_positions_near_52_week_highs",
+    "get_positions_summary",
+    "get_positions_with_dividend_yield",
+    "get_sector_etfs",
+    "get_sector_volume_leaders",
+    "get_technical_indicator_definition",
+    "get_technical_indicator_interpretation",
+    "get_top_performers_on_specific_dates",
+    "get_top_volume_stocks",
+    "optimize_volume_signal_filter",
+    "screen_rsi_oversold",
+    "screen_stocks_by_market_cap_and_technical_criteria"
+  ]
+}

@@ -63,7 +63,7 @@ export const SparkChart04: React.FC<SparkChart04Props> = ({ data, dataIndex = 'd
                             categories={[item.dataKey ?? item.name]}
                             fill="solid"
                             colors={item.color ? ([item.color] as any) : undefined}
-                            className="flex-none"
+                            className="h-20 w-32 flex-none"
                         />
                     </div>
                 </Card>

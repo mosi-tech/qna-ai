@@ -72,7 +72,7 @@ export const SparkChart01: React.FC<SparkChart01Props> = ({
                                 index={dataIndex}
                                 categories={[item.dataKey ?? item.id]}
                                 colors={(item.changeType === 'positive' ? ['emerald'] : item.changeType === 'negative' ? ['red'] : ['gray']) as any}
-                                className="h-8 w-24 flex-none sm:w-28"
+                                className="h-16 w-32 flex-none sm:w-40"
                             />
                             <div
                                 className={cx(

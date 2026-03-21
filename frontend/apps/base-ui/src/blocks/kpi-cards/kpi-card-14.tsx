@@ -64,7 +64,7 @@ const StockCard: React.FC<{
                 categories={[item.name]}
                 colors={item.changeType === 'positive' ? ['emerald'] : ['red']}
                 fill="solid"
-                className="mt-4 h-10 w-full"
+                className="mt-4 h-16 w-full"
             />
         </Card>
     );

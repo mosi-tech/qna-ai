@@ -82,7 +82,7 @@ const KpiCardItem = ({ item, chartData, indexField }: KpiCardItemProps) => {
                     showGridLines={false}
                     startEndOnly={true}
                     fill="solid"
-                    className="-mb-2 mt-3 h-24"
+                    className="-mb-2 mt-3 h-32"
                     tooltipCallback={(props) => {
                         if (props.active) {
                             setSelectedChartData((prev) =>

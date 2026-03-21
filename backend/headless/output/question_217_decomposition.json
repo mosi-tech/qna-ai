@@ -1,0 +1,68 @@
+{
+  "question_number": 217,
+  "original_question": "Which positions had the largest difference between VWAP and close today?",
+  "analysis": {
+    "question_type": "comparative_analysis_with_ranking",
+    "requires_data_retrieval": true,
+    "requires_analysis": true,
+    "decomposition_required": true,
+    "key_analysis": "The question asks for positions ranked by the magnitude of VWAP-to-close difference. This requires two operations: (1) fetching today's intraday VWAP data for all open positions, and (2) calculating and ranking the positions by absolute difference between VWAP and close price."
+  },
+  "decomposition": {
+    "is_leaf": false,
+    "reasoning": "Question requires both data retrieval (today's VWAP/close data) and comparative analysis (ranking positions by difference magnitude). No single existing utility provides this functionality. Two new utilities are needed: one to retrieve intraday VWAP data for open positions, and one to analyze and rank positions by VWAP-close divergence.",
+    "sub_questions": [
+      {
+        "sequence": 1,
+        "question": "Get today's intraday market data including VWAP and close prices for all open positions.",
+        "utility_needed": "get_intraday_vwap_data_for_positions",
+        "description": "Retrieve current open positions with today's intraday data including VWAP, close price, and related metrics."
+      },
+      {
+        "sequence": 2,
+        "question": "Analyze and rank open positions by the magnitude of difference between VWAP and close price today.",
+        "utility_needed": "analyze_vwap_close_divergence",
+        "description": "Calculate absolute difference between VWAP and close for each position, rank by largest divergence, and provide detailed metrics including percentage deviation."
+      }
+    ]
+  },
+  "new_utilities": [
+    {
+      "name": "get_intraday_vwap_data_for_positions",
+      "domain": "intraday",
+      "description": "Retrieve today's intraday market data for all open positions including VWAP, close price, opening price, high, low, and volume metrics to enable intraday analysis and VWAP-based calculations.",
+      "sub_utilities": [
+        "symbol",
+        "quantity",
+        "current_price",
+        "vwap",
+        "close_price",
+        "open_price",
+        "day_high",
+        "day_low",
+        "volume",
+        "timestamp",
+        "get_open_positions_with_pnl"
+      ]
+    },
+    {
+      "name": "analyze_vwap_close_divergence",
+      "domain": "intraday",
+      "description": "Analyze open positions to identify and rank those with the largest absolute difference between Volume Weighted Average Price (VWAP) and close price today. Returns positions ranked by divergence magnitude with absolute and percentage differences.",
+      "sub_utilities": [
+        "symbol",
+        "vwap",
+        "close_price",
+        "vwap_close_absolute_difference",
+        "vwap_close_percent_difference",
+        "divergence_rank",
+        "divergence_direction",
+        "quantity",
+        "current_price",
+        "get_intraday_vwap_data_for_positions"
+      ]
+    }
+  ],
+  "library_update_status": "pending",
+  "notes": "Two new utilities created to handle VWAP-based intraday analysis. These fill a gap in the library where VWAP analysis was referenced but not fully implemented. The utilities follow the established pattern of data retrieval followed by analytical ranking."
+}
