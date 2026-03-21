@@ -42,59 +42,29 @@ export const WidthCompatibilityTester: React.FC = () => {
   });
   const [approvals, setApprovals] = useState<Record<string, WidthSize[]>>({});
 
-  // Load approvals from localStorage or backend on mount
+  // Load approvals from backend file on mount
   useEffect(() => {
     const loadApprovals = async () => {
       try {
-        // Try localStorage first (faster, always reliable)
-        const saved = localStorage.getItem('widthApprovals');
-        if (saved) {
-          try {
-            const parsed = JSON.parse(saved);
-            setApprovals(parsed);
-            // Still try backend in background to sync newer data
-            try {
-              const response = await fetch('/api/dashboard/width-approvals');
-              if (response.ok) {
-                const data = await response.json();
-                const backendApprovals = data.data || {};
-                if (Object.keys(backendApprovals).length > 0) {
-                  setApprovals(backendApprovals);
-                  localStorage.setItem('widthApprovals', JSON.stringify(backendApprovals));
-                }
-              }
-            } catch {
-              // Backend sync failed, stick with localStorage
-            }
-            return;
-          } catch (e) {
-            console.error('Failed to parse localStorage approvals', e);
-          }
-        }
-
-        // Fallback to backend if localStorage empty
         const response = await fetch('/api/dashboard/width-approvals');
         if (response.ok) {
           const data = await response.json();
-          const backendApprovals = data.data || {};
-          setApprovals(backendApprovals);
-          if (Object.keys(backendApprovals).length > 0) {
-            localStorage.setItem('widthApprovals', JSON.stringify(backendApprovals));
-          }
+          const approvals = data.data || {};
+          setApprovals(approvals);
+        } else {
+          setApprovals({});
         }
       } catch (err) {
-        console.error('Error loading approvals:', err);
+        console.error('Error loading approvals from backend:', err);
+        setApprovals({});
       }
     };
 
     loadApprovals();
   }, []);
 
-  // Save approvals to localStorage and API whenever they change
+  // Save approvals to backend file whenever they change
   useEffect(() => {
-    localStorage.setItem('widthApprovals', JSON.stringify(approvals));
-
-    // Auto-save to backend
     const saveToBackend = async () => {
       try {
         const response = await fetch('/api/dashboard/width-approvals', {
@@ -102,9 +72,11 @@ export const WidthCompatibilityTester: React.FC = () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(approvals),
         });
-        if (!response.ok) console.warn('Failed to save approvals to backend');
+        if (!response.ok) {
+          console.error('Failed to save approvals to backend');
+        }
       } catch (err) {
-        console.warn('Could not reach backend for auto-save:', err);
+        console.error('Error saving approvals to backend:', err);
       }
     };
 
