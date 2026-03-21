@@ -43,35 +43,57 @@ export const WidthCompatibilityTester: React.FC = () => {
   const [approvals, setApprovals] = useState<Record<string, WidthSize[]>>({});
   const hasLoadedRef = React.useRef(false);
 
-  // Load approvals from localStorage on mount
+  // Load approvals from backend file on mount
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('widthApprovals');
-      if (saved) {
-        const approvals = JSON.parse(saved);
-        console.log('✓ Loaded approvals:', approvals);
-        setApprovals(approvals);
+    const loadApprovals = async () => {
+      try {
+        const response = await fetch('http://localhost:8010/api/dashboard/width-approvals');
+        if (response.ok) {
+          const data = await response.json();
+          const approvals = data.data || {};
+          console.log('✓ Loaded approvals:', approvals);
+          setApprovals(approvals);
+        } else {
+          console.warn('Backend returned:', response.status);
+          setApprovals({});
+        }
+      } catch (err) {
+        console.error('Error loading approvals:', err);
+        setApprovals({});
+      } finally {
+        hasLoadedRef.current = true;
       }
-    } catch (err) {
-      console.error('Error loading approvals:', err);
-    } finally {
-      hasLoadedRef.current = true;
-    }
+    };
+
+    loadApprovals();
   }, []);
 
-  // Save approvals to localStorage whenever they change (skip until after load)
+  // Save approvals to backend file whenever they change (skip until after load)
   useEffect(() => {
     if (!hasLoadedRef.current) {
       return;
     }
 
-    try {
-      console.log('💾 Saving approvals:', approvals);
-      localStorage.setItem('widthApprovals', JSON.stringify(approvals));
-      console.log('✓ Saved to localStorage');
-    } catch (err) {
-      console.error('Error saving approvals:', err);
-    }
+    const saveToBackend = async () => {
+      try {
+        console.log('💾 Saving approvals:', approvals);
+        const response = await fetch('http://localhost:8010/api/dashboard/width-approvals', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(approvals),
+        });
+        if (response.ok) {
+          const result = await response.json();
+          console.log('✓ Saved to backend:', result.data);
+        } else {
+          console.error('Failed to save - status:', response.status);
+        }
+      } catch (err) {
+        console.error('Error saving to backend:', err);
+      }
+    };
+
+    saveToBackend();
   }, [approvals]);
 
   const handleCategoryChange = (width: WidthSize, category: string) => {
