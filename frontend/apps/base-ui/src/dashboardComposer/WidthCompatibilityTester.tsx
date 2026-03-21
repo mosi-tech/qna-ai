@@ -43,19 +43,33 @@ export const WidthCompatibilityTester: React.FC = () => {
   const [approvals, setApprovals] = useState<Record<string, WidthSize[]>>({});
   const hasLoadedRef = React.useRef(false);
 
-  // Load approvals from backend file on mount
+  // Load approvals from localStorage first, then sync with backend
   useEffect(() => {
     const loadApprovals = async () => {
       try {
-        const response = await fetch('/api/width-approvals');
-        if (response.ok) {
-          const data = await response.json();
-          const approvals = data.data || {};
-          console.log('✓ Loaded approvals:', approvals);
-          setApprovals(approvals);
-        } else {
-          console.warn('Backend returned:', response.status);
-          setApprovals({});
+        // Try localStorage first (fast)
+        const saved = localStorage.getItem('widthApprovals');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          console.log('✓ Loaded from localStorage:', parsed);
+          setApprovals(parsed);
+        }
+
+        // Sync with backend file in background
+        try {
+          const response = await fetch('/api/width-approvals');
+          if (response.ok) {
+            const data = await response.json();
+            const backendApprovals = data.data || {};
+            // Use backend data if it's newer/different
+            if (Object.keys(backendApprovals).length > 0) {
+              console.log('✓ Synced from backend:', backendApprovals);
+              setApprovals(backendApprovals);
+              localStorage.setItem('widthApprovals', JSON.stringify(backendApprovals));
+            }
+          }
+        } catch (err) {
+          console.warn('Backend sync failed, using localStorage:', err.message);
         }
       } catch (err) {
         console.error('Error loading approvals:', err);
@@ -68,32 +82,39 @@ export const WidthCompatibilityTester: React.FC = () => {
     loadApprovals();
   }, []);
 
-  // Save approvals to backend file whenever they change (skip until after load)
+  // Save approvals to localStorage immediately, sync with backend in background
   useEffect(() => {
     if (!hasLoadedRef.current) {
       return;
     }
 
-    const saveToBackend = async () => {
+    // Save to localStorage immediately (fast)
+    try {
+      console.log('💾 Saving to localStorage:', approvals);
+      localStorage.setItem('widthApprovals', JSON.stringify(approvals));
+    } catch (err) {
+      console.error('Error saving to localStorage:', err);
+    }
+
+    // Sync to backend file in background (non-blocking)
+    const syncToBackend = async () => {
       try {
-        console.log('💾 Saving approvals:', approvals);
         const response = await fetch('/api/width-approvals', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(approvals),
         });
         if (response.ok) {
-          const result = await response.json();
-          console.log('✓ Saved to backend:', result.data);
+          console.log('✓ Synced to backend file');
         } else {
-          console.error('Failed to save - status:', response.status);
+          console.warn('Backend sync failed:', response.status);
         }
       } catch (err) {
-        console.error('Error saving to backend:', err);
+        console.warn('Backend sync error (data safe in localStorage):', err.message);
       }
     };
 
-    saveToBackend();
+    syncToBackend();
   }, [approvals]);
 
   const handleCategoryChange = (width: WidthSize, category: string) => {
