@@ -12,6 +12,20 @@
 import React from 'react';
 import type { DashboardSpec, BlockState } from './types';
 import BlockShell from './BlockShell';
+import { CREATIVE_GRIDS } from '../dashboardComposer/CreativeGrids';
+
+// Helper to convert colSpan to Tailwind col-span class
+function getColSpanClass(colSpan: number): string {
+    const colSpanMap: Record<number, string> = {
+        1: 'col-span-1',
+        2: 'col-span-2',
+        3: 'col-span-3',
+        4: 'col-span-4',
+        5: 'col-span-5',
+        6: 'col-span-6',
+    };
+    return colSpanMap[colSpan] || 'col-span-1';
+}
 
 interface DashboardCanvasProps {
     spec: DashboardSpec | null;
@@ -85,7 +99,10 @@ export default function DashboardCanvas({ spec, blockStates, specLoading, specEr
     if (specError) return <SpecErrorState error={specError} />;
     if (!spec) return <EmptyCanvas />;
 
-    const isGrid = spec.layout === 'grid';
+    // Check if we have grid layout from orchestrator
+    const hasGridLayout = spec.gridTemplate && spec.gridSlots;
+    const gridTemplate = hasGridLayout ? CREATIVE_GRIDS[spec.gridTemplate!] : null;
+    const isGrid = spec.layout === 'grid' && !hasGridLayout; // Legacy fallback
 
     return (
         <div className="p-6 overflow-y-auto h-full">
@@ -105,7 +122,34 @@ export default function DashboardCanvas({ spec, blockStates, specLoading, specEr
 
             <LoadProgress states={blockStates} />
 
-            {isGrid ? (
+            {hasGridLayout && gridTemplate ? (
+                // Render using CreativeGrids layout
+                <div className={`grid ${gridTemplate.cssClass} gap-6 max-w-6xl`}>
+                    {gridTemplate.slots.map((slot) => {
+                        const blockId = spec.gridSlots![slot.id];
+                        if (!blockId) return null;
+
+                        const blockState = blockStates.find((bs) => bs.spec.blockId === blockId);
+                        if (!blockState) return null;
+
+                        return (
+                            <div key={slot.id} className={getColSpanClass(slot.colSpan)}>
+                                <p className="text-xs font-medium text-slate-400 dark:text-slate-600 uppercase tracking-wide mb-2">
+                                    {blockState.spec.category} · {blockState.spec.blockId}
+                                </p>
+                                <BlockShell
+                                    spec={blockState.spec}
+                                    loadState={blockState.loadState}
+                                    data={blockState.data}
+                                    error={blockState.error}
+                                    index={blockStates.indexOf(blockState)}
+                                />
+                            </div>
+                        );
+                    })}
+                </div>
+            ) : isGrid ? (
+                // Legacy grid layout
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     {blockStates.map((bs, i) => {
                         const isFullWidth =
@@ -124,6 +168,7 @@ export default function DashboardCanvas({ spec, blockStates, specLoading, specEr
                     })}
                 </div>
             ) : (
+                // Wide layout (single column)
                 <div className="space-y-6">
                     {blockStates.map((bs, i) => (
                         <div key={bs.spec.blockId + i}>

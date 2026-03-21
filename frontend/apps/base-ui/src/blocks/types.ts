@@ -48,6 +48,9 @@ export interface DashboardSpec {
     subtitle: string;
     layout: 'wide' | 'grid';
     blocks: BlockSpec[];
+    // Grid layout with slot assignments (from orchestrator)
+    gridTemplate?: string;    // e.g., 'two-col', 'three-col', 'quad-balance'
+    gridSlots?: Record<string, string>;  // slot-id => block-id mapping
 }
 
 // 'idle' is kept for ai-builder backward compatibility.

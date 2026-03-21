@@ -1,0 +1,42 @@
+{
+  "step": "ui_planner_batch_v2",
+  "input": {
+    "question": "QQ perfoamnce over 10 years"
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "original_question": "QQ perfoamnce over 10 years",
+      "intent": "User wants to see the historical price trend and total return of the asset QQ over a ten-year period.",
+      "decomposition": [
+        {
+          "sub_question": "What is the price trend of QQ over the last 10 years?",
+          "block_type": "line-chart",
+          "title": "10-Year Price History",
+          "description": "Displays the historical price movement of QQ over the last decade.",
+          "canonical_params": {
+            "ticker": "QQ",
+            "period": "10y"
+          }
+        },
+        {
+          "sub_question": "What is the total return of QQ over the last 10 years?",
+          "block_type": "kpi-card",
+          "title": "10-Year Total Return",
+          "description": "Shows the cumulative percentage return of QQ over the 10-year period.",
+          "canonical_params": {
+            "ticker": "QQ",
+            "period": "10y",
+            "metric": "return"
+          }
+        }
+      ],
+      "dashboard_title": "QQ 10-Year Performance"
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-21T13:32:08.421622"
+  },
+  "duration": 23.86743,
+  "timestamp": "2026-03-21T13:32:08.422068"
+}

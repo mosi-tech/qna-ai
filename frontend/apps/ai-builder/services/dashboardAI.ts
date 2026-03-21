@@ -140,6 +140,11 @@ export interface HeadlessResult {
         sub_question?: string;
         canonical_params?: any;
     }>;
+    // Grid layout from orchestrator
+    layout?: {
+        templateId: string;
+        slots: Record<string, any>;
+    };
     // Legacy fields for compatibility
     cache_hits?: number;
     jobs_enqueued?: number;
@@ -274,11 +279,29 @@ export function headlessResultToSpec(result: HeadlessResult): DashboardSpec {
         };
     });
 
+    // Extract grid layout if available from orchestrator
+    let gridTemplate: any = null;
+    let gridSlots: Record<string, string> = {};
+
+    if (result.layout?.templateId) {
+        gridTemplate = result.layout.templateId;
+        // Map layout slots to blockIds
+        if (result.layout.slots) {
+            Object.entries(result.layout.slots).forEach(([slotId, slotConfig]: [string, any]) => {
+                if (slotConfig?.blockId) {
+                    gridSlots[slotId] = slotConfig.blockId;
+                }
+            });
+        }
+    }
+
     return {
         title: result.plan_title || 'Dashboard',
         subtitle: `Generated in ${result.elapsed_s.toFixed(1)}s${result.status === 'cached' ? ' (cached)' : ''}`,
         layout: 'grid',
         blocks,
+        gridTemplate,  // Grid template ID from orchestrator
+        gridSlots,     // Slot to blockId mapping
     };
 }
 

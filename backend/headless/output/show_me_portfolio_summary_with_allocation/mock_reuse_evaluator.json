@@ -1,0 +1,17 @@
+{
+  "step": "mock_reuse_evaluator",
+  "input": {
+    "question": "Show me a portfolio summary with allocation. Provide total portfolio value, daily change percentage (absolute and percentage), previous close value, year-to-date (YTD) return, and 1-year performance. Include sector allocation percentages and asset class allocation breakdown with weight percentages and current market values."
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "reused": false
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-21T13:57:13.113646"
+  },
+  "duration": 0.000201,
+  "timestamp": "2026-03-21T13:57:13.113752"
+}

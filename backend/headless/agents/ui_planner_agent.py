@@ -24,6 +24,7 @@ import json
 from typing import Dict, Any, List
 
 from agent_base import AgentBase, AgentResult
+from grid_layout_manager import create_grid_manager
 
 
 class UIPlannerAgent(AgentBase):
@@ -45,6 +46,8 @@ class UIPlannerAgent(AgentBase):
 
         # Load block catalog
         self.catalog = self._load_catalog()
+        # Load grid layout manager
+        self.grid_manager = create_grid_manager()
 
     def _load_catalog(self) -> Dict[str, Any]:
         """Load BLOCK_CATALOG.json"""
@@ -140,14 +143,25 @@ No markdown, no code blocks, just JSON.
             if len(result_data["blocks"]) < 3:
                 self.logger.warning("⚠️ Less than 3 blocks in plan")
 
+            # Generate grid layout with approval constraints
+            layout_config = self.grid_manager.generate_layout_config(
+                dashboard_title=result_data.get("title", "Dashboard"),
+                blocks=result_data["blocks"]
+            )
+
+            # Merge layout into result
+            result_data["layout"] = layout_config.get("layout")
+            result_data["layout_metadata"] = layout_config.get("metadata")
+
             # Add metadata
             result_data["metadata"] = {
                 "question": question,
                 "block_count": len(result_data["blocks"]),
-                "block_ids": [b.get("blockId") for b in result_data["blocks"]]
+                "block_ids": [b.get("blockId") for b in result_data["blocks"]],
+                "template_id": layout_config["layout"]["templateId"],
             }
 
-            self.logger.info(f"✅ Planned dashboard '{result_data.get('title')}' with {len(result_data['blocks'])} blocks")
+            self.logger.info(f"✅ Planned dashboard '{result_data.get('title')}' with {len(result_data['blocks'])} blocks on grid '{layout_config['layout']['templateId']}'")
 
             return AgentResult(success=True, data=result_data)
 

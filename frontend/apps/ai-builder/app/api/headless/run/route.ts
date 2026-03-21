@@ -21,6 +21,10 @@ interface OrchestratorOutput {
         blockId: string;
         data?: any;
     }>;
+    layout?: {
+        templateId: string;
+        slots: Record<string, any>;
+    };
     mock_data_file?: string;
     similarity?: number;
     total_time: number;
@@ -66,6 +70,11 @@ interface HeadlessResult {
         sub_question?: string;
         canonical_params?: any;
     }>;
+    // Grid layout from orchestrator
+    layout?: {
+        templateId: string;
+        slots: Record<string, any>;
+    };
     plan_title?: string;
     mock_data_file?: string;
     similarity?: number;
@@ -279,6 +288,7 @@ export async function POST(request: NextRequest) {
                             }
                             return transformed;
                         }) || [],
+                        layout: orchestratorResult.layout,
                         plan_title: orchestratorResult.title,
                         mock_data_file: orchestratorResult.mock_data_file,
                         similarity: orchestratorResult.similarity,
@@ -293,6 +303,22 @@ export async function POST(request: NextRequest) {
                         blocks_data_count: headlessResult.blocks_data?.length || 0,
                         elapsed_s: headlessResult.elapsed_s,
                     });
+
+                    // Log layout details if available
+                    if (headlessResult.layout) {
+                        console.log(`[${closeTimestamp}] [headless/run] 📐 Grid Layout:`, {
+                            template: headlessResult.layout.templateId,
+                            slots: Object.keys(headlessResult.layout.slots).length,
+                            slotAssignments: Object.entries(headlessResult.layout.slots).reduce((acc: any, [slotId, slotConfig]: [string, any]) => {
+                                acc[slotId] = {
+                                    blockId: slotConfig.blockId,
+                                    title: slotConfig.title,
+                                };
+                                return acc;
+                            }, {}),
+                        });
+                    }
+
                     resolve(NextResponse.json(headlessResult));
                 } catch (e) {
                     const logLines = stdout.trim().split('\n');

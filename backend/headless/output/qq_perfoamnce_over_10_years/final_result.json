@@ -1,0 +1,220 @@
+{
+  "success": true,
+  "action": "mock_generated",
+  "title": "QQ 10-Year Performance",
+  "blocks": [
+    {
+      "blockId": "line-chart-01",
+      "category": "line-charts",
+      "title": "10-Year Price History",
+      "dataContract": {
+        "type": "timeseries",
+        "description": "What is the price trend of QQ over the last 10 years?"
+      },
+      "sub_question": "What is the price trend of QQ over the last 10 years?",
+      "canonical_params": {
+        "ticker": "QQ",
+        "period": "10y"
+      }
+    },
+    {
+      "blockId": "kpi-card-02",
+      "category": "kpi-cards",
+      "title": "10-Year Total Return",
+      "dataContract": {
+        "type": "kpi",
+        "description": "What is the total return of QQ over the last 10 years?"
+      },
+      "sub_question": "What is the total return of QQ over the last 10 years?",
+      "canonical_params": {
+        "ticker": "QQ",
+        "period": "10y",
+        "metric": "return"
+      }
+    }
+  ],
+  "blocks_data": [
+    {
+      "blockId": "line-chart-01",
+      "data": {
+        "data": [
+          {
+            "date": "2026-02-19",
+            "value": 356.9488741008217
+          },
+          {
+            "date": "2026-02-20",
+            "value": 348.53486327010046
+          },
+          {
+            "date": "2026-02-21",
+            "value": 346.0404031512337
+          },
+          {
+            "date": "2026-02-22",
+            "value": 355.5815594838762
+          },
+          {
+            "date": "2026-02-23",
+            "value": 362.144646959305
+          },
+          {
+            "date": "2026-02-24",
+            "value": 365.66392596757794
+          },
+          {
+            "date": "2026-02-25",
+            "value": 369.89997293718056
+          },
+          {
+            "date": "2026-02-26",
+            "value": 377.0196117618042
+          },
+          {
+            "date": "2026-02-27",
+            "value": 370.38994497005694
+          },
+          {
+            "date": "2026-02-28",
+            "value": 366.45325517924954
+          },
+          {
+            "date": "2026-03-01",
+            "value": 366.6506860418119
+          },
+          {
+            "date": "2026-03-02",
+            "value": 367.0902589992318
+          },
+          {
+            "date": "2026-03-03",
+            "value": 363.88706390528154
+          },
+          {
+            "date": "2026-03-04",
+            "value": 357.6603750267763
+          },
+          {
+            "date": "2026-03-05",
+            "value": 352.9410747490587
+          },
+          {
+            "date": "2026-03-06",
+            "value": 353.38299811894206
+          },
+          {
+            "date": "2026-03-07",
+            "value": 349.2305175143911
+          },
+          {
+            "date": "2026-03-08",
+            "value": 358.0705631496403
+          },
+          {
+            "date": "2026-03-09",
+            "value": 360.63068502754516
+          },
+          {
+            "date": "2026-03-10",
+            "value": 370.62282131990247
+          },
+          {
+            "date": "2026-03-11",
+            "value": 371.43265255432465
+          },
+          {
+            "date": "2026-03-12",
+            "value": 371.7581362934966
+          },
+          {
+            "date": "2026-03-13",
+            "value": 370.12112235730774
+          },
+          {
+            "date": "2026-03-14",
+            "value": 360.41713548742075
+          },
+          {
+            "date": "2026-03-15",
+            "value": 351.1660711987505
+          },
+          {
+            "date": "2026-03-16",
+            "value": 356.93961850706495
+          },
+          {
+            "date": "2026-03-17",
+            "value": 365.7182202118028
+          },
+          {
+            "date": "2026-03-18",
+            "value": 360.0681600207008
+          },
+          {
+            "date": "2026-03-19",
+            "value": 369.5268790208327
+          },
+          {
+            "date": "2026-03-20",
+            "value": 377.9660649242774
+          }
+        ],
+        "categories": [
+          "value"
+        ],
+        "summary": [
+          {
+            "name": "value",
+            "value": 377.9660649242774
+          }
+        ]
+      }
+    },
+    {
+      "blockId": "kpi-card-02",
+      "data": {
+        "metrics": [
+          {
+            "label": "10-Year Total Return",
+            "value": "35.0%",
+            "change": "-3.8%",
+            "changeType": "positive"
+          }
+        ]
+      }
+    }
+  ],
+  "total_time": 23.871309,
+  "steps": [
+    {
+      "step": "ui_planner_batch_v2",
+      "success": true,
+      "duration": 23.86743,
+      "timestamp": "2026-03-21T13:32:08.421744",
+      "output_size": 806
+    },
+    {
+      "step": "mock_v2_generator",
+      "success": true,
+      "duration": 0.00071,
+      "timestamp": "2026-03-21T13:32:08.424511",
+      "output_size": 2557
+    }
+  ],
+  "timestamp": "2026-03-21T13:32:08.425624",
+  "_debug": {
+    "timestamp": "2026-03-21T13:32:08.425671",
+    "blocks_count": 2,
+    "blocks_data_count": 2,
+    "blocks_ids": [
+      "line-chart-01",
+      "kpi-card-02"
+    ],
+    "blocks_data_ids": [
+      "line-chart-01",
+      "kpi-card-02"
+    ],
+    "success": true,
+    "action": "mock_generated"
+  }
+}

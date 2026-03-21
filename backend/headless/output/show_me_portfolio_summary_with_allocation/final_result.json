@@ -1,0 +1,314 @@
+{
+  "success": true,
+  "action": "mock_generated",
+  "title": "Portfolio Performance & Allocation",
+  "blocks": [
+    {
+      "blockId": "kpi-card-01",
+      "category": "kpi-cards",
+      "title": "Portfolio Summary",
+      "dataContract": {
+        "type": "kpi",
+        "description": "Portfolio NAV, daily change, and YTD return",
+        "points": 1
+      },
+      "sub_question": "What is the total portfolio value, daily change percentage, previous close value, and year-to-date return?",
+      "canonical_params": {
+        "metric": "performance_summary"
+      }
+    },
+    {
+      "blockId": "line-chart-06",
+      "category": "line-charts",
+      "title": "1-Year Performance Trend",
+      "dataContract": {
+        "type": "timeseries",
+        "description": "Portfolio total return over the last year",
+        "points": 1
+      },
+      "sub_question": "What is the portfolio's total return performance over the last 1 year?",
+      "canonical_params": {
+        "metric": "total_return",
+        "period": "1y"
+      }
+    },
+    {
+      "blockId": "treemap-01",
+      "category": "treemaps",
+      "title": "Sector Allocation",
+      "dataContract": {
+        "type": "treemap",
+        "description": "Portfolio breakdown by sector weighted by percentage",
+        "points": 1
+      },
+      "sub_question": "What is the percentage allocation breakdown of the portfolio by sector?",
+      "canonical_params": {
+        "metric": "sector_allocation"
+      }
+    },
+    {
+      "blockId": "bar-list-01",
+      "category": "bar-lists",
+      "title": "Asset Class Breakdown",
+      "dataContract": {
+        "type": "bar_list",
+        "description": "Asset class breakdown showing market value and weight percentage",
+        "points": 1
+      },
+      "sub_question": "What is the breakdown of asset classes by current market value and weight percentage?",
+      "canonical_params": {
+        "metric": "asset_class_breakdown"
+      }
+    }
+  ],
+  "blocks_data": [
+    {
+      "blockId": "kpi-card-01",
+      "data": {
+        "metrics": [
+          {
+            "name": "Portfolio Value",
+            "stat": 20750.78,
+            "change": "2.93%",
+            "changeType": "positive"
+          },
+          {
+            "name": "Daily P&L",
+            "stat": 39070.58,
+            "change": "9.76%",
+            "changeType": "negative"
+          },
+          {
+            "name": "YTD Return",
+            "stat": 1690.34,
+            "change": "24.69%",
+            "changeType": "negative"
+          },
+          {
+            "name": "Sharpe Ratio",
+            "stat": 47649.03,
+            "change": "27.91%",
+            "changeType": "positive"
+          }
+        ],
+        "cols": 4
+      }
+    },
+    {
+      "blockId": "line-chart-06",
+      "data": {
+        "data": [
+          {
+            "date": "2025-04-25",
+            "Value": 88379.11
+          },
+          {
+            "date": "2025-05-25",
+            "Value": 78853.03
+          },
+          {
+            "date": "2025-06-24",
+            "Value": 75960.53
+          },
+          {
+            "date": "2025-07-24",
+            "Value": 94152.28
+          },
+          {
+            "date": "2025-08-23",
+            "Value": 94440.44
+          },
+          {
+            "date": "2025-09-22",
+            "Value": 79666.51
+          },
+          {
+            "date": "2025-10-22",
+            "Value": 80920.62
+          },
+          {
+            "date": "2025-11-21",
+            "Value": 94127.9
+          },
+          {
+            "date": "2025-12-21",
+            "Value": 87273.28
+          },
+          {
+            "date": "2026-01-20",
+            "Value": 81278.6
+          },
+          {
+            "date": "2026-02-19",
+            "Value": 85737.0
+          },
+          {
+            "date": "2026-03-21",
+            "Value": 91830.23
+          }
+        ],
+        "categories": [
+          "Value"
+        ],
+        "summary": [
+          {
+            "name": "Value",
+            "value": 79721.15
+          }
+        ]
+      }
+    },
+    {
+      "blockId": "treemap-01",
+      "data": {
+        "data": [
+          {
+            "name": "Healthcare",
+            "value": 15.0
+          },
+          {
+            "name": "Consumer",
+            "value": 26.8
+          },
+          {
+            "name": "Industrial",
+            "value": 12.6
+          },
+          {
+            "name": "Energy",
+            "value": 14.93
+          },
+          {
+            "name": "Finance",
+            "value": 12.83
+          }
+        ]
+      }
+    },
+    {
+      "blockId": "bar-list-01",
+      "data": {
+        "data": [
+          {
+            "name": "Holding A",
+            "value": 20068.94
+          },
+          {
+            "name": "Holding B",
+            "value": 35657.33
+          },
+          {
+            "name": "Holding C",
+            "value": 12507.53
+          },
+          {
+            "name": "Holding D",
+            "value": 49871.25
+          },
+          {
+            "name": "Holding E",
+            "value": 14613.93
+          }
+        ]
+      }
+    }
+  ],
+  "layout": {
+    "templateId": "quad-balance",
+    "slots": {
+      "slot-1": {
+        "blockId": "kpi-card-01",
+        "category": "kpi-cards",
+        "title": "Portfolio Summary",
+        "dataContract": {
+          "type": "kpi",
+          "description": "Portfolio NAV, daily change, and YTD return",
+          "points": 1
+        }
+      },
+      "slot-2": {
+        "blockId": "line-chart-06",
+        "category": "line-charts",
+        "title": "1-Year Performance Trend",
+        "dataContract": {
+          "type": "timeseries",
+          "description": "Portfolio total return over the last year",
+          "points": 1
+        }
+      },
+      "slot-3": {
+        "blockId": "treemap-01",
+        "category": "treemaps",
+        "title": "Sector Allocation",
+        "dataContract": {
+          "type": "treemap",
+          "description": "Portfolio breakdown by sector weighted by percentage",
+          "points": 1
+        }
+      },
+      "slot-4": {
+        "blockId": "bar-list-01",
+        "category": "bar-lists",
+        "title": "Asset Class Breakdown",
+        "dataContract": {
+          "type": "bar_list",
+          "description": "Asset class breakdown showing market value and weight percentage",
+          "points": 1
+        }
+      }
+    }
+  },
+  "mock_data_file": "/Users/shivc/Documents/Workspace/JS/qna-ai-admin/backend/headless/agents/mock/../../output/mock_data/show_me_portfolio_summary_with_allocation.json",
+  "similarity": null,
+  "total_time": 71.229717,
+  "steps": [
+    {
+      "step": "question_enhancer",
+      "success": true,
+      "duration": 7.716346,
+      "timestamp": "2026-03-21T13:56:09.615696",
+      "output_size": 671
+    },
+    {
+      "step": "ui_planner",
+      "success": true,
+      "duration": 63.494987,
+      "timestamp": "2026-03-21T13:57:13.112008",
+      "output_size": 3104
+    },
+    {
+      "step": "mock_reuse_evaluator",
+      "success": true,
+      "duration": 0.000201,
+      "timestamp": "2026-03-21T13:57:13.113704",
+      "output_size": 17
+    },
+    {
+      "step": "mock_data_generator",
+      "success": true,
+      "duration": 0.013896,
+      "timestamp": "2026-03-21T13:57:13.128314",
+      "output_size": 232
+    }
+  ],
+  "timestamp": "2026-03-21T13:57:13.129063",
+  "_debug": {
+    "timestamp": "2026-03-21T13:57:13.129107",
+    "blocks_count": 4,
+    "blocks_data_count": 4,
+    "blocks_ids": [
+      "kpi-card-01",
+      "line-chart-06",
+      "treemap-01",
+      "bar-list-01"
+    ],
+    "blocks_data_ids": [
+      "kpi-card-01",
+      "line-chart-06",
+      "treemap-01",
+      "bar-list-01"
+    ],
+    "success": true,
+    "action": "mock_generated"
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "step": "ui_planner_batch_v2",
+  "input": {
+    "question": "QQQ perfoamnce over last 10 yers"
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "original_question": "QQQ perfoamnce over last 10 yers",
+      "intent": "Determine the overall return and price trajectory of the QQQ ETF over the past decade.",
+      "decomposition": [
+        {
+          "sub_question": "What is the total return of QQQ over the last 10 years?",
+          "block_type": "kpi-card",
+          "title": "10-Year Total Return",
+          "description": "The cumulative percentage return of QQQ over the specified period.",
+          "canonical_params": {
+            "ticker": "QQQ",
+            "period": "10y",
+            "metric": "return"
+          }
+        },
+        {
+          "sub_question": "What is the historical price trend of QQQ over the last 10 years?",
+          "block_type": "line-chart",
+          "title": "QQQ 10-Year Price History",
+          "description": "Visual representation of QQQ price movements over the last decade.",
+          "canonical_params": {
+            "ticker": "QQQ",
+            "period": "10y",
+            "metric": "price"
+          }
+        }
+      ],
+      "dashboard_title": "QQQ Long-Term Performance"
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-21T13:47:56.348467"
+  },
+  "duration": 10.56328,
+  "timestamp": "2026-03-21T13:47:56.349097"
+}

@@ -215,6 +215,7 @@ class AnalysisOrchestrator:
 
             blocks = step_result["data"].get("blocks", [])
             title = step_result["data"].get("title", enhanced_question)
+            layout = step_result["data"].get("layout")  # Grid layout with slot assignments
             ui_output = step_result["data"]
 
             # Mock v1 mode flow: Skip script generation, use mock data
@@ -320,6 +321,7 @@ class AnalysisOrchestrator:
                     "title": title,
                     "blocks": blocks,
                     "blocks_data": blocks_data,
+                    "layout": layout,  # Grid layout with slot assignments
                     "mock_data_file": mock_data_file,
                     "similarity": similarity,
                     "total_time": total_time,
@@ -394,6 +396,7 @@ class AnalysisOrchestrator:
                     "title": title,
                     "blocks": blocks,
                     "blocks_data": mcp_data,
+                    "layout": layout,  # Grid layout with slot assignments
                     "total_time": total_time,
                     "steps": self.steps,
                     "timestamp": datetime.now().isoformat()
@@ -541,6 +544,7 @@ class AnalysisOrchestrator:
                 "action": "generated",
                 "title": title,
                 "blocks": blocks,
+                "layout": layout,  # Grid layout with slot assignments
                 "script_name": script_name,
                 "script": script if self.verbose else f"<{len(script)} characters>",
                 "validation": validation_data,
@@ -753,6 +757,22 @@ def main():
         print(f"   Action: {result.get('action')}")
         print(f"   Total time: {result.get('total_time', 0):.2f}s")
         print(f"   Steps: {len(result.get('steps', []))}")
+
+        # Print final plan details
+        if result.get("title"):
+            print(f"\n📋 Final Plan: {result.get('title')}")
+        if result.get("blocks"):
+            print(f"   Blocks selected: {len(result.get('blocks'))}")
+            for i, block in enumerate(result.get("blocks", []), 1):
+                print(f"      {i}. {block.get('blockId')} - {block.get('title')} ({block.get('category')})")
+
+        # Print layout details
+        if result.get("layout"):
+            layout = result.get("layout")
+            print(f"\n📐 Grid Layout: {layout.get('templateId')}")
+            slots = layout.get("slots", {})
+            for slot_id, slot_config in slots.items():
+                print(f"      {slot_id}: {slot_config.get('blockId')} - {slot_config.get('title')}")
     else:
         print(f"❌ Analysis failed: {result.get('error')}")
     print(f"{'='*60}\n")

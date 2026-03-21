@@ -1,0 +1,138 @@
+{
+  "step": "ui_planner",
+  "input": {
+    "question": "What is my portfolio performance including total portfolio value, cost basis, net profit/loss, year-to-date (YTD) return percentage, daily change percentage, and 1-year daily historical performance data? Please also provide sector allocation percentages and a breakdown of top 10 holdings by weight."
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "title": "Portfolio Performance Overview",
+      "subtitle": "Summary of portfolio value, returns, historical performance, sector allocation, and top holdings.",
+      "layout": {
+        "templateId": "quad-balance",
+        "slots": {
+          "slot-1": {
+            "blockId": "kpi-card-01",
+            "category": "kpi-cards",
+            "title": "Portfolio Summary",
+            "dataContract": {
+              "type": "kpi",
+              "description": "Portfolio value, cost basis, net P/L, YTD return, and daily change",
+              "points": 1
+            }
+          },
+          "slot-2": {
+            "blockId": "line-chart-06",
+            "category": "line-charts",
+            "title": "1-Year Performance History",
+            "dataContract": {
+              "type": "time_series",
+              "description": "Daily historical portfolio performance over the last 1 year",
+              "points": 1
+            }
+          },
+          "slot-3": {
+            "blockId": "donut-chart-07",
+            "category": "donut-charts",
+            "title": "Sector Allocation",
+            "dataContract": {
+              "type": "composition",
+              "description": "Percentage breakdown of portfolio holdings by sector",
+              "points": 1
+            }
+          },
+          "slot-4": {
+            "blockId": "table-action-01",
+            "category": "tables",
+            "title": "Top 10 Holdings",
+            "dataContract": {
+              "type": "tabular",
+              "description": "List of top 10 holdings ranked by weight percentage",
+              "points": 1
+            }
+          }
+        }
+      },
+      "blocks": [
+        {
+          "blockId": "kpi-card-01",
+          "category": "kpi-cards",
+          "title": "Portfolio Summary",
+          "dataContract": {
+            "type": "kpi",
+            "description": "Portfolio value, cost basis, net P/L, YTD return, and daily change",
+            "points": 1
+          },
+          "sub_question": "What is the total portfolio value, cost basis, net profit/loss, year-to-date (YTD) return percentage, and daily change percentage?",
+          "canonical_params": {
+            "metric": "performance_summary"
+          }
+        },
+        {
+          "blockId": "line-chart-06",
+          "category": "line-charts",
+          "title": "1-Year Performance History",
+          "dataContract": {
+            "type": "time_series",
+            "description": "Daily historical portfolio performance over the last 1 year",
+            "points": 1
+          },
+          "sub_question": "What is the daily historical performance data of the portfolio over the last 1 year?",
+          "canonical_params": {
+            "metric": "performance_history",
+            "period": "1y"
+          }
+        },
+        {
+          "blockId": "donut-chart-07",
+          "category": "donut-charts",
+          "title": "Sector Allocation",
+          "dataContract": {
+            "type": "composition",
+            "description": "Percentage breakdown of portfolio holdings by sector",
+            "points": 1
+          },
+          "sub_question": "What are the sector allocation percentages for the portfolio?",
+          "canonical_params": {
+            "metric": "sector_allocation"
+          }
+        },
+        {
+          "blockId": "table-action-01",
+          "category": "tables",
+          "title": "Top 10 Holdings",
+          "dataContract": {
+            "type": "tabular",
+            "description": "List of top 10 holdings ranked by weight percentage",
+            "points": 1
+          },
+          "sub_question": "What are the top 10 holdings in the portfolio ranked by weight percentage?",
+          "canonical_params": {
+            "metric": "holdings_weight"
+          }
+        }
+      ],
+      "layout_metadata": {
+        "slot_count": 4,
+        "placed_count": 4,
+        "unplaced_blocks": []
+      },
+      "metadata": {
+        "question": "What is my portfolio performance including total portfolio value, cost basis, net profit/loss, year-to-date (YTD) return percentage, daily change percentage, and 1-year daily historical performance data? Please also provide sector allocation percentages and a breakdown of top 10 holdings by weight.",
+        "block_count": 4,
+        "block_ids": [
+          "kpi-card-01",
+          "line-chart-06",
+          "donut-chart-07",
+          "table-action-01"
+        ],
+        "template_id": "quad-balance"
+      }
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-21T13:43:44.026772"
+  },
+  "duration": 32.109931,
+  "timestamp": "2026-03-21T13:43:44.027028"
+}

@@ -1,0 +1,25 @@
+{
+  "step": "question_enhancer",
+  "input": {
+    "question": "what is my portfolio performance",
+    "original_question": "what is my portfolio performance"
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "enhanced_question": "What is my portfolio performance including total portfolio value, cost basis, net profit/loss, year-to-date (YTD) return percentage, daily change percentage, and 1-year daily historical performance data? Please also provide sector allocation percentages and a breakdown of top 10 holdings by weight.",
+      "data_requirements": [],
+      "metadata": {
+        "block_count": 0,
+        "enhancement_summary": "No specific dashboard blocks were provided. Enhanced the question to request comprehensive portfolio metrics (current value, returns, historical time series, allocation, and holdings) to support a general performance analysis.",
+        "original_question": "what is my portfolio performance",
+        "enhanced_block_ids": []
+      }
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-21T13:43:11.913594"
+  },
+  "duration": 10.763196,
+  "timestamp": "2026-03-21T13:43:11.915053"
+}

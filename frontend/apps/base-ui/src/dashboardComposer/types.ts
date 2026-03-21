@@ -4,10 +4,13 @@
 
 export type GridTemplateId = '1-col' | '2-col' | '3-col' | '2-1' | '1-2' | '3-1-2' | 'custom';
 
+export type ApprovedWidth = 'full' | '1/2' | '1/3' | '2/3' | '1/4' | '3/4';
+
 export interface GridSlot {
   id: string;
   colSpan: number;
   rowSpan: number;
+  width?: ApprovedWidth;
 }
 
 export interface GridTemplate {

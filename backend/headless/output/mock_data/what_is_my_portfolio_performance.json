@@ -1,0 +1,194 @@
+{
+  "question": "What is my portfolio performance including total portfolio value, cost basis, net profit/loss, year-to-date (YTD) return percentage, daily change percentage, and 1-year daily historical performance data? Please also provide sector allocation percentages and a breakdown of top 10 holdings by weight.",
+  "generated_at": "2026-03-21T13:43:44.029565",
+  "data": {},
+  "blocks": [
+    {
+      "block_id": "kpi-card-01",
+      "type": "kpi",
+      "sub_question": "What is the total portfolio value, cost basis, net profit/loss, year-to-date (YTD) return percentage, and daily change percentage?",
+      "canonical_params": {
+        "metric": "performance_summary"
+      },
+      "data": {
+        "metrics": [
+          {
+            "name": "Portfolio Value",
+            "stat": 35924.84,
+            "change": "21.92%",
+            "changeType": "positive"
+          },
+          {
+            "name": "Daily P&L",
+            "stat": 27341.95,
+            "change": "-2.45%",
+            "changeType": "negative"
+          }
+        ],
+        "cols": 2
+      }
+    },
+    {
+      "block_id": "line-chart-06",
+      "type": "time_series",
+      "sub_question": "What is the daily historical performance data of the portfolio over the last 1 year?",
+      "canonical_params": {
+        "metric": "performance_history",
+        "period": "1y"
+      },
+      "data": {
+        "data": [
+          {
+            "date": "2025-04-25",
+            "Value": 51474.26
+          },
+          {
+            "date": "2025-05-25",
+            "Value": 54922.17
+          },
+          {
+            "date": "2025-06-24",
+            "Value": 41340.08
+          },
+          {
+            "date": "2025-07-24",
+            "Value": 49470.96
+          },
+          {
+            "date": "2025-08-23",
+            "Value": 53131.3
+          },
+          {
+            "date": "2025-09-22",
+            "Value": 47099.76
+          },
+          {
+            "date": "2025-10-22",
+            "Value": 48906.25
+          },
+          {
+            "date": "2025-11-21",
+            "Value": 58067.82
+          },
+          {
+            "date": "2025-12-21",
+            "Value": 47621.59
+          },
+          {
+            "date": "2026-01-20",
+            "Value": 46584.73
+          },
+          {
+            "date": "2026-02-19",
+            "Value": 50444.84
+          },
+          {
+            "date": "2026-03-21",
+            "Value": 41214.61
+          }
+        ],
+        "categories": [
+          "Value"
+        ],
+        "summary": [
+          {
+            "name": "Value",
+            "value": 50797.06
+          }
+        ]
+      }
+    },
+    {
+      "block_id": "donut-chart-07",
+      "type": "composition",
+      "sub_question": "What are the sector allocation percentages for the portfolio?",
+      "canonical_params": {
+        "metric": "sector_allocation"
+      },
+      "data": {
+        "data": [
+          {
+            "name": "Energy",
+            "value": 23.03
+          },
+          {
+            "name": "Industrial",
+            "value": 16.49
+          },
+          {
+            "name": "Technology",
+            "value": 14.17
+          },
+          {
+            "name": "Consumer",
+            "value": 22.71
+          },
+          {
+            "name": "Finance",
+            "value": 10.87
+          }
+        ]
+      }
+    },
+    {
+      "block_id": "table-action-01",
+      "type": "tabular",
+      "sub_question": "What are the top 10 holdings in the portfolio ranked by weight percentage?",
+      "canonical_params": {
+        "metric": "holdings_weight"
+      },
+      "data": {
+        "rows": [
+          {
+            "Symbol": "STK1",
+            "Shares": 73,
+            "Avg Cost": 44.4,
+            "Market Value": 75548.32,
+            "P&L": 1878.31,
+            "P&L %": 17.93
+          },
+          {
+            "Symbol": "STK2",
+            "Shares": 752,
+            "Avg Cost": 370.41,
+            "Market Value": 4351.56,
+            "P&L": 6363.12,
+            "P&L %": 11.46
+          },
+          {
+            "Symbol": "STK3",
+            "Shares": 59,
+            "Avg Cost": 133.68,
+            "Market Value": 5060.85,
+            "P&L": -2444.09,
+            "P&L %": 14.71
+          },
+          {
+            "Symbol": "STK4",
+            "Shares": 848,
+            "Avg Cost": 241.5,
+            "Market Value": 60113.51,
+            "P&L": 2797.52,
+            "P&L %": -26.23
+          },
+          {
+            "Symbol": "STK5",
+            "Shares": 917,
+            "Avg Cost": 309.19,
+            "Market Value": 78972.45,
+            "P&L": 17283.26,
+            "P&L %": 34.57
+          }
+        ],
+        "columns": [
+          "Symbol",
+          "Shares",
+          "Avg Cost",
+          "Market Value",
+          "P&L",
+          "P&L %"
+        ]
+      }
+    }
+  ]
+}

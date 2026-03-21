@@ -1,0 +1,178 @@
+{
+  "question": "Show me a portfolio summary with allocation. Provide total portfolio value, daily change percentage (absolute and percentage), previous close value, year-to-date (YTD) return, and 1-year performance. Include sector allocation percentages and asset class allocation breakdown with weight percentages and current market values.",
+  "generated_at": "2026-03-21T13:57:13.114601",
+  "data": {},
+  "blocks": [
+    {
+      "block_id": "kpi-card-01",
+      "type": "kpi",
+      "sub_question": "What is the total portfolio value, daily change percentage, previous close value, and year-to-date return?",
+      "canonical_params": {
+        "metric": "performance_summary"
+      },
+      "data": {
+        "metrics": [
+          {
+            "name": "Portfolio Value",
+            "stat": 20750.78,
+            "change": "2.93%",
+            "changeType": "positive"
+          },
+          {
+            "name": "Daily P&L",
+            "stat": 39070.58,
+            "change": "9.76%",
+            "changeType": "negative"
+          },
+          {
+            "name": "YTD Return",
+            "stat": 1690.34,
+            "change": "24.69%",
+            "changeType": "negative"
+          },
+          {
+            "name": "Sharpe Ratio",
+            "stat": 47649.03,
+            "change": "27.91%",
+            "changeType": "positive"
+          }
+        ],
+        "cols": 4
+      }
+    },
+    {
+      "block_id": "line-chart-06",
+      "type": "timeseries",
+      "sub_question": "What is the portfolio's total return performance over the last 1 year?",
+      "canonical_params": {
+        "metric": "total_return",
+        "period": "1y"
+      },
+      "data": {
+        "data": [
+          {
+            "date": "2025-04-25",
+            "Value": 88379.11
+          },
+          {
+            "date": "2025-05-25",
+            "Value": 78853.03
+          },
+          {
+            "date": "2025-06-24",
+            "Value": 75960.53
+          },
+          {
+            "date": "2025-07-24",
+            "Value": 94152.28
+          },
+          {
+            "date": "2025-08-23",
+            "Value": 94440.44
+          },
+          {
+            "date": "2025-09-22",
+            "Value": 79666.51
+          },
+          {
+            "date": "2025-10-22",
+            "Value": 80920.62
+          },
+          {
+            "date": "2025-11-21",
+            "Value": 94127.9
+          },
+          {
+            "date": "2025-12-21",
+            "Value": 87273.28
+          },
+          {
+            "date": "2026-01-20",
+            "Value": 81278.6
+          },
+          {
+            "date": "2026-02-19",
+            "Value": 85737.0
+          },
+          {
+            "date": "2026-03-21",
+            "Value": 91830.23
+          }
+        ],
+        "categories": [
+          "Value"
+        ],
+        "summary": [
+          {
+            "name": "Value",
+            "value": 79721.15
+          }
+        ]
+      }
+    },
+    {
+      "block_id": "treemap-01",
+      "type": "treemap",
+      "sub_question": "What is the percentage allocation breakdown of the portfolio by sector?",
+      "canonical_params": {
+        "metric": "sector_allocation"
+      },
+      "data": {
+        "data": [
+          {
+            "name": "Healthcare",
+            "value": 15.0
+          },
+          {
+            "name": "Consumer",
+            "value": 26.8
+          },
+          {
+            "name": "Industrial",
+            "value": 12.6
+          },
+          {
+            "name": "Energy",
+            "value": 14.93
+          },
+          {
+            "name": "Finance",
+            "value": 12.83
+          }
+        ]
+      }
+    },
+    {
+      "block_id": "bar-list-01",
+      "type": "bar_list",
+      "sub_question": "What is the breakdown of asset classes by current market value and weight percentage?",
+      "canonical_params": {
+        "metric": "asset_class_breakdown"
+      },
+      "data": {
+        "data": [
+          {
+            "name": "Holding A",
+            "value": 20068.94
+          },
+          {
+            "name": "Holding B",
+            "value": 35657.33
+          },
+          {
+            "name": "Holding C",
+            "value": 12507.53
+          },
+          {
+            "name": "Holding D",
+            "value": 49871.25
+          },
+          {
+            "name": "Holding E",
+            "value": 14613.93
+          }
+        ]
+      }
+    }
+  ]
+}

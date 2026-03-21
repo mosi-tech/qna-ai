@@ -1,0 +1,25 @@
+{
+  "step": "question_enhancer",
+  "input": {
+    "question": "QQQ performance over 10 years",
+    "original_question": "QQQ performance over 10 years"
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "enhanced_question": "QQQ performance over 10 years, including current price, daily change percentage, total return, annualized return (CAGR), volatility, maximum drawdown, and daily closing price history for the full 10-year period.",
+      "data_requirements": [],
+      "metadata": {
+        "block_count": 0,
+        "enhancement_summary": "Enhanced with specific performance metrics (CAGR, volatility, drawdown) and explicit 10-year historical time series requirements to guide data retrieval.",
+        "original_question": "QQQ performance over 10 years",
+        "enhanced_block_ids": []
+      }
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-21T13:41:03.670636"
+  },
+  "duration": 16.184167,
+  "timestamp": "2026-03-21T13:41:03.670896"
+}

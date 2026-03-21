@@ -30,7 +30,11 @@ interface WidthState {
   blockIndex: number;
 }
 
-export const WidthCompatibilityTester: React.FC = () => {
+interface WidthCompatibilityTesterProps {
+  onBack?: () => void;
+}
+
+export const WidthCompatibilityTester: React.FC<WidthCompatibilityTesterProps> = ({ onBack }) => {
   const [viewport, setViewport] = useState<ViewportMode>('desktop');
   const [widthStates, setWidthStates] = useState<Record<WidthSize, WidthState>>({
     full: { category: BLOCK_CATEGORIES[0], blockIndex: 0 },
@@ -281,6 +285,14 @@ export const WidthCompatibilityTester: React.FC = () => {
     <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-950">
       {/* Viewport Selector & Controls - Floating */}
       <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 border border-gray-200 dark:border-gray-700">
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition"
+          >
+            ← Back
+          </button>
+        )}
         <div className="flex items-center gap-2">
           <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 px-2">
             Viewport:

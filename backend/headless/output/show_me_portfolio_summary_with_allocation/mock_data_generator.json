@@ -1,0 +1,148 @@
+{
+  "step": "mock_data_generator",
+  "input": {
+    "question": "Show me a portfolio summary with allocation. Provide total portfolio value, daily change percentage (absolute and percentage), previous close value, year-to-date (YTD) return, and 1-year performance. Include sector allocation percentages and asset class allocation breakdown with weight percentages and current market values.",
+    "ui_planner_output": {
+      "title": "Portfolio Performance & Allocation",
+      "subtitle": "Summary of portfolio value, daily and 1-year returns, plus sector and asset class breakdowns.",
+      "layout": {
+        "templateId": "quad-balance",
+        "slots": {
+          "slot-1": {
+            "blockId": "kpi-card-01",
+            "category": "kpi-cards",
+            "title": "Portfolio Summary",
+            "dataContract": {
+              "type": "kpi",
+              "description": "Portfolio NAV, daily change, and YTD return",
+              "points": 1
+            }
+          },
+          "slot-2": {
+            "blockId": "line-chart-06",
+            "category": "line-charts",
+            "title": "1-Year Performance Trend",
+            "dataContract": {
+              "type": "timeseries",
+              "description": "Portfolio total return over the last year",
+              "points": 1
+            }
+          },
+          "slot-3": {
+            "blockId": "treemap-01",
+            "category": "treemaps",
+            "title": "Sector Allocation",
+            "dataContract": {
+              "type": "treemap",
+              "description": "Portfolio breakdown by sector weighted by percentage",
+              "points": 1
+            }
+          },
+          "slot-4": {
+            "blockId": "bar-list-01",
+            "category": "bar-lists",
+            "title": "Asset Class Breakdown",
+            "dataContract": {
+              "type": "bar_list",
+              "description": "Asset class breakdown showing market value and weight percentage",
+              "points": 1
+            }
+          }
+        }
+      },
+      "blocks": [
+        {
+          "blockId": "kpi-card-01",
+          "category": "kpi-cards",
+          "title": "Portfolio Summary",
+          "dataContract": {
+            "type": "kpi",
+            "description": "Portfolio NAV, daily change, and YTD return",
+            "points": 1
+          },
+          "sub_question": "What is the total portfolio value, daily change percentage, previous close value, and year-to-date return?",
+          "canonical_params": {
+            "metric": "performance_summary"
+          }
+        },
+        {
+          "blockId": "line-chart-06",
+          "category": "line-charts",
+          "title": "1-Year Performance Trend",
+          "dataContract": {
+            "type": "timeseries",
+            "description": "Portfolio total return over the last year",
+            "points": 1
+          },
+          "sub_question": "What is the portfolio's total return performance over the last 1 year?",
+          "canonical_params": {
+            "metric": "total_return",
+            "period": "1y"
+          }
+        },
+        {
+          "blockId": "treemap-01",
+          "category": "treemaps",
+          "title": "Sector Allocation",
+          "dataContract": {
+            "type": "treemap",
+            "description": "Portfolio breakdown by sector weighted by percentage",
+            "points": 1
+          },
+          "sub_question": "What is the percentage allocation breakdown of the portfolio by sector?",
+          "canonical_params": {
+            "metric": "sector_allocation"
+          }
+        },
+        {
+          "blockId": "bar-list-01",
+          "category": "bar-lists",
+          "title": "Asset Class Breakdown",
+          "dataContract": {
+            "type": "bar_list",
+            "description": "Asset class breakdown showing market value and weight percentage",
+            "points": 1
+          },
+          "sub_question": "What is the breakdown of asset classes by current market value and weight percentage?",
+          "canonical_params": {
+            "metric": "asset_class_breakdown"
+          }
+        }
+      ],
+      "layout_metadata": {
+        "slot_count": 4,
+        "placed_count": 4,
+        "unplaced_blocks": []
+      },
+      "metadata": {
+        "question": "Show me a portfolio summary with allocation. Provide total portfolio value, daily change percentage (absolute and percentage), previous close value, year-to-date (YTD) return, and 1-year performance. Include sector allocation percentages and asset class allocation breakdown with weight percentages and current market values.",
+        "block_count": 4,
+        "block_ids": [
+          "kpi-card-01",
+          "line-chart-06",
+          "treemap-01",
+          "bar-list-01"
+        ],
+        "template_id": "quad-balance"
+      }
+    },
+    "question_id": "show_me_portfolio_summary_with_allocation"
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "mock_data_file": "/Users/shivc/Documents/Workspace/JS/qna-ai-admin/backend/headless/agents/mock/../../output/mock_data/show_me_portfolio_summary_with_allocation.json",
+      "data_points": [
+        "question",
+        "generated_at",
+        "data",
+        "blocks"
+      ]
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-21T13:57:13.128270"
+  },
+  "duration": 0.013896,
+  "timestamp": "2026-03-21T13:57:13.128395"
+}

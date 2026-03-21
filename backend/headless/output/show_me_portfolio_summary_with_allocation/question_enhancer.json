@@ -1,0 +1,25 @@
+{
+  "step": "question_enhancer",
+  "input": {
+    "question": "show me portfolio summary with allocation",
+    "original_question": "show me portfolio summary with allocation"
+  },
+  "output": {
+    "success": true,
+    "data": {
+      "enhanced_question": "Show me a portfolio summary with allocation. Provide total portfolio value, daily change percentage (absolute and percentage), previous close value, year-to-date (YTD) return, and 1-year performance. Include sector allocation percentages and asset class allocation breakdown with weight percentages and current market values.",
+      "data_requirements": [],
+      "metadata": {
+        "block_count": 0,
+        "enhancement_summary": "Added specific data requirements for KPIs (value, changes, returns) and allocation breakdowns (sector/asset class) to guide the financial script.",
+        "original_question": "show me portfolio summary with allocation",
+        "enhanced_block_ids": []
+      }
+    },
+    "error": null,
+    "metadata": {},
+    "timestamp": "2026-03-21T13:56:09.615578"
+  },
+  "duration": 7.716346,
+  "timestamp": "2026-03-21T13:56:09.615964"
+}
