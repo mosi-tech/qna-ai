@@ -6,86 +6,177 @@
   "output": {
     "success": true,
     "data": {
-      "title": "Equity Portfolio Overview",
-      "subtitle": "Holdings, daily P&L trend, sector allocation, and YTD performance",
-      "layout": "grid",
+      "title": "Portfolio Overview & Holdings",
+      "subtitle": "Daily P&L, sector allocation, YTD performance, and detailed holdings",
+      "narrative": "This dashboard summarizes the user\u2019s equity portfolio, presenting key performance metrics, daily profit and loss trends, sector distribution, and individual holdings.",
+      "rows": [
+        {
+          "role": "headline",
+          "columns": [
+            {
+              "width": "full",
+              "blockId": "kpi-card-01",
+              "category": "kpi-cards",
+              "title": "Portfolio Snapshot",
+              "dataContract": {
+                "type": "kpi",
+                "description": "Total portfolio value, daily P&L, and year\u2011to\u2011date performance",
+                "points": 3
+              },
+              "sub_question": "What are my portfolio's total value, daily P&L, and YTD performance?",
+              "canonical_params": {
+                "portfolioId": "user-123",
+                "metric": "portfolio_summary"
+              }
+            }
+          ]
+        },
+        {
+          "role": "primary",
+          "columns": [
+            {
+              "width": "1/2",
+              "blockId": "line-chart-06",
+              "category": "line-charts",
+              "title": "Daily P&L Trend",
+              "dataContract": {
+                "type": "timeseries",
+                "description": "Daily profit and loss of the portfolio over the selected period",
+                "points": 30
+              },
+              "sub_question": "What is the daily P&L trend for my portfolio over the selected period?",
+              "canonical_params": {
+                "portfolioId": "user-123",
+                "metric": "daily_pnl"
+              }
+            },
+            {
+              "width": "1/2",
+              "blockId": "donut-chart-04",
+              "category": "donut-charts",
+              "title": "Sector Allocation",
+              "dataContract": {
+                "type": "distribution",
+                "description": "Current sector allocation of the portfolio",
+                "points": 5
+              },
+              "sub_question": "What is the current sector allocation of my portfolio?",
+              "canonical_params": {
+                "portfolioId": "user-123",
+                "metric": "sector_allocation"
+              }
+            }
+          ]
+        },
+        {
+          "role": "detail",
+          "columns": [
+            {
+              "width": "full",
+              "blockId": "table-action-01",
+              "category": "tables",
+              "title": "Holdings Detail",
+              "dataContract": {
+                "type": "table",
+                "description": "Individual holdings with ticker, asset class, market value, and daily P&L",
+                "points": 20
+              },
+              "sub_question": "What are the holdings details of my portfolio, including ticker, asset class, market value, and daily P&L?",
+              "canonical_params": {
+                "portfolioId": "user-123",
+                "metric": "holdings_detail"
+              }
+            }
+          ]
+        }
+      ],
       "blocks": [
-        {
-          "blockId": "table-01",
-          "category": "tables",
-          "title": "Portfolio Holdings",
-          "dataContract": {
-            "type": "table",
-            "description": "Equity holdings with ticker, class, and market value",
-            "points": 10,
-            "categories": []
-          },
-          "sub_question": "Show my equity portfolio holdings with ticker, class, and market value.",
-          "canonical_params": {}
-        },
-        {
-          "blockId": "spark-chart-01",
-          "category": "spark-charts",
-          "title": "Daily P&L Trend",
-          "dataContract": {
-            "type": "spark",
-            "description": "Daily profit and loss trend of the portfolio",
-            "points": 30,
-            "categories": []
-          },
-          "sub_question": "Show my daily profit and loss trend for the portfolio.",
-          "canonical_params": {
-            "metric": "daily_pnl",
-            "period": "1d"
-          }
-        },
-        {
-          "blockId": "bar-list-07",
-          "category": "bar-lists",
-          "title": "Sector Allocation",
-          "dataContract": {
-            "type": "bar-list",
-            "description": "Sector allocation by market value",
-            "points": 6,
-            "categories": []
-          },
-          "sub_question": "Show my portfolio sector allocation by market value.",
-          "canonical_params": {
-            "metric": "sector_allocation"
-          }
-        },
         {
           "blockId": "kpi-card-01",
           "category": "kpi-cards",
-          "title": "YTD Performance",
+          "title": "Portfolio Snapshot",
           "dataContract": {
             "type": "kpi",
-            "description": "Year-to-date return of the portfolio",
-            "points": 1,
-            "categories": []
+            "description": "Total portfolio value, daily P&L, and year\u2011to\u2011date performance",
+            "points": 3
           },
-          "sub_question": "What is the year-to-date return of my portfolio?",
+          "sub_question": "What are my portfolio's total value, daily P&L, and YTD performance?",
           "canonical_params": {
-            "metric": "ytd_return",
-            "period": "ytd"
-          }
+            "portfolioId": "user-123",
+            "metric": "portfolio_summary"
+          },
+          "width": "full",
+          "role": "headline"
+        },
+        {
+          "blockId": "line-chart-06",
+          "category": "line-charts",
+          "title": "Daily P&L Trend",
+          "dataContract": {
+            "type": "timeseries",
+            "description": "Daily profit and loss of the portfolio over the selected period",
+            "points": 30
+          },
+          "sub_question": "What is the daily P&L trend for my portfolio over the selected period?",
+          "canonical_params": {
+            "portfolioId": "user-123",
+            "metric": "daily_pnl"
+          },
+          "width": "1/2",
+          "role": "primary"
+        },
+        {
+          "blockId": "donut-chart-04",
+          "category": "donut-charts",
+          "title": "Sector Allocation",
+          "dataContract": {
+            "type": "distribution",
+            "description": "Current sector allocation of the portfolio",
+            "points": 5
+          },
+          "sub_question": "What is the current sector allocation of my portfolio?",
+          "canonical_params": {
+            "portfolioId": "user-123",
+            "metric": "sector_allocation"
+          },
+          "width": "1/2",
+          "role": "primary"
+        },
+        {
+          "blockId": "table-action-01",
+          "category": "tables",
+          "title": "Holdings Detail",
+          "dataContract": {
+            "type": "table",
+            "description": "Individual holdings with ticker, asset class, market value, and daily P&L",
+            "points": 20
+          },
+          "sub_question": "What are the holdings details of my portfolio, including ticker, asset class, market value, and daily P&L?",
+          "canonical_params": {
+            "portfolioId": "user-123",
+            "metric": "holdings_detail"
+          },
+          "width": "full",
+          "role": "detail"
         }
       ],
+      "layout": null,
       "metadata": {
         "question": "Show me my equity portfolio with holdings, daily P&L, sector allocation and YTD performance",
         "block_count": 4,
         "block_ids": [
-          "table-01",
-          "spark-chart-01",
-          "bar-list-07",
-          "kpi-card-01"
-        ]
+          "kpi-card-01",
+          "line-chart-06",
+          "donut-chart-04",
+          "table-action-01"
+        ],
+        "layout_source": "rows"
       }
     },
     "error": null,
     "metadata": {},
-    "timestamp": "2026-03-18T23:11:43.088518"
+    "timestamp": "2026-03-22T14:11:29.415305"
   },
-  "duration": 7.346022,
-  "timestamp": "2026-03-18T23:11:43.088926"
+  "duration": 16.631673,
+  "timestamp": "2026-03-22T14:11:29.416024"
 }

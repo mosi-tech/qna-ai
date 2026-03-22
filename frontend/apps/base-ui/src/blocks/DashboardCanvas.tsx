@@ -10,11 +10,24 @@
  */
 
 import React from 'react';
-import type { DashboardSpec, BlockState } from './types';
+import type { DashboardSpec, BlockState, RowWidth } from './types';
 import BlockShell from './BlockShell';
 import { CREATIVE_GRIDS } from '../dashboardComposer/CreativeGrids';
 
-// Helper to convert colSpan to Tailwind col-span class
+// Convert RowWidth fraction to Tailwind col-span on a 12-column grid
+function widthToColSpan(width: RowWidth): string {
+    const map: Record<RowWidth, string> = {
+        'full': 'col-span-12',
+        '3/4':  'col-span-9',
+        '2/3':  'col-span-8',
+        '1/2':  'col-span-6',
+        '1/3':  'col-span-4',
+        '1/4':  'col-span-3',
+    };
+    return map[width] ?? 'col-span-12';
+}
+
+// Helper to convert colSpan to Tailwind col-span class (legacy CreativeGrids)
 function getColSpanClass(colSpan: number): string {
     const colSpanMap: Record<number, string> = {
         1: 'col-span-1',
@@ -99,10 +112,11 @@ export default function DashboardCanvas({ spec, blockStates, specLoading, specEr
     if (specError) return <SpecErrorState error={specError} />;
     if (!spec) return <EmptyCanvas />;
 
-    // Check if we have grid layout from orchestrator
-    const hasGridLayout = spec.gridTemplate && spec.gridSlots;
+    // Priority: rows > CreativeGrids > legacy grid > wide
+    const hasRows = spec.rows && spec.rows.length > 0;
+    const hasGridLayout = !hasRows && spec.gridTemplate && spec.gridSlots;
     const gridTemplate = hasGridLayout ? CREATIVE_GRIDS[spec.gridTemplate!] : null;
-    const isGrid = spec.layout === 'grid' && !hasGridLayout; // Legacy fallback
+    const isGrid = !hasRows && spec.layout === 'grid' && !hasGridLayout;
 
     return (
         <div className="p-6 overflow-y-auto h-full">
@@ -122,8 +136,34 @@ export default function DashboardCanvas({ spec, blockStates, specLoading, specEr
 
             <LoadProgress states={blockStates} />
 
-            {hasGridLayout && gridTemplate ? (
-                // Render using CreativeGrids layout
+            {hasRows ? (
+                // Row-based layout from updated UI Planner (rows with explicit widths)
+                <div className="space-y-5 max-w-6xl">
+                    {spec.rows!.map((row, rowIdx) => (
+                        <div key={rowIdx} className="grid grid-cols-12 gap-5">
+                            {row.columns.map((col) => {
+                                const blockState = blockStates.find((bs) => bs.spec.blockId === col.blockId);
+                                if (!blockState) return null;
+                                return (
+                                    <div key={col.blockId} className={widthToColSpan(col.width)}>
+                                        <p className="text-xs font-medium text-slate-400 dark:text-slate-600 uppercase tracking-wide mb-2">
+                                            {blockState.spec.category} · {blockState.spec.blockId}
+                                        </p>
+                                        <BlockShell
+                                            spec={blockState.spec}
+                                            loadState={blockState.loadState}
+                                            data={blockState.data}
+                                            error={blockState.error}
+                                            index={blockStates.indexOf(blockState)}
+                                        />
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ))}
+                </div>
+            ) : hasGridLayout && gridTemplate ? (
+                // Render using CreativeGrids layout (legacy)
                 <div className={`grid ${gridTemplate.cssClass} gap-6 max-w-6xl`}>
                     {gridTemplate.slots.map((slot) => {
                         const blockId = spec.gridSlots![slot.id];

@@ -21,6 +21,16 @@ interface OrchestratorOutput {
         blockId: string;
         data?: any;
     }>;
+    // Row-based layout from updated UI Planner prompt
+    rows?: Array<{
+        role: string;
+        columns: Array<{
+            width: string;
+            blockId: string;
+            category?: string;
+            title?: string;
+        }>;
+    }>;
     layout?: {
         templateId: string;
         slots: Record<string, any>;
@@ -70,7 +80,17 @@ interface HeadlessResult {
         sub_question?: string;
         canonical_params?: any;
     }>;
-    // Grid layout from orchestrator
+    // Row-based layout from updated UI Planner prompt
+    rows?: Array<{
+        role: string;
+        columns: Array<{
+            width: string;
+            blockId: string;
+            category?: string;
+            title?: string;
+        }>;
+    }>;
+    // Grid layout from orchestrator (legacy CreativeGrids)
     layout?: {
         templateId: string;
         slots: Record<string, any>;
@@ -273,6 +293,7 @@ export async function POST(request: NextRequest) {
                         total_elapsed_s: orchestratorResult.total_time,
                         blocks: orchestratorResult.blocks?.length || 0,
                         ui_blocks: orchestratorResult.blocks || [],
+                        rows: orchestratorResult.rows,
                         blocks_data: orchestratorResult.blocks_data?.map(block => {
                             const hasData = block.data !== null && block.data !== undefined;
                             const transformed = {

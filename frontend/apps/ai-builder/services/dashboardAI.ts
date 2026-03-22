@@ -13,10 +13,12 @@ import type {
     DataContract,
     BlockSpec,
     DashboardSpec,
+    DashboardRow,
+    RowWidth,
     BlockLoadState,
     BlockState,
 } from '@ui-gen/base-ui';
-export type { BlockCategory, DataContractType, DataContract, BlockSpec, DashboardSpec, BlockLoadState, BlockState };
+export type { BlockCategory, DataContractType, DataContract, BlockSpec, DashboardSpec, DashboardRow, RowWidth, BlockLoadState, BlockState };
 
 // ─── System prompt ────────────────────────────────────────────────────────────
 
@@ -140,7 +142,17 @@ export interface HeadlessResult {
         sub_question?: string;
         canonical_params?: any;
     }>;
-    // Grid layout from orchestrator
+    // Row-based layout from updated UI Planner prompt
+    rows?: Array<{
+        role: string;
+        columns: Array<{
+            width: string;
+            blockId: string;
+            category?: string;
+            title?: string;
+        }>;
+    }>;
+    // Grid layout from orchestrator (legacy CreativeGrids)
     layout?: {
         templateId: string;
         slots: Record<string, any>;
@@ -238,33 +250,73 @@ export async function runHeadlessPipeline(question: string, options: { useNoCode
 
 // ─── Convert headless result to DashboardSpec ─────────────────────────────────────
 
+function inferContractType(category: BlockCategory): DataContractType {
+    if (category === 'line-charts') return 'timeseries';
+    if (category === 'bar-lists') return 'ranked-list';
+    if (category === 'donut-charts') return 'categorical';
+    if (category === 'spark-charts') return 'spark';
+    if (category === 'tables') return 'table-rows';
+    if (category === 'status-monitoring') return 'tracker';
+    return 'kpi';
+}
+
 export function headlessResultToSpec(result: HeadlessResult): DashboardSpec {
-    // Use ui_blocks from UI Planner if available, otherwise fallback to blocks_data
+    // ── If the backend returned rows (new UI Planner format) ──────────────────
+    if (result.rows && result.rows.length > 0) {
+        // Flatten rows → blocks for BlockState creation in BuilderApp
+        const blocks: BlockSpec[] = [];
+        const rows: DashboardRow[] = [];
+
+        for (const row of result.rows) {
+            const rowColumns: DashboardRow['columns'] = [];
+
+            for (const col of row.columns) {
+                // Find matching ui_block for full metadata
+                const uiBlock = result.ui_blocks?.find((b) => b.blockId === col.blockId);
+                const category = (col.category || uiBlock?.category || 'kpi-cards') as BlockCategory;
+                const contractType = inferContractType(category);
+                const description = uiBlock?.dataContract?.description || col.title || col.blockId;
+
+                // Only add to blocks if not already present (blockIds can theoretically repeat)
+                if (!blocks.find((b) => b.blockId === col.blockId)) {
+                    blocks.push({
+                        blockId: col.blockId,
+                        category,
+                        title: col.title || uiBlock?.title || col.blockId,
+                        dataContract: {
+                            type: contractType,
+                            description,
+                            points: uiBlock?.dataContract?.points || (contractType === 'timeseries' ? 12 : contractType === 'spark' ? 14 : 5),
+                            categories: contractType === 'timeseries' ? ['Value'] : undefined,
+                        },
+                        sub_question: uiBlock?.sub_question,
+                        canonical_params: uiBlock?.canonical_params,
+                    });
+                }
+
+                rowColumns.push({ width: col.width as RowWidth, blockId: col.blockId });
+            }
+
+            rows.push({ role: row.role as DashboardRow['role'], columns: rowColumns });
+        }
+
+        return {
+            title: result.plan_title || 'Dashboard',
+            subtitle: `Generated in ${result.elapsed_s.toFixed(1)}s${result.status === 'cached' ? ' (cached)' : ''}`,
+            layout: 'grid',
+            blocks,
+            rows,
+        };
+    }
+
+    // ── Legacy flat blocks path (old UI Planner format) ───────────────────────
     const uiBlocks = result.ui_blocks || [];
-    const blocksData = result.blocks_data || [];
 
     const blocks: BlockSpec[] = uiBlocks.map((uiBlock) => {
-        // Use UI Planner's blockId and category directly
         const blockId = uiBlock.blockId;
         const category = uiBlock.category as BlockCategory;
-
-        // Infer data contract type from category
-        let contractType: DataContractType = 'kpi';
-        let description = uiBlock.dataContract?.description || uiBlock.title;
-
-        if (category === 'line-charts') {
-            contractType = 'timeseries';
-        } else if (category === 'bar-lists') {
-            contractType = 'ranked-list';
-        } else if (category === 'donut-charts') {
-            contractType = 'categorical';
-        } else if (category === 'spark-charts') {
-            contractType = 'spark';
-        } else if (category === 'tables') {
-            contractType = 'table-rows';
-        } else if (category === 'status-monitoring') {
-            contractType = 'tracker';
-        }
+        const contractType = inferContractType(category);
+        const description = uiBlock.dataContract?.description || uiBlock.title;
 
         return {
             blockId,
@@ -279,13 +331,12 @@ export function headlessResultToSpec(result: HeadlessResult): DashboardSpec {
         };
     });
 
-    // Extract grid layout if available from orchestrator
+    // Extract grid layout if available from orchestrator (legacy CreativeGrids)
     let gridTemplate: any = null;
     let gridSlots: Record<string, string> = {};
 
     if (result.layout?.templateId) {
         gridTemplate = result.layout.templateId;
-        // Map layout slots to blockIds
         if (result.layout.slots) {
             Object.entries(result.layout.slots).forEach(([slotId, slotConfig]: [string, any]) => {
                 if (slotConfig?.blockId) {
@@ -300,8 +351,8 @@ export function headlessResultToSpec(result: HeadlessResult): DashboardSpec {
         subtitle: `Generated in ${result.elapsed_s.toFixed(1)}s${result.status === 'cached' ? ' (cached)' : ''}`,
         layout: 'grid',
         blocks,
-        gridTemplate,  // Grid template ID from orchestrator
-        gridSlots,     // Slot to blockId mapping
+        gridTemplate,
+        gridSlots,
     };
 }
 

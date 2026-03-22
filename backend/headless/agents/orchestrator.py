@@ -215,7 +215,8 @@ class AnalysisOrchestrator:
 
             blocks = step_result["data"].get("blocks", [])
             title = step_result["data"].get("title", enhanced_question)
-            layout = step_result["data"].get("layout")  # Grid layout with slot assignments
+            layout = step_result["data"].get("layout")  # Grid layout with slot assignments (legacy)
+            rows = step_result["data"].get("rows")      # Row-based layout (new format)
             ui_output = step_result["data"]
 
             # Mock v1 mode flow: Skip script generation, use mock data
@@ -321,7 +322,8 @@ class AnalysisOrchestrator:
                     "title": title,
                     "blocks": blocks,
                     "blocks_data": blocks_data,
-                    "layout": layout,  # Grid layout with slot assignments
+                    "rows": rows,    # Row-based layout (new UI Planner format)
+                    "layout": layout,  # Grid layout (legacy CreativeGrids)
                     "mock_data_file": mock_data_file,
                     "similarity": similarity,
                     "total_time": total_time,
@@ -396,7 +398,8 @@ class AnalysisOrchestrator:
                     "title": title,
                     "blocks": blocks,
                     "blocks_data": mcp_data,
-                    "layout": layout,  # Grid layout with slot assignments
+                    "rows": rows,    # Row-based layout (new UI Planner format)
+                    "layout": layout,  # Grid layout (legacy CreativeGrids)
                     "total_time": total_time,
                     "steps": self.steps,
                     "timestamp": datetime.now().isoformat()
@@ -544,7 +547,8 @@ class AnalysisOrchestrator:
                 "action": "generated",
                 "title": title,
                 "blocks": blocks,
-                "layout": layout,  # Grid layout with slot assignments
+                "rows": rows,    # Row-based layout (new UI Planner format)
+                "layout": layout,  # Grid layout (legacy CreativeGrids)
                 "script_name": script_name,
                 "script": script if self.verbose else f"<{len(script)} characters>",
                 "validation": validation_data,

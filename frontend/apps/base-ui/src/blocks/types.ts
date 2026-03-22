@@ -42,13 +42,28 @@ export interface BlockSpec {
     cache_key?: string;
 }
 
+export type RowWidth = 'full' | '3/4' | '2/3' | '1/2' | '1/3' | '1/4';
+export type RowRole = 'headline' | 'primary' | 'supporting' | 'detail';
+
+export interface DashboardRowColumn {
+    width: RowWidth;
+    blockId: string;
+}
+
+export interface DashboardRow {
+    role: RowRole;
+    columns: DashboardRowColumn[];
+}
+
 export interface DashboardSpec {
     dashboard_id?: string;    // set after backend persists
     title: string;
     subtitle: string;
     layout: 'wide' | 'grid';
     blocks: BlockSpec[];
-    // Grid layout with slot assignments (from orchestrator)
+    // Row-based layout from updated UI Planner (rows with explicit widths)
+    rows?: DashboardRow[];
+    // Grid layout with slot assignments (from orchestrator, legacy)
     gridTemplate?: string;    // e.g., 'two-col', 'three-col', 'quad-balance'
     gridSlots?: Record<string, string>;  // slot-id => block-id mapping
 }

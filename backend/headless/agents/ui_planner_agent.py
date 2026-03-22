@@ -105,23 +105,9 @@ class UIPlannerAgent(AgentBase):
         # Build prompt with catalog
         catalog_prompt = self._build_catalog_prompt()
 
-        user_message = f"""
-User Question: {question}
+        user_message = f"""User Question: {question}
 
-Please plan a dashboard that answers this question.
-
-Return ONLY a JSON object with:
-- title: Dashboard title
-- subtitle: Brief description
-- layout: "grid" or "wide"
-- blocks: Array of 3-7 block objects with:
-  - blockId: Block ID from catalog
-  - category: Block category
-  - title: Block title
-  - dataContract: Object with type, description, points, categories
-
-No markdown, no code blocks, just JSON.
-"""
+Plan a dashboard that answers this question. Return ONLY the JSON object as specified. No markdown, no code blocks, no prose."""
 
         try:
             # Make LLM request
@@ -133,9 +119,40 @@ No markdown, no code blocks, just JSON.
             content = response.get("content", "").strip()
             result_data = self._safe_parse_json(content)
 
-            # Validate result structure
+            # ── Handle new rows-based format from updated system prompt ──────────
+            if "rows" in result_data and isinstance(result_data["rows"], list):
+                rows = result_data["rows"]
+                # Flatten rows → blocks for downstream pipeline compatibility
+                blocks = []
+                for row in rows:
+                    role = row.get("role", "")
+                    for col in row.get("columns", []):
+                        block = {
+                            "blockId": col.get("blockId"),
+                            "category": col.get("category"),
+                            "title": col.get("title"),
+                            "dataContract": col.get("dataContract", {}),
+                            "sub_question": col.get("sub_question"),
+                            "canonical_params": col.get("canonical_params", {}),
+                            "width": col.get("width"),
+                            "role": role,
+                        }
+                        blocks.append(block)
+                result_data["blocks"] = blocks
+                # Skip grid_manager — the rows already encode layout
+                result_data["layout"] = None
+                result_data["metadata"] = {
+                    "question": question,
+                    "block_count": len(blocks),
+                    "block_ids": [b.get("blockId") for b in blocks],
+                    "layout_source": "rows",
+                }
+                self.logger.info(f"✅ Planned dashboard '{result_data.get('title')}' with {len(blocks)} blocks via rows layout")
+                return AgentResult(success=True, data=result_data)
+
+            # ── Legacy blocks-based format ────────────────────────────────────────
             if "blocks" not in result_data:
-                raise Exception("Missing 'blocks' field in response")
+                raise Exception("Missing 'blocks' or 'rows' field in response")
 
             if not isinstance(result_data["blocks"], list):
                 raise Exception("'blocks' must be an array")

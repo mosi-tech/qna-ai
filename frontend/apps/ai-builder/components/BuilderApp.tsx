@@ -33,7 +33,7 @@ export default function BuilderApp() {
     const [specLoading, setSpecLoading] = useState(false);
     const [specError, setSpecError] = useState<string | undefined>();
     const [mockMode, setMockMode] = useState(true);
-    const [mockV2Mode, setMockV2Mode] = useState(true);
+    const [mockV2Mode, setMockV2Mode] = useState(false);
     const [skipReuse, setSkipReuse] = useState(true);
 
     const handleSend = useCallback(async (text: string) => {
