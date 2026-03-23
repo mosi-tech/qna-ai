@@ -3,14 +3,8 @@ import React from 'react'
 export function FKCard({ children, className = '', style }) {
   return (
     <div
-      className={`rounded-xl overflow-hidden ${className}`}
-      style={{
-        background:   'var(--color-background-primary)',
-        border:       '0.5px solid var(--color-border-tertiary)',
-        borderRadius: 12,
-        overflow:     'hidden',
-        ...style,
-      }}
+      className={`bg-[var(--color-background-primary)] border border-[var(--color-border-tertiary)] rounded-2xl overflow-hidden ${className}`}
+      style={style}
     >
       {children}
     </div>
@@ -19,25 +13,32 @@ export function FKCard({ children, className = '', style }) {
 
 export function FKCardHeader({ title, subtitle, actions }) {
   return (
-    <div className="flex justify-between items-start" style={{ padding: '18px 20px 0' }}>
+    <div className="flex items-start justify-between px-5 pt-5 pb-0">
       <div>
         {title && (
-          <div
-            className="text-sm font-medium"
-            style={{ color: 'var(--color-text-primary)', marginBottom: 2 }}
-          >
+          <div className="text-[16px] font-sans font-semibold text-[var(--color-text-primary)] leading-tight">
             {title}
           </div>
         )}
         {subtitle && (
-          <div className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
+          <div className="text-[13px] font-sans text-[var(--color-text-tertiary)] mt-0.5">
             {subtitle}
           </div>
         )}
       </div>
       {actions && (
-        <div className="flex gap-1.5 items-center">{actions}</div>
+        <div className="flex items-center gap-2 ml-4 flex-shrink-0">
+          {actions}
+        </div>
       )}
+    </div>
+  )
+}
+
+export function FKCardBody({ children, className = '' }) {
+  return (
+    <div className={`px-5 pb-5 pt-3 ${className}`}>
+      {children}
     </div>
   )
 }

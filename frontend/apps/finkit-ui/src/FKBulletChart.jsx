@@ -36,7 +36,7 @@ function drawBullet(canvas, data, fmt) {
   const BAR_RIGHT = W - VALUE_W - H_PAD
   const BAR_W     = BAR_RIGHT - BAR_LEFT
 
-  ctx.font = '10px var(--font-mono, monospace)'
+  ctx.font = '12px var(--font-sans, system-ui)'
 
   data.forEach((row, i) => {
     const y     = H_PAD + i * ROW_H + ROW_H / 2
@@ -50,7 +50,7 @@ function drawBullet(canvas, data, fmt) {
     ctx.fillStyle = labelC
     ctx.textAlign = 'right'
     ctx.textBaseline = 'middle'
-    ctx.font = '11px var(--font-sans, sans-serif)'
+    ctx.font = '12px var(--font-sans, system-ui)'
     ctx.fillText(row.label, LABEL_W - 8, y)
 
     // Background range track
@@ -72,7 +72,7 @@ function drawBullet(canvas, data, fmt) {
     ctx.fillRect(targetX - 1, y - BAR_H / 2 - 2, 2, BAR_H + 4)
 
     // Value label
-    ctx.font = '500 11px var(--font-mono, monospace)'
+    ctx.font = '500 12px var(--font-mono, monospace)'
     ctx.fillStyle = aboveTarget ? color.gain : color.loss
     ctx.textAlign = 'left'
     ctx.textBaseline = 'middle'
@@ -80,7 +80,7 @@ function drawBullet(canvas, data, fmt) {
     ctx.fillText(formatted, BAR_RIGHT + 8, y)
 
     // vs target (small sub-label)
-    ctx.font = '9px var(--font-mono, monospace)'
+    ctx.font = '12px var(--font-mono, monospace)'
     ctx.fillStyle = labelC
     const targetFormatted = row.format ? row.format(row.target) : fmt(row.target)
     ctx.fillText(`vs ${targetFormatted}`, BAR_RIGHT + 8, y + 12)

@@ -129,7 +129,7 @@ function DonutChart({ data, valueKey, labelKey, colorKey, innerLabel, innerSub, 
               </span>
             )}
             {innerSub && (
-              <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)', marginTop: 2 }}>
+              <span style={{ fontSize: 12, fontFamily: 'var(--font-sans)', color: 'var(--color-text-tertiary)', marginTop: 2 }}>
                 {innerSub}
               </span>
             )}
@@ -153,7 +153,7 @@ function DonutChart({ data, valueKey, labelKey, colorKey, innerLabel, innerSub, 
               <span className="text-xs truncate flex-1" style={{ color: 'var(--color-text-primary)' }}>
                 {row[labelKey]}
               </span>
-              <span className="text-[11px] font-mono" style={{ color: 'var(--color-text-secondary)', flexShrink: 0 }}>
+              <span className="text-[13px] font-mono" style={{ color: 'var(--color-text-secondary)', flexShrink: 0 }}>
                 {pct.toFixed(1)}%
               </span>
               <div style={{ width: 60, height: 3, borderRadius: 99, background: 'var(--color-background-secondary)' }}>
@@ -224,12 +224,12 @@ function TreemapChart({ data, valueKey, labelKey, colorKey, colorBy = 'index', h
               }}
             >
               {rect.w > 48 && (
-                <span style={{ fontSize: Math.min(12, rect.w / 7), fontWeight: 600, color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.3)', textAlign: 'center', lineHeight: 1.2, overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                <span style={{ fontSize: Math.min(12, rect.w / 7), fontFamily: 'var(--font-sans)', fontWeight: 600, color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.3)', textAlign: 'center', lineHeight: 1.2, overflow: 'hidden', whiteSpace: 'nowrap' }}>
                   {rect[labelKey]}
                 </span>
               )}
               {rect.w > 72 && rect.h > 32 && (
-                <span style={{ fontSize: Math.min(11, rect.w / 8), color: 'rgba(255,255,255,0.8)', marginTop: 2, fontFamily: 'var(--font-mono)' }}>
+                <span style={{ fontSize: Math.min(12, rect.w / 8), color: 'rgba(255,255,255,0.8)', marginTop: 2, fontFamily: 'var(--font-mono)' }}>
                   {rect[valueKey]?.toFixed(1)}
                 </span>
               )}
@@ -252,7 +252,7 @@ function BarsChart({ data, valueKey, labelKey, showTotal = true }) {
       {showTotal && (
         <div style={{ fontSize: 20, fontWeight: 600, fontFamily: 'var(--font-mono)', color: 'var(--color-text-primary)', marginBottom: 12 }}>
           {total.toFixed(1)}%
-          <span style={{ fontSize: 11, fontWeight: 400, marginLeft: 6, color: 'var(--color-text-tertiary)' }}>total</span>
+          <span style={{ fontSize: 13, fontFamily: 'var(--font-sans)', fontWeight: 400, marginLeft: 6, color: 'var(--color-text-tertiary)' }}>total</span>
         </div>
       )}
       <div className="flex flex-col gap-3">
@@ -267,7 +267,7 @@ function BarsChart({ data, valueKey, labelKey, showTotal = true }) {
               <div style={{ flex: 1, height: 4, borderRadius: 99, background: 'var(--color-background-secondary)' }}>
                 <div style={{ height: '100%', borderRadius: 99, background: c, width: `${Math.max(1, pct)}%`, transition: 'width 0.3s' }} />
               </div>
-              <span className="text-[11px] font-mono min-w-[40px] text-right" style={{ color: 'var(--color-text-secondary)' }}>
+              <span className="text-[13px] font-mono min-w-[40px] text-right" style={{ color: 'var(--color-text-secondary)' }}>
                 {row[valueKey]?.toFixed(1)}%
               </span>
             </div>

@@ -115,7 +115,7 @@ export function FKMultiPanel({
                       position: 'insideRight',
                       angle:    -90,
                       offset:   -6,
-                      style:    { fontSize: 9, fill: 'var(--color-text-tertiary)', fontFamily: 'var(--font-mono)' },
+                      style:    { fontSize: 12, fill: 'var(--color-text-tertiary)', fontFamily: 'var(--font-sans)' },
                     } : undefined}
                     domain={panel.yDomain || ['auto', 'auto']}
                   />
@@ -137,8 +137,8 @@ export function FKMultiPanel({
                         value:    rl.label,
                         position: 'right',
                         fill:     rl.color || 'var(--color-text-tertiary)',
-                        fontSize: 9,
-                        fontFamily: 'var(--font-mono)',
+                        fontSize: 12,
+                        fontFamily: 'var(--font-sans)',
                       } : undefined}
                     />
                   ))}

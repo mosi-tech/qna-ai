@@ -107,7 +107,7 @@ export function FKTimeline({
     <FKCard>
       <FKCardHeader title={title} subtitle={subtitle} />
       <div ref={containerRef} style={{ padding: '12px 0 8px', position: 'relative', overflowX: 'auto' }}>
-        <svg width={width} height={totalH} style={{ display: 'block', fontFamily: 'var(--font-mono)' }}>
+        <svg width={width} height={totalH} style={{ display: 'block' }}>
 
           {/* Row labels + lane backgrounds */}
           {rows.map((row, ri) => {
@@ -119,7 +119,7 @@ export function FKTimeline({
                   opacity={0.4} />
                 {row !== '__default' && (
                   <text x={LABEL_W - 8} y={y + ROW_H / 2 + 1} textAnchor="end"
-                    fontSize={10} fill="var(--color-text-tertiary)" dominantBaseline="middle">
+                    fontSize={12} fontFamily="var(--font-sans)" fill="var(--color-text-tertiary)" dominantBaseline="middle">
                     {row}
                   </text>
                 )}
@@ -138,7 +138,7 @@ export function FKTimeline({
                 x2={toX(today)} y2={PAD_TOP + rows.length * ROW_H}
                 stroke="var(--color-text-tertiary)" strokeWidth={1} strokeDasharray="4 3" opacity={0.5}
               />
-              <text x={toX(today) + 3} y={PAD_TOP + 10} fontSize={9} fill="var(--color-text-tertiary)">
+              <text x={toX(today) + 3} y={PAD_TOP + 10} fontSize={12} fontFamily="var(--font-sans)" fill="var(--color-text-tertiary)">
                 Today
               </text>
             </g>
@@ -193,7 +193,7 @@ export function FKTimeline({
             {ticks.map((tick, i) => (
               <g key={i} transform={`translate(${toX(tick.t)}, 0)`}>
                 <line y1={0} y2={4} stroke="var(--color-border-secondary)" strokeWidth={0.5} />
-                <text y={14} textAnchor="middle" fontSize={9} fill="var(--color-text-tertiary)">
+                <text y={14} textAnchor="middle" fontSize={12} fontFamily="var(--font-mono)" fill="var(--color-text-tertiary)">
                   {tick.label}
                 </text>
               </g>

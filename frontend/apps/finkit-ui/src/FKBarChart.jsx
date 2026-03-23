@@ -5,7 +5,7 @@ import {
 } from 'recharts'
 import { FKCard, FKCardHeader } from './FKCard.jsx'
 import { FKStatStrip, FKBadge } from './FKSparkline.jsx'
-import { color, axisProps, gridProps, tooltipStyle, resolveColor } from './tokens.js'
+import { color, axisProps, categoryAxisProps, gridProps, tooltipStyle, resolveColor } from './tokens.js'
 
 // ─── Sample data ─────────────────────────────────────────────────────────────
 const SAMPLE_DATA = [
@@ -45,10 +45,10 @@ function BarTooltip({ active, payload, label, yFormat }) {
   if (!active || !payload?.length) return null
   return (
     <div style={tooltipStyle}>
-      <div style={{ color: 'var(--color-text-secondary)', marginBottom: 6, fontSize: 11 }}>{label}</div>
+      <div style={{ color: 'var(--color-text-secondary)', marginBottom: 6, fontSize: 13, fontFamily: 'var(--font-sans)' }}>{label}</div>
       {payload.filter(p => p.dataKey !== '_base').map((p, i) => (
         <div key={i} className="flex items-center gap-2" style={{ color: 'var(--color-text-primary)' }}>
-          <span style={{ fontSize: 11 }}>{p.name || p.dataKey}</span>
+          <span style={{ fontSize: 13, fontFamily: 'var(--font-sans)' }}>{p.name || p.dataKey}</span>
           <span style={{ fontWeight: 500, marginLeft: 'auto', paddingLeft: 12 }}>
             {yFormat ? yFormat(p.value) : p.value?.toLocaleString()}
           </span>
@@ -269,7 +269,7 @@ export function FKBarChart({
             {isHoriz ? (
               <>
                 <XAxis type="number" {...axisProps} tickFormatter={yFormat} orientation="bottom" />
-                <YAxis type="category" dataKey={labelKey} {...axisProps} width={56} />
+                <YAxis type="category" dataKey={labelKey} {...categoryAxisProps} width={56} />
               </>
             ) : (
               <>

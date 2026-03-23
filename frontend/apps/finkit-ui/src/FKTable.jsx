@@ -137,7 +137,8 @@ export function FKTable({
                     style={{
                       padding:       '10px 16px',
                       textAlign:     col.align || 'left',
-                      fontSize:      10,
+                      fontSize:      13,
+                      fontFamily:    'var(--font-sans)',
                       fontWeight:    500,
                       textTransform: 'uppercase',
                       letterSpacing: '0.05em',
@@ -198,7 +199,7 @@ export function FKTable({
                       style={{
                         padding:    '9px 16px',
                         textAlign:  col.align || 'left',
-                        fontSize:   col.mono ? 12 : 13,
+                        fontSize:   13,
                         fontFamily: col.mono ? 'var(--font-mono)' : 'var(--font-sans)',
                         color:      txtCol,
                         borderBottom: '0.5px solid var(--color-border-tertiary)',

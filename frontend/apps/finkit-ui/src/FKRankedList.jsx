@@ -61,7 +61,7 @@ export function FKRankedList({
             >
               {/* Rank number */}
               <span
-                className="text-[11px] font-mono w-5 text-right flex-shrink-0"
+                className="text-[12px] font-mono w-5 text-right flex-shrink-0"
                 style={{ color: 'var(--color-text-tertiary)' }}
               >
                 {i + 1}
@@ -84,7 +84,7 @@ export function FKRankedList({
                   {row[labelKey]}
                 </span>
                 {row[subKey] && (
-                  <span className="text-[10px] truncate" style={{ color: 'var(--color-text-tertiary)' }}>
+                  <span className="text-[12px] font-sans truncate" style={{ color: 'var(--color-text-tertiary)' }}>
                     {row[subKey]}
                   </span>
                 )}

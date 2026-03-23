@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import {
   ResponsiveContainer, ComposedChart, Line, Area,
   XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine,
@@ -28,20 +28,82 @@ const SAMPLE_SERIES = [
 ]
 
 // ─── Custom tooltip ───────────────────────────────────────────────────────────
-function CustomTooltip({ active, payload, label, yFormat, seriesMap }) {
+function CustomTooltip({ active, payload, label, yFormat, seriesColors, seriesMap, viewMode }) {
   if (!active || !payload?.length) return null
+  // Keep only the last occurrence of each dataKey (Line comes after Area — has correct color)
+  const last = {}
+  payload.forEach(p => { last[p.dataKey] = p })
+  const unique = Object.values(last).filter(p => seriesColors[p.dataKey])
+
+  const fmt = viewMode === 'pct'
+    ? v => `${v >= 0 ? '+' : ''}${v?.toFixed(2)}%`
+    : yFormat || (v => v?.toFixed(2))
+
   return (
     <div style={tooltipStyle}>
-      <div style={{ color: 'var(--color-text-secondary)', marginBottom: 6, fontSize: 11 }}>
+      <div style={{ color: 'var(--color-text-tertiary)', marginBottom: 6, fontSize: 13,
+                    fontFamily: 'var(--font-sans)', paddingBottom: 6,
+                    borderBottom: '1px solid var(--color-border-tertiary)' }}>
         {label}
       </div>
-      {payload.map((p, i) => (
-        <div key={i} className="flex items-center gap-2" style={{ color: p.color }}>
-          <span style={{ fontSize: 11 }}>{seriesMap?.[p.dataKey] || p.dataKey}</span>
-          <span style={{ fontWeight: 500, marginLeft: 'auto', paddingLeft: 12 }}>
-            {yFormat ? yFormat(p.value) : p.value?.toFixed(2)}
-          </span>
-        </div>
+      {unique.map((p, i) => {
+        const c = seriesColors[p.dataKey]
+        return (
+          <div key={i} className="flex items-center justify-between gap-6 mt-1.5">
+            <div className="flex items-center gap-2">
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: c, flexShrink: 0, display: 'inline-block' }} />
+              <span style={{ fontSize: 13, fontFamily: 'var(--font-sans)', color: 'var(--color-text-secondary)' }}>
+                {seriesMap[p.dataKey] || p.dataKey}
+              </span>
+            </div>
+            <span style={{ fontSize: 13, fontFamily: 'var(--font-mono)', fontWeight: 500,
+                           color: 'var(--color-text-primary)', tabularNums: true }}>
+              {fmt(p.value)}
+            </span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+// ─── % change normalizer ─────────────────────────────────────────────────────
+function normalizeToPercent(data, series) {
+  const firsts = {}
+  series.forEach(s => {
+    const first = data.find(r => r[s.key] != null)
+    if (first) firsts[s.key] = first[s.key]
+  })
+  return data.map(row => {
+    const out = { ...row }
+    series.forEach(s => {
+      const base = firsts[s.key]
+      if (row[s.key] != null && base) {
+        out[s.key] = parseFloat(((row[s.key] / base - 1) * 100).toFixed(3))
+      }
+    })
+    return out
+  })
+}
+
+// ─── ViewMode toggle ─────────────────────────────────────────────────────────
+function ViewToggle({ value, onChange }) {
+  return (
+    <div className="flex items-center gap-0.5 bg-[var(--color-background-tertiary)] rounded-lg p-0.5">
+      {['%', '$'].map(opt => (
+        <button
+          key={opt}
+          onClick={() => onChange(opt === '%' ? 'pct' : 'value')}
+          className={[
+            'px-2.5 py-1 rounded-md text-[12px] font-sans font-medium transition-colors leading-none',
+            value === (opt === '%' ? 'pct' : 'value')
+              ? 'bg-[var(--color-background-primary)] text-[var(--color-text-primary)] shadow-sm'
+              : 'text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)]',
+          ].join(' ')}
+          style={{ border: 'none', cursor: 'pointer', background: value === (opt === '%' ? 'pct' : 'value') ? undefined : 'transparent' }}
+        >
+          {opt}
+        </button>
       ))}
     </div>
   )
@@ -64,7 +126,8 @@ export function FKLineChart({
   smooth        = false,
   connectNulls  = false,
   dot           = false,
-  interpolation,        // 'linear' | 'step' | 'stepBefore' | 'stepAfter'
+  interpolation,
+  defaultViewMode,  // 'pct' | 'value' — overrides auto-detection
   title,
   subtitle,
   badge,
@@ -72,33 +135,52 @@ export function FKLineChart({
 }) {
   const resolvedData   = data   || SAMPLE_DATA
   const resolvedSeries = series || (yKey ? [{ key: yKey, label: yKey }] : SAMPLE_SERIES)
-  const rangeOptions   = Array.isArray(rangeSelector) ? rangeSelector : ['1M', '3M', '6M', '1Y']
+  const isMulti        = resolvedSeries.length >= 2
+
+  // Default to % mode when multi-series, unless caller overrides
+  const [viewMode, setViewMode] = useState(defaultViewMode || (isMulti ? 'pct' : 'value'))
+
+  const rangeOptions = Array.isArray(rangeSelector) ? rangeSelector : ['1M', '3M', '6M', '1Y']
   const [range, setRange] = useState(defaultRange || rangeOptions[rangeOptions.length - 1])
 
+  const seriesColors = Object.fromEntries(
+    resolvedSeries.map((s, i) => [s.key, s.color || color.series[i % color.series.length]])
+  )
   const seriesMap = Object.fromEntries(resolvedSeries.map(s => [s.key, s.label || s.key]))
 
   const handleRangeChange = r => { setRange(r); onRangeChange?.(r) }
 
-  const actions = rangeSelector
-    ? <FKRangeSelector options={rangeOptions} value={range} onChange={handleRangeChange} />
-    : badge
-    ? <FKBadge variant="neutral">{badge}</FKBadge>
-    : null
+  const chartData = useMemo(
+    () => viewMode === 'pct' ? normalizeToPercent(resolvedData, resolvedSeries) : resolvedData,
+    [resolvedData, resolvedSeries, viewMode]
+  )
 
-  // interpolation prop takes precedence over smooth boolean
+  // y-axis format: in pct mode always show %, in value mode use caller's yFormat
+  const activeYFormat = viewMode === 'pct'
+    ? v => `${v >= 0 ? '+' : ''}${v?.toFixed(1)}%`
+    : yFormat
+
   const curveType = interpolation
     ? (interpolation === 'step' ? 'stepAfter' : interpolation)
     : smooth ? 'monotone' : 'linear'
+
+  const actions = (
+    <div className="flex items-center gap-2">
+      {isMulti && <ViewToggle value={viewMode} onChange={setViewMode} />}
+      {rangeSelector && <FKRangeSelector options={rangeOptions} value={range} onChange={handleRangeChange} />}
+      {!rangeSelector && badge && <FKBadge variant="neutral">{badge}</FKBadge>}
+    </div>
+  )
 
   return (
     <FKCard>
       <FKCardHeader title={title} subtitle={subtitle} actions={actions} />
       <div style={{ height, padding: '12px 4px 8px 0' }}>
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={resolvedData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+          <ComposedChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
             <defs>
               {resolvedSeries.map((s, i) => {
-                const c = s.color || color.series[i % color.series.length]
+                const c = seriesColors[s.key]
                 return (
                   <linearGradient key={s.key} id={`fkline-grad-${s.key}`} x1="0" y1="0" x2="0" y2="1">
                     <stop offset="0%"   stopColor={c} stopOpacity={0.15} />
@@ -122,36 +204,39 @@ export function FKLineChart({
               {...axisProps}
               orientation="right"
               width={52}
-              tickFormatter={yFormat}
+              tickFormatter={activeYFormat}
             />
 
             <Tooltip
               content={
-                <CustomTooltip yFormat={yFormat} seriesMap={seriesMap} />
+                <CustomTooltip
+                  yFormat={yFormat}
+                  seriesColors={seriesColors}
+                  seriesMap={seriesMap}
+                  viewMode={viewMode}
+                />
               }
               cursor={{ stroke: 'var(--color-border-secondary)', strokeWidth: 1 }}
             />
 
-            {/* Gradient fills (rendered before lines so lines sit on top) */}
-            {resolvedSeries.map((s, i) => {
-              const c = s.color || color.series[i % color.series.length]
-              return (
-                <Area
-                  key={`area-${s.key}`}
-                  type={curveType}
-                  dataKey={s.key}
-                  fill={`url(#fkline-grad-${s.key})`}
-                  stroke="none"
-                  connectNulls={connectNulls}
-                  legendType="none"
-                  isAnimationActive={false}
-                />
-              )
-            })}
+            {/* Gradient fills — Area comes first (below lines) */}
+            {resolvedSeries.map(s => (
+              <Area
+                key={`area-${s.key}`}
+                type={curveType}
+                dataKey={s.key}
+                fill={`url(#fkline-grad-${s.key})`}
+                stroke="none"
+                connectNulls={connectNulls}
+                legendType="none"
+                tooltipType="none"
+                isAnimationActive={false}
+              />
+            ))}
 
             {/* Lines */}
-            {resolvedSeries.map((s, i) => {
-              const c = s.color || color.series[i % color.series.length]
+            {resolvedSeries.map(s => {
+              const c = seriesColors[s.key]
               return (
                 <Line
                   key={`line-${s.key}`}
@@ -174,20 +259,13 @@ export function FKLineChart({
                 key={i}
                 x={rl.x !== undefined ? rl.x : undefined}
                 y={rl.y !== undefined ? rl.y : undefined}
-                label={
-                  rl.label
-                    ? {
-                        value:    rl.label,
-                        fill:     rl.color || 'var(--color-text-tertiary)',
-                        fontSize: 10,
-                        fontFamily: 'var(--font-mono)',
-                      }
-                    : undefined
-                }
-                stroke={
-                  rl.color ||
-                  (rl.y === 0 ? 'rgba(0,0,0,0.15)' : 'var(--color-border-secondary)')
-                }
+                label={rl.label ? {
+                  value: rl.label,
+                  fill: rl.color || 'var(--color-text-tertiary)',
+                  fontSize: 12,
+                  fontFamily: 'var(--font-sans)',
+                } : undefined}
+                stroke={rl.color || (rl.y === 0 ? 'rgba(0,0,0,0.15)' : 'var(--color-border-secondary)')}
                 strokeDasharray={rl.dashed ? '4 3' : undefined}
                 strokeWidth={1}
               />

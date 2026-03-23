@@ -127,7 +127,7 @@ function AnnotationLayer({ xAxisMap, yAxisMap, data, events, callouts, colorMap,
             <rect x={boxX} y={boxY} width={labelW} height={boxH} rx={4}
               fill="var(--color-background-primary)" stroke={c} strokeWidth={0.5} />
             <text x={x} y={boxY + 13} textAnchor="middle"
-              fontSize={10} fontFamily="var(--font-mono)" fill={c} fontWeight={500}>
+              fontSize={12} fontFamily="var(--font-sans)" fill={c} fontWeight={500}>
               {ca.label}
             </text>
           </g>
@@ -146,7 +146,7 @@ function AnnotationLegend({ series, events, bands, colorMap, shapeMap }) {
         return (
           <div key={s.key} className="flex items-center gap-1.5">
             <div style={{ width: 20, height: 2, background: c, borderRadius: 1, borderTop: s.strokeDash ? `1px dashed ${c}` : undefined }} />
-            <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>{s.label || s.key}</span>
+            <span style={{ fontSize: 13, fontFamily: 'var(--font-sans)', color: 'var(--color-text-secondary)' }}>{s.label || s.key}</span>
           </div>
         )
       })}
@@ -157,14 +157,14 @@ function AnnotationLegend({ series, events, bands, colorMap, shapeMap }) {
             <svg width={12} height={12} style={{ flexShrink: 0 }}>
               <MarkerShape shape={(shapeMap || DEFAULT_SHAPE_MAP)[type] || 'circle'} cx={6} cy={6} r={5} fill={c} />
             </svg>
-            <span style={{ fontSize: 11, color: 'var(--color-text-secondary)', textTransform: 'capitalize' }}>{type}</span>
+            <span style={{ fontSize: 13, fontFamily: 'var(--font-sans)', color: 'var(--color-text-secondary)', textTransform: 'capitalize' }}>{type}</span>
           </div>
         )
       })}
       {(bands || []).map((b, i) => (
         <div key={i} className="flex items-center gap-1.5">
           <div style={{ width: 12, height: 10, background: b.color || 'rgba(99,102,241,0.2)', borderRadius: 2 }} />
-          <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>{b.label}</span>
+          <span style={{ fontSize: 13, fontFamily: 'var(--font-sans)', color: 'var(--color-text-secondary)' }}>{b.label}</span>
         </div>
       ))}
     </div>

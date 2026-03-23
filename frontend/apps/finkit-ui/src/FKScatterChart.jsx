@@ -72,7 +72,7 @@ function draw(canvas, data, opts) {
   const tickCol = isDark ? 'rgba(255,255,255,0.3)'  : 'rgba(0,0,0,0.35)'
   const textCol = isDark ? 'rgba(255,255,255,0.6)'  : 'rgba(0,0,0,0.5)'
 
-  ctx.font = `10px var(--font-mono, monospace)`
+  ctx.font = `12px var(--font-mono, monospace)`
   const TICKS = 5
   for (let i = 0; i <= TICKS; i++) {
     const x = PAD.left + (i / TICKS) * cW
@@ -96,11 +96,13 @@ function draw(canvas, data, opts) {
 
   // Axis labels
   if (xLabel) {
+    ctx.font = `12px var(--font-sans, system-ui)`
     ctx.fillStyle = textCol; ctx.textAlign = 'center'
     ctx.fillText(xLabel, PAD.left + cW / 2, H - 4)
   }
   if (yLabel) {
     ctx.save(); ctx.translate(12, PAD.top + cH / 2); ctx.rotate(-Math.PI / 2)
+    ctx.font = `12px var(--font-sans, system-ui)`
     ctx.textAlign = 'center'; ctx.fillStyle = textCol; ctx.fillText(yLabel, 0, 0)
     ctx.restore()
   }
@@ -171,7 +173,7 @@ function draw(canvas, data, opts) {
     // Label inside bubble
     if (labelKey && r >= 10) {
       ctx.fillStyle  = '#fff'
-      ctx.font       = `500 10px var(--font-mono, monospace)`
+      ctx.font       = `500 12px var(--font-sans, system-ui)`
       ctx.textAlign  = 'center'
       ctx.textBaseline = 'middle'
       ctx.fillText(row[labelKey], sx, sy)

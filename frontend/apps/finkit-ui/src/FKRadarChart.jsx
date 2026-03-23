@@ -87,15 +87,15 @@ export function FKRadarChart({
             <PolarAngleAxis
               dataKey="subject"
               tick={{
-                fontSize:   11,
+                fontSize:   12,
                 fill:       'var(--color-text-secondary)',
-                fontFamily: 'var(--font-mono)',
+                fontFamily: 'var(--font-sans)',
               }}
             />
             <PolarRadiusAxis
               angle={90}
               domain={[0, 100]}
-              tick={{ fontSize: 9, fill: 'var(--color-text-tertiary)' }}
+              tick={{ fontSize: 12, fill: 'var(--color-text-tertiary)', fontFamily: 'var(--font-mono)' }}
               tickCount={4}
               axisLine={false}
             />
@@ -121,7 +121,7 @@ export function FKRadarChart({
               <Legend
                 iconType="circle"
                 iconSize={8}
-                wrapperStyle={{ fontSize: 11, fontFamily: 'var(--font-mono)', paddingTop: 8 }}
+                wrapperStyle={{ fontSize: 13, fontFamily: 'var(--font-sans)', paddingTop: 8 }}
               />
             )}
           </RadarChart>

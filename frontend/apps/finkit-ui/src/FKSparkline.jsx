@@ -15,7 +15,7 @@ export function FKBadge({ children, variant = 'neutral', style }) {
   const v = BADGE_VARIANTS[variant] || BADGE_VARIANTS.neutral
   return (
     <span
-      className="inline-flex items-center rounded-full text-[10px] font-medium leading-none"
+      className="inline-flex items-center rounded-full text-[12px] font-medium leading-none"
       style={{
         padding:    '3px 8px',
         background: v.bg,
@@ -37,7 +37,7 @@ export function FKDelta({ value, decimals = 2, suffix = '%' }) {
   const abs    = Math.abs(value)
   return (
     <span
-      className="inline-flex items-center gap-0.5 text-[11px] font-medium font-mono"
+      className="inline-flex items-center gap-0.5 text-[12px] font-medium font-mono"
       style={{ color: fill }}
     >
       {arrow} {abs.toFixed(decimals)}{suffix}
@@ -82,7 +82,7 @@ export function FKRangeSelector({ options = ['1M', '3M', '6M', '1Y'], value, onC
           <button
             key={opt}
             onClick={() => onChange?.(opt)}
-            className="px-2 rounded transition-colors text-[10px] font-mono leading-none"
+            className="px-2 rounded transition-colors text-[12px] font-sans leading-none"
             style={{
               padding:    '4px 8px',
               background: active ? 'var(--color-background-secondary)' : 'transparent',
@@ -115,7 +115,7 @@ export function FKStatStrip({ stats = [] }) {
       {stats.map((s, i) => (
         <div key={i} className="flex flex-col gap-0.5">
           <span
-            className="text-[9px] uppercase tracking-widest"
+            className="text-[12px] font-sans uppercase tracking-widest"
             style={{ color: 'var(--color-text-tertiary)' }}
           >
             {s.label}

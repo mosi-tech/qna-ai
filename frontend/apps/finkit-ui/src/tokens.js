@@ -32,27 +32,37 @@ export const font = {
   mono: 'var(--font-mono)',
 }
 
-// Single source of truth for Recharts axis/grid/tooltip props
+// Recharts axis props — numeric/date axes (mono ticks)
 export const axisProps = {
-  tick:     { fontSize: 10, fill: 'var(--color-text-tertiary)', fontFamily: 'var(--font-mono)' },
+  tick:     { fontSize: 12, fill: 'var(--color-text-tertiary)', fontFamily: 'var(--font-mono)' },
+  axisLine: false,
+  tickLine: false,
+}
+
+// Category axis props — label axes (tickers, sector names, month names → sans)
+export const categoryAxisProps = {
+  tick:     { fontSize: 12, fill: 'var(--color-text-tertiary)', fontFamily: 'var(--font-sans)' },
   axisLine: false,
   tickLine: false,
 }
 
 export const gridProps = {
   stroke:          'var(--color-border-tertiary)',
-  strokeDasharray: '0',
+  strokeOpacity:   0.3,
   vertical:        false,
+  strokeDasharray: '3 6',
 }
 
 export const tooltipStyle = {
   background:   'var(--color-background-primary)',
-  border:       '0.5px solid var(--color-border-secondary)',
-  borderRadius: 8,
-  padding:      '10px 12px',
-  fontSize:     12,
-  fontFamily:   'var(--font-mono)',
-  boxShadow:    '0 4px 16px rgba(0,0,0,0.08)',
+  border:       '1px solid var(--color-border-tertiary)',
+  borderRadius: 10,
+  padding:      '10px 14px',
+  fontSize:     13,
+  fontFamily:   'var(--font-sans)',
+  boxShadow:    '0 8px 24px rgba(0,0,0,0.08)',
+  outline:      'none',
+  minWidth:     140,
 }
 
 // Default range selector options — charts use this unless overridden

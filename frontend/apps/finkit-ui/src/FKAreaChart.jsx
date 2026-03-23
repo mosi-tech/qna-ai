@@ -30,10 +30,10 @@ function AreaTooltip({ active, payload, label, mode, seriesMap }) {
   if (!active || !payload?.length) return null
   return (
     <div style={tooltipStyle}>
-      <div style={{ color: 'var(--color-text-secondary)', marginBottom: 6, fontSize: 11 }}>{label}</div>
+      <div style={{ color: 'var(--color-text-secondary)', marginBottom: 6, fontSize: 13, fontFamily: 'var(--font-sans)' }}>{label}</div>
       {[...payload].reverse().map((p, i) => (
         <div key={i} className="flex items-center gap-2" style={{ color: p.fill }}>
-          <span style={{ fontSize: 11 }}>{seriesMap?.[p.dataKey] || p.dataKey}</span>
+          <span style={{ fontSize: 13, fontFamily: 'var(--font-sans)' }}>{seriesMap?.[p.dataKey] || p.dataKey}</span>
           <span style={{ fontWeight: 500, marginLeft: 'auto', paddingLeft: 12 }}>
             {mode === 'normalized' ? `${p.value?.toFixed(1)}%` : p.value?.toFixed(1)}
           </span>
@@ -52,7 +52,7 @@ function AreaLegend({ series }) {
         return (
           <div key={s.key} className="flex items-center gap-1.5">
             <div style={{ width: 10, height: 10, borderRadius: 2, background: c, flexShrink: 0 }} />
-            <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>{s.label || s.key}</span>
+            <span style={{ fontSize: 13, fontFamily: 'var(--font-sans)', color: 'var(--color-text-secondary)' }}>{s.label || s.key}</span>
           </div>
         )
       })}

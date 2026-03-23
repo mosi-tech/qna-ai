@@ -38,7 +38,7 @@ function MetricCard({ card }) {
       style={{
         padding:     '20px 20px 16px',
         background:  'var(--color-background-primary)',
-        border:      '0.5px solid var(--color-border-tertiary)',
+        border:      '1px solid var(--color-border-tertiary)',
         borderTop:   `2px solid ${topColor}`,
         ...(card.accent ? { borderLeft: `3px solid ${card.accent}` } : {}),
         boxShadow:   hovered ? '0 0 0 1px var(--color-border-secondary)' : undefined,
@@ -48,7 +48,7 @@ function MetricCard({ card }) {
     >
       {/* Label */}
       <div
-        className="text-[10px] uppercase tracking-[0.06em] mb-2"
+        className="text-[12px] font-sans uppercase tracking-[0.06em] mb-2"
         style={{ color: 'var(--color-text-tertiary)', letterSpacing: '0.06em' }}
       >
         {card.label}
@@ -69,7 +69,7 @@ function MetricCard({ card }) {
       <div className="flex items-center gap-2 flex-wrap">
         {card.delta !== undefined && <FKDelta value={card.delta} />}
         {card.sub && (
-          <span className="text-[11px]" style={{ color: 'var(--color-text-tertiary)' }}>
+          <span className="text-[12px] font-sans" style={{ color: 'var(--color-text-tertiary)' }}>
             {card.sub}
           </span>
         )}

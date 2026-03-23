@@ -114,7 +114,7 @@ export function FKHeatGrid({
                 <button
                   key={p}
                   onClick={() => setPeriod(p)}
-                  className="text-[10px] font-mono rounded"
+                  className="text-[12px] font-sans rounded"
                   style={{
                     padding: '3px 7px',
                     background: p === period ? 'var(--color-background-secondary)' : 'transparent',
@@ -138,7 +138,7 @@ export function FKHeatGrid({
               {/* Empty corner */}
               <th style={{ width: 52 }} />
               {cols.map(c => (
-                <th key={c} style={{ fontSize: 10, fontWeight: 500, color: 'var(--color-text-tertiary)', textAlign: 'center', paddingBottom: 4, width: effectiveCellSize }}>
+                <th key={c} style={{ fontSize: 12, fontFamily: 'var(--font-sans)', fontWeight: 500, color: 'var(--color-text-tertiary)', textAlign: 'center', paddingBottom: 4, width: effectiveCellSize }}>
                   {c}
                 </th>
               ))}
@@ -147,7 +147,7 @@ export function FKHeatGrid({
           <tbody>
             {rows.map(row => (
               <tr key={row}>
-                <td style={{ fontSize: 10, color: 'var(--color-text-tertiary)', paddingRight: 8, whiteSpace: 'nowrap', textAlign: 'right' }}>
+                <td style={{ fontSize: 12, fontFamily: 'var(--font-sans)', color: 'var(--color-text-tertiary)', paddingRight: 8, whiteSpace: 'nowrap', textAlign: 'right' }}>
                   {row}
                 </td>
                 {cols.map(col => {
@@ -165,7 +165,7 @@ export function FKHeatGrid({
                           display:      'flex',
                           alignItems:   'center',
                           justifyContent: 'center',
-                          fontSize:     10,
+                          fontSize:     12,
                           fontFamily:   'var(--font-mono)',
                           fontWeight:   500,
                           color:        cs.text,
@@ -189,7 +189,7 @@ export function FKHeatGrid({
 
         {/* Color legend */}
         <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 9, color: 'var(--color-text-tertiary)' }}>
+          <span style={{ fontSize: 12, fontFamily: 'var(--font-sans)', color: 'var(--color-text-tertiary)' }}>
             {fmtVal(min)}
           </span>
           <div style={{
@@ -200,7 +200,7 @@ export function FKHeatGrid({
               ? 'linear-gradient(to right, rgba(220,38,38,0.55), rgba(220,38,38,0.08) 40%, rgba(22,163,74,0.08) 60%, rgba(22,163,74,0.55))'
               : 'linear-gradient(to right, rgba(99,102,241,0.08), rgba(99,102,241,0.78))',
           }} />
-          <span style={{ fontSize: 9, color: 'var(--color-text-tertiary)' }}>
+          <span style={{ fontSize: 12, fontFamily: 'var(--font-sans)', color: 'var(--color-text-tertiary)' }}>
             {fmtVal(max)}
           </span>
         </div>

@@ -59,7 +59,7 @@ function drawChart(canvas, data, opts) {
     const fillC  = getRowColor(row, colorRule)
 
     // Label
-    ctx.font      = `10px var(--font-mono, monospace)`
+    ctx.font      = `12px var(--font-sans, system-ui)`
     ctx.fillStyle = labelCol
     ctx.textAlign = 'right'
     ctx.textBaseline = 'middle'
@@ -104,14 +104,14 @@ function drawChart(canvas, data, opts) {
 
     // Min/max labels
     if (showValues) {
-      ctx.fillStyle = labelCol; ctx.font = `9px var(--font-mono, monospace)`
+      ctx.fillStyle = labelCol; ctx.font = `12px var(--font-mono, monospace)`
       ctx.textAlign = 'left'
       ctx.fillText(format ? format(mn) : mn.toFixed(2), BAR_LEFT, y + markerR + 10)
       ctx.textAlign = 'right'
       ctx.fillText(format ? format(mx) : mx.toFixed(2), BAR_RIGHT, y + markerR + 10)
 
       // Current value right of bar
-      ctx.fillStyle = valCol; ctx.font = `500 11px var(--font-mono, monospace)`
+      ctx.fillStyle = valCol; ctx.font = `500 12px var(--font-mono, monospace)`
       ctx.textAlign = 'left'
       ctx.fillText(format ? format(v) : v.toFixed(2), BAR_RIGHT + 6, y)
     }

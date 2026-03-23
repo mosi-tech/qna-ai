@@ -190,8 +190,8 @@ export function FKSankeyChart({
                   y={pos.y + pos.h / 2}
                   textAnchor={last ? 'end' : 'start'}
                   dominantBaseline="middle"
-                  fontSize={11}
-                  fontFamily="var(--font-mono)"
+                  fontSize={12}
+                  fontFamily="var(--font-sans)"
                   fill="var(--color-text-primary)"
                 >
                   {n.label}

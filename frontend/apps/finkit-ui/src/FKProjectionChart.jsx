@@ -35,27 +35,27 @@ function ProjLegend({ scenarios }) {
     <div className="flex flex-wrap gap-x-4 gap-y-1" style={{ padding: '6px 20px 12px' }}>
       <div className="flex items-center gap-1.5">
         <div style={{ width: 20, height: 2, background: seriesColor }} />
-        <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>Historical</span>
+        <span style={{ fontSize: 13, fontFamily: 'var(--font-sans)', color: 'var(--color-text-secondary)' }}>Historical</span>
       </div>
       {!scenarios ? (
         <>
           <div className="flex items-center gap-1.5">
             <div style={{ width: 20, height: 2, background: seriesColor, borderTop: `1.5px dashed ${seriesColor}`, borderBottom: 'none' }} />
-            <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>Median projection</span>
+            <span style={{ fontSize: 13, fontFamily: 'var(--font-sans)', color: 'var(--color-text-secondary)' }}>Median projection</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div style={{ width: 12, height: 10, background: `${color.series[0]}30`, borderRadius: 2 }} />
-            <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>50% range</span>
+            <span style={{ fontSize: 13, fontFamily: 'var(--font-sans)', color: 'var(--color-text-secondary)' }}>50% range</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div style={{ width: 12, height: 10, background: `${color.series[0]}12`, borderRadius: 2 }} />
-            <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>80% range</span>
+            <span style={{ fontSize: 13, fontFamily: 'var(--font-sans)', color: 'var(--color-text-secondary)' }}>80% range</span>
           </div>
         </>
       ) : scenarios.map((s, i) => (
         <div key={s.key} className="flex items-center gap-1.5">
           <div style={{ width: 20, height: 2, background: s.color || color.series[i + 1], borderTop: `1.5px dashed ${s.color}` }} />
-          <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>{s.label || s.key}</span>
+          <span style={{ fontSize: 13, fontFamily: 'var(--font-sans)', color: 'var(--color-text-secondary)' }}>{s.label || s.key}</span>
         </div>
       ))}
     </div>
@@ -181,8 +181,8 @@ export function FKProjectionChart({
                   value: 'Today',
                   position: 'insideTopLeft',
                   fill: 'var(--color-text-tertiary)',
-                  fontSize: 10,
-                  fontFamily: 'var(--font-mono)',
+                  fontSize: 12,
+                  fontFamily: 'var(--font-sans)',
                 }}
               />
             )}

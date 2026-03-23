@@ -5,7 +5,7 @@ import {
 } from 'recharts'
 import { FKCard, FKCardHeader } from './FKCard.jsx'
 import { FKTooltip } from './FKTooltip.jsx'
-import { color, axisProps, gridProps } from './tokens.js'
+import { color, axisProps, categoryAxisProps, gridProps } from './tokens.js'
 
 // ─── Sample data ──────────────────────────────────────────────────────────────
 const SAMPLE_DATA = [
@@ -114,7 +114,7 @@ export function FKWaterfall({
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={rows} margin={{ top: 20, right: 8, left: 0, bottom: 0 }}>
             <CartesianGrid {...gridProps} />
-            <XAxis dataKey="label" {...axisProps} />
+            <XAxis dataKey="label" {...categoryAxisProps} />
             <YAxis
               {...axisProps}
               orientation="right"
@@ -152,7 +152,7 @@ export function FKWaterfall({
                       x={(x || 0) + (width || 0) / 2}
                       y={(y || 0) - 4}
                       textAnchor="middle"
-                      fontSize={10}
+                      fontSize={12}
                       fontFamily="var(--font-mono)"
                       fontWeight={500}
                       fill={textColor}

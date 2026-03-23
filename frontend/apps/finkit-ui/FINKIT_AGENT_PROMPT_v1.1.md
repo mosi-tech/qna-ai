@@ -184,64 +184,31 @@ export const font = {
   mono: 'var(--font-mono)',
 }
 
-// ─── TYPOGRAPHY RULES — READ CAREFULLY ───────────────────────────────────────
-// Modern financial UI (Robinhood, Wealthfront, LSEG) uses sans-serif for almost
-// everything. Mono is reserved ONLY for numerical data where column alignment matters.
-//
-// USE font.sans (var(--font-sans)) for:
-//   - Card titles, subtitles
-//   - Legend labels
-//   - Axis category labels (tickers, sector names, month names)
-//   - Tooltip series labels (the left-side name)
-//   - Button text, tab text, range selector options
-//   - Table column headers
-//   - Any label or descriptive text
-//
-// USE font.mono (var(--font-mono)) for:
-//   - Axis tick values (numbers: prices, percentages, dates as numbers)
-//   - Tooltip values (the right-side number)
-//   - Table cell values that are numeric
-//   - FKMetricGrid values
-//   - Anything that needs to align in columns by digit
-//
-// NEVER use font.mono for labels, titles, legends, or any descriptive text.
-// ─────────────────────────────────────────────────────────────────────────────
-
-// Recharts axis props — import into every chart
-// Note: tick font is mono because axis ticks are always numeric values or dates.
-// Category axis labels (XAxis on bar charts with ticker names) should override
-// tick.fontFamily to font.sans.
+// Single source of truth for Recharts — import these into every chart component
 export const axisProps = {
-  tick:     { fontSize: 11, fill: 'var(--color-text-tertiary)', fontFamily: 'var(--font-mono)' },
-  axisLine: false,
-  tickLine: false,
-}
-
-export const categoryAxisProps = {
-  tick:     { fontSize: 11, fill: 'var(--color-text-tertiary)', fontFamily: 'var(--font-sans)' },
+  tick:     { fontSize: 10, fill: 'var(--color-text-tertiary)', fontFamily: 'var(--font-mono)' },
   axisLine: false,
   tickLine: false,
 }
 
 export const gridProps = {
   stroke:          'var(--color-border-tertiary)',
-  strokeOpacity:   0.5,
   vertical:        false,
-  strokeDasharray: '3 6',
+  strokeDasharray: '2 4',
 }
 
-// Tooltip container style — passed to Recharts wrapperStyle
-// Font is sans here; individual rows set mono only on the value side
+// Base style object for the Recharts <Tooltip> wrapperStyle prop.
+// Every chart passes this to wrapperStyle — do NOT also pass contentStyle or itemStyle.
+// All visual customisation is done through FKTooltip (see below).
 export const tooltipStyle = {
   background:   'var(--color-background-primary)',
   border:       '0.5px solid var(--color-border-secondary)',
-  borderRadius: 10,
+  borderRadius: 8,
   padding:      '10px 14px',
-  fontSize:     13,
-  fontFamily:   'var(--font-sans)',
-  boxShadow:    '0 8px 24px rgba(0,0,0,0.10)',
+  fontSize:     12,
+  fontFamily:   'var(--font-mono)',
+  boxShadow:    '0 4px 16px rgba(0,0,0,0.08)',
   outline:      'none',
-  minWidth:     140,
 }
 
 // Default range selector options — charts use this unless overridden
@@ -252,33 +219,41 @@ export const defaultRangeOptions = ['1M', '3M', '6M', '1Y', '3Y', '5Y', 'ALL']
 
 ## Shared tooltip (put in `src/FKTooltip.jsx`, import into every chart)
 
-Every chart uses this single tooltip component. Never use Recharts' default tooltip.
-Typography rule: series **labels** use `font-sans`, numeric **values** use `font-mono`.
+Every chart uses this single tooltip component. This ensures consistent formatting,
+dark mode support, and layout across all chart types. Never use Recharts' default tooltip
+appearance directly — always pass `content={<FKTooltip ... />}` or use the factory function.
 
 ```jsx
-import { tooltipStyle } from './tokens'
-
-// ─── FKTooltip — standard single/multi-series tooltip ────────────────────────
+// FKTooltip — universal custom tooltip for all FK charts
+//
 // Usage with Recharts:
-//   <Tooltip content={<FKTooltip xFormat={d => formatDate(d)} valueFormat={v => `$${v}`} />} />
+//   <Tooltip content={<FKTooltip xFormat={formatDate} valueFormat={formatUSD} />} />
+//
+// Or with canvas charts (FKScatterChart, FKBulletChart, FKRangeChart):
+//   render a <FKTooltip.Box> positioned absolutely at {x, y} with items you build manually
+
 export function FKTooltip({ xFormat, valueFormat, colorMap, active, payload, label }) {
   if (!active || !payload?.length) return null
+
   return (
     <div style={tooltipStyle}>
-      <div className="text-xs text-[var(--color-text-tertiary)] font-sans mb-2 pb-1.5
+      {/* Header: the x-axis value (date, category) */}
+      <div className="text-[11px] text-[var(--color-text-tertiary)] font-mono mb-2 pb-1.5
                       border-b border-[var(--color-border-tertiary)]">
         {xFormat ? xFormat(label) : label}
       </div>
+
+      {/* Rows: one per series */}
       {payload.map((entry, i) => (
-        <div key={i} className="flex items-center justify-between gap-6 mt-1.5">
-          <div className="flex items-center gap-2">
+        <div key={i} className="flex items-center justify-between gap-4 mt-1">
+          <div className="flex items-center gap-1.5">
             <span style={{ background: colorMap?.[entry.dataKey] ?? entry.color }}
-                  className="w-2 h-2 rounded-full flex-shrink-0" />
-            <span className="text-[13px] text-[var(--color-text-secondary)] font-sans">
+                  className="inline-block w-2 h-2 rounded-full flex-shrink-0" />
+            <span className="text-[11px] text-[var(--color-text-secondary)] font-mono">
               {entry.name ?? entry.dataKey}
             </span>
           </div>
-          <span className="text-[13px] text-[var(--color-text-primary)] font-mono font-medium tabular-nums">
+          <span className="text-[11px] text-[var(--color-text-primary)] font-mono font-medium">
             {valueFormat ? valueFormat(entry.value) : entry.value}
           </span>
         </div>
@@ -287,108 +262,36 @@ export function FKTooltip({ xFormat, valueFormat, colorMap, active, payload, lab
   )
 }
 
-// ─── FKTooltip.OHLC — candlestick tooltip with 4 price values + volume ───────
-// Usage: <Tooltip content={<FKTooltip.OHLC valueFormat={v=>`$${v.toFixed(2)}`} />} />
-FKTooltip.OHLC = function OHLCTooltip({ active, payload, label, xFormat, valueFormat }) {
-  if (!active || !payload?.length) return null
-  const d = payload[0]?.payload ?? {}
-  const fmt = valueFormat ?? (v => v?.toFixed(2))
-  const isUp = (d.close ?? 0) >= (d.open ?? 0)
+// FKTooltip.Box — for canvas charts that manage their own hover state
+// Wrap this around manually constructed tooltip content
+FKTooltip.Box = function TooltipBox({ children, style }) {
   return (
-    <div style={tooltipStyle}>
-      <div className="text-xs text-[var(--color-text-tertiary)] font-sans mb-2 pb-1.5
-                      border-b border-[var(--color-border-tertiary)]">
-        {xFormat ? xFormat(label) : label}
-      </div>
-      {[
-        { label: 'Open',   value: d.open,   color: 'var(--color-text-secondary)' },
-        { label: 'High',   value: d.high,   color: '#16a34a' },
-        { label: 'Low',    value: d.low,    color: '#dc2626' },
-        { label: 'Close',  value: d.close,  color: isUp ? '#16a34a' : '#dc2626' },
-      ].map(row => (
-        <div key={row.label} className="flex items-center justify-between gap-6 mt-1.5">
-          <span className="text-[13px] text-[var(--color-text-secondary)] font-sans">{row.label}</span>
-          <span className="text-[13px] font-mono font-medium tabular-nums" style={{ color: row.color }}>
-            {fmt(row.value)}
-          </span>
-        </div>
-      ))}
-      {d.volume != null && (
-        <div className="flex items-center justify-between gap-6 mt-1.5 pt-1.5
-                        border-t border-[var(--color-border-tertiary)]">
-          <span className="text-[13px] text-[var(--color-text-secondary)] font-sans">Volume</span>
-          <span className="text-[13px] font-mono tabular-nums text-[var(--color-text-tertiary)]">
-            {(d.volume / 1_000_000).toFixed(1)}M
-          </span>
-        </div>
-      )}
+    <div style={{ ...tooltipStyle, position: 'absolute', pointerEvents: 'none', ...style }}>
+      {children}
     </div>
   )
 }
 
-// ─── FKTooltip.Scatter — two-axis + label + size tooltip ─────────────────────
-FKTooltip.Scatter = function ScatterTooltip({ active, payload, xLabel, yLabel, xFormat, yFormat, sizeLabel }) {
-  if (!active || !payload?.length) return null
-  const d = payload[0]?.payload ?? {}
-  return (
-    <div style={tooltipStyle}>
-      {d.label && (
-        <div className="text-[13px] font-sans font-medium text-[var(--color-text-primary)] mb-2 pb-1.5
-                        border-b border-[var(--color-border-tertiary)]">
-          {d.label}
-        </div>
-      )}
-      {[
-        { label: xLabel ?? 'X', value: xFormat ? xFormat(d.x) : d.x },
-        { label: yLabel ?? 'Y', value: yFormat ? yFormat(d.y) : d.y },
-        sizeLabel && d.size != null
-          ? { label: sizeLabel, value: d.size?.toLocaleString() }
-          : null,
-      ].filter(Boolean).map(row => (
-        <div key={row.label} className="flex items-center justify-between gap-6 mt-1.5">
-          <span className="text-[13px] text-[var(--color-text-secondary)] font-sans">{row.label}</span>
-          <span className="text-[13px] font-mono font-medium tabular-nums text-[var(--color-text-primary)]">
-            {row.value}
-          </span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-// ─── FKTooltip.Box — for canvas charts that manage their own hover state ──────
-FKTooltip.Box = function TooltipBox({ children, x, y, cardRef }) {
-  // Clamp position to card bounds
-  const style = {
-    ...tooltipStyle,
-    position:      'absolute',
-    pointerEvents: 'none',
-    left:          x + 12,
-    top:           y,
-    transform:     'translateY(-50%)',
-    zIndex:        50,
-  }
-  return <div style={style}>{children}</div>
-}
-
-// ─── FKTooltip.Header + FKTooltip.Row — building blocks for Box tooltips ─────
+// FKTooltip.Header — reusable header row (date / category label)
 FKTooltip.Header = function TooltipHeader({ children }) {
   return (
-    <div className="text-xs text-[var(--color-text-tertiary)] font-sans mb-2 pb-1.5
+    <div className="text-[11px] text-[var(--color-text-tertiary)] font-mono mb-2 pb-1.5
                     border-b border-[var(--color-border-tertiary)]">
       {children}
     </div>
   )
 }
 
+// FKTooltip.Row — reusable value row with color dot, label, value
 FKTooltip.Row = function TooltipRow({ color, label, value }) {
   return (
-    <div className="flex items-center justify-between gap-6 mt-1.5">
-      <div className="flex items-center gap-2">
-        {color && <span style={{ background: color }} className="w-2 h-2 rounded-full flex-shrink-0" />}
-        <span className="text-[13px] text-[var(--color-text-secondary)] font-sans">{label}</span>
+    <div className="flex items-center justify-between gap-4 mt-1">
+      <div className="flex items-center gap-1.5">
+        <span style={{ background: color }}
+              className="inline-block w-2 h-2 rounded-full flex-shrink-0" />
+        <span className="text-[11px] text-[var(--color-text-secondary)] font-mono">{label}</span>
       </div>
-      <span className="text-[13px] text-[var(--color-text-primary)] font-mono font-medium tabular-nums">
+      <span className="text-[11px] text-[var(--color-text-primary)] font-mono font-medium">
         {value}
       </span>
     </div>
@@ -396,37 +299,44 @@ FKTooltip.Row = function TooltipRow({ color, label, value }) {
 }
 ```
 
-**Tooltip rules — enforced for every chart:**
-- Series label (left side) → `font-sans`, `text-[var(--color-text-secondary)]`
-- Numeric value (right side) → `font-mono`, `tabular-nums`, `text-[var(--color-text-primary)]`
-- Header date/category → `font-sans`, `text-[var(--color-text-tertiary)]`
-- Use `FKTooltip` for standard line/area/bar charts
-- Use `FKTooltip.OHLC` for candlestick charts — shows Open/High/Low/Close + Volume
-- Use `FKTooltip.Scatter` for scatter/bubble charts — shows x label, y label, optional size
-- Use `FKTooltip.Box` + `.Header` + `.Row` for canvas charts (FKScatterChart, FKRangeChart, FKBulletChart)
+**Tooltip rules that apply to every chart:**
+- Always use `<FKTooltip>` — never Recharts' default tooltip appearance
+- `xFormat` formats the header (date → "Jan 15, 2024", number → "Q3 2023")
+- `valueFormat` formats every value row (default: raw number)
+- `colorMap` overrides Recharts' entry color — use this when series colors are data-driven
+- Canvas charts (FKScatterChart, FKRangeChart, FKBulletChart) use `FKTooltip.Box` +
+  `FKTooltip.Header` + `FKTooltip.Row` manually, positioned via `position: absolute`
+- Tooltip must never clip outside the card boundary — use Recharts' `allowEscapeViewBox`
+  or constrain canvas tooltip position to card bounds
 
 ---
 
 ## Shared range selector (put in `src/FKRangeSelector.jsx`, import into charts that need it)
 
-Charts that display time-series data **must** support a range selector:
-FKLineChart, FKAreaChart, FKAnnotatedChart, FKCandleChart, FKMultiPanel, FKProjectionChart.
+A period tab bar rendered in the card header. Charts that display time-series data
+**must** support a range selector. This includes: FKLineChart, FKAreaChart,
+FKAnnotatedChart, FKCandleChart, FKMultiPanel, FKProjectionChart.
 
-Categorical/relational charts do NOT get a range selector: FKBarChart, FKHeatGrid,
-FKScatterChart, FKPartChart, FKRadarChart, FKSankeyChart.
+Charts that show categorical or relational data (FKBarChart, FKHeatGrid, FKScatterChart,
+FKPartChart, FKRadarChart, FKSankeyChart) do NOT get a range selector — they show
+whatever data they receive.
 
 ```jsx
-import { defaultRangeOptions } from './tokens'
+// FKRangeSelector — period tab bar for time-series charts
+//
+// Usage:
+//   <FKRangeSelector options={['1M','3M','1Y','5Y','ALL']} value={range} onChange={setRange} />
 
 export function FKRangeSelector({ options = defaultRangeOptions, value, onChange }) {
   return (
-    <div className="flex items-center gap-0.5 bg-[var(--color-background-tertiary)] rounded-lg p-0.5">
+    <div className="flex items-center gap-0.5 bg-[var(--color-background-tertiary)]
+                    rounded-md p-0.5">
       {options.map(opt => (
         <button
           key={opt}
           onClick={() => onChange(opt)}
           className={[
-            'px-2.5 py-1 rounded-md text-[11px] font-sans font-medium transition-colors',
+            'px-2.5 py-1 rounded text-[11px] font-mono font-medium transition-colors',
             value === opt
               ? 'bg-[var(--color-background-primary)] text-[var(--color-text-primary)] shadow-sm'
               : 'text-[var(--color-text-tertiary)] hover:text-[var(--color-text-secondary)]'
@@ -438,131 +348,34 @@ export function FKRangeSelector({ options = defaultRangeOptions, value, onChange
     </div>
   )
 }
-
-// ─── filterByRange — the actual slicing function ──────────────────────────────
-// Import and use this inside every time-series chart to slice data by range.
-// This is what makes the range selector actually work — charts must call this.
-//
-// data:    array of objects with a date field (ISO string or parseable)
-// range:   the selected range string e.g. '1M', '3M', '6M', '1Y', '3Y', '5Y', 'ALL'
-// dateKey: the key in each data object that holds the date (default: 'date')
-//
-// Returns a new array containing only items within the selected range window,
-// measured back from the LATEST date in the dataset (not from today).
-
-export function filterByRange(data, range, dateKey = 'date') {
-  if (!data?.length || range === 'ALL') return data
-
-  // Find the latest date in the dataset
-  const dates = data.map(d => new Date(d[dateKey]).getTime()).filter(Boolean)
-  const latest = new Date(Math.max(...dates))
-
-  // Calculate cutoff date by subtracting the range from latest
-  const cutoff = new Date(latest)
-  switch (range) {
-    case '1W':  cutoff.setDate(latest.getDate() - 7);          break
-    case '1M':  cutoff.setMonth(latest.getMonth() - 1);        break
-    case '3M':  cutoff.setMonth(latest.getMonth() - 3);        break
-    case '6M':  cutoff.setMonth(latest.getMonth() - 6);        break
-    case '1Y':  cutoff.setFullYear(latest.getFullYear() - 1);  break
-    case '2Y':  cutoff.setFullYear(latest.getFullYear() - 2);  break
-    case '3Y':  cutoff.setFullYear(latest.getFullYear() - 3);  break
-    case '5Y':  cutoff.setFullYear(latest.getFullYear() - 5);  break
-    case '10Y': cutoff.setFullYear(latest.getFullYear() - 10); break
-    default:    return data
-  }
-
-  return data.filter(d => new Date(d[dateKey]) >= cutoff)
-}
-
-// ─── useRangeFilter — hook for charts to wire up range selector ───────────────
-// Usage inside any time-series chart:
-//
-//   const { range, setRange, filteredData } = useRangeFilter(data, '1Y')
-//   // render: <FKRangeSelector value={range} onChange={setRange} />
-//   // use:    filteredData in the chart instead of data
-
-export function useRangeFilter(data, defaultRange = '1Y', dateKey = 'date') {
-  const [range, setRange] = useState(() => {
-    // Auto-select: use defaultRange if data spans that far, else 'ALL'
-    if (!data?.length) return 'ALL'
-    const filtered = filterByRange(data, defaultRange, dateKey)
-    return filtered.length > 1 ? defaultRange : 'ALL'
-  })
-
-  const filteredData = useMemo(
-    () => filterByRange(data, range, dateKey),
-    [data, range, dateKey]
-  )
-
-  return { range, setRange, filteredData }
-}
 ```
 
-**Range selector integration — required pattern for every time-series chart:**
-
-```jsx
-// Inside FKLineChart (and all other time-series charts):
-import { FKRangeSelector, useRangeFilter } from './FKRangeSelector'
-
-export function FKLineChart({ data, series, rangeSelector = true, defaultRange = '1Y', onRangeChange, ...props }) {
-  const { range, setRange, filteredData } = useRangeFilter(data, defaultRange)
-
-  const handleRangeChange = (r) => {
-    setRange(r)
-    onRangeChange?.(r)
-  }
-
-  return (
-    <FKCard>
-      <FKCardHeader
-        title={props.title}
-        subtitle={props.subtitle}
-        actions={rangeSelector && (
-          <FKRangeSelector
-            options={Array.isArray(rangeSelector) ? rangeSelector : defaultRangeOptions}
-            value={range}
-            onChange={handleRangeChange}
-          />
-        )}
-      />
-      {/* Use filteredData NOT data in the chart */}
-      <ResponsiveContainer>
-        <LineChart data={filteredData}>
-          ...
-        </LineChart>
-      </ResponsiveContainer>
-    </FKCard>
-  )
-}
-```
-
-The y-axis domain MUST recalculate from `filteredData` — never hardcode domain or derive
-it from the full `data` array. Use:
-```js
-const yMin = Math.min(...filteredData.flatMap(d => series.map(s => d[s.key] ?? Infinity)))
-const yMax = Math.max(...filteredData.flatMap(d => series.map(s => d[s.key] ?? -Infinity)))
-const padding = (yMax - yMin) * 0.05
-const domain = [yMin - padding, yMax + padding]
-```
+**Range selector rules that apply to every time-series chart:**
+- Range selector always sits in the **top-right of the card header**, inline with the title
+- The selected range filters the data slice shown — the chart component handles the slicing
+  internally based on the selected option and the latest date in the data
+- `defaultRange` prop sets the initial selection — default is `'1Y'` if data supports it,
+  otherwise the largest available range
+- `onRangeChange` is optional — if not provided, the chart manages range state internally
+- When the data window changes, x-axis ticks and y-axis domain must recalculate
+- `'ALL'` option always shows the full dataset regardless of date range
 
 ---
 
 ## Shared card wrapper (put in `src/FKCard.jsx`)
 
-Every chart component wraps itself in this card. The card is intentionally minimal —
-no heavy borders, no background color clash, generous whitespace. Modern financial UI
-relies on whitespace and elevation rather than borders to create hierarchy.
+Every chart component wraps itself in this card. Export it so compositions can use it too.
 
 ```jsx
-export function FKCard({ children, className = '' }) {
+export function FKCard({ children, style }) {
   return (
-    <div className={`
-      bg-[var(--color-background-primary)]
-      border border-[var(--color-border-tertiary)]
-      rounded-2xl overflow-hidden
-      ${className}
-    `}>
+    <div style={{
+      background:   'var(--color-background-primary)',
+      border:       '0.5px solid var(--color-border-tertiary)',
+      borderRadius: 12,
+      overflow:     'hidden',
+      ...style,
+    }}>
       {children}
     </div>
   )
@@ -570,45 +383,18 @@ export function FKCard({ children, className = '' }) {
 
 export function FKCardHeader({ title, subtitle, actions }) {
   return (
-    <div className="flex items-start justify-between px-5 pt-5 pb-0">
+    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start',
+                  padding:'18px 20px 0' }}>
       <div>
-        {title && (
-          <div className="text-[15px] font-sans font-semibold text-[var(--color-text-primary)] leading-tight">
-            {title}
-          </div>
-        )}
-        {subtitle && (
-          <div className="text-[13px] font-sans text-[var(--color-text-tertiary)] mt-0.5">
-            {subtitle}
-          </div>
-        )}
+        {title    && <div style={{ fontSize:14, fontWeight:500,
+                                   color:'var(--color-text-primary)', marginBottom:2 }}>{title}</div>}
+        {subtitle && <div style={{ fontSize:12, color:'var(--color-text-secondary)' }}>{subtitle}</div>}
       </div>
-      {actions && (
-        <div className="flex items-center gap-2 ml-4 flex-shrink-0">
-          {actions}
-        </div>
-      )}
-    </div>
-  )
-}
-
-export function FKCardBody({ children, className = '' }) {
-  return (
-    <div className={`px-5 pb-5 pt-3 ${className}`}>
-      {children}
+      {actions && <div style={{ display:'flex', gap:6, alignItems:'center' }}>{actions}</div>}
     </div>
   )
 }
 ```
-
-**Card design rules:**
-- Title: `font-sans`, 15px, `font-semibold` — NOT mono, NOT small
-- Subtitle: `font-sans`, 13px, tertiary color
-- Border: `border` (1px) not `border-[0.5px]` — Tailwind's `border` is cleaner at 1px
-- Border radius: `rounded-2xl` (16px) — modern, not `rounded-xl`
-- No box shadow on the card itself — elevation comes from page background contrast
-- `overflow-hidden` so chart edges clip cleanly at the card border
-- Padding: `px-5 pt-5` (20px) — generous, not cramped
 
 ---
 
@@ -2054,281 +1840,3 @@ to:   PropTypes.string,  // ISO date — bar end
 // Duration bars and point dots can coexist in the same FKTimeline instance
 // Use case: holding period analysis, bond maturity ladder, option expiry schedule
 ```
-
----
-
-### FKCandleChart — scroll, pan, and viewport spec
-
-FKCandleChart is Canvas-rendered. A 10-year daily dataset has ~2,500 candles.
-Rendering all 2,500 at once makes individual candles invisible and kills performance.
-The chart MUST implement a viewport window with scroll/pan.
-
-**Viewport model:**
-```js
-// The chart maintains a viewport — how many candles are visible at once
-// and which candle is at the left edge of the view.
-const [viewStart, setViewStart] = useState(0)      // index of leftmost visible candle
-const [viewCount, setViewCount] = useState(120)    // number of candles visible (default: 120 trading days ≈ 6M)
-
-// visibleData = data.slice(viewStart, viewStart + viewCount)
-// The chart renders ONLY visibleData — not the full dataset
-```
-
-**Scroll interactions (all three must work):**
-1. **Mouse wheel / trackpad scroll** — scrolls left/right through the dataset
-   - Horizontal scroll (deltaX): pan left/right
-   - Vertical scroll (deltaY): zoom in/out (change viewCount)
-   - Prevent default scroll behavior on the canvas element
-2. **Click + drag (pan)** — dragging left moves forward in time, right moves backward
-3. **Range selector** — selecting '1M', '3M', '6M', '1Y' etc. sets `viewCount` to the
-   corresponding number of trading days and snaps `viewStart` so the latest date is visible:
-   - '1M'  → viewCount = 21
-   - '3M'  → viewCount = 63
-   - '6M'  → viewCount = 126
-   - '1Y'  → viewCount = 252
-   - '3Y'  → viewCount = 756
-   - '5Y'  → viewCount = 1260
-   - 'ALL' → viewCount = data.length
-
-**Scroll bar (required):**
-Render a thin scroll bar below the main chart area (not below the volume panel).
-- Height: 4px, border-radius 99px
-- Track: `var(--color-border-tertiary)`
-- Thumb: `var(--color-text-tertiary)`, width proportional to viewCount/data.length
-- Thumb position: proportional to viewStart/data.length
-- Dragging the thumb scrolls the viewport
-
-**Candle width calculation:**
-```js
-const candleWidth = Math.max(1, Math.floor((canvasWidth - 60) / viewCount) - 1)
-// Minimum 1px candle, maximum auto-sized. 60px reserved for y-axis.
-// The -1 creates a 1px gap between candles.
-```
-
-**Performance rules:**
-- Never render more candles than `viewCount` — clip to visibleData only
-- Use `requestAnimationFrame` for pan/scroll updates — never setState on every mousemove
-- Debounce range selector changes by 16ms to avoid double renders
-
-**Tooltip on hover:**
-- Show `FKTooltip.OHLC` positioned at the hovered candle
-- Identify hovered candle by: `Math.floor((mouseX - yAxisWidth) / (candleWidth + 1))`
-- Show a vertical crosshair line at the hovered candle center
-- Tooltip clamps to card bounds — if near right edge, show left of cursor instead
-
----
-
-## Showcase — component explorer (put in `src/showcase/Showcase.jsx`)
-
-The showcase is a **full component explorer**, not a static gallery. It is the primary
-tool for reviewing and critiquing the kit. Build it properly.
-
-### Structure
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  FINKIT Component Explorer          [Light] [Dark]           │
-├────────────────┬────────────────────────────────────────────┤
-│                │                                            │
-│  Navigation    │   Component demos                          │
-│  (left panel)  │   (right panel — scrollable)              │
-│                │                                            │
-│  • Overview    │   [Component name]                         │
-│  ─────────     │   ─────────────────────────────────────── │
-│  Charts        │   Default  │  Finance-realistic  │  Stress │
-│  • FKLineChart │            │                    │          │
-│  • FKAreaChart │   [demo]   │      [demo]        │  [demo]  │
-│  • FKBarChart  │            │                    │          │
-│  ...           │                                            │
-│                │   Props used:                              │
-│  Tables        │   [prop chip] [prop chip] [prop chip]      │
-│  • FKTable     │                                            │
-│  • FKRankedList│                                            │
-│  ...           │                                            │
-│                │                                            │
-│  Events        │                                            │
-│  • FKTimeline  │                                            │
-│  ...           │                                            │
-└────────────────┴────────────────────────────────────────────┘
-```
-
-### Left nav categories
-```
-Overview (dashboard composition — all components together)
-─────────
-Time Series
-  FKLineChart
-  FKAreaChart
-  FKCandleChart
-  FKAnnotatedChart
-  FKMultiPanel
-  FKProjectionChart
-─────────
-Categorical
-  FKBarChart
-  FKWaterfall
-  FKHeatGrid
-  FKRadarChart
-─────────
-Relational
-  FKScatterChart
-  FKSankeyChart
-  FKPartChart
-─────────
-Range & Gauge
-  FKRangeChart
-  FKBulletChart
-─────────
-Tabular
-  FKTable
-  FKRankedList
-  FKMetricGrid
-─────────
-Events
-  FKTimeline
-─────────
-Primitives
-  FKSparkline
-  FKTooltip (variants)
-  FKRangeSelector
-```
-
-### Three demo variants — REQUIRED for every component
-
-**Variant 1: Default** — no props except sample data. Must render without errors.
-
-**Variant 2: Finance-realistic** — real-looking financial data, proper labels, real
-number formats. Use 2+ years of daily data for time-series charts. This is the demo
-that matters most for critiquing the visual quality.
-
-**Variant 3: Stress** — maximum complexity. Most series, most data points, all optional
-props active, edge cases (negative values, very long labels, missing data points).
-
-### Realistic sample data for showcase (generate once, reuse across demos)
-
-The showcase must generate realistic-looking financial data at the top of the file.
-Do NOT use trivial fake data like `[{date:'2024-01-01', value: 100}]`.
-
-```js
-// Generate 5 years of daily OHLCV data for a stock (realistic random walk)
-function generateOHLCV(startPrice = 180, days = 1260, startDate = '2020-01-02') {
-  const data = []
-  let price = startPrice
-  let date = new Date(startDate)
-  for (let i = 0; i < days; i++) {
-    if (date.getDay() === 0) { date.setDate(date.getDate() + 1); continue }
-    if (date.getDay() === 6) { date.setDate(date.getDate() + 2); continue }
-    const change = (Math.random() - 0.48) * price * 0.02
-    const open  = price
-    const close = Math.max(1, price + change)
-    const high  = Math.max(open, close) * (1 + Math.random() * 0.01)
-    const low   = Math.min(open, close) * (1 - Math.random() * 0.01)
-    const volume = Math.floor(40_000_000 + Math.random() * 80_000_000)
-    data.push({
-      date:   date.toISOString().split('T')[0],
-      open:   +open.toFixed(2),
-      high:   +high.toFixed(2),
-      low:    +low.toFixed(2),
-      close:  +close.toFixed(2),
-      volume,
-    })
-    price = close
-    date.setDate(date.getDate() + 1)
-  }
-  return data
-}
-
-// Derive a closing-price series from OHLCV data
-function toCloseSeries(ohlcv, key = 'close') {
-  return ohlcv.map(d => ({ date: d.date, [key]: d[key] }))
-}
-```
-
-### Specific demo requirements per component
-
-**FKLineChart demos:**
-- Default: single series, 1 year of daily data
-- Finance-realistic: QQQ vs SPY normalized to 100, 5Y, range selector active, proper $ format
-- Stress: 6 series (sector ETFs), 10Y daily data, reference lines at 0 and mean
-
-**FKAreaChart demos:**
-- Default: single area, above
-- Finance-realistic: portfolio drawdown (fillMode=below, zero reference), 3Y
-- Stress: 4 stacked series (sector allocation over time), 5Y
-
-**FKCandleChart demos:**
-- Default: 120 candles (6M)
-- Finance-realistic: AAPL-like data, 5Y full dataset with scroll, volume panel, range selector
-- Stress: 10Y dataset (2500+ candles), verify scroll performance, show all range options
-
-**FKBarChart demos:**
-- Default: 6 categories, grouped
-- Finance-realistic: earnings surprise % per quarter (10 quarters), beat=green/miss=red colorRule
-- Stress: lollipop mode, 30 tickers, positive and negative values
-
-**FKHeatGrid demos:**
-- Default: 4×4 grid
-- Finance-realistic: monthly returns calendar (12 cols × 5 rows), proper % format, diverging color scale
-- Stress: 20×20 correlation matrix
-
-**FKScatterChart demos:**
-- Default: 20 dots
-- Finance-realistic: S&P 500 stocks — x=volatility, y=YTD return, size=market cap, color=sector
-- Stress: 200 dots with size encoding
-
-**FKMultiPanel demos:**
-- Default: price + volume (2 panels)
-- Finance-realistic: price + SMA20/SMA50 + volume + RSI (4 panels), range selector
-- Stress: price + MACD + RSI + volume + ATR (5 panels), 5Y data
-
-**FKProjectionChart demos:**
-- Default: 2Y historical + 1Y projection, single median line
-- Finance-realistic: retirement projection — 20Y historical + 30Y fan (p10/p25/p75/p90)
-- Stress: bull/base/bear scenarios + fan combined
-
-**FKRadarChart demos:**
-- Default: single series, 5 axes
-- Finance-realistic: AAPL vs MSFT factor profile (value/quality/momentum/growth/safety)
-- Stress: 3 stocks compared, 8 axes
-
-**FKTable demos:**
-- Default: 5 rows, 4 columns
-- Finance-realistic: earnings history table (20 quarters, colorRule on surprise %)
-- Stress: pivot mode — monthly returns (years × months), 50 rows sortable
-
-**FKAnnotatedChart demos:**
-- Default: line + 2 events
-- Finance-realistic: QQQ price + SMA10/SMA200 + buy/sell markers + recession bands
-- Stress: all overlay types combined — events[] + bands[] + callouts[]
-
-### Light/dark toggle (required)
-
-The showcase must have a light/dark mode toggle in the top-right header. Implement it
-by toggling a `dark` class on the root element and using `prefers-color-scheme` as default.
-All components must look correct in both modes — verify this is the case.
-
-### Props display (required)
-
-Below each demo variant, show a row of small chips listing the key props used:
-```jsx
-<div className="flex flex-wrap gap-1.5 mt-3">
-  {activeProps.map(p => (
-    <span key={p} className="px-2 py-0.5 bg-[var(--color-background-tertiary)]
-                              text-[11px] font-mono text-[var(--color-text-secondary)]
-                              rounded-md border border-[var(--color-border-tertiary)]">
-      {p}
-    </span>
-  ))}
-</div>
-```
-
-### Overview page (the first page shown on load)
-
-The overview renders a realistic financial dashboard using multiple components together:
-```
-Row 1: FKMetricGrid (4 KPIs: portfolio value, day change, YTD return, Sharpe)
-Row 2: FKAnnotatedChart full-width (portfolio equity curve, 1Y, with Fed meeting bands)
-Row 3: FKPartChart (allocation donut) + FKRankedList (top holdings) + FKBulletChart (price vs targets)
-Row 4: FKTable (holdings table with colorRules)
-```
-This is the composition demo — it shows how components work together in a real dashboard.
