@@ -1826,6 +1826,7 @@ export function Showcase() {
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', dark)
+    document.documentElement.classList.toggle('light', !dark)
   }, [dark])
 
   const PageComponent = PAGE_COMPONENTS[page] || OverviewPage

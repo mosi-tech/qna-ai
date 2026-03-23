@@ -155,6 +155,17 @@ export function FKLineChart({
     [resolvedData, resolvedSeries, viewMode]
   )
 
+  // Tight y-axis domain: pad by 5% of the actual data range (not the values)
+  const yDomain = useMemo(() => {
+    if (viewMode === 'pct') return ['auto', 'auto']
+    const vals = resolvedSeries.flatMap(s => chartData.map(d => d[s.key])).filter(v => v != null)
+    if (!vals.length) return ['auto', 'auto']
+    const lo  = Math.min(...vals)
+    const hi  = Math.max(...vals)
+    const pad = (hi - lo) * 0.05 || Math.abs(lo) * 0.02 || 1
+    return [lo - pad, hi + pad]
+  }, [chartData, resolvedSeries, viewMode])
+
   // y-axis format: in pct mode always show %, in value mode use caller's yFormat
   const activeYFormat = viewMode === 'pct'
     ? v => `${v >= 0 ? '+' : ''}${v?.toFixed(1)}%`
@@ -177,7 +188,7 @@ export function FKLineChart({
       <FKCardHeader title={title} subtitle={subtitle} actions={actions} />
       <div style={{ height, padding: '12px 4px 8px 0' }}>
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+          <ComposedChart data={chartData} margin={{ top: 4, right: 4, left: 8, bottom: 0 }}>
             <defs>
               {resolvedSeries.map((s, i) => {
                 const c = seriesColors[s.key]
@@ -199,12 +210,14 @@ export function FKLineChart({
               maxRotation={0}
               tickFormatter={xFormat}
               interval={xType === 'category' ? 0 : 'preserveStartEnd'}
+              padding={{ left: 16, right: 8 }}
             />
             <YAxis
               {...axisProps}
               orientation="right"
               width={52}
               tickFormatter={activeYFormat}
+              domain={yDomain}
             />
 
             <Tooltip

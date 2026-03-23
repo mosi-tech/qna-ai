@@ -56,47 +56,56 @@ function MarkerShape({ shape, cx, cy, r = 6, fill }) {
 }
 
 // ─── Custom overlay for events + callouts ─────────────────────────────────────
-function AnnotationLayer({ xAxisMap, yAxisMap, data, events, callouts, colorMap, shapeMap, xKey }) {
+function AnnotationLayer({ xAxisMap, yAxisMap, data, events, callouts, colorMap, shapeMap, xKey, series }) {
   if (!xAxisMap || !yAxisMap) return null
   const xAxis = Object.values(xAxisMap)[0]
   const yAxis = Object.values(yAxisMap)[0]
   if (!xAxis?.scale || !yAxis?.scale) return null
 
-  const xLabels = data.map(r => r[xKey || 'date'])
+  const xLabels    = data.map(r => r[xKey || 'date'])
+  const primaryKey = series?.[0]?.key
 
+  // Categorical XAxis: pass the string value directly, not the index
   function getX(dateLabel) {
+    const x = xAxis.scale(dateLabel)
+    if (x == null || isNaN(x)) return null
+    return x + (xAxis.scale.bandwidth?.() || 0) / 2
+  }
+
+  // Get the pixel-y of the primary series value at a given date
+  function getDataY(dateLabel) {
+    if (!primaryKey) return null
     const idx = xLabels.indexOf(dateLabel)
     if (idx < 0) return null
-    return xAxis.scale(idx) + (xAxis.scale.bandwidth?.() || 0) / 2
+    const val = data[idx]?.[primaryKey]
+    return val != null ? yAxis.scale(val) : null
   }
+
   const yDomain = yAxis.scale.domain()
-  function getY(dateLabel, series, seriesData) {
-    if (!series?.length || !seriesData) return yAxis.scale((yDomain[0] + yDomain[1]) / 2)
-    const idx  = xLabels.indexOf(dateLabel)
-    const row  = seriesData[idx]
-    const val  = row?.[series[0]?.key]
-    return val != null ? yAxis.scale(val) : yAxis.scale(yDomain[1])
-  }
+  const yTop    = yAxis.scale(yDomain[1])   // small pixel y = top of plot area
+  const yBottom = yAxis.scale(yDomain[0])   // large pixel y = bottom of plot area
 
   const markers = (events || []).map((ev, i) => {
     const x = getX(ev.date)
     if (x == null) return null
     const c     = (colorMap || DEFAULT_COLOR_MAP)[ev.type] || color.series[0]
     const shape = (shapeMap || DEFAULT_SHAPE_MAP)[ev.type] || 'circle'
-    const y     = yAxis.scale(yDomain[0]) - 12
+    // up-shapes (buy) sit just above the bottom edge; down-shapes (sell) just below the top
+    const isUpShape = shape === 'triangle-up' || shape === 'circle'
+    const y = isUpShape ? yBottom - 10 : yTop + 10
     return { ev, x, y, c, shape, key: `ev-${i}` }
   }).filter(Boolean)
 
-  // Callout positions
   const calloutEls = (callouts || []).map((ca, i) => {
     const x = getX(ca.date)
     if (x == null) return null
     const c      = ca.color || color.series[0]
     const above  = ca.position !== 'below'
-    const y      = above
-      ? yAxis.scale(yDomain[1]) + 16 + (i % 2 === 0 ? 0 : 20)
-      : yAxis.scale(yDomain[0]) - 16 - (i % 2 === 0 ? 0 : 20)
-    return { ca, x, y, c, above, key: `ca-${i}` }
+    // Box center: near top/bottom of the plot area with a small margin
+    const boxCenterY = above ? yTop + 14 : yBottom - 14
+    // Leader line ends at the actual data value, falling back to the plot edge
+    const leaderEndY = getDataY(ca.date) ?? (above ? yTop : yBottom)
+    return { ca, x, boxCenterY, leaderEndY, c, above, key: `ca-${i}` }
   }).filter(Boolean)
 
   return (
@@ -107,23 +116,23 @@ function AnnotationLayer({ xAxisMap, yAxisMap, data, events, callouts, colorMap,
       ))}
 
       {/* Callout boxes */}
-      {calloutEls.map(({ ca, x, y, c, above, key }) => {
-        const labelW = ca.label.length * 6.5 + 12
-        const boxH   = 20
-        const boxX   = x - labelW / 2
-        const boxY   = y - boxH / 2
+      {calloutEls.map(({ ca, x, boxCenterY, leaderEndY, c, above, key }) => {
+        const labelW    = ca.label.length * 6.5 + 16
+        const boxH      = 20
+        const boxX      = x - labelW / 2
+        const boxY      = boxCenterY - boxH / 2
+        const lineStart = above ? boxY + boxH : boxY   // leader starts at bottom/top of box
         return (
           <g key={key}>
-            {/* Leader line */}
+            {/* Leader line from box edge to the data value */}
             <line
-              x1={x} y1={above ? boxY + boxH : boxY}
-              x2={x} y2={above ? yAxis.scale(yDomain[1]) + 2 : yAxis.scale(yDomain[0]) - 2}
+              x1={x} y1={lineStart}
+              x2={x} y2={leaderEndY}
               stroke={c} strokeWidth={0.5} strokeDasharray="3 2" opacity={0.7}
             />
-            {/* Dot */}
-            <circle cx={x} cy={above ? yAxis.scale(yDomain[1]) + 2 : yAxis.scale(yDomain[0]) - 2}
-              r={3} fill={c} />
-            {/* Box */}
+            {/* Dot at data value */}
+            <circle cx={x} cy={leaderEndY} r={3} fill={c} />
+            {/* Label box */}
             <rect x={boxX} y={boxY} width={labelW} height={boxH} rx={4}
               fill="var(--color-background-primary)" stroke={c} strokeWidth={0.5} />
             <text x={x} y={boxY + 13} textAnchor="middle"
@@ -205,12 +214,22 @@ export function FKAnnotatedChart({
 
   const curveType = 'linear'
 
+  // Tight y-axis domain: 5% of the data range as padding
+  const yDomain = useMemo(() => {
+    const vals = resolvedSeries.flatMap(s => resolvedData.map(d => d[s.key])).filter(v => v != null)
+    if (!vals.length) return ['auto', 'auto']
+    const lo  = Math.min(...vals)
+    const hi  = Math.max(...vals)
+    const pad = (hi - lo) * 0.05 || Math.abs(lo) * 0.02 || 1
+    return [lo - pad, hi + pad]
+  }, [resolvedData, resolvedSeries])
+
   return (
     <FKCard>
       <FKCardHeader title={title} subtitle={subtitle} actions={actions} />
       <div style={{ height, padding: '12px 4px 4px 0' }}>
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={resolvedData} margin={{ top: 20, right: 4, left: 0, bottom: 0 }}>
+          <ComposedChart data={resolvedData} margin={{ top: 20, right: 4, left: 8, bottom: 0 }}>
             {/* Gradient fills */}
             <defs>
               {resolvedSeries.filter(s => s.type === 'area').map((s, i) => {
@@ -225,8 +244,8 @@ export function FKAnnotatedChart({
             </defs>
 
             <CartesianGrid {...gridProps} />
-            <XAxis dataKey={xKey} {...axisProps} minTickGap={40} maxRotation={0} />
-            <YAxis {...axisProps} orientation="right" width={52} tickFormatter={valueFormat} />
+            <XAxis dataKey={xKey} {...axisProps} minTickGap={40} maxRotation={0} padding={{ left: 16, right: 8 }} />
+            <YAxis {...axisProps} orientation="right" width={52} tickFormatter={valueFormat} domain={yDomain} />
 
             <Tooltip
               content={<FKTooltip valueFormat={valueFormat} />}
@@ -277,6 +296,7 @@ export function FKAnnotatedChart({
                   colorMap={colorMap || DEFAULT_COLOR_MAP}
                   shapeMap={shapeMap || DEFAULT_SHAPE_MAP}
                   xKey={xKey}
+                  series={resolvedSeries}
                 />
               )}
             />

@@ -1,10 +1,10 @@
 import React, { useState, useMemo, useCallback } from 'react'
 import {
-  ResponsiveContainer, PieChart, Pie, Cell, Tooltip,
+  ResponsiveContainer, PieChart, Pie, Cell,
 } from 'recharts'
 import { FKCard, FKCardHeader } from './FKCard.jsx'
 import { FKBadge } from './FKSparkline.jsx'
-import { color, tooltipStyle } from './tokens.js'
+import { color } from './tokens.js'
 
 // ─── Sample data ──────────────────────────────────────────────────────────────
 const SAMPLE_DATA = [
@@ -87,6 +87,18 @@ function DonutChart({ data, valueKey, labelKey, colorKey, innerLabel, innerSub, 
   const [active, setActive] = useState(null)
   const total = data.reduce((a, b) => a + (b[valueKey] || 0), 0)
 
+  // What to show in the donut center
+  const activeRow = active !== null ? data[active] : null
+  const centerMain = activeRow
+    ? `${((activeRow[valueKey] || 0) / total * 100).toFixed(1)}%`
+    : (innerLabel ?? `${total.toFixed(1)}%`)
+  const centerSub = activeRow
+    ? activeRow[labelKey]
+    : (innerSub ?? null)
+  const centerColor = activeRow
+    ? (activeRow[colorKey] || color.series[active % color.series.length])
+    : 'var(--color-text-primary)'
+
   return (
     <div className="flex items-center gap-6" style={{ padding: '12px 20px 16px' }}>
       <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
@@ -102,52 +114,59 @@ function DonutChart({ data, valueKey, labelKey, colorKey, innerLabel, innerSub, 
               dataKey={valueKey}
               onMouseEnter={(_, i) => setActive(i)}
               onMouseLeave={() => setActive(null)}
+              isAnimationActive={false}
             >
               {data.map((row, i) => {
                 const c = row[colorKey] || color.series[i % color.series.length]
                 return (
-                  <Cell key={i} fill={c} opacity={active === null || active === i ? 1 : 0.4} />
+                  <Cell
+                    key={i}
+                    fill={c}
+                    opacity={active === null || active === i ? 1 : 0.35}
+                    stroke="none"
+                  />
                 )
               })}
             </Pie>
-            <Tooltip
-              formatter={(v, name) => [`${((v / total) * 100).toFixed(1)}%`, name]}
-              contentStyle={tooltipStyle}
-            />
+            {/* No <Tooltip> — info shown in center instead */}
           </PieChart>
         </ResponsiveContainer>
-        {/* Center label */}
-        {(innerLabel || innerSub) && (
-          <div style={{
-            position: 'absolute', inset: 0, display: 'flex',
-            flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-            pointerEvents: 'none',
+
+        {/* Center display — shows hovered segment info or default label */}
+        <div style={{
+          position: 'absolute', inset: 0, display: 'flex',
+          flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          pointerEvents: 'none',
+        }}>
+          <span style={{
+            fontSize: 15, fontWeight: 600, fontFamily: 'var(--font-mono)',
+            color: centerColor,
+            transition: 'color 0.15s',
           }}>
-            {innerLabel && (
-              <span style={{ fontSize: 16, fontWeight: 600, fontFamily: 'var(--font-mono)', color: 'var(--color-text-primary)' }}>
-                {innerLabel}
-              </span>
-            )}
-            {innerSub && (
-              <span style={{ fontSize: 12, fontFamily: 'var(--font-sans)', color: 'var(--color-text-tertiary)', marginTop: 2 }}>
-                {innerSub}
-              </span>
-            )}
-          </div>
-        )}
+            {centerMain}
+          </span>
+          {centerSub && (
+            <span style={{
+              fontSize: 11, fontFamily: 'var(--font-sans)',
+              color: 'var(--color-text-tertiary)', marginTop: 2,
+              maxWidth: size * 0.55, textAlign: 'center', lineHeight: 1.3,
+            }}>
+              {centerSub}
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* Legend with bars */}
+      {/* Legend — no hover handlers to avoid blink conflict with pie */}
       <div className="flex flex-col gap-2 flex-1 min-w-0">
         {data.map((row, i) => {
           const c   = row[colorKey] || color.series[i % color.series.length]
           const pct = total ? (row[valueKey] || 0) / total * 100 : 0
+          const dim = active !== null && active !== i
           return (
             <div key={i}
               className="flex items-center gap-2 cursor-default"
-              style={{ opacity: active === null || active === i ? 1 : 0.4 }}
-              onMouseEnter={() => setActive(i)}
-              onMouseLeave={() => setActive(null)}
+              style={{ opacity: dim ? 0.35 : 1, transition: 'opacity 0.15s' }}
             >
               <div style={{ width: 10, height: 10, borderRadius: 3, background: c, flexShrink: 0 }} />
               <span className="text-xs truncate flex-1" style={{ color: 'var(--color-text-primary)' }}>

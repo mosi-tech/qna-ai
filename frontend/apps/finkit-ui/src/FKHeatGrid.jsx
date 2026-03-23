@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { FKCard, FKCardHeader } from './FKCard.jsx'
 import { FKBadge } from './FKSparkline.jsx'
+import { FKTooltip } from './FKTooltip.jsx'
 
 // ─── Sample data ─────────────────────────────────────────────────────────────
 const MONTHS   = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
@@ -13,42 +14,91 @@ function makeSampleData() {
 }
 const SAMPLE_DATA = makeSampleData()
 
+// ─── Dark-mode detector ───────────────────────────────────────────────────────
+function useIsDark() {
+  const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'))
+  useEffect(() => {
+    const obs = new MutationObserver(() =>
+      setIsDark(document.documentElement.classList.contains('dark'))
+    )
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    return () => obs.disconnect()
+  }, [])
+  return isDark
+}
+
 // ─── Color scale helpers ──────────────────────────────────────────────────────
-function divergingCell(v, min, max) {
-  const abs = Math.max(Math.abs(min), Math.abs(max)) || 1
-  const r   = Math.min(Math.abs(v) / abs, 1)
-  if (v >= 0) {
-    if (r > 0.75)  return { bg: 'rgba(22,163,74,0.55)',  text: '#166534' }
-    if (r > 0.4)   return { bg: 'rgba(22,163,74,0.35)',  text: '#15803d' }
-    if (r > 0.15)  return { bg: 'rgba(22,163,74,0.18)',  text: '#16a34a' }
-    return           { bg: 'rgba(22,163,74,0.08)',  text: '#22c55e' }
-  } else {
-    if (r > 0.75)  return { bg: 'rgba(220,38,38,0.55)',  text: '#7f1d1d' }
-    if (r > 0.4)   return { bg: 'rgba(220,38,38,0.35)',  text: '#b91c1c' }
-    if (r > 0.15)  return { bg: 'rgba(220,38,38,0.18)',  text: '#dc2626' }
-    return           { bg: 'rgba(220,38,38,0.08)',  text: '#ef4444' }
-  }
+// Always white text. Solid hex colors — no rgba transparency so cells are
+// clearly visible in both modes. Text-shadow on lighter tiers for legibility.
+
+const SHADOW_LIGHT = '0 1px 3px rgba(0,0,0,0.35)'  // for lighter cell backgrounds
+const SHADOW_NONE  = 'none'
+
+// 4-step solid palettes  [low → high intensity]
+const PALETTES = {
+  // Light mode
+  light: {
+    green:  ['#4ade80', '#22c55e', '#16a34a', '#15803d'],
+    red:    ['#fca5a5', '#f87171', '#ef4444', '#dc2626'],
+    indigo: ['#a5b4fc', '#818cf8', '#6366f1', '#4f46e5'],
+  },
+  // Dark mode
+  dark: {
+    green:  ['#166534', '#16a34a', '#22c55e', '#4ade80'],
+    red:    ['#991b1b', '#b91c1c', '#ef4444', '#fca5a5'],
+    indigo: ['#312e81', '#4338ca', '#6366f1', '#818cf8'],
+  },
+}
+// Lighter tiers (index 0–1) need a shadow to make white legible
+const NEEDS_SHADOW = [true, true, false, false]
+
+function pickTier(t) {
+  if (t > 0.75) return 3
+  if (t > 0.4)  return 2
+  if (t > 0.15) return 1
+  return 0
 }
 
-function sequentialCell(v, min, max) {
-  const r = (v - min) / ((max - min) || 1)
-  const a = 0.08 + r * 0.7
-  return { bg: `rgba(99,102,241,${a.toFixed(2)})`, text: r > 0.5 ? '#4338ca' : '#6366f1' }
+function divergingCell(v, min, max, isDark) {
+  const abs    = Math.max(Math.abs(min), Math.abs(max)) || 1
+  const t      = Math.min(Math.abs(v) / abs, 1)
+  const tier   = pickTier(t)
+  const mode   = isDark ? 'dark' : 'light'
+  const colors = v >= 0 ? PALETTES[mode].green : PALETTES[mode].red
+  return { bg: colors[tier], text: '#fff', shadow: NEEDS_SHADOW[tier] ? SHADOW_LIGHT : SHADOW_NONE }
 }
 
-function gainOnlyCell(v, min, max) {
-  const r = (v - min) / ((max - min) || 1)
-  const a = 0.08 + r * 0.7
-  return { bg: `rgba(22,163,74,${a.toFixed(2)})`, text: r > 0.5 ? '#166534' : '#16a34a' }
+function sequentialCell(v, min, max, isDark) {
+  const t      = (v - min) / ((max - min) || 1)
+  const tier   = pickTier(t)
+  const colors = PALETTES[isDark ? 'dark' : 'light'].indigo
+  return { bg: colors[tier], text: '#fff', shadow: NEEDS_SHADOW[tier] ? SHADOW_LIGHT : SHADOW_NONE }
 }
 
-function getCellStyle(v, min, max, scale) {
-  if (scale === 'sequential') return sequentialCell(v, min, max)
-  if (scale === 'gain-only')  return gainOnlyCell(v, min, max)
-  return divergingCell(v, min, max)
+function gainOnlyCell(v, min, max, isDark) {
+  const t      = (v - min) / ((max - min) || 1)
+  const tier   = pickTier(t)
+  const colors = PALETTES[isDark ? 'dark' : 'light'].green
+  return { bg: colors[tier], text: '#fff', shadow: NEEDS_SHADOW[tier] ? SHADOW_LIGHT : SHADOW_NONE }
 }
 
-// ─── FKHeatGrid (spec name: FKGridChart) ─────────────────────────────────────
+function getCellStyle(v, min, max, scale, isDark) {
+  if (scale === 'sequential') return sequentialCell(v, min, max, isDark)
+  if (scale === 'gain-only')  return gainOnlyCell(v, min, max, isDark)
+  return divergingCell(v, min, max, isDark)
+}
+
+// ─── Default tooltip content ──────────────────────────────────────────────────
+function DefaultTooltipContent({ row, col, value, fmtVal, rowKey, colKey }) {
+  return (
+    <>
+      <FKTooltip.Header>{row} · {col}</FKTooltip.Header>
+      <FKTooltip.Row label={`${rowKey} / ${colKey}`} value={fmtVal(value)} />
+    </>
+  )
+}
+
+// ─── FKHeatGrid ───────────────────────────────────────────────────────────────
 export function FKHeatGrid({
   data,
   rowKey        = 'month',
@@ -64,14 +114,21 @@ export function FKHeatGrid({
   periodKey,
   periods,
   defaultPeriod,
+  // tooltip: false = no tooltip, true = default, function(cell) = custom content
+  tooltip       = true,
   title,
   subtitle,
   badge,
   stats,
 }) {
   const resolvedData = data || SAMPLE_DATA
+  const isDark       = useIsDark()
   const [period, setPeriod] = useState(defaultPeriod || periods?.[0])
   const fmtVal = valueFormat || (v => `${v?.toFixed(1)}%`)
+
+  // Hover state for custom tooltip
+  const [hovered, setHovered] = useState(null)  // { x, y, row, col, value }
+  const containerRef = useRef(null)
 
   const filtered = periodKey && period
     ? resolvedData.filter(r => r[periodKey] === period)
@@ -81,7 +138,6 @@ export function FKHeatGrid({
     const rowSet = [...new Set(filtered.map(r => r[rowKey]))]
     const colSet = [...new Set(filtered.map(r => r[colKey]))]
 
-    // Sort rows: months in calendar order, else alphabetical
     const MONTH_ORDER = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
     const sortedRows = rowSet.sort((a, b) => {
       const ai = MONTH_ORDER.indexOf(a)
@@ -101,6 +157,18 @@ export function FKHeatGrid({
   }, [filtered, rowKey, colKey, valueKey, colorDomain])
 
   const effectiveCellSize = cellSize || Math.max(36, Math.min(64, Math.floor(540 / Math.max(cols.length, 1))))
+
+  function handleMouseEnter(e, row, col, v) {
+    if (!tooltip) return
+    const rect = containerRef.current?.getBoundingClientRect()
+    const cellRect = e.currentTarget.getBoundingClientRect()
+    setHovered({
+      x: cellRect.left - (rect?.left ?? 0) + cellRect.width / 2,
+      y: cellRect.top  - (rect?.top  ?? 0),
+      row, col, value: v,
+    })
+  }
+  function handleMouseLeave() { setHovered(null) }
 
   return (
     <FKCard>
@@ -131,11 +199,10 @@ export function FKHeatGrid({
         }
       />
 
-      <div style={{ padding: '12px 20px 16px', overflowX: 'auto' }}>
+      <div ref={containerRef} style={{ padding: '12px 20px 16px', overflowX: 'auto', position: 'relative' }}>
         <table style={{ borderCollapse: 'separate', borderSpacing: 3 }}>
           <thead>
             <tr>
-              {/* Empty corner */}
               <th style={{ width: 52 }} />
               {cols.map(c => (
                 <th key={c} style={{ fontSize: 12, fontFamily: 'var(--font-sans)', fontWeight: 500, color: 'var(--color-text-tertiary)', textAlign: 'center', paddingBottom: 4, width: effectiveCellSize }}>
@@ -151,29 +218,31 @@ export function FKHeatGrid({
                   {row}
                 </td>
                 {cols.map(col => {
-                  const v = grid[`${row}_${col}`]
-                  const cs = v != null ? getCellStyle(v, min, max, colorScale) : { bg: 'var(--color-background-secondary)', text: 'var(--color-text-tertiary)' }
+                  const v  = grid[`${row}_${col}`]
+                  const cs = v != null
+                    ? getCellStyle(v, min, max, colorScale, isDark)
+                    : { bg: 'var(--color-background-secondary)', text: 'var(--color-text-tertiary)', shadow: SHADOW_NONE }
                   return (
                     <td key={col}>
                       <div
-                        title={v != null ? fmtVal(v) : '—'}
                         style={{
-                          width:        effectiveCellSize,
-                          height:       effectiveCellSize,
-                          background:   cs.bg,
-                          borderRadius: shape === 'circle' ? '50%' : cellRadius,
-                          display:      'flex',
-                          alignItems:   'center',
+                          width:          effectiveCellSize,
+                          height:         effectiveCellSize,
+                          background:     cs.bg,
+                          borderRadius:   shape === 'circle' ? '50%' : cellRadius,
+                          display:        'flex',
+                          alignItems:     'center',
                           justifyContent: 'center',
-                          fontSize:     12,
-                          fontFamily:   'var(--font-mono)',
-                          fontWeight:   500,
-                          color:        cs.text,
-                          cursor:       'default',
-                          transition:   'opacity 0.15s',
+                          fontSize:       11,
+                          fontFamily:     'var(--font-mono)',
+                          fontWeight:     600,
+                          color:          cs.text,
+                          textShadow:     cs.shadow,
+                          cursor:         'default',
+                          transition:     'opacity 0.15s',
                         }}
-                        onMouseEnter={e => e.currentTarget.style.opacity = '0.75'}
-                        onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                        onMouseEnter={e => handleMouseEnter(e, row, col, v)}
+                        onMouseLeave={handleMouseLeave}
                       >
                         {showValues && v != null && effectiveCellSize > 32
                           ? fmtVal(v)
@@ -197,13 +266,34 @@ export function FKHeatGrid({
             height: 5,
             borderRadius: 3,
             background: colorScale === 'diverging'
-              ? 'linear-gradient(to right, rgba(220,38,38,0.55), rgba(220,38,38,0.08) 40%, rgba(22,163,74,0.08) 60%, rgba(22,163,74,0.55))'
-              : 'linear-gradient(to right, rgba(99,102,241,0.08), rgba(99,102,241,0.78))',
+              ? (isDark
+                  ? 'linear-gradient(to right, #991b1b, #b91c1c 35%, #166534 65%, #22c55e)'
+                  : 'linear-gradient(to right, #dc2626, #fca5a5 35%, #4ade80 65%, #15803d)')
+              : (isDark
+                  ? 'linear-gradient(to right, #312e81, #6366f1, #818cf8)'
+                  : 'linear-gradient(to right, #a5b4fc, #6366f1, #4f46e5)'),
           }} />
           <span style={{ fontSize: 12, fontFamily: 'var(--font-sans)', color: 'var(--color-text-tertiary)' }}>
             {fmtVal(max)}
           </span>
         </div>
+
+        {/* Tooltip */}
+        {tooltip && hovered && hovered.value != null && (
+          <FKTooltip.Box x={hovered.x} y={hovered.y} style={{ transform: 'translate(-50%, -100%) translateY(-8px)' }}>
+            {typeof tooltip === 'function'
+              ? tooltip({ row: hovered.row, col: hovered.col, value: hovered.value })
+              : <DefaultTooltipContent
+                  row={hovered.row}
+                  col={hovered.col}
+                  value={hovered.value}
+                  fmtVal={fmtVal}
+                  rowKey={rowKey}
+                  colKey={colKey}
+                />
+            }
+          </FKTooltip.Box>
+        )}
       </div>
     </FKCard>
   )

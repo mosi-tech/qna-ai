@@ -20,9 +20,9 @@
   --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace;
 }
 
-/* ─── Dark mode ─── */
+/* ─── Dark mode — system preference ─── */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not(.light) {
     --color-background-primary:   #0f1117;
     --color-background-secondary: #161b22;
     --color-background-tertiary:  #1c2128;
@@ -35,6 +35,36 @@
     --color-border-secondary: #21262d;
     --color-border-tertiary:  #161b22;
   }
+}
+
+/* ─── Dark mode — class override (toggled by Showcase) ─── */
+html.dark {
+  --color-background-primary:   #0f1117;
+  --color-background-secondary: #161b22;
+  --color-background-tertiary:  #1c2128;
+
+  --color-text-primary:   #f0f6fc;
+  --color-text-secondary: #8b949e;
+  --color-text-tertiary:  #484f58;
+
+  --color-border-primary:   #30363d;
+  --color-border-secondary: #21262d;
+  --color-border-tertiary:  #161b22;
+}
+
+/* ─── Light mode — class override (forces light when system is dark) ─── */
+html.light {
+  --color-background-primary:   #ffffff;
+  --color-background-secondary: #f8fafc;
+  --color-background-tertiary:  #f1f5f9;
+
+  --color-text-primary:   #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-tertiary:  #94a3b8;
+
+  --color-border-primary:   #cbd5e1;
+  --color-border-secondary: #e2e8f0;
+  --color-border-tertiary:  #f1f5f9;
 }
 
 *, *::before, *::after {
