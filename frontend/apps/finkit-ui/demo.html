@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FINKIT — CDN Demo</title>
+
+  <!-- React 18 + Recharts via CDN (no build step) -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script crossorigin src="https://unpkg.com/recharts@2.13.0/umd/Recharts.js"></script>
+  <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    /* ── CSS variables (light) ── */
+    :root {
+      --color-background-primary:   #ffffff;
+      --color-background-secondary: #f8fafc;
+      --color-background-tertiary:  #f1f5f9;
+      --color-text-primary:         #0f172a;
+      --color-text-secondary:       #475569;
+      --color-text-tertiary:        #94a3b8;
+      --color-border-primary:       #cbd5e1;
+      --color-border-secondary:     #e2e8f0;
+      --color-border-tertiary:      #f1f5f9;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-mono: 'SF Mono', 'Fira Code', monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-background-primary:   #0f1117;
+        --color-background-secondary: #161b22;
+        --color-background-tertiary:  #1c2128;
+        --color-text-primary:         #f0f6fc;
+        --color-text-secondary:       #8b949e;
+        --color-text-tertiary:        #484f58;
+        --color-border-primary:       #30363d;
+        --color-border-secondary:     #21262d;
+        --color-border-tertiary:      #161b22;
+      }
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0;
+      -webkit-font-smoothing: antialiased;
+      background: var(--color-background-tertiary);
+      color: var(--color-text-primary);
+      font-family: var(--font-sans);
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useMemo, useRef, useEffect, useCallback } = React
+    const {
+      ResponsiveContainer, ComposedChart, AreaChart, BarChart, PieChart,
+      Line, Area, Bar, Pie, Cell,
+      XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine,
+    } = Recharts
+
+    /* ── Tokens ─────────────────────────────────────────────────── */
+    const color = {
+      gain:     '#16a34a', loss: '#dc2626', warn: '#d97706',
+      gainBg:   'rgba(22,163,74,0.09)', lossBg: 'rgba(220,38,38,0.09)',
+      series:   ['#6366f1','#06b6d4','#f59e0b','#ec4899','#10b981','#94a3b8'],
+    }
+    const axisProps = {
+      tick: { fontSize: 10, fill: 'var(--color-text-tertiary)', fontFamily: 'var(--font-mono)' },
+      axisLine: false, tickLine: false,
+    }
+    const gridProps = { stroke: 'var(--color-border-tertiary)', vertical: false }
+    const ttStyle  = {
+      background: 'var(--color-background-primary)',
+      border: '0.5px solid var(--color-border-secondary)',
+      borderRadius: 8, padding: '10px 12px', fontSize: 12,
+      fontFamily: 'var(--font-mono)',
+    }
+
+    /* ── FKCard ─────────────────────────────────────────────────── */
+    function FKCard({ children, style }) {
+      return (
+        <div style={{ background:'var(--color-background-primary)', border:'0.5px solid var(--color-border-tertiary)', borderRadius:12, overflow:'hidden', ...style }}>
+          {children}
+        </div>
+      )
+    }
+    function FKCardHeader({ title, subtitle, actions }) {
+      return (
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', padding:'18px 20px 0' }}>
+          <div>
+            {title    && <div style={{ fontSize:14, fontWeight:500, color:'var(--color-text-primary)', marginBottom:2 }}>{title}</div>}
+            {subtitle && <div style={{ fontSize:12, color:'var(--color-text-secondary)' }}>{subtitle}</div>}
+          </div>
+          {actions && <div style={{ display:'flex', gap:6 }}>{actions}</div>}
+        </div>
+      )
+    }
+
+    /* ── FKSparkline ─────────────────────────────────────────────── */
+    function FKSparkline({ data = [], width = 72, height = 28 }) {
+      if (!data || data.length < 2) return null
+      const mn = Math.min(...data), mx = Math.max(...data), range = mx - mn || 1
+      const pts = data.map((v, i) => ({ x: (i/(data.length-1))*width, y: height-((v-mn)/range)*(height-2)-1 }))
+      const isPos = data[data.length-1] >= data[0]
+      const d = pts.map((p,i)=>`${i===0?'M':'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')
+      return (
+        <svg width={width} height={height} style={{ display:'block' }}>
+          <path d={d} fill="none" stroke={isPos ? color.gain : color.loss} strokeWidth={1.5} />
+        </svg>
+      )
+    }
+
+    /* ── FKDelta ─────────────────────────────────────────────────── */
+    function FKDelta({ value, decimals=2, suffix='%' }) {
+      const isPos = value >= 0
+      return (
+        <span style={{ color: isPos ? color.gain : color.loss, fontSize:11, fontFamily:'var(--font-mono)', fontWeight:500 }}>
+          {isPos?'▲':'▼'} {Math.abs(value).toFixed(decimals)}{suffix}
+        </span>
+      )
+    }
+
+    /* ── FKMetricGrid ────────────────────────────────────────────── */
+    function FKMetricGrid({ cards = [], cols = 4 }) {
+      return (
+        <div style={{ display:'grid', gridTemplateColumns:`repeat(${cols},1fr)`, gap:12 }}>
+          {cards.map((c,i) => {
+            const topColor = c.delta > 0 ? color.gain : c.delta < 0 ? color.loss : '#6366f1'
+            return (
+              <div key={i} style={{ padding:'20px 20px 16px', background:'var(--color-background-primary)', border:'0.5px solid var(--color-border-tertiary)', borderRadius:12, borderTop:`2px solid ${topColor}`, position:'relative' }}>
+                <div style={{ fontSize:10, textTransform:'uppercase', letterSpacing:'0.06em', color:'var(--color-text-tertiary)', marginBottom:8 }}>{c.label}</div>
+                <div style={{ fontSize:26, fontFamily:'var(--font-mono)', fontWeight:500, color:c.color||'var(--color-text-primary)', marginBottom:6 }}>{c.value}</div>
+                <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+                  {c.delta != null && <FKDelta value={c.delta} />}
+                  {c.sub && <span style={{ fontSize:11, color:'var(--color-text-tertiary)' }}>{c.sub}</span>}
+                </div>
+                {c.spark && <div style={{ position:'absolute', bottom:10, right:12, opacity:0.8 }}><FKSparkline data={c.spark} width={60} height={22} /></div>}
+              </div>
+            )
+          })}
+        </div>
+      )
+    }
+
+    /* ── FKLineChart ─────────────────────────────────────────────── */
+    function FKLineChart({ data=[], series=[], xKey='date', yFormat, title, subtitle, height=220 }) {
+      return (
+        <FKCard>
+          <FKCardHeader title={title} subtitle={subtitle} />
+          <div style={{ height, padding:'12px 4px 8px 0' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={data} margin={{ top:4,right:4,left:0,bottom:0 }}>
+                <defs>
+                  {series.map((s,i) => {
+                    const c = s.color || color.series[i]
+                    return <linearGradient key={s.key} id={`g${s.key}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={c} stopOpacity={0.15} />
+                      <stop offset="100%" stopColor={c} stopOpacity={0} />
+                    </linearGradient>
+                  })}
+                </defs>
+                <CartesianGrid {...gridProps} />
+                <XAxis dataKey={xKey} {...axisProps} minTickGap={40} />
+                <YAxis {...axisProps} orientation="right" width={52} tickFormatter={yFormat} />
+                <Tooltip contentStyle={ttStyle} formatter={yFormat ? (v) => [yFormat(v)] : undefined} />
+                {series.map((s,i) => {
+                  const c = s.color || color.series[i]
+                  return [
+                    <Area key={`a${s.key}`} type="linear" dataKey={s.key} fill={`url(#g${s.key})`} stroke="none" isAnimationActive={false} />,
+                    <Line key={s.key} type="linear" dataKey={s.key} name={s.label||s.key} stroke={c} strokeWidth={1.5} strokeDasharray={s.dashed?'4 3':undefined} dot={false} isAnimationActive={false} />
+                  ]
+                }).flat()}
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+        </FKCard>
+      )
+    }
+
+    /* ── FKBarChart ──────────────────────────────────────────────── */
+    function FKBarChart({ data=[], valueKey='value', labelKey='label', yFormat, title }) {
+      return (
+        <FKCard>
+          <FKCardHeader title={title} />
+          <div style={{ height:200, padding:'12px 4px 8px 0' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={data} margin={{ top:4,right:8,left:0,bottom:0 }}>
+                <CartesianGrid {...gridProps} />
+                <XAxis dataKey={labelKey} {...axisProps} />
+                <YAxis {...axisProps} orientation="right" width={52} tickFormatter={yFormat} />
+                <Tooltip contentStyle={ttStyle} />
+                <Bar dataKey={valueKey} maxBarSize={40} radius={[4,4,0,0]} isAnimationActive={false}>
+                  {data.map((row,i) => <Cell key={i} fill={row[valueKey]>=0?'rgba(22,163,74,0.72)':'rgba(220,38,38,0.72)'} stroke={row[valueKey]>=0?color.gain:color.loss} strokeWidth={1} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </FKCard>
+      )
+    }
+
+    /* ── FKPartChart (donut) ─────────────────────────────────────── */
+    function FKPartChart({ data=[], valueKey='value', labelKey='label', title }) {
+      const total = data.reduce((a,b)=>a+(b[valueKey]||0),0)
+      return (
+        <FKCard>
+          <FKCardHeader title={title} />
+          <div style={{ display:'flex', gap:16, padding:'12px 20px 16px' }}>
+            <div style={{ width:140, height:140, flexShrink:0 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={data} cx="50%" cy="50%" innerRadius={40} outerRadius={62} paddingAngle={2} strokeWidth={0} dataKey={valueKey}>
+                    {data.map((_,i) => <Cell key={i} fill={color.series[i%color.series.length]} />)}
+                  </Pie>
+                  <Tooltip contentStyle={ttStyle} formatter={v=>[`${((v/total)*100).toFixed(1)}%`]} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            <div style={{ display:'flex', flexDirection:'column', gap:8, justifyContent:'center' }}>
+              {data.map((row,i) => (
+                <div key={i} style={{ display:'flex', alignItems:'center', gap:8 }}>
+                  <div style={{ width:10, height:10, borderRadius:3, background:color.series[i%color.series.length], flexShrink:0 }} />
+                  <span style={{ fontSize:12, color:'var(--color-text-primary)' }}>{row[labelKey]}</span>
+                  <span style={{ fontSize:11, fontFamily:'var(--font-mono)', color:'var(--color-text-secondary)', marginLeft:'auto', paddingLeft:12 }}>
+                    {((row[valueKey]||0)/total*100).toFixed(1)}%
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </FKCard>
+      )
+    }
+
+    /* ── App ─────────────────────────────────────────────────────── */
+    const spark = (base, n=20) => Array.from({length:n},(_,i)=>+(base+Math.sin(i*.4)*5+i*.3+Math.random()*3).toFixed(2))
+    const MONTHLY = [
+      {month:'Jan',pnl:4200},{month:'Feb',pnl:-1800},{month:'Mar',pnl:6100},
+      {month:'Apr',pnl:3400},{month:'May',pnl:-2200},{month:'Jun',pnl:5800},
+      {month:'Jul',pnl:2100},{month:'Aug',pnl:-900} ,{month:'Sep',pnl:3700},
+      {month:'Oct',pnl:4900},{month:'Nov',pnl:-1100},{month:'Dec',pnl:7200},
+    ]
+    const ROLLING = Array.from({length:24},(_,i)=>({
+      date: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][i%12]+' '+(i<12?'23':'24'),
+      sharpe: +(0.6+Math.sin(i*.4)*.6+i*.04).toFixed(2),
+    }))
+    const HOLDINGS_PIE = [
+      {label:'Technology',value:64.0},{label:'Financials',value:18.7},
+      {label:'Consumer',value:9.8},{label:'Healthcare',value:7.5},
+    ]
+
+    function App() {
+      return (
+        <div style={{ maxWidth:1200, margin:'0 auto', padding:'32px 24px 80px', fontFamily:'var(--font-sans)' }}>
+          <div style={{ marginBottom:32 }}>
+            <div style={{ fontSize:24, fontWeight:700, color:'var(--color-text-primary)', marginBottom:4 }}>FINKIT Primitives — CDN Demo</div>
+            <div style={{ fontSize:14, color:'var(--color-text-secondary)' }}>Self-contained demo using React + Recharts via CDN. No build step.</div>
+          </div>
+
+          <div style={{ marginBottom:32 }}>
+            <div style={{ fontSize:11, fontWeight:600, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--color-text-tertiary)', marginBottom:12 }}>FKMetricGrid</div>
+            <FKMetricGrid cols={4} cards={[
+              { label:'Portfolio Value', value:'$94,273',  delta:1.99,  sub:'today',          spark:spark(90) },
+              { label:'Total Return',    value:'+20.25%',  delta:20.25, color:color.gain,      spark:spark(100) },
+              { label:'Sharpe Ratio',    value:'1.84',     sub:'Excellent' },
+              { label:'Max Drawdown',    value:'−23.4%',   color:color.loss, sub:'peak to trough' },
+            ]} />
+          </div>
+
+          <div style={{ marginBottom:32 }}>
+            <div style={{ fontSize:11, fontWeight:600, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--color-text-tertiary)', marginBottom:12 }}>FKLineChart + FKBarChart</div>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:16 }}>
+              <FKLineChart data={ROLLING} series={[{key:'sharpe',label:'Rolling Sharpe'}]} xKey="date" title="Rolling 12M Sharpe" />
+              <FKBarChart data={MONTHLY} valueKey="pnl" labelKey="month" yFormat={v=>`${v>=0?'+':''}$${(v/1000).toFixed(0)}k`} title="Monthly P&L" />
+            </div>
+          </div>
+
+          <div>
+            <div style={{ fontSize:11, fontWeight:600, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--color-text-tertiary)', marginBottom:12 }}>FKPartChart (Donut)</div>
+            <div style={{ maxWidth:400 }}>
+              <FKPartChart data={HOLDINGS_PIE} valueKey="value" labelKey="label" title="Sector Allocation" />
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />)
+  </script>
+</body>
+</html>
