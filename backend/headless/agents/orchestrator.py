@@ -74,6 +74,8 @@ from script_validator_agent import create_script_validator_agent
 from verification_agent import create_verification_agent
 from script_executor_agent import create_script_executor_agent
 from mcp_direct_agent import create_mcp_direct_agent
+from mcp_block_solver_agent import create_mcp_block_solver_agent
+import concurrent.futures
 from mock.mock_reuse_evaluator import create_mock_reuse_evaluator
 from mock.mock_data_generator import create_mock_data_generator
 from mock.mock_v2_generator import create_mock_v2_generator
@@ -98,6 +100,7 @@ class AnalysisOrchestrator:
         no_code: bool = False,
         mock_mode: bool = False,
         mock_v2_mode: bool = False,
+        mcp_live_mode: bool = False,
         max_generation_attempts: int = 3,
         verbose: bool = False,
         output_dir: str = None
@@ -109,6 +112,7 @@ class AnalysisOrchestrator:
         self.no_code = no_code
         self.mock_mode = mock_mode
         self.mock_v2_mode = mock_v2_mode
+        self.mcp_live_mode = mcp_live_mode
         self.max_generation_attempts = max_generation_attempts
         self.verbose = verbose
         self.output_dir = output_dir or os.path.join(os.path.dirname(__file__), "..", "output")
@@ -124,6 +128,9 @@ class AnalysisOrchestrator:
         self.verification = create_verification_agent()
         self.script_executor = create_script_executor_agent()
         self.mcp_direct = create_mcp_direct_agent()
+
+        # MCP live mode: parallel per-block solvers
+        self.mcp_block_solver = create_mcp_block_solver_agent() if mcp_live_mode else None
 
         # Mock mode agents (v1 - single-shot)
         self.mock_reuse_evaluator = create_mock_reuse_evaluator()
@@ -218,6 +225,71 @@ class AnalysisOrchestrator:
             layout = step_result["data"].get("layout")  # Grid layout with slot assignments (legacy)
             rows = step_result["data"].get("rows")      # Row-based layout (new format)
             ui_output = step_result["data"]
+
+            # MCP Live mode: parallel per-block data fetching using real MCP tools
+            if self.mcp_live_mode:
+                self._log(f"🔴 MCP Live mode: solving {len(blocks)} blocks in parallel")
+
+                blocks_data = []
+                failed_blocks = []
+
+                def solve_block(block):
+                    """Solve a single block's sub_question using MCP tools"""
+                    block_id = block.get("blockId", "unknown")
+                    try:
+                        result = self.mcp_block_solver.execute({
+                            "blockId": block_id,
+                            "sub_question": block.get("sub_question", ""),
+                            "canonical_params": block.get("canonical_params", {}),
+                            "dataContract": block.get("dataContract", {})
+                        })
+                        if result.success:
+                            data = result.data
+                            return {
+                                "blockId": block_id,
+                                "data": data.get("data"),
+                                "functions_called": data.get("functions_called", []),
+                                "success": True
+                            }
+                        else:
+                            logger.warning(f"⚠️ Block solver failed for {block_id}: {result.error}")
+                            return {"blockId": block_id, "data": None, "success": False, "error": result.error}
+                    except Exception as e:
+                        logger.error(f"❌ Block solver exception for {block_id}: {e}")
+                        return {"blockId": block_id, "data": None, "success": False, "error": str(e)}
+
+                # Run all block solvers in parallel using ThreadPoolExecutor
+                # (asyncio.run() inside each agent means we need threads, not async gather)
+                max_workers = min(len(blocks), 8)  # Cap at 8 parallel threads
+                with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+                    future_to_block = {executor.submit(solve_block, block): block for block in blocks}
+                    for future in concurrent.futures.as_completed(future_to_block):
+                        block_result = future.result()
+                        if block_result.get("success"):
+                            blocks_data.append({
+                                "blockId": block_result["blockId"],
+                                "data": block_result["data"]
+                            })
+                            self._log(f"  ✅ {block_result['blockId']} → {block_result.get('functions_called', [])}")
+                        else:
+                            failed_blocks.append(block_result["blockId"])
+                            self._log(f"  ❌ {block_result['blockId']} failed: {block_result.get('error', 'unknown')}")
+
+                total_time = (datetime.now() - start_time).total_seconds()
+                self._log(f"✅ MCP Live: {len(blocks_data)} blocks solved, {len(failed_blocks)} failed in {total_time:.1f}s")
+
+                return {
+                    "success": True,
+                    "action": "mcp_live",
+                    "title": title,
+                    "blocks": blocks,
+                    "blocks_data": blocks_data,
+                    "rows": rows,
+                    "layout": layout,
+                    "total_time": total_time,
+                    "steps": self.steps,
+                    "timestamp": datetime.now().isoformat()
+                }
 
             # Mock v1 mode flow: Skip script generation, use mock data
             if self.mock_mode:
@@ -698,6 +770,11 @@ def main():
         help="Mock V2 mode (batch decomposition): Requires --mock. Breaks questions into sub-questions and generates data per sub-question"
     )
     parser.add_argument(
+        "--mcp-live",
+        action="store_true",
+        help="Use real MCP tools per block in parallel (live data)"
+    )
+    parser.add_argument(
         "--max-generation-attempts",
         type=int,
         default=3,
@@ -742,6 +819,7 @@ def main():
         no_code=args.no_code,
         mock_mode=args.mock,
         mock_v2_mode=args.mock_v2,
+        mcp_live_mode=args.mcp_live,
         max_generation_attempts=args.max_generation_attempts,
         verbose=args.verbose,
         output_dir=args.output_dir

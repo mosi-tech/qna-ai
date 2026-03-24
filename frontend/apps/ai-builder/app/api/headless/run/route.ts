@@ -7,7 +7,7 @@ export const maxDuration = 600; // 10 minutes max for pipeline execution
 
 interface OrchestratorOutput {
     success: boolean;
-    action: 'generated' | 'mcp_direct' | 'mock_generated' | 'mock_reused';
+    action: 'generated' | 'mcp_direct' | 'mock_generated' | 'mock_reused' | 'mcp_live';
     title?: string;
     blocks?: Array<{
         blockId: string;
@@ -109,7 +109,7 @@ interface HeadlessResult {
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { question, useNoCode, mock, mockV2, skipReuse } = body;
+        const { question, useNoCode, mock, mockV2, skipReuse, mcpLive } = body;
 
         if (!question || typeof question !== 'string') {
             return NextResponse.json({ error: 'question is required' }, { status: 400 });
@@ -185,6 +185,11 @@ export async function POST(request: NextRequest) {
             console.log(`[${timestamp}] [headless/run] ⚠️  SKIP CACHE ENABLED`);
         }
 
+        if (mcpLive) {
+            args.push('--mcp-live');
+            console.log(`[${timestamp}] [headless/run] 🔴 MCP LIVE mode ENABLED`);
+        }
+
         // Use fast settings: skip enhancement and fast model
         args.push('--skip-enhancement');
 
@@ -198,6 +203,13 @@ export async function POST(request: NextRequest) {
                 PYTHONPATH: backendDir, // Ensure Python can find the backend modules
                 // Use fast model for ui_planner
                 UI_PLANNER_LLM_MODEL: 'gpt-oss:20b',
+                // HTTP Toolkit proxy — captures all LLM traffic
+                HTTP_PROXY:  'http://localhost:8000',
+                HTTPS_PROXY: 'http://localhost:8000',
+                // Trust HTTP Toolkit's CA cert for HTTPS interception
+                // Export from HTTPKit and save to this path first
+                REQUESTS_CA_BUNDLE: `${process.env.HOME}/.httptoolkit-ca.pem`,
+                SSL_CERT_FILE:      `${process.env.HOME}/.httptoolkit-ca.pem`,
             },
             cwd: backendDir, // Set working directory to backend so .env loads correctly
         });
@@ -287,7 +299,8 @@ export async function POST(request: NextRequest) {
                         cache_key: `orchestrator_${Date.now()}_${question.length}`, // Simple cache key
                         status: orchestratorResult.success ? (
                             orchestratorResult.action === 'mock_generated' ? 'mock_generated' :
-                            orchestratorResult.action === 'mock_reused' ? 'mock_reused' : 'generated'
+                            orchestratorResult.action === 'mock_reused' ? 'mock_reused' :
+                            orchestratorResult.action === 'mcp_live' ? 'generated' : 'generated'
                         ) : 'failed',
                         elapsed_s: orchestratorResult.total_time,
                         total_elapsed_s: orchestratorResult.total_time,

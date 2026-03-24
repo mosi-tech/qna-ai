@@ -211,11 +211,11 @@ interface PipelineError {
     };
 }
 
-export async function runHeadlessPipeline(question: string, options: { useNoCode?: boolean; mock?: boolean; mockV2?: boolean; skipReuse?: boolean } = {}): Promise<HeadlessResult> {
+export async function runHeadlessPipeline(question: string, options: { useNoCode?: boolean; mock?: boolean; mockV2?: boolean; skipReuse?: boolean; mcpLive?: boolean } = {}): Promise<HeadlessResult> {
     const res = await fetch('/api/headless/run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question, useNoCode: options.useNoCode ?? true, mock: options.mock ?? false, mockV2: options.mockV2 ?? false, skipReuse: options.skipReuse ?? false }),
+        body: JSON.stringify({ question, useNoCode: options.useNoCode ?? true, mock: options.mock ?? false, mockV2: options.mockV2 ?? false, skipReuse: options.skipReuse ?? false, mcpLive: options.mcpLive ?? false }),
     });
 
     if (!res.ok) {
@@ -246,6 +246,60 @@ export async function runHeadlessPipeline(question: string, options: { useNoCode
     }
 
     return res.json() as Promise<HeadlessResult>;
+}
+
+// ─── Streaming pipeline ───────────────────────────────────────────────────────
+
+export type StreamEvent =
+    | { event: 'spec';  title: string; rows: any[]; blocks: any[]; elapsed_s: number }
+    | { event: 'block'; blockId: string; data: Record<string, unknown> | null }
+    | { event: 'done';  elapsed_s: number }
+    | { event: 'error'; message: string };
+
+/**
+ * Streams the headless pipeline via SSE.
+ * Yields events one by one: spec → block × N → done (or error).
+ */
+export async function* runHeadlessPipelineStream(
+    question: string,
+    options: { mock?: boolean; mockV2?: boolean; skipReuse?: boolean; mcpLive?: boolean; blockDelay?: number } = {},
+): AsyncGenerator<StreamEvent> {
+    const res = await fetch('/api/headless/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            question,
+            mock:       options.mock       ?? true,
+            mockV2:     options.mockV2     ?? false,
+            skipReuse:  options.skipReuse  ?? true,
+            mcpLive:    options.mcpLive    ?? false,
+            blockDelay: options.blockDelay ?? 300,
+        }),
+    });
+
+    if (!res.ok || !res.body) throw new Error('Stream request failed');
+
+    const reader  = res.body.getReader();
+    const decoder = new TextDecoder();
+    let   buf     = '';
+
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+
+        // SSE lines are delimited by \n\n
+        const parts = buf.split('\n\n');
+        buf = parts.pop() ?? '';
+
+        for (const part of parts) {
+            const line = part.trim();
+            if (!line.startsWith('data:')) continue;
+            try {
+                yield JSON.parse(line.slice(5).trim()) as StreamEvent;
+            } catch { /* ignore malformed chunks */ }
+        }
+    }
 }
 
 // ─── Convert headless result to DashboardSpec ─────────────────────────────────────
