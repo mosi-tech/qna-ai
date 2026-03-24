@@ -76,7 +76,7 @@ export function FKRadarChart({
   return (
     <FKCard>
       <FKCardHeader title={title} subtitle={subtitle} />
-      <div style={{ height, padding: '8px 0 0' }}>
+      <div style={{ height, padding: '8px 8px 0' }}>
         <ResponsiveContainer width="100%" height="100%">
           <RadarChart data={chartData} margin={{ top: 16, right: 24, bottom: 16, left: 24 }}>
             <PolarGrid

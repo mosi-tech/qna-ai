@@ -145,7 +145,7 @@ export function FKProjectionChart({
   return (
     <FKCard>
       <FKCardHeader title={title} subtitle={subtitle} />
-      <div style={{ height, padding: '12px 4px 4px 0' }}>
+      <div style={{ height, padding: '12px 8px 4px 8px' }}>
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
             <defs>

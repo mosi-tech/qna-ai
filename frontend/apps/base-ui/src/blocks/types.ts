@@ -35,6 +35,7 @@ export interface BlockSpec {
     blockId: string;          // matches BLOCK_CATALOG.json id
     category: BlockCategory;
     title: string;
+    subtitle?: string;
     dataContract: DataContract;
     // Sub-question extensions (populated when coming from UIPlanner)
     sub_question?: string;

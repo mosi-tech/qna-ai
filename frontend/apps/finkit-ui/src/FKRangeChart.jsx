@@ -41,8 +41,8 @@ function drawChart(canvas, data, opts) {
   const labelCol = isDark ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.45)'
   const valCol   = isDark ? 'rgba(255,255,255,0.75)' : 'rgba(0,0,0,0.7)'
 
-  const LABEL_W   = 72
-  const VALUE_W   = showValues ? 72 : 0
+  const LABEL_W   = 88
+  const VALUE_W   = showValues ? 88 : 0
   const BAR_LEFT  = LABEL_W + 12
   const BAR_RIGHT = W - VALUE_W - 8
   const BAR_W     = BAR_RIGHT - BAR_LEFT
@@ -59,7 +59,7 @@ function drawChart(canvas, data, opts) {
     const fillC  = getRowColor(row, colorRule)
 
     // Label
-    ctx.font      = `12px var(--font-sans, system-ui)`
+    ctx.font      = `500 15px system-ui, -apple-system, sans-serif`
     ctx.fillStyle = labelCol
     ctx.textAlign = 'right'
     ctx.textBaseline = 'middle'
@@ -83,7 +83,7 @@ function drawChart(canvas, data, opts) {
     if (targetKey && row[targetKey] != null) {
       const tPct    = (row[targetKey] - mn) / range
       const tx2     = BAR_LEFT + Math.min(Math.max(tPct, 0), 1) * BAR_W
-      const ds      = 5
+      const ds      = 4
       ctx.fillStyle = '#6366f1'
       ctx.beginPath()
       ctx.moveTo(tx2, y - ds)
@@ -104,14 +104,14 @@ function drawChart(canvas, data, opts) {
 
     // Min/max labels
     if (showValues) {
-      ctx.fillStyle = labelCol; ctx.font = `12px var(--font-mono, monospace)`
+      ctx.fillStyle = labelCol; ctx.font = `14px ui-monospace, 'SF Mono', Consolas, monospace`
       ctx.textAlign = 'left'
-      ctx.fillText(format ? format(mn) : mn.toFixed(2), BAR_LEFT, y + markerR + 10)
+      ctx.fillText(format ? format(mn) : mn.toFixed(2), BAR_LEFT, y + markerR + 14)
       ctx.textAlign = 'right'
-      ctx.fillText(format ? format(mx) : mx.toFixed(2), BAR_RIGHT, y + markerR + 10)
+      ctx.fillText(format ? format(mx) : mx.toFixed(2), BAR_RIGHT, y + markerR + 14)
 
       // Current value right of bar
-      ctx.fillStyle = valCol; ctx.font = `500 12px var(--font-mono, monospace)`
+      ctx.fillStyle = valCol; ctx.font = `600 15px ui-monospace, 'SF Mono', Consolas, monospace`
       ctx.textAlign = 'left'
       ctx.fillText(format ? format(v) : v.toFixed(2), BAR_RIGHT + 6, y)
     }
@@ -130,7 +130,7 @@ export function FKRangeChart({
   format,
   showValues = true,
   colorRule,
-  rowHeight  = 44,
+  rowHeight  = 64,
   title,
   subtitle,
   badge,

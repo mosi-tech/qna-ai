@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "npm run dev --workspace=apps/qna-ai",
     "dev:ai-builder": "npm run dev --workspace=apps/ai-builder",
+    "dev:composer": "npm run dev --workspace=apps/composer",
     "dev:base-ui": "npm run dev --workspace=apps/base-ui",
     "build": "npm run build --workspace=apps/qna-ai",
     "build:all": "npm run build --workspaces --if-present",

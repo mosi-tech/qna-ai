@@ -74,7 +74,7 @@ export function FKMultiPanel({
         }
       />
 
-      <div style={{ padding: '8px 0 8px' }}>
+      <div style={{ padding: '8px 8px 8px' }}>
         {resolvedPanels.map((panel, pi) => {
           const isLast     = pi === resolvedPanels.length - 1
           const panelH     = panel.height || (pi === 0 ? 280 : 120)

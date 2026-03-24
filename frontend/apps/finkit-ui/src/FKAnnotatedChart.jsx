@@ -214,20 +214,24 @@ export function FKAnnotatedChart({
 
   const curveType = 'linear'
 
-  // Tight y-axis domain: 5% of the data range as padding
+  // Tight y-axis domain: rounded to a nice step so ticks are clean integers
   const yDomain = useMemo(() => {
     const vals = resolvedSeries.flatMap(s => resolvedData.map(d => d[s.key])).filter(v => v != null)
     if (!vals.length) return ['auto', 'auto']
-    const lo  = Math.min(...vals)
-    const hi  = Math.max(...vals)
-    const pad = (hi - lo) * 0.05 || Math.abs(lo) * 0.02 || 1
-    return [lo - pad, hi + pad]
+    const lo   = Math.min(...vals)
+    const hi   = Math.max(...vals)
+    const pad  = (hi - lo) * 0.05 || Math.abs(lo) * 0.02 || 1
+    const step = Math.pow(10, Math.floor(Math.log10((hi - lo) || 1)))
+    return [
+      Math.floor((lo - pad) / step) * step,
+      Math.ceil((hi + pad)  / step) * step,
+    ]
   }, [resolvedData, resolvedSeries])
 
   return (
     <FKCard>
       <FKCardHeader title={title} subtitle={subtitle} actions={actions} />
-      <div style={{ height, padding: '12px 4px 4px 0' }}>
+      <div style={{ height, padding: '12px 8px 4px 8px' }}>
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={resolvedData} margin={{ top: 20, right: 4, left: 8, bottom: 0 }}>
             {/* Gradient fills */}
@@ -245,7 +249,7 @@ export function FKAnnotatedChart({
 
             <CartesianGrid {...gridProps} />
             <XAxis dataKey={xKey} {...axisProps} minTickGap={40} maxRotation={0} padding={{ left: 16, right: 8 }} />
-            <YAxis {...axisProps} orientation="right" width={52} tickFormatter={valueFormat} domain={yDomain} />
+            <YAxis {...axisProps} orientation="right" width={52} tickFormatter={valueFormat} domain={yDomain} tickCount={5} />
 
             <Tooltip
               content={<FKTooltip valueFormat={valueFormat} />}

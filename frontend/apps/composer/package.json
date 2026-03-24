@@ -1,13 +1,10 @@
 {
-  "name": "@finkit/ui",
+  "name": "@finkit/composer",
   "version": "0.1.0",
+  "private": true,
   "type": "module",
-  "exports": {
-    ".": "./src/index.js",
-    "./css": "./src/index.css"
-  },
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --port 5176",
     "build": "vite build",
     "preview": "vite preview"
   },
@@ -17,8 +14,6 @@
     "recharts": "^2.14.0"
   },
   "devDependencies": {
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.0",
     "autoprefixer": "^10.4.0",
     "postcss": "^8.4.0",

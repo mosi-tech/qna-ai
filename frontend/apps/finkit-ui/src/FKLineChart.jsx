@@ -120,7 +120,7 @@ export function FKLineChart({
   xFormat,
   referenceLines,
   height        = 240,
-  rangeSelector,
+  rangeSelector = true,
   defaultRange,
   onRangeChange,
   smooth        = false,
@@ -155,15 +155,19 @@ export function FKLineChart({
     [resolvedData, resolvedSeries, viewMode]
   )
 
-  // Tight y-axis domain: pad by 5% of the actual data range (not the values)
+  // Tight y-axis domain: rounded to a nice step so ticks are clean integers
   const yDomain = useMemo(() => {
     if (viewMode === 'pct') return ['auto', 'auto']
     const vals = resolvedSeries.flatMap(s => chartData.map(d => d[s.key])).filter(v => v != null)
     if (!vals.length) return ['auto', 'auto']
-    const lo  = Math.min(...vals)
-    const hi  = Math.max(...vals)
-    const pad = (hi - lo) * 0.05 || Math.abs(lo) * 0.02 || 1
-    return [lo - pad, hi + pad]
+    const lo   = Math.min(...vals)
+    const hi   = Math.max(...vals)
+    const pad  = (hi - lo) * 0.05 || Math.abs(lo) * 0.02 || 1
+    const step = Math.pow(10, Math.floor(Math.log10((hi - lo) || 1)))
+    return [
+      Math.floor((lo - pad) / step) * step,
+      Math.ceil((hi + pad)  / step) * step,
+    ]
   }, [chartData, resolvedSeries, viewMode])
 
   // y-axis format: in pct mode always show %, in value mode use caller's yFormat
@@ -186,9 +190,9 @@ export function FKLineChart({
   return (
     <FKCard>
       <FKCardHeader title={title} subtitle={subtitle} actions={actions} />
-      <div style={{ height, padding: '12px 4px 8px 0' }}>
+      <div style={{ height, padding: '12px 8px 8px 8px' }}>
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={chartData} margin={{ top: 4, right: 4, left: 8, bottom: 0 }}>
+          <ComposedChart data={chartData} margin={{ top: 4, right: 16, left: 16, bottom: 0 }}>
             <defs>
               {resolvedSeries.map((s, i) => {
                 const c = seriesColors[s.key]
@@ -206,11 +210,11 @@ export function FKLineChart({
             <XAxis
               dataKey={xKey}
               {...axisProps}
-              minTickGap={40}
+              minTickGap={48}
               maxRotation={0}
               tickFormatter={xFormat}
-              interval={xType === 'category' ? 0 : 'preserveStartEnd'}
-              padding={{ left: 16, right: 8 }}
+              interval="preserveStart"
+              padding={{ left: 24, right: 24 }}
             />
             <YAxis
               {...axisProps}
@@ -218,6 +222,7 @@ export function FKLineChart({
               width={52}
               tickFormatter={activeYFormat}
               domain={yDomain}
+              tickCount={5}
             />
 
             <Tooltip

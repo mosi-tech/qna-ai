@@ -1,0 +1,128 @@
+{
+  "FKMetricGrid": [
+    "full",
+    "2/3",
+    "3/4",
+    "1/2",
+    "1/3"
+  ],
+  "FKLineChart": [
+    "full",
+    "3/4",
+    "2/3",
+    "1/2"
+  ],
+  "FKAreaChart": [
+    "full",
+    "3/4",
+    "2/3",
+    "1/2"
+  ],
+  "FKAnnotatedChart": [
+    "full",
+    "3/4",
+    "2/3",
+    "1/2"
+  ],
+  "FKCandleChart": [
+    "full",
+    "3/4",
+    "2/3",
+    "1/2"
+  ],
+  "FKMultiPanel": [
+    "full",
+    "3/4",
+    "2/3",
+    "1/2"
+  ],
+  "FKProjectionChart": [
+    "full",
+    "3/4",
+    "2/3",
+    "1/2"
+  ],
+  "FKBandChart": [
+    "full",
+    "1/2"
+  ],
+  "FKBarChart": [
+    "full",
+    "3/4",
+    "2/3",
+    "1/2"
+  ],
+  "FKWaterfall": [
+    "full",
+    "1/2",
+    "3/4",
+    "2/3"
+  ],
+  "FKHistogram": [
+    "full",
+    "1/2",
+    "3/4",
+    "2/3"
+  ],
+  "FKScatterChart": [
+    "full",
+    "1/2",
+    "1/3",
+    "3/4",
+    "2/3"
+  ],
+  "FKRadarChart": [
+    "1/2",
+    "1/3",
+    "1/4"
+  ],
+  "FKPartChart": [
+    "1/2",
+    "1/4",
+    "1/3"
+  ],
+  "FKHeatGrid": [
+    "full",
+    "2/3",
+    "1/2"
+  ],
+  "FKSankeyChart": [
+    "full",
+    "2/3",
+    "3/4"
+  ],
+  "FKRangeChart": [
+    "1/2",
+    "1/3"
+  ],
+  "FKBulletChart": [
+    "1/2",
+    "1/3",
+    "full",
+    "3/4",
+    "2/3"
+  ],
+  "FKRankedList": [
+    "1/2",
+    "1/3",
+    "1/4"
+  ],
+  "FKTimeline": [
+    "full",
+    "2/3",
+    "3/4",
+    "1/2"
+  ],
+  "FKTable": [
+    "full",
+    "3/4",
+    "2/3",
+    "1/2"
+  ],
+  "FKBarChart_Grouped": [
+    "full",
+    "3/4",
+    "2/3",
+    "1/2"
+  ]
+}

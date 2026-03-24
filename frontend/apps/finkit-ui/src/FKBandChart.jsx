@@ -71,8 +71,12 @@ export function FKBandChart({
   const allVals = filteredData.flatMap(row => resolvedSeries.map(s => row[s.key] ?? 0))
   const yMin = Math.min(...allVals, baseline)
   const yMax = Math.max(...allVals, baseline)
-  const pad  = (yMax - yMin) * 0.08 || 1
-  const yDomain = [yMin - pad, yMax + pad]
+  const pad    = (yMax - yMin) * 0.08 || 1
+  const step   = Math.pow(10, Math.floor(Math.log10((yMax - yMin) || 1)))
+  const yDomain = [
+    Math.floor((yMin - pad) / step) * step,
+    Math.ceil((yMax  + pad) / step) * step,
+  ]
 
   const chartData = isTwoSeries ? filteredData : buildSplitData(filteredData, resolvedSeries[0].key, baseline)
   const s0color   = resolvedSeries[0].color || color.series[0]
@@ -87,7 +91,7 @@ export function FKBandChart({
   return (
     <FKCard>
       <FKCardHeader title={title} subtitle={subtitle} actions={actions} />
-      <div style={{ height, padding: '12px 4px 8px 0' }}>
+      <div style={{ height, padding: '12px 8px 8px 8px' }}>
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
             <defs>
@@ -107,7 +111,7 @@ export function FKBandChart({
 
             <CartesianGrid {...gridProps} />
             <XAxis dataKey={xKey} {...axisProps} minTickGap={40} maxRotation={0} />
-            <YAxis {...axisProps} orientation="right" width={52} tickFormatter={yFormat} domain={yDomain} />
+            <YAxis {...axisProps} orientation="right" width={52} tickFormatter={yFormat} domain={yDomain} tickCount={5} />
             <Tooltip
               content={<FKTooltip yFormat={yFormat} valueFormat={yFormat} />}
               cursor={{ stroke: 'var(--color-border-secondary)', strokeWidth: 1 }}

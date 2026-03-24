@@ -28,6 +28,7 @@
         "@radix-ui/react-toast": "^1.0.0",
         "@radix-ui/react-toggle-group": "^1.0.0",
         "@radix-ui/react-tooltip": "^1.0.0",
+        "@finkit/ui": "*",
         "@ui-gen/auth-core": "*",
         "@ui-gen/base-ui": "*",
         "drizzle-orm": "^0.38.0",

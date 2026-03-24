@@ -27,6 +27,19 @@ const SAMPLE_ROWS = [
   { ticker: 'JPM',   value: 5900, weight:  6.2, return_pct:  1.03, sector: 'Financials' },
 ]
 
+// ─── colorRule presets ────────────────────────────────────────────────────────
+const COLOR_RULE_PRESETS = {
+  'gain-loss': v => (Number(v) > 0 ? 'gain' : Number(v) < 0 ? 'loss' : null),
+  'positive':  v => (Number(v) > 0 ? 'gain' : null),
+  'negative':  v => (Number(v) < 0 ? 'loss' : null),
+}
+
+function resolveColorRule(colorRule) {
+  if (!colorRule) return null
+  if (typeof colorRule === 'function') return colorRule
+  return COLOR_RULE_PRESETS[colorRule] || null
+}
+
 // ─── Sort utility ─────────────────────────────────────────────────────────────
 function sortRows(rows, col, dir) {
   if (!col) return rows
@@ -39,6 +52,31 @@ function sortRows(rows, col, dir) {
   })
 }
 
+// ─── Pagination button ────────────────────────────────────────────────────────
+function PageBtn({ children, onClick, disabled, active }) {
+  const [hovered, setHovered] = React.useState(false)
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        minWidth: 26, height: 26, padding: '0 6px',
+        borderRadius: 6,
+        border: active ? '1px solid var(--color-border-primary)' : '1px solid transparent',
+        background: active ? 'var(--color-background-tertiary)' : hovered && !disabled ? 'var(--color-background-tertiary)' : 'transparent',
+        color: disabled ? 'var(--color-border-primary)' : active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+        fontSize: 12, fontFamily: 'var(--font-sans)',
+        cursor: disabled ? 'default' : 'pointer',
+        transition: 'background 0.1s',
+      }}
+    >
+      {children}
+    </button>
+  )
+}
+
 // ─── FKTable (spec: FKDataTable) ─────────────────────────────────────────────
 export function FKTable({
   columns,
@@ -47,6 +85,7 @@ export function FKTable({
   defaultDir    = 'desc',
   sparkKey,
   maxRows,
+  pageSize      = 10,
   stickyHeader  = false,
   onRowClick,
   pivotRow,
@@ -90,14 +129,23 @@ export function FKTable({
   }, [isPivot, columns, rows, pivotRow, pivotCol, pivotValue])
   const [sortCol, setSortCol] = useState(defaultSort || null)
   const [sortDir, setSortDir] = useState(defaultDir)
+  const [page, setPage] = useState(0)
 
   const sorted = useMemo(
     () => sortRows(resolvedRows, sortCol, sortDir),
     [resolvedRows, sortCol, sortDir]
   )
 
-  const displayed  = maxRows ? sorted.slice(0, maxRows) : sorted
-  const isHidden   = maxRows && sorted.length > maxRows
+  // Reset to first page when sort or data changes
+  const prevSortRef = React.useRef(sortCol + sortDir)
+  if (prevSortRef.current !== sortCol + sortDir) {
+    prevSortRef.current = sortCol + sortDir
+    if (page !== 0) setPage(0)
+  }
+
+  const limited    = maxRows ? sorted.slice(0, maxRows) : sorted
+  const totalPages = pageSize ? Math.ceil(limited.length / pageSize) : 1
+  const displayed  = pageSize ? limited.slice(page * pageSize, (page + 1) * pageSize) : limited
 
   function handleColClick(key, sortable) {
     if (sortable === false) return
@@ -117,7 +165,7 @@ export function FKTable({
         actions={badge ? <FKBadge variant="neutral">{badge}</FKBadge> : null}
       />
       <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
           <thead>
             <tr
               style={{
@@ -191,7 +239,8 @@ export function FKTable({
                   }
                   const raw     = row[col.key]
                   const display = col.format ? col.format(raw, row) : raw
-                  const token   = col.colorRule ? col.colorRule(raw, row) : null
+                  const colorFn = resolveColorRule(col.colorRule)
+                  const token   = colorFn ? colorFn(raw, row) : null
                   const txtCol  = token ? resolveColor(token) : 'var(--color-text-primary)'
                   return (
                     <td
@@ -215,9 +264,25 @@ export function FKTable({
           </tbody>
         </table>
       </div>
-      {isHidden && (
-        <div style={{ padding: '10px 16px', borderTop: '0.5px solid var(--color-border-tertiary)', fontSize: 12, color: 'var(--color-text-tertiary)' }}>
-          Showing {displayed.length} of {sorted.length}
+      {totalPages > 1 && (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '10px 16px',
+          borderTop: '0.5px solid var(--color-border-tertiary)',
+          fontSize: 12,
+          color: 'var(--color-text-tertiary)',
+          fontFamily: 'var(--font-sans)',
+        }}>
+          <span>{page * pageSize + 1}–{Math.min((page + 1) * pageSize, limited.length)} of {limited.length}</span>
+          <div style={{ display: 'flex', gap: 4 }}>
+            <PageBtn disabled={page === 0} onClick={() => setPage(0)}>«</PageBtn>
+            <PageBtn disabled={page === 0} onClick={() => setPage(p => p - 1)}>‹</PageBtn>
+            {Array.from({ length: totalPages }, (_, i) => (
+              <PageBtn key={i} active={i === page} onClick={() => setPage(i)}>{i + 1}</PageBtn>
+            ))}
+            <PageBtn disabled={page === totalPages - 1} onClick={() => setPage(p => p + 1)}>›</PageBtn>
+            <PageBtn disabled={page === totalPages - 1} onClick={() => setPage(totalPages - 1)}>»</PageBtn>
+          </div>
         </div>
       )}
     </FKCard>

@@ -1,10 +1,11 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
   ResponsiveContainer, ComposedChart, BarChart, Bar, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, LabelList,
 } from 'recharts'
 import { FKCard, FKCardHeader } from './FKCard.jsx'
 import { FKStatStrip, FKBadge } from './FKSparkline.jsx'
+import { FKRangeSelector } from './FKRangeSelector.jsx'
 import { color, axisProps, categoryAxisProps, gridProps, tooltipStyle, resolveColor } from './tokens.js'
 
 // ─── Sample data ─────────────────────────────────────────────────────────────
@@ -72,6 +73,8 @@ function buildWaterfallData(data, valueKey, colorRule) {
 }
 
 // ─── FKBarChart ──────────────────────────────────────────────────────────────
+const RANGE_COUNTS = { '1M': 1, '3M': 3, '6M': 6, '1Y': 12, '2Y': 24, 'ALL': Infinity }
+
 export function FKBarChart({
   data,
   series,
@@ -86,13 +89,29 @@ export function FKBarChart({
   showRunningTotal = true,
   totalLabel      = 'Total',
   yFormat,
+  rangeSelector,
+  defaultRange,
   title,
   subtitle,
   badge,
   stats,
 }) {
+  const rangeOptions = Array.isArray(rangeSelector) ? rangeSelector : ['3M', '6M', '1Y', 'ALL']
+  const [range, setRange] = useState(defaultRange || rangeOptions[rangeOptions.length - 1])
+
   const resolvedColorRule = colorRule || ((row, key) => defaultColorRule(row, key || valueKey))
-  let resolvedData = data || SAMPLE_DATA
+  const rawData = data || SAMPLE_DATA
+
+  // Slice to range when rangeSelector is enabled
+  const rangeFiltered = rangeSelector
+    ? rawData.slice(-Math.min(rawData.length, RANGE_COUNTS[range] ?? Infinity))
+    : rawData
+
+  let resolvedData = rangeFiltered
+
+  const actions = rangeSelector
+    ? <FKRangeSelector options={rangeOptions} value={range} onChange={setRange} />
+    : badge ? <FKBadge variant="neutral">{badge}</FKBadge> : null
 
   // ── Horizontal: sort descending ──────────────────────────────────────────
   if (orientation === 'horizontal') {
@@ -108,9 +127,9 @@ export function FKBarChart({
         <FKCardHeader
           title={title}
           subtitle={subtitle}
-          actions={badge ? <FKBadge variant="neutral">{badge}</FKBadge> : null}
+          actions={actions}
         />
-        <div style={{ height, padding: '12px 4px 8px 0' }}>
+        <div style={{ height, padding: '12px 8px 8px 8px' }}>
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={wfData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid {...gridProps} />
@@ -142,9 +161,9 @@ export function FKBarChart({
         <FKCardHeader
           title={title}
           subtitle={subtitle}
-          actions={badge ? <FKBadge variant="neutral">{badge}</FKBadge> : null}
+          actions={actions}
         />
-        <div style={{ height, padding: '12px 4px 8px 0' }}>
+        <div style={{ height, padding: '12px 8px 8px 8px' }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={resolvedData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid {...gridProps} />
@@ -179,9 +198,9 @@ export function FKBarChart({
         <FKCardHeader
           title={title}
           subtitle={subtitle}
-          actions={badge ? <FKBadge variant="neutral">{badge}</FKBadge> : null}
+          actions={actions}
         />
-        <div style={{ height, padding: '12px 4px 8px 0' }}>
+        <div style={{ height, padding: '12px 8px 8px 8px' }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={resolvedData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid {...gridProps} />
@@ -227,7 +246,7 @@ export function FKBarChart({
     return (
       <FKCard>
         <FKCardHeader title={title} subtitle={subtitle} actions={badge ? <FKBadge variant="neutral">{badge}</FKBadge> : null} />
-        <div style={{ height, padding: '12px 4px 8px 0' }}>
+        <div style={{ height, padding: '12px 8px 8px 8px' }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={resolvedData} margin={{ top: 12, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid {...gridProps} />
@@ -258,7 +277,7 @@ export function FKBarChart({
         subtitle={subtitle}
         actions={badge ? <FKBadge variant="neutral">{badge}</FKBadge> : null}
       />
-      <div style={{ height, padding: '12px 4px 8px 0' }}>
+      <div style={{ height, padding: '12px 8px 8px 8px' }}>
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
             data={resolvedData}

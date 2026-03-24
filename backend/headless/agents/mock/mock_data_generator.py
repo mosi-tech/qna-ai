@@ -134,7 +134,7 @@ class MockDataGenerator(AgentBase):
                     "name": block.get("blockId", ""),
                     "type": data_contract.get("type", "string"),
                     "description": data_contract.get("description", ""),
-                    "points": data_contract.get("points", 1),
+                    "points": data_contract.get("points", 12),
                     "block_id": block.get("blockId", ""),
                     "sub_question": block.get("sub_question", ""),
                     "canonical_params": block.get("canonical_params", {})
@@ -170,231 +170,409 @@ class MockDataGenerator(AgentBase):
         return mock_data
 
     def _generate_block_data(self, contract: Dict) -> Any:
-        """Generate mock data for a specific block based on its type"""
+        """Generate mock data shaped for finkit-ui components.
+
+        Dispatches on the FK* blockId emitted by the updated UI Planner.
+        Data shapes match each finkit component's expected props exactly.
+        """
         import random
         from datetime import datetime, timedelta
 
-        data_type = contract.get("type", "string")
         block_id = contract.get("block_id", "")
         sub_question = contract.get("sub_question", "")
+        n = max(contract.get("points", 12), 2)
 
-        # Determine component type from block_id and data_type
-        component_type = None
-        if "kpi-card" in block_id:
-            component_type = "kpi"
-        elif "line-chart" in block_id:
-            component_type = "line"
-        elif "bar-chart" in block_id:
-            component_type = "bar"
-        elif "bar-list" in block_id or "barlist" in data_type.lower() or data_type.lower() == "barlist":
-            component_type = "barlist"
-        elif "donut-chart" in block_id or "donut" in data_type.lower() or data_type.lower() == "donut":
-            component_type = "donut"
-        elif "spark-chart" in block_id or "spark" in data_type.lower() or data_type.lower() == "spark":
-            component_type = "spark"
-        elif "table" in block_id or data_type.lower() == "table" or "table" in data_type.lower():
-            component_type = "table"
-        elif "tracker" in block_id:
-            component_type = "tracker"
+        # ── helpers ──────────────────────────────────────────────────────────
+        def dates_monthly(count):
+            return [(datetime.now() - timedelta(days=30*i)).strftime("%Y-%m-%d")
+                    for i in reversed(range(count))]
 
-        if component_type == "kpi" or data_type == "kpi":
-            # KPI card: return metrics array matching frontend KPI card format
-            num_metrics = random.randint(2, 4)
-            metric_names = [
-                "Portfolio Value", "Daily P&L", "YTD Return", "Sharpe Ratio",
-                "Holdings", "Avg Cost", "Market Value", "Unrealized Gain",
-                "Sector Exposure", "Beta", "Alpha", "Max Drawdown"
-            ][:num_metrics]
+        def dates_daily(count):
+            return [(datetime.now() - timedelta(days=i)).strftime("%Y-%m-%d")
+                    for i in reversed(range(count))]
 
+        def walk(start, volatility=0.02, count=12):
+            v, out = start, []
+            for _ in range(count):
+                v = round(v * (1 + random.gauss(0.002, volatility)), 2)
+                out.append(v)
+            return out
+
+        def label_items(count, prefix="Item"):
+            return [f"{prefix} {chr(65+i)}" for i in range(min(count, 26))]
+
+        # ── dispatch on FK block id ───────────────────────────────────────────
+
+        # FKMetricGrid ─────────────────────────────────────────────────────────
+        if block_id == "FKMetricGrid":
+            cols = min(max(n, 2), 4)
+            names = ["Portfolio Value", "Daily P&L", "YTD Return", "Sharpe Ratio",
+                     "Beta", "Alpha", "Max Drawdown", "Volatility"][:cols]
             return {
-                "metrics": [
+                "cards": [
                     {
-                        "name": name,
-                        "stat": round(random.uniform(1000, 100000), 2),
-                        "change": f"{random.uniform(-20, 30):.2f}%",
-                        "changeType": "positive" if random.random() > 0.4 else "negative"
+                        "label": name,
+                        "value": f"${random.uniform(1000, 200000):,.0f}" if "Value" in name or "P&L" in name
+                                 else f"{random.uniform(-30, 50):.2f}%",
+                        "delta": round(random.uniform(-15, 25), 2),
+                        "sub": random.choice(["vs yesterday", "YTD", "vs benchmark", "annualised"])
                     }
-                    for name in metric_names
+                    for name in names
                 ],
-                "cols": num_metrics
+                "cols": cols
             }
 
-        elif component_type == "line" or data_type == "timeseries" or "trend" in sub_question.lower() or "performance" in sub_question.lower() or "history" in sub_question.lower():
-            # Line chart: return time series data matching frontend format
-            # Use intelligent default for time series: 12 months for YTD performance
-            num_points = contract.get("points", 12) if contract.get("points", 12) > 1 else 12
-            categories = ["Value", "Benchmark"] if "comparison" in sub_question.lower() or "benchmark" in sub_question.lower() else ["Value"]
-
-            dates = [(datetime.now() - timedelta(days=30*i)).strftime("%Y-%m-%d") for i in reversed(range(num_points))]
-
-            # Generate data: each date gets all categories in one row
+        # FKLineChart / FKAreaChart / FKBandChart / FKAnnotatedChart ──────────
+        elif block_id in ("FKLineChart", "FKAreaChart", "FKBandChart"):
+            has_bench = "benchmark" in sub_question.lower() or "comparison" in sub_question.lower()
+            series_keys = ["portfolio", "benchmark"] if has_bench else ["value"]
+            series = [{"key": k, "label": k.title()} for k in series_keys]
+            starts = {k: random.uniform(80, 120) for k in series_keys}
+            ds = dates_monthly(n)
             data = []
-            category_values = {cat: random.uniform(50000, 100000) for cat in categories}
-
-            for date in dates:
-                row = {"date": date}
-                for cat in categories:
-                    row[cat] = round(category_values[cat] + random.uniform(-10000, 15000), 2)
+            vals = {k: starts[k] for k in series_keys}
+            for d in ds:
+                row = {"date": d}
+                for k in series_keys:
+                    vals[k] = round(vals[k] * (1 + random.gauss(0.003, 0.018)), 2)
+                    row[k] = vals[k]
                 data.append(row)
+            out = {"data": data, "series": series}
+            if block_id == "FKAreaChart":
+                out["fillMode"] = "below" if "drawdown" in sub_question.lower() else "above"
+            if block_id == "FKBandChart":
+                out["baseline"] = 0
+            return out
 
+        elif block_id == "FKAnnotatedChart":
+            series = [
+                {"key": "price",  "label": "Price",  "color": "#6366f1"},
+                {"key": "sma50",  "label": "SMA 50", "color": "#f59e0b", "strokeDash": "4 2"},
+            ]
+            ds = dates_daily(n * 5)
+            price, sma = 100.0, 100.0
+            data = []
+            for d in ds:
+                price = round(price * (1 + random.gauss(0.0005, 0.015)), 2)
+                sma   = round(sma * 0.98 + price * 0.02, 2)
+                data.append({"date": d, "price": price, "sma50": sma})
+            mid = len(data) // 2
             return {
                 "data": data,
-                "categories": categories,
-                "summary": [
+                "series": series,
+                "events": [
+                    {"date": data[mid]["date"],      "type": "buy",  "label": "Signal Buy"},
+                    {"date": data[mid + 10]["date"], "type": "sell", "label": "Signal Sell"},
+                ],
+                "bands":    [{"from": data[5]["date"], "to": data[15]["date"],
+                               "color": "rgba(220,38,38,0.08)", "label": "Bear regime"}],
+                "callouts": [{"date": data[mid - 5]["date"], "label": "Key event"}],
+            }
+
+        # FKBarChart ───────────────────────────────────────────────────────────
+        elif block_id == "FKBarChart":
+            is_time = ("month" in sub_question.lower() or "annual" in sub_question.lower()
+                       or "history" in sub_question.lower() or "over time" in sub_question.lower())
+            series = [{"key": "value", "label": "Return"}]
+            if is_time:
+                ds = dates_monthly(n)
+                data = [{"date": d, "value": round(random.gauss(1.5, 4), 2)} for d in ds]
+            else:
+                labels = label_items(n, "Sector")
+                data = [{"name": l, "value": round(random.uniform(5, 35), 2)} for l in labels]
+            return {
+                "data": data,
+                "series": series,
+                "xKey": "date" if is_time else "name",
+                "colorRule": "gain-loss",
+            }
+
+        # FKWaterfall ──────────────────────────────────────────────────────────
+        elif block_id == "FKWaterfall":
+            items = ["Revenue", "COGS", "Gross Profit", "OpEx", "EBITDA", "D&A", "EBIT", "Tax", "Net Income"]
+            total = round(random.uniform(80, 120), 1)
+            rows = [{"label": "Revenue", "value": total, "type": "start"}]
+            for item in items[1:-1]:
+                v = round(random.uniform(-30, 20), 1)
+                rows.append({"label": item, "value": v, "type": "delta"})
+            rows.append({"label": "Net Income", "value": None, "type": "end"})
+            return {"data": rows}
+
+        # FKHistogram ──────────────────────────────────────────────────────────
+        elif block_id == "FKHistogram":
+            count = max(n * 10, 100)
+            return {
+                "data": [round(random.gauss(0.8, 3.5), 3) for _ in range(count)],
+                "overlayNormal": True,
+            }
+
+        # FKPartChart ──────────────────────────────────────────────────────────
+        elif block_id == "FKPartChart":
+            sectors = ["Technology", "Healthcare", "Financials", "Consumer", "Energy",
+                       "Industrials", "Materials", "Utilities", "Real Estate", "Communication"]
+            count = min(max(n, 4), len(sectors))
+            chosen = random.sample(sectors, count)
+            raw = [random.uniform(5, 35) for _ in chosen]
+            total = sum(raw)
+            mode = "treemap" if count > 7 else "donut"
+            return {
+                "data": [{"label": s, "value": round(v / total * 100, 2)}
+                         for s, v in zip(chosen, raw)],
+                "labelKey": "label",
+                "valueKey": "value",
+                "mode": mode,
+            }
+
+        # FKHeatGrid ───────────────────────────────────────────────────────────
+        elif block_id == "FKHeatGrid":
+            months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+            years  = ["2022","2023","2024"]
+            return {
+                "data": [
+                    {"row": m, "col": y, "value": round(random.gauss(1.0, 3.5), 2)}
+                    for m in months for y in years
+                ],
+                "rowKey": "row",
+                "colKey": "col",
+                "valueKey": "value",
+                "colorScale": "diverging",
+                "valueFormat": "pct",
+            }
+
+        # FKScatterChart ───────────────────────────────────────────────────────
+        elif block_id == "FKScatterChart":
+            tickers = ["AAPL","MSFT","NVDA","AMZN","META","GOOGL","TSLA","JPM","BRK","V"]
+            count = min(n, len(tickers))
+            return {
+                "data": [
                     {
-                        "name": cat,
-                        "value": round(category_values[cat], 2)
+                        "x": round(random.uniform(0, 25), 2),
+                        "y": round(random.uniform(-10, 35), 2),
+                        "size": round(random.uniform(5, 50), 1),
+                        "label": tickers[i],
                     }
-                    for cat in categories
+                    for i in range(count)
+                ],
+                "xKey": "x",
+                "yKey": "y",
+                "sizeKey": "size",
+                "labelKey": "label",
+                "trendLine": True,
+            }
+
+        # FKBulletChart ────────────────────────────────────────────────────────
+        elif block_id == "FKBulletChart":
+            labels = label_items(max(n, 3), "Target")
+            return {
+                "data": [
+                    {
+                        "label": l,
+                        "value":    round(random.uniform(40, 95), 1),
+                        "target":   round(random.uniform(70, 100), 1),
+                        "rangeMin": 0,
+                        "rangeMax": 100,
+                    }
+                    for l in labels
                 ]
             }
 
-        elif component_type == "bar" or data_type == "bar":
-            # Bar chart: return categorical or timeseries data
-            num_points = contract.get("points", 6) if contract.get("points", 6) > 1 else 6
-            categories = ["Value"]
-
-            # Check if it should be timeseries (with dates) or categorical (with names)
-            if "trend" in sub_question.lower() or "history" in sub_question.lower() or "over time" in sub_question.lower():
-                dates = [(datetime.now() - timedelta(days=30*i)).strftime("%Y-%m-%d") for i in reversed(range(num_points))]
-                return {
-                    "data": [
-                        {
-                            "date": date,
-                            **{cat: round(random.uniform(10000, 100000), 2) for cat in categories}
-                        }
-                        for date in dates
-                    ],
-                    "categories": categories
-                }
-            else:
-                return {
-                    "data": [
-                        {
-                            "name": f"Item {i+1}",
-                            **{cat: round(random.uniform(1000, 50000), 2) for cat in categories}
-                        }
-                        for i in range(num_points)
-                    ],
-                    "categories": categories
-                }
-
-        elif component_type == "table" or "table" in data_type.lower():
-            # Table: return rows and columns (check before barlist for "holdings" questions)
-            # For tables, use sensible default of 5-10 rows even if points=1
-            num_rows = contract.get("points", 5) if contract.get("points", 5) > 1 else random.randint(5, 10)
-            columns = ["Symbol", "Shares", "Avg Cost", "Market Value", "P&L", "P&L %"]
-
+        # FKRangeChart ─────────────────────────────────────────────────────────
+        elif block_id == "FKRangeChart":
+            tickers = ["AAPL","MSFT","GOOGL","NVDA","AMZN","META","TSLA","JPM"]
+            count = min(max(n, 4), len(tickers))
             return {
+                "data": [
+                    {
+                        "label": tickers[i],
+                        "min":   round(random.uniform(80, 150), 2),
+                        "max":   round(random.uniform(200, 350), 2),
+                        "value": round(random.uniform(150, 250), 2),
+                    }
+                    for i in range(count)
+                ],
+                "labelKey": "label",
+                "minKey":   "min",
+                "maxKey":   "max",
+                "valueKey": "value",
+            }
+
+        # FKCandleChart ────────────────────────────────────────────────────────
+        elif block_id == "FKCandleChart":
+            count = max(n * 5, 60)
+            price = 150.0
+            ds = [(datetime.now() - timedelta(days=count-i)).strftime("%Y-%m-%d")
+                  for i in range(count)]
+            candles = []
+            for d in ds:
+                o = round(price * (1 + random.gauss(0, 0.008)), 2)
+                c = round(o    * (1 + random.gauss(0.001, 0.012)), 2)
+                h = round(max(o, c) * (1 + abs(random.gauss(0, 0.005))), 2)
+                l = round(min(o, c) * (1 - abs(random.gauss(0, 0.005))), 2)
+                candles.append({"date": d, "open": o, "high": h, "low": l, "close": c,
+                                 "volume": random.randint(1_000_000, 50_000_000)})
+                price = c
+            return {"data": candles}
+
+        # FKMultiPanel ─────────────────────────────────────────────────────────
+        elif block_id == "FKMultiPanel":
+            ds = dates_daily(max(n * 5, 60))
+            price, vol_ma = 150.0, 10_000_000
+            price_data, rsi_data, vol_data = [], [], []
+            for d in ds:
+                price = round(price * (1 + random.gauss(0.001, 0.014)), 2)
+                price_data.append({"date": d, "price": price})
+                rsi_data.append({"date": d, "rsi": round(random.uniform(30, 70), 1)})
+                vol_data.append({"date": d, "volume": random.randint(5_000_000, 50_000_000)})
+            return {
+                "panels": [
+                    {"series": [{"key": "price", "label": "Price"}],
+                     "data": price_data, "height": 200},
+                    {"series": [{"key": "rsi", "label": "RSI"}],
+                     "data": rsi_data, "height": 100,
+                     "referenceLines": [{"y": 70, "color": "#dc2626"}, {"y": 30, "color": "#16a34a"}]},
+                    {"series": [{"key": "volume", "label": "Volume"}],
+                     "data": vol_data, "height": 80},
+                ]
+            }
+
+        # FKProjectionChart ────────────────────────────────────────────────────
+        elif block_id == "FKProjectionChart":
+            hist_n  = max(n * 3, 24)
+            proj_n  = max(n, 12)
+            hist_dates = dates_monthly(hist_n)
+            split_date = hist_dates[-1]
+            proj_dates = [(datetime.now() + timedelta(days=30*i)).strftime("%Y-%m-%d")
+                          for i in range(1, proj_n + 1)]
+            v = 100.0
+            historical = []
+            for d in hist_dates:
+                v = round(v * (1 + random.gauss(0.005, 0.025)), 2)
+                historical.append({"date": d, "value": v})
+            projection = []
+            p = v
+            for d in proj_dates:
+                p50 = round(p * (1 + random.gauss(0.006, 0.02)), 2)
+                spread = abs(p50 - p) * random.uniform(0.5, 1.5)
+                projection.append({
+                    "date": d,
+                    "p50": p50,
+                    "p25": round(p50 - spread * 0.6, 2),
+                    "p75": round(p50 + spread * 0.6, 2),
+                    "p10": round(p50 - spread * 1.2, 2),
+                    "p90": round(p50 + spread * 1.2, 2),
+                })
+                p = p50
+            return {
+                "historical": historical,
+                "projection": projection,
+                "splitDate": split_date,
+            }
+
+        # FKRadarChart ─────────────────────────────────────────────────────────
+        elif block_id == "FKRadarChart":
+            axis_names = ["Value", "Quality", "Momentum", "Growth", "Safety", "Yield"]
+            axes = [{"key": a.lower(), "label": a} for a in axis_names]
+            tickers = ["AAPL", "MSFT", "GOOGL"]
+            colors  = ["#6366f1", "#22c55e", "#f59e0b"]
+            series = [
+                {
+                    "label": t,
+                    "color": colors[i],
+                    "data": {a["key"]: round(random.uniform(3, 9), 1) for a in axes},
+                }
+                for i, t in enumerate(tickers[:2])
+            ]
+            return {"axes": axes, "series": series}
+
+        # FKSankeyChart ────────────────────────────────────────────────────────
+        elif block_id == "FKSankeyChart":
+            nodes = [
+                {"id": "equities",   "label": "Equities",   "column": 0},
+                {"id": "fixed",      "label": "Fixed Inc.", "column": 0},
+                {"id": "alts",       "label": "Alts",       "column": 0},
+                {"id": "us",         "label": "US",         "column": 1},
+                {"id": "intl",       "label": "Intl",       "column": 1},
+                {"id": "growth",     "label": "Growth",     "column": 2},
+                {"id": "value",      "label": "Value",      "column": 2},
+                {"id": "income",     "label": "Income",     "column": 2},
+            ]
+            flows = [
+                {"from": "equities", "to": "us",     "value": 30},
+                {"from": "equities", "to": "intl",   "value": 20},
+                {"from": "fixed",    "to": "us",     "value": 15},
+                {"from": "fixed",    "to": "income", "value": 10},
+                {"from": "alts",     "to": "intl",   "value": 8},
+                {"from": "us",       "to": "growth", "value": 28},
+                {"from": "us",       "to": "value",  "value": 17},
+                {"from": "intl",     "to": "growth", "value": 18},
+                {"from": "intl",     "to": "income", "value": 10},
+            ]
+            return {"nodes": nodes, "flows": flows}
+
+        # FKDataTable / FKTable ────────────────────────────────────────────────
+        elif block_id in ("FKDataTable", "FKTable"):
+            num_rows = max(n, 5)
+            tickers = [f"TKR{i+1}" for i in range(num_rows)]
+            columns = [
+                {"key": "ticker",   "label": "Symbol"},
+                {"key": "price",    "label": "Price",   "align": "right", "mono": True},
+                {"key": "change",   "label": "Change",  "align": "right", "mono": True,
+                 "colorRule": "gain-loss"},
+                {"key": "weight",   "label": "Weight",  "align": "right", "mono": True},
+                {"key": "value",    "label": "Value",   "align": "right", "mono": True},
+            ]
+            return {
+                "columns": columns,
                 "rows": [
                     {
-                        "Symbol": f"STK{i+1}",
-                        "Shares": random.randint(10, 1000),
-                        "Avg Cost": round(random.uniform(10, 500), 2),
-                        "Market Value": round(random.uniform(1000, 100000), 2),
-                        "P&L": round(random.uniform(-5000, 20000), 2),
-                        "P&L %": round(random.uniform(-30, 50), 2)
+                        "ticker": tickers[i],
+                        "price":  round(random.uniform(20, 500), 2),
+                        "change": round(random.uniform(-5, 8), 2),
+                        "weight": round(random.uniform(1, 20), 1),
+                        "value":  round(random.uniform(1000, 50000), 0),
                     }
                     for i in range(num_rows)
-                ],
-                "columns": columns
-            }
-
-        elif component_type == "barlist" or data_type == "list" or "list" in sub_question.lower():
-            # Bar list: return ranked list data
-            num_items = contract.get("points", 5) if contract.get("points", 5) > 1 else 5
-            return {
-                "data": [
-                    {
-                        "name": f"Holding {chr(65+i)}",
-                        "value": round(random.uniform(1000, 50000), 2)
-                    }
-                    for i in range(num_items)
                 ]
             }
 
-        elif component_type == "donut" or "allocation" in sub_question.lower() or "donut" in sub_question.lower():
-            # Donut chart: return categorical data
-            # For allocation/sector charts, use sensible default of 5-6 items even if points=1
-            sectors = ["Technology", "Healthcare", "Finance", "Energy", "Consumer", "Industrial"]
-            points = contract.get("points", 5) if contract.get("points", 5) > 1 else 5
-            num_points = min(points, len(sectors))
-            selected_sectors = random.sample(sectors, num_points)
-
+        # FKRankedList ─────────────────────────────────────────────────────────
+        elif block_id == "FKRankedList":
+            count = max(n, 5)
+            labels = label_items(count, "Asset")
             return {
-                "data": [
-                    {
-                        "name": sector,
-                        "value": round(random.uniform(10, 30), 2)
-                    }
-                    for sector in selected_sectors
-                ]
+                "data": sorted(
+                    [{"label": l, "value": round(random.uniform(-10, 40), 2)} for l in labels],
+                    key=lambda x: x["value"], reverse=True
+                ),
+                "labelKey": "label",
+                "valueKey": "value",
             }
 
-        elif component_type == "spark" or "spark" in sub_question.lower() or "watchlist" in sub_question.lower():
-            # Spark chart: return spark data
-            tickers = ["AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "TSLA", "META", "JPM"]
-            num_items = min(contract.get("points", 5), len(tickers))
-            selected_tickers = random.sample(tickers, num_items)
-            num_points = contract.get("points", 14)
-
-            dates = [(datetime.now() - timedelta(days=1*i)).strftime("%Y-%m-%d") for i in reversed(range(num_points))]
-
-            # Generate chart data with prices for each ticker over time
-            data = []
-            for date in dates:
-                row = {"date": date}
-                for ticker in selected_tickers:
-                    row[ticker] = round(random.uniform(100, 200), 2)
-                data.append(row)
-
-            # Generate items with complete metadata
-            items = []
-            for ticker in selected_tickers:
-                # Get start and end prices to calculate change
-                start_price = data[0][ticker]
-                end_price = data[-1][ticker]
-                change_pct = ((end_price - start_price) / start_price) * 100
-                change_type = 'positive' if change_pct > 0 else 'negative' if change_pct < 0 else 'neutral'
-
-                items.append({
-                    "id": ticker,
-                    "name": ticker,
-                    "dataKey": ticker,
-                    "value": f"${end_price:.2f}",
-                    "change": f"{change_pct:+.1f}%",
-                    "changeType": change_type
+        # FKTimeline ───────────────────────────────────────────────────────────
+        elif block_id == "FKTimeline":
+            types = ["earnings", "dividend", "split", "news", "fed"]
+            labels = ["Q3 Earnings", "Dividend $0.25", "Fed Rate Decision",
+                      "Product Launch", "Analyst Upgrade", "M&A Announcement"]
+            count = max(n, 4)
+            events = []
+            for i in range(count):
+                d = (datetime.now() - timedelta(days=random.randint(0, 180))).strftime("%Y-%m-%d")
+                events.append({
+                    "date": d,
+                    "label": labels[i % len(labels)],
+                    "type": types[i % len(types)],
                 })
+            return {"events": sorted(events, key=lambda x: x["date"])}
 
-            return {
-                "data": data,
-                "items": items
-            }
-
-        elif component_type == "tracker" or "tracker" in sub_question.lower() or "monitoring" in sub_question.lower():
-            # Status tracker: return status data
-            num_points = contract.get("points", 30)
-            statuses = ["ok", "ok", "ok", "ok", "warning", "error"]  # Weighted towards ok
-
-            return {
-                "data": [
-                    {"status": random.choice(statuses)}
-                    for _ in range(num_points)
-                ]
-            }
-
+        # ── fallback: FKMetricGrid with 3 generic cards ────────────────────────
         else:
-            # Default: simple KPI metrics
             return {
-                "metrics": [
-                    {
-                        "name": "Metric",
-                        "stat": round(random.uniform(1000, 100000), 2),
-                        "change": f"{random.uniform(-10, 20):.2f}%",
-                        "changeType": "positive" if random.random() > 0.4 else "negative"
-                    }
+                "cards": [
+                    {"label": "Value",  "value": f"${random.uniform(10000, 500000):,.0f}", "delta": round(random.uniform(-10, 20), 2)},
+                    {"label": "Return", "value": f"{random.uniform(-10, 30):.2f}%",        "delta": round(random.uniform(-5, 15), 2)},
+                    {"label": "Risk",   "value": f"{random.uniform(5, 25):.2f}%",          "sub": "annualised"},
                 ],
-                "cols": 1
+                "cols": 3,
             }
 
     def _mock_value_by_type(self, data_type: str, name: str) -> Any:

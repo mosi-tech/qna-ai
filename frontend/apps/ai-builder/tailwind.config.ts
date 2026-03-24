@@ -8,6 +8,8 @@ const config: Config = {
         './components/**/*.{js,ts,jsx,tsx}',
         // Scan base-ui source so Tailwind includes all utility classes used by blocks
         '../base-ui/src/**/*.{js,ts,jsx,tsx}',
+        // Scan finkit-ui so FK component Tailwind classes are not purged
+        '../finkit-ui/src/**/*.{js,jsx}',
         // Scan auth-core so page/admin/handler components are not purged
         '../../packages/auth-core/src/**/*.{js,ts,jsx,tsx}',
     ],
@@ -15,7 +17,11 @@ const config: Config = {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Geist Sans', ...defaultTheme.fontFamily.sans],
+                sans: ['var(--font-sans)'],
+                mono: ['var(--font-mono)'],
+            },
+            gridTemplateColumns: {
+                12: 'repeat(12, minmax(0, 1fr))',
             },
             keyframes: {
                 hide: { from: { opacity: '1' }, to: { opacity: '0' } },

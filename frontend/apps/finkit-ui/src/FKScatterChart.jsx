@@ -224,7 +224,7 @@ export function FKScatterChart({
   return (
     <FKCard>
       <FKCardHeader title={title} subtitle={subtitle} />
-      <div style={{ padding: '8px 0 0', height, position: 'relative' }}>
+      <div style={{ padding: '8px 8px 0', height, position: 'relative' }}>
         <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />
       </div>
       {stats && <FKStatStrip stats={stats} />}

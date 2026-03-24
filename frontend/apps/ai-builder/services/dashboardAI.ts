@@ -283,6 +283,7 @@ export function headlessResultToSpec(result: HeadlessResult): DashboardSpec {
                         blockId: col.blockId,
                         category,
                         title: col.title || uiBlock?.title || col.blockId,
+                        subtitle: (col as any).subtitle || uiBlock?.subtitle,
                         dataContract: {
                             type: contractType,
                             description,
@@ -322,6 +323,7 @@ export function headlessResultToSpec(result: HeadlessResult): DashboardSpec {
             blockId,
             category,
             title: uiBlock.title,
+            subtitle: uiBlock.subtitle,
             dataContract: {
                 type: contractType,
                 description,

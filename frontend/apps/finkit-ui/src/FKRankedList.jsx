@@ -50,7 +50,8 @@ export function FKRankedList({
               key={i}
               className="flex items-center gap-3"
               style={{
-                padding:    '10px 20px',
+                padding:      '0 20px',
+                minHeight:    52,
                 borderBottom: i < resolvedData.length - 1
                   ? '0.5px solid var(--color-border-tertiary)'
                   : undefined,
@@ -75,42 +76,37 @@ export function FKRankedList({
                   : color.series[i % color.series.length],
               }} />
 
-              {/* Label + sub */}
-              <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-                <span
-                  className="text-sm font-medium truncate"
-                  style={{ color: 'var(--color-text-primary)' }}
-                >
-                  {row[labelKey]}
-                </span>
-                {row[subKey] && (
-                  <span className="text-[12px] font-sans truncate" style={{ color: 'var(--color-text-tertiary)' }}>
-                    {row[subKey]}
+              {/* 3-column grid: name | sparkline | value+delta */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', alignItems: 'center', flex: 1, minWidth: 0, gap: 8 }}>
+                {/* Col 1: label + sub */}
+                <div className="flex flex-col gap-0.5 min-w-0">
+                  <span className="text-sm font-medium truncate" style={{ color: 'var(--color-text-primary)' }}>
+                    {row[labelKey]}
                   </span>
-                )}
+                  {row[subKey] && (
+                    <span className="text-[11px] truncate" style={{ color: 'var(--color-text-tertiary)' }}>
+                      {row[subKey]}
+                    </span>
+                  )}
+                </div>
+
+                {/* Col 2: sparkline */}
+                <div className="flex items-center justify-center">
+                  {sparkKey && sparkData && (
+                    <FKSparkline data={sparkData} width={72} height={24} />
+                  )}
+                </div>
+
+                {/* Col 3: value + delta */}
+                <div className="flex flex-col items-end gap-0.5">
+                  <span className="text-sm font-mono font-medium" style={{ color: valueCol }}>
+                    {valueFormat ? valueFormat(row[valueKey], row) : row[valueKey]}
+                  </span>
+                  {deltaKey && row[deltaKey] != null && (
+                    <FKDelta value={row[deltaKey]} decimals={1} />
+                  )}
+                </div>
               </div>
-
-              {/* Sparkline */}
-              {sparkKey && sparkData && (
-                <div className="flex-shrink-0">
-                  <FKSparkline data={sparkData} width={60} height={24} />
-                </div>
-              )}
-
-              {/* Value */}
-              <span
-                className="text-sm font-mono font-medium text-right flex-shrink-0"
-                style={{ minWidth: 56, color: valueCol }}
-              >
-                {valueFormat ? valueFormat(row[valueKey], row) : row[valueKey]}
-              </span>
-
-              {/* Delta badge */}
-              {deltaKey && row[deltaKey] != null && (
-                <div className="flex-shrink-0">
-                  <FKDelta value={row[deltaKey]} decimals={1} />
-                </div>
-              )}
             </div>
           )
         })}

@@ -1,8 +1,8 @@
 /**
  * DashboardCanvas.tsx — ai-builder shim
  *
- * Re-exports the canonical DashboardCanvas from @ui-gen/base-ui.
- * All logic now lives in apps/base-ui/src/blocks/DashboardCanvas.tsx.
+ * Switched to FKDashboardCanvas (finkit-ui renderers).
+ * Types still come from @ui-gen/base-ui (BlockState, BlockSpec, etc.).
  */
-export { DashboardCanvas as default } from '@ui-gen/base-ui';
+export { default } from './FKDashboardCanvas';
 export type { BlockState } from '@ui-gen/base-ui';

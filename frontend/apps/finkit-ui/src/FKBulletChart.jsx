@@ -11,12 +11,14 @@ const SAMPLE_DATA = [
   { label: 'Gross Margin',      value: 0.44, target: 0.46, rangeMin: 0.40, rangeMax: 0.50 },
 ]
 
-const ROW_H    = 52
-const LABEL_W  = 140
-const VALUE_W  = 72
+const ROW_H    = 64
+const LABEL_W  = 160
+const VALUE_W  = 88
 const H_PAD    = 16
 const BAR_H    = 10
 const FILL_H   = 6
+const SANS  = `system-ui, -apple-system, sans-serif`
+const MONO  = `ui-monospace, 'SF Mono', Consolas, monospace`
 
 function drawBullet(canvas, data, fmt) {
   const dpr = window.devicePixelRatio || 1
@@ -36,8 +38,6 @@ function drawBullet(canvas, data, fmt) {
   const BAR_RIGHT = W - VALUE_W - H_PAD
   const BAR_W     = BAR_RIGHT - BAR_LEFT
 
-  ctx.font = '12px var(--font-sans, system-ui)'
-
   data.forEach((row, i) => {
     const y     = H_PAD + i * ROW_H + ROW_H / 2
     const range = row.rangeMax - row.rangeMin || 1
@@ -50,7 +50,7 @@ function drawBullet(canvas, data, fmt) {
     ctx.fillStyle = labelC
     ctx.textAlign = 'right'
     ctx.textBaseline = 'middle'
-    ctx.font = '12px var(--font-sans, system-ui)'
+    ctx.font = `500 14px ${SANS}`
     ctx.fillText(row.label, LABEL_W - 8, y)
 
     // Background range track
@@ -72,18 +72,18 @@ function drawBullet(canvas, data, fmt) {
     ctx.fillRect(targetX - 1, y - BAR_H / 2 - 2, 2, BAR_H + 4)
 
     // Value label
-    ctx.font = '500 12px var(--font-mono, monospace)'
+    ctx.font = `600 15px ${MONO}`
     ctx.fillStyle = aboveTarget ? color.gain : color.loss
     ctx.textAlign = 'left'
     ctx.textBaseline = 'middle'
     const formatted = row.format ? row.format(row.value) : fmt(row.value)
-    ctx.fillText(formatted, BAR_RIGHT + 8, y)
+    ctx.fillText(formatted, BAR_RIGHT + 8, y - 6)
 
     // vs target (small sub-label)
-    ctx.font = '12px var(--font-mono, monospace)'
+    ctx.font = `13px ${MONO}`
     ctx.fillStyle = labelC
     const targetFormatted = row.format ? row.format(row.target) : fmt(row.target)
-    ctx.fillText(`vs ${targetFormatted}`, BAR_RIGHT + 8, y + 12)
+    ctx.fillText(`vs ${targetFormatted}`, BAR_RIGHT + 8, y + 10)
   })
 }
 

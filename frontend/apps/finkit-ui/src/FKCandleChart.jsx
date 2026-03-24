@@ -64,7 +64,7 @@ function drawCandles(canvas, data, opts, tooltip) {
   const toX    = i => PAD.left + (i + 0.5) * (cW / n)
 
   // Y grid + labels
-  ctx.font = `12px var(--font-mono, monospace)`
+  ctx.font = `13px ui-monospace, 'SF Mono', Consolas, monospace`
   for (let t = 0; t <= 4; t++) {
     const yv = yMin + (t / 4) * (yMax - yMin)
     const sy = toY(yv)
@@ -107,14 +107,14 @@ function drawCandles(canvas, data, opts, tooltip) {
       ctx.fillStyle = row.close >= row.open ? 'rgba(22,163,74,0.4)' : 'rgba(220,38,38,0.4)'
       ctx.fillRect(cx - hw, volTop + (volH - bH), hw * 2, bH)
     })
-    ctx.fillStyle = textCol; ctx.font = `12px var(--font-mono, monospace)`
+    ctx.fillStyle = textCol; ctx.font = `13px ui-monospace, 'SF Mono', Consolas, monospace`
     ctx.textAlign = 'left'
     ctx.fillText('Volume', PAD.left + 4, volTop + 10)
   }
 
   // X labels (every ~8 candles)
   const step = Math.max(1, Math.ceil(n / 7))
-  ctx.fillStyle = textCol; ctx.font = `12px var(--font-mono, monospace)`
+  ctx.fillStyle = textCol; ctx.font = `13px ui-monospace, 'SF Mono', Consolas, monospace`
   ctx.textAlign = 'center'
   data.forEach((row, i) => {
     if (i % step !== 0) return
@@ -292,7 +292,7 @@ export function FKCandleChart({
     <FKCard>
       <FKCardHeader title={title} subtitle={subtitle} actions={actions} />
       <div
-        style={{ padding: '8px 0 0', position: 'relative', cursor: isDragging.current ? 'grabbing' : 'crosshair' }}
+        style={{ padding: '8px 8px 0', position: 'relative', cursor: isDragging.current ? 'grabbing' : 'crosshair' }}
         onMouseMove={handleMouseMove}
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
@@ -329,14 +329,6 @@ export function FKCandleChart({
         </div>
 
         {/* OHLC Tooltip */}
-        {tooltipData && (
-          <FKTooltip.OHLC
-            active
-            payload={[{ payload: tooltipData }]}
-            label={tooltipData.date}
-            valueFormat={v => `$${v?.toFixed(2)}`}
-          />
-        )}
         {tooltipData && (
           <div style={{
             position:      'absolute',

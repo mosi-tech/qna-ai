@@ -110,7 +110,7 @@ export function FKWaterfall({
   return (
     <FKCard>
       <FKCardHeader title={title} subtitle={subtitle} />
-      <div style={{ height, padding: '16px 4px 8px 0' }}>
+      <div style={{ height, padding: '16px 8px 8px 8px' }}>
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={rows} margin={{ top: 20, right: 8, left: 0, bottom: 0 }}>
             <CartesianGrid {...gridProps} />

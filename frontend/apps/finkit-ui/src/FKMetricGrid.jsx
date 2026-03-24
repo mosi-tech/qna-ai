@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { color } from './tokens.js'
 import { FKDelta } from './FKSparkline.jsx'
 import { FKSparkline } from './FKSparkline.jsx'
+import { FKCard, FKCardHeader } from './FKCard.jsx'
 
 const SAMPLE_CARDS = [
   { label: 'Portfolio Value', value: '$94,273',  delta: 1.99,  sub: 'today' },
@@ -10,17 +11,22 @@ const SAMPLE_CARDS = [
   { label: 'Max Drawdown',    value: '−23.4%',   color: color.loss, sub: 'peak to trough' },
 ]
 
-const COLS_CLASS = { 2: 'grid-cols-2', 3: 'grid-cols-3', 4: 'grid-cols-4' }
-
-export function FKMetricGrid({ cards = SAMPLE_CARDS, cols = 4 }) {
-  const colClass = COLS_CLASS[cols] || 'grid-cols-4'
-
-  return (
-    <div className={`grid ${colClass} gap-3`}>
+export function FKMetricGrid({ cards = SAMPLE_CARDS, minCardWidth = 160, title, subtitle }) {
+  const grid = (
+    <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fit, minmax(${minCardWidth}px, 1fr))`, gap: 12 }}>
       {cards.map((card, i) => (
         <MetricCard key={i} card={card} />
       ))}
     </div>
+  )
+
+  if (!title && !subtitle) return grid
+
+  return (
+    <FKCard>
+      <FKCardHeader title={title} subtitle={subtitle} />
+      <div className="px-5 pb-5 pt-3">{grid}</div>
+    </FKCard>
   )
 }
 

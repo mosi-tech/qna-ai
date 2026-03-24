@@ -144,7 +144,7 @@ export function FKSankeyChart({
   return (
     <FKCard>
       <FKCardHeader title={title} subtitle={subtitle} />
-      <div ref={containerRef} style={{ padding: '12px 0 16px', position: 'relative' }}>
+      <div ref={containerRef} style={{ padding: '12px 8px 16px', position: 'relative' }}>
         <svg width={width} height={height - 40} style={{ display: 'block', overflow: 'visible' }}>
           {/* Flow paths */}
           {flowPaths.map((f, i) => {

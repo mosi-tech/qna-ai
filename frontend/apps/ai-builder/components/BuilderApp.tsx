@@ -150,7 +150,7 @@ export default function BuilderApp() {
         setSpec(dashSpec);
         setBlockStates(initial);
         setSpecLoading(false);
-    }, []);
+    }, [mockMode, mockV2Mode, skipReuse]);
 
     const isLoading = specLoading || blockStates.some((bs) => bs.loadState === 'loading');
 
@@ -230,7 +230,7 @@ export default function BuilderApp() {
                 </div>
 
                 {/* Right: Dashboard canvas */}
-                <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-950">
+                <div className="flex-1 overflow-y-auto bg-slate-100 dark:bg-[#0a0d14]">
                     <DashboardCanvas
                         spec={spec}
                         blockStates={blockStates}

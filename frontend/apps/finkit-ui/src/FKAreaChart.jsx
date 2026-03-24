@@ -68,7 +68,7 @@ export function FKAreaChart({
   mode          = 'normalized',
   yFormat,
   height        = 260,
-  rangeSelector,
+  rangeSelector = true,
   defaultRange,
   onRangeChange,
   title,
@@ -86,7 +86,16 @@ export function FKAreaChart({
     return rawData.map(row => {
       const sum = rawSeries.reduce((acc, s) => acc + (row[s.key] || 0), 0) || 1
       const out = { [xKey]: row[xKey] }
-      rawSeries.forEach(s => { out[s.key] = parseFloat(((row[s.key] || 0) / sum * 100).toFixed(2)) })
+      let remaining = 100
+      rawSeries.forEach((s, i) => {
+        if (i === rawSeries.length - 1) {
+          out[s.key] = parseFloat(Math.max(0, remaining).toFixed(2))
+        } else {
+          const v = parseFloat(((row[s.key] || 0) / sum * 100).toFixed(2))
+          out[s.key] = v
+          remaining -= v
+        }
+      })
       return out
     })
   }, [rawData, rawSeries, mode, xKey])
@@ -102,7 +111,7 @@ export function FKAreaChart({
   return (
     <FKCard>
       <FKCardHeader title={title} subtitle={subtitle} actions={actions} />
-      <div style={{ height, padding: '12px 4px 4px 0' }}>
+      <div style={{ height, padding: '12px 8px 4px 8px' }}>
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
             <CartesianGrid {...gridProps} />
@@ -112,6 +121,7 @@ export function FKAreaChart({
               orientation="right"
               width={48}
               domain={mode === 'normalized' ? [0, 100] : ['auto', 'auto']}
+              ticks={mode === 'normalized' ? [0, 25, 50, 75, 100] : undefined}
               tickFormatter={tickFmt}
             />
             <Tooltip

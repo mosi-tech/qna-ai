@@ -122,7 +122,7 @@ export function FKHistogram({
         subtitle={subtitle}
         actions={badge ? <FKBadge variant="neutral">{badge}</FKBadge> : null}
       />
-      <div style={{ height, padding: '12px 4px 8px 0' }}>
+      <div style={{ height, padding: '12px 8px 8px 8px' }}>
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart data={chartData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
             <CartesianGrid {...gridProps} />
