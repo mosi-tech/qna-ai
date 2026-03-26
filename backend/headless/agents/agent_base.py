@@ -80,12 +80,8 @@ class AgentBase(ABC):
         self.task = task
         self.default_timeout = kwargs.get('default_timeout', 60)
 
-        # Setup logging
+        # Setup logging — rely on root handler (configured in orchestrator) for output
         self.logger = logging.getLogger(f"agent.{name}")
-        self.logger.setLevel(logging.INFO)
-        handler = logging.StreamHandler()
-        handler.setFormatter(logging.Formatter('%(levelname)s:%(name)s:%(message)s'))
-        self.logger.addHandler(handler)
 
         # Load prompt file
         self.prompt_file = prompt_file

@@ -366,20 +366,27 @@ class AnthropicProvider(LLMProvider):
             request_data["tools"] = processed_tools
             headers["anthropic-beta"] = "tools-2024-05-16"
         
-        # Make API call
-        async with httpx.AsyncClient(timeout=120.0) as client:
-            response = await client.post(
-                f"{self.base_url}/messages",
-                json=request_data,
-                headers=headers
-            )
-            
+        # Make API call with retry on 429 rate limit
+        import asyncio as _asyncio
+        max_retries = 3
+        for attempt in range(max_retries):
+            async with httpx.AsyncClient(timeout=120.0) as client:
+                response = await client.post(
+                    f"{self.base_url}/messages",
+                    json=request_data,
+                    headers=headers
+                )
+
             if response.status_code == 200:
                 return {
                     "success": True,
                     "data": response.json(),
                     "provider": "anthropic"
                 }
+            elif response.status_code == 429 and attempt < max_retries - 1:
+                wait = 10 * (2 ** attempt)  # 10s, 20s
+                logger.warning(f"⏳ Anthropic 429 rate limit — retrying in {wait}s (attempt {attempt + 1}/{max_retries})")
+                await _asyncio.sleep(wait)
             else:
                 return {
                     "success": False,

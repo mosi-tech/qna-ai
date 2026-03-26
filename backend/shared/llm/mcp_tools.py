@@ -3,6 +3,7 @@
 Simplified MCP Tools Management
 """
 
+import copy
 import json
 import logging
 import os
@@ -34,9 +35,11 @@ class MCPToolsConfig:
 
 class SimplifiedMCPLoader:
     """Simplified MCP tools loader"""
-    
+
     def __init__(self):
         self._mcp_initialized = {}  # Per-config initialization
+        self._init_loops = {}       # Track which event loop each config was initialized on
+        self._init_lock: Optional[Any] = None  # asyncio.Lock created lazily (can't create at import time)
     
     async def load_tools_for_service(self, service_name: str) -> List[Dict[str, Any]]:
         """Load MCP tools for a specific service"""
@@ -65,10 +68,16 @@ class SimplifiedMCPLoader:
             logger.info(f"🚫 MCP tools disabled for service '{service_name}'")
             return []
         
-        # Initialize MCP if needed
+        # Initialize MCP if needed (re-initialize if event loop changed)
+        import asyncio
         config_key = f"service-{service_name}"
-        if config_key not in self._mcp_initialized:
-            await self._initialize_mcp_for_config(config_key, config_data)
+        current_loop = asyncio.get_running_loop()
+        if self._init_lock is None:
+            self._init_lock = asyncio.Lock()
+        async with self._init_lock:
+            if config_key not in self._mcp_initialized or self._init_loops.get(config_key) is not current_loop:
+                await self._initialize_mcp_for_config(config_key, config_data)
+                self._init_loops[config_key] = current_loop
         
         # Load tools with service-specific filtering
         return await self._load_tools_with_filtering(tools_config)
@@ -103,7 +112,20 @@ class SimplifiedMCPLoader:
                 for server_name in allowed_servers
                 if server_name in all_mcp_servers
             }
-            
+
+            # Override with persistent HTTP/SSE URLs if env vars are set
+            # e.g. FINANCIAL_MCP_URL=http://localhost:8101/sse
+            url_env_map = {
+                "financial-data":   os.getenv("FINANCIAL_MCP_URL"),
+                "analytics-engine": os.getenv("ANALYTICS_MCP_URL"),
+                "validation-server": os.getenv("VALIDATION_MCP_URL"),
+            }
+            for srv, url in url_env_map.items():
+                if url and srv in filtered_servers:
+                    filtered_servers[srv] = copy.copy(filtered_servers[srv])
+                    filtered_servers[srv]["url"] = url
+                    logger.info(f"🌐 Using persistent SSE server for '{srv}': {url}")
+
             # Return filtered config for Claude Code CLI
             filtered_config = {
                 "mcpServers": filtered_servers
@@ -140,12 +162,25 @@ class SimplifiedMCPLoader:
     async def _initialize_mcp_for_config(self, config_key: str, config_data: Dict[str, Any]):
         """Initialize MCP for specific config"""
         try:
-            await initialize_mcp_client(config_data)
+            # Inject persistent SSE URLs if env vars are set
+            url_env_map = {
+                "financial-data":    os.getenv("FINANCIAL_MCP_URL"),
+                "analytics-engine":  os.getenv("ANALYTICS_MCP_URL"),
+                "validation-server": os.getenv("VALIDATION_MCP_URL"),
+            }
+            patched_servers = copy.deepcopy(config_data.get("mcpServers", {}))
+            for srv, url in url_env_map.items():
+                if url and srv in patched_servers:
+                    patched_servers[srv]["url"] = url
+                    logger.info(f"🌐 Using persistent SSE server for '{srv}': {url}")
+            patched_config = {**config_data, "mcpServers": patched_servers}
+
+            await initialize_mcp_client(patched_config)
             self._mcp_initialized[config_key] = True
-            
-            server_count = len(config_data.get("mcpServers", {}))
+
+            server_count = len(patched_servers)
             logger.info(f"🔌 MCP initialized for {config_key} with {server_count} servers")
-            
+
         except Exception as e:
             logger.error(f"❌ Critical: Failed to initialize MCP for {config_key}: {e}")
             self._mcp_initialized[config_key] = False

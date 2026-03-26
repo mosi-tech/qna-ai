@@ -211,11 +211,11 @@ interface PipelineError {
     };
 }
 
-export async function runHeadlessPipeline(question: string, options: { useNoCode?: boolean; mock?: boolean; mockV2?: boolean; skipReuse?: boolean; mcpLive?: boolean } = {}): Promise<HeadlessResult> {
+export async function runHeadlessPipeline(question: string, options: { useNoCode?: boolean; mock?: boolean; mockV2?: boolean; skipReuse?: boolean; mcpLive?: boolean; mcpScript?: boolean; pipeline?: boolean } = {}): Promise<HeadlessResult> {
     const res = await fetch('/api/headless/run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question, useNoCode: options.useNoCode ?? true, mock: options.mock ?? false, mockV2: options.mockV2 ?? false, skipReuse: options.skipReuse ?? false, mcpLive: options.mcpLive ?? false }),
+        body: JSON.stringify({ question, useNoCode: options.useNoCode ?? true, mock: options.mock ?? false, mockV2: options.mockV2 ?? false, skipReuse: options.skipReuse ?? false, mcpLive: options.mcpLive ?? false, mcpScript: options.mcpScript ?? false, pipeline: options.pipeline ?? false }),
     });
 
     if (!res.ok) {
@@ -262,7 +262,7 @@ export type StreamEvent =
  */
 export async function* runHeadlessPipelineStream(
     question: string,
-    options: { mock?: boolean; mockV2?: boolean; skipReuse?: boolean; mcpLive?: boolean; blockDelay?: number } = {},
+    options: { mock?: boolean; mockV2?: boolean; skipReuse?: boolean; mcpLive?: boolean; mcpScript?: boolean; pipeline?: boolean; blockDelay?: number } = {},
 ): AsyncGenerator<StreamEvent> {
     const res = await fetch('/api/headless/stream', {
         method: 'POST',
@@ -273,6 +273,8 @@ export async function* runHeadlessPipelineStream(
             mockV2:     options.mockV2     ?? false,
             skipReuse:  options.skipReuse  ?? true,
             mcpLive:    options.mcpLive    ?? false,
+            mcpScript:  options.mcpScript  ?? false,
+            pipeline:   options.pipeline   ?? false,
             blockDelay: options.blockDelay ?? 300,
         }),
     });

@@ -7,7 +7,7 @@ export const maxDuration = 600; // 10 minutes max for pipeline execution
 
 interface OrchestratorOutput {
     success: boolean;
-    action: 'generated' | 'mcp_direct' | 'mock_generated' | 'mock_reused' | 'mcp_live';
+    action: 'generated' | 'mcp_direct' | 'mock_generated' | 'mock_reused' | 'mcp_live' | 'mcp_script';
     title?: string;
     blocks?: Array<{
         blockId: string;
@@ -109,7 +109,7 @@ interface HeadlessResult {
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const { question, useNoCode, mock, mockV2, skipReuse, mcpLive } = body;
+        const { question, useNoCode, mock, mockV2, skipReuse, mcpLive, mcpScript, pipeline } = body;
 
         if (!question || typeof question !== 'string') {
             return NextResponse.json({ error: 'question is required' }, { status: 400 });
@@ -188,6 +188,16 @@ export async function POST(request: NextRequest) {
         if (mcpLive) {
             args.push('--mcp-live');
             console.log(`[${timestamp}] [headless/run] 🔴 MCP LIVE mode ENABLED`);
+        }
+
+        if (mcpScript) {
+            args.push('--mcp-script');
+            console.log(`[${timestamp}] [headless/run] 🟣 MCP SCRIPT mode ENABLED`);
+        }
+
+        if (pipeline) {
+            args.push('--pipeline');
+            console.log(`[${timestamp}] [headless/run] 🟢 PIPELINE mode ENABLED`);
         }
 
         // Use fast settings: skip enhancement and fast model
@@ -299,8 +309,7 @@ export async function POST(request: NextRequest) {
                         cache_key: `orchestrator_${Date.now()}_${question.length}`, // Simple cache key
                         status: orchestratorResult.success ? (
                             orchestratorResult.action === 'mock_generated' ? 'mock_generated' :
-                            orchestratorResult.action === 'mock_reused' ? 'mock_reused' :
-                            orchestratorResult.action === 'mcp_live' ? 'generated' : 'generated'
+                            orchestratorResult.action === 'mock_reused' ? 'mock_reused' : 'generated'
                         ) : 'failed',
                         elapsed_s: orchestratorResult.total_time,
                         total_elapsed_s: orchestratorResult.total_time,

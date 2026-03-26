@@ -36,7 +36,9 @@ export default function BuilderApp() {
     const [mockV2Mode, setMockV2Mode] = useState(false);
     const [skipReuse, setSkipReuse] = useState(true);
     const [streamMode, setStreamMode] = useState(false);
-    const [mcpLiveMode, setMcpLiveMode] = useState(true);
+    const [mcpLiveMode, setMcpLiveMode] = useState(false);
+    const [mcpScriptMode, setMcpScriptMode] = useState(true);
+    const [pipelineMode, setPipelineMode] = useState(false);
 
     const handleSend = useCallback(async (text: string) => {
         const assistantId = uid();
@@ -54,7 +56,7 @@ export default function BuilderApp() {
         // ── Streaming path ────────────────────────────────────────────────────
         if (streamMode) {
             try {
-                const gen = runHeadlessPipelineStream(text, { mock: mockMode, mockV2: mockV2Mode, skipReuse, mcpLive: mcpLiveMode });
+                const gen = runHeadlessPipelineStream(text, { mock: mockMode, mockV2: mockV2Mode, skipReuse, mcpLive: mcpLiveMode, mcpScript: mcpScriptMode, pipeline: pipelineMode });
                 let dashSpec: DashboardSpec | null = null;
 
                 for await (const ev of gen) {
@@ -107,7 +109,7 @@ export default function BuilderApp() {
         // ── Standard (batch) path ─────────────────────────────────────────────
         let headlessResult: HeadlessResult;
         try {
-            headlessResult = await runHeadlessPipeline(text, { useNoCode: true, mock: mockMode, mockV2: mockV2Mode, skipReuse, mcpLive: mcpLiveMode });
+            headlessResult = await runHeadlessPipeline(text, { useNoCode: true, mock: mockMode, mockV2: mockV2Mode, skipReuse, mcpLive: mcpLiveMode, mcpScript: mcpScriptMode, pipeline: pipelineMode });
         } catch (err: any) {
             const msg = err?.message ?? 'Unknown error from headless pipeline';
             setMessages((prev) =>
@@ -206,7 +208,7 @@ export default function BuilderApp() {
         setSpec(dashSpec);
         setBlockStates(initial);
         setSpecLoading(false);
-    }, [mockMode, mockV2Mode, skipReuse, mcpLiveMode]);
+    }, [mockMode, mockV2Mode, skipReuse, mcpLiveMode, mcpScriptMode, pipelineMode]);
 
     const isLoading = specLoading || blockStates.some((bs) => bs.loadState === 'loading');
 
@@ -280,6 +282,20 @@ export default function BuilderApp() {
                     <label className="flex items-center gap-1.5 cursor-pointer group">
                         <input
                             type="checkbox"
+                            checked={mcpScriptMode}
+                            onChange={(e) => setMcpScriptMode(e.target.checked)}
+                            className="sr-only peer"
+                        />
+                        <div className="relative w-8 h-4 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-checked:bg-violet-500 transition-colors">
+                            <div className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform ${mcpScriptMode ? 'translate-x-4' : ''}`} />
+                        </div>
+                        <span className="text-xs font-medium text-slate-600 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200">
+                            Script
+                        </span>
+                    </label>
+                    <label className="flex items-center gap-1.5 cursor-pointer group">
+                        <input
+                            type="checkbox"
                             checked={mcpLiveMode}
                             onChange={(e) => setMcpLiveMode(e.target.checked)}
                             className="sr-only peer"
@@ -289,6 +305,20 @@ export default function BuilderApp() {
                         </div>
                         <span className="text-xs font-medium text-slate-600 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200">
                             MCP Live
+                        </span>
+                    </label>
+                    <label className="flex items-center gap-1.5 cursor-pointer group">
+                        <input
+                            type="checkbox"
+                            checked={pipelineMode}
+                            onChange={(e) => setPipelineMode(e.target.checked)}
+                            className="sr-only peer"
+                        />
+                        <div className="relative w-8 h-4 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-checked:bg-green-500 transition-colors">
+                            <div className={`absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full transition-transform ${pipelineMode ? 'translate-x-4' : ''}`} />
+                        </div>
+                        <span className="text-xs font-medium text-slate-600 dark:text-slate-400 group-hover:text-slate-800 dark:group-hover:text-slate-200">
+                            Pipeline
                         </span>
                     </label>
                     {isLoading && (

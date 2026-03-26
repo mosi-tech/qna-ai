@@ -52,6 +52,7 @@ Skipped in mock v2 mode: ui_planner (uses hierarchical decomposition instead), m
 """
 
 import argparse
+import asyncio
 import json
 import logging
 import sys
@@ -75,6 +76,8 @@ from verification_agent import create_verification_agent
 from script_executor_agent import create_script_executor_agent
 from mcp_direct_agent import create_mcp_direct_agent
 from mcp_block_solver_agent import create_mcp_block_solver_agent
+from mcp_script_agent import create_mcp_script_agent
+from pipeline_block_solver_agent import create_pipeline_block_solver_agent
 import concurrent.futures
 from mock.mock_reuse_evaluator import create_mock_reuse_evaluator
 from mock.mock_data_generator import create_mock_data_generator
@@ -101,6 +104,8 @@ class AnalysisOrchestrator:
         mock_mode: bool = False,
         mock_v2_mode: bool = False,
         mcp_live_mode: bool = False,
+        mcp_script_mode: bool = False,
+        pipeline_mode: bool = False,
         max_generation_attempts: int = 3,
         verbose: bool = False,
         output_dir: str = None
@@ -113,6 +118,8 @@ class AnalysisOrchestrator:
         self.mock_mode = mock_mode
         self.mock_v2_mode = mock_v2_mode
         self.mcp_live_mode = mcp_live_mode
+        self.mcp_script_mode = mcp_script_mode
+        self.pipeline_mode = pipeline_mode
         self.max_generation_attempts = max_generation_attempts
         self.verbose = verbose
         self.output_dir = output_dir or os.path.join(os.path.dirname(__file__), "..", "output")
@@ -129,11 +136,18 @@ class AnalysisOrchestrator:
         self.script_executor = create_script_executor_agent()
         self.mcp_direct = create_mcp_direct_agent()
 
-        # MCP live mode: parallel per-block solvers
+        # MCP live mode: parallel per-block solvers (direct tool calling)
         self.mcp_block_solver = create_mcp_block_solver_agent() if mcp_live_mode else None
 
+        # MCP script mode: parallel per-block script generation + execution
+        self.mcp_script_solver = create_mcp_script_agent() if mcp_script_mode else None
+
+        # Pipeline mode: delegates to existing CodePromptBuilderService + AnalysisService
+        self.pipeline_solver = create_pipeline_block_solver_agent() if pipeline_mode else None
+
         # Mock mode agents (v1 - single-shot)
-        self.mock_reuse_evaluator = create_mock_reuse_evaluator()
+        # Only connect to ChromaDB when reuse is actually needed
+        self.mock_reuse_evaluator = create_mock_reuse_evaluator() if (mock_mode and not skip_reuse) else None
         self.mock_data_generator = create_mock_data_generator()
 
         # Mock mode agents (v2 - batch decomposition)
@@ -281,6 +295,137 @@ class AnalysisOrchestrator:
                 return {
                     "success": True,
                     "action": "mcp_live",
+                    "title": title,
+                    "blocks": blocks,
+                    "blocks_data": blocks_data,
+                    "rows": rows,
+                    "layout": layout,
+                    "total_time": total_time,
+                    "steps": self.steps,
+                    "timestamp": datetime.now().isoformat()
+                }
+
+            # MCP Script mode: parallel per-block script generation + execution
+            if self.mcp_script_mode:
+                self._log(f"🟣 MCP Script mode: generating scripts for {len(blocks)} blocks in parallel")
+
+                blocks_data = []
+                failed_blocks = []
+
+                def solve_block_script(block):
+                    block_id = block.get("blockId", "unknown")
+                    try:
+                        result = self.mcp_script_solver.execute({
+                            "blockId": block_id,
+                            "sub_question": block.get("sub_question", ""),
+                            "canonical_params": block.get("canonical_params", {}),
+                            "dataContract": block.get("dataContract", {})
+                        })
+                        if result.success:
+                            data = result.data
+                            return {
+                                "blockId": block_id,
+                                "data": data.get("data"),
+                                "functions_called": data.get("functions_called", []),
+                                "success": True
+                            }
+                        else:
+                            logger.warning(f"⚠️ Script solver failed for {block_id}: {result.error}")
+                            return {"blockId": block_id, "data": None, "success": False, "error": result.error}
+                    except Exception as e:
+                        logger.error(f"❌ Script solver exception for {block_id}: {e}")
+                        return {"blockId": block_id, "data": None, "success": False, "error": str(e)}
+
+                max_workers = min(len(blocks), 6)  # Scripts are heavier; cap at 6
+                with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+                    future_to_block = {executor.submit(solve_block_script, block): block for block in blocks}
+                    for future in concurrent.futures.as_completed(future_to_block):
+                        block_result = future.result()
+                        if block_result.get("success"):
+                            blocks_data.append({
+                                "blockId": block_result["blockId"],
+                                "data": block_result["data"]
+                            })
+                            self._log(f"  ✅ {block_result['blockId']} → {block_result.get('functions_called', [])}")
+                        else:
+                            failed_blocks.append(block_result["blockId"])
+                            self._log(f"  ❌ {block_result['blockId']} failed: {block_result.get('error', 'unknown')[:120]}")
+
+                total_time = (datetime.now() - start_time).total_seconds()
+                self._log(f"✅ MCP Script: {len(blocks_data)} blocks solved, {len(failed_blocks)} failed in {total_time:.1f}s")
+
+                return {
+                    "success": True,
+                    "action": "mcp_script",
+                    "title": title,
+                    "blocks": blocks,
+                    "blocks_data": blocks_data,
+                    "rows": rows,
+                    "layout": layout,
+                    "total_time": total_time,
+                    "steps": self.steps,
+                    "timestamp": datetime.now().isoformat()
+                }
+
+            # Pipeline mode: concurrent per-block using CodePromptBuilderService + AnalysisService
+            if self.pipeline_mode:
+                self._log(f"🟢 Pipeline mode: solving {len(blocks)} blocks concurrently")
+
+                blocks_data = []
+                failed_blocks = []
+
+                async def solve_block_async(block):
+                    block_id = block.get("blockId", "unknown")
+                    try:
+                        result = await self.pipeline_solver.execute_async({
+                            "blockId": block_id,
+                            "sub_question": block.get("sub_question", ""),
+                            "canonical_params": block.get("canonical_params", {}),
+                            "dataContract": block.get("dataContract", {})
+                        })
+                        if result.success:
+                            data = result.data
+                            return {
+                                "blockId": block_id,
+                                "data": data.get("data"),
+                                "functions_called": data.get("functions_called", []),
+                                "success": True
+                            }
+                        else:
+                            logger.warning(f"⚠️ Pipeline solver failed for {block_id}: {result.error}")
+                            return {"blockId": block_id, "data": None, "success": False, "error": result.error}
+                    except Exception as e:
+                        logger.error(f"❌ Pipeline solver exception for {block_id}: {e}")
+                        return {"blockId": block_id, "data": None, "success": False, "error": str(e)}
+
+                async def solve_all_blocks():
+                    sem = asyncio.Semaphore(min(len(blocks), 4))
+
+                    async def throttled(block):
+                        async with sem:
+                            return await solve_block_async(block)
+
+                    tasks = [throttled(b) for b in blocks]
+                    return await asyncio.gather(*tasks, return_exceptions=False)
+
+                block_results = asyncio.run(solve_all_blocks())
+                for block_result in block_results:
+                    if block_result.get("success"):
+                        blocks_data.append({
+                            "blockId": block_result["blockId"],
+                            "data": block_result["data"]
+                        })
+                        self._log(f"  ✅ {block_result['blockId']} → {block_result.get('functions_called', [])}")
+                    else:
+                        failed_blocks.append(block_result["blockId"])
+                        self._log(f"  ❌ {block_result['blockId']} failed: {block_result.get('error', 'unknown')[:120]}")
+
+                total_time = (datetime.now() - start_time).total_seconds()
+                self._log(f"✅ Pipeline: {len(blocks_data)} blocks solved, {len(failed_blocks)} failed in {total_time:.1f}s")
+
+                return {
+                    "success": True,
+                    "action": "pipeline",
                     "title": title,
                     "blocks": blocks,
                     "blocks_data": blocks_data,
@@ -772,7 +917,17 @@ def main():
     parser.add_argument(
         "--mcp-live",
         action="store_true",
-        help="Use real MCP tools per block in parallel (live data)"
+        help="Use real MCP tools per block in parallel (live data, direct tool calling)"
+    )
+    parser.add_argument(
+        "--mcp-script",
+        action="store_true",
+        help="Use script-generation mode: LLM writes Python per block, script runs and returns compact JSON (avoids context overflow)"
+    )
+    parser.add_argument(
+        "--pipeline",
+        action="store_true",
+        help="Pipeline mode: delegates each block to CodePromptBuilderService + AnalysisService (proven fast pipeline)"
     )
     parser.add_argument(
         "--max-generation-attempts",
@@ -820,6 +975,8 @@ def main():
         mock_mode=args.mock,
         mock_v2_mode=args.mock_v2,
         mcp_live_mode=args.mcp_live,
+        mcp_script_mode=args.mcp_script,
+        pipeline_mode=args.pipeline,
         max_generation_attempts=args.max_generation_attempts,
         verbose=args.verbose,
         output_dir=args.output_dir

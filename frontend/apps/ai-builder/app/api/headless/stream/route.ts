@@ -26,7 +26,7 @@ const sse   = (obj: object) => enc.encode(`data: ${JSON.stringify(obj)}\n\n`);
 
 export async function POST(request: NextRequest) {
     const body                                          = await request.json();
-    const { question, mock = true, mockV2 = false, skipReuse = true, mcpLive = false, blockDelay = 300 } = body;
+    const { question, mock = true, mockV2 = false, skipReuse = true, mcpLive = false, mcpScript = false, pipeline = false, blockDelay = 300 } = body;
 
     if (!question) {
         return new Response('question required', { status: 400 });
@@ -51,6 +51,8 @@ export async function POST(request: NextRequest) {
     if (mockV2)     args.push('--mock-v2');
     if (skipReuse)  args.push('--skip-reuse');
     if (mcpLive)    args.push('--mcp-live');
+    if (mcpScript)  args.push('--mcp-script');
+    if (pipeline)   args.push('--pipeline');
 
     // ── SSE stream ────────────────────────────────────────────────────────────
     const stream = new ReadableStream({

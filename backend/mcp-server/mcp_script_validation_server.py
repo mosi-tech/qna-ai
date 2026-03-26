@@ -6,6 +6,7 @@ Provides MCP tools for validating Python scripts in sandboxed environment.
 Returns only validation status to LLM, never actual financial data.
 """
 
+import argparse
 import sys
 import os
 import json
@@ -734,23 +735,50 @@ async def write_and_validate(arguments: dict) -> list[TextContent]:
     )]
 
 
+def _init_options():
+    return InitializationOptions(
+        server_name="mcp-script-validation-server",
+        server_version="1.0.0",
+        capabilities=app.get_capabilities(
+            notification_options=NotificationOptions(),
+            experimental_capabilities={},
+        ),
+    )
+
+
 async def main():
     """Run the MCP script validation server"""
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--port", type=int, default=None, help="Run as HTTP/SSE server on this port")
+    parser.add_argument("--host", default="0.0.0.0")
+    args = parser.parse_args()
+
     logger.info("🚀 MCP Script Validation Server starting...")
-    
-    async with stdio_server() as (read_stream, write_stream):
-        await app.run(
-            read_stream,
-            write_stream,
-            InitializationOptions(
-                server_name="mcp-script-validation-server",
-                server_version="1.0.0",
-                capabilities=app.get_capabilities(
-                    notification_options=NotificationOptions(),
-                    experimental_capabilities={}
-                ),
-            ),
-        )
+
+    if args.port:
+        from mcp.server.sse import SseServerTransport
+        from starlette.applications import Starlette
+        from starlette.routing import Mount, Route
+        import uvicorn
+
+        sse = SseServerTransport("/messages/")
+
+        async def handle_sse(request):
+            async with sse.connect_sse(request.scope, request.receive, request._send) as streams:
+                await app.run(streams[0], streams[1], _init_options())
+
+        starlette_app = Starlette(routes=[
+            Route("/sse", endpoint=handle_sse),
+            Mount("/messages/", app=sse.handle_post_message),
+        ])
+        logger.info(f"🌐 Validation MCP server listening on http://{args.host}:{args.port}/sse")
+        config = uvicorn.Config(starlette_app, host=args.host, port=args.port, log_level="warning")
+        server = uvicorn.Server(config)
+        await server.serve()
+    else:
+        async with stdio_server() as (read_stream, write_stream):
+            await app.run(read_stream, write_stream, _init_options())
+
 
 if __name__ == "__main__":
     asyncio.run(main())

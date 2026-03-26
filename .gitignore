@@ -112,3 +112,4 @@ generate-*.ts
 /all-questions/single_consolidated
 /backend/headless/output
 /backend/headless/output
+*.pid

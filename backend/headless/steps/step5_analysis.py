@@ -80,6 +80,9 @@ def save_output(result: dict) -> str:
 
 def _init_verification_service():
     """Mirror AnalysisQueueWorker._initialize_verification_service()."""
+    if os.getenv("VERIFICATION_ENABLED", "true").lower() == "false":
+        logger.info("Verification disabled via VERIFICATION_ENABLED=false")
+        return None
     try:
         prompt_template = (
             "Before we proceed, I need to verify something important:\n\n"
