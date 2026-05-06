@@ -67,7 +67,7 @@ class PipelineBlockSolverAgent(AgentBase):
     def __init__(self, llm_model: str = None, llm_provider: str = None):
         super().__init__(
             name="pipeline_block_solver",
-            task="PIPELINE",
+            task="RESULT_FORMATTER",
             prompt_file=None,
             llm_model=llm_model,
             llm_provider=llm_provider,

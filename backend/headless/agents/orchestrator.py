@@ -106,6 +106,7 @@ class AnalysisOrchestrator:
         mcp_live_mode: bool = False,
         mcp_script_mode: bool = False,
         pipeline_mode: bool = False,
+        parallel: bool = False,
         max_generation_attempts: int = 3,
         verbose: bool = False,
         output_dir: str = None
@@ -120,6 +121,7 @@ class AnalysisOrchestrator:
         self.mcp_live_mode = mcp_live_mode
         self.mcp_script_mode = mcp_script_mode
         self.pipeline_mode = pipeline_mode
+        self.parallel = parallel
         self.max_generation_attempts = max_generation_attempts
         self.verbose = verbose
         self.output_dir = output_dir or os.path.join(os.path.dirname(__file__), "..", "output")
@@ -367,9 +369,10 @@ class AnalysisOrchestrator:
                     "timestamp": datetime.now().isoformat()
                 }
 
-            # Pipeline mode: concurrent per-block using CodePromptBuilderService + AnalysisService
+            # Pipeline mode: per-block using CodePromptBuilderService + AnalysisService
             if self.pipeline_mode:
-                self._log(f"🟢 Pipeline mode: solving {len(blocks)} blocks concurrently")
+                mode_label = "concurrently" if self.parallel else "sequentially"
+                self._log(f"🟢 Pipeline mode: solving {len(blocks)} blocks {mode_label}")
 
                 blocks_data = []
                 failed_blocks = []
@@ -399,14 +402,17 @@ class AnalysisOrchestrator:
                         return {"blockId": block_id, "data": None, "success": False, "error": str(e)}
 
                 async def solve_all_blocks():
-                    sem = asyncio.Semaphore(min(len(blocks), 4))
-
-                    async def throttled(block):
-                        async with sem:
-                            return await solve_block_async(block)
-
-                    tasks = [throttled(b) for b in blocks]
-                    return await asyncio.gather(*tasks, return_exceptions=False)
+                    if self.parallel:
+                        sem = asyncio.Semaphore(min(len(blocks), 4))
+                        async def throttled(block):
+                            async with sem:
+                                return await solve_block_async(block)
+                        return await asyncio.gather(*[throttled(b) for b in blocks])
+                    else:
+                        results = []
+                        for block in blocks:
+                            results.append(await solve_block_async(block))
+                        return results
 
                 block_results = asyncio.run(solve_all_blocks())
                 for block_result in block_results:
@@ -930,6 +936,11 @@ def main():
         help="Pipeline mode: delegates each block to CodePromptBuilderService + AnalysisService (proven fast pipeline)"
     )
     parser.add_argument(
+        "--parallel",
+        action="store_true",
+        help="Solve blocks in parallel (default: sequential). Use with --pipeline or --mcp-script."
+    )
+    parser.add_argument(
         "--max-generation-attempts",
         type=int,
         default=3,
@@ -977,6 +988,7 @@ def main():
         mcp_live_mode=args.mcp_live,
         mcp_script_mode=args.mcp_script,
         pipeline_mode=args.pipeline,
+        parallel=args.parallel,
         max_generation_attempts=args.max_generation_attempts,
         verbose=args.verbose,
         output_dir=args.output_dir

@@ -49,8 +49,8 @@ class OllamaProvider(LLMProvider):
     async def call_api(self, model: str, messages: List[Dict[str, Any]], 
                       max_tokens: int = 10000, enable_caching: bool = False,
                       override_system_prompt: Optional[str] = None,
-                      override_tools: Optional[List[Dict[str, Any]]] = None, 
-                      force_api: bool = True) -> Dict[str, Any]:
+                      override_tools: Optional[List[Dict[str, Any]]] = None,
+                      force_api: bool = True, **kwargs) -> Dict[str, Any]:
         """Make Ollama API call using stored system prompt and tools"""
         
         # Use overrides if provided, otherwise use stored data

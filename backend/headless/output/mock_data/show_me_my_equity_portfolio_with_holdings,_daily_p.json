@@ -1,399 +1,295 @@
 {
   "question": "Show me my equity portfolio with holdings, daily P&L, sector allocation and YTD performance",
-  "generated_at": "2026-03-22T14:11:29.417895",
+  "generated_at": "2026-03-24T12:39:41.968746",
   "data": {},
   "blocks": [
     {
-      "block_id": "kpi-card-01",
+      "block_id": "FKMetricGrid",
       "type": "kpi",
-      "sub_question": "What are my portfolio's total value, daily P&L, and YTD performance?",
+      "sub_question": "What is the total YTD return, current NAV, today's P&L and month-over-month change for my equity portfolio?",
       "canonical_params": {
-        "portfolioId": "user-123",
-        "metric": "portfolio_summary"
+        "metric": "ytd_performance",
+        "period": "ytd",
+        "interval": "daily"
       },
       "data": {
-        "metrics": [
+        "cards": [
           {
-            "name": "Portfolio Value",
-            "stat": 48503.57,
-            "change": "11.65%",
-            "changeType": "positive"
+            "label": "Portfolio Value",
+            "value": "$175,189",
+            "delta": 18.66,
+            "sub": "vs benchmark"
           },
           {
-            "name": "Daily P&L",
-            "stat": 28404.1,
-            "change": "12.34%",
-            "changeType": "negative"
+            "label": "Daily P&L",
+            "value": "$16,956",
+            "delta": 24.42,
+            "sub": "vs benchmark"
           },
           {
-            "name": "YTD Return",
-            "stat": 12165.83,
-            "change": "-13.16%",
-            "changeType": "negative"
+            "label": "YTD Return",
+            "value": "18.68%",
+            "delta": -10.55,
+            "sub": "annualised"
           },
           {
-            "name": "Sharpe Ratio",
-            "stat": 3802.15,
-            "change": "14.30%",
-            "changeType": "negative"
+            "label": "Sharpe Ratio",
+            "value": "-3.76%",
+            "delta": 12.69,
+            "sub": "vs yesterday"
           }
         ],
         "cols": 4
       }
     },
     {
-      "block_id": "line-chart-06",
+      "block_id": "FKLineChart",
       "type": "timeseries",
-      "sub_question": "What is the daily P&L trend for my portfolio over the selected period?",
+      "sub_question": "What is the daily net P&L of my equity portfolio over the selected period?",
       "canonical_params": {
-        "portfolioId": "user-123",
-        "metric": "daily_pnl"
+        "metric": "daily_net_pl",
+        "interval": "daily"
       },
       "data": {
         "data": [
           {
-            "date": "2023-11-03",
-            "Value": 82891.79
+            "date": "2025-04-28",
+            "value": 86.7
           },
           {
-            "date": "2023-12-03",
-            "Value": 92103.49
+            "date": "2025-05-28",
+            "value": 88.21
           },
           {
-            "date": "2024-01-02",
-            "Value": 97576.55
+            "date": "2025-06-27",
+            "value": 88.67
           },
           {
-            "date": "2024-02-01",
-            "Value": 74624.64
+            "date": "2025-07-27",
+            "value": 88.17
           },
           {
-            "date": "2024-03-02",
-            "Value": 79111.78
+            "date": "2025-08-26",
+            "value": 92.14
           },
           {
-            "date": "2024-04-01",
-            "Value": 99177.58
+            "date": "2025-09-25",
+            "value": 92.61
           },
           {
-            "date": "2024-05-01",
-            "Value": 96048.42
+            "date": "2025-10-25",
+            "value": 95.54
           },
           {
-            "date": "2024-05-31",
-            "Value": 93266.8
+            "date": "2025-11-24",
+            "value": 96.55
           },
           {
-            "date": "2024-06-30",
-            "Value": 76775.5
+            "date": "2025-12-24",
+            "value": 100.02
           },
           {
-            "date": "2024-07-30",
-            "Value": 87790.23
+            "date": "2026-01-23",
+            "value": 100.29
           },
           {
-            "date": "2024-08-29",
-            "Value": 79774.59
+            "date": "2026-02-22",
+            "value": 101.24
           },
           {
-            "date": "2024-09-28",
-            "Value": 82612.2
-          },
-          {
-            "date": "2024-10-28",
-            "Value": 94615.51
-          },
-          {
-            "date": "2024-11-27",
-            "Value": 76558.88
-          },
-          {
-            "date": "2024-12-27",
-            "Value": 77102.62
-          },
-          {
-            "date": "2025-01-26",
-            "Value": 84542.31
-          },
-          {
-            "date": "2025-02-25",
-            "Value": 97181.28
-          },
-          {
-            "date": "2025-03-27",
-            "Value": 97667.48
-          },
-          {
-            "date": "2025-04-26",
-            "Value": 85880.07
-          },
-          {
-            "date": "2025-05-26",
-            "Value": 76554.73
-          },
-          {
-            "date": "2025-06-25",
-            "Value": 90976.06
-          },
-          {
-            "date": "2025-07-25",
-            "Value": 75063.38
-          },
-          {
-            "date": "2025-08-24",
-            "Value": 81667.72
-          },
-          {
-            "date": "2025-09-23",
-            "Value": 81429.67
-          },
-          {
-            "date": "2025-10-23",
-            "Value": 88134.78
-          },
-          {
-            "date": "2025-11-22",
-            "Value": 86096.75
-          },
-          {
-            "date": "2025-12-22",
-            "Value": 79477.97
-          },
-          {
-            "date": "2026-01-21",
-            "Value": 86992.58
-          },
-          {
-            "date": "2026-02-20",
-            "Value": 89002.46
-          },
-          {
-            "date": "2026-03-22",
-            "Value": 90015.44
+            "date": "2026-03-24",
+            "value": 99.6
           }
         ],
-        "categories": [
-          "Value"
-        ],
-        "summary": [
+        "series": [
           {
-            "name": "Value",
-            "value": 84389.35
+            "key": "value",
+            "label": "Value"
           }
         ]
       }
     },
     {
-      "block_id": "donut-chart-04",
+      "block_id": "FKPartChart",
       "type": "distribution",
-      "sub_question": "What is the current sector allocation of my portfolio?",
+      "sub_question": "What is the current sector allocation of my equity portfolio?",
       "canonical_params": {
-        "portfolioId": "user-123",
-        "metric": "sector_allocation"
+        "metric": "sector_allocation",
+        "interval": "ytd"
       },
       "data": {
         "data": [
           {
-            "name": "Finance",
-            "value": 16.0
+            "label": "Healthcare",
+            "value": 10.1
           },
           {
-            "name": "Healthcare",
-            "value": 24.78
+            "label": "Utilities",
+            "value": 6.24
           },
           {
-            "name": "Energy",
-            "value": 29.36
+            "label": "Real Estate",
+            "value": 10.92
           },
           {
-            "name": "Technology",
-            "value": 29.97
+            "label": "Consumer",
+            "value": 13.21
           },
           {
-            "name": "Consumer",
-            "value": 26.09
+            "label": "Industrials",
+            "value": 16.2
+          },
+          {
+            "label": "Materials",
+            "value": 4.31
+          },
+          {
+            "label": "Financials",
+            "value": 8.76
+          },
+          {
+            "label": "Communication",
+            "value": 16.54
+          },
+          {
+            "label": "Technology",
+            "value": 6.92
+          },
+          {
+            "label": "Energy",
+            "value": 6.79
           }
-        ]
+        ],
+        "labelKey": "label",
+        "valueKey": "value",
+        "mode": "treemap"
       }
     },
     {
-      "block_id": "table-action-01",
-      "type": "table",
-      "sub_question": "What are the holdings details of my portfolio, including ticker, asset class, market value, and daily P&L?",
+      "block_id": "FKDataTable",
+      "type": "tabular",
+      "sub_question": "What are the current holdings in my equity portfolio, including ticker, shares, avg cost, market value, and daily P&L?",
       "canonical_params": {
-        "portfolioId": "user-123",
-        "metric": "holdings_detail"
+        "metric": "holdings_list",
+        "interval": "market"
       },
       "data": {
+        "columns": [
+          {
+            "key": "ticker",
+            "label": "Symbol"
+          },
+          {
+            "key": "price",
+            "label": "Price",
+            "align": "right",
+            "mono": true
+          },
+          {
+            "key": "change",
+            "label": "Change",
+            "align": "right",
+            "mono": true,
+            "colorRule": "gain-loss"
+          },
+          {
+            "key": "weight",
+            "label": "Weight",
+            "align": "right",
+            "mono": true
+          },
+          {
+            "key": "value",
+            "label": "Value",
+            "align": "right",
+            "mono": true
+          }
+        ],
         "rows": [
           {
-            "Symbol": "STK1",
-            "Shares": 55,
-            "Avg Cost": 489.34,
-            "Market Value": 26926.97,
-            "P&L": 19759.45,
-            "P&L %": 19.36
+            "ticker": "TKR1",
+            "price": 179.13,
+            "change": 4.68,
+            "weight": 4.4,
+            "value": 48157.0
           },
           {
-            "Symbol": "STK2",
-            "Shares": 805,
-            "Avg Cost": 13.28,
-            "Market Value": 63528.92,
-            "P&L": -4041.09,
-            "P&L %": 23.42
+            "ticker": "TKR2",
+            "price": 154.4,
+            "change": 0.62,
+            "weight": 10.7,
+            "value": 41800.0
           },
           {
-            "Symbol": "STK3",
-            "Shares": 464,
-            "Avg Cost": 167.0,
-            "Market Value": 69966.15,
-            "P&L": 14307.3,
-            "P&L %": -25.03
+            "ticker": "TKR3",
+            "price": 455.5,
+            "change": 6.09,
+            "weight": 2.1,
+            "value": 37125.0
           },
           {
-            "Symbol": "STK4",
-            "Shares": 826,
-            "Avg Cost": 260.84,
-            "Market Value": 68835.3,
-            "P&L": 787.49,
-            "P&L %": 32.47
+            "ticker": "TKR4",
+            "price": 216.59,
+            "change": 6.69,
+            "weight": 5.9,
+            "value": 9168.0
           },
           {
-            "Symbol": "STK5",
-            "Shares": 991,
-            "Avg Cost": 391.24,
-            "Market Value": 94875.58,
-            "P&L": -4902.29,
-            "P&L %": 17.93
+            "ticker": "TKR5",
+            "price": 161.03,
+            "change": 2.44,
+            "weight": 3.1,
+            "value": 22754.0
           },
           {
-            "Symbol": "STK6",
-            "Shares": 649,
-            "Avg Cost": 479.5,
-            "Market Value": 24312.42,
-            "P&L": 3338.96,
-            "P&L %": 16.84
+            "ticker": "TKR6",
+            "price": 52.87,
+            "change": -1.96,
+            "weight": 14.6,
+            "value": 47222.0
           },
           {
-            "Symbol": "STK7",
-            "Shares": 593,
-            "Avg Cost": 381.38,
-            "Market Value": 92488.91,
-            "P&L": -489.73,
-            "P&L %": -14.87
+            "ticker": "TKR7",
+            "price": 287.62,
+            "change": -1.65,
+            "weight": 3.0,
+            "value": 46218.0
           },
           {
-            "Symbol": "STK8",
-            "Shares": 602,
-            "Avg Cost": 494.24,
-            "Market Value": 5289.49,
-            "P&L": -4340.55,
-            "P&L %": 46.71
+            "ticker": "TKR8",
+            "price": 476.53,
+            "change": 1.89,
+            "weight": 4.4,
+            "value": 6446.0
           },
           {
-            "Symbol": "STK9",
-            "Shares": 545,
-            "Avg Cost": 422.9,
-            "Market Value": 13007.06,
-            "P&L": 18621.61,
-            "P&L %": 21.57
+            "ticker": "TKR9",
+            "price": 113.0,
+            "change": 7.87,
+            "weight": 3.0,
+            "value": 10886.0
           },
           {
-            "Symbol": "STK10",
-            "Shares": 911,
-            "Avg Cost": 193.94,
-            "Market Value": 82339.82,
-            "P&L": -26.25,
-            "P&L %": 11.3
+            "ticker": "TKR10",
+            "price": 86.31,
+            "change": 0.1,
+            "weight": 17.5,
+            "value": 11348.0
           },
           {
-            "Symbol": "STK11",
-            "Shares": 568,
-            "Avg Cost": 158.67,
-            "Market Value": 51847.81,
-            "P&L": 16194.27,
-            "P&L %": -0.38
+            "ticker": "TKR11",
+            "price": 186.2,
+            "change": -3.15,
+            "weight": 12.7,
+            "value": 49115.0
           },
           {
-            "Symbol": "STK12",
-            "Shares": 667,
-            "Avg Cost": 335.33,
-            "Market Value": 51981.47,
-            "P&L": 2838.7,
-            "P&L %": 45.1
-          },
-          {
-            "Symbol": "STK13",
-            "Shares": 904,
-            "Avg Cost": 415.92,
-            "Market Value": 17296.88,
-            "P&L": 17254.47,
-            "P&L %": 41.15
-          },
-          {
-            "Symbol": "STK14",
-            "Shares": 433,
-            "Avg Cost": 183.64,
-            "Market Value": 65581.98,
-            "P&L": -2175.98,
-            "P&L %": -5.91
-          },
-          {
-            "Symbol": "STK15",
-            "Shares": 566,
-            "Avg Cost": 206.34,
-            "Market Value": 3107.24,
-            "P&L": 15215.31,
-            "P&L %": 17.64
-          },
-          {
-            "Symbol": "STK16",
-            "Shares": 814,
-            "Avg Cost": 439.24,
-            "Market Value": 96652.81,
-            "P&L": -4546.35,
-            "P&L %": 31.03
-          },
-          {
-            "Symbol": "STK17",
-            "Shares": 178,
-            "Avg Cost": 10.65,
-            "Market Value": 59143.25,
-            "P&L": 12485.06,
-            "P&L %": 34.68
-          },
-          {
-            "Symbol": "STK18",
-            "Shares": 867,
-            "Avg Cost": 320.55,
-            "Market Value": 19346.21,
-            "P&L": 6007.09,
-            "P&L %": 37.26
-          },
-          {
-            "Symbol": "STK19",
-            "Shares": 120,
-            "Avg Cost": 116.47,
-            "Market Value": 60243.15,
-            "P&L": 12882.61,
-            "P&L %": -8.8
-          },
-          {
-            "Symbol": "STK20",
-            "Shares": 337,
-            "Avg Cost": 132.55,
-            "Market Value": 64971.2,
-            "P&L": 9123.43,
-            "P&L %": 45.46
+            "ticker": "TKR12",
+            "price": 428.96,
+            "change": -4.27,
+            "weight": 10.3,
+            "value": 4566.0
           }
-        ],
-        "columns": [
-          "Symbol",
-          "Shares",
-          "Avg Cost",
-          "Market Value",
-          "P&L",
-          "P&L %"
         ]
       }
     }

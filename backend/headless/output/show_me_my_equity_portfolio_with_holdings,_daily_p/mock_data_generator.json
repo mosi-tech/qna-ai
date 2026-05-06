@@ -3,27 +3,57 @@
   "input": {
     "question": "Show me my equity portfolio with holdings, daily P&L, sector allocation and YTD performance",
     "ui_planner_output": {
-      "title": "Portfolio Overview & Holdings",
-      "subtitle": "Daily P&L, sector allocation, YTD performance, and detailed holdings",
-      "narrative": "This dashboard summarizes the user\u2019s equity portfolio, presenting key performance metrics, daily profit and loss trends, sector distribution, and individual holdings.",
+      "title": "Equity Portfolio Dashboard",
+      "subtitle": "Holdings, daily net P&L, sector allocation & YTD performance",
+      "narrative": "The KPI row shows YTD return and NAV, the line chart tracks daily net P&L, the donut illustrates sector weights, and the table lists current holdings.",
       "rows": [
         {
           "role": "headline",
           "columns": [
             {
               "width": "full",
-              "blockId": "kpi-card-01",
-              "category": "kpi-cards",
-              "title": "Portfolio Snapshot",
+              "blockId": "FKMetricGrid",
+              "title": "Portfolio YTD Summary",
+              "props": {
+                "cols": 4,
+                "cards": [
+                  {
+                    "label": "Total Return YTD",
+                    "valueKey": "total_return_ytd",
+                    "deltaKey": "total_return_ytd"
+                  },
+                  {
+                    "label": "NAV",
+                    "valueKey": "nav",
+                    "deltaKey": "nav"
+                  },
+                  {
+                    "label": "P&L Today",
+                    "valueKey": "pnl_today",
+                    "deltaKey": "pnl_today"
+                  },
+                  {
+                    "label": "Month \u0394",
+                    "valueKey": "mo_change_pct",
+                    "deltaKey": "mo_change_pct"
+                  }
+                ]
+              },
               "dataContract": {
                 "type": "kpi",
-                "description": "Total portfolio value, daily P&L, and year\u2011to\u2011date performance",
-                "points": 3
+                "description": "YTD return, NAV, daily P&L and MoM change for the portfolio",
+                "fields": [
+                  "total_return_ytd",
+                  "nav",
+                  "pnl_today",
+                  "mo_change_pct"
+                ]
               },
-              "sub_question": "What are my portfolio's total value, daily P&L, and YTD performance?",
+              "sub_question": "What is the total YTD return, current NAV, today's P&L and month-over-month change for my equity portfolio?",
               "canonical_params": {
-                "portfolioId": "user-123",
-                "metric": "portfolio_summary"
+                "metric": "ytd_performance",
+                "period": "ytd",
+                "interval": "daily"
               }
             }
           ]
@@ -32,35 +62,68 @@
           "role": "primary",
           "columns": [
             {
-              "width": "1/2",
-              "blockId": "line-chart-06",
-              "category": "line-charts",
-              "title": "Daily P&L Trend",
+              "width": "full",
+              "blockId": "FKLineChart",
+              "title": "Daily Net P&L",
+              "props": {
+                "series": [
+                  {
+                    "key": "net_pl",
+                    "label": "Net P&L"
+                  }
+                ],
+                "rangeSelector": [
+                  "1M",
+                  "3M",
+                  "6M",
+                  "YTD",
+                  "All"
+                ],
+                "defaultRange": "YTD",
+                "yFormat": "currency",
+                "tickFormat": ".2f"
+              },
               "dataContract": {
                 "type": "timeseries",
-                "description": "Daily profit and loss of the portfolio over the selected period",
-                "points": 30
+                "description": "Daily net P&L for the equity portfolio",
+                "fields": [
+                  "date",
+                  "net_pl"
+                ]
               },
-              "sub_question": "What is the daily P&L trend for my portfolio over the selected period?",
+              "sub_question": "What is the daily net P&L of my equity portfolio over the selected period?",
               "canonical_params": {
-                "portfolioId": "user-123",
-                "metric": "daily_pnl"
+                "metric": "daily_net_pl",
+                "interval": "daily"
               }
-            },
+            }
+          ]
+        },
+        {
+          "role": "supporting",
+          "columns": [
             {
-              "width": "1/2",
-              "blockId": "donut-chart-04",
-              "category": "donut-charts",
+              "width": "full",
+              "blockId": "FKPartChart",
               "title": "Sector Allocation",
+              "props": {
+                "mode": "donut",
+                "valueKey": "weight",
+                "labelKey": "sector",
+                "innerLabel": "Portfolio"
+              },
               "dataContract": {
                 "type": "distribution",
-                "description": "Current sector allocation of the portfolio",
-                "points": 5
+                "description": "Current sector weight breakdown of the portfolio",
+                "fields": [
+                  "sector",
+                  "weight"
+                ]
               },
-              "sub_question": "What is the current sector allocation of my portfolio?",
+              "sub_question": "What is the current sector allocation of my equity portfolio?",
               "canonical_params": {
-                "portfolioId": "user-123",
-                "metric": "sector_allocation"
+                "metric": "sector_allocation",
+                "interval": "ytd"
               }
             }
           ]
@@ -70,18 +133,69 @@
           "columns": [
             {
               "width": "full",
-              "blockId": "table-action-01",
-              "category": "tables",
-              "title": "Holdings Detail",
-              "dataContract": {
-                "type": "table",
-                "description": "Individual holdings with ticker, asset class, market value, and daily P&L",
-                "points": 20
+              "blockId": "FKDataTable",
+              "title": "Holdings",
+              "props": {
+                "defaultSort": "market_value",
+                "defaultDir": "desc",
+                "pageSize": 20,
+                "columns": [
+                  {
+                    "key": "ticker",
+                    "label": "Ticker",
+                    "sortable": true
+                  },
+                  {
+                    "key": "description",
+                    "label": "Description",
+                    "sortable": true
+                  },
+                  {
+                    "key": "shares",
+                    "label": "Shares",
+                    "sortable": true,
+                    "align": "right"
+                  },
+                  {
+                    "key": "avg_cost",
+                    "label": "Avg Cost",
+                    "sortable": true,
+                    "align": "right",
+                    "fmt": "currency"
+                  },
+                  {
+                    "key": "market_value",
+                    "label": "Market Value",
+                    "sortable": true,
+                    "align": "right",
+                    "fmt": "currency"
+                  },
+                  {
+                    "key": "daily_pl",
+                    "label": "Daily P&L",
+                    "sortable": true,
+                    "align": "right",
+                    "fmt": "currency",
+                    "colorRule": "sign"
+                  }
+                ]
               },
-              "sub_question": "What are the holdings details of my portfolio, including ticker, asset class, market value, and daily P&L?",
+              "dataContract": {
+                "type": "tabular",
+                "description": "Current holdings of the equity portfolio with price and P&L metrics",
+                "fields": [
+                  "ticker",
+                  "description",
+                  "shares",
+                  "avg_cost",
+                  "market_value",
+                  "daily_pl"
+                ]
+              },
+              "sub_question": "What are the current holdings in my equity portfolio, including ticker, shares, avg cost, market value, and daily P&L?",
               "canonical_params": {
-                "portfolioId": "user-123",
-                "metric": "holdings_detail"
+                "metric": "holdings_list",
+                "interval": "market"
               }
             }
           ]
@@ -89,69 +203,88 @@
       ],
       "blocks": [
         {
-          "blockId": "kpi-card-01",
-          "category": "kpi-cards",
-          "title": "Portfolio Snapshot",
+          "blockId": "FKMetricGrid",
+          "category": null,
+          "title": "Portfolio YTD Summary",
           "dataContract": {
             "type": "kpi",
-            "description": "Total portfolio value, daily P&L, and year\u2011to\u2011date performance",
-            "points": 3
+            "description": "YTD return, NAV, daily P&L and MoM change for the portfolio",
+            "fields": [
+              "total_return_ytd",
+              "nav",
+              "pnl_today",
+              "mo_change_pct"
+            ]
           },
-          "sub_question": "What are my portfolio's total value, daily P&L, and YTD performance?",
+          "sub_question": "What is the total YTD return, current NAV, today's P&L and month-over-month change for my equity portfolio?",
           "canonical_params": {
-            "portfolioId": "user-123",
-            "metric": "portfolio_summary"
+            "metric": "ytd_performance",
+            "period": "ytd",
+            "interval": "daily"
           },
           "width": "full",
           "role": "headline"
         },
         {
-          "blockId": "line-chart-06",
-          "category": "line-charts",
-          "title": "Daily P&L Trend",
+          "blockId": "FKLineChart",
+          "category": null,
+          "title": "Daily Net P&L",
           "dataContract": {
             "type": "timeseries",
-            "description": "Daily profit and loss of the portfolio over the selected period",
-            "points": 30
+            "description": "Daily net P&L for the equity portfolio",
+            "fields": [
+              "date",
+              "net_pl"
+            ]
           },
-          "sub_question": "What is the daily P&L trend for my portfolio over the selected period?",
+          "sub_question": "What is the daily net P&L of my equity portfolio over the selected period?",
           "canonical_params": {
-            "portfolioId": "user-123",
-            "metric": "daily_pnl"
+            "metric": "daily_net_pl",
+            "interval": "daily"
           },
-          "width": "1/2",
+          "width": "full",
           "role": "primary"
         },
         {
-          "blockId": "donut-chart-04",
-          "category": "donut-charts",
+          "blockId": "FKPartChart",
+          "category": null,
           "title": "Sector Allocation",
           "dataContract": {
             "type": "distribution",
-            "description": "Current sector allocation of the portfolio",
-            "points": 5
+            "description": "Current sector weight breakdown of the portfolio",
+            "fields": [
+              "sector",
+              "weight"
+            ]
           },
-          "sub_question": "What is the current sector allocation of my portfolio?",
+          "sub_question": "What is the current sector allocation of my equity portfolio?",
           "canonical_params": {
-            "portfolioId": "user-123",
-            "metric": "sector_allocation"
+            "metric": "sector_allocation",
+            "interval": "ytd"
           },
-          "width": "1/2",
-          "role": "primary"
+          "width": "full",
+          "role": "supporting"
         },
         {
-          "blockId": "table-action-01",
-          "category": "tables",
-          "title": "Holdings Detail",
+          "blockId": "FKDataTable",
+          "category": null,
+          "title": "Holdings",
           "dataContract": {
-            "type": "table",
-            "description": "Individual holdings with ticker, asset class, market value, and daily P&L",
-            "points": 20
+            "type": "tabular",
+            "description": "Current holdings of the equity portfolio with price and P&L metrics",
+            "fields": [
+              "ticker",
+              "description",
+              "shares",
+              "avg_cost",
+              "market_value",
+              "daily_pl"
+            ]
           },
-          "sub_question": "What are the holdings details of my portfolio, including ticker, asset class, market value, and daily P&L?",
+          "sub_question": "What are the current holdings in my equity portfolio, including ticker, shares, avg cost, market value, and daily P&L?",
           "canonical_params": {
-            "portfolioId": "user-123",
-            "metric": "holdings_detail"
+            "metric": "holdings_list",
+            "interval": "market"
           },
           "width": "full",
           "role": "detail"
@@ -162,10 +295,10 @@
         "question": "Show me my equity portfolio with holdings, daily P&L, sector allocation and YTD performance",
         "block_count": 4,
         "block_ids": [
-          "kpi-card-01",
-          "line-chart-06",
-          "donut-chart-04",
-          "table-action-01"
+          "FKMetricGrid",
+          "FKLineChart",
+          "FKPartChart",
+          "FKDataTable"
         ],
         "layout_source": "rows"
       }
@@ -185,8 +318,8 @@
     },
     "error": null,
     "metadata": {},
-    "timestamp": "2026-03-22T14:11:29.430701"
+    "timestamp": "2026-03-24T12:39:41.982875"
   },
-  "duration": 0.01299,
-  "timestamp": "2026-03-22T14:11:29.430812"
+  "duration": 0.014444,
+  "timestamp": "2026-03-24T12:39:41.982984"
 }

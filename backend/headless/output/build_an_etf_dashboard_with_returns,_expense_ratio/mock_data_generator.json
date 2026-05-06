@@ -3,67 +3,211 @@
   "input": {
     "question": "Build an ETF dashboard with returns, expense ratios, tracking error and benchmark comparison",
     "ui_planner_output": {
-      "title": "ETF Performance Dashboard",
-      "subtitle": "See returns, expense ratio, tracking error and benchmark comparison",
-      "layout": "grid",
-      "blocks": [
+      "title": "ETF Performance Overview",
+      "subtitle": "Key returns, expense ratio, tracking error, and benchmark comparison",
+      "narrative": "The dashboard first presents the ETF\u2019s core metrics, then shows its price trajectory against the benchmark, while the supporting chart breaks down its annual returns.",
+      "rows": [
         {
-          "blockId": "line-chart-06",
-          "category": "line-charts",
-          "title": "ETF vs Benchmark Return",
-          "dataContract": {
-            "type": "lineChart",
-            "description": "Cumulative return of ETF compared to its benchmark over the past year",
-            "points": 2
-          },
-          "sub_question": "Show the cumulative return of the ETF versus its benchmark over the last year.",
-          "canonical_params": {
-            "ticker": "QQQ",
-            "metric": "cumulative_return",
-            "period": "1y",
-            "benchmark": "SPY"
-          }
+          "role": "headline",
+          "columns": [
+            {
+              "width": "full",
+              "blockId": "FKMetricGrid",
+              "title": "ETF Core Metrics",
+              "props": {
+                "cols": 4,
+                "cards": [
+                  {
+                    "label": "Total return (1Y)",
+                    "valueKey": "total_return_1y",
+                    "delta": true
+                  },
+                  {
+                    "label": "Expense ratio",
+                    "valueKey": "expense_ratio"
+                  },
+                  {
+                    "label": "Tracking error",
+                    "valueKey": "tracking_error"
+                  },
+                  {
+                    "label": "Benchmark return (1Y)",
+                    "valueKey": "benchmark_return_1y"
+                  }
+                ]
+              },
+              "dataContract": {
+                "type": "kpi",
+                "description": "Key performance metrics for the ETF over the last year and its benchmark",
+                "fields": [
+                  "total_return_1y",
+                  "expense_ratio",
+                  "tracking_error",
+                  "benchmark_return_1y"
+                ]
+              },
+              "sub_question": "What are the ETF's total return, expense ratio, tracking error, and benchmark return over the last year?",
+              "canonical_params": {
+                "ticker": "ABC",
+                "metric": "performance_overview",
+                "period": "1y"
+              }
+            }
+          ]
         },
         {
-          "blockId": "kpi-card-01",
-          "category": "kpi-cards",
-          "title": "Expense Ratio",
-          "dataContract": {
-            "type": "kpi",
-            "description": "Current expense ratio of the ETF",
-            "points": 1
-          },
-          "sub_question": "What is the current expense ratio of the ETF?",
-          "canonical_params": {
-            "ticker": "QQQ",
-            "metric": "expense_ratio"
-          }
-        },
-        {
-          "blockId": "kpi-card-02",
-          "category": "kpi-cards",
-          "title": "Tracking Error",
-          "dataContract": {
-            "type": "kpi",
-            "description": "Current tracking error of the ETF over the last year",
-            "points": 1
-          },
-          "sub_question": "What is the current tracking error of the ETF?",
-          "canonical_params": {
-            "ticker": "QQQ",
-            "metric": "tracking_error",
-            "period": "1y"
-          }
+          "role": "primary",
+          "columns": [
+            {
+              "width": "2/3",
+              "blockId": "FKLineChart",
+              "title": "ETF vs Benchmark Price",
+              "props": {
+                "series": [
+                  {
+                    "key": "price",
+                    "label": "ETF Price"
+                  },
+                  {
+                    "key": "benchmark_price",
+                    "label": "Benchmark Price"
+                  }
+                ],
+                "xType": "time",
+                "rangeSelector": [
+                  "1M",
+                  "3M",
+                  "6M",
+                  "1Y"
+                ],
+                "defaultRange": "1Y",
+                "yFormat": "currency",
+                "interpolation": "linear"
+              },
+              "dataContract": {
+                "type": "timeseries",
+                "description": "Daily closing price for the ETF and its benchmark",
+                "fields": [
+                  "date",
+                  "price",
+                  "benchmark_price"
+                ]
+              },
+              "sub_question": "How has the ETF price moved compared to its benchmark over time?",
+              "canonical_params": {
+                "ticker": "ABC",
+                "benchmark": "SPY",
+                "metric": "price_comparison",
+                "period": "1y"
+              }
+            },
+            {
+              "width": "1/3",
+              "blockId": "FKBarChart",
+              "title": "Annual Returns",
+              "props": {
+                "valueKey": "return_pct",
+                "labelKey": "year",
+                "colorRule": "sign",
+                "yFormat": "percent",
+                "orientation": "vertical",
+                "sorted": true
+              },
+              "dataContract": {
+                "type": "categorical",
+                "description": "Annual return percentage for the ETF",
+                "fields": [
+                  "year",
+                  "return_pct"
+                ]
+              },
+              "sub_question": "What were the ETF's annual returns over the past years?",
+              "canonical_params": {
+                "ticker": "ABC",
+                "metric": "annual_returns"
+              }
+            }
+          ]
         }
       ],
+      "blocks": [
+        {
+          "blockId": "FKMetricGrid",
+          "category": null,
+          "title": "ETF Core Metrics",
+          "dataContract": {
+            "type": "kpi",
+            "description": "Key performance metrics for the ETF over the last year and its benchmark",
+            "fields": [
+              "total_return_1y",
+              "expense_ratio",
+              "tracking_error",
+              "benchmark_return_1y"
+            ]
+          },
+          "sub_question": "What are the ETF's total return, expense ratio, tracking error, and benchmark return over the last year?",
+          "canonical_params": {
+            "ticker": "ABC",
+            "metric": "performance_overview",
+            "period": "1y"
+          },
+          "width": "full",
+          "role": "headline"
+        },
+        {
+          "blockId": "FKLineChart",
+          "category": null,
+          "title": "ETF vs Benchmark Price",
+          "dataContract": {
+            "type": "timeseries",
+            "description": "Daily closing price for the ETF and its benchmark",
+            "fields": [
+              "date",
+              "price",
+              "benchmark_price"
+            ]
+          },
+          "sub_question": "How has the ETF price moved compared to its benchmark over time?",
+          "canonical_params": {
+            "ticker": "ABC",
+            "benchmark": "SPY",
+            "metric": "price_comparison",
+            "period": "1y"
+          },
+          "width": "2/3",
+          "role": "primary"
+        },
+        {
+          "blockId": "FKBarChart",
+          "category": null,
+          "title": "Annual Returns",
+          "dataContract": {
+            "type": "categorical",
+            "description": "Annual return percentage for the ETF",
+            "fields": [
+              "year",
+              "return_pct"
+            ]
+          },
+          "sub_question": "What were the ETF's annual returns over the past years?",
+          "canonical_params": {
+            "ticker": "ABC",
+            "metric": "annual_returns"
+          },
+          "width": "1/3",
+          "role": "primary"
+        }
+      ],
+      "layout": null,
       "metadata": {
         "question": "Build an ETF dashboard with returns, expense ratios, tracking error and benchmark comparison",
         "block_count": 3,
         "block_ids": [
-          "line-chart-06",
-          "kpi-card-01",
-          "kpi-card-02"
-        ]
+          "FKMetricGrid",
+          "FKLineChart",
+          "FKBarChart"
+        ],
+        "layout_source": "rows"
       }
     },
     "question_id": "build_an_etf_dashboard_with_returns,_expense_ratio"
@@ -81,8 +225,8 @@
     },
     "error": null,
     "metadata": {},
-    "timestamp": "2026-03-18T22:08:49.896395"
+    "timestamp": "2026-03-23T16:20:47.989457"
   },
-  "duration": 6.848494,
-  "timestamp": "2026-03-18T22:08:49.898295"
+  "duration": 0.013841,
+  "timestamp": "2026-03-23T16:20:47.989602"
 }

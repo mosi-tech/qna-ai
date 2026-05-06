@@ -113,3 +113,5 @@ generate-*.ts
 /backend/headless/output
 /backend/headless/output
 *.pid
+/backend/headless/output
+/backend/headless/output

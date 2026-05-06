@@ -199,7 +199,7 @@ class SimplifiedMCPLoader:
         for tool_name, tool_schema in mcp_client.available_tools.items():
             # Apply server filtering (if specified)
             if allowed_servers and not self._tool_matches_servers(tool_name, allowed_servers):
-                logger.info(f"🚫 Tool {tool_name} not from allowed servers")
+                logger.debug(f"🚫 Tool {tool_name} not from allowed servers")
                 continue
                 
             # Apply exclusion filter

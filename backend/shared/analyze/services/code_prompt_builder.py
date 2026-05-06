@@ -153,10 +153,11 @@ class CodePromptBuilderService(BaseService):
         try:
             response = await self.llm_service.make_request(
                 messages=[{
-                    "role": "user", 
+                    "role": "user",
                     "content": analysis_prompt
                 }],
-                system_prompt=self.system_prompt
+                system_prompt=self.system_prompt,
+                slim_tools=True  # Only name+description needed for selection, skip schemas
             )
             
             # Check if LLM request was successful

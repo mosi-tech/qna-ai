@@ -315,7 +315,7 @@ class AnthropicProvider(LLMProvider):
                       max_tokens: int = 10000, enable_caching: bool = False,
                       override_system_prompt: Optional[str] = None,
                       override_tools: Optional[List[Dict[str, Any]]] = None,
-                      force_api: bool = False) -> Dict[str, Any]:
+                      force_api: bool = False, **kwargs) -> Dict[str, Any]:
         """Make Anthropic API call using stored system prompt and tools"""
         
         # Use overrides if provided, otherwise use stored data
@@ -334,15 +334,16 @@ class AnthropicProvider(LLMProvider):
             logger.info("🔀 Using regular Anthropic API (forced - e.g., context search)")
         else:
             logger.info("🔀 Using regular Anthropic API (USE_CLAUDE_CODE_CLI=false or unset)")
-        return await self._call_anthropic_api(model, messages, max_tokens, enable_caching)
-    
-    async def _call_anthropic_api(self, model: str, messages: List[Dict[str, Any]], 
-                                 max_tokens: int = 4000, enable_caching: bool = False) -> Dict[str, Any]:
+        return await self._call_anthropic_api(model, messages, max_tokens, enable_caching, slim_tools=kwargs.get("slim_tools", False))
+
+    async def _call_anthropic_api(self, model: str, messages: List[Dict[str, Any]],
+                                 max_tokens: int = 4000, enable_caching: bool = False,
+                                 slim_tools: bool = False) -> Dict[str, Any]:
         """Original Anthropic API implementation"""
-        
+
         # Get processed system data (using stored system prompt)
         system_data = self.get_processed_system_data(enable_caching)
-        processed_tools = self.get_processed_tools(enable_caching) if self._raw_tools else None
+        processed_tools = self.get_processed_tools(enable_caching, slim=slim_tools) if self._raw_tools else None
 
         # Filter out system messages from messages array (Anthropic handles separately)
         user_messages = [msg for msg in messages if msg["role"] != "system"]
@@ -627,33 +628,37 @@ class AnthropicProvider(LLMProvider):
             
         return self._processed_system_cache[cache_key]
     
-    def get_processed_tools(self, enable_caching: bool = True) -> List[Dict[str, Any]]:
-        """Get tools processed for Anthropic with caching control"""
+    def get_processed_tools(self, enable_caching: bool = True, slim: bool = False) -> List[Dict[str, Any]]:
+        """Get tools processed for Anthropic with caching control.
+
+        slim=True omits input_schema — use for function-selection calls where only
+        name + description are needed. Reduces token count from ~29k to ~3k.
+        """
         if not self._raw_tools:
             return []
-            
-        cache_key = f"tools_{enable_caching}_{len(self._raw_tools)}"
-        
+
+        cache_key = f"tools_{enable_caching}_{slim}_{len(self._raw_tools)}"
+
         if cache_key not in self._processed_tools_cache:
             anthropic_tools = []
             for i, tool in enumerate(self._raw_tools):
                 anthropic_tool = {
                     "name": tool["function"]["name"],
                     "description": tool["function"]["description"],
-                    "input_schema": tool["function"]["parameters"]
                 }
-                
+                anthropic_tool["input_schema"] = {"type": "object", "properties": {}} if slim else tool["function"]["parameters"]
+
                 # Add cache control to the last tool only if caching is enabled
                 if enable_caching and self.supports_caching() and i == len(self._raw_tools) - 1:
                     anthropic_tool["cache_control"] = {
                         "type": "ephemeral",
                         "ttl": "1h"
                     }
-                
+
                 anthropic_tools.append(anthropic_tool)
-            
+
             self._processed_tools_cache[cache_key] = anthropic_tools
-            
+
         return self._processed_tools_cache[cache_key]
     
     def create_simulated_tool_call(self, function_name: str, arguments: Dict[str, Any], call_id: str = None) -> Dict[str, Any]:

@@ -226,8 +226,9 @@ class LLMService:
                         model=model,
                         messages=messages,
                         max_tokens=max_tokens,
-                        enable_caching=kwargs.get('enable_caching', False),
-                        force_api=force_api
+                        enable_caching=kwargs.get('enable_caching', self.cache_manager.enable_caching and self.provider.supports_caching()),
+                        force_api=force_api,
+                        slim_tools=kwargs.get('slim_tools', False),
                     )
                     
                     # Check for 500-level errors in the response
